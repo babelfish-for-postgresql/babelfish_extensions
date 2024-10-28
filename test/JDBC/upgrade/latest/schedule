@@ -497,6 +497,7 @@ set_tran_isolvl
 with_recompile
 alter_proc_recompile
 catalogs_dbo_sys_schema-upgrade
+unary_plus_op_string
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -570,12 +571,18 @@ replicate
 space
 SELECT_INTO_TEST
 binary-datatype-operators
+securityadmin_role
 sys_dm_os_sys_info
+BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
 BABEL-5119
+dbcreator_role
 BABEL-5129
+db_accessadmin
 BABEL-CASE_EXPR
 db_owner
+BABEL-5186
+datareader_datawriter
 

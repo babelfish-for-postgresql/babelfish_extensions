@@ -2499,11 +2499,11 @@ public:
 	{
 		// Check for comparison operators directly followed by an '@@' variable, like =@@
 		handleAtAtVarInPredicate(ctx);
-	}		
+	}	
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
-	}
+	}		
 	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
 	{
 		handleBitOperators(ctx);
@@ -3217,10 +3217,7 @@ public:
 		// Check for comparison operators directly followed by an '@@' variable, like =@@
 		handleAtAtVarInPredicate(ctx);
 	}	
-	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
-	{
-		handleBitNotOperator(ctx);
-	}
+
 	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
 	{
 		handleBitOperators(ctx);
@@ -3228,6 +3225,54 @@ public:
 	void exitMult_div_percent_expr(TSqlParser::Mult_div_percent_exprContext *ctx) override
 	{
 		handleModuloOperator(ctx);
+	}
+	
+	void enterUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		/* 
+		 * The T-SQL grammar allows an arbitrary number of unary '+' operators to precede an expression, 
+		 * but PG only supports that for numeric expressions. For string expressions, such a '+' will raise an error in PG.
+		 * In SQL this shows as redundant operators, for example for concatenation: SELECT 'a' ++ 'b'. Expressions
+		 * such as +++(+++@v)) are also valid syntax according to the T-SQL grammar even though they look unusual.
+		 * Here we remove such unary '+' operators, which are redundant anyway. 
+		 * However we do not touch numeric constants (e.g. +123) since the '+', although still redundant, may
+		 * have been included for code clarity (e.g. +123 as opposed to -123).
+		 */
+		std::string op = getFullText(ctx->op);	
+		if (op.front() == '+') {	
+			auto rhsctx = ctx->expression();
+			while (true) {						
+				std::string rhs = getFullText(rhsctx);
+				if (
+					(rhs.front() == '\'') ||    // single-quoted strings
+					(rhs.front() == '"')  ||    // both double-quoted strings and double-quoted identifiers
+					(rhs.front() == '@')  ||    // variables
+					(rhs.front() == '(')  ||    // bracketed expressions			
+					(rhs.front() == '[')  ||    // bracket-delimited identifiers
+					(rhs.front() == '_')  ||    // identifiers starting with an underscore
+					std::isalpha(rhs.front())   // identifiers as well as the N'...' string notation
+				   ) {
+					stream.setText(ctx->op->getStartIndex(), " ");	
+					break;
+				}
+				if (rhs.front() == '+')  {
+					if (dynamic_cast<TSqlParser::Unary_op_exprContext *>(rhsctx)) {
+						TSqlParser::Unary_op_exprContext *uctx = static_cast<TSqlParser::Unary_op_exprContext *>(rhsctx);
+						op = getFullText(uctx->op);	
+						if (op.front() == '+') {
+							rhsctx = uctx->expression();	
+							continue;
+						}
+					}
+				}	
+				break; 
+			}
+		}
+		return;
+	}	
+	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		handleBitNotOperator(ctx);
 	}
 
 };

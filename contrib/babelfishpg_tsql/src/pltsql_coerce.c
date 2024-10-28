@@ -43,6 +43,14 @@
 #include <math.h>
 #include "pltsql.h"
 
+/* 
+ * This macro is to define typmod of sysname to 128 beacause
+ * sysname is created as CREATE DOMAIN sys.SYSNAME AS sys.VARCHAR(128);
+ */
+#define SYSNAME_TYPMOD 128
+#define NCHAR_MAX_TYPMOD 4000
+#define BPCHAR_MAX_TYPMOD 8000
+
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -1945,17 +1953,37 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
-        bool             is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
+	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
 	 * But if it is CASE expr then it will also check for text and ntext.
-         */
+	 */
 	foreach(lc, exprs)
 	{
-		Node	*expr = (Node *) lfirst(lc);
+		Node		*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
+
+		if (is_case_expr)
+		{
+			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+
+			/*
+			 * If any of the branch is of UDT, then we will find the baseType using
+			 * get_immediate_base_type_of_UDT_internal(), to find common type using TSQL precedence.
+			 * If type is not UDT then baseType will be NULL.
+			 */
+			if (OidIsValid(baseType))
+					type = baseType;
+			
+			/* 
+			 * If any of the branch is of sysname or UDT is made from sysname
+			 * We need to assign type to "varchar" (As sysname is created from "varchar").
+			 */
+ 			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+					type = get_sys_varcharoid();
+		}
 
 		if (expr_is_null(expr))
 			continue;
@@ -2103,12 +2131,64 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	{
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
+		Oid   type = exprType(expr);
+		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
+
+		/* 
+		 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
+		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
+		 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
+		 */
+		if (OidIsValid(immediate_base_type))
+		{
+			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
+			int32 base_typmod = -1;
+			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+			
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
+			 * -1 will only be returned if common_type is a datatype
+			 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+			 */
+			if (base_typmod == -1 && 
+				is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+			{
+				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+					return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+					return NCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+					return -1;
+			}
+			
+			typmod = base_typmod;	
+		}
+		
+		/* 
+		 * Handling for sysname, In CASE expression if one of the branch is 
+		 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
+		 */
+		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+			typmod = SYSNAME_TYPMOD + VARHDRSZ;
 
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
+		/* This conditon is for the datatype with MAX typmod.
+		 * -1 will only be returned if common_type is a datatype
+		 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
+		 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+		 */
 		if (expr_is_var_max(expr))
-			return -1;
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+				return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+			else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+				return NCHAR_MAX_TYPMOD + VARHDRSZ;
+			else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+				return -1;
+		}
 
 		if (lc == list_head(exprs))
 			max_typmods = typmod;

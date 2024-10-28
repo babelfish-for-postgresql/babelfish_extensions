@@ -130,14 +130,18 @@ master_r1#!#r1#!#r1#!#master#!#sch2
 
 ALTER USER r1 WITH NAME = new_r1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
 
 SELECT rolname, orig_username, login_name, database_name, default_schema_name
 FROM sys.babelfish_authid_user_ext
-WHERE orig_username = 'new_r1';
+WHERE orig_username = 'new_r1' or orig_username = 'r1';
 go
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
-master_new_r1#!#new_r1#!#r1#!#master#!#sch2
+master_r1#!#r1#!#r1#!#master#!#sch2
 ~~END~~
 
 
@@ -217,7 +221,7 @@ r2
 
 
 -- tsql
-DROP USER new_r1;
+DROP USER r1;
 go
 
 -- psql
@@ -277,7 +281,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+5
 ~~END~~
 
 
@@ -288,7 +292,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+6
 ~~END~~
 
 
@@ -300,7 +304,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-5
+7
 ~~END~~
 
 
@@ -388,7 +392,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+6
 ~~END~~
 
 
@@ -418,7 +422,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+5
 ~~END~~
 
 
@@ -489,14 +493,14 @@ ALTER SERVER ROLE db_owner ADD MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 CREATE LOGIN err_user WITH PASSWORD = '123';
@@ -690,15 +694,27 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_db_accessadmin#!#db_accessadmin#!##!#db1#!#
+db1_db_datareader#!#db_datareader#!##!#db1#!#
+db1_db_datawriter#!#db_datawriter#!##!#db1#!#
 db1_db_owner#!#db_owner#!##!#db1#!#
 db1_dbo#!#dbo#!##!#db1#!#dbo
 db1_guest#!#guest#!##!#db1#!#guest
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
@@ -863,12 +879,21 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
@@ -914,18 +939,33 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+db1_db_accessadmin#!##!#db_accessadmin#!#db1#!#
+db1_db_datareader#!##!#db_datareader#!#db1#!#
+db1_db_datawriter#!##!#db_datawriter#!#db1#!#
 db1_db_owner#!##!#db_owner#!#db1#!#
 db1_dbo#!##!#dbo#!#db1#!#dbo
 db1_guest#!##!#guest#!#db1#!#guest
+db2_db_accessadmin#!##!#db_accessadmin#!#db2#!#
+db2_db_datareader#!##!#db_datareader#!#db2#!#
+db2_db_datawriter#!##!#db_datawriter#!#db2#!#
 db2_db_owner#!##!#db_owner#!#db2#!#
 db2_dbo#!##!#dbo#!#db2#!#dbo
 db2_guest#!##!#guest#!#db2#!#guest
+master_db_accessadmin#!##!#db_accessadmin#!#master#!#
+master_db_datareader#!##!#db_datareader#!#master#!#
+master_db_datawriter#!##!#db_datawriter#!#master#!#
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#guest
+msdb_db_accessadmin#!##!#db_accessadmin#!#msdb#!#
+msdb_db_datareader#!##!#db_datareader#!#msdb#!#
+msdb_db_datawriter#!##!#db_datawriter#!#msdb#!#
 msdb_db_owner#!##!#db_owner#!#msdb#!#
 msdb_dbo#!##!#dbo#!#msdb#!#dbo
 msdb_guest#!##!#guest#!#msdb#!#guest
+tempdb_db_accessadmin#!##!#db_accessadmin#!#tempdb#!#
+tempdb_db_datareader#!##!#db_datareader#!#tempdb#!#
+tempdb_db_datawriter#!##!#db_datawriter#!#tempdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#guest
@@ -940,6 +980,9 @@ GO
 varchar#!#varchar
 guest#!#guest
 dbo#!#dbo
+db_accessadmin#!#
+db_datareader#!#
+db_datawriter#!#
 db_owner#!#
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
@@ -972,6 +1015,9 @@ GO
 varchar#!#varchar
 guest#!#guest
 dbo#!#dbo
+db_accessadmin#!#
+db_datareader#!#
+db_datawriter#!#
 db_owner#!#
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
@@ -1106,15 +1152,27 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db2_db_accessadmin#!#db_accessadmin#!##!#db2#!#
+db2_db_datareader#!#db_datareader#!##!#db2#!#
+db2_db_datawriter#!#db_datawriter#!##!#db2#!#
 db2_db_owner#!#db_owner#!##!#db2#!#
 db2_dbo#!#dbo#!##!#db2#!#dbo
 db2_guest#!#guest#!##!#db2#!#guest
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
@@ -1130,12 +1188,21 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
@@ -1408,6 +1475,9 @@ GO
 varchar
 babel_4935_no_sysadmin1
 babel_4935_no_sysadmin2
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 guest
@@ -1425,6 +1495,9 @@ GO
 varchar
 babel_4935_no_sysadmin1
 babel_4935_no_sysadmin2
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 guest
@@ -1441,6 +1514,9 @@ GO
 ~~START~~
 varchar
 babel_4935_no_sysadmin1
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 guest
@@ -1456,6 +1532,9 @@ SELECT name FROM sys.database_principals ORDER BY name
 GO
 ~~START~~
 varchar
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 guest

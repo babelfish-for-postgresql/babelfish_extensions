@@ -169,6 +169,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.convertIntToSQLVariantByteA = &convertIntToSQLVariantByteA;
 		common_utility_plugin_var.tsql_varchar_input = &tsql_varchar_input;
 		common_utility_plugin_var.tsql_bpchar_input = &tsql_bpchar_input;
+		common_utility_plugin_var.is_tsql_sysname_datatype = &is_tsql_sysname_datatype;
 		common_utility_plugin_var.is_tsql_bpchar_datatype = &is_tsql_bpchar_datatype;
 		common_utility_plugin_var.is_tsql_nchar_datatype = &is_tsql_nchar_datatype;
 		common_utility_plugin_var.is_tsql_varchar_datatype = &is_tsql_varchar_datatype;

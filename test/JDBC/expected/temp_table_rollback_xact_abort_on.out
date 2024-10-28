@@ -1226,10 +1226,6 @@ END CATCH
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "t2" does not exist)~~
-
 
 SELECT @@trancount
 SELECT * FROM temp_table_rollback_t6

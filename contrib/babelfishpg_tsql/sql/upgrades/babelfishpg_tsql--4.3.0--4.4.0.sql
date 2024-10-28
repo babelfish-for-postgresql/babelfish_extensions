@@ -70,6 +70,281 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+
+CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_db_roles_during_upgrade';
+
+CALL sys.create_db_roles_during_upgrade();
+
+DROP PROCEDURE sys.create_db_roles_during_upgrade();
+
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
+    existing_server_roles TEXT;
+BEGIN
+    SELECT STRING_AGG(rolname::text, ', ')
+    INTO existing_server_roles FROM pg_catalog.pg_roles
+    WHERE rolname IN ('securityadmin', 'dbcreator');
+        
+    IF existing_server_roles IS NOT NULL THEN
+            RAISE EXCEPTION 'The following role(s) already exist(s): %', existing_server_roles;   
+    ELSE
+        EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
+        EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
+        CALL sys.babel_initialize_logins('securityadmin');
+        EXECUTE format('CREATE ROLE dbcreator CREATEDB INHERIT PASSWORD NULL');
+        EXECUTE format('GRANT dbcreator TO bbf_role_admin WITH ADMIN TRUE');
+        CALL sys.babel_initialize_logins('dbcreator');
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.bbf_is_member_of_role_nosuper(OID, OID)
+RETURNS BOOLEAN AS 'babelfishpg_tsql', 'bbf_is_member_of_role_nosuper'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- SERVER_PRINCIPALS
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
+  OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+-- login_token
+CREATE OR REPLACE VIEW sys.login_token
+AS SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+ELSE 'SQL LOGIN' END AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.orig_loginname = sys.suser_name()
+AND Ext.type in ('S','U')
+UNION ALL
+SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
+CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.type = 'R'
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
+
+GRANT SELECT ON sys.login_token TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
+RETURNS INTEGER AS
+$$
+DECLARE has_role BOOLEAN;
+DECLARE login_valid BOOLEAN;
+BEGIN
+	role  := TRIM(trailing from LOWER(role));
+	login := TRIM(trailing from LOWER(login));
+
+	login_valid = (login = suser_name() COLLATE sys.database_default) OR 
+		(EXISTS (SELECT name
+	 			FROM sys.server_principals
+		 	 	WHERE 
+				LOWER(name) = login COLLATE sys.database_default
+				AND type IN ('S', 'R')));
+ 	
+ 	IF NOT login_valid THEN
+ 		RETURN NULL;
+    
+    ELSIF role = 'public' COLLATE sys.database_default THEN
+    	RETURN 1;
+	
+ 	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
+                        OR ((login COLLATE sys.database_default NOT IN ('sysadmin', 'securityadmin', 'dbcreator'))
+					        AND pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER')));
+	    IF has_role THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	
+    ELSIF role COLLATE sys.database_default IN (
+            'serveradmin',
+            'setupadmin',
+            'processadmin',
+            'diskadmin',
+            'bulkadmin') THEN 
+    	RETURN 0;
+ 	
+    ELSE
+ 		  RETURN NULL;
+ 	END IF;
+	
+ 	EXCEPTION WHEN OTHERS THEN
+	 	  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- sp_helpsrvrolemember
+CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If server role is not specified, return info for all server roles
+	IF @srvrolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If a valid server role is specified, return its member info
+	-- If the role is a SQL server predefined role (i.e. serveradmin), 
+	-- do not raise an error even if it does not exist
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
+					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'processadmin',
+					'diskadmin', 'bulkadmin')
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
+		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If the specified server role is not valid
+	ELSE
+		RAISERROR('%s is not a known fixed role.', 16, 1, @srvrolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
+
+-- SYSLOGINS
+CREATE OR REPLACE VIEW sys.syslogins
+AS SELECT 
+Base.sid AS sid,
+CAST(9 AS SYS.TINYINT) AS status,
+Base.create_date AS createdate,
+Base.modify_date AS updatedate,
+Base.create_date AS accdate,
+CAST(0 AS INT) AS totcpu,
+CAST(0 AS INT) AS totio,
+CAST(0 AS INT) AS spacelimit,
+CAST(0 AS INT) AS timelimit,
+CAST(0 AS INT) AS resultlimit,
+Base.name AS name,
+Base.default_database_name AS dbname,
+Base.default_language_name AS default_language_name,
+CAST(Base.name AS SYS.NVARCHAR(128)) AS loginname,
+CAST(NULL AS SYS.NVARCHAR(128)) AS password,
+CAST(0 AS INT) AS denylogin,
+CAST(1 AS INT) AS hasaccess,
+CAST( 
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' OR Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntname,
+CAST(
+   CASE 
+    WHEN Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+  AS INT) AS isntgroup,
+CAST(
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntuser,
+CAST(
+    CASE
+        WHEN is_srvrolemember('sysadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS sysadmin,
+CAST(
+    CASE
+        WHEN is_srvrolemember('securityadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS securityadmin,
+CAST(0 AS INT) AS serveradmin,
+CAST(0 AS INT) AS setupadmin,
+CAST(0 AS INT) AS processadmin,
+CAST(0 AS INT) AS diskadmin,
+CAST(
+    CASE
+        WHEN is_srvrolemember('dbcreator', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS dbcreator,
+CAST(0 AS INT) AS bulkadmin
+FROM sys.server_principals AS Base
+WHERE Base.type in ('S', 'U');
+
+GRANT SELECT ON sys.syslogins TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.configurations
 AS
 SELECT  configuration_id, 
@@ -136,6 +411,7 @@ SELECT  c.value_in_use AS value,
         END AS status
 FROM sys.configurations c LEFT JOIN sys.babelfish_configurations b ON c.configuration_id = b.configuration_id;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
 -- Assigning dbo role to the db_owner login
 DO $$
 DECLARE
@@ -1046,7 +1322,9 @@ BEGIN
         END IF;
     ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role COLLATE sys.database_default)
     THEN
-        IF EXISTS (SELECT name FROM sys.user_token WHERE name = role COLLATE sys.database_default)
+        IF (((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' COLLATE sys.database_default) AND role COLLATE sys.database_default IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter'))
+        THEN RETURN 1;
+        ELSIF EXISTS (SELECT name FROM sys.user_token WHERE name = role COLLATE sys.database_default)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
         ELSIF (is_windows_grp)
         THEN RETURN NULL; -- Return NULL if session is not a windows auth session but argument is a windows group
@@ -1515,7 +1793,7 @@ BEGIN
 		from sys.sp_columns_100_view
         -- TODO: Temporary fix to use '\' as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
 		where pg_catalog.lower(table_name) like pg_catalog.lower(sys.babelfish_truncate_identifier(@table_name)) COLLATE database_default ESCAPE '\'
-			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default)
+			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_owner),'')) = '' or table_owner like sys.babelfish_truncate_identifier(@table_owner) collate database_default ESCAPE '\')
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
 			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@column_name),'')) = '' or column_name like sys.babelfish_truncate_identifier(@column_name) collate database_default)
 		order by table_qualifier,
@@ -1679,6 +1957,103 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
+WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
+
+CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+    "@column_name" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+    IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+ 	
+	IF (COALESCE(@table_owner, '') = '')
+	BEGIN
+		
+		IF EXISTS ( 
+			SELECT * FROM sys.sp_column_privileges_view 
+			WHERE LOWER(@table_name) = LOWER(table_name) and LOWER(SCHEMA_NAME()) = LOWER(table_qualifier)
+			)
+		BEGIN 
+			SELECT 
+			TABLE_QUALIFIER,
+			TABLE_OWNER,
+			TABLE_NAME,
+			COLUMN_NAME,
+			GRANTOR,
+			GRANTEE,
+			PRIVILEGE,
+			IS_GRANTABLE
+			FROM sys.sp_column_privileges_view
+			WHERE LOWER(@table_name) = LOWER(table_name)
+				AND (LOWER(SCHEMA_NAME()) = LOWER(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+		END
+		ELSE
+		BEGIN
+			SELECT 
+			TABLE_QUALIFIER,
+			TABLE_OWNER,
+			TABLE_NAME,
+			COLUMN_NAME,
+			GRANTOR,
+			GRANTEE,
+			PRIVILEGE,
+			IS_GRANTABLE
+			FROM sys.sp_column_privileges_view
+			WHERE LOWER(@table_name) = LOWER(table_name)
+				AND (LOWER('dbo')= LOWER(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+		END
+	END
+	ELSE
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		COLUMN_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE
+		FROM sys.sp_column_privileges_view
+		WHERE LOWER(@table_name) = LOWER(table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+	END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
@@ -1705,57 +2080,56 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-WHERE t4.privilege_type = 'DELETE'; 
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
+WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
 
-CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
-RETURNS INTEGER AS
-$$
-DECLARE has_role BOOLEAN;
-DECLARE login_valid BOOLEAN;
+CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.sysname = '',
+	"@fusepattern" sys.bit = 1
+)
+AS $$
 BEGIN
-	role  := TRIM(trailing from LOWER(role));
-	login := TRIM(trailing from LOWER(login));
 	
-	login_valid = (login = suser_name() COLLATE sys.database_default) OR 
-		(EXISTS (SELECT name
-	 			FROM sys.server_principals
-		 	 	WHERE 
-				LOWER(name) = login COLLATE sys.database_default
-				AND type = 'S'));
- 	
- 	IF NOT login_valid THEN
- 		RETURN NULL;
-    
-    ELSIF role = 'public' COLLATE sys.database_default THEN
-    	RETURN 1;
+	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
 	
- 	ELSIF role = 'sysadmin' COLLATE sys.database_default THEN
-	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
-	    IF has_role THEN
-			RETURN 1;
-		ELSE
-			RETURN 0;
-		END IF;
+	IF @fusepattern = 1
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) LIKE LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) LIKE LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
+	ELSE 
+	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) = LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) = LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
 	
-    ELSIF role COLLATE sys.database_default IN (
-            'serveradmin',
-            'securityadmin',
-            'setupadmin',
-            'securityadmin',
-            'processadmin',
-            'dbcreator',
-            'diskadmin',
-            'bulkadmin') THEN 
-    	RETURN 0;
- 	
-    ELSE
- 		  RETURN NULL;
- 	END IF;
-	
- 	EXCEPTION WHEN OTHERS THEN
-	 	  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql STABLE;
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
@@ -4059,6 +4433,214 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_columns_100_int
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_statistics_internal_deprecated_in_4_4_0');
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_pkeys_internal_deprecated_in_4_4_0');
+
+CREATE OR REPLACE FUNCTION sys.bbf_is_role_member(member NAME, rolename NAME)
+RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
+
+-- DATABASE_PRINCIPALS
+CREATE OR REPLACE VIEW sys.database_principals AS
+SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.oid AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME()
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'guest') -- system users should always be visible
+  OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_USER'
+    WHEN type = 'R' THEN 'DATABASE_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(-1 AS INT) AS owning_principal_id,
+CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(0 AS SYS.BIT) AS is_fixed_role,
+CAST(-1 AS INT) AS authentication_type,
+CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(-1 AS INT) AS default_language_lcid,
+CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- Returns a list of the fixed database roles. 
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+	BEGIN
+		SELECT CAST(DbFixedRole as sys.SYSNAME) AS DbFixedRole, CAST(Description AS sys.nvarchar(70)) AS Description FROM (
+			VALUES ('db_owner', 'DB Owners'),
+			('db_accessadmin', 'DB Access Administrators'),
+			('db_datareader', 'DB Data Reader'),
+			('db_datawriter', 'DB Data Writer')) x(DbFixedRole, Description)
+			WHERE LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = DbFixedRole;
+	END
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
+			'db_securityadmin','db_ddladmin', 'db_backupoperator', 
+			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+	BEGIN
+		-- Return an empty result set instead of raising an error
+		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
+		WHERE 1=0;	
+	END
+	ELSE
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
+END
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If security account is not specified, return info about all users
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND (Ext1.type != 'R' OR Ext1.type != 'A')
+		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is the db fixed role - db_owner
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- TODO: Need to change after we can add/drop members to/from db_owner
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
+			   USER_ID('dbo') AS 'Userid';
+	END
+	-- If the security account is a db role
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND Ext2.orig_username NOT IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
+	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type != 'R')
+	BEGIN
+		SELECT DISTINCT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND (Ext1.type != 'R' OR Ext1.type != 'A')
+		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
@@ -10566,67 +11148,43 @@ CALL sys.babelfish_alter_default_privilege_on_schema();
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
 
-CREATE OR REPLACE FUNCTION sys.bbf_is_role_member(member NAME, rolename NAME)
-RETURNS BOOLEAN
-AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
-
--- DATABASE_PRINCIPALS
-CREATE OR REPLACE VIEW sys.database_principals AS
-SELECT
-CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
-CAST(Ext.type AS CHAR(1)) as type,
-CAST(
-  CASE
-    WHEN Ext.type = 'S' THEN 'SQL_USER'
-    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
-    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
-    ELSE NULL
-  END
-  AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
-CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
-CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
-CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
-CAST(Ext.authentication_type AS INT) AS authentication_type,
-CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
-CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
-CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
-ON Base.rolname = Ext.rolname
-LEFT OUTER JOIN pg_catalog.pg_roles Base2
-ON Ext.login_name = Base2.rolname
-WHERE Ext.database_name = DB_NAME()
-  AND (Ext.orig_username IN ('dbo', 'db_owner', 'guest') -- system users should always be visible
-  OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
-UNION ALL
-SELECT
-CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
-CAST(type AS CHAR(1)) as type,
-CAST(
-  CASE
-    WHEN type = 'S' THEN 'SQL_USER'
-    WHEN type = 'R' THEN 'DATABASE_ROLE'
-    WHEN type = 'U' THEN 'WINDOWS_USER'
-    ELSE NULL
-  END
-  AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
-CAST(NULL AS SYS.DATETIME) AS create_date,
-CAST(NULL AS SYS.DATETIME) AS modify_date,
-CAST(-1 AS INT) AS owning_principal_id,
-CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
-CAST(0 AS SYS.BIT) AS is_fixed_role,
-CAST(-1 AS INT) AS authentication_type,
-CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
-CAST(NULL AS SYS.SYSNAME) AS default_language_name,
-CAST(-1 AS INT) AS default_language_lcid,
-CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
-FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
+-- To handle the typmod values for procedure and function
+UPDATE pg_proc p1
+SET probin = (
+    SELECT jsonb_set(
+        p1.probin::jsonb,
+        '{typmod_array}',
+        to_jsonb(
+            (
+                SELECT jsonb_agg(
+                    CASE
+                        WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proargtypes[typ_index-1] IS NOT NULL) THEN
+                            CASE
+                                WHEN typmod = '-8000' AND p2.proargtypes[typ_index-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                WHEN typmod = '-1' AND p2.proargtypes[typ_index-1]::regtype::text = 'sys.smalldatetime' THEN '0'
+                                WHEN typmod = '-1' AND p2.proargtypes[typ_index-1]::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                ELSE typmod
+                            END
+                        WHEN p2.prokind = 'f' AND p2.prorettype IS NOT NULL THEN
+                            CASE
+                                WHEN typmod = '-8000' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary') THEN '-1'
+                                WHEN typmod = '-1' AND p2.prorettype::regtype::text = 'sys.smalldatetime' THEN '0'
+                                WHEN typmod = '-1' AND p2.prorettype::regtype in ('sys.varchar', 'sys.nvarchar', 'sys.varbinary', 'sys.nchar','sys.binary','sys.bpchar') THEN '1'
+                                ELSE typmod
+                            END
+                        ELSE typmod
+                    END
+                )
+                FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(typmod,typ_index)
+            )
+        )
+    )
+)
+FROM pg_proc p2
+INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p2.pronamespace::regnamespace::name
+INNER JOIN pg_language l ON p2.prolang = l.oid AND l.lanname = 'pltsql'
+WHERE p1.oid = p2.oid 
+    AND ((p2.prokind = 'p' AND p2.proargtypes <> '') OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL));
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -68,6 +68,18 @@ static bool handle_dropdb(DropdbStmt *dropdb_stmt);
 static char *get_role_name(RoleSpec *role);
 char	   *get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
+static Oid bbf_admin_oid = InvalidOid;
+
+/* Returns OID of bbf_role_admin server role */
+static Oid
+get_bbf_role_admin_oid(void)
+{
+	if (!OidIsValid(bbf_admin_oid))
+		bbf_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
+	return bbf_admin_oid;
+}
+
+
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
  *					  bytes at 'in' in UTF-8 encoding.
@@ -893,19 +905,15 @@ get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
 static void
 check_babelfish_droprole_restrictions(char *role)
 {
-	Oid bbf_role_admin_oid = InvalidOid;
-
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return;
-
-	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
 
 	/*
 	 * Allow DROP ROLE if current user is bbf_role_admin as we need
 	 * to allow remove_babelfish from PG endpoint. It is safe
 	 * since only superusers can assume this role.
 	 */
-	if (bbf_role_admin_oid == GetUserId())
+	if (get_bbf_role_admin_oid() == GetUserId())
 		return;
 
 	if (is_babelfish_role(role))
@@ -939,14 +947,21 @@ is_babelfish_role(const char *role)
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
+	Oid			securityadmin;
+	Oid			dbcreator;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
+	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
+	dbcreator = get_role_oid(BABELFISH_DBCREATOR, true);  /* missing OK */
 
-	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid))
+	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) 
+			|| !OidIsValid(securityadmin) || !OidIsValid(dbcreator))
 		return false;
 
 	if (is_member_of_role(sysadmin_oid, role_oid) ||
+		is_member_of_role(securityadmin, role_oid) ||
+		is_member_of_role(dbcreator, role_oid) ||
 		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
 		return true;
 
@@ -1203,22 +1218,20 @@ static bool
 handle_grant_role(GrantRoleStmt *grant_stmt)
 {
 	ListCell *item;
-	Oid bbf_role_admin_oid = InvalidOid;
 
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
-	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
 
 	/*
 	 * Allow GRANT ROLE if current user is bbf_role_admin as we need
 	 * to allow initialise_babelfish from PG endpoint. It is safe
 	 * since only superusers can assume this role.
 	 */
-	if (bbf_role_admin_oid == GetUserId())
+	if (get_bbf_role_admin_oid() == GetUserId())
 		return true;
 
-	/* Restrict roles to added as a member of bbf_role_admin */
+	/* Restrict roles to added as a member of BBF default server roles */
 	foreach(item, grant_stmt->granted_roles)
 	{
 		AccessPriv *priv = (AccessPriv *) lfirst(item);
@@ -1229,18 +1242,19 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
-	/* Restrict grant to/from bbf_role_admin role */
+	/* Restrict grant to/from bbf_role_admin, securityadmin or dbcreator role */
+
 	foreach(item, grant_stmt->grantee_roles)
 	{
 		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolespec->rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 

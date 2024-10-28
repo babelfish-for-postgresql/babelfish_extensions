@@ -2244,6 +2244,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 			   *lowercase_rolname;
 	size_t		len;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2279,15 +2280,17 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 		pfree(physical_role_name);
 
 		/* Check if the role does not exists */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2380,6 +2383,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	size_t		len;
 	char	   *physical_member_name;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid,
 				member_oid;
 	List	   *parsetree_list;
@@ -2430,24 +2434,24 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
+		physical_member_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
 		 * Check if the user, group or role does not exists and given member
 		 * name is an role or user
 		 */
-		if (member_oid == InvalidOid || (!is_role(member_oid) && !is_user(member_oid)))
+		if (member_oid == InvalidOid || !get_db_principal_kind(member_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
@@ -2457,6 +2461,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("Cannot make a role a member of itself.")));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2554,6 +2560,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 			   *lowercase_membername;
 	size_t		len;
 	char	   *physical_name;
+	char	   *db_name= get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2597,28 +2604,31 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
+		physical_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
 		pfree(physical_name);
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false, true);
+		physical_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*
 		 * Throw an error id the given member name doesn't exist or isn't a
 		 * role or user
 		 */
-		if (role_oid == InvalidOid || (!is_role(role_oid) && !is_user(role_oid)))
+		if (role_oid == InvalidOid || !get_db_principal_kind(role_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
+
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2997,6 +3007,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char	   *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char	   *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char	   *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	StringInfoData query;
 
@@ -3022,6 +3034,16 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
 	initStringInfo(&query);
+
+	/*
+	 * check privileges for login
+	 * allow if has privileges of sysadmin or securityadmin.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+				!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("User does not have permission to perform this action.")));
 
 	/*
 	 * We prepare the following query to create a user mapping. This will be
@@ -3058,8 +3080,22 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 		appendStringInfoString(&query, ")");
 	}
+	/*
+	* We have performed all the permissions checks.
+	* Set current user to bbf_role_admin for mapping permissions.
+	*/
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	exec_utility_cmd_helper(query.data);
+	PG_TRY();
+	{
+		exec_utility_cmd_helper(query.data);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	if (servername)
 		pfree(servername);
@@ -3083,6 +3119,8 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char	   *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char	   *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	StringInfoData query;
 
@@ -3103,39 +3141,67 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	remove_trailing_spaces(servername);
 
+	/*
+	 * check privileges for login
+	 * allow if has privileges of sysadmin or securityadmin.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+				!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("User does not have permission to perform this action.")));
+
 	/* Check if servername is valid */
 	get_foreign_server_oid(servername, false);
 
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following queries to drop a linked server login. This will
-	 * be executed using ProcessUtility():
-	 *
-	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
-	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
-	 *
-	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
-	 * was not entirely correct because T-SQL linked logins are not user or login specific.
-	 * To address this we now create user mapping for the PG PUBLIC role internally.
-	 *
-	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
-	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
-	 * and PUBLIC PG roles.
-	 */
-	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
-	exec_utility_cmd_helper(query.data);
+	* We have performed all the permissions checks.
+	* Set current user to bbf_role_admin for mapping permissions.
+	*/
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	resetStringInfo(&query);
+	PG_TRY();
+	{
+		/*
+		* We prepare the following queries to drop a linked server login. This will
+		* be executed using ProcessUtility():
+		*
+		* DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
+		* DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
+		*
+		* Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
+		* was not entirely correct because T-SQL linked logins are not user or login specific.
+		* To address this we now create user mapping for the PG PUBLIC role internally.
+		*
+		* To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
+		* implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
+		* and PUBLIC PG roles.
+		*/
+		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
+		exec_utility_cmd_helper(query.data);
 
-	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
-	exec_utility_cmd_helper(query.data);
+		resetStringInfo(&query);
+
+		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
+		exec_utility_cmd_helper(query.data);
+	}
+
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	if (locallogin)
 		pfree(locallogin);
 
 	if (servername)
 		pfree(servername);
+
+	pfree(query.data);
 
 	return (Datum) 0;
 }

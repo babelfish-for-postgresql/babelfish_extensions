@@ -1176,8 +1176,9 @@ create_partition_scheme
     ;
 
 filegroup_type
-    : PRIMARY_SQBRACKET // primary filegroup
-    | id // user filegroup
+    : PRIMARY_SQBRACKET // [PRIMARY] filegroup
+    | char_string       // can be 'PRIMARY'
+    | id                // user filegroup
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-remote-service-binding-transact-sql

@@ -78,6 +78,8 @@ static void validateFQDN(char *fqdn);
 static void drop_db_owner_related_roles(Oid roleid, const char* rolname);
 
 static Oid bbf_admin_oid = InvalidOid;
+static Oid securityadmin_oid = InvalidOid;
+static Oid dbcreator_oid = InvalidOid;
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -143,7 +145,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	new_record_login_ext[LOGIN_EXT_ROLNAME] = NameGetDatum(&rolname_namedata);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
 
-	if (strcmp(stmt->role, "sysadmin") == 0)
+	if (IS_BBF_FIXED_SERVER_ROLE(stmt->role))
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
 	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("Z");
@@ -291,7 +293,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (is_user(roleid) || is_role(roleid))
+	else if (get_db_principal_kind(roleid, get_current_pltsql_db_name()))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -688,6 +690,25 @@ get_bbf_role_admin_oid(void)
 	return bbf_admin_oid;
 }
 
+
+/* Returns OID of securityadmin server role */
+Oid
+get_securityadmin_oid(void)
+{
+	if (!OidIsValid(securityadmin_oid))
+		securityadmin_oid = get_role_oid(BABELFISH_SECURITYADMIN, false);
+	return securityadmin_oid;
+}
+
+/* Returns OID of dbcreator server role */
+Oid
+get_dbcreator_oid(void)
+{
+	if (!OidIsValid(dbcreator_oid))
+		dbcreator_oid = get_role_oid(BABELFISH_DBCREATOR, false);
+	return dbcreator_oid;
+}
+
 /*
  * Returns OID of SA of the current database.
  * We assume that SA is the DBA of the babelfish DB.
@@ -924,7 +945,6 @@ get_original_login_name(char *login)
 	return result;
 }
 
-
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
@@ -1040,7 +1060,8 @@ drop_all_logins(PG_FUNCTION_ARGS)
 		 * Remove SA from authid_login_ext now but do not add it to the list
 		 * because we don't want to remove the corresponding PG role.
 		 */
-		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "sysadmin") == 0) || (strcmp(rolname, "bbf_role_admin") == 0))
+		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "bbf_role_admin") == 0)
+									|| IS_BBF_FIXED_SERVER_ROLE(rolname))
 			CatalogTupleDelete(bbf_authid_login_ext_rel, &tuple->t_self);
 		else
 			rolname_list = lcons(rolname, rolname_list);
@@ -1706,7 +1727,7 @@ bool
 is_alter_server_stmt(GrantRoleStmt *stmt)
 {
 	/*
-	 * is alter server role statement, if one and the only one granted role is
+	 * is alter server role statement, if the granted role is
 	 * server role
 	 */
 
@@ -1714,13 +1735,10 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 	{
 		RoleSpec   *spec = (RoleSpec *) linitial(stmt->granted_roles);
 
-		if (strcmp(spec->rolename, "sysadmin") == 0)	/* only supported server
-														 * role */
+		/* only supported server roles */
+		if (IS_BBF_FIXED_SERVER_ROLE(spec->rolename))
 			return true;
 	}
-	/* has one and only one grantee  */
-	if (list_length(stmt->grantee_roles) != 1)
-		return false;
 
 	return false;
 }
@@ -1760,8 +1778,14 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a login", grantee_name)));
 
-	/* only sysadmin role is assumed below */
-	if (!has_privs_of_role(GetSessionUserId(), sysadmin))
+	/* 
+	 * check if it has sysadmin privileges or
+	 * if server role is securityadmin and it has privileges of securityadmin or
+	 * if server role is dbcreator and it has privileges of dbcreator
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), sysadmin) && (!IS_ROLENAME_SECURITYADMIN(granted_name)
+		|| !has_privs_of_role(GetSessionUserId(), get_securityadmin_oid())) && (!IS_ROLENAME_DBCREATOR(granted_name)
+						|| !has_privs_of_role(GetSessionUserId(), get_dbcreator_oid())))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter server role",
@@ -1771,7 +1795,7 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	 * sysadmin role is not granted if grantee login has a user in one of the
 	 * databases, as Babelfish only supports one dbo currently
 	 */
-	if (stmt->is_grant && (strcmp(granted_name, "sysadmin") == 0) && has_user_in_db(grantee_name, &db_name))
+	if (stmt->is_grant && IS_ROLENAME_SYSADMIN(granted_name) && has_user_in_db(grantee_name, &db_name))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
@@ -1819,7 +1843,7 @@ is_alter_role_stmt(GrantRoleStmt *stmt)
 		Oid			granted = get_role_oid(spec->rolename, true);
 
 		/* Check if the granted role is an existing database role */
-		if (granted == InvalidOid || !is_role(granted))
+		if (granted == InvalidOid || get_db_principal_kind(granted, get_current_pltsql_db_name()) != BBF_ROLE)
 			return false;
 	}
 
@@ -1834,6 +1858,8 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	Oid			cur_db_owner;
 	const char *granted_name;
 	const char *grantee_name;
+	const char *original_user_name;
+	const char *db_name = get_current_pltsql_db_name();
 	RoleSpec   *granted_spec;
 	RoleSpec   *grantee_spec;
 
@@ -1843,7 +1869,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	grantee = get_role_oid(grantee_name, false);
 
 	/* Disallow ALTER ROLE if the grantee is not a db principal */
-	if (!is_user(grantee) && !is_role(grantee))
+	if (!get_db_principal_kind(grantee, db_name))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a database user or a user-defined database role",
@@ -1854,7 +1880,15 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	granted_name = granted_spec->rolename;
 	granted = get_role_oid(granted_name, false);
 
-	cur_db_owner = get_role_oid(get_db_owner_role_name(get_cur_db_name()), false);
+	original_user_name = get_authid_user_ext_original_name(granted_name, db_name);
+	Assert(original_user_name);
+
+	/* only members of db_owner can alter drop members of fixed db roles */
+	if (IS_FIXED_DB_PRINCIPAL(original_user_name) &&
+	    !has_privs_of_role(GetUserId(), get_db_owner_oid(db_name, false)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", original_user_name)));
 
 	/*
 	 * Disallow ALTER ROLE if 1. Current login doesn't have permission on the
@@ -1862,7 +1896,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	 * the granted role
 	 */
 	if (!has_privs_of_role(GetSessionUserId(), granted) ||
-		(!has_privs_of_role(GetSessionUserId(), cur_db_owner) && grantee == GetUserId()))
+		grantee == GetUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter role %s",
@@ -1956,7 +1990,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	char			*dc_principal = NULL;
 	char			*physical_role_name;
 	char			*physical_principal_name;
-	char			*cur_db_name;
+	char			*cur_db_name = get_cur_db_name();
 	char			*db_owner_name;
 	char			*dbo_role_name;
 	int			idx;
@@ -1970,7 +2004,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
 		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
-	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, false, true);
+	physical_role_name = get_physical_user_name(cur_db_name, dc_role, false, true);
 	role_oid = get_role_oid(physical_role_name, true);
 	pfree(physical_role_name);
 
@@ -1986,7 +2020,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
 			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, false, true);
+		physical_principal_name = get_physical_user_name(cur_db_name, dc_principal, false, true);
 		principal_oid = get_role_oid(physical_principal_name, true);
 		pfree(physical_principal_name);
 	}
@@ -2014,7 +2048,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	 * principal. Note that if given principal is current user or current
 	 * user is member of db_owner role, we'll always have permissions.
 	 */
-	if (!is_role(role_oid) ||
+	if (get_db_principal_kind(role_oid, cur_db_name) != BBF_ROLE ||
 		((principal_oid != cur_user_oid) &&
 		 (!has_privs_of_role(cur_user_oid, role_oid) ||
 		  !has_privs_of_role(cur_user_oid, principal_oid)) &&
@@ -2028,10 +2062,12 @@ is_rolemember(PG_FUNCTION_ARGS)
 	dbo_role_name = get_dbo_role_name(cur_db_name);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
 	
+	pfree(cur_db_name);
 	pfree(db_owner_name);
 	pfree(dbo_role_name);
 
-	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
+	/* Fixed db principals cannot be member of other roles except dbo which is member of all fixed roles */
+	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid && !IS_FIXED_DB_PRINCIPAL(role)))
 		PG_RETURN_INT32(0);
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))
 		PG_RETURN_INT32(1);
@@ -3020,4 +3056,22 @@ drop_db_owner_related_roles(Oid roleid, const char* rolname)
 		if (obj_rolname)
 			pfree(obj_rolname);
 	}
+}
+
+PG_FUNCTION_INFO_V1(bbf_is_member_of_role_nosuper);
+Datum
+bbf_is_member_of_role_nosuper(PG_FUNCTION_ARGS)
+{
+	Oid	member, role;
+	bool	result;
+
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
+	member = PG_GETARG_OID(0);
+	role = PG_GETARG_OID(1);
+
+	result = is_member_of_role_nosuper(member, role);
+
+	PG_RETURN_BOOL(result);
 }

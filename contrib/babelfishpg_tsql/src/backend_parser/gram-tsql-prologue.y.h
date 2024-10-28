@@ -14,6 +14,7 @@
 
 #include "src/backend_parser/gramparse.h"
 #include "src/pltsql_instr.h"
+#include "src/catalog.h"
 #include "src/multidb.h"
 #include "src/tsql_for/tsql_for.h"
 
@@ -51,6 +52,9 @@ static void tsql_check_param_readonly(const char *paramname, TypeName *typename,
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
 static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
+static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func_name, int func_name_loc, 
+										List *tsql_createfunc_args, char *param_name, int table_loc, List *table_elts, 
+										char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner);
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
@@ -89,3 +93,4 @@ static Node *tsql_update_output_into_cte_transformation(WithClause *opt_with_cla
 static List *get_transformed_output_list(List *tsql_output_clause);
 static bool returning_list_has_column_name(List *existing_colnames, char *current_colname);
 static void tsql_index_nulls_order(List *indexParams, const char *accessMethod);
+static void check_server_role_and_throw_if_unsupported(const char* serverrole, int position, core_yyscan_t yyscanner);

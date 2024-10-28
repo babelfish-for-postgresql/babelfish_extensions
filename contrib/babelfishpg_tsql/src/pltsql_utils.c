@@ -30,6 +30,7 @@
 
 #include "multidb.h"
 #include "session.h"
+#include "rolecmds.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -403,13 +404,17 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 }
 
 /*
- * Setup default typmod for sys types/domains when typmod isn't specified
- * (that is, typmod = -1).
+ * Helper function to setup default typmod for sys types/domains
+ * when typmod isn't specified (that is, typmod = -1).
  * We only care to do this in TSQL dialect, this means sys.varchar
  * defaults to sys.varchar(1) only in TSQL dialect.
  *
  * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
  * length of string and binary type will be set to 30.
+ *
+ * is_procedure_or_func indicates if it's a procedure/function statement,
+ * if it's true the default length of string and binary type will be set to 1
+ * otherwise we will add VARHDRSZ to it.
  *
  * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
  * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
@@ -419,7 +424,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
 void
-pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -475,10 +480,13 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 						 * atttypmod is the declared length of the type plus
 						 * VARHDRSZ.
 						 */
-						*typmod = 30 + VARHDRSZ;
+						*typmod = 30;
 					else
 						/* Default length is 1 in the general case */
-						*typmod = 1 + VARHDRSZ;
+						*typmod = 1;
+
+					if (!is_procedure_or_func)
+						*typmod += VARHDRSZ;
 				}
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
@@ -514,6 +522,12 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 			}
 		}
 	}
+}
+
+void
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+{
+    pltsql_check_or_set_default_typmod_helper(typeName, typmod, is_cast, false);
 }
 
 /*
@@ -1122,7 +1136,7 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1
 	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
 
-	if (grantee && priv && stmt->action)
+	if (grantee && stmt->action)
 	{
 		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
 	}
@@ -2513,4 +2527,112 @@ update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grante
 	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
 
 	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec));
+}
+
+/*
+ * exec_database_roles_subcmds:
+ * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
+ */
+void
+exec_database_roles_subcmds(const char *schema, char *schema_owner)
+{
+	StringInfoData	query;
+	char		*db_datareader;
+	char		*db_datawriter;
+	char		*dbo_role;
+	char		*db_owner;
+	const char	*dbname = get_cur_db_name();
+	List		*stmt_list;
+	int		expected_stmts = 2;
+	ListCell	*parsetree_item;
+	Node		*stmts;
+	int		i=0;
+	Oid save_userid;
+	int save_sec_context;
+
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+	dbo_role = get_dbo_role_name(dbname);
+	db_owner = get_db_owner_name(dbname);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	/* If schema owner is not the dbo/db_owner role. */
+	if (schema_owner && strcmp(schema_owner, dbo_role) != 0 && strcmp(schema_owner, db_owner) != 0)
+	{
+		// do nothing
+	}
+	else
+	{
+		schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+	}
+
+	initStringInfo(&query);
+
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datareader, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+
+	PG_TRY();
+	{
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		/* Run all subcommands */
+		foreach(parsetree_item, stmt_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						ALTER_DEFAULT_PRIVILEGES,
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
+		CommandCounterIncrement();
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		pfree(db_datareader);
+		pfree(db_datawriter);
+		pfree(dbo_role);
+		pfree(db_owner);
+	}
+	PG_END_TRY();
+	pfree(query.data);
+}
+
+void
+throw_error_for_fixed_db_role(char *rolname, char *dbname)
+{
+	if (rolname != NULL &&
+		IS_FIXED_DB_PRINCIPAL(get_authid_user_ext_original_name(rolname, dbname)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+	}
 }

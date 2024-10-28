@@ -3127,12 +3127,9 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
 			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
+
 			ap->priv_name = $4;
 			n->is_grant = true;
 			n->granted_roles = list_make1(ap);
@@ -3145,11 +3142,8 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
+			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = false;
@@ -3990,54 +3984,7 @@ tsql_CreateFunctionStmt:
 			| CREATE opt_or_replace FUNCTION func_name tsql_createfunc_args
 			  RETURNS param_name TABLE '(' OptTableElementList ')' opt_as tokens_remaining
 				{
-					CreateStmt *n1 = makeNode(CreateStmt);
-					CreateFunctionStmt *n2 = makeNode(CreateFunctionStmt);
-					char *tbltyp_name = psprintf("%s_%s", $7, strVal(llast($4)));
-					List *tbltyp = list_copy($4);
-					FunctionParameter *out_param;
-
-					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
-					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($13)), @13);
-					DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, @1);
-					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
-					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
-					if (sql_dialect != SQL_DIALECT_TSQL)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
-								 parser_errposition(@1)));
-
-					tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
-					tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
-					n1->relation = makeRangeVarFromAnyName(tbltyp, @4, yyscanner);
-					n1->tableElts = $10;
-					n1->inhRelations = NIL;
-					n1->partspec = NULL;
-					n1->ofTypename = NULL;
-					n1->constraints = NIL;
-					n1->options = NIL;
-					n1->oncommit = ONCOMMIT_NOOP;
-					n1->tablespacename = NULL;
-					n1->if_not_exists = false;
-					n1->tsql_tabletype = true;
-
-					/* Add a param for the output table variable */
-					out_param = makeNode(FunctionParameter);
-					out_param->name = $7;
-					out_param->argType = makeTypeNameFromNameList(tbltyp);
-					out_param->mode = FUNC_PARAM_TABLE;
-					out_param->defexpr = NULL;
-
-					n2->is_procedure = false;
-					n2->replace = $2;
-					n2->funcname = $4;
-					n2->parameters = lappend($5, out_param);
-					n2->returnType = makeTypeNameFromNameList(tbltyp);
-					n2->returnType->setof = true;
-					n2->returnType->location = @8;
-					n2->options = list_make4(lang, body, tbltypStmt, location);
-
-					$$ = (Node *)n2;
+					$$ = buildTsqlMultiLineTvfNode(@1, $2, $4, @4, $5, $7, @8, $10, $13, @13, false, yyscanner);
 				}
 			/* TSQL inline table-valued function */
 			| CREATE opt_or_replace FUNCTION func_name tsql_createfunc_args
@@ -4156,6 +4103,11 @@ tsql_AlterFunctionStmt:
 					n->actions = list_make4(lang, body, location, ret); // piggy-back on actions to just put the new proc body instead
 					$$ = (Node *)n;
 				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+              RETURNS param_name TABLE '(' OptTableElementList ')' opt_as tokens_remaining
+                {
+					$$ = buildTsqlMultiLineTvfNode(@1, false, $3, @3, $4, $6, @7, $9, $12, @12, true, yyscanner);
+                }
 		;
 
 /*

@@ -1,6 +1,6 @@
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 4~~
 
 
 SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
@@ -8,6 +8,9 @@ GO
 ~~START~~
 varchar#!#nvarchar
 db_owner#!#DB Owners
+db_accessadmin#!#DB Access Administrators
+db_datareader#!#DB Data Reader
+db_datawriter#!#DB Data Writer
 ~~END~~
 
 
@@ -48,6 +51,8 @@ GO
 
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_accessadmin'
 GO
+~~ROW COUNT: 1~~
+
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
 GO
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
@@ -56,8 +61,12 @@ INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpd
 GO
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datareader'
 GO
+~~ROW COUNT: 1~~
+
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datawriter'
 GO
+~~ROW COUNT: 1~~
+
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatareader'
 GO
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatawriter'
@@ -67,6 +76,9 @@ SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
+db_accessadmin#!#DB Access Administrators
+db_datareader#!#DB Data Reader
+db_datawriter#!#DB Data Writer
 ~~END~~
 
 

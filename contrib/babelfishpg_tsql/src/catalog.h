@@ -147,10 +147,12 @@ extern Oid	get_authid_login_ext_idx_oid(void);
 extern Oid	bbf_authid_user_ext_oid;
 extern Oid	bbf_authid_user_ext_idx_oid;
 
-extern bool is_user(Oid role_oid);
-extern bool is_role(Oid role_oid);
+#define BBF_ROLE 1
+#define BBF_USER 2
+const int get_db_principal_kind(Oid role_oid, const char *db_name);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
+extern char *get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
 extern List *get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid);
@@ -314,6 +316,9 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantor 8
 
 #define PUBLIC_ROLE_NAME "public"
+#define BABELFISH_SECURITYADMIN "securityadmin"
+#define BABELFISH_SYSADMIN "sysadmin"
+#define BABELFISH_DBCREATOR "dbcreator"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
@@ -322,6 +327,26 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
+
+/* check if rolename is sysadmin */
+#define IS_ROLENAME_SYSADMIN(rolname) \
+	(strlen(rolname) == 8 && \
+	strncmp(rolname, BABELFISH_SYSADMIN, 8) == 0)
+
+/* check if rolename is securityadmin */
+#define IS_ROLENAME_SECURITYADMIN(rolname) \
+	(strlen(rolname) == 13 && \
+	strncmp(rolname, BABELFISH_SECURITYADMIN, 13) == 0)
+
+/* check if rolename is dbcreator */
+#define IS_ROLENAME_DBCREATOR(rolname) \
+	(strlen(rolname) == 9 && \
+	strncmp(rolname, BABELFISH_DBCREATOR, 9) == 0)
+
+#define IS_BBF_FIXED_SERVER_ROLE(rolename) \
+	(IS_ROLENAME_SYSADMIN(rolename) || \
+	IS_ROLENAME_SECURITYADMIN(rolename) || \
+	IS_ROLENAME_DBCREATOR(rolename))
 
 extern int permissions[];
 

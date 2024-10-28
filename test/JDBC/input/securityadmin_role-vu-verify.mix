@@ -1,0 +1,933 @@
+-- tsql
+select is_srvrolemember('sysadmin', 'securityadmin')
+go
+
+select is_srvrolemember('securityadmin', 'sysadmin')
+go
+
+alter login securityadmin_login1 with password='123'
+go
+
+alter login no_securityadmin_login1 with password='123'
+go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
+
+-- make login member of securityadmin
+Alter server role securityadmin add member securityadmin_login1
+go
+
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
+go
+
+-- should error out
+create login securityadmin with password = '123'
+go
+
+-- terminate-tsql-conn
+
+-- Case 1 - positives 
+-- securityadmin's login privileges
+-- tsql user=securityadmin_login1 password=123
+-- alter server role securityadmin should be allowed
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
+go
+
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
+go
+
+Alter server role securityadmin add member no_securityadmin_login1
+go
+
+Alter server role securityadmin drop member no_securityadmin_login1
+go
+
+-- create login should be allowed
+-- windows login
+create login [babel\securityadmin_l1] from windows;
+go
+
+-- password based login
+create login securityadmin_l2 with password = '123'
+go
+
+-- alter login should be allowed
+-- password based login
+alter login securityadmin_l2 with password = '123'
+go
+
+ALTER LOGIN securityadmin_l2 WITH PASSWORD = '1234' OLD_PASSWORD = '123';
+go
+
+ALTER LOGIN securityadmin_l2 disable;
+go
+
+ALTER LOGIN securityadmin_l2 enable;
+go
+
+ALTER LOGIN securityadmin_l2 with default_database=securityadmin_db1;
+go
+
+-- windows login
+alter login [babel\securityadmin_l1] with PASSWORD='123'
+go
+
+ALTER LOGIN [babel\securityadmin_l1] WITH PASSWORD = '1234' OLD_PASSWORD = '123';
+go
+
+ALTER LOGIN [babel\securityadmin_l1] disable;
+go
+
+ALTER LOGIN [babel\securityadmin_l1] enable;
+go
+
+ALTER LOGIN [babel\securityadmin_l1] with default_database=securityadmin_db1;
+go
+
+-- make altering login member of securityadmin
+Alter server role securityadmin add member securityadmin_l2
+go
+
+-- alter securityadmin member login
+-- allowed
+alter login securityadmin_l2 with password = '123'
+go
+
+-- drop login should be allowed
+-- password based login
+drop login securityadmin_l2
+go
+
+-- windows login
+drop login [babel\securityadmin_l1]
+go
+
+-- grant server permissions (currently not supported)
+-- few examples
+GRANT CONTROL SERVER TO no_securityadmin_login1
+go
+
+GRANT ALTER ANY EVENT NOTIFICATION TO no_securityadmin_login1 WITH GRANT OPTION; 
+go
+
+GRANT ALTER ANY DATABASE TO no_securityadmin_login1;
+go
+
+-- grant database permissions (only connect is supported)
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- allowed
+-- tsql user=no_securityadmin_login1 password=123
+use securityadmin_db1
+go
+
+-- terminate-tsql-conn user=no_securityadmin_login1 password=123
+
+-- tsql user=securityadmin_login1 password=123 database=securityadmin_db1
+REVOKE CONNECT FROM no_securityadmin_user1
+go
+
+-- unsupported
+GRANT SHOWPLAN TO no_securityadmin_user1;
+go
+
+GRANT CREATE VIEW TO no_securityadmin_user1 WITH GRANT OPTION;
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123 database=securityadmin_db1
+
+-- connection revoked
+-- tsql user=no_securityadmin_login1 password=123
+use securityadmin_db1
+go
+
+-- terminate-tsql-conn user=no_securityadmin_login1 password=123
+
+-- revoke server permissions (currently not supported)
+-- few examples
+-- tsql user=securityadmin_login1 password=123 database=securityadmin_db1
+REVOKE CONTROL SERVER FROM no_securityadmin_login1
+go
+
+REVOKE ALTER ANY EVENT NOTIFICATION FROM no_securityadmin_login1; 
+go
+
+REVOKE ALTER ANY DATABASE FROM no_securityadmin_login1;
+go
+
+-- grant database permissions (only connect is supported)
+GRANT CONNECT TO no_securityadmin_user1
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123 database=securityadmin_db1
+
+-- tsql user=no_securityadmin_login1 password=123
+use securityadmin_db1
+go
+
+-- Check unprivileged login should not have access
+-- permission denied
+EXEC sp_addlinkedsrvlogin 'Accounts', 'False'
+GO
+
+EXEC sp_droplinkedsrvlogin 'Accounts', NULL
+GO
+
+Alter server role securityadmin add member no_securityadmin_login1
+GO
+
+Alter server role securityadmin drop member no_securityadmin_login1
+GO
+
+-- only current login and fixed server roles
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals ORDER BY name
+GO
+
+-- only current login
+select name, type, usage from sys.login_token order by name;
+go
+
+-- terminate-tsql-conn user=no_securityadmin_login1 password=123
+
+-- tsql user=securityadmin_login1 password=123
+-- unsupported
+REVOKE SHOWPLAN FROM no_securityadmin_user1;
+go
+
+REVOKE CREATE VIEW FROM no_securityadmin_user1;
+go
+
+-- System objects
+-- All rows of server_prinicipals view should be visible to securityadmin login
+-- limited rows should get displayed
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals 
+WHERE name in ('jdbc_user', 'sysadmin', 'public', 'securityadmin') ORDER BY name;
+GO
+
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals name WHERE name like '%securityadmin%' ORDER BY name;
+GO
+
+-- current login along with current fixed role should be visible
+select name, type, usage from sys.login_token order by name;
+go
+
+select name, sysadmin, securityadmin from syslogins where name like '%securityadmin%' order by name
+go
+
+-- should return 0
+select is_srvrolemember ('sysadmin')
+go
+
+-- should return 1
+select is_srvrolemember ('securityadmin')
+go
+
+select is_srvrolemember ('securityadmin', 'securityadmin_login1')
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- psql
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Add localhost as linked server
+EXEC sp_addlinkedserver  @server = N'server_4229', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedserver  'Accounts'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'server_4229', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+drop database securityadmin_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+EXEC sp_addlinkedsrvlogin 'Accounts', 'False'
+GO
+
+EXEC sp_droplinkedsrvlogin 'Accounts', NULL
+GO
+
+-- inside procedure
+exec securityadmin_create_login_p1
+go
+
+exec securityadmin_alter_login_p1
+go
+
+exec securityadmin_add_mem_p1
+go
+
+exec securityadmin_drop_mem_p1
+go
+
+exec securityadmin_drop_login_p1
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- login is member of both securityadmin as well as sysadmin
+-- tsql
+drop user securityadmin_user1
+go
+
+Alter server role sysadmin add member securityadmin_login1
+go
+
+create database securityadmin_db1
+go
+
+-- terminate-tsql-conn
+
+-- it should be able to connect to the database
+-- tsql user=securityadmin_login1 password=123
+use securityadmin_db1
+go
+
+-- it should be dbo
+select current_user
+go
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- only member of securityadmin
+-- tsql
+alter server role sysadmin drop member securityadmin_login1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+
+-- only rolcreaterole attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+
+-- should be able to create/drop login
+create login test_securityadmin_l1 with password ='123'
+go
+
+drop login test_securityadmin_l1
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- only member of sysadmin
+drop user securityadmin_user1
+go
+
+alter server role sysadmin add member securityadmin_login1
+go
+
+alter server role securityadmin drop member securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+
+-- both attribute should be true
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'securityadmin_login1'
+go
+
+-- should be able to create/drop login
+create login test_securityadmin_l1 with password ='123'
+go
+
+drop login test_securityadmin_l1
+go
+
+-- should return 1
+select is_srvrolemember ('sysadmin')
+go
+
+-- should return 1
+select is_srvrolemember ('securityadmin')
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- make it member of securityadmin only
+alter server role sysadmin drop member securityadmin_login1
+go
+
+alter server role securityadmin add member securityadmin_login1
+go
+
+drop user no_securityadmin_user1
+go
+
+alter server role sysadmin add member no_securityadmin_login1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+TRUNCATE TABLE sadm_sp_helpsrvrolemember_tbl
+GO
+
+-- sp_helpsrvrolemember
+INSERT INTO sadm_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'securityadmin'
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM sadm_sp_helpsrvrolemember_tbl where MemberName like '%securityadmin%'
+GO
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- Case 2 - negatives
+-- alter server role sysadmin should give permission denied
+Alter server role sysadmin add member no_securityadmin_login1
+go
+
+-- alter server role securityadmin add member db roles should error out
+Alter server role securityadmin add member guest
+go
+
+-- alter sysadmin login should give permission denied
+-- login which is altered is member of sysadmin
+Alter login no_securityadmin_login1 with password ='123'
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+-- make member of securityadmin as well
+alter server role securityadmin add member no_securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- login which is altered is member of sysadmin and securityadmin both
+-- permission denied
+Alter login no_securityadmin_login1 with password ='123'
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+alter server role securityadmin drop member no_securityadmin_login1
+go
+
+alter server role sysadmin drop member no_securityadmin_login1
+go
+
+create user no_securityadmin_user1 for login no_securityadmin_login1
+go
+
+create role dummy_role
+go
+
+drop database securityadmin_db1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- should error out
+Alter server role securityadmin add member dummy_role
+go
+
+-- create database permission denied
+create database perm_denied_db
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- tsql
+drop role dummy_role
+go
+
+create database securityadmin_db1
+go
+
+use securityadmin_db1
+go
+
+create user securityadmin_user1 for login securityadmin_login1
+go
+
+create user no_securityadmin_user1 for login no_securityadmin_login1
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_login1 password=123
+-- alter database permission denied
+alter database securityadmin_db1 modify name = rename_db_database1;
+go
+
+alter authorization on database::securityadmin_db1 to no_securityadmin_login1
+go
+
+-- drop database permission denied
+drop database securityadmin_db1
+go
+
+-- securityadmin login's mapped user should not have any priv
+select current_user, db_name()
+go
+
+select suser_name()
+go
+
+-- allowed
+create login securityadmin_l2 with password = '123'
+go
+
+-- create objects/user permission denied
+create user securityadmin_l2
+go
+
+create role securityadmin_role1
+go
+
+create schema perm_denied_scm
+go
+
+create view perm_denied_v1 as select 1;
+go
+
+create table perm_denied_tb1 (a int);
+go
+
+select 1 into perm_denied_tb2;
+go
+
+create function perm_denied_func1() returns int as begin return 1 end;
+go
+
+create procedure perm_denied_proc1 as begin select 1; end
+go
+
+create type perm_denied_typ1 from int;
+go
+
+create index perm_denied_index1 on securityadmin_tb1(a);
+go
+
+CREATE FUNCTION perm_denied_func1() RETURNS TABLE AS RETURN ( SELECT 1 AS Value);
+go
+
+-- DMLS on object permission denied
+Alter user no_securityadmin_user1 with DEFAULT_SCHEMA=securityadmin_scm1
+go
+
+Alter role securityadmin_rol add member no_securityadmin_user1
+go
+
+Alter role securityadmin_rol drop member no_securityadmin_user1
+go
+
+Alter table securityadmin_tb1 add b int
+go
+
+Insert into securityadmin_tb1 values (1)
+go
+
+UPDATE securityadmin_tb1 SET a = 2 where a = 1;
+go
+
+DELETE FROM securityadmin_tb1 WHERE a = 1;
+go
+
+TRUNCATE TABLE securityadmin_tb1;
+go
+
+select * from securityadmin_tb1
+go
+
+select * from securityadmin_v1
+go
+
+select securityadmin_func1()
+go
+
+exec securityadmin_proc1
+go
+
+Enable trigger securityadmin_tggr1 on securityadmin_tb1
+go
+
+Disable trigger securityadmin_tggr1 on securityadmin_tb1
+go
+
+-- grant on objects permission denied
+Grant select on securityadmin_tb1 to no_securityadmin_user1
+go
+
+Grant update on securityadmin_v1 to no_securityadmin_user1
+go
+
+Grant update on securityadmin_v1 to no_securityadmin_user1
+go
+
+Grant exec on securityadmin_func1 to no_securityadmin_user1
+go
+
+Grant exec on securityadmin_proc1 to no_securityadmin_user1
+go
+
+-- Revoke on objects permission denied
+Revoke select on securityadmin_tb1 from no_securityadmin_user1
+go
+
+Revoke update on securityadmin_v1 from no_securityadmin_user1
+go
+
+Revoke update on securityadmin_v1 from no_securityadmin_user1
+go
+
+Revoke exec on securityadmin_func1 from no_securityadmin_user1
+go
+
+Revoke exec on securityadmin_proc1 from no_securityadmin_user1
+go
+
+-- grant on schema
+-- permission denied
+grant select on securityadmin_v1 to no_securityadmin_user1;
+go
+grant select on dbo.securityadmin_v1 to no_securityadmin_user1;
+go
+grant execute on securityadmin_proc1 to no_securityadmin_user1;
+go
+grant execute on dbo.securityadmin_proc1 to no_securityadmin_user1;
+go
+
+-- revoke on schema
+-- permission denied
+revoke select on securityadmin_v1 from no_securityadmin_user1;
+go
+revoke select on dbo.securityadmin_v1 from no_securityadmin_user1;
+go
+revoke execute on securityadmin_proc1 from no_securityadmin_user1;
+go
+revoke execute on dbo.securityadmin_proc1 from no_securityadmin_user1;
+go
+
+-- drop object permission denied
+drop user securityadmin_l2
+go
+
+drop role securityadmin_rol
+go
+
+drop schema securityadmin_scm1
+go
+
+drop view securityadmin_show_role_mem
+go
+
+drop TRIGGER securityadmin_tggr1
+go
+
+drop table securityadmin_tb1
+go
+
+drop view securityadmin_v1
+go
+
+drop function securityadmin_func1()
+go
+
+drop procedure securityadmin_proc1
+go
+
+-- allowed drop login
+drop login securityadmin_l2
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- securityadmin login should not get mapped to dbo if no user exist, it should disconnect
+
+-- tsql database=securityadmin_db1
+drop user securityadmin_user1
+go
+
+-- terminate-tsql-conn database=securityadmin_db1
+
+-- it should disconnect
+-- tsql user=securityadmin_login1 password=123
+use securityadmin_db1
+go
+
+-- Case 3 - alter server role other than securityadmin and sysadmin should give unsupported
+-- tsql
+Alter server role false_role add member no_securityadmin_login1
+go
+
+Alter server role serveradmin add member no_securityadmin_login1
+go
+
+Alter server role setupadmin add member no_securityadmin_login1
+go
+
+Alter server role processadmin add member no_securityadmin_login1
+go
+
+Alter server role diskadmin add member no_securityadmin_login1
+go
+
+Alter server role bulkadmin add member no_securityadmin_login1
+go
+
+Alter server role false_role drop member no_securityadmin_login1
+go
+
+Alter server role serveradmin drop member no_securityadmin_login1
+go
+
+Alter server role setupadmin drop member no_securityadmin_login1
+go
+
+Alter server role processadmin drop member no_securityadmin_login1
+go
+
+Alter server role diskadmin drop member no_securityadmin_login1
+go
+
+Alter server role bulkadmin drop member no_securityadmin_login1
+go
+
+-- terminate-tsql-conn user=securityadmin_login1 password=123
+
+-- Case 4 - check unintended/unauthorized use of securityadmin
+-- tsql
+CREATE LOGIN securityadmin_restrict_new_login WITH password = '12345678';
+go
+
+ALTER SERVER ROLE sysadmin ADD MEMBER securityadmin_restrict_new_login;
+GO
+
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
+go
+
+-- terminate-tsql-conn
+
+-- tsql user=securityadmin_restrict_new_login password=12345678
+select * from securityadmin_show_role_mem where MemberPrincipalName like 'jdbc_user' or MemberPrincipalName like '%securityadmin_%'
+go
+
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('securityadmin'))
+go
+
+select bbf_is_member_of_role_nosuper(suser_id(), suser_id('sysadmin'))
+go
+
+select is_srvrolemember ('sysadmin')
+go
+
+select is_srvrolemember ('securityadmin')
+go
+
+select current_user, db_name()
+go
+
+CREATE ROLE securityadmin_restrictions_role;
+GO
+
+-- a tsql login should not be able to drop securityadmin explicitly from tsql port
+
+-- should be denied
+ALTER ROLE securityadmin_restrictions_role ADD MEMBER securityadmin;
+GO
+
+DROP LOGIN securityadmin;
+GO
+
+DROP ROLE securityadmin_restrictions_role;
+GO
+
+-- terminate-tsql-conn user=securityadmin_restrict_new_login password=12345678
+
+-- psql
+create role securityadmin_restrict_new_pg_role
+go
+
+-- psql user=securityadmin_restrict_new_login password=12345678
+-- a tsql login should not be able to alter/grant/drop securityadmin from pg port
+ALTER ROLE securityadmin NOCREATEROLE;
+GO
+
+ALTER ROLE securityadmin WITH PASSWORD '12345678';
+GO
+
+ALTER ROLE securityadmin VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE securityadmin WITH CONNECTION LIMIT 1;
+GO
+
+GRANT securityadmin TO securityadmin_restrict_new_login;
+GO
+
+GRANT securityadmin TO securityadmin_restrict_new_pg_role
+GO
+
+GRANT sysadmin TO securityadmin
+go
+
+GRANT securityadmin TO securityadmin
+go
+
+GRANT securityadmin_restrict_new_login TO securityadmin;
+GO
+
+REVOKE securityadmin FROM master_dbo;
+GO
+
+REVOKE master_dbo FROM securityadmin;
+GO
+
+DROP ROLE securityadmin;
+GO
+
+SET SESSION AUTHORIZATION securityadmin;
+GO
+
+SET ROLE securityadmin;
+GO
+
+-- try granting object ownership to securityadmin
+ALTER schema master_securityadmin_scm1 owner to securityadmin;
+go
+
+ALTER table master_dbo.securityadmin_tb1 owner to securityadmin;
+go
+
+ALTER procedure master_dbo.securityadmin_proc1 owner to securityadmin;
+go
+
+ALTER function master_dbo.securityadmin_func1 owner to securityadmin;
+go
+
+-- psql
+-- drop role
+drop role securityadmin_restrict_new_pg_role
+go
+
+-- normal PG user
+CREATE USER securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
+go
+
+-- psql user=securityadmin_restrictions_pg_user password=12345678
+-- a normal psql user should not be able to alter/grant/drop securityadmin from pg port
+ALTER ROLE securityadmin NOCREATEROLE;
+GO
+
+-- Altering a role by an underprivileged login should be restricted
+alter user securityadmin_restrict_new_login with password '123'
+go
+
+ALTER ROLE securityadmin WITH PASSWORD '12345678';
+GO
+
+ALTER ROLE securityadmin VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE securityadmin WITH CONNECTION LIMIT 1;
+GO
+
+GRANT securityadmin TO securityadmin_restrict_new_login;
+GO
+
+GRANT securityadmin_restrict_new_login TO securityadmin;
+GO
+
+REVOKE securityadmin FROM master_dbo;
+GO
+
+REVOKE sysadmin FROM securityadmin
+go
+
+REVOKE securityadmin FROM securityadmin
+go
+
+REVOKE master_dbo FROM securityadmin;
+GO
+
+DROP ROLE securityadmin;
+GO
+
+SET SESSION AUTHORIZATION securityadmin;
+GO
+
+SET ROLE securityadmin;
+GO
+
+-- tsql
+EXEC sp_dropserver 'server_4229', 'droplogins'
+GO
+
+EXEC sp_dropserver 'Accounts', 'droplogins'
+GO
+
+-- terminate-tsql-conn
+
+-- psql
+-- Drop extension only if not user mapping exists for bbf_server
+-- Needed so that same test can be reused in upgrade in conjunction
+-- with tests for OPENQUERY
+DO
+$$
+BEGIN
+IF NOT EXISTS (SELECT * FROM pg_user_mappings WHERE srvname = 'bbf_server') THEN
+        SET client_min_messages = 'error';
+        DROP EXTENSION tds_fdw CASCADE;
+END IF;
+END
+$$
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'securityadmin_restrict_new_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+DROP USER securityadmin_restrictions_pg_user;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+
+ALTER SERVER ROLE sysadmin drop MEMBER securityadmin_restrict_new_login;
+GO
+
+DROP LOGIN securityadmin_restrict_new_login
+GO

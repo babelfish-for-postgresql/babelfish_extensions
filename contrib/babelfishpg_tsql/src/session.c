@@ -48,10 +48,21 @@ get_cur_db_id(void)
 	return current_db_id;
 }
 
+/* same as get_current_pltsql_db_name but reurn value is palloc'd */
 char *
 get_cur_db_name(void)
 {
 	return pstrdup(current_db_name);
+}
+
+/*
+ * returns current active babelfish db name
+ * Callers should NOT pfree the return value
+ */
+const char *
+get_current_pltsql_db_name(void)
+{
+	return current_db_name;
 }
 
 void 
