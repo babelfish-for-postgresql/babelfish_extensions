@@ -1830,7 +1830,7 @@ pltsql_get_last_stmt_handle(PG_FUNCTION_ARGS)
 }
 
 /*
- * reset_cached_cursor
+ * reset_cached_cursor:
  *		Cleans up all the stale cursor states and resets the cursor handles.
  *		This function should be called when a connection is cancelled or terminated.
  */
