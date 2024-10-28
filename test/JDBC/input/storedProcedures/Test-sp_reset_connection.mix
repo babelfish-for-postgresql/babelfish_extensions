@@ -99,3 +99,149 @@ GO
 -- tsql
 DROP DATABASE reset_con_db3
 GO
+
+-- Cursor reset testing
+CREATE TABLE babel_cursor_t1 (i INT, d double precision, c varchar(10), u uniqueidentifier, v sql_variant);
+INSERT INTO babel_cursor_t1 VALUES (1, 1.1, 'a', '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 1);
+INSERT INTO babel_cursor_t1 VALUES (2, 22.22, 'bb', '2E984725-C51C-4BF4-9960-E1C80E27ABA0', 22.22);
+INSERT INTO babel_cursor_t1 VALUES (3, 333.333, 'cccc', '3E984725-C51C-4BF4-9960-E1C80E27ABA0', 'cccc');
+INSERT INTO babel_cursor_t1 VALUES (4, 4444.4444, 'dddddd', '4E984725-C51C-4BF4-9960-E1C80E27ABA0', cast('4E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier));
+INSERT INTO babel_cursor_t1 VALUES (NULL, NULL, NULL, NULL, NULL);
+GO
+
+-- check the status of the cursor
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+go
+
+-- This will work since we declared 180150001 handle
+EXEC sp_cursorfetch 180150001, 2, 0, 1;
+GO
+EXEC sp_cursor 180150001, 40, 1, 0;
+GO
+
+exec sys.sp_reset_connection
+GO
+
+-- Check cursor being cleaned up
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2;
+FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+SELECT sys.babelfish_pltsql_get_last_cursor_handle();
+SELECT @@cursor_rows;
+GO
+-- This will not work since we 80150001 handle should have been cleaned up
+EXEC sp_cursorfetch 180150001, 2, 0, 1;
+GO
+EXEC sp_cursor 180150001, 40, 1, 0;
+GO
+
+-- Testing with only Cursor Open
+DECLARE @cursor_handle int;
+EXEC sp_cursoropen @cursor_handle OUTPUT, 'select i, d, c, u from babel_cursor_t1', 2, 8193;
+GO
+
+-- check the status of the cursor
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+go
+
+exec sys.sp_reset_connection
+GO
+
+-- Check cursor being cleaned up
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2;
+FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+SELECT sys.babelfish_pltsql_get_last_cursor_handle();
+SELECT @@cursor_rows;
+GO
+
+-- Testing with only Cursor Prepare
+DECLARE @stmt_handle int;
+EXEC sp_cursorprepare @stmt_handle OUTPUT, N'', 'select i, d, c, u from babel_cursor_t1', 0, 2, 1;
+GO
+
+-- check the status of the cursor should give 1073741825
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+exec sys.sp_reset_connection
+GO
+
+-- Check cursor being cleaned up
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2;
+FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+SELECT sys.babelfish_pltsql_get_last_cursor_handle();
+SELECT @@cursor_rows;
+GO
+
+-- Testing with only Cursor Prepare and Fetch
+DECLARE @stmt_handle int;
+DECLARE @cursor_handle int;
+DECLARE @cursor_handle2 int;
+EXEC sp_cursorprepare @stmt_handle OUTPUT, N'', 'select i, d, c, u from babel_cursor_t1', 0, 2, 1;
+EXEC sp_cursorexecute @stmt_handle, @cursor_handle OUTPUT, 2, 1;
+EXEC sp_cursorfetch @cursor_handle, 2, 0, 1;
+EXEC sp_cursorexecute @stmt_handle, @cursor_handle2 OUTPUT, 2, 1;
+GO
+
+-- check the status of the cursor
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+go
+-- check the status of the cursor should give 1073741825
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+exec sys.sp_reset_connection
+GO
+
+exec sys.sp_reset_connection
+GO
+
+-- Check cursor being cleaned up
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2;
+FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+SELECT sys.babelfish_pltsql_get_last_cursor_handle();
+SELECT @@cursor_rows;
+GO
+
+-- Testing with only Cursor Prepare and Fetch but this time calling cursor close
+DECLARE @stmt_handle int;
+DECLARE @cursor_handle int;
+DECLARE @cursor_handle2 int;
+EXEC sp_cursorprepare @stmt_handle OUTPUT, N'', 'select i, d, c, u from babel_cursor_t1', 0, 2, 1;
+EXEC sp_cursorexecute @stmt_handle, @cursor_handle OUTPUT, 2, 1;
+EXEC sp_cursorfetch @cursor_handle, 2, 0, 1;
+EXEC sp_cursorexecute @stmt_handle, @cursor_handle2 OUTPUT, 2, 1;
+EXEC sp_cursorclose @cursor_handle;
+EXEC sp_cursorclose @cursor_handle2;
+EXEC sp_cursorunprepare @stmt_handle;
+GO
+
+-- check the status of the cursor
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+go
+-- check the status of the cursor should give 1073741825
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+exec sys.sp_reset_connection
+GO
+
+exec sys.sp_reset_connection
+GO
+
+-- Check cursor being cleaned up
+DECLARE @Report CURSOR;
+EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2;
+FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
+SELECT sys.babelfish_pltsql_get_last_stmt_handle();
+SELECT sys.babelfish_pltsql_get_last_cursor_handle()
+SELECT @@cursor_rows;
+GO
+
+drop table babel_cursor_t1;
+GO

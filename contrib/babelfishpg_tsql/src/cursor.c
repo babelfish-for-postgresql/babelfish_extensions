@@ -67,12 +67,12 @@ typedef struct cursorhashent
 
 static HTAB *CursorHashTable = NULL;
 
-typedef struct cursorpreparedhandlehashent
+typedef struct CursorPreparedHandleHashEnt
 {
 	uint32		handle;
 	SPIPlanPtr	plan;
 	int			cursor_options;
-} CurosrPreparedHandleHashEnt;
+} CursorPreparedHandleHashEnt;
 
 static HTAB *CursorPreparedHandleHashTable = NULL;
 
@@ -479,7 +479,7 @@ pltsql_create_cursor_htab()
 	/* CursorPreparedHandleHashTable */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(uint32);
-	ctl.entrysize = sizeof(CurosrPreparedHandleHashEnt);
+	ctl.entrysize = sizeof(CursorPreparedHandleHashEnt);
 	ctl.hcxt = CursorHashtabContext;
 
 	CursorPreparedHandleHashTable = hash_create("T-SQL cursor prepared handle", 16 /* PORTALS_PER_USER */ , &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
@@ -1110,7 +1110,7 @@ execute_sp_cursorunprepare(int stmt_handle)
 {
 	int			rc;
 	MemoryContext savedPortalCxt;
-	CurosrPreparedHandleHashEnt *phentry;
+	CursorPreparedHandleHashEnt *phentry;
 	bool		found;
 
 	/*
@@ -1124,7 +1124,7 @@ execute_sp_cursorunprepare(int stmt_handle)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	phentry = (CurosrPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, &stmt_handle, HASH_FIND, NULL);
+	phentry = (CursorPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, &stmt_handle, HASH_FIND, NULL);
 	if (phentry == NULL)
 		elog(ERROR, "can't find prepared handle: %u", stmt_handle);
 
@@ -1444,7 +1444,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	int			cursor_options;
 	bool		found;
 	SPIPlanPtr	plan;
-	CurosrPreparedHandleHashEnt *phentry;
+	CursorPreparedHandleHashEnt *phentry;
 	CursorHashEnt *hentry;
 	Portal		portal;
 	MemoryContext oldcontext;
@@ -1476,7 +1476,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 		if (save_plan)
 		{
 			*stmt_handle = get_next_cursor_prepared_handle();
-			phentry = (CurosrPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_ENTER, &found);
+			phentry = (CursorPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_ENTER, &found);
 			Assert(!found);		/* already checked in
 								 * get_next_cursor_prepared_handle() */
 
@@ -1489,7 +1489,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	}
 	else						/* !prepare */
 	{
-		phentry = (CurosrPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_FIND, NULL);
+		phentry = (CursorPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_FIND, NULL);
 		if (phentry == NULL)
 			elog(ERROR, "can't find stmt_handle: %u", *stmt_handle);
 		if (phentry->plan == NULL)
@@ -1827,4 +1827,64 @@ Datum
 pltsql_get_last_stmt_handle(PG_FUNCTION_ARGS)
 {
 	return current_cursor_prepared_handle;
+}
+
+/*
+ * reset_cached_cursor:
+ *		Cleans up all the stale cursor states and resets the cursor handles.
+ *		This function should be called when a connection is cancelled or terminated.
+ */
+void
+reset_cached_cursor(void)
+{
+	HASH_SEQ_STATUS hash_seq;
+	CursorHashEnt *hentry;
+	CursorPreparedHandleHashEnt *phentry;
+
+	/* Iterate through the CursorHashTable and clean up each cursor. */
+	hash_seq_init(&hash_seq, CursorHashTable);
+	while ((hentry = (CursorHashEnt *) hash_seq_search(&hash_seq)) != NULL)
+	{
+		/* Clean up the cursor data. */
+		if (hentry && hentry->tupdesc)
+		{
+			FreeTupleDesc(hentry->tupdesc);
+			hentry->tupdesc = NULL;
+		}
+		if (hentry && hentry->fetch_buffer)
+		{
+			tuplestore_end(hentry->fetch_buffer);
+			hentry->fetch_buffer = NULL;
+		}
+		if (hentry && hentry->textptr_only_bitmap)
+		{
+			pfree(hentry->textptr_only_bitmap);
+			hentry->textptr_only_bitmap = NULL;
+		}
+	}
+
+	/* Iterate through the CursorPreparedHandleHashTable and clean up each prepared cursor. */
+	hash_seq_init(&hash_seq, CursorPreparedHandleHashTable);
+	while ((phentry = (CursorPreparedHandleHashEnt *) hash_seq_search(&hash_seq)) != NULL)
+	{
+		if (phentry && phentry->plan)
+		{
+			SPI_freeplan(phentry->plan);
+			phentry->plan = NULL;
+		}
+	}
+
+	hash_destroy(CursorHashTable);
+	hash_destroy(CursorPreparedHandleHashTable);
+	CursorHashTable = NULL;
+	CursorPreparedHandleHashTable = NULL;
+
+	/* Re-create the cursor-related data structures. */
+	pltsql_create_cursor_htab();
+	/* Reset cursor handles. */
+	current_cursor_handle = CURSOR_HANDLE_INVALID;
+	current_cursor_prepared_handle = CURSOR_PREPARED_HANDLE_START;
+
+	/* Reset sp_cursor_params. */
+	reset_sp_cursor_params();
 }
