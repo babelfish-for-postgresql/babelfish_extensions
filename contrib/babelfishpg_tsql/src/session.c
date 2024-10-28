@@ -201,6 +201,7 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
+	reset_cached_cursor();
 }
 
 void
