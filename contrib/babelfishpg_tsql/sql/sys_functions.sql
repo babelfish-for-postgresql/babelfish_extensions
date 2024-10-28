@@ -4423,7 +4423,7 @@ CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
 DECLARE
-    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0); -- '  adding quote in comment to suppress build warning
 BEGIN
     -- Always return 1 for 'public'
     IF (role = 'public')

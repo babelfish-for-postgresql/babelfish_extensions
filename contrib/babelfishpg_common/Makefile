@@ -102,7 +102,7 @@ FLAG_TO_CHECK := -DENABLE_SPATIAL_TYPES
 ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 # The flag is not present then build the .in file not including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
-		cpp $< | sed 's/^# /-- /g' > $@
+		cpp -Werror $< | sed 's/^# /-- /g' > $@
 
     sql/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
@@ -122,7 +122,7 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
-		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
+		cpp -Werror -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
 
     sql/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
