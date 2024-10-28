@@ -1084,6 +1084,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		{
 			if(filegroup->id())
 				handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "user filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
+				
+			if(filegroup->char_string())
+			{
+				std::string filegroup_name = getFullText(filegroup->char_string());
+				if ((!pg_strcasecmp(filegroup_name.c_str(), "'PRIMARY'") == 0) &&
+				    (!pg_strcasecmp(filegroup_name.c_str(), "\"PRIMARY\"") == 0))				    
+						handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "user filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
+			}
 		}
 	}
 	if (ctx->create_partition_function() && !(ctx->create_partition_function()->RIGHT()))
