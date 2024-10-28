@@ -10555,6 +10555,181 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
+    ELSE
+        IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+            RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+        ELSE
+            RETURN CAST(arg AS sys.varbinary);
+        END IF;
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;  
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg sys.VARCHAR,
+                                                                  IN try BOOL,
+                                                                  IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE; 
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_varbinary(IN arg sys.VARCHAR,                                                       
+                                                                      IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
+                                                               IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.varbinary
+AS
+$BODY$
+BEGIN
+    IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+        RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+    ELSE
+        RETURN CAST(arg AS sys.varbinary);
+    END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;  
+
+-- Helper function to convert to binary or varbinary
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_varbinary(IN input_value sys.VARCHAR, IN style NUMERIC DEFAULT 0) 
+RETURNS sys.varbinary 
+AS 
+$BODY$
+DECLARE
+    result bytea; 
+BEGIN
+    IF style = 0 THEN
+        RETURN CAST(input_value AS sys.varbinary);
+    ELSIF style = 1 THEN
+        -- Handle hexadecimal conversion
+        IF (PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" AND PG_CATALOG.length(input_value) % 2 = 0) THEN
+            result := decode(substring(input_value from 3), 'hex');
+        ELSE
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        END IF;
+    ELSIF style = 2 THEN
+        IF PG_CATALOG.left(input_value, 2) = '0x' COLLATE "C" THEN
+            RAISE EXCEPTION 'Error converting data type varchar to varbinary.';
+        ELSE
+            result := decode(input_value, 'hex');
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'The style % is not supported for conversions from varchar to varbinary.', style;
+    END IF;
+
+    RETURN CAST(result AS sys.varbinary);
+END;
+$BODY$ 
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.VARCHAR, pattern sys.VARCHAR, replacement sys.VARCHAR)
+RETURNS sys.VARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string sys.NVARCHAR, pattern sys.NVARCHAR, replacement sys.NVARCHAR)
+RETURNS sys.NVARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ai(input_string) then
+       return pg_catalog.replace(input_string, pattern, replacement);
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
+$body$
+declare
+  v_find_result VARCHAR;
+  v_pos bigint;
+  v_regexp_pattern VARCHAR;
+begin
+  if pattern is null or expression is null then
+    return null;
+  end if;
+  if sys.is_collated_ai(expression) then
+    return sys.patindex_ai_collations(pattern, expression);
+  end if;
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+  else
+    v_regexp_pattern := '#"' || pattern;
+  end if;
+
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
+  else
+   v_regexp_pattern := v_regexp_pattern || '#"';
+  end if;
+  v_find_result := substring(expression, v_regexp_pattern, '#');
+  if v_find_result <> '' collate sys.database_default then
+    v_pos := strpos(expression, v_find_result);
+  else
+    v_pos := 0;
+  end if;
+  return v_pos;
+end;
+$body$
+language plpgsql immutable returns null on null input;
+
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on all the schemas where the schema owner is not dbo/db_owner
 CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()

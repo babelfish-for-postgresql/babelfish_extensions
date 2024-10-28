@@ -79,6 +79,12 @@ ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-cleanup
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-prepare
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-verify
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-2736-before-16_5-vu-prepare
+ignore#!#BABEL-2736-before-16_5-vu-verify
+ignore#!#BABEL-2736-before-16_5-vu-cleanup
+ignore#!#BABEL-2736-before-15_3-vu-prepare
+ignore#!#BABEL-2736-before-15_3-vu-verify
+ignore#!#BABEL-2736-before-15_3-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -433,4 +439,35 @@ ignore#!#forjsonauto-before-16_5-vu-cleanup
 ignore#!#BABEL-5059-before-14_7-or-15_2-vu-prepare
 ignore#!#BABEL-5059-before-14_7-or-15_2-vu-verify
 ignore#!#BABEL-5059-before-14_7-or-15_2-vu-cleanup
+
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-prepare
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-verify
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-cleanup
+ignore#!#bbf_view_def_before_16_5-vu-prepare
+ignore#!#bbf_view_def_before_16_5-vu-verify
+ignore#!#bbf_view_def_before_16_5-vu-cleanup
+ignore#!#routines_definition_before_16_5-vu-prepare
+ignore#!#routines_definition_before_16_5-vu-verify
+ignore#!#routines_definition_before_16_5-vu-cleanup
+ignore#!#sys-all_sql_modules_before_16_5-vu-prepare
+ignore#!#sys-all_sql_modules_before_16_5-vu-verify
+ignore#!#sys-all_sql_modules_before_16_5-vu-cleanup
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-prepare
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-verify
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-cleanup
+ignore#!#sys-sql_modules_before_16_5-vu-prepare
+ignore#!#sys-sql_modules_before_16_5-vu-verify
+ignore#!#sys-sql_modules_before_16_5-vu-cleanup
+ignore#!#sys-sql_modules-dep_before_16_5-vu-prepare
+ignore#!#sys-sql_modules-dep_before_16_5-vu-verify
+ignore#!#sys-sql_modules-dep_before_16_5-vu-cleanup
+ignore#!#babel-4475_before_16_5-vu-prepare
+ignore#!#babel-4475_before_16_5-vu-verify
+ignore#!#babel-4475_before_16_5-vu-cleanup
+ignore#!#BABEL-5119_before_16_5-vu-prepare
+ignore#!#BABEL-5119_before_16_5-vu-verify
+ignore#!#BABEL-5119_before_16_5-vu-cleanup
+ignore#!#BABEL-5059_before_16_5-vu-prepare
+ignore#!#BABEL-5059_before_16_5-vu-verify
+ignore#!#BABEL-5059_before_16_5-vu-cleanup
 
