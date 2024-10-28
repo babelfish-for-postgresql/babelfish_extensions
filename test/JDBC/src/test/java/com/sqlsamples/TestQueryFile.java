@@ -220,7 +220,7 @@ public class TestQueryFile {
 
         // if this is a normal JDBC test run, we need to run the prepare, verify
         // and cleanup scripts for one use-case, one after the other
-        if (!isUpgradeTestMode) {
+        // if (!isUpgradeTestMode) {
             // first sort all files based only on file prefix
             Collections.sort(fileList, new Comparator<String>() {
                 @Override
@@ -241,7 +241,7 @@ public class TestQueryFile {
                     }
                 }
             });
-        }
+        // }
 
         return fileList.stream();
     }
