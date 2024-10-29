@@ -1,0 +1,3 @@
+-- tsql
+DROP DATABASE database babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;
+GO
