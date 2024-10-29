@@ -1642,7 +1642,8 @@ babelfish_define_type_default_collation(Oid typeNamespace)
 	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
 	/* We should only override the default collation for Babelfish data types. */
-	if (strcmp(get_namespace_name(typeNamespace), "sys") != 0)
+	if (strcmp(get_namespace_name(typeNamespace), "sys") != 0 && (!babelfish_dump_restore || (babelfish_dump_restore &&
+		 strncmp(babelfish_dump_restore, "off", 3) == 0)))
 		return DEFAULT_COLLATION_OID;
 
 	/*

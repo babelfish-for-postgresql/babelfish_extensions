@@ -219,7 +219,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
  * 			parser Hook
  *****************************************/
 static Oid set_param_collation(Param *param);
-static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
+static Oid default_collation_for_builtin_type(Type typ);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 
 /* Save hook values in case of unload */
@@ -5555,15 +5555,14 @@ set_param_collation(Param *param)
  * 	@return - default collation for the given builtin type based on dialect
  */
 static Oid
-default_collation_for_builtin_type(Type typ, bool handle_pg_type)
+default_collation_for_builtin_type(Type typ)
 {
 	Form_pg_type	typtup;
 	Oid				oid = InvalidOid;
 
 	typtup = (Form_pg_type) GETSTRUCT(typ);
 	if (OidIsValid(typtup->typcollation) &&
-		sql_dialect == SQL_DIALECT_TSQL &&
-		(typtup->typnamespace == sys_schema_oid))
+		sql_dialect == SQL_DIALECT_TSQL)
 	{
 		/*
 		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
@@ -5574,16 +5573,6 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 	else
 	{
 		oid = typtup->typcollation;
-	}
-
-	/*
-	 * Special handling for PG datatypes such as TEXT because Babelfish does not define sys.TEXT.
-	 * This is required as Babelfish currently does not handle collation of String Const node correctly.
-	 * TODO: Fix the handling of the collation for String Const node.
-	 */
-	if (handle_pg_type && oid == DEFAULT_COLLATION_OID)
-	{
-		oid = CLUSTER_COLLATION_OID();
 	}
 
 	return oid;
