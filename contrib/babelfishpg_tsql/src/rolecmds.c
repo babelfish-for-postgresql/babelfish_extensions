@@ -1855,7 +1855,6 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 {
 	Oid			granted;
 	Oid			grantee;
-	Oid			cur_db_owner;
 	const char *granted_name;
 	const char *grantee_name;
 	const char *original_user_name;
@@ -2900,6 +2899,7 @@ change_object_owner_if_db_owner()
 	StringInfoData	query;
 	char		*rolname = NULL;
 	char 		*obj_rolname = NULL;
+	char		*cur_db_name = NULL;
 	Oid		role_oid = GetUserId();
 	List		*parsetree_list;
 	Node		*n;
@@ -2909,7 +2909,8 @@ change_object_owner_if_db_owner()
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	dbo_id = get_role_oid(get_dbo_role_name(get_cur_db_name()), true);
+	cur_db_name = get_cur_db_name();
+	dbo_id = get_role_oid(get_dbo_role_name(cur_db_name), true);
 
 	if (role_oid == dbo_id || dbo_id == InvalidOid || is_create_bbf_builtin_dbs)
 		return;
@@ -2919,10 +2920,10 @@ change_object_owner_if_db_owner()
 	if (!rolname)
 		return;
 
-	if (!is_user(role_oid))
+	if (!user_exists_for_db(cur_db_name, rolname))
 		return;
 
-	if (!is_member_of_role(role_oid, get_role_oid(get_db_owner_name(get_cur_db_name()), true)))
+	if (!is_member_of_role(role_oid, get_role_oid(get_db_owner_name(cur_db_name), true)))
 		return;
 
 	obj_rolname = get_obj_role(rolname);

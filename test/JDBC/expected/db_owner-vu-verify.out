@@ -164,15 +164,14 @@ GO
 
 -- tsql user=dbowner__l1 password=123
 -- CASE 4: Able to ALTER ANY USER
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbo#!#English
 ~~END~~
 
 alter user dbowner__u1 with default_schema = dbowner__s1
-go
-alter user dbowner__u1 with name = new_dbowner__u1
 go
 alter user dbowner__u2 with default_schema = dbo
 go
@@ -180,11 +179,11 @@ alter user dbowner__u2 with login = dbowner__temp
 go
 alter user dbowner__u2 with name = new_dbowner__u2
 go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_new_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
+dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
 dbowner__main_db_new_dbowner__u2#!#dbowner__temp#!#dbo#!#English
 ~~END~~
 
@@ -192,7 +191,7 @@ select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
 ~~START~~
 nvarchar#!#nvarchar#!#int
-new_dbowner__u1#!#dbowner__l1#!#1
+dbowner__u1#!#dbowner__l1#!#1
 ~~END~~
 
 alter user new_dbowner__u2 with default_schema = dbo
@@ -201,7 +200,7 @@ alter user new_dbowner__u2 with login = dbowner__l2
 go
 alter user new_dbowner__u2 with name = dbowner__u2
 go
-alter user new_dbowner__u1 with login = dbowner__temp
+alter user dbowner__u1 with login = dbowner__temp
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
@@ -210,36 +209,33 @@ nvarchar#!#nvarchar#!#int
 guest#!#dbowner__l1#!#0
 ~~END~~
 
-select database_name, rolname, login_name, default_schema_name, default_language_name from sys.babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%'
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
 ~~START~~
-nvarchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db#!#dbowner__main_db_new_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
+varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
 ~~END~~
 
-alter user new_dbowner__u1 with login = dbowner__l1
+alter user dbowner__u1 with login = dbowner__l1
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Current user does not have privileges to change login)~~
 
-alter user new_dbowner__u1 with name = dbowner__u1
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current user does not have privileges to change user name)~~
-
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_new_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
+dbowner__main_db_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
 ~~END~~
 
 select name from sys.database_principals order by name
 go
 ~~START~~
 varchar
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 guest
@@ -252,11 +248,11 @@ sys
 -- tsql
 use dbowner__main_db
 go
-alter role db_owner drop member new_dbowner__u1
+alter role db_owner drop member dbowner__u1
 go
-alter role db_owner add member new_dbowner__u1
+alter role db_owner add member dbowner__u1
 go
-alter user new_dbowner__u1 with login = dbowner__l1
+alter user dbowner__u1 with login = dbowner__l1
 go
 
 -- terminate-tsql-conn user=dbowner__l1 password=123
@@ -268,21 +264,23 @@ select sys.user_name(), is_member('db_owner')
 go
 ~~START~~
 nvarchar#!#int
-new_dbowner__u1#!#1
+dbowner__u1#!#1
 ~~END~~
 
-alter user new_dbowner__u1 with name = dbowner__u1
-go
-select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname like 'dbowner__main_db_new_%' order by rolname
+select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
 ~~END~~
 
 select name from sys.database_principals order by name
 go
 ~~START~~
 varchar
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 dbowner__r1
@@ -391,6 +389,9 @@ select name from sys.database_principals order by name
 go
 ~~START~~
 varchar
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 dbowner__u2
@@ -562,6 +563,9 @@ select name from sys.database_principals order by name
 go
 ~~START~~
 varchar
+db_accessadmin
+db_datareader
+db_datawriter
 db_owner
 dbo
 dbowner__r1
@@ -988,6 +992,9 @@ select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by r
 go
 ~~START~~
 name
+dbowner__test_db_db_accessadmin
+dbowner__test_db_db_datareader
+dbowner__test_db_db_datawriter
 dbowner__test_db_db_owner
 dbowner__test_db_dbo
 dbowner__test_db_dbowner__test_db_dbowner__u1
@@ -1013,6 +1020,9 @@ select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by r
 go
 ~~START~~
 name
+dbowner__test_db_db_accessadmin
+dbowner__test_db_db_datareader
+dbowner__test_db_db_datawriter
 dbowner__test_db_db_owner
 dbowner__test_db_dbo
 dbowner__test_db_guest

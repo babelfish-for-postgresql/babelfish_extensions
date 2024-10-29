@@ -779,6 +779,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		const char *login = GetUserNameFromId(roleid, false);
 		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 
+		db_owner_role = get_db_owner_name(dbname);
+		db_owner_oid = get_role_oid(db_owner_role, false);
+
 		/* Check if login has required privilege to drop the database */
 		/* If current login's associated user in database is member of db_owner role, allow it to drop the database */
 		if (!has_privs_of_role(prev_current_user_id, db_owner_oid) &&

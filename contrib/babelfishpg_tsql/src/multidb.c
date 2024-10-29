@@ -256,7 +256,7 @@ rewrite_object_refs(Node *stmt)
 				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
 
 				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER if MEMBER is a T-SQL database role */
-				if ((strcmp(role_name, "db_owner") == 0) && is_role(get_role_oid(physical_principal_name, true)))
+				if ((strcmp(role_name, "db_owner") == 0) && get_db_principal_kind(get_role_oid(physical_principal_name, false), db_name) == BBF_ROLE)
 				{
 					if (grant_role->is_grant)
 						ereport(ERROR,

@@ -3383,9 +3383,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "rolemembers") == 0)
 							{
-								if (strcmp(cur_user, dbo_name) != 0 &&
-									strcmp(cur_user, user_name) != 0 &&
-									!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
+								if (is_member_of_db_owner)
+								{
+									/*
+									 * Only members of db_owner can alter login for a user
+									 */
+								}
+								else
+								{
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change login")));
