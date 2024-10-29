@@ -31,6 +31,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -126,6 +127,7 @@ static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 								ColumnRef *cref, bool error_if_no_field);
 static Node *make_datum_param(PLtsql_expr *expr, int dno, int location);
+static Node *make_const_from_var(PLtsql_expr *expr, int dno, int location);
 static PLtsql_row *build_row_from_vars(PLtsql_variable **vars, int numvars);
 static PLtsql_type *build_datatype(HeapTuple typeTup, int32 typmod,
 								   Oid collation, TypeName *origtypname);
@@ -1763,7 +1765,14 @@ resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 	{
 		case PLTSQL_NSTYPE_VAR:
 			if (nnames == nnames_scalar)
-				return make_datum_param(expr, nse->itemno, cref->location);
+			{
+				if (pstate->p_expr_kind == EXPR_KIND_SELECT_TARGET || 
+					pstate->p_expr_kind == EXPR_KIND_EXECUTE_PARAMETER ||
+					pstate->p_expr_kind == EXPR_KIND_CALL_ARGUMENT)
+					return make_datum_param(expr, nse->itemno, cref->location);
+				else
+					return make_const_from_var(expr, nse->itemno, cref->location);
+			}
 			break;
 		case PLTSQL_NSTYPE_REC:
 			if (nnames == nnames_wholerow)
@@ -1815,6 +1824,42 @@ resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 
 	/* Name format doesn't match the pltsql variable type */
 	return NULL;
+}
+
+static Node *
+make_const_from_var(PLtsql_expr *expr, int dno, int location)
+{
+	PLtsql_execstate	*estate;
+	PLtsql_var			*var;
+	PLtsql_datum		*datum; 
+	Const				*con;
+	int16				typLen;
+	bool				typByVal;
+	Datum				val;
+
+	/* see comment in resolve_column_ref */
+	estate = expr->func->cur_estate;
+	Assert(dno >= 0 && dno < estate->ndatums);
+	datum = estate->datums[dno];
+
+	if (datum->dtype != PLTSQL_DTYPE_VAR)
+		return make_datum_param (expr, dno, location);
+
+	var = (PLtsql_var *) datum;
+	get_typlenbyval(var->datatype->typoid, &typLen, &typByVal);
+	if (var->isnull || typByVal)
+		val = var->value;
+	else
+		val = datumCopy(var->value, typByVal, typLen);
+	con = makeConst(var->datatype->typoid,
+					var->datatype->atttypmod,
+					var->datatype->collation,
+					(int) typLen,
+					val,
+					var->isnull,
+					typByVal);
+	con->location = location;
+	return (Node *) con;
 }
 
 /*
