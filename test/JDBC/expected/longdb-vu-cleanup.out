@@ -1,7 +1,6 @@
 -- tsql
-DROP DATABASE database babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;
+DROP DATABASE babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'database' at line 1 and character position 14)~~
-
+drop database babel_5135_longdb
+go

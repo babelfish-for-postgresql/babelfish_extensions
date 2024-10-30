@@ -1,3 +1,6 @@
 -- tsql
 create database babel_5135_longdb_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;
 GO
+
+create database babel_5135_longdb
+go
