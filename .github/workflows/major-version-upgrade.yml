@@ -138,7 +138,7 @@ jobs:
           release_mode: 'yes'
 
       - name: Copy ANTLR
-        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+        run: cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
       - name: Build Extensions using latest version
         id: build-extensions-new

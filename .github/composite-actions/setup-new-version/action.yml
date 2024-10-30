@@ -24,7 +24,7 @@ runs:
     - name: Copy ANTLR
       id: copy-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
-      run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.pg_new_dir }}/lib/
+      run: cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" ~/${{ inputs.pg_new_dir }}/lib/
       shell: bash
 
     - name: Build Extensions
