@@ -167,7 +167,7 @@ init_pg() {
     make -j 4
     make install
     cd contrib && make && sudo make install
-    cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+    cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
 
