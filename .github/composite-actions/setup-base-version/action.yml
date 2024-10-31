@@ -42,7 +42,7 @@ runs:
       if: always() && steps.build-modified-postgres.outcome == 'success'
       uses: ./.github/composite-actions/compile-antlr
       with:
-        version: ${{ inputs.engine_branch == 'source.latest' && 4.13.2 || 4.9.3 }}
+        version: ${{ [inputs.engine_branch == 'source.latest'] && 4.13.2 || 4.9.3 }}
         install_dir: ${{ inputs.install_dir }}
 
     - name: Set env variables and build extensions
