@@ -136,13 +136,18 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
           release_mode: 'yes'
-
-      - name: Copy ANTLR
-        run: cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" ~/${{env.NEW_INSTALL_DIR}}/lib/
+      
+      - name: Compile new ANTLR
+        id: compile-new-antlr
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+        with:
+          version: 4.13.2
+          install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}

@@ -20,12 +20,14 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
-
-    - name: Copy ANTLR
-      id: copy-antlr
+      
+    - name: Compile new ANTLR
+      id: compile-new-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
-      run: cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" ~/${{ inputs.pg_new_dir }}/lib/
-      shell: bash
+      uses: ./.github/composite-actions/compile-antlr
+      with:
+        version: 4.13.2
+        install_dir: ${{env.NEW_INSTALL_DIR}}
 
     - name: Build Extensions
       id: build-extensions-new

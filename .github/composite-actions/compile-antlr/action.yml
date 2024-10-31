@@ -1,6 +1,10 @@
 name: 'Compile ANTLR'
 
 inputs:
+  version:
+    description: 'version of ANTLR to install'
+    required: no
+    default: 4.9.3
   install_dir:
     description: 'Engine install directory'
     required: no
@@ -12,7 +16,7 @@ runs:
 
     - name: Compile ANTLR
       run: |
-        ANTLR_VERSION=4.13.2
+        ANTLR_VERSION=${{inputs.version}}
         
         cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
         sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
