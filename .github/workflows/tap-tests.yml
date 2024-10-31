@@ -49,6 +49,7 @@ jobs:
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
+          version: 4.9.3
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - name: Build PostGIS Extension using ${{env.EXTENSION_BRANCH_OLD}}
@@ -112,7 +113,6 @@ jobs:
         if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
-          version: 4.13.2
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build Extensions using latest version

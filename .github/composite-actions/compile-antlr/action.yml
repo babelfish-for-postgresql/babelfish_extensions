@@ -4,7 +4,7 @@ inputs:
   version:
     description: 'version of ANTLR to install'
     required: no
-    default: 4.9.3
+    default: 4.13.2
   install_dir:
     description: 'Engine install directory'
     required: no
