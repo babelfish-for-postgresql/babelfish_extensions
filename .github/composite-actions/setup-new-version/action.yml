@@ -20,7 +20,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
-      
+
     - name: Compile new ANTLR
       id: compile-new-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
