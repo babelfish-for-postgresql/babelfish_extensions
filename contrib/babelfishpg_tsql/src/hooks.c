@@ -34,6 +34,7 @@
 #include "common/logging.h"
 #include "executor/execExpr.h"
 #include "funcapi.h"
+#include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -164,6 +165,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ParamListInfo params, QueryCompletion *qc);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
+static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId, AclMode privileges, Oid *grantorId, AclMode *grantOptions);
 
 /*****************************************
  * 			Executor Hooks
@@ -287,6 +289,7 @@ static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determins
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
+static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -499,6 +502,9 @@ InstallExtendedHooks(void)
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
+
+	prev_bbf_execute_grantstmt_as_dbsecadmin_hook = bbf_execute_grantstmt_as_dbsecadmin_hook;
+	bbf_execute_grantstmt_as_dbsecadmin_hook = handle_grantstmt_for_dbsecadmin;
 	
 	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
 }
@@ -569,6 +575,7 @@ UninstallExtendedHooks(void)
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
+	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -5635,4 +5642,90 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
         identity = getObjectIdentity(address,true); 
     }
     return identity;
+}
+
+/*
+ * Allows execution of GRANT/REVOKE statement if current_user is member of db_securityadmin
+ * given that GRANT/REVOKE is being executed on current database's object. It is being
+ * ensured that schema of given object(in GRANT/REVOKE statement) belongs to current database.  
+ */
+static void
+handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
+								AclMode privileges, Oid *grantorId, AclMode *grantOptions)
+{
+	ObjectAddress	address;
+	Oid				classid = InvalidOid;
+	Oid				schema_oid = InvalidOid;
+
+	/*
+	 * Return if any of following condition is true
+	 * 1. Not a TDS client
+	 * 2. Not a TSQL dialect
+	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
+	 *    This means already the best grantor has been selected using select_best_grantor().
+	 */
+	if (!MyProcPort->is_tds_conn ||
+		sql_dialect != SQL_DIALECT_TSQL ||
+		*grantorId == ownerId ||
+		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
+		return;
+
+	switch(objType)
+	{
+		case OBJECT_TABLE:
+		case OBJECT_COLUMN:
+		case OBJECT_VIEW:
+			classid = RelationRelationId;
+			break;
+		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+			classid = ProcedureRelationId;
+			break;
+		case OBJECT_SCHEMA:
+			classid = NamespaceRelationId;
+			break;
+		default:
+			break;
+	}
+
+	if (!OidIsValid(classid))
+		return;
+
+	if (classid == NamespaceRelationId)
+	{
+		schema_oid = objId;
+	}
+	else
+	{
+		ObjectAddressSet(address, classid, objId);
+		schema_oid = get_object_namespace(&address);
+	}
+
+	if (OidIsValid(schema_oid))
+	{
+		/*
+		 * Don't allow if object's schema is not from current database OR
+		 * it is a shared schema.
+		 */
+		if (!is_schema_from_db(schema_oid, get_cur_db_id()))
+		{
+			return;
+		}
+		else
+		{
+			/*
+			 * Check if current user is member of db_securityadmin role.
+			 * If so, then grant/revoke the requested privileges by overriding
+			 * grantId with ownerId.
+			 */
+			if (is_member_of_role(GetUserId(),
+								  get_db_securityadmin_oid(get_current_pltsql_db_name(), false)))
+			{
+				*grantorId = ownerId;
+				*grantOptions = ACL_GRANT_OPTION_FOR(privileges);
+				return;
+			}
+		}
+	}
+	return;
 }

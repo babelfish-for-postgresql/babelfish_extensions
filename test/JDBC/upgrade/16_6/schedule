@@ -586,4 +586,5 @@ securityadmin_role
 db_accessadmin
 datareader_datawriter
 dbcreator_role
+db_securityadmin
 

@@ -968,7 +968,6 @@ View sys.change_tracking_tables
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
-View sys.database_role_members
 View sys.dm_hadr_cluster
 View sys.dm_hadr_database_replica_states
 View sys.dm_os_host_info

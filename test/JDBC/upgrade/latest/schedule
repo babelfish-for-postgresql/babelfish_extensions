@@ -584,10 +584,10 @@ BABEL-5119
 dbcreator_role
 BABEL-5129
 db_accessadmin
+db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
 smalldatetime_date_cmp
 datareader_datawriter
-
