@@ -3005,11 +3005,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						char *current_db_name = get_cur_db_name();
 
 						if (has_privs_of_role(GetUserId(), get_db_owner_oid(current_db_name, false)) ||
-						    (isuser && has_privs_of_role(GetUserId(), get_db_accessadmin_oid(current_db_name, false))))
+						    (isuser && has_privs_of_role(GetUserId(), get_db_accessadmin_oid(current_db_name, false))) ||
+							(isrole && has_privs_of_role(GetUserId(), get_db_securityadmin_oid(current_db_name, false))))
 						{
 							/*
 							 * members of db_owner can create roles and users
 							 * members of db_accessadmin can only create users
+							 * members of db_securityadmin can only create db roles
 							 */
 						}
 						else
@@ -3335,13 +3337,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						char		*db_name = get_cur_db_name();
 						bool 		is_member_of_db_owner = false;
 						bool 		is_member_of_db_accessadmin = false;
+						bool 		is_member_of_db_securityadmin = false;
 						int 		save_sec_context;
 						Oid 		save_userid;
 						Oid 		db_owner = get_db_owner_oid(db_name, false);
 						Oid 		db_accessadmin = get_db_accessadmin_oid(db_name, false);
+						Oid			db_securityadmin = get_db_securityadmin_oid(db_name, false);
 						Oid 		user_oid = get_role_oid(stmt->role->rolename, false);
-
-						/* db principal being altered should be a user or role in the current active logical database */
 						if ((isuser && get_db_principal_kind(user_oid, db_name) != BBF_USER) ||
 						    (isrole && get_db_principal_kind(user_oid, db_name) != BBF_ROLE))
 							ereport(ERROR,
@@ -3352,6 +3354,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						/* check membership in db_accessadmin if alter user and not already a member of db_owner */
 						if (!is_member_of_db_owner && isuser)
 							is_member_of_db_accessadmin = has_privs_of_role(GetUserId(), db_accessadmin);
+
+						if (!is_member_of_db_owner && isrole)
+							is_member_of_db_securityadmin = has_privs_of_role(GetUserId(), db_securityadmin);
 
 						/*
 						 * Check if the current user has privileges.
@@ -3380,11 +3385,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							else if (strcmp(defel->defname, "rename") == 0)
 							{
 								if (is_member_of_db_owner || (isuser && is_member_of_db_accessadmin &&
-									!has_privs_of_role(user_oid, db_owner)))
+									!has_privs_of_role(user_oid, db_owner)) ||
+									(isrole && is_member_of_db_securityadmin && !has_privs_of_role(user_oid, db_owner)))
 								{
 									/*
 									 * members of db_owner can rename any role or user
 									 * members of db_accessadmin can rename users who are not members of db_owner
+									 * member of db_securityadmin can rename users who are not members of db_owner
 									 */
 								}
 								else
@@ -3498,6 +3505,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								Oid		db_owner = get_db_owner_oid(db_name, false);
 								Oid		db_accessadmin = get_db_accessadmin_oid(db_name, false);
+								Oid		db_securityadmin = get_db_securityadmin_oid(db_name, false);
 
 								foreach(item, stmt->roles)
 								{
@@ -3527,11 +3535,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 												(errcode(ERRCODE_CHECK_VIOLATION),
 												 errmsg("Cannot drop the %s '%s'.", db_principal_type, rolspec->rolename)));
 
-									if (has_privs_of_role(GetUserId(), db_owner) || (drop_user && has_privs_of_role(GetUserId(), db_accessadmin)))
+									if (has_privs_of_role(GetUserId(), db_owner) || (drop_user && has_privs_of_role(GetUserId(), db_accessadmin)) ||
+										(drop_role && has_privs_of_role(GetUserId(), db_securityadmin)))
 									{
 										/* 
 										 * db_owner can drop any user or role in database
 										 * db_accessadmin can drop users in a database
+										 * db_securityadmin can drop roles in a database
 										 */
 									}
 									else
@@ -3746,6 +3756,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						const char *db_name = get_current_pltsql_db_name();
 						Oid        db_accessadmin = get_db_accessadmin_oid(db_name, false);
+						Oid        db_securityadmin = get_db_securityadmin_oid(db_name, false);
 
 						owner_oid = get_rolespec_oid(rolspec, true);
 						/*
@@ -3754,8 +3765,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						* to current user and later alter schema owner using bbf_role_admin
 						*/
 						if (!member_can_set_role(GetUserId(), owner_oid) &&
-							has_privs_of_role(GetUserId(), db_accessadmin) &&
-							(get_db_principal_kind(owner_oid, db_name)))
+							(has_privs_of_role(GetUserId(), db_accessadmin) ||
+							has_privs_of_role(GetUserId(), db_securityadmin)) &&
+							get_db_principal_kind(owner_oid, db_name))
 						{
 							create_schema->authrole = NULL;
 							alter_owner = true;
@@ -4286,6 +4298,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				char		*db_datareader = get_db_datareader_name(dbname);
 				char		*db_datawriter = get_db_datawriter_name(dbname);
 				char		*db_accessadmin = get_db_accessadmin_role_name(dbname);
+
+				/*
+				 * NOTE: GRANT/REVOKE on OBJECT(schema-contained)/SCHEMA are allowed
+				 * if current_user is member of db_securityadmin via engine hooks.
+				 * Please refer handle_grantstmt_for_dbsecadmin() function for more details.
+				 */
 
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)

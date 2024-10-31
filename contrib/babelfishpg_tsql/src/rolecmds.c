@@ -1983,11 +1983,16 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", original_user_name)));
 
 	/*
-	 * Disallow ALTER ROLE if 1. Current login doesn't have permission on the
-	 * granted role, or 2. The current user is trying to add/drop itself from
-	 * the granted role
+	 * Disallow ALTER ROLE if
+	 * 1. Current login doesn't have permission on the granted role
+	 * OR
+	 * 2. Granted role is not a fixed db role or current user is a member of db_securityadmin
+	 * OR
+	 * 3. The current user is trying to add/drop itself from the granted role
 	 */
-	if (!has_privs_of_role(GetSessionUserId(), granted) ||
+	if ((!has_privs_of_role(GetSessionUserId(), granted) &&
+		 !(get_db_principal_kind(granted, db_name) == BBF_ROLE &&
+		   has_privs_of_role(GetUserId(), get_db_securityadmin_oid(get_current_pltsql_db_name(), false)))) ||
 		grantee == GetUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

@@ -1,6 +1,6 @@
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole
 GO
-~~ROW COUNT: 4~~
+~~ROW COUNT: 5~~
 
 
 SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
@@ -9,6 +9,7 @@ GO
 varchar#!#nvarchar
 db_owner#!#DB Owners
 db_accessadmin#!#DB Access Administrators
+db_securityadmin#!#DB Security Administrators
 db_datareader#!#DB Data Reader
 db_datawriter#!#DB Data Writer
 ~~END~~
@@ -55,6 +56,8 @@ GO
 
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
 GO
+~~ROW COUNT: 1~~
+
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
 GO
 INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_backupoperator     '
@@ -77,6 +80,7 @@ GO
 ~~START~~
 varchar#!#nvarchar
 db_accessadmin#!#DB Access Administrators
+db_securityadmin#!#DB Security Administrators
 db_datareader#!#DB Data Reader
 db_datawriter#!#DB Data Writer
 ~~END~~

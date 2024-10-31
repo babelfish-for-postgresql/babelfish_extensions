@@ -588,6 +588,29 @@ GO
 -- terminate-tsql-conn user=babel_5136_db_accessadmin_l1 password=12345678 database=babel_5136
 
 -- tsql
+USE babel_5136
+GO
+CREATE SCHEMA BABEL5119_schema;
+GO
+
+-- test for BABEL-5294
+SELECT u.orig_username, SUBSTRING(a.datacl, strpos(a.datacl, '='), strpos(a.datacl, '/') - strpos(a.datacl, '='))
+    FROM (
+        SELECT CAST(unnest(datacl) AS TEXT) AS datacl FROM pg_database WHERE datname = CURRENT_DATABASE()
+    ) AS a
+    JOIN sys.babelfish_authid_user_ext u ON (left(datacl, charindex('=', datacl) - 1) = u.rolname)
+    WHERE u.database_name = 'babel_5136'
+    ORDER BY u.orig_username;
+GO
+~~START~~
+nvarchar#!#varchar
+db_accessadmin#!#=C
+db_securityadmin#!#=C
+dbo#!#=CTc
+~~END~~
+
+USE master
+GO
 DROP DATABASE babel_5136
 GO
 -- terminate-tsql-conn

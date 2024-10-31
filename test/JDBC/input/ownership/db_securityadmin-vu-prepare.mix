@@ -1,0 +1,108 @@
+-- tsql
+create login babel_5135_l1 with password='12345678';
+GO
+
+create user babel_5135_u1 for login babel_5135_l1;
+GO
+
+create role babel_5135_r1;
+GO
+
+create login babel_5135_l2 with password='12345678';
+GO
+
+create login babel_5135_dbsecadmin_l1 with password='12345678';
+GO
+
+create user babel_5135_dbsecadmin_u1 for login babel_5135_dbsecadmin_l1;
+GO
+
+create role babel_5135_dbsecadmin_r1;
+GO
+
+create schema babel_5135_schema1;
+GO
+
+create table babel_5135_schema1.babel_5135_t1(a int, b int);
+GO
+
+create view babel_5135_schema1.babel_5135_v1 as select 1;
+GO
+
+CREATE PROC babel_5135_schema1.babel_5135_p1 AS SELECT 1
+GO
+
+CREATE FUNCTION babel_5135_schema1.babel_5135_f1() RETURNS INT AS BEGIN return 1; END
+GO
+
+CREATE FUNCTION babel_5135_schema1.babel_5135_tvf1() RETURNS TABLE AS RETURN (SELECT a, b FROM babel_5135_schema1.babel_5135_t1);
+GO
+
+CREATE VIEW babel_5135_show_role_mem AS
+SELECT 
+roles.name AS RolePrincipalName
+, members.name AS MemberPrincipalName
+FROM sys.database_role_members AS db_role_mems
+INNER JOIN sys.database_principals AS roles
+    ON db_role_mems.role_principal_id = roles.principal_id
+INNER JOIN sys.database_principals AS members 
+    ON db_role_mems.member_principal_id = members.principal_id order by MemberPrincipalName;
+GO
+
+CREATE PROCEDURE babel_5135_roleop_proc1 AS BEGIN CREATE ROLE babel_5135_role2; ALTER ROLE babel_5135_role2 WITH NAME = babel_5135_role3; DROP ROLE babel_5135_role3; END
+GO
+CREATE PROCEDURE babel_5135_roleop_proc2 AS BEGIN ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1; END
+GO
+CREATE PROCEDURE babel_5135_roleop_proc3 AS BEGIN ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_u1; END
+GO
+CREATE PROCEDURE babel_5135_schemaop_proc1 AS BEGIN CREATE SCHEMA babel_5135_sch11; END
+GO
+CREATE PROCEDURE babel_5135_grantop_proc1 AS BEGIN
+GRANT SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 TO babel_5135_u1;
+GRANT SELECT ON babel_5135_schema1.babel_5135_v1 TO babel_5135_u1;
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_p1 TO babel_5135_u1;
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+END
+GO
+CREATE PROCEDURE babel_5135_revokeop_proc1 AS BEGIN
+REVOKE SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 FROM babel_5135_u1;
+REVOKE SELECT ON babel_5135_schema1.babel_5135_v1 FROM babel_5135_u1;
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_p1 FROM babel_5135_u1;
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_f1 FROM babel_5135_u1;
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_tvf1 FROM babel_5135_u1;
+END
+GO
+
+GRANT EXECUTE ON babel_5135_roleop_proc1 TO PUBLIC;
+GO
+GRANT EXECUTE ON babel_5135_roleop_proc2 TO PUBLIC;
+GO
+GRANT EXECUTE ON babel_5135_roleop_proc3 TO PUBLIC;
+GO
+GRANT EXECUTE ON babel_5135_schemaop_proc1 TO PUBLIC;
+GO
+GRANT EXECUTE ON babel_5135_grantop_proc1 TO PUBLIC;
+GO
+GRANT EXECUTE ON babel_5135_revokeop_proc1 TO PUBLIC;
+GO
+
+create database babel_5135_db1
+GO
+
+USE babel_5135_db1;
+GO
+
+create user babel_5135_u1 for login babel_5135_l1;
+GO
+
+CREATE VIEW babel_5135_show_role_mem AS
+SELECT 
+roles.name AS RolePrincipalName
+, members.name AS MemberPrincipalName
+FROM sys.database_role_members AS db_role_mems
+INNER JOIN sys.database_principals AS roles
+    ON db_role_mems.role_principal_id = roles.principal_id
+INNER JOIN sys.database_principals AS members 
+    ON db_role_mems.member_principal_id = members.principal_id order by MemberPrincipalName;
+GO

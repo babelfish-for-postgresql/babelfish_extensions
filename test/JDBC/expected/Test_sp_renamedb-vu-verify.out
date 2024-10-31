@@ -23,6 +23,7 @@ sp_renamedb_database1_db_accessadmin#!##!#db_accessadmin#!#sp_renamedb_database1
 sp_renamedb_database1_db_datareader#!##!#db_datareader#!#sp_renamedb_database1
 sp_renamedb_database1_db_datawriter#!##!#db_datawriter#!#sp_renamedb_database1
 sp_renamedb_database1_db_owner#!##!#db_owner#!#sp_renamedb_database1
+sp_renamedb_database1_db_securityadmin#!##!#db_securityadmin#!#sp_renamedb_database1
 sp_renamedb_database1_dbo#!##!#dbo#!#sp_renamedb_database1
 sp_renamedb_database1_guest#!##!#guest#!#sp_renamedb_database1
 sp_renamedb_database1_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database1
@@ -87,6 +88,7 @@ sp_renamedb_database2_db_accessadmin#!##!#db_accessadmin#!#sp_renamedb_database2
 sp_renamedb_database2_db_datareader#!##!#db_datareader#!#sp_renamedb_database2
 sp_renamedb_database2_db_datawriter#!##!#db_datawriter#!#sp_renamedb_database2
 sp_renamedb_database2_db_owner#!##!#db_owner#!#sp_renamedb_database2
+sp_renamedb_database2_db_securityadmin#!##!#db_securityadmin#!#sp_renamedb_database2
 sp_renamedb_database2_dbo#!##!#dbo#!#sp_renamedb_database2
 sp_renamedb_database2_guest#!##!#guest#!#sp_renamedb_database2
 sp_renamedb_database2_sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_login2#!#sp_renamedb_database2
@@ -205,6 +207,7 @@ sp_renamedb_thisnewdatabasename115699cc11f7805d9b9b640d6455580c#!##!#dbo#!#sp_re
 sp_renamedb_thisnewdatabasename2a476218bfa8dba9ac86fb898b11e9a5#!##!#db_datawriter#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 sp_renamedb_thisnewdatabasename7052c471c798d0b08c69f719bcd607d7#!##!#db_datareader#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 sp_renamedb_thisnewdatabasenameb0dffbb56deab7ad4e684df689419c65#!##!#db_owner#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
+sp_renamedb_thisnewdatabasenameda6915c331b2fe3a4c4e33126c0366c1#!##!#db_securityadmin#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 sp_renamedb_thisnewdatabasenamedeb7cafbbedd23f312d90e7c10a60901#!##!#guest#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 sp_renamedb_thisnewdatabasenameeeb9e8f522c23281503d418ce3640572#!##!#db_accessadmin#!#sp_renamedb_thisnewdatabasename738bbb14cb857db43c693446c049f0bd
 ~~END~~

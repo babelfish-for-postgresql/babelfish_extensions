@@ -549,6 +549,7 @@ xml_exist-before-16_5
 BABEL-5119_before_16_5
 dbcreator_role
 db_accessadmin
+db_securityadmin
 BABEL-CASE_EXPR
 datareader_datawriter
 BABEL-5186

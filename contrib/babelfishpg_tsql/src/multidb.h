@@ -25,6 +25,8 @@ extern char *get_dbo_role_name(const char *dbname);
 extern char *get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode);
 extern char *get_db_owner_name(const char *dbname);
 extern char *get_db_owner_name_by_mode(const char *dbname, MigrationMode mode);
+extern char *get_db_securityadmin_role_name(const char *dbname);
+extern Oid  get_db_securityadmin_oid(const char *dbname, bool missing_ok);
 extern Oid  get_db_owner_oid(const char *dbname, bool missing_ok);
 extern char *get_db_accessadmin_role_name(const char *dbname);
 extern Oid  get_db_accessadmin_oid(const char *dbname, bool missing_ok);

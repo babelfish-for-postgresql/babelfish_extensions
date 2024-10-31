@@ -36,6 +36,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
 rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
@@ -87,6 +88,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
 rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2
@@ -138,6 +140,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
 rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
@@ -189,6 +192,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
 rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2
@@ -252,6 +256,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
 rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
@@ -303,6 +308,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
 rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2
@@ -354,6 +360,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
 rename_db_database1_guest#!##!#guest#!#rename_db_database1
 rename_db_database1_rename_db_role1#!##!#rename_db_role1#!#rename_db_database1
@@ -405,6 +412,7 @@ db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
+db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
 rename_db_database2_guest#!##!#guest#!#rename_db_database2
 rename_db_database2_rename_db_role1#!##!#rename_db_role1#!#rename_db_database2

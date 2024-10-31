@@ -148,7 +148,7 @@ extern Oid	bbf_authid_user_ext_idx_oid;
 
 #define BBF_ROLE 1
 #define BBF_USER 2
-const int get_db_principal_kind(Oid role_oid, const char *db_name);
+const  int	get_db_principal_kind(Oid role_oid, const char *db_name);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name);

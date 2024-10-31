@@ -87,6 +87,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *dbo;
 	const char     *db_owner;
 	const char     *db_accessadmin;
+	const char     *db_securityadmin;
 	const char     *guest;
 	const char     *guest_schema;
 	Oid       	owner_oid;
@@ -98,6 +99,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	db_accessadmin = get_db_accessadmin_role_name(dbname);
+	db_securityadmin = get_db_securityadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 	owner_oid = get_role_oid(owner, true);
@@ -119,9 +121,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	if (!owner_is_sa)
 		appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
+	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+
 	/* create db_accessadmin for database */
 	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
-	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
+
+	/* create db_securityadmin */
 	appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 
@@ -146,13 +153,13 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	if (guest)
 	{
 		if (!owner_is_sa)
-			expected_stmt_num = list_length(logins) > 0 ? 14 : 13;	
+			expected_stmt_num = list_length(logins) > 0 ? 16 : 15;	
 		else
-			expected_stmt_num = list_length(logins) > 0 ? 13 : 12;
+			expected_stmt_num = list_length(logins) > 0 ? 15 : 14;
 	}
 	else
 	{
-		expected_stmt_num = 10;
+		expected_stmt_num = 12;
 
 		if (!owner_is_sa)
 			expected_stmt_num++;
@@ -194,6 +201,12 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
 
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, db_securityadmin, db_owner, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_securityadmin, NULL);
+
 	if (guest)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
@@ -221,6 +234,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 		update_CreateSchemaStmt(stmt, guest_schema, guest);
 	}
 
+	pfree((char *) schema);
+	pfree((char *) dbo);
+	pfree((char *) db_owner);
+	pfree((char *) db_accessadmin);
+	pfree((char *) db_securityadmin);
+	pfree((char *) guest);
+	pfree((char *) guest_schema);
+
 	return res;
 }
 
@@ -230,6 +251,7 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 	const char     *dbo;
 	const char     *db_owner;
 	const char     *db_accessadmin;
+	const char     *db_securityadmin;
 	const char     *db_datareader;
 	const char     *db_datawriter;
 	const char     *guest;
@@ -237,6 +259,7 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	db_accessadmin = get_db_accessadmin_role_name(dbname);
+	db_securityadmin = get_db_securityadmin_role_name(dbname);
 	guest = get_guest_role_name(dbname);
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
@@ -244,8 +267,9 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 	add_to_bbf_authid_user_ext(dbo, DBO, dbname, DBO, NULL, false, true, false);
 	add_to_bbf_authid_user_ext(db_owner, DB_OWNER, dbname, NULL, NULL, true, true, false);
 	add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
-	add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, true, false);
-	add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, true, false);
+	add_to_bbf_authid_user_ext(db_securityadmin, DB_SECURITYADMIN, dbname, NULL, NULL, true, false, false);
+	add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, false, false);
+	add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, false, false);
 
 	/*
 	 * For master, tempdb and msdb databases, the guest user will be
@@ -255,6 +279,12 @@ add_fixed_user_roles_to_bbf_authid_user_ext(const char *dbname)
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, true, false);
 	else
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
+
+	pfree((char *) dbo);
+	pfree((char *) db_owner);
+	pfree((char *) db_accessadmin);
+	pfree((char *) db_securityadmin);
+	pfree((char *) guest);
 }
 
 /*
@@ -267,11 +297,12 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	List	   *stmt_list;
 	ListCell   *elem;
 	Node	   *stmt;
-	int         expected_stmts = 10;
+	int         expected_stmts = 12;
 	int         i = 0;
 	const char *dbo;
 	const char *db_owner;
 	const char *db_accessadmin;
+	const char *db_securityadmin;
 	const char *schema;
 	const char *guest_schema;
 	const char *db_datareader;
@@ -280,6 +311,7 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	dbo = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 	db_accessadmin = get_db_accessadmin_role_name(dbname);
+	db_securityadmin = get_db_securityadmin_role_name(dbname);
 	schema = get_dbo_schema_name(dbname);
 	guest_schema = get_guest_schema_name(dbname);
 	db_datareader = get_db_datareader_name(dbname);
@@ -294,8 +326,11 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
-		    strcmp(user_name, db_accessadmin) != 0 && strcmp(user_name, db_datareader) != 0 &&
+		if (strcmp(user_name, db_owner) != 0 &&
+			strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0 &&
+			strcmp(user_name, db_securityadmin) != 0 &&
+			strcmp(user_name, db_datareader) != 0 &&
 			strcmp(user_name, db_datawriter) != 0)
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
@@ -303,12 +338,16 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 			expected_stmts += 2;
 		}
 	}
-	appendStringInfo(&query, "DROP OWNED BY dummy, dummy, dummy CASCADE; ");
+	appendStringInfo(&query, "DROP OWNED BY dummy, dummy, dummy, dummy CASCADE; ");
 
-	/* Then drop db_accessadmin, db_owner and dbo in that order */
+	/* 
+	 * Then drop db_datareader, db_datawriter, db_securityadmin, db_accessadmin,
+	 * db_owner and dbo in that order
+	 */
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
-
+	appendStringInfo(&query, "REVOKE CREATE ON DATABASE dummy FROM dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "REVOKE CREATE ON DATABASE dummy FROM dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
@@ -333,8 +372,11 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
 
-		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0 &&
-		    strcmp(user_name, db_accessadmin) != 0 && strcmp(user_name, db_datareader) != 0 &&
+		if (strcmp(user_name, db_owner) != 0 &&
+			strcmp(user_name, dbo) != 0 &&
+			strcmp(user_name, db_accessadmin) != 0 &&
+			strcmp(user_name, db_securityadmin) != 0 &&
+			strcmp(user_name, db_datareader) != 0 &&
 			strcmp(user_name, db_datawriter) != 0)
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
@@ -346,12 +388,17 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	}
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_DropOwnedStmt(stmt, list_make3(pstrdup(db_accessadmin), pstrdup(db_owner), pstrdup(dbo)));
+	update_DropOwnedStmt(stmt, list_make4(pstrdup(db_securityadmin), pstrdup(db_accessadmin), pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_datareader);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_datawriter);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_securityadmin, NULL);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_securityadmin);
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
@@ -365,6 +412,13 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	update_DropRoleStmt(stmt, db_owner);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, dbo);
+
+	pfree((char *) dbo);
+	pfree((char *) db_owner);
+	pfree((char *) db_accessadmin);
+	pfree((char *) db_securityadmin);
+	pfree((char *) schema);
+	pfree((char *) guest_schema);
 
 	return stmt_list;
 }
@@ -1417,12 +1471,14 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	int            i = 0;
 	char           *db_owner;
 	char           *db_accessadmin;
+	char		   *db_securityadmin;
 	char           *db_datareader;
 	char           *db_datawriter;
 	int16			dbid = get_db_id(dbname);
 
 	db_owner = get_db_owner_name(dbname);
 	db_accessadmin = get_db_accessadmin_role_name(dbname);
+	db_securityadmin = get_db_securityadmin_role_name(dbname);
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
 
@@ -1430,6 +1486,7 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	rolname_same_as_db_rolname(db_accessadmin);
 	rolname_same_as_db_rolname(db_datareader);
 	rolname_same_as_db_rolname(db_datawriter);
+	rolname_same_as_db_rolname(db_securityadmin);
 
 	stmt = parsetree_nth_stmt(parsetree_list, i++);
 	update_CreateRoleStmt(stmt, db_datareader, db_owner, NULL);
@@ -1443,6 +1500,12 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	stmt = parsetree_nth_stmt(parsetree_list, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_accessadmin, NULL);
 
+	stmt = parsetree_nth_stmt(parsetree_list, i++);
+	update_CreateRoleStmt(stmt, db_securityadmin, db_owner, NULL);
+
+	stmt = parsetree_nth_stmt(parsetree_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_securityadmin, NULL);
+
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
 	PG_TRY();
@@ -1451,8 +1514,9 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 
 		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 		add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
-		add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, true, false);
-		add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, true, false);
+		add_to_bbf_authid_user_ext(db_securityadmin, DB_SECURITYADMIN, dbname, NULL, NULL, true, false, false);
+		add_to_bbf_authid_user_ext(db_datareader, DB_DATAREADER, dbname, NULL, NULL, true, false, false);
+		add_to_bbf_authid_user_ext(db_datawriter, DB_DATAWRITER, dbname, NULL, NULL, true, false, false);
 
 		foreach(parsetree_item, parsetree_list)
 		{
@@ -1492,6 +1556,7 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		pfree(db_owner);
 		pfree(db_accessadmin);
+		pfree(db_securityadmin);
 		pfree(db_datareader);
 		pfree(db_datawriter);
 	}
@@ -1537,6 +1602,9 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 
 		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
 		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
+		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
+
 		appendStringInfo(&query, "CREATE ROLE dummy ROLE dummy; ");
 		appendStringInfo(&query, "GRANT CREATE ON DATABASE dummy TO dummy; ");
 

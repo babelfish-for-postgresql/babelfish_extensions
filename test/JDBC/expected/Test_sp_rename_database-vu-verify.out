@@ -23,6 +23,7 @@ sp_rename_database1_db_accessadmin#!##!#db_accessadmin#!#sp_rename_database1
 sp_rename_database1_db_datareader#!##!#db_datareader#!#sp_rename_database1
 sp_rename_database1_db_datawriter#!##!#db_datawriter#!#sp_rename_database1
 sp_rename_database1_db_owner#!##!#db_owner#!#sp_rename_database1
+sp_rename_database1_db_securityadmin#!##!#db_securityadmin#!#sp_rename_database1
 sp_rename_database1_dbo#!##!#dbo#!#sp_rename_database1
 sp_rename_database1_guest#!##!#guest#!#sp_rename_database1
 sp_rename_database1_sp_rename_login2#!#sp_rename_login2#!#sp_rename_login2#!#sp_rename_database1
@@ -87,6 +88,7 @@ sp_rename_database2_db_accessadmin#!##!#db_accessadmin#!#sp_rename_database2
 sp_rename_database2_db_datareader#!##!#db_datareader#!#sp_rename_database2
 sp_rename_database2_db_datawriter#!##!#db_datawriter#!#sp_rename_database2
 sp_rename_database2_db_owner#!##!#db_owner#!#sp_rename_database2
+sp_rename_database2_db_securityadmin#!##!#db_securityadmin#!#sp_rename_database2
 sp_rename_database2_dbo#!##!#dbo#!#sp_rename_database2
 sp_rename_database2_guest#!##!#guest#!#sp_rename_database2
 sp_rename_database2_sp_rename_login2#!#sp_rename_login2#!#sp_rename_login2#!#sp_rename_database2
@@ -206,6 +208,7 @@ sp_rename_thisnewdatabasenameis21f79a8b66248a73068dca6edd5b0ca3#!##!#guest#!#sp_
 sp_rename_thisnewdatabasenameis95c235131f6db63ef16f222aa48d0554#!##!#db_datareader#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameisa0a5aa90abf2314f4773860fda5e43a2#!##!#db_accessadmin#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameisc7c7032a834c11dbbbbf4911217c443a#!##!#db_datawriter#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
+sp_rename_thisnewdatabasenameisf37d42f2565acdd17a6e787fa43e9065#!##!#db_securityadmin#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameisfacf8af797f428fdc401ffddc672894d#!##!#dbo#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 ~~END~~
 

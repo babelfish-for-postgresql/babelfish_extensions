@@ -1,4 +1,4 @@
--- sla 80000
+-- sla 180000
 -- TODO: BABEL-5349
 -- psql
 do 

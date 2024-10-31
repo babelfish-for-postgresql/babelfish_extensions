@@ -572,6 +572,7 @@ cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-5119_before_16_5
 db_accessadmin
+db_securityadmin
 GRANT_SCHEMA-before-15_9-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
 charindex_replace_patindex

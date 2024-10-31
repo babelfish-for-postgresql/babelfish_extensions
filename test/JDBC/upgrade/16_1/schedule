@@ -541,6 +541,7 @@ binary-datatype-operators
 BABEL-5059_before_16_5
 cast-varchar-to-time
 db_accessadmin
+db_securityadmin
 securityadmin_role
 dbcreator_role
 xml_exist-before-16_5

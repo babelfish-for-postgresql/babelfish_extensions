@@ -1,0 +1,1317 @@
+-- tsql
+-- bbf dump does not dump password so reset the password
+ALTER LOGIN babel_5135_l1 WITH PASSWORD='12345678';
+GO
+
+ALTER LOGIN babel_5135_l2 WITH PASSWORD='12345678';
+GO
+
+ALTER LOGIN babel_5135_dbsecadmin_l1 WITH PASSWORD='12345678';
+GO
+
+-- tsql
+-- CASE 1 Allowed syntaxes to modify the membership of db_securityadmin
+    -- CASE 1.1 Validate ALTER ROLE ... ADD/DROP MEMBER
+    -- CASE 1.2 Validate sp_addrolemember
+	-- CASE 1.3 Test inside database with truncated name
+ALTER ROLE db_securityadmin ADD MEMBER babel_5135_u1;
+GO
+
+ALTER ROLE db_securityadmin ADD MEMBER babel_5135_r1;
+GO
+
+EXEC sp_addrolemember 'db_securityadmin', 'babel_5135_u1';
+GO
+
+EXEC sp_addrolemember 'db_securityadmin', 'babel_5135_r1';
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+db_securityadmin#!#babel_5135_r1
+db_securityadmin#!#babel_5135_u1
+~~END~~
+
+
+ALTER ROLE db_securityadmin DROP MEMBER babel_5135_u1;
+GO
+
+ALTER ROLE db_securityadmin DROP MEMBER babel_5135_r1;
+GO
+
+EXEC sp_droprolemember 'db_securityadmin', 'babel_5135_u1';
+GO
+
+EXEC sp_droprolemember 'db_securityadmin', 'babel_5135_r1';
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+-- CASE 1.3 Test inside database with truncated name
+USE babel_5135_db1;
+GO
+
+ALTER ROLE db_securityadmin ADD MEMBER babel_5135_u1;
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+db_securityadmin#!#babel_5135_u1
+~~END~~
+
+
+ALTER ROLE db_securityadmin DROP MEMBER babel_5135_u1;
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+EXEC sp_addrolemember 'db_securityadmin', 'babel_5135_u1';
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+db_securityadmin#!#babel_5135_u1
+~~END~~
+
+
+EXEC sp_droprolemember 'db_securityadmin', 'babel_5135_u1';
+GO
+
+SELECT * FROM babel_5135_show_role_mem WHERE RolePrincipalName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+USE master;
+GO
+
+-- tsql
+-- CASE 2 - Only members of db_owner should be able to modify the membership of db_securityadmin
+	-- [already covered by CASE 1] CASE 2.1 - Verify members of db_owner can modify the membership
+	-- CASE 2.2 - Verify that members of db_securityadmin itself can't modify it's own membership
+ALTER ROLE db_securityadmin ADD MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- it should fail
+ALTER ROLE db_securityadmin ADD MEMBER babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_securityadmin', because it does not exist or you do not have permission.)~~
+
+
+ALTER ROLE db_securityadmin DROP MEMBER babel_5135_dbsecadmin_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_securityadmin', because it does not exist or you do not have permission.)~~
+
+
+-- tsql
+-- CASE 3 - Able to manage database roles
+	-- CASE 3.1 - CREATE/ALTER/DROP ROLE
+	-- CASE 3.2 - ADD/DROP the membership of user-defined database roles should be allowed
+	-- CASE 3.3 - ADD/DROP the membership of system-defined database roles should be blocked
+	-- CASE 3.4 - CREATE/ALTER/DROP USER should not be Allowed
+-- role created by another user, to test alter/drop on it
+CREATE ROLE babel_5135_role1;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+CREATE ROLE babel_5135_role2;
+GO
+
+ALTER ROLE babel_5135_role2 WITH NAME = babel_5135_role3;
+GO
+
+DROP ROLE babel_5135_role3;
+GO
+
+ALTER ROLE babel_5135_role1 WITH NAME = babel_5135_role4;
+GO
+
+DROP ROLE babel_5135_role4;
+GO
+
+-- create/alter/drop role inside procedure
+-- execution should be succeeded with no error
+EXEC babel_5135_roleop_proc1;
+GO
+
+-- CASE 3.2 - ADD/DROP the membership of user-defined database roles
+ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_u1;
+GO
+
+-- alter role add member inside procedure
+-- execution should be succeeded with no error
+-- Add
+EXEC babel_5135_roleop_proc2;
+GO
+
+-- Drop
+EXEC babel_5135_roleop_proc3;
+GO
+
+-- CASE 3.3 - ADD/DROP the membership of system-defined database roles should be blocked
+ALTER ROLE db_accessadmin ADD MEMBER babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'db_accessadmin', because it does not exist or you do not have permission.)~~
+
+
+ALTER ROLE db_owner ADD MEMBER babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+
+
+-- CASE 3.4 -- CREATE/ALTER/DROP USER should fail
+CREATE USER babel_5135_user1 FOR LOGIN babel_5135_l2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+ALTER USER babel_5135_u1 WITH NAME = babel_5135_dbsecadmin_u2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
+
+ALTER USER babel_5135_u1 WITH DEFAULT_SCHEMA=dbo;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change schema)~~
+
+
+DROP USER babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'babel_5135_u1', because it does not exist or you do not have permission.)~~
+
+
+-- CASE 4 - CREATE SCHEMA should be allowed
+CREATE SCHEMA babel_5135_sch1;
+GO
+
+CREATE SCHEMA babel_5135_sch2 AUTHORIZATION babel_5135_u1;
+GO
+
+SELECT name, sys.user_name(principal_id) FROM sys.schemas WHERE name IN ('babel_5135_sch1','babel_5135_sch2') ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+babel_5135_sch1#!#babel_5135_dbsecadmin_u1
+babel_5135_sch2#!#babel_5135_u1
+~~END~~
+
+
+-- tsql
+-- granting db_securityadmin to guest and create schema
+alter role db_securityadmin add member guest;
+GO
+
+-- tsql user=babel_5135_l2 password=12345678
+select current_user;
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+CREATE SCHEMA babel_5135_sch3;
+GO
+
+SELECT name, sys.user_name(principal_id) FROM sys.schemas WHERE name LIKE 'babel_5135_sch3' ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+babel_5135_sch3#!#guest
+~~END~~
+
+
+DROP SCHEMA babel_5135_sch3;
+GO
+
+-- tsql
+alter role db_securityadmin DROP member guest;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- schema creation inside procedure
+-- execution should be succeeded with no error
+EXEC babel_5135_schemaop_proc1;
+GO
+
+DROP SCHEMA babel_5135_sch11;
+GO
+
+-- ALTER/DROP of unowned schema should not be allowed
+-- NOTE: Add testcase when supported
+ALTER SCHEMA babel_5135_schema1 TRANSFER t33144;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER SCHEMA' is not currently supported in Babelfish)~~
+
+
+DROP SCHEMA babel_5135_schema1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema master_babel_5135_schema1)~~
+
+
+DROP SCHEMA babel_5135_sch1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+DROP SCHEMA babel_5135_sch2;
+GO
+
+-- CASE 5 - GRANT/REVOKE management of permissions
+	-- CASE 5.1 - Validate GRANT/REVOKE of object/schema privileges
+	-- CASE 5.2 - Validate members of db_securityadmin can not actually access given objects
+	-- CASE 5.3 - Validate that after GRANT/REVOKE, objectowner/dbo can execute REVOKE/GRANT respectively
+	-- CASE 5.4 - Grant/Revoke should not be allowed for show shared schema or any other database's schema
+GRANT SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+GRANT SELECT ON babel_5135_schema1.babel_5135_v1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_v1)~~
+
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_p1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_p1)~~
+
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_5135_v1)~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5135_p1)~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+REVOKE SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 FROM babel_5135_u1;
+GO
+
+REVOKE SELECT ON babel_5135_schema1.babel_5135_v1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_p1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_f1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_tvf1 FROM babel_5135_u1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_5135_v1)~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5135_p1)~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- Testing GRANT inside procedure
+EXEC babel_5135_grantop_proc1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- Testing revokes inside procedure
+EXEC babel_5135_revokeop_proc1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_5135_v1)~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5135_p1)~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 TO babel_5135_u1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+REVOKE SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 FROM babel_5135_u1;
+GO
+
+-- tsql user=babel_5135_l1 password=12345678
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_5135_v1)~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5135_p1)~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- CASE 5.2 - Validate members of db_securityadmin can not actually access given objects 
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_dbsecadmin_u1
+~~END~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_t1;
+INSERT INTO babel_5135_schema1.babel_5135_t1 VALUES (1,2);
+UPDATE babel_5135_schema1.babel_5135_t1 SET a = 2 WHERE a = 1;
+DELETE FROM babel_5135_schema1.babel_5135_t1 WHERE a = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_t1)~~
+
+
+SELECT COUNT(*) FROM babel_5135_schema1.babel_5135_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_5135_v1)~~
+
+
+EXEC babel_5135_schema1.babel_5135_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_5135_p1)~~
+
+
+SELECT babel_5135_schema1.babel_5135_f1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_f1)~~
+
+
+SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- CASE 5.3 - Validate that after GRANT/REVOKE, objectowner/dbo can execute REVOKE/GRANT respectively
+-- execute GRANT via db_securityadmin member and REVOKE it with object owner
+GRANT SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 TO babel_5135_u1;
+GO
+
+GRANT SELECT ON babel_5135_schema1.babel_5135_v1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_p1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+-- tsql
+REVOKE SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 FROM babel_5135_u1;
+GO
+
+REVOKE SELECT ON babel_5135_schema1.babel_5135_v1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_p1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_f1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_tvf1 FROM babel_5135_u1;
+GO
+
+-- execute GRANT as objectowner/dbo
+GRANT SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 TO babel_5135_u1;
+GO
+
+GRANT SELECT ON babel_5135_schema1.babel_5135_v1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_p1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
+GO
+
+GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+REVOKE SELECT, INSERT, UPDATE, DELETE ON babel_5135_schema1.babel_5135_t1 FROM babel_5135_u1;
+GO
+
+REVOKE SELECT ON babel_5135_schema1.babel_5135_v1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_p1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_f1 FROM babel_5135_u1;
+GO
+
+REVOKE EXECUTE ON babel_5135_schema1.babel_5135_tvf1 FROM babel_5135_u1;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+-- CASE 5.4 - Grant/Revoke should not be allowed for show shared schema or any other database's schema
+-- Following error is misleading, will be fixed separately
+GRANT SELECT ON sys.database_principals TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could find logical schema name for: "sys")~~
+
+
+REVOKE SELECT ON sys.database_principals FROM babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could find logical schema name for: "sys")~~
+
+
+GRANT SELECT ON pg_catalog.pg_namespace TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could find logical schema name for: "pg_catalog")~~
+
+
+REVOKE SELECT ON pg_catalog.pg_namespace FROM babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could find logical schema name for: "pg_catalog")~~
+
+
+REVOKE SELECT ON babel_5135_db1.dbo.babel_5135_show_role_mem TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_show_role_mem)~~
+
+
+REVOKE SELECT ON babel_5135_db1.dbo.babel_5135_show_role_mem FROM babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_5135_show_role_mem)~~
+
+
+-- tsql
+-- CASE 6 - is_member() / is_rolemember() testcases
+SELECT is_member('db_securityadmin'), is_rolemember('db_securityadmin');
+GO
+~~START~~
+int#!#int
+0#!#1
+~~END~~
+
+
+SELECT is_rolemember('db_securityadmin', 'dbo');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_rolemember('db_securityadmin', 'db_owner');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_rolemember('db_securityadmin', 'db_accessadmin');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+SELECT is_member('db_securityadmin'), is_rolemember('db_securityadmin');
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+-- tsql
+EXEC sp_droprolemember 'db_securityadmin', 'babel_5135_dbsecadmin_u1';
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+SELECT is_member('db_securityadmin'), is_rolemember('db_securityadmin');
+GO
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+-- tsql
+EXEC sp_addrolemember 'db_securityadmin', 'babel_5135_dbsecadmin_u1';
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+SELECT is_member('db_securityadmin'), is_rolemember('db_securityadmin');
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+
+-- tsql
+-- CASE 7 - system procedures
+ -- CASE 7.1 - sp_helpdbfixedrole testcase are covered in respective test Test-sp_helpdbfixedrole file
+ -- CASE 7.2 - sp_helpuser
+ -- CASE 7.3 - sp_helprole
+ -- CASE 7.4 - sp_helprolemember
+-- test for helpuser
+CREATE TABLE temp_sp_helpuser(RoleName sys.sysname, Role_id int,
+Users_in_role sys.sysname, UserID int);
+GO
+
+GRANT INSERT,SELECT ON temp_sp_helpuser TO PUBLIC;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+INSERT INTO temp_sp_helpuser(RoleName, Role_id, Users_in_role, UserID) EXEC sp_helpuser 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT Rolename, sys.user_name(Role_id), Users_in_role, sys.user_name(UserID) FROM temp_sp_helpuser
+WHERE Rolename = 'db_securityadmin' ORDER BY Users_in_role;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+db_securityadmin#!#db_securityadmin#!#babel_5135_dbsecadmin_u1#!#babel_5135_dbsecadmin_u1
+~~END~~
+
+
+-- tsql
+TRUNCATE TABLE temp_sp_helpuser;
+GO
+
+-- tsql
+INSERT INTO temp_sp_helpuser(RoleName, Role_id, Users_in_role, UserID) EXEC sp_helpuser 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT Rolename, sys.user_name(Role_id), Users_in_role, sys.user_name(UserID) FROM temp_sp_helpuser
+WHERE Rolename = 'db_securityadmin' ORDER BY Users_in_role;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+db_securityadmin#!#db_securityadmin#!#babel_5135_dbsecadmin_u1#!#babel_5135_dbsecadmin_u1
+~~END~~
+
+
+-- tsql
+DROP TABLE temp_sp_helpuser;
+GO
+
+-- test for sp_helprole
+CREATE TABLE temp_sp_helprole(RoleName sys.sysname, RoleId int, IsAppRole int);
+GO
+
+GRANT INSERT,SELECT ON temp_sp_helprole TO PUBLIC;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+INSERT INTO temp_sp_helprole(RoleName, RoleId, IsAppRole) EXEC sp_helprole 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT RoleName, sys.user_name(RoleId), IsAppRole FROM temp_sp_helprole
+WHERE RoleName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#nvarchar#!#int
+db_securityadmin#!#db_securityadmin#!#0
+~~END~~
+
+
+-- tsql
+TRUNCATE TABLE temp_sp_helprole;
+GO
+
+-- tsql
+INSERT INTO temp_sp_helprole(RoleName, RoleId, IsAppRole) EXEC sp_helprole 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT RoleName, sys.user_name(RoleId), IsAppRole FROM temp_sp_helprole
+WHERE RoleName = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#nvarchar#!#int
+db_securityadmin#!#db_securityadmin#!#0
+~~END~~
+
+
+-- tsql
+DROP TABLE temp_sp_helprole;
+GO
+
+-- test for temp_sp_helprolemember
+CREATE TABLE temp_sp_helprolemember(DbRole sys.sysname, MemberName sys.sysname, MemberSID SYS.VARBINARY(85));
+GO
+
+GRANT INSERT,SELECT ON temp_sp_helprolemember TO PUBLIC;
+GO
+
+-- tsql user=babel_5135_dbsecadmin_l1 password=12345678
+INSERT INTO temp_sp_helprolemember(DbRole, MemberName, MemberSID) EXEC sp_helprolemember 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbRole, MemberName FROM temp_sp_helprolemember
+WHERE DbRole = 'db_securityadmin' ORDER BY MemberName;
+GO
+~~START~~
+varchar#!#varchar
+db_securityadmin#!#babel_5135_dbsecadmin_u1
+~~END~~
+
+
+-- tsql
+TRUNCATE TABLE temp_sp_helprolemember;
+GO
+
+-- tsql
+INSERT INTO temp_sp_helprolemember(DbRole, MemberName, MemberSID) EXEC sp_helprolemember 'db_securityadmin';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbRole, MemberName FROM temp_sp_helprolemember
+WHERE DbRole = 'db_securityadmin' ORDER BY MemberName;
+GO
+~~START~~
+varchar#!#varchar
+db_securityadmin#!#babel_5135_dbsecadmin_u1
+~~END~~
+
+
+-- tsql
+DROP TABLE temp_sp_helprolemember;
+GO
+
+-- CASE 8
+USE babel_5135_db1;
+GO
+
+SELECT name, type, type_desc, default_schema_name, is_fixed_role, authentication_type_desc FROM sys.database_principals WHERE NAME = 'db_securityadmin';
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#varchar#!#bit#!#nvarchar
+db_securityadmin#!#R#!#DATABASE_ROLE#!##!#1#!#
+~~END~~
+
+
+USE master;
+GO
+
+-- tsql
+-- CASE 9 - Restrictions
+-- normal tsql login
+CREATE LOGIN db_securityadmin_restrictions_login WITH password = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER db_securityadmin_restrictions_login;
+GO
+
+-- psql
+-- normal PG user
+CREATE USER db_securityadmin_restrictions_pg_user WITH LOGIN CREATEROLE CREATEDB PASSWORD '12345678' inherit;
+go
+
+-- tsql user=db_securityadmin_restrictions_login password=12345678
+-- a tsql login should not be able to rename/drop db_securityadmin and grant/revoke on it explicitly from tsql port
+ALTER ROLE db_securityadmin WITH NAME = db_securityadmin1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user db_securityadmin)~~
+
+
+DROP ROLE db_securityadmin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'db_securityadmin'.)~~
+
+
+GRANT SELECT ON babel_5135_schema1.babel_5135_t1 TO db_securityadmin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 TO db_securityadmin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+REVOKE SELECT ON babel_5135_schema1.babel_5135_t1 FROM db_securityadmin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+REVOKE SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 FROM db_securityadmin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny or revoke permissions to or from special roles.)~~
+
+
+-- psql user=db_securityadmin_restrictions_login password=12345678
+-- a tsql login should not be able to alter/grant/drop db_securityadmin from pg port
+ALTER ROLE master_db_securityadmin NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+
+-- GRANT master_db_securityadmin TO db_securityadmin_restrictions_login;
+-- GO
+GRANT db_securityadmin_restrictions_login TO master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to grant role "db_securityadmin_restrictions_login"
+  Detail: Only roles with the ADMIN option on role "db_securityadmin_restrictions_login" may grant this role.
+    Server SQLState: 42501)~~
+
+
+
+-- REVOKE master_db_securityadmin FROM master_dbo;
+-- GO
+REVOKE master_dbo FROM master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to revoke role "master_dbo"
+  Detail: Only roles with the ADMIN option on role "master_dbo" may revoke this role.
+    Server SQLState: 42501)~~
+
+
+DROP ROLE master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE master_db_securityadmin;
+GO
+
+-- psql user=db_securityadmin_restrictions_pg_user password=12345678
+-- a normal psql user should not be able to alter/grant/drop db_securityadmin from pg port
+ALTER ROLE master_db_securityadmin NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_db_securityadmin WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT master_db_securityadmin TO db_securityadmin_restrictions_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to grant role "master_db_securityadmin"
+  Detail: Only roles with the ADMIN option on role "master_db_securityadmin" may grant this role.
+    Server SQLState: 42501)~~
+
+
+GRANT db_securityadmin_restrictions_login TO master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to grant role "db_securityadmin_restrictions_login"
+  Detail: Only roles with the ADMIN option on role "db_securityadmin_restrictions_login" may grant this role.
+    Server SQLState: 42501)~~
+
+
+REVOKE master_db_securityadmin FROM master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to revoke role "master_db_securityadmin"
+  Detail: Only roles with the ADMIN option on role "master_db_securityadmin" may revoke this role.
+    Server SQLState: 42501)~~
+
+
+REVOKE master_dbo FROM master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to revoke role "master_dbo"
+  Detail: Only roles with the ADMIN option on role "master_dbo" may revoke this role.
+    Server SQLState: 42501)~~
+
+
+DROP ROLE master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE master_db_securityadmin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "master_db_securityadmin"
+    Server SQLState: 42501)~~
+
+
+-- psql
+DROP USER db_securityadmin_restrictions_pg_user;
+GO
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'db_securityadmin_restrictions_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+~~END~~
+
+
+-- tsql
+DROP LOGIN db_securityadmin_restrictions_login;
+GO
