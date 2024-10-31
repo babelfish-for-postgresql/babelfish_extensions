@@ -26,7 +26,7 @@ runs:
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
       uses: ./.github/composite-actions/compile-antlr
       with:
-        install_dir: ${{env.NEW_INSTALL_DIR}}
+        install_dir: ${{env.pg_new_dir}}
 
     - name: Build Extensions
       id: build-extensions-new
