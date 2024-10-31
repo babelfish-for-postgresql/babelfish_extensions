@@ -30,7 +30,7 @@ runs:
 
     - name: Build Extensions
       id: build-extensions-new
-      if: always() && steps.copy-antlr.outcome == 'success'
+      if: always() && steps.compile-new-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with:
         install_dir: ${{ inputs.pg_new_dir }}
