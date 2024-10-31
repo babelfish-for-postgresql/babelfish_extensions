@@ -557,6 +557,7 @@ BABEL-5059_before_16_5
 cast-varchar-to-time
 dbcreator_role
 db_accessadmin
+db_securityadmin
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5186

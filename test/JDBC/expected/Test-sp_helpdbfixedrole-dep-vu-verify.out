@@ -4,6 +4,7 @@ GO
 varchar#!#nvarchar
 db_owner#!#DB Owners
 db_accessadmin#!#DB Access Administrators
+db_securityadmin#!#DB Security Administrators
 db_datareader#!#DB Data Reader
 db_datawriter#!#DB Data Writer
 ~~END~~
@@ -21,7 +22,7 @@ SELECT dbo.test_sp_helpdbfixedrole_func()
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 
@@ -29,7 +30,7 @@ SELECT * FROM test_sp_helpdbfixedrole_view
 GO
 ~~START~~
 int
-4
+5
 ~~END~~
 
 
@@ -37,6 +38,7 @@ EXEC test_sp_helpdbfixedrole_proc 'DB_securityadmin'
 GO
 ~~START~~
 varchar#!#nvarchar
+db_securityadmin#!#DB Security Administrators
 ~~END~~
 
 

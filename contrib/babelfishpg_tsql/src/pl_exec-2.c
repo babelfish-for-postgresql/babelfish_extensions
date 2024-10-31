@@ -4008,9 +4008,14 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 		/*
 		 * If the login is not the db owner or the login is not the member of
-		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+		 * sysadmin or login is not the schema owner,
+		 * or current_user is not member of db_securityadmin fixed role
+		 * then it doesn't have the permission to GRANT/REVOKE.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+			!login_is_db_owner &&
+			!object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), get_db_securityadmin_oid(dbname, false)))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));

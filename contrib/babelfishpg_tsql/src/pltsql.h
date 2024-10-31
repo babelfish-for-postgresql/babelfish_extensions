@@ -1993,20 +1993,22 @@ extern bool insert_bulk_check_constraints;
 #define DBO "dbo"
 #define DB_OWNER "db_owner"
 #define DB_ACCESSADMIN "db_accessadmin"
+#define DB_SECURITYADMIN "db_securityadmin"
 #define DB_DATAREADER "db_datareader"
 #define DB_DATAWRITER "db_datawriter"
 
 #define IS_BBF_BUILT_IN_DB(dbname) \
-    (strncmp(dbname, "master", 6) == 0 || \
-     strncmp(dbname, "tempdb", 6) == 0 || \
-     strncmp(dbname, "msdb", 4) == 0)
+    (strcmp(dbname, "master") == 0 || \
+     strcmp(dbname, "tempdb") == 0 || \
+     strcmp(dbname, "msdb") == 0)
 
 #define IS_FIXED_DB_PRINCIPAL(rolname) \
-	(strncmp(rolname, DBO, 3) == 0 || \
-	 strncmp(rolname, DB_OWNER, 8) == 0 || \
-	 strncmp(rolname, DB_ACCESSADMIN, 14) == 0 || \
-	 strncmp(rolname, DB_DATAREADER, 13) == 0 || \
-	 strncmp(rolname, DB_DATAWRITER, 13) == 0)
+	(strcmp(rolname, DBO) == 0 || \
+	 strcmp(rolname, DB_OWNER) == 0 || \
+	 strcmp(rolname, DB_ACCESSADMIN) == 0 || \
+	 strcmp(rolname, DB_SECURITYADMIN) == 0 || \
+	 strcmp(rolname, DB_DATAREADER) == 0 || \
+	 strcmp(rolname, DB_DATAWRITER) == 0)
 
 /**********************************************************************
  * Function declarations
