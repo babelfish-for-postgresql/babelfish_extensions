@@ -21,13 +21,24 @@ runs:
   using: "composite"
   steps:    
     - name: Build and run tests for Postgres engine using ${{ inputs.engine_branch }}
+      id: build-modified-postgres-new
+      if: always()
       uses: ./.github/composite-actions/build-modified-postgres
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
 
+    - name: Compile new ANTLR
+      id: compile-new-antlr
+      if: always() && steps.build-modified-postgres-new.outcome == 'success'
+      uses: ./.github/composite-actions/compile-antlr
+      with:
+        version: ${{ inputs.engine_branch == 'latest' && '4.13.2' || '4.9.3' }}
+        install_dir: ${{inputs.install_dir}}
+
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
+      if: always() && steps.compile-new-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with: 
         install_dir: ${{ inputs.install_dir }}
