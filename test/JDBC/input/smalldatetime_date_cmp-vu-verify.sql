@@ -1,3 +1,4 @@
+-- parallel_query_expected
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
