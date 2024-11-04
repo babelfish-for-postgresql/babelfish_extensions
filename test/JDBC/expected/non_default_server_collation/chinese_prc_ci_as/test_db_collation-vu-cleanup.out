@@ -39,6 +39,12 @@ GO
 DROP INDEX test_db_idx8 on test_db_collation_vu_prepare_db121_columns;
 GO
 
+DROP VIEW func_output1;
+GO
+
+DROP VIEW func_output2;
+GO
+
 DROP VIEW test_db_collation_vu_prepare_db121_v1;
 GO
 
