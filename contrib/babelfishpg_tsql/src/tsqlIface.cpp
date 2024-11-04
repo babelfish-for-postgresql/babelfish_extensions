@@ -1985,37 +1985,17 @@ public:
 				{
 					if (ddl_object && ddl_object->full_object_name())
 					{
-						line_and_pos = getLineAndPos(ddl_object);
 						// DML target can be an alias: verify that the alias is for a table variable
-						bool aliasIsTabVar = false;
 						if (table_sources)
 						{
-							std::string dmlTarget = getFullText(ddl_object->full_object_name());
-							line_and_pos = getLineAndPos(ddl_object->full_object_name());
-							std::vector<TSqlParser::Table_source_itemContext *> table_source_item;
-							if (ctx->update_statement())
-								table_source_item = table_sources->table_source_item();
-							else
-								table_source_item = table_sources->table_source_item();
-
-							for (size_t i=0; i<table_source_item.size(); ++i)
+							line_and_pos = getLineAndPos(ddl_object);
+							// DML target can be an alias: verify that the alias is for a table variable
+							if (table_sources)
 							{
-								// Find FROM-clause alias matching the DML target
-								if (table_source_item[i]->as_table_alias().size() == 0)
-									continue;  // No alias found in this FROM-clause item
-
-								std::string alias = getFullText(table_source_item[i]->as_table_alias()[0]->table_alias());
-								if (pg_strcasecmp(alias.c_str(), dmlTarget.c_str()) != 0)
-									continue;  // This alias is not matching the DML target
-
-								if (table_source_item[i]->local_id())
-								{
-									// Table variable, with alias matching the DML target
-									aliasIsTabVar = true;
-									break;
-								}
+								line_and_pos = getLineAndPos(ddl_object->full_object_name());								
+								std::string dmlTarget = getFullText(ddl_object->full_object_name());
+								dmlTargetAllowed = dmlTargetIsTabvar(table_sources->table_source_item(), dmlTarget);
 							}
-							dmlTargetAllowed = aliasIsTabVar;
 						}
 					}
 				}
@@ -2063,6 +2043,43 @@ public:
 		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
 		clear_tables_info();
+	}
+
+	bool dmlTargetIsTabvar(std::vector<TSqlParser::Table_source_itemContext *> table_source_item, std::string dmlTarget)
+	{
+		// Potential optimization: as soon as we find the alias matching the DML target, and it's not a table variable, 
+		// we can stop searching through the rest of the table_source_items. 
+		// But some quick testing did not show a measurable difference so this may not be worth doing.
+		
+		// Search through table_source_item, including nested ones, to find the alias and whether it is for a table variable
+		for (size_t i=0; i<table_source_item.size(); ++i)
+		{
+			// First recurse deep until the lowest level of nested table_source_item, if any
+			if (table_source_item[i]->table_source_item().size() > 0)
+			{
+				if (dmlTargetIsTabvar(table_source_item[i]->table_source_item(), dmlTarget))
+					return true;
+			}
+
+			// At this point, there is no deeper nested table_source_item so we can look for the alias
+
+			// Find alias matching the DML target
+			if (table_source_item[i]->as_table_alias().size() == 0)
+				continue;  // No alias found in this table_source_item
+
+			std::string alias = getFullText(table_source_item[i]->as_table_alias()[0]->table_alias());
+			if (pg_strcasecmp(alias.c_str(), dmlTarget.c_str()) != 0)
+				continue;  // This alias is not matching the DML target
+
+			if (table_source_item[i]->local_id())
+			{
+				// Table variable, with alias matching the DML target
+				return true;
+			}
+		}
+
+		// We did not find the target alias, or it was not a table variable
+		return false;
 	}
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *selectCtx) override
