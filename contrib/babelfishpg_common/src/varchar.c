@@ -55,7 +55,7 @@ static inline int varcharTruelen(VarChar *arg);
  * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
  *     or created over nvarchar or nchar.
  */
-static bool
+bool
 is_basetype_nchar_nvarchar(Oid typid)
 {
 	if (tsql_nvarchar_oid == InvalidOid)
@@ -174,6 +174,53 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 		*consumed_p = consumed;
 
 	return code;
+}
+
+void
+AddUTF16ToStringInfo(int32_t code, StringInfo buf)
+{
+	union
+	{
+		uint16_t	value;
+		uint8_t		half[2];
+	}			temp16;
+
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid Unicode code point 0x%x", code)));
+
+	/* Handle single 16-bit code point */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, code & 0xFF);
+		appendStringInfoChar(buf, (code >> 8) & 0xFF);
+		return;
+	}
+
+	temp16.value = 0xD800 + (((code - 0x010000) >> 10) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+	temp16.value = 0xDC00 + ((code - 0x010000) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+}
+
+void
+TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
+{
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
+		AddUTF16ToStringInfo(code, out);
+		i += consumed;
+	}
 }
 
 /*
@@ -443,7 +490,12 @@ tsql_varchar_input(const char *s, size_t len, int32 atttypmod)
 {
 	return varchar_input(s, len, atttypmod);
 }
-
+void
+tsql_utf16_to_utf8(StringInfoData *utf16_data, const uint8 *data, size_t len)
+{
+    initStringInfo(utf16_data);
+    TsqlUTF8toUTF16StringInfo(utf16_data, data, len);
+}
 /*
  * Convert a C string to VARCHAR internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.

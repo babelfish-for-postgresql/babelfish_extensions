@@ -19,6 +19,10 @@
 #include "c.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
+// #include "../../babelfishpg_common/src/sqlvariant.h"
+// #include "../../babelfishpg_common/src/typecode.h"
+// #include "../../babelfishpg_common/src/varchar.h"
+// #include "utils/syscache.h"
 
 
 #define MD5_RESULTLEN  (16)
@@ -41,6 +45,14 @@ static int	find_round_pos(char *float_char, int has_neg_sign, int int_digits, in
 static Datum return_varchar_pointer(char *buf, int size);
 
 /*
+ * Helper functions for hashbytes()
+ */
+void TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len);
+void AddUTF16ToStringInfo(int32_t code, StringInfo buf);
+int32_t GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p);
+// bool is_basetype_nvarchar(Oid typid);
+
+/*
  * Hashbytes implementation
  *
  * According to some SQL tsql, MD2, MD4, MD5, SHA/SHA1 still
@@ -61,6 +73,25 @@ hashbytes(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(in);
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
 	bytea	   *result;
+	StringInfoData utf16_data;
+	// Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	bool        is_nvarchar = false;
+	// common_utility_plugin **common_utility_plugin_ptr;
+	if (len >= 2 && data[len] == '~' && data[len+1] == '(')
+    {
+        is_nvarchar = true;
+    }
+	// if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type))
+	// {
+	// 	is_nvarchar = true;
+	// }	
+
+	if (is_nvarchar == true)
+	{
+        (common_utility_plugin_ptr->tsql_utf16_to_utf8)(&utf16_data, data, len);
+        data = (const uint8 *) utf16_data.data;
+        len = utf16_data.len;
+	}
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{

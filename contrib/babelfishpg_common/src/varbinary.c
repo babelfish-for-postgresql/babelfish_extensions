@@ -38,9 +38,12 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 #include "utils/varlena.h"
+#include "lib/stringinfo.h"
 
 #include "instr.h"
 #include "logical.h"
+#include "varchar.h"
+#include "babelfishpg_common.h"
 
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
@@ -56,6 +59,7 @@ PG_FUNCTION_INFO_V1(varbinaryrowversion);
 PG_FUNCTION_INFO_V1(rowversionbinary);
 PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
+PG_FUNCTION_INFO_V1(nvarcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
@@ -670,6 +674,90 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
+	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	// bool        is_varchar;
+	// common_utility_plugin **common_utility_plugin_ptr;
+
+
+	// if(is_varchar == false)
+	// 	return nvarcharvarbinary(fcinfo);
+	// if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type))
+	// {
+	// 	return nvarcharvarbinary(fcinfo);
+	// }
+	if(is_basetype_nchar_nvarchar(input_type))	
+	{
+		return nvarcharvarbinary(fcinfo);
+	}
+
+	else
+	{
+		if (!isExplicit)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					errmsg("Implicit conversion from data type varchar to "
+							"varbinary is not allowed. Use the CONVERT function "
+							"to run this query.")));
+
+		PG_TRY();
+		{
+			collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
+			encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+		}
+		PG_CATCH();
+		{
+			MemoryContext ectx;
+			ErrorData    *errorData;
+
+			ectx = MemoryContextSwitchTo(ccxt);
+			errorData = CopyErrorData();
+			FlushErrorState();
+			MemoryContextSwitchTo(ectx);
+
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to convert from data type varchar to varbinary, %s",
+					errorData->message)));
+		}
+		PG_END_TRY();
+	}
+
+
+	/* 
+	 * If typmod is -1 (or invalid), use the actual length
+	 * Length should be checked after encoding into server encoding
+	 */
+	if (typmod < (int32) VARHDRSZ)
+		maxlen = encodedByteLen;
+	else
+		maxlen = typmod - VARHDRSZ;
+
+	if (encodedByteLen > maxlen)
+		encodedByteLen = maxlen;
+	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, encoded_data, encodedByteLen);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+nvarcharvarbinary(PG_FUNCTION_ARGS)
+{
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);		/* Source string is UTF-8 */
+	char	   *encoded_data;
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
+	int			encodedByteLen;
+	StringInfoData s; 
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -680,8 +768,17 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
-		encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+		/*
+		 * For nvarchar ->
+		 * convert the string to UTF16 from UTF8 via TsqlUTF8toUTF16StringInfo();
+		 * For this we need to prepare a StringInfoData()
+		 */
+		initStringInfo(&s);
+		TsqlUTF8toUTF16StringInfo(&s, data, len);
+		encoded_data = s.data;
+		encodedByteLen= s.len;
+
+
 	}
 	PG_CATCH();
 	{
@@ -717,6 +814,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	memcpy(rp, encoded_data, encodedByteLen);
+	pfree(s.data);
 
 	PG_RETURN_BYTEA_P(result);
 }

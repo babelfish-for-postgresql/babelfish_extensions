@@ -187,6 +187,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_datetime2_datatype = &is_tsql_datetime2_datatype;
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
 		common_utility_plugin_var.is_tsql_datetimeoffset_datatype = &is_tsql_datetimeoffset_datatype;
+		common_utility_plugin_var.tsql_utf16_to_utf8 = &tsql_utf16_to_utf8;
 		common_utility_plugin_var.is_tsql_decimal_datatype = &is_tsql_decimal_datatype;
 		common_utility_plugin_var.is_tsql_sqlvariant_datatype = &is_tsql_sqlvariant_datatype;
 		common_utility_plugin_var.is_tsql_rowversion_or_timestamp_datatype = &is_tsql_rowversion_or_timestamp_datatype;
