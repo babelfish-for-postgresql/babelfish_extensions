@@ -217,10 +217,10 @@ static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
 static void rewrite_string_agg_query(TSqlParser::STRING_AGGContext *ctx);
 static bool setSysSchema = false;
 static void rewrite_function_trim_to_sys_trim(TSqlParser::TRIMContext *ctx);
-static bool isUserVarNameAtAtHash(const std::string name);
-static bool isDelimitedUserVarNameAtAtHash(const std::string name);
+static bool isAtAtUserVarName(const std::string name);
+static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
-static std::string delimitIfUserVarNameAtAtHash(const std::string name);	
+static std::string delimitIfAtAtUserVarName(const std::string name);	
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -269,7 +269,7 @@ static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment
 // TODO: incorporate local_id_positions with rewritten_query_fragment
 static std::map<size_t, std::string> local_id_positions;
 	
-// Keep track of location of user-defined variables like @@var or @vr#
+// For user-defined variables like @@var or @var# in the RETURN clause of an ITVF
 static std::map<size_t, std::string> local_id_positions_atatuservar;
 
 // should be called before visiting subclause to make PLtsql_stmt.
@@ -1961,7 +1961,7 @@ public:
 				}
 				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
 				{					
-					if (ddl_object && ddl_object->full_object_name() && isDelimitedUserVarNameAtAtHash(getFullText(ddl_object->full_object_name()) ))
+					if (ddl_object && ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name()) ))
 					{
 						/* This is a table variable name enclosed in delimiters, which is OK */
 					}
@@ -1997,7 +1997,7 @@ public:
 				}
 				else if (ddl_object && !ddl_object->local_id())
 				{
-					if (ddl_object && ddl_object->full_object_name() && isDelimitedUserVarNameAtAtHash(getFullText(ddl_object->full_object_name()) ))
+					if (ddl_object && ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name()) ))
 					{
 						/* DML target is a table variable name enclosed in delimiters, which is OK */
 						dmlTargetAllowed = true;
@@ -2095,7 +2095,7 @@ public:
 				return true;
 			}
 
-			if (isDelimitedUserVarNameAtAtHash(getFullText(table_source_item[i]->full_object_name())))
+			if (isDelimitedAtAtUserVarName(getFullText(table_source_item[i]->full_object_name())))
 			{
 				// Delimited table variable name, with alias matching the DML target
 				return true;
@@ -2727,7 +2727,10 @@ public:
 			if (ctx->DOT().empty())
 			{
 				std::string local_id_str = getFullText(ctx);
-				if (isDelimitedUserVarNameAtAtHash(local_id_str)) {
+				if (isDelimitedAtAtUserVarName(local_id_str)) {
+					// We're in the RETURN clause of an ITVF, and any variables names @@var or @var# will be delimited at this point.
+					// Downstream these need to be temporarily replaced with CAST(NULL as <type>), and to make that work we need
+					// to record their positions here. 
 					local_id_positions_atatuservar.emplace(std::make_pair(ctx->start->getStartIndex(), local_id_str));
 				}
 			}
@@ -4695,9 +4698,9 @@ makeTsqlExpr(const std::string &fragment, bool addSelect)
     PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
 
 	if (addSelect)
-		result->query = pstrdup((fragment_SELECT_prefix + delimitIfUserVarNameAtAtHash(fragment)).c_str());
+		result->query = pstrdup((fragment_SELECT_prefix + delimitIfAtAtUserVarName(fragment)).c_str());
 	else
-		result->query = pstrdup(delimitIfUserVarNameAtAtHash(fragment).c_str());		
+		result->query = pstrdup(delimitIfAtAtUserVarName(fragment).c_str());		
 
 	result->plan     = NULL;
 	result->paramnos = NULL;
@@ -5212,10 +5215,13 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 
 		std::u32string query = utf8_to_utf32(itvf_expr->query);
 			
-		/* Add the positions of @@var / @var# names */
+		/* 
+		 * Add the positions of @@var / @var# names to make the logic below work
+		 * for getting the column list.
+		 */
 		for (const auto &entryA : local_id_positions_atatuservar)
 		{
-			std::string varName = delimitIfUserVarNameAtAtHash(entryA.second);
+			std::string varName = delimitIfAtAtUserVarName(entryA.second);
 			local_id_positions.emplace(std::make_pair(entryA.first, varName));	
 		}
 					
@@ -5223,7 +5229,7 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 		{
 			const std::string& local_id = entry.second;
 			std::string local_id_lookup = local_id;				
-			if (isDelimitedUserVarNameAtAtHash(local_id)) local_id_lookup = local_id.substr(1,local_id.length()-2);				
+			if (isDelimitedAtAtUserVarName(local_id)) local_id_lookup = local_id.substr(1,local_id.length()-2);				
 			const std::u32string& local_id_u32 = utf8_to_utf32(local_id.c_str());
 			size_t offset = entry.first - base_index;
 			if (query.substr(offset, local_id_u32.length()) == local_id_u32) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
@@ -5322,7 +5328,7 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 	result->seterror = false;
 
 	// msg, severity, state
-	result->params = lappend(result->params, makeTsqlExpr(delimitIfUserVarNameAtAtHash(ctx->msg->getText()), true));
+	result->params = lappend(result->params, makeTsqlExpr(delimitIfAtAtUserVarName(ctx->msg->getText()), true));
 	recordSelectFragmentOffsets(ctx->parent, ctx->raiseerror_msg());
 		
 	result->params = lappend(result->params, makeTsqlExpr(ctx->severity, true));
@@ -5834,7 +5840,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		{
 			TSqlParser::Special_variableContext *guc_ctx = static_cast<TSqlParser::Special_variableContext*> (set_special_ctx->special_variable());
 			/* build expression with the input variable */
-			PLtsql_expr* input_expr = makeTsqlExpr(delimitIfUserVarNameAtAtHash(getFullText(set_special_ctx->LOCAL_ID())), true);
+			PLtsql_expr* input_expr = makeTsqlExpr(delimitIfAtAtUserVarName(getFullText(set_special_ctx->LOCAL_ID())), true);
 			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
 			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
 			/* assign expression to target */
@@ -9532,10 +9538,10 @@ handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
 }
 
 // Determine if a variable name contains a hash or starts with @@: these need special handling 
-// since the PG backend won't process these names otherwise.
+// since the PG backend isn't able to process these names otherwise.
 // For predefined global @@variables, these should not be delimited as the backend handles these already.
 static bool 
-isUserVarNameAtAtHash(const std::string name)
+isAtAtUserVarName(const std::string name)
 {
 	if (name.length() >= 3)
 	{
@@ -9561,11 +9567,12 @@ isUserVarNameAtAtHash(const std::string name)
 
 // Check for same variable name as above, but delimited
 static bool 
-isDelimitedUserVarNameAtAtHash(const std::string name)
+isDelimitedAtAtUserVarName(const std::string name)
 {
+	// Check for delimiters. Both square brackets and double quotes are used as delimiters for variable names.
 	if (((name.front() == '[') && (name.back() == ']')) || ((name.front() == '"') && (name.back() == '"')))
 	{
-		if (isUserVarNameAtAtHash(name.substr(1,name.length()-2)))
+		if (isAtAtUserVarName(name.substr(1,name.length()-2)))
    		{
  		  	return true;
 		}
@@ -9580,7 +9587,7 @@ handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject)
 	std::string local_id = ::getFullText(ctx);
 	
 	// Don't do anything for a predefined T-SQL global @@variable
-	if (!isUserVarNameAtAtHash(local_id))
+	if (!isAtAtUserVarName(local_id))
 	{
 		return;
 	}
@@ -9638,10 +9645,10 @@ handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject)
 
 // Delimit a variable name directly (rather than by rewriting) 
 static std::string 
-delimitIfUserVarNameAtAtHash(const std::string name)
+delimitIfAtAtUserVarName(const std::string name)
 {
 	std::string str = name;
-	if (isUserVarNameAtAtHash(name))
+	if (isAtAtUserVarName(name))
 	{
 		str = "[" + str + "]";
 	}

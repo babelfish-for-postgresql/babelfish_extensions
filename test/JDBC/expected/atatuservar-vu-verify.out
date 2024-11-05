@@ -3432,3 +3432,5 @@ four
 
 ~~ROW COUNT: 1~~
 
+set quoted_identifier on
+go

@@ -1715,3 +1715,5 @@ end
 go
 insert t22_trigger_atatuservar values (123)
 go
+set quoted_identifier on
+go

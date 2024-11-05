@@ -1491,7 +1491,7 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	 * Add delimiters for valid T-SQL variable names like @@var or @var#
 	 */	
 	if (is_tsql_atatuservar(tbl->tblname))
-		expr->query = psprintf("select * from \"%s\"", tbl->tblname);
+		expr->query = psprintf("select * from [%s]", tbl->tblname);
 	else
 		expr->query = psprintf("select * from %s", tbl->tblname);
 
@@ -2574,7 +2574,10 @@ delimit_tsql_atatuservar(const char *src, char *result)
 
 		if (varname_start != src)
 		{
-			/* Do not add delimiters if the name is already delimited */
+			/* 
+			 * Do not add delimiters if the name is already delimited.
+			 * Both square brackets and double quotes are used as delimiters for variable names.
+			 */
 			if ((*(varname_start-1) == '[') || (*(varname_start-1) == '"'))
 			{
 				add_delimiter = false;
