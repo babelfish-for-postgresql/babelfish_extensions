@@ -2525,6 +2525,7 @@ delimit_tsql_atatuservar(const char *src, char *result)
 {
 	char *s = (char *) src;
 	char *varname_start = NULL;
+	bool add_delimiter = false;
 
 	char *tgt = result;
 
@@ -2538,7 +2539,7 @@ delimit_tsql_atatuservar(const char *src, char *result)
 		}
 
 		/* Start of variable name found */
-		bool add_delimiter = false;
+		add_delimiter = false;
 
 		varname_start = s;
 
