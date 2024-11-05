@@ -264,7 +264,6 @@ GO
 CREATE TABLE trgdatetimediffTestTab(sysdatetime int, sysdatetimeoffset int, getdate int, currtimestamp int)
 GO
 
--- For daylight saving period DIFF will be 420, For non daylight saving period DIFF will be 
 CREATE TRIGGER trgdatetimediff
 ON datetimediffTable
 AFTER INSERT
