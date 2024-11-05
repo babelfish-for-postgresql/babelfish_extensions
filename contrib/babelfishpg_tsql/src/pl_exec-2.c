@@ -2685,7 +2685,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	 * definition is 5 characters ('@@p x' , where x would be the type), this will 
 	 * always be enough for adding delimiters.
 	 */	
-	paramdefstr_delimited = (char *) palloc(sizeof(char *)*strlen(paramdefstr)*2);	
+	paramdefstr_delimited = (char *) palloc(sizeof(char)*strlen(paramdefstr)*2);	
 	delimit_tsql_atatuservar(paramdefstr, paramdefstr_delimited);	
 
 	/*
