@@ -6037,7 +6037,10 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		}
 		std::string expr_query = ss.str();
 		result->expr = makeTsqlExpr(expr_query, true);
-		recordSelectFragmentOffsets(ctx->parent, exec_strings[0]->getStart()->getStartIndex(), exec_strings[exec_strings.size()-1]->getStop()->getStopIndex(), 0);
+		if (!exec_strings.empty())
+		{
+			recordSelectFragmentOffsets(ctx->parent, exec_strings[0]->getStart()->getStartIndex(), exec_strings[exec_strings.size()-1]->getStop()->getStopIndex(), 0);
+		}
 
 		return (PLtsql_stmt *) result;
 	}
