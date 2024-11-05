@@ -38,6 +38,7 @@
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/user.h"
+#include "commands/view.h"
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -2668,6 +2669,33 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (!babelfish_dump_restore && atstmt->objtype == OBJECT_TABLE && !superuser())
 				{
 					bbf_alter_handle_partitioned_table(atstmt);
+				}
+				break;
+			}
+		case T_AlterViewStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					AlterViewStmt *stmt = (AlterViewStmt*) parsetree;
+					ViewStmt *view = (ViewStmt*) parsetree;
+					ObjectAddress address;
+
+					if (!IS_TDS_CLIENT())
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("TSQL ALTER VIEW is not supported from PostgreSQL endpoint.")));
+					}
+
+					view->replace = false; // when replace set to true, program crashes (related to something in define view)
+					view->withCheckOption = stmt->withCheckOption;
+
+					EventTriggerAlterTableStart(parsetree);
+					address = DefineView(view, queryString, pstmt->stmt_location, pstmt->stmt_len, true);
+					EventTriggerAlterTableEnd();
+
+					/* Temproary statement, delete */
+					Assert(address.objectId != InvalidOid);
 				}
 				break;
 			}

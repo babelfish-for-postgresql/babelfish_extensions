@@ -2456,6 +2456,7 @@ tsql_stmt :
 			| AlterFdwStmt
 			| AlterFunctionStmt
 			| tsql_AlterFunctionStmt
+			| tsql_AlterViewStmt
 			| AlterGroupStmt
 			| tsql_AlterLoginStmt
 			| AlterObjectDependsStmt
@@ -4114,6 +4115,20 @@ tsql_AlterFunctionStmt:
                 {
 					$$ = buildTsqlMultiLineTvfNode(@1, false, $3, @3, $4, $6, @7, $9, $12, @12, true, yyscanner);
                 }
+		;
+
+tsql_AlterViewStmt: TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
+				{
+					AlterViewStmt *n = makeNode(AlterViewStmt);
+
+					n->view = $3;
+					n->aliases = $4;
+					n->query = $7;
+					n->options = $5;
+					n->withCheckOption = $8;
+					$$ = (Node *) n;
+				}
 		;
 
 /*

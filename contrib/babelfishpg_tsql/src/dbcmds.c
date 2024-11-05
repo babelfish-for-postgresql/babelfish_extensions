@@ -129,7 +129,14 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	if (guest)
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 
+	old_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_PG;
+	/* this query must be run in PG dialect or we will get a syntax error due to different
+	 * ALTER VIEW behavior between PG and TSQL
+	 */
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	sql_dialect = old_dialect;
 
 	if (guest)
 	{
