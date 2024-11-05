@@ -140,7 +140,7 @@ static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 /*****************************************
  * 			Commands Hooks
  *****************************************/
-static int	find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
+static int	find_attr_by_name_from_column_def_list(const char *attributeName, const List *columns);
 static void pltsql_drop_func_default_positions(Oid objectId);
 static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls);
 
@@ -659,11 +659,11 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	minOid = atooid(babelfish_dump_restore_min_oid);
 	Assert(OidIsValid(minOid));
-	if (ShmemVariableCache->nextOid >= minOid + 1)
+	if (TransamVariables->nextOid >= minOid + 1)
 		return;
 
-	ShmemVariableCache->nextOid = minOid + 1;
-	ShmemVariableCache->oidCount = 0;
+	TransamVariables->nextOid = minOid + 1;
+	TransamVariables->oidCount = 0;
 }
 
 static Oid
@@ -688,7 +688,7 @@ pltsql_GetNewTempObjectId()
 	{
 		/* First check to see if another connection has already picked a start, then update. */
 		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
-		if (OidIsValid(ShmemVariableCache->tempOidStart))
+		if (OidIsValid(TransamVariables->tempOidStart))
 		{
 			/*
 			 * Persist the newfound value of temp_oid_buffer_start to disk (via pg_settings).
@@ -696,28 +696,28 @@ pltsql_GetNewTempObjectId()
 			 * If for whatever reason this fails, we will fallback to manually updating the GUC,
 			 * which won't be crash-resilient, but won't cause loss of functionality.
 			 */
-			if (!set_and_persist_temp_oid_buffer_start(ShmemVariableCache->tempOidStart))
+			if (!set_and_persist_temp_oid_buffer_start(TransamVariables->tempOidStart))
 			{
 				elog(WARNING, "unable to persist temp_oid_buffer_start");
-				temp_oid_buffer_start = OID_TO_BUFFER_START(ShmemVariableCache->tempOidStart);
+				temp_oid_buffer_start = OID_TO_BUFFER_START(TransamVariables->tempOidStart);
 			}
-			nextTempOid = ShmemVariableCache->tempOidStart;
+			nextTempOid = TransamVariables->tempOidStart;
 		}
 		else
 		{
 			/* We need to pick a new start for the buffer range. */
-			tempOidStart = ShmemVariableCache->nextOid;
+			tempOidStart = TransamVariables->nextOid;
 
 			/*
-			 * Decrement ShmemVariableCache->oidCount to take into account the new buffer we're allocating
+			 * Decrement TransamVariables->oidCount to take into account the new buffer we're allocating
 			 */
-			if (ShmemVariableCache->oidCount < temp_oid_buffer_size)
-				ShmemVariableCache->oidCount = 0;
+			if (TransamVariables->oidCount < temp_oid_buffer_size)
+				TransamVariables->oidCount = 0;
 			else
-				ShmemVariableCache->oidCount -= temp_oid_buffer_size;
+				TransamVariables->oidCount -= temp_oid_buffer_size;
 
 			/*
-			 * If ShmemVariableCache->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * If TransamVariables->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
 			 * GetNewObjectId will return the right value on the next call.  
 			 */
 			if (tempOidStart < FirstNormalObjectId)
@@ -729,20 +729,20 @@ pltsql_GetNewTempObjectId()
 				tempOidStart = FirstNormalObjectId;
 
 				/* As in GetNewObjectId - wraparound in standalone mode (unlikely but possible) */
-				ShmemVariableCache->oidCount = 0;
+				TransamVariables->oidCount = 0;
 			}
 
 			if (!set_and_persist_temp_oid_buffer_start(tempOidStart))
 			{
 				elog(WARNING, "unable to persist temp_oid_buffer_start");
-				temp_oid_buffer_start = OID_TO_BUFFER_START(ShmemVariableCache->tempOidStart);
+				temp_oid_buffer_start = OID_TO_BUFFER_START(TransamVariables->tempOidStart);
 			}
-			ShmemVariableCache->tempOidStart = tempOidStart;
+			TransamVariables->tempOidStart = tempOidStart;
 
 			nextTempOid = (Oid) tempOidStart;
 
 			/* Skip nextOid ahead to end of range here as well. */
-			ShmemVariableCache->nextOid = (Oid) (tempOidStart + temp_oid_buffer_size);
+			TransamVariables->nextOid = (Oid) (tempOidStart + temp_oid_buffer_size);
 		}
 
 		/*
@@ -754,14 +754,14 @@ pltsql_GetNewTempObjectId()
 		if ((BUFFER_START_TO_OID < FirstNormalObjectId)
 		 || (((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) < BUFFER_START_TO_OID))
 			elog(ERROR, "OID buffer start is invalid");
-		if (ShmemVariableCache->nextOid < ((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) && ShmemVariableCache->nextOid > BUFFER_START_TO_OID)
+		if (TransamVariables->nextOid < ((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) && TransamVariables->nextOid > BUFFER_START_TO_OID)
 			elog(ERROR, "Normal OID range and Temp OID buffer intersect");
 
 		/* If we run out of logged for use oids then we must log more */
-		if (ShmemVariableCache->oidCount == 0)
+		if (TransamVariables->oidCount == 0)
 		{
-			XLogPutNextOid(ShmemVariableCache->nextOid + GetVarOidPrefetch());
-			ShmemVariableCache->oidCount = GetVarOidPrefetch();
+			XLogPutNextOid(TransamVariables->nextOid + GetVarOidPrefetch());
+			TransamVariables->oidCount = GetVarOidPrefetch();
 		}
 		
 		LWLockRelease(OidGenLock);
@@ -781,7 +781,7 @@ pltsql_GetNewTempObjectId()
 		 */
 		Assert(BUFFER_START_TO_OID >= FirstNormalObjectId);
 		Assert(((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) > BUFFER_START_TO_OID);
-		Assert(BUFFER_START_TO_OID != ShmemVariableCache->nextOid);
+		Assert(BUFFER_START_TO_OID != TransamVariables->nextOid);
 	
 		nextTempOid = BUFFER_START_TO_OID;
 	}
@@ -1963,14 +1963,14 @@ is_identifier_char(unsigned char c)
 }
 
 static int
-find_attr_by_name_from_column_def_list(const char *attributeName, List *schema)
+find_attr_by_name_from_column_def_list(const char *attributeName, const List *columns)
 {
 	char	   *attrname = downcase_identifier(attributeName, strlen(attributeName), false, false);
 	int			attrlen = strlen(attrname);
 	int			i = 1;
 	ListCell   *s;
 
-	foreach(s, schema)
+	foreach(s, columns)
 	{
 		ColumnDef  *def = lfirst(s);
 
@@ -5068,19 +5068,6 @@ make_restarget_from_cstr_list(List * l)
 	return tempResTarget;
 }
 
-static A_Const *
-makeStringConst(char *str, int location)
-{
-	A_Const	*node;
-
-	node = makeNode(A_Const);
-	node->val.sval.type = T_String;
-	node->val.sval.sval = str;
-
-	node->location = location;	
-	return node;
-}
-
 static void 
 transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
@@ -5607,7 +5594,7 @@ static char*
 pltsql_get_object_identity_event_trigger(ObjectAddress* address)
 {
     char *identity = NULL;
-    if (getObjectClass(address) == OCLASS_CLASS)
+    if (address->classId == RelationRelationId)
     {
         int save_nestlevel = 0;
         save_nestlevel = pltsql_new_guc_nest_level();

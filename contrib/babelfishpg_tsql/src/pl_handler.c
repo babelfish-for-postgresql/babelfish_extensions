@@ -154,7 +154,6 @@ extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
-static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
@@ -1032,7 +1031,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				pstate->p_namespace = NIL;
 				addNSItemToQuery(pstate, pstate->p_target_nsitem, false, true, true);
 				query->returningList = transformReturningList(pstate,
-															  returningList);
+															  returningList,
+															  EXPR_KIND_RETURNING);
 			}
 			else
 			{
@@ -1608,58 +1608,6 @@ static bool check_json_auto_walker(Node *node, ParseState *pstate)
 	}
 	return expression_tree_walker(node, check_json_auto_walker,
 								  (void *) pstate);
-}
-
-/*
- * transformReturningList -
- *	handle a RETURNING clause in INSERT/UPDATE/DELETE
- *
- *	Duplicated from analyzer
- */
-static List *
-transformReturningList(ParseState *pstate, List *returningList)
-{
-	List	   *rlist;
-	int			save_next_resno;
-
-	if (returningList == NIL)
-		return NIL;				/* nothing to do */
-
-	/*
-	 * We need to assign resnos starting at one in the RETURNING list. Save
-	 * and restore the main tlist's value of p_next_resno, just in case
-	 * someone looks at it later (probably won't happen).
-	 */
-	save_next_resno = pstate->p_next_resno;
-	pstate->p_next_resno = 1;
-
-	/* transform RETURNING identically to a SELECT targetlist */
-	rlist = transformTargetList(pstate, returningList, EXPR_KIND_RETURNING);
-
-	/*
-	 * Complain if the nonempty tlist expanded to nothing (which is possible
-	 * if it contains only a star-expansion of a zero-column table).  If we
-	 * allow this, the parsed Query will look like it didn't have RETURNING,
-	 * with results that would probably surprise the user.
-	 */
-	if (rlist == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("RETURNING must have at least one column"),
-				 parser_errposition(pstate,
-									exprLocation(linitial(returningList)))));
-
-	/* mark column origins */
-	markTargetListOrigins(pstate, rlist);
-
-	/* resolve any still-unresolved output columns as being type text */
-	if (pstate->p_resolve_unknowns)
-		resolveTargetListUnknowns(pstate, rlist);
-
-	/* restore state */
-	pstate->p_next_resno = save_next_resno;
-
-	return rlist;
 }
 
 static bool

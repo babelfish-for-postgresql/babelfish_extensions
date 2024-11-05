@@ -1283,7 +1283,7 @@ collation_is_CI(Oid colloid)
 		ReleaseSysCache(tp);
 		return false;
 	}
-	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colllocale, &isnull);
 	if (!isnull)
 		collcollate = pstrdup(TextDatumGetCString(datum));
 	ReleaseSysCache(tp);
@@ -1366,7 +1366,7 @@ is_collated_ai_internal(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tp);
 		PG_RETURN_BOOL(false);
 	}
-	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colllocale, &isnull);
 
 	if (isnull)
 	{

@@ -9,7 +9,6 @@
 #include "funcapi.h"
 #include "access/rmgr.h"
 #include "access/xlog_internal.h"
-#include "storage/backendid.h"
 #include "storage/smgr.h"
 
 #include "utils/memutils.h"

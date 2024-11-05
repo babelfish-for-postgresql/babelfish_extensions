@@ -39,12 +39,12 @@ Datum
 tsql_isjson(PG_FUNCTION_ARGS)
 {
 	JsonParseErrorType result;
-	JsonLexContext *lex;
+	JsonLexContext lex;
 	text	   *json_text = PG_GETARG_TEXT_PP(0);
 
 	/* set up lex context and parse json expression */
-	lex = makeJsonLexContext(json_text, false);
-	result = tsql_parse_json(json_text, lex, &nullSemAction);
+	makeJsonLexContext(&lex, json_text, false);
+	result = tsql_parse_json(json_text, &lex, &nullSemAction);
 
 	PG_RETURN_INT32((result == JSON_SUCCESS) ? 1 : 0);
 }
@@ -59,13 +59,13 @@ JsonParseErrorType
 tsql_parse_json(text *json_text, JsonLexContext *lex, JsonSemAction *sem)
 {
 	JsonParseErrorType result_first_token;
-	JsonLexContext *lex_first_token;
+	JsonLexContext lex_first_token;
 	JsonTokenType tok;
 
 	/* Short circuit when first token is scalar */
-	lex_first_token = makeJsonLexContext(json_text, false);
-	result_first_token = json_lex(lex_first_token);
-	tok = lex_first_token->token_type;
+	makeJsonLexContext(&lex_first_token, json_text, false);
+	result_first_token = json_lex(&lex_first_token);
+	tok = lex_first_token.token_type;
 	if (result_first_token != JSON_SUCCESS ||
 		(tok != JSON_TOKEN_OBJECT_START && tok != JSON_TOKEN_ARRAY_START))
 		return JSON_EXPECTED_JSON;
@@ -85,16 +85,16 @@ Datum
 tsql_jsonb_in(text *json_text)
 {
 	JsonParseErrorType result_first_token;
-	JsonLexContext *lex_first_token;
+	JsonLexContext lex_first_token;
 	JsonTokenType tok;
 
 	/* Short circuit when first token is scalar */
-	lex_first_token = makeJsonLexContext(json_text, false);
-	result_first_token = json_lex(lex_first_token);
-	tok = lex_first_token->token_type;
+	makeJsonLexContext(&lex_first_token, json_text, false);
+	result_first_token = json_lex(&lex_first_token);
+	tok = lex_first_token.token_type;
 	if (result_first_token != JSON_SUCCESS ||
 		(tok != JSON_TOKEN_OBJECT_START && tok != JSON_TOKEN_ARRAY_START))
-		json_errsave_error(result_first_token, lex_first_token, NULL);
+		json_errsave_error(result_first_token, &lex_first_token, NULL);
 
 	/* convert json expression to jsonb */
 	return DirectFunctionCall1(jsonb_in, CStringGetDatum(text_to_cstring(json_text)));

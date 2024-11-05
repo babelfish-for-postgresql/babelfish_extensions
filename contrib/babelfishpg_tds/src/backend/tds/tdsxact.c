@@ -318,7 +318,7 @@ GetTxnMgmtRequest(const StringInfo message)
 void
 ProcessTxnMgmtRequest(TDSRequest request)
 {
-	uint64_t	txnId = (uint64_t) MyProc->lxid;
+	uint64_t	txnId = (uint64_t) MyProc->vxid.lxid;
 	TDSRequestTxnMgmt req;
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
 	int			cmd_type = TDS_CMD_UNKNOWN;
@@ -388,7 +388,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 									   &txnId, sizeof(uint64_t));
 				if (req->nextTxn != NULL)
 				{
-					txnId = (uint64_t) MyProc->lxid;
+					txnId = (uint64_t) MyProc->vxid.lxid;
 					TdsSendEnvChangeBinary(TDS_ENVID_BEGINTXN,
 										   &txnId, sizeof(uint64_t),
 										   NULL, 0);
@@ -414,7 +414,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 										   &txnId, sizeof(uint64_t));
 				if (req->nextTxn != NULL)
 				{
-					txnId = (uint64_t) MyProc->lxid;
+					txnId = (uint64_t) MyProc->vxid.lxid;
 					TdsSendEnvChangeBinary(TDS_ENVID_BEGINTXN,
 										   &txnId, sizeof(uint64_t),
 										   NULL, 0);

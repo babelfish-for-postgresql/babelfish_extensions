@@ -283,7 +283,7 @@ serverproperty(PG_FUNCTION_ARGS)
 			bool		isnull;
 
 			datlocprovider = ((Form_pg_database) GETSTRUCT(tuple))->datlocprovider;
-			datum = SysCacheGetAttr(DATABASEOID, tuple, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate, &isnull);
+			datum = SysCacheGetAttr(DATABASEOID, tuple, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_datlocale : Anum_pg_database_datcollate, &isnull);
 			Assert(!isnull);
 			collation_name = pstrdup(TextDatumGetCString(datum));
 			ReleaseSysCache(tuple);

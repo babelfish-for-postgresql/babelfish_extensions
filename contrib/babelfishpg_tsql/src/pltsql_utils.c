@@ -1244,7 +1244,7 @@ UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force)
 
 	SET_LOCKTAG_INT16(tag, dbid);
 
-	if (!force && !LockHeldByMe(&tag, lockmode))
+	if (!force && !LockHeldByMe(&tag, lockmode, false))
 		return;
 
 	LockRelease(&tag, lockmode, true);

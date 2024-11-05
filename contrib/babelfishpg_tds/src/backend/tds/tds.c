@@ -32,7 +32,7 @@
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "postmaster/postmaster.h"
-#include "storage/backendid.h"
+#include "storage/procarray.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -55,7 +55,7 @@
  * includes autovacuum workers and background workers as well.
  * ----------
  */
-#define NumBackendStatSlots (MaxBackends + NUM_AUXPROCTYPES)
+#define NumBackendStatSlots (MaxBackends + NUM_AUXILIARY_PROCS)
 
 #define LIBDATALEN 32
 #define LANGDATALEN 128
@@ -462,8 +462,8 @@ void
 tdsstat_initialize(void)
 {
 	/* Initialize MyTdsStatusEntry */
-	Assert(MyBackendId >= 1 && MyBackendId <= MaxBackends);
-	MyTdsStatusEntry = &TdsStatusArray[MyBackendId - 1];
+	Assert(MyProcNumber >= 0 && MyProcNumber < MaxBackends);
+	MyTdsStatusEntry = &TdsStatusArray[MyProcNumber];
 
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(tds_stats_shmem_shutdown, 0);
@@ -622,7 +622,7 @@ tdsstat_read_current_status(void)
 	volatile TdsStatus *tdsentry;
 	LocalTdsStatus *localtable;
 	LocalTdsStatus *localentry;
-	int			i;
+	ProcNumber		i;
 
 	if (isLocalStatusTableValid)
 		return;					/* already done */
@@ -751,7 +751,7 @@ tdsstat_read_current_status(void)
 		/* Only valid entries get included into the local array */
 		if (localentry->tdsStatus.st_procpid > 0)
 		{
-			BackendIdGetTransactionIds(i, 
+			ProcNumberGetTransactionIds(i, 
 									   &localentry->backend_xid, 
 									   &localentry->backend_xmin, 
 									   &localentry->backend_subxact_count, 

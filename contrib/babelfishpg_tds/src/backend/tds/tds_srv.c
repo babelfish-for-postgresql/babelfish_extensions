@@ -42,8 +42,6 @@
 
 static listen_init_hook_type prev_listen_init;
 
-static bool LoadedSSL = false;
-
 /* Where the Unix socket files are (list of palloc'd strings) */
 static List *sock_paths = NIL;
 
@@ -52,10 +50,10 @@ static ErrorContextCallback tdserrcontext;
 
 TdsErrorContextData *TdsErrorContext = NULL;
 
-static int	pe_accept(pgsocket server_fd, Port *port);
-static void pe_listen_init(void);
-static void pe_close(pgsocket server_fd);
-static void pe_tds_init(void);
+static int	pe_accept(pgsocket server_fd, ClientSocket *client_sock);
+static void	pe_listen_init(void);
+static int	pe_close(pgsocket server_fd);
+static Port	*pe_tds_init(ClientSocket *client_sock);
 static int	pe_start(Port *port);
 static void pe_authenticate(Port *port, const char **username);
 static void pe_mainfunc(Port *port) pg_attribute_noreturn();
@@ -132,32 +130,131 @@ pe_listen_init(void)
  * pe_accept - Accept a new incoming client connection
  */
 static int
-pe_accept(pgsocket server_fd, Port *port)
+pe_accept(pgsocket server_fd, ClientSocket *client_sock)
 {
-	return pe_create_connection(server_fd, port);
+	return AcceptConnection(server_fd, client_sock);
 }
 
 /*
  * pe_close - called to close server sockets in new backend
  */
-static void
+static int
 pe_close(pgsocket server_fd)
 {
-	StreamClose(server_fd);
+	return closesocket(server_fd);
 }
 
 /*
  * pe_init - equivalent of pq_init
  */
-static void
-pe_tds_init(void)
+static Port *
+pe_tds_init(ClientSocket *client_sock)
 {
 	PLtsql_protocol_plugin **pltsql_plugin_handler_ptr_tmp;
+	Port	*port;
+
+	/* allocate the Port struct and copy the ClientSocket contents to it */
+	port = palloc0(sizeof(Port));
+	port->sock = client_sock->sock;
+	memcpy(&port->raddr.addr, &client_sock->raddr.addr, client_sock->raddr.salen);
+	port->raddr.salen = client_sock->raddr.salen;
+ 
+	/* fill in the server (local) address */
+	port->laddr.salen = sizeof(port->laddr.addr);
+	if (getsockname(port->sock,
+					(struct sockaddr *) &port->laddr.addr,
+					&port->laddr.salen) < 0)
+	{
+		ereport(FATAL,
+				(errmsg("%s() failed: %m", "getsockname")));
+	}
+ 
+	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
+	if (port->laddr.addr.ss_family != AF_UNIX)
+	{
+		int			on;
+#ifdef WIN32
+		int			oldopt;
+		int			optlen;
+		int			newopt;
+#endif
+ 
+#ifdef	TCP_NODELAY
+		on = 1;
+		if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
+					   (char *) &on, sizeof(on)) < 0)
+		{
+			ereport(FATAL,
+					(errmsg("%s(%s) failed: %m", "setsockopt", "TCP_NODELAY")));
+		}
+#endif
+		on = 1;
+		if (setsockopt(port->sock, SOL_SOCKET, SO_KEEPALIVE,
+					   (char *) &on, sizeof(on)) < 0)
+		{
+			ereport(FATAL,
+					(errmsg("%s(%s) failed: %m", "setsockopt", "SO_KEEPALIVE")));
+		}
+ 
+#ifdef WIN32
+ 
+		/*
+		 * This is a Win32 socket optimization.  The OS send buffer should be
+		 * large enough to send the whole Postgres send buffer in one go, or
+		 * performance suffers.  The Postgres send buffer can be enlarged if a
+		 * very large message needs to be sent, but we won't attempt to
+		 * enlarge the OS buffer if that happens, so somewhat arbitrarily
+		 * ensure that the OS buffer is at least PQ_SEND_BUFFER_SIZE * 4.
+		 * (That's 32kB with the current default).
+		 *
+		 * The default OS buffer size used to be 8kB in earlier Windows
+		 * versions, but was raised to 64kB in Windows 2012.  So it shouldn't
+		 * be necessary to change it in later versions anymore.  Changing it
+		 * unnecessarily can even reduce performance, because setting
+		 * SO_SNDBUF in the application disables the "dynamic send buffering"
+		 * feature that was introduced in Windows 7.  So before fiddling with
+		 * SO_SNDBUF, check if the current buffer size is already large enough
+		 * and only increase it if necessary.
+		 *
+		 * See https://support.microsoft.com/kb/823764/EN-US/ and
+		 * https://msdn.microsoft.com/en-us/library/bb736549%28v=vs.85%29.aspx
+		 */
+		optlen = sizeof(oldopt);
+		if (getsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &oldopt,
+					   &optlen) < 0)
+		{
+			ereport(FATAL,
+					(errmsg("%s(%s) failed: %m", "getsockopt", "SO_SNDBUF")));
+		}
+		newopt = PQ_SEND_BUFFER_SIZE * 4;
+		if (oldopt < newopt)
+		{
+			if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &newopt,
+						   sizeof(newopt)) < 0)
+			{
+				ereport(FATAL,
+						(errmsg("%s(%s) failed: %m", "setsockopt", "SO_SNDBUF")));
+			}
+		}
+#endif
+ 
+		/*
+		 * Also apply the current keepalive parameters.  If we fail to set a
+		 * parameter, don't error out, because these aren't universally
+		 * supported.  (Note: you might think we need to reset the GUC
+		 * variables to 0 in such a case, but it's not necessary because the
+		 * show hooks for these variables report the truth anyway.)
+		 */
+		(void) pq_setkeepalivesidle(tcp_keepalives_idle, port);
+		(void) pq_setkeepalivesinterval(tcp_keepalives_interval, port);
+		(void) pq_setkeepalivescount(tcp_keepalives_count, port);
+		(void) pq_settcpusertimeout(tcp_user_timeout, port);
+	}
 
 	/* This is client backend */
 	MyBackendType = B_BACKEND;
 
-	TdsClientInit();
+	TdsClientInit(port);
 
 	/*
 	 * If this is a TDS client, we install the TDS specific protocol function
@@ -211,6 +308,11 @@ pe_tds_init(void)
 
 	/* set up process-exit hook to close the socket */
 	on_proc_exit(socket_close, 0);
+
+	/* mark the connection as TDS */
+	port->is_tds_conn = true;
+
+	return port;
 }
 
 /*
@@ -225,8 +327,8 @@ pe_tds_init(void)
 static int
 pe_start(Port *port)
 {
-	int			rc;
-	MemoryContext oldContext;
+	int				rc = 0;
+	MemoryContext	oldContext;
 
 	/* we're ready to begin the communication with the TDS client */
 	if ((pltsql_plugin_handler_ptr))
@@ -249,7 +351,11 @@ pe_start(Port *port)
 	tdserrcontext.previous = error_context_stack;
 	error_context_stack = &tdserrcontext;
 
+#ifdef USE_SSL
 	if ((rc = TdsProcessLogin(port, LoadedSSL)) == -1)
+#else
+	if ((rc = TdsProcessLogin(port, false)) == -1)
+#endif
 	{
 		return STATUS_ERROR;
 	}

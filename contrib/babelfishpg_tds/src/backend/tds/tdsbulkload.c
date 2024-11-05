@@ -937,7 +937,7 @@ CleanupBCPDuringError(bool internal_sp_started,
 	if (ret < 0)
 		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
 
-	if (internal_sp_started && before_lxid == MyProc->lxid && before_subtxn_id == GetCurrentSubTransactionId())
+	if (internal_sp_started && before_lxid == MyProc->vxid.lxid && before_subtxn_id == GetCurrentSubTransactionId())
 	{
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			elog(LOG, "TSQL TXN PG semantics : Rollback internal savepoint");
@@ -978,7 +978,7 @@ ProcessBCPRequest(TDSRequest request)
 	StringInfo	message = req->firstMessage;
 	volatile bool internal_sp_started = false;
 	volatile int before_subtxn_id = 0;
-	volatile int before_lxid = MyProc->lxid;
+	volatile int before_lxid = MyProc->vxid.lxid;
 	ResourceOwner oldowner = CurrentResourceOwner;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	bool endOfMessage = false;

@@ -296,7 +296,7 @@ extern bool TdsGetRecvPacketEomStatus(void);
 /* Functions in backend/tds/tdslogin.c */
 extern void TdsSetBufferSize(uint32_t newSize);
 extern void TdsClientAuthentication(Port *port);
-extern void TdsClientInit(void);
+extern void TdsClientInit(Port *port);
 extern void TdsSetBufferSize(uint32_t newSize);
 extern int	TdsProcessLogin(Port *port, bool LoadSsl);
 extern void TdsSendLoginAck(Port *port);

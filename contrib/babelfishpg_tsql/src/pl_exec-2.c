@@ -1190,7 +1190,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		paramLI = setup_param_list(estate, expr);
 
-		before_lxid = MyProc->lxid;
+		before_lxid = MyProc->vxid.lxid;
 		topEntry = simple_econtext_stack;
 
 		memset(&options, 0, sizeof(options));
@@ -1200,7 +1200,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		rc = SPI_execute_plan_extended(expr->plan, &options);
 
-		after_lxid = MyProc->lxid;
+		after_lxid = MyProc->vxid.lxid;
 
 		if (before_lxid != after_lxid ||
 			simple_econtext_stack == NULL ||
@@ -1536,7 +1536,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		MemSet(fcinfo, 0, SizeForFunctionCallInfo(1));
 		fcinfo->args[0].value = PointerGetDatum(codeblock);
 		fcinfo->args[0].isnull = false;
-		before_lxid = MyProc->lxid;
+		before_lxid = MyProc->vxid.lxid;
 		topEntry = simple_econtext_stack;
 
 		/* Pass the control the inline handler */
@@ -1557,7 +1557,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	}
 	PG_END_TRY();
 
-	after_lxid = MyProc->lxid;
+	after_lxid = MyProc->vxid.lxid;
 
 	/*
 	 * This logic is similar to what we do in exec_stmt_exec_spexecutesql().
@@ -1649,7 +1649,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 		}
 	}
 
-	before_lxid = MyProc->lxid;
+	before_lxid = MyProc->vxid.lxid;
 	topEntry = simple_econtext_stack;
 
 	/*
@@ -1675,7 +1675,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	/* Delete temporary tables as ENR */
 	pltsql_remove_current_query_env();
 
-	after_lxid = MyProc->lxid;
+	after_lxid = MyProc->vxid.lxid;
 
 	/* SP_PREPAR may pass NULL */
 	if (!estate)
@@ -3371,7 +3371,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		if (attr->attidentity)
 		{
 			attname = NameStr(attr->attname);
-			seqid = getIdentitySequence(table_oid, attnum + 1, false);
+			seqid = getIdentitySequence(rel, attnum + 1, false);
 			break;
 		}
 	}

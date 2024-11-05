@@ -913,7 +913,7 @@ BeginBulkCopy(Relation rel,
 		if (att->attidentity)
 		{
 			cstate->seq_index = attnum - 1;
-			cstate->seqid = getIdentitySequence(RelationGetRelid(cstate->rel), attnum, false);
+			cstate->seqid = getIdentitySequence(rel, attnum, false);
 		}
 		/* Get default info if needed */
 		else if (!att->attgenerated && att->atthasdef)
@@ -1004,7 +1004,7 @@ BeginBulkCopy(Relation rel,
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT. */
-	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT);
+	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT, NIL);
 
 	CopyMultiInsertInfoInit(&cstate->multiInsertInfo, cstate->resultRelInfo, cstate,
 							cstate->estate, cstate->mycid, ti_options);

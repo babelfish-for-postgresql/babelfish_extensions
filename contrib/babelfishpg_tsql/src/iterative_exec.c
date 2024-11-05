@@ -1248,7 +1248,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 {
 	int			rc = PLTSQL_RC_OK;
 	volatile bool internal_sp_started;
-	volatile int before_lxid = MyProc->lxid;
+	volatile int before_lxid = MyProc->vxid.lxid;
 	volatile int before_subtxn_id = 0;
 	MemoryContext cur_ctxt = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -1306,7 +1306,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 
 		/* Release internal savepoint if it is current active savepoint */
 		if (internal_sp_started &&
-			before_lxid == MyProc->lxid &&
+			before_lxid == MyProc->vxid.lxid &&
 			before_subtxn_id == GetCurrentSubTransactionId())
 		{
 			elog(DEBUG5, "TSQL TXN Release internal savepoint");
@@ -1402,7 +1402,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		error_mapped = get_tsql_error_code(edata, &last_error);
 		exec_set_error(estate, last_error, edata->sqlerrcode, !error_mapped);
 		if (internal_sp_started &&
-			before_lxid == MyProc->lxid &&
+			before_lxid == MyProc->vxid.lxid &&
 			before_subtxn_id == GetCurrentSubTransactionId())
 		{
 			HOLD_INTERRUPTS();
@@ -2179,7 +2179,7 @@ static
 void
 send_env_change_token_on_txn_abort(void)
 {
-	uint64_t	txnId = (uint64_t) MyProc->lxid;
+	uint64_t	txnId = (uint64_t) MyProc->vxid.lxid;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change_binary)
 		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (ENVCHANGE_ROLLBACKTXN, NULL, 0, &txnId, sizeof(uint64_t));

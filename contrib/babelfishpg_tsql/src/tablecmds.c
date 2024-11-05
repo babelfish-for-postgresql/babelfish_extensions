@@ -250,7 +250,7 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 		 * Below logic has been taken from backend's ATExecAlterColumnType
 		 * function
 		 */
-		if (getObjectClass(&foundObject) == OCLASS_DEFAULT)
+		if (foundObject.classId == AttrDefaultRelationId)
 		{
 			ObjectAddress col = GetAttrDefaultColumnAddress(foundObject.objectId);
 

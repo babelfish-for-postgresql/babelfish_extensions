@@ -234,7 +234,7 @@ get_table_identity(Oid tableOid)
 
 		if (attr->attidentity)
 		{
-			seqid = getIdentitySequence(tableOid, attnum + 1, false);
+			seqid = getIdentitySequence(rel, attnum + 1, false);
 			break;
 		}
 	}
