@@ -29,12 +29,13 @@ select * from getutcdate_dep_view
 go
 
 -- all the tests have datetime difference spillover correction to avoid flakiness.
+-- For daylight saving period DIFF will be 420, For non daylight saving period DIFF will be 480
 declare @x datetime2 = sysdatetime()
 select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = sysdatetime()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = 480 or @diff = 479
     SELECT 1;
 ELSE
     SELECT 0;
@@ -45,7 +46,7 @@ select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = 480 or @diff = 479
     SELECT 1;
 ELSE
     SELECT 0;
@@ -56,7 +57,7 @@ select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = getdate()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = 480 or @diff = 479
     SELECT 1;
 ELSE
     SELECT 0;
@@ -67,7 +68,7 @@ select set_config('timezone', 'US/Pacific', false);
 declare @y datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = 480 or @diff = 479
     SELECT 1;
 ELSE
     SELECT 0;
@@ -85,7 +86,7 @@ go
 declare @x datetime2 = sysdatetimeoffset() AT TIME ZONE 'Pacific Standard Time'
 declare @y datetime2 = sysdatetimeoffset() AT TIME ZONE 'UTC'
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = -420 or @diff = -421
+IF @diff = -480 or @diff = -481
     SELECT 1;
 ELSE
     SELECT 0;
@@ -124,27 +125,28 @@ go
 SELECT * from dbo.datetimediffView;
 go
 
+-- For daylight saving period DIFF will be 420, For non daylight saving period DIFF will be 480
 declare @x datetime2 = SYSDATETIME();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeDiffFunc(@x, -420, 1)
+select dbo.GetSysDatetimeDiffFunc(@x, -480, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = sysdatetimeoffset();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeOffsetDiffFunc(@x, -420, 1)
+select dbo.GetSysDatetimeOffsetDiffFunc(@x, -480, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = getdate();
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetDateDiffFunc(@x, -420, 1)
+select dbo.GetDateDiffFunc(@x, -480, 1)
 select set_config('timezone', 'UTC', false);
 go
 
 declare @x datetime2 = CURRENT_TIMESTAMP;
 select set_config('timezone', 'US/Pacific', false);
-select dbo.GetCurrTimestampDiffFunc(@x, -420, 1)
+select dbo.GetCurrTimestampDiffFunc(@x, -480, 1)
 select set_config('timezone', 'UTC', false);
 go
 
