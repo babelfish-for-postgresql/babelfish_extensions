@@ -237,6 +237,7 @@ Finalize Aggregate  (cost=4655.02..4655.03 rows=1 width=4)
         Workers Planned: 4
         ->  Partial Aggregate  (cost=4655.00..4655.01 rows=1 width=8)
               ->  Parallel Seq Scan on smalldate_date_cmp_t1  (cost=0.00..4530.00 rows=50000 width=0)
+                    Filter: (smalldatetime_col > '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
