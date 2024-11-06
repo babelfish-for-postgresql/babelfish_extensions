@@ -133,7 +133,7 @@ static bool prev_insert_bulk_check_constraints = false;
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 
 /* Enclose a user-defined @@var or @var# name in delimiters */
-static void delimit_tsql_atatuservar(const char *src, char *result);
+static char *delimit_tsql_atatuservar(const char *src);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -2520,13 +2520,20 @@ is_char_identpart(char c)
  * This is used for the parameter argument of sp_executesql, so the input
  * string may contain multiple names, e.g.: @par1 int, @par2 varchar(20), ...
  */
-static void
-delimit_tsql_atatuservar(const char *src, char *result)
+static char *
+delimit_tsql_atatuservar(const char *src)
 {
 	char *s = (char *) src;
 	char *varname_start = NULL;
 	bool add_delimiter = false;
-
+	
+	/* 
+	 * Reserving twice the amount of space of the input string: since the shortest possible
+	 * parameter definition is 5 characters ('@@p x' , where x would be the type), this will 
+	 * always be enough for adding delimiters.
+	 * Note that there can be multiple parameter names in the input string.
+	 */
+	char *result = (char *) palloc(sizeof(char)*strlen(src)*2);	
 	char *tgt = result;
 
 	while (*s)
@@ -2594,6 +2601,7 @@ delimit_tsql_atatuservar(const char *src, char *result)
 	} /* while */
 
 	*tgt = '\0';
+	return result;
 }
 
 /*
@@ -2669,7 +2677,6 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	const char *str1 = "CREATE PROC p_tmp_spexecutesql (";
 	const char *str2 = ") AS BEGIN END; DROP PROC p_tmp_spexecutesql;";
 	StringInfoData proc_stmt;
-	char	   *paramdefstr_delimited;
 
 	Assert(args);
 
@@ -2679,22 +2686,14 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		return;
 	}
 
-	/* 
-	 * Put delimiters around parameter names like @@par or @par#.
-	 * Reserving twice the amount of space: since the shortest possible parameter
-	 * definition is 5 characters ('@@p x' , where x would be the type), this will 
-	 * always be enough for adding delimiters.
-	 */	
-	paramdefstr_delimited = (char *) palloc(sizeof(char)*strlen(paramdefstr)*2);	
-	delimit_tsql_atatuservar(paramdefstr, paramdefstr_delimited);	
-
 	/*
 	 * Create a fake CREATE PROCEDURE statement to get the param definition
 	 * parse tree.
+	 * Delimiters will be applied around parameter names like @@par or @par#.
 	 */
 	initStringInfo(&proc_stmt);
 	appendStringInfoString(&proc_stmt, str1);
-	appendStringInfoString(&proc_stmt, paramdefstr_delimited);
+	appendStringInfoString(&proc_stmt, delimit_tsql_atatuservar(paramdefstr));
 	appendStringInfoString(&proc_stmt, str2);
 
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
