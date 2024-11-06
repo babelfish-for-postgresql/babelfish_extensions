@@ -2519,6 +2519,8 @@ is_char_identpart(char c)
  * Without delimiters, the backend will raise an error.
  * This is used for the parameter argument of sp_executesql, so the input
  * string may contain multiple names, e.g.: @par1 int, @par2 varchar(20), ...
+ * This function calls palloc() to allocate a new string and returns a pointer
+ * to this string.
  */
 static char *
 delimit_tsql_atatuservar(const char *src)
