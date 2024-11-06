@@ -1,0 +1,70 @@
+USE master
+GO
+
+CREATE TABLE myschema.t(a int)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "myschema" does not exist)~~
+
+
+EXEC dbo.myproc
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.myproc() does not exist)~~
+
+
+SELECT * FROM dbo.t14
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.t14" does not exist)~~
+
+
+DROP USER smith
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'smith', because it does not exist or you do not have permission.)~~
+
+
+CREATE DATABASE TestDB2961
+GO
+
+USE TestDB2961
+GO
+
+CREATE TABLE myschema.t(a int)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "myschema" does not exist)~~
+
+
+EXEC dbo.myproc
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.myproc() does not exist)~~
+
+
+SELECT * FROM dbo.t14
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.t14" does not exist)~~
+
+
+DROP USER smith
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'smith', because it does not exist or you do not have permission.)~~
+
+
+USE master
+GO
+
+DROP DATABASE TestDB2961
+GO
