@@ -2,11 +2,11 @@ USE master;
 GO
 
 CREATE VIEW sys_configurations_vu_prepare_v1 AS
-SELECT * FROM sys.configurations
+SELECT configuration_id, name, minimum, maximum, description, is_dynamic, is_advanced FROM sys.configurations
 GO
 
 CREATE PROC sys_configurations_vu_prepare_p1 AS
-SELECT * FROM sys.configurations
+SELECT configuration_id, name, minimum, maximum, description, is_dynamic, is_advanced FROM sys.configurations
 GO
 
 CREATE FUNCTION sys_configurations_vu_prepare_f1()
