@@ -157,5 +157,11 @@ drop table t21_trigger_atatuservar
 go
 drop table t22_trigger_atatuservar
 go
+drop table t23_trigger_atatuservar
+go
 drop procedure p1_cursor_atatuservar
+go
+drop procedure p1_sysfunctions_atatuservar
+go
+drop function f1_sysfunctions_atatuservar
 go

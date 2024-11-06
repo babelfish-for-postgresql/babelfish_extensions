@@ -1717,3 +1717,126 @@ insert t22_trigger_atatuservar values (123)
 go
 set quoted_identifier on
 go
+
+-- user-defined variables that were previously mapped to internal sys. functions, e.g. sys.rand()
+declare @@xact_state int=123 select @@xact_state, xact_state()
+go
+declare @@error_line int=123 select @@error_line, error_line()
+go
+declare @@error_message int=123 select @@error_message, error_message()
+go
+declare @@error_number int=123 select @@error_number, error_number()
+go
+declare @@error_procedure int=123 select @@error_procedure, error_procedure()
+go
+declare @@error_severity int=123 select @@error_severity, error_severity()
+go
+declare @@error_state int=123 select @@error_state, error_state()
+go
+declare @@db_id int=123 select @@db_id, db_id('master')
+go
+declare @@db_name int=123 select @@db_name, db_name()
+go
+declare @@exp int=123 select @@exp, exp(1)
+go
+declare @@sign int=123 select @@sign, sign(1)
+go
+declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
+go
+declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
+go
+declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
+go
+declare @@atn2 int=123 select @@atn2, atn2(1,0)
+go
+declare @@datepart int=123 select @@datepart, datepart(yy, '2024-11-12')
+go
+declare @@datediff int=123 select @@datediff, datediff(dd, '2024-11-12', '2024-12-13')
+go
+declare @@datediff_big int=123 select @@datediff_big, datediff(dd, '2024-11-12', '2024-12-13')
+go
+declare @@dateadd int=123 select @@dateadd, datediff(dd, 3, '2024-11-12')
+go
+declare @@datename int=123 select @@datename, datename(dw, '2024-11-12')
+go
+
+create proc p1_sysfunctions_atatuservar
+as
+begin
+declare @@xact_state int=123 select @@xact_state, xact_state()
+declare @@error_line int=123 select @@error_line, error_line()
+declare @@error_message int=123 select @@error_message, error_message()
+declare @@error_number int=123 select @@error_number, error_number()
+declare @@error_procedure int=123 select @@error_procedure, error_procedure()
+declare @@error_state int=123 select @@error_state, error_state()
+declare @@db_id int=123 select @@db_id, db_id('master')
+declare @@db_name int=123 select @@db_name, db_name()
+declare @@exp int=123 select @@exp, exp(1)
+declare @@sign int=123 select @@sign, sign(1)
+declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
+declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
+declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
+declare @@atn2 int=123 select @@atn2, atn2(1,0)
+declare @@datepart int=123 select @@datepart, datepart(yy, '2024-11-12')
+declare @@datediff int=123 select @@datediff, datediff(dd, '2024-11-12', '2024-12-13')
+declare @@datediff_big int=123 select @@datediff_big, datediff(dd, '2024-11-12', '2024-12-13')
+declare @@dateadd int=123 select @@dateadd, datediff(dd, 3, '2024-11-12')
+declare @@datename int=123 select @@datename, datename(dw, '2024-11-12')
+end
+go
+exec p1_sysfunctions_atatuservar
+go
+
+create function f1_sysfunctions_atatuservar() returns int
+as
+begin
+declare @@xact_state int=123 
+declare @@error_line int=123 
+declare @@error_message int=123 
+declare @@error_number int=123 
+declare @@error_procedure int=123 
+declare @@error_state int=123 
+declare @@db_id int=123 
+declare @@db_name int=123 
+declare @@exp int=123 
+declare @@sign int=123 
+declare @@lock_timeout int=123 
+declare @@rand int=123 
+declare @@trigger_nestlevel int=123 
+declare @@atn2 int=123 
+declare @@datepart int=123 
+declare @@datediff int=123 
+declare @@datediff_big int=123 
+declare @@dateadd int=123 
+declare @@datename int=123 
+return @@xact_state + @@error_line + @@error_message + @@error_number + @@error_procedure + @@error_state + @@db_id + @@db_name + @@exp + @@sign + @@lock_timeout + @@rand + @@trigger_nestlevel + @@atn2 + @@datepart + @@datediff + @@datediff_big + @@dateadd + @@datename 
+end
+go
+select dbo.f1_sysfunctions_atatuservar()
+go
+
+create trigger tr1_sysfunctions_atatuservar on t23_trigger_atatuservar for insert as
+begin
+declare @@xact_state int=123 select @@xact_state, xact_state()
+declare @@error_line int=123 select @@error_line, error_line()
+declare @@error_message int=123 select @@error_message, error_message()
+declare @@error_number int=123 select @@error_number, error_number()
+declare @@error_procedure int=123 select @@error_procedure, error_procedure()
+declare @@error_state int=123 select @@error_state, error_state()
+declare @@db_id int=123 select @@db_id, db_id('master')
+declare @@db_name int=123 select @@db_name, db_name()
+declare @@exp int=123 select @@exp, exp(1)
+declare @@sign int=123 select @@sign, sign(1)
+declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
+declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
+declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
+declare @@atn2 int=123 select @@atn2, atn2(1,0)
+declare @@datepart int=123 select @@datepart, datepart(yy, '2024-11-12')
+declare @@datediff int=123 select @@datediff, datediff(dd, '2024-11-12', '2024-12-13')
+declare @@datediff_big int=123 select @@datediff_big, datediff(dd, '2024-11-12', '2024-12-13')
+declare @@dateadd int=123 select @@dateadd, datediff(dd, 3, '2024-11-12')
+declare @@datename int=123 select @@datename, datename(dw, '2024-11-12')
+end
+go
+insert t23_trigger_atatuservar values(1)
+go

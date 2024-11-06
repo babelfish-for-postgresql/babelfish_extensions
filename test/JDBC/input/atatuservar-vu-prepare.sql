@@ -58,3 +58,5 @@ create table t21_trigger_atatuservar(a int)
 go
 create table t22_trigger_atatuservar(a int)
 go
+create table t23_trigger_atatuservar(a int)
+go
