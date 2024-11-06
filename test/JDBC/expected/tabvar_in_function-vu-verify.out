@@ -195,3 +195,170 @@ go
 ~~ERROR (Message: 'DELETE' cannot be used within a function)~~
 
 
+create function f6_tabvar_in_function_upd(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update t set a = t.a + 1 from @tv as t join t1_tabvar_in_function_ins as tv on tv.a = t.a
+    return
+end
+go
+select * from dbo.f6_tabvar_in_function_upd(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f6_tabvar_in_function_del(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update @tv set a = a + 1
+    insert @tv values(@p1)
+    delete t from @tv as t inner join t1_tabvar_in_function_ins as tv on tv.a = t.a
+    return
+end
+go
+select * from dbo.f6_tabvar_in_function_del(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f6a_tabvar_in_function_upd(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update t set a = t.a + 1 from t1_tabvar_in_function_ins as tv join @tv as t on tv.a = t.a
+    return
+end
+go
+select * from dbo.f6a_tabvar_in_function_upd(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f6a_tabvar_in_function_del(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update @tv set a = a + 1
+    insert @tv values(@p1)
+    delete t from t1_tabvar_in_function_ins as tv join @tv as t on tv.a = t.a
+    return
+end
+go
+select * from dbo.f6a_tabvar_in_function_del(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f7_tabvar_in_function_upd(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update t set a = t.a + 1 from t1_tabvar_in_function_ins as t1 left join t1_tabvar_in_function_ins as tv on tv.a = t1.a right join @tv t on tv.a = t.a 
+    return
+end
+go
+select * from dbo.f7_tabvar_in_function_upd(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f7_tabvar_in_function_del(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update @tv set a = a + 1
+    insert @tv values(@p1)
+    delete t from t1_tabvar_in_function_ins as t1 join t1_tabvar_in_function_ins as tv on tv.a = t1.a join @tv t on tv.a = t.a 
+    return
+end
+go
+select * from dbo.f7_tabvar_in_function_del(123)
+go
+~~START~~
+int
+124
+~~END~~
+
+
+create function f8_tabvar_in_function_upd(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update t set a = t.a + 1 from @tv as tv cross join t1_tabvar_in_function_ins as t
+    return
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'UPDATE' cannot be used within a function)~~
+
+
+create function f8_tabvar_in_function_del(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update @tv set a = a + 1
+    insert @tv values(@p1)
+    delete t from @tv as tv inner join t1_tabvar_in_function_ins as t on tv.a = t.a
+    return
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DELETE' cannot be used within a function)~~
+
+
+create function f9_tabvar_in_function_upd(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update t set a = t.a + 1 from @tv as t1 full outer join t1_tabvar_in_function_ins as tv on tv.a = t1.a cross join t1_tabvar_in_function_ins t
+    return
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'UPDATE' cannot be used within a function)~~
+
+
+create function f9_tabvar_in_function_del(@p1 int)
+returns @tv table(a int)
+as
+begin
+    insert @tv values(@p1)
+    update @tv set a = a + 1
+    insert @tv values(@p1)
+    delete t from @tv as t1 right join t1_tabvar_in_function_ins as tv on tv.a = t1.a full outer join t1_tabvar_in_function_ins t on tv.a = t.a 
+    return
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DELETE' cannot be used within a function)~~
+
