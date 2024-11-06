@@ -717,7 +717,7 @@ void PLtsql_expr_query_mutator::run()
 		rewritten_query += query.substr(cursor); // copy remaining expr->query
 		
 	// update query string
-	std::string new_query = antlrcpp::Utf8::lenientEncode(rewritten_query);
+	std::string new_query = antlrcpp::Utf8::lenientEncode(std::u32string_view(rewritten_query));
 	expr->query = pstrdup(new_query.c_str());
 }
 
