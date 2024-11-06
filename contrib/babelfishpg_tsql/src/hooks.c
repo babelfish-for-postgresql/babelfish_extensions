@@ -209,6 +209,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
+static const char *remove_db_name_in_schema(const char *schema_name);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -236,6 +237,7 @@ static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_c
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
+static remove_db_name_in_schema_hook_type prev_remove_db_name_in_schema_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
@@ -336,6 +338,9 @@ InstallExtendedHooks(void)
 
 	prev_get_trigger_object_address_hook = get_trigger_object_address_hook;
 	get_trigger_object_address_hook = get_trigger_object_address;
+
+	prev_remove_db_name_in_schema_hook = remove_db_name_in_schema_hook;
+	remove_db_name_in_schema_hook = remove_db_name_in_schema;
 
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
@@ -519,6 +524,7 @@ UninstallExtendedHooks(void)
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
+	remove_db_name_in_schema_hook = prev_remove_db_name_in_schema_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
@@ -5629,4 +5635,24 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
         identity = getObjectIdentity(address,true); 
     }
     return identity;
+}
+
+/*
+ * remove_db_name_in_schema - remove the db name and underscore at the beginning
+ * 	of the given string. It is used to unmap schema name in error messages.
+ *
+ * 	@param schema_name - char *
+ * 	@return - unmapped schema name char *
+ */
+static const char *
+remove_db_name_in_schema(const char *schema_name)
+{
+	const char * cur_db_name = get_cur_db_name();
+	size_t db_name_len = strlen(cur_db_name);
+	size_t prefix_len = db_name_len + 1;
+	if (strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+		// Return the part after the prefix
+		schema_name += prefix_len;
+	}
+	return schema_name;
 }
