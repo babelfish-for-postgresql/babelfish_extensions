@@ -16,6 +16,10 @@ inputs:
     description: "Server collation name"
     required: false
     default: "default"
+  antlr_version:
+    description: "ANTLR version to use (based on Extension Branch)"
+    required: false
+    default: 4.13.2
 
 runs:
   using: "composite"
@@ -33,7 +37,7 @@ runs:
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
       uses: ./.github/composite-actions/compile-antlr
       with:
-        version: ${{ inputs.engine_branch == 'latest' && '4.13.2' || '4.9.3' }}
+        version: ${{ inputs.antlr_version }}
         install_dir: ${{inputs.install_dir}}
 
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
