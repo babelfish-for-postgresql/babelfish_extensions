@@ -3062,12 +3062,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (!IsBinaryUpgrade && babelfish_dump_restore)
+				/*
+				 * Set current user to bbf_role_admin while restoring babelfish roles/grants
+				 * so that it becomes its admin/GRANTOR. We will do this only if the current is
+				 * superuser since only superuser is allowed to perform dump/restore.
+				 * Note that no additional permission checks are needed as superusers can
+				 * anyway perform this action.
+				 */
+				else if (!IsBinaryUpgrade && babelfish_dump_restore && superuser())
 				{
 					Oid 		save_userid;
 					int 		save_sec_context;
 
-					/* Save the previous user to be restored after creating the login. */
+					/* Save the previous user to be restored after creating the user. */
 					GetUserIdAndSecContext(&save_userid, &save_sec_context);
 					PG_TRY();
 					{
@@ -3860,7 +3867,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
-			else if (!IsBinaryUpgrade && babelfish_dump_restore)
+			/*
+			 * Set current user to bbf_role_admin while restoring babelfish roles/grants
+			 * so that it becomes its admin/GRANTOR. We will do this only if the current is
+			 * superuser since only superuser is allowed to perform dump/restore.
+			 * Note that no additional permission checks are needed as superusers can
+			 * anyway perform this action.
+			 */
+			else if (!IsBinaryUpgrade && babelfish_dump_restore && superuser())
 			{
 				Oid 			save_userid;
 				int 			save_sec_context;
