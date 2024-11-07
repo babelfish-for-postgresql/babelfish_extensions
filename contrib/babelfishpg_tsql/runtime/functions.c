@@ -2474,7 +2474,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP);
+	enr = GetENRTempTableWithOid(object_id);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
