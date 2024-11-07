@@ -3062,7 +3062,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (babelfish_dump_restore)
+				else if (!IsBinaryUpgrade && babelfish_dump_restore)
 				{
 					Oid 		save_userid;
 					int 		save_sec_context;
@@ -3860,7 +3860,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
-			else if (babelfish_dump_restore)
+			else if (!IsBinaryUpgrade && babelfish_dump_restore)
 			{
 				Oid 			save_userid;
 				int 			save_sec_context;
