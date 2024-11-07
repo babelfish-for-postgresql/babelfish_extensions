@@ -491,7 +491,7 @@ tsql_varchar_input(const char *s, size_t len, int32 atttypmod)
 	return varchar_input(s, len, atttypmod);
 }
 void
-tsql_utf16_to_utf8(StringInfoData *utf16_data, const uint8 *data, size_t len)
+tsql_utf8_to_utf16(StringInfoData *utf16_data, const uint8 *data, size_t len)
 {
     initStringInfo(utf16_data);
     TsqlUTF8toUTF16StringInfo(utf16_data, data, len);

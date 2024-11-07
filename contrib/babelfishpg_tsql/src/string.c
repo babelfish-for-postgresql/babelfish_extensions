@@ -68,30 +68,28 @@ int32_t GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p);
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
+	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
 	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
 	bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	size_t		len = VARSIZE_ANY_EXHDR(in);
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
 	bytea	   *result;
 	StringInfoData utf16_data;
-	// Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	bool        is_nvarchar = false;
+	// Oid		   *argtypes = NULL;	
+	// int			nargs = 0;
+	// input_type = argtypes[1];
+	// bool        is_nvarchar = false;
 	// common_utility_plugin **common_utility_plugin_ptr;
-	if (len >= 2 && data[len] == '~' && data[len+1] == '(')
-    {
-        is_nvarchar = true;
-    }
-	// if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type))
-	// {
-	// 	is_nvarchar = true;
-	// }	
-
-	if (is_nvarchar == true)
+	// if (len >= 2 && data[len] == '~' && data[len+1] == '(')
+    // {
+    //     is_nvarchar = true;
+    // }
+	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
-        (common_utility_plugin_ptr->tsql_utf16_to_utf8)(&utf16_data, data, len);
+		(common_utility_plugin_ptr->tsql_utf8_to_utf16)(&utf16_data, data, len);
         data = (const uint8 *) utf16_data.data;
         len = utf16_data.len;
-	}
+	}	
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{

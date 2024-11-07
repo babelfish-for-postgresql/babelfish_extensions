@@ -44,6 +44,7 @@
 #include "logical.h"
 #include "varchar.h"
 #include "babelfishpg_common.h"
+#include "typecode.h"
 
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
@@ -685,7 +686,10 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	// {
 	// 	return nvarcharvarbinary(fcinfo);
 	// }
-	if(is_basetype_nchar_nvarchar(input_type))	
+	if (tsql_nvarchar_oid == InvalidOid)
+		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
+
+	if(tsql_nvarchar_oid == input_type)	
 	{
 		return nvarcharvarbinary(fcinfo);
 	}
