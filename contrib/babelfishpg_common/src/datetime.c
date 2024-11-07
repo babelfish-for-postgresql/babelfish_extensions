@@ -1753,90 +1753,100 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 
 
 	if(type == UNITS) {
-		switch(val) {
-			case DTK_YEAR:
-				if(dttype == TIME) {
-					incompatibleDatePart = true;
+		PG_TRY();
+		{
+			switch(val) {
+				case DTK_YEAR:
+					if(dttype == TIME) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
-				break;
-			case DTK_QUARTER:
-				if(dttype == TIME) {
-					incompatibleDatePart = true;
+				case DTK_QUARTER:
+					if(dttype == TIME) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
-				break;
-			case DTK_MONTH:
-				if(dttype == TIME) {
-					incompatibleDatePart = true;
+				case DTK_MONTH:
+					if(dttype == TIME) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
-				break;
-			case DTK_WEEK:
-				if(dttype == TIME) {
-					incompatibleDatePart = true;
+				case DTK_WEEK:
+					if(dttype == TIME) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
-				break;
-			case DTK_DAY:
-			case DTK_DOY:
-				if(dttype == TIME) {
-					incompatibleDatePart = true;
+				case DTK_DAY:
+				case DTK_DOY:
+					if(dttype == TIME) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
-				break;
-			case DTK_HOUR:
-				if(dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_HOUR:
+					if(dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
-				break;
-			case DTK_MINUTE:
-				if(dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_MINUTE:
+					if(dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
-				break;
-			case DTK_SECOND:
-				if(dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_SECOND:
+					if(dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
-				break;
-			case DTK_MILLISEC:
-				if(dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_MILLISEC:
+					if(dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
-				break;
-			case DTK_MICROSEC:
-				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_MICROSEC:
+					if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
 					break;
-				}
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
-				break;
-			case DTK_NANO:
-				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					incompatibleDatePart = true;
+				case DTK_NANO:
+					if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
+						incompatibleDatePart = true;
+						break;
+					}
+					num = num / 1000 * 1000; // Floors the number to avoid incorrect rounding
+					interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 					break;
-				}
-				num = num / 1000 * 1000; // Floors the number to avoid incorrect rounding
-				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
-				break;
-			default:
-				validDateAdd = false;
-				break;
+				default:
+					validDateAdd = false;
+					break;
+			}
 		}
+		PG_CATCH();
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					errmsg("Adding a value to a \'%s\' column caused an overflow.", datetypeName(dttype))));
+		}
+		PG_END_TRY();
 	} else {
 		validDateAdd = false;
 	}
