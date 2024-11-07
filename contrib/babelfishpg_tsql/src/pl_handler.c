@@ -3062,6 +3062,33 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
+				else if (babelfish_dump_restore)
+				{
+					Oid 		save_userid;
+					int 		save_sec_context;
+
+					/* Save the previous user to be restored after creating the login. */
+					GetUserIdAndSecContext(&save_userid, &save_sec_context);
+					PG_TRY();
+					{
+						SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+												params, queryEnv, dest,
+												qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+													params, queryEnv, dest,
+													qc);
+					}
+					PG_FINALLY();
+					{
+						SetUserIdAndSecContext(save_userid, save_sec_context);
+					}
+					PG_END_TRY();
+					return;
+				}
 				break;
 			}
 		case T_AlterRoleStmt:
@@ -3832,6 +3859,50 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_END_TRY();
 					return;
 				}
+			}
+			else if (babelfish_dump_restore)
+			{
+				Oid 			save_userid;
+				int 			save_sec_context;
+				ListCell		*item;
+				bool			isadmin = false;
+				GrantRoleStmt	*stmt = (GrantRoleStmt *) parsetree;
+
+				foreach(item, stmt->opt)
+				{
+					DefElem    *opt = (DefElem *) lfirst(item);
+					char	   *optval = defGetString(opt);
+
+					if (strcmp(opt->defname, "admin") == 0)
+					{
+						parse_bool(optval, &isadmin);
+						break;
+					}
+				}
+				if (isadmin)
+					break;
+
+				/* Save the previous user to be restored after creating the login. */
+				GetUserIdAndSecContext(&save_userid, &save_sec_context);
+				PG_TRY();
+				{
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest,
+											qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+												params, queryEnv, dest,
+												qc);
+				}
+				PG_FINALLY();
+				{
+					SetUserIdAndSecContext(save_userid, save_sec_context);
+				}
+				PG_END_TRY();
+				return;
 			}
 			break;
 		case T_RenameStmt:
