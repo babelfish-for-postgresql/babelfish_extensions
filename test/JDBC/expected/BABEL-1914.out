@@ -47,7 +47,7 @@ ALTER SYSTEM SET statement_timeout=-1000;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: -1000 ms is outside the valid range for parameter "statement_timeout" (0 .. 2147483647)
+~~ERROR (Message: ERROR: -1000 ms is outside the valid range for parameter "statement_timeout" (0 ms .. 2147483647 ms)
     Server SQLState: 22023)~~
 
 -- psql

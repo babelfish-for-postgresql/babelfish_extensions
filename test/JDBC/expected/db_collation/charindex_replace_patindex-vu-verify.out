@@ -184,8 +184,8 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 text
 Query Text: SELECT * FROM babel_5144_t1 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
 Index Scan using babel_5144_idx1babel_5144_t145234637e3ecc830cb4dde1fe866640f on babel_5144_t1 (actual rows=2 loops=1)
-  Index Cond: (charindex = $0)
-  InitPlan 1 (returns $0)
+  Index Cond: (charindex = (InitPlan 1).col1)
+  InitPlan 1
     ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
 ~~END~~
 
@@ -231,8 +231,8 @@ abcḍèĎÈdedEDEabcd#!#de#!####!#abc##########abcd#!#4#!#4
 text
 Query Text: SELECT * FROM babel_5144_t3 WHERE [charIndex] = (SELECT id FROM #table_5144_result_store)
 Index Scan using babel_5144_idx3babel_5144_t313c3a4389779eae0c4b18abc08f95caa on babel_5144_t3 (actual rows=2 loops=1)
-  Index Cond: (charindex = $0)
-  InitPlan 1 (returns $0)
+  Index Cond: (charindex = (InitPlan 1).col1)
+  InitPlan 1
     ->  Seq Scan on "#table_5144_result_store" (actual rows=1 loops=1)
 ~~END~~
 

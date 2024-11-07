@@ -112,7 +112,7 @@ go
 text
 Query Text: SELECT MAX(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Scan Backward using testdatatypeaggsort_char_idxtesfbaa28928b545e2adef99cfdad96bca2 on testdatatypeaggsort_tbl
                 Index Cond: (char_col IS NOT NULL)
@@ -130,7 +130,7 @@ go
 text
 Query Text: SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Scan using testdatatypeaggsort_char_idxtesfbaa28928b545e2adef99cfdad96bca2 on testdatatypeaggsort_tbl
                 Index Cond: (char_col IS NOT NULL)
@@ -149,7 +149,7 @@ go
 text
 Query Text: SELECT MAX(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan Backward using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col <= 'xxx'::"varchar"))
@@ -166,7 +166,7 @@ go
 text
 Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'ppp'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'ppp'::"varchar"))
@@ -184,7 +184,7 @@ go
 text
 Query Text: SELECT MAX(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan Backward using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col <= '2020-12-31 23:59:59'::datetime))
@@ -201,7 +201,7 @@ go
 text
 Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2010-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2010-12-31 23:59:59'::datetime))
@@ -219,7 +219,7 @@ go
 text
 Query Text: SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan Backward using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col <= '2020-12-31 23:59:59'::datetime2))
@@ -236,7 +236,7 @@ go
 text
 Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2010-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2010-12-31 23:59:59'::datetime2))
@@ -254,7 +254,7 @@ go
 text
 Query Text: SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan Backward using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col <= '2020-12-31 23:59:59 +00:00'::datetimeoffset))
@@ -271,7 +271,7 @@ go
 text
 Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2010-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2010-12-31 23:59:59 +00:00'::datetimeoffset))
@@ -289,7 +289,7 @@ go
 text
 Query Text: SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan Backward using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col <= '2021-01-01 00:00:00'::smalldatetime))
@@ -306,7 +306,7 @@ go
 text
 Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2010-12-31 23:59:59'
 Result
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2011-01-01 00:00:00'::smalldatetime))

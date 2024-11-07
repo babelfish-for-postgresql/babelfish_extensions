@@ -330,7 +330,7 @@ go
 text
 Query Text: SELECT (select a1 from babel_2843_t1 where b1 = 1)
 Result  (cost=38.25..38.26 rows=1 width=4) (actual rows=1 loops=1)
-  InitPlan 1 (returns $0)
+  InitPlan 1
     ->  Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=4) (actual rows=1 loops=1)
           Filter: (b1 = 1)
           Rows Removed by Filter: 2
