@@ -24,6 +24,20 @@ text
 off
 ~~END~~
 
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
 
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
@@ -40,7 +54,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 277.298 ms
+Babelfish T-SQL Batch Parsing Time: 276.388 ms
 ~~END~~
 
 
@@ -57,7 +71,7 @@ Query Text: EXEC test_smalldatetime_date_p1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.288 ms
+Babelfish T-SQL Batch Parsing Time: 0.292 ms
 ~~END~~
 
 
@@ -74,7 +88,7 @@ Query Text: EXEC test_smalldatetime_date_p2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.913 ms
+Babelfish T-SQL Batch Parsing Time: 1.911 ms
 ~~END~~
 
 
@@ -85,15 +99,13 @@ text
 Query Text: EXEC test_smalldatetime_date_p3
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE)
   ->  Aggregate
-        ->  Bitmap Heap Scan on smalldate_date_cmp_t1
-              Recheck Cond: (smalldatetime_col < '2023-09-30'::date)
-              ->  Bitmap Index Scan on smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2
-                    Index Cond: (smalldatetime_col < '2023-09-30'::date)
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col < '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.698 ms
+Babelfish T-SQL Batch Parsing Time: 8.584 ms
 ~~END~~
 
 
@@ -104,13 +116,13 @@ text
 Query Text: EXEC test_smalldatetime_date_p4
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE)
   ->  Aggregate
-        ->  Seq Scan on smalldate_date_cmp_t1
-              Filter: (smalldatetime_col > '2023-09-30'::date)
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col > '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.454 ms
+Babelfish T-SQL Batch Parsing Time: 9.546 ms
 ~~END~~
 
 
@@ -121,15 +133,13 @@ text
 Query Text: EXEC test_smalldatetime_date_p5
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE)
   ->  Aggregate
-        ->  Bitmap Heap Scan on smalldate_date_cmp_t1
-              Recheck Cond: (smalldatetime_col <= '2023-09-30'::date)
-              ->  Bitmap Index Scan on smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2
-                    Index Cond: (smalldatetime_col <= '2023-09-30'::date)
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col <= '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.202 ms
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
 ~~END~~
 
 
@@ -140,13 +150,13 @@ text
 Query Text: EXEC test_smalldatetime_date_p6
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE)
   ->  Aggregate
-        ->  Seq Scan on smalldate_date_cmp_t1
-              Filter: (smalldatetime_col >= '2023-08-31'::date)
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col >= '2023-08-31'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.171 ms
+Babelfish T-SQL Batch Parsing Time: 1.135 ms
 ~~END~~
 
 
@@ -157,13 +167,13 @@ text
 Query Text: EXEC test_smalldatetime_date_p7
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE)
   ->  Aggregate
-        ->  Seq Scan on smalldate_date_cmp_t1
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
               Filter: (smalldatetime_col <> '2023-08-31'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.563 ms
+Babelfish T-SQL Batch Parsing Time: 1.562 ms
 ~~END~~
 
 
@@ -179,7 +189,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.991 ms
+Babelfish T-SQL Batch Parsing Time: 0.993 ms
 ~~END~~
 
 
@@ -195,7 +205,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -205,10 +215,8 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v3
 Aggregate
-  ->  Bitmap Heap Scan on smalldate_date_cmp_t1
-        Recheck Cond: (smalldatetime_col < '2023-09-30'::date)
-        ->  Bitmap Index Scan on smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2
-              Index Cond: (smalldatetime_col < '2023-09-30'::date)
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col < '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
@@ -223,13 +231,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v4
 Aggregate
-  ->  Seq Scan on smalldate_date_cmp_t1
-        Filter: (smalldatetime_col > '2023-09-30'::date)
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col > '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 
@@ -239,15 +247,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v5
 Aggregate
-  ->  Bitmap Heap Scan on smalldate_date_cmp_t1
-        Recheck Cond: (smalldatetime_col <= '2023-09-30'::date)
-        ->  Bitmap Index Scan on smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2
-              Index Cond: (smalldatetime_col <= '2023-09-30'::date)
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col <= '2023-09-30'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -257,8 +263,8 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v6
 Aggregate
-  ->  Seq Scan on smalldate_date_cmp_t1
-        Filter: (smalldatetime_col >= '2023-08-31'::date)
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col >= '2023-08-31'::date)
 ~~END~~
 
 ~~START~~
@@ -273,7 +279,7 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v7
 Aggregate
-  ->  Seq Scan on smalldate_date_cmp_t1
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
         Filter: (smalldatetime_col <> '2023-08-31'::date)
 ~~END~~
 
@@ -287,6 +293,20 @@ SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'on', false);
 GO
 ~~START~~
 text
@@ -320,6 +340,20 @@ text
 off
 ~~END~~
 
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
 
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
@@ -330,13 +364,13 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t2 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE)
 Aggregate
-  ->  Seq Scan on smalldate_date_cmp_t2
-        Filter: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
+  ->  Index Only Scan using smalldate_date_cmp_ind2smalldat4c549f48a1bc5e5f6920677e03332728 on smalldate_date_cmp_t2
+        Index Cond: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.299 ms
+Babelfish T-SQL Batch Parsing Time: 0.258 ms
 ~~END~~
 
 
@@ -344,6 +378,20 @@ SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'on', false);
 GO
 ~~START~~
 text
