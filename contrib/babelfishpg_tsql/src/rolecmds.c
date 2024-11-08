@@ -452,7 +452,7 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 
 			/* Grant guest user to login if it's mapped user is being dropped. */
 			if (strlen(login) > 0)
-				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), true);
+				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
 		}
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
@@ -595,10 +595,11 @@ grant_guests_to_login(const char *login)
 
 /* 
  * Grant/revoke given role from the login.
+ * If grantor is provided then only GRANT/REVOKE specific to it will be affected.
  * The 'is_grant' flag determines if the action is grant/revoke.
  */
 void
-grant_revoke_role_to_login(const char* login, const char *role_name, bool is_grant)
+grant_revoke_role_to_login(const char* login, const char *role_name, const char *grantor, bool is_grant)
 {
 	StringInfoData query;
 	List	   *parsetree_list;
@@ -621,13 +622,15 @@ grant_revoke_role_to_login(const char* login, const char *role_name, bool is_gra
 	if (is_grant)
 	{
 		/* Build dummy GRANT statement to grant membership to login  */
-		appendStringInfo(&query, "GRANT dummy TO dummy; ");
+		appendStringInfo(&query, "GRANT dummy TO dummy ");
 	}
 	else
 	{
 		/* Build dummy REVOKE statement to revoke membership from login */
-		appendStringInfo(&query, "REVOKE dummy FROM dummy; ");
+		appendStringInfo(&query, "REVOKE dummy FROM dummy ");
 	}
+	if (grantor)
+		appendStringInfo(&query, "GRANTED BY %s; ", grantor);
 
 	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -1304,7 +1307,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		verify_login_for_bbf_authid_user_ext(login);
 		login_name_str = login->rolename;
 		/* Revoke guest user from login as login now has a mapped user in current database. */
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), false);
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), NULL, false);
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
 
@@ -1499,7 +1503,8 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 									&is_null);
 
 				char *db_name = TextDatumGetCString(name);
-				grant_revoke_role_to_login(login, get_guest_role_name(db_name), false);
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), NULL, false);
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 				pfree(db_name);
 			}
 		}
