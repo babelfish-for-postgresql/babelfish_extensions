@@ -471,27 +471,6 @@ ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
 
-# Following test are failing due to dependency on pg_hint_plan
-ignore#!#BABEL-3291
-ignore#!#BABEL-3292
-ignore#!#BABEL-3293
-ignore#!#BABEL-3294
-ignore#!#BABEL-3295
-ignore#!#BABEL-3512
-ignore#!#BABEL-3513-vu-prepare
-ignore#!#BABEL-3513-vu-verify
-ignore#!#BABEL-3513-vu-cleanup
-ignore#!#BABEL-3592
-ignore#!#BABEL-4294-vu-prepare
-ignore#!#BABEL-4294-vu-verify
-ignore#!#BABEL-4294-vu-cleanup
-ignore#!#babel_index_nulls_order-vu-verify
-
-# Following test are failing due to dependency on Vector
-ignore#!#TestHalfvecDatatype
-ignore#!#TestVectorDatatype
-ignore#!#TestSparsevecDatatype
-
 # Assertion failure in pg-stat-statements BABEL-5391
 ignore#!#Test-sp_execute_postgresql
 ignore#!#pg_stat_statements_tsql

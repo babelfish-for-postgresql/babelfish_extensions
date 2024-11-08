@@ -173,7 +173,7 @@ init_db() {
 init_pghint() {
     cd $1
     if [ ! -d "./pg_hint_plan" ]; then
-        git clone --depth 1 --branch REL16_1_6_0 https://github.com/ossc-db/pg_hint_plan.git
+        git clone --depth 1 --branch REL17_1_7_0 https://github.com/ossc-db/pg_hint_plan.git
     fi
     cd pg_hint_plan
     export PATH=$2/postgres/bin:$PATH
