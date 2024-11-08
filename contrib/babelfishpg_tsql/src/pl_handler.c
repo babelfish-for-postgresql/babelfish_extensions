@@ -3842,6 +3842,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					check_alter_role_stmt(grant_role);
 
+					if (!grant_role->is_grant)
+					{
+						/*
+						 * First execute REVOKE statement using current user.
+						 * This is needed since grantor of GRANTs from previous versions might
+						 * not be bbf_role_admin.
+						 */
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+												queryEnv, dest, qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+													queryEnv, dest, qc);
+					}
 					/*
 					 * We have performed all the permissions checks.
 					 * Set current user to bbf_role_admin for grant permissions.

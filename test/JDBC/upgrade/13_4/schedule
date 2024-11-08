@@ -205,7 +205,6 @@ Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
-Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText
