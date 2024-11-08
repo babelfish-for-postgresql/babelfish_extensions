@@ -439,8 +439,24 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	tuple = systable_getnext(scan);
 
 	if (HeapTupleIsValid(tuple))
+	{
+		bool  is_null;
+
+		Datum datum = heap_getattr(tuple,
+								   Anum_bbf_authid_user_ext_login_name,
+								   bbf_authid_user_ext_rel->rd_att,
+								   &is_null);
+		if (!is_null)
+		{
+			char *login = NameStr(*DatumGetName(datum));
+
+			/* Grant guest user to login if it's mapped user is being dropped. */
+			if (strlen(login) > 0)
+				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), true);
+		}
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
+	}
 
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
@@ -578,19 +594,17 @@ grant_guests_to_login(const char *login)
 }
 
 /* 
- * Grant/revoke dbo role from the login.
+ * Grant/revoke given role from the login.
  * The 'is_grant' flag determines if the action is grant/revoke.
  */
 void
-grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
+grant_revoke_role_to_login(const char* login, const char *role_name, bool is_grant)
 {
 	StringInfoData query;
 	List	   *parsetree_list;
-	List	   *dbo = NIL;
+	List	   *rolelist = NIL;
 	Node	   *stmt;
 	PlannedStmt *wrapper;
-
-	char 	   *dbo_role_name = get_dbo_role_name(db_name);
 
 	/*
 	 * If login i.e old_owner/new_owner is master user 
@@ -602,7 +616,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	
 	initStringInfo(&query);
 
-	dbo = lappend(dbo, make_accesspriv_node(dbo_role_name));
+	rolelist = lappend(rolelist, make_accesspriv_node(role_name));
 
 	if (is_grant)
 	{
@@ -625,7 +639,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	update_GrantRoleStmt(stmt, dbo, list_make1(make_rolespec_node(login)));
+	update_GrantRoleStmt(stmt, rolelist, list_make1(make_rolespec_node(login)));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -650,7 +664,6 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	CommandCounterIncrement();
 
 	pfree(query.data);
-	pfree(dbo_role_name);
 }
 
 static List *
@@ -1286,8 +1299,13 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 
 	if (has_login)
 	{
+		char *db_name = get_cur_db_name();
+
 		verify_login_for_bbf_authid_user_ext(login);
 		login_name_str = login->rolename;
+		/* Revoke guest user from login as login now has a mapped user in current database. */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), false);
+		pfree(db_name);
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
@@ -1440,6 +1458,63 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	bbf_set_current_user(prev_current_user);
 	sql_dialect = saved_dialect;
 	PG_RETURN_INT32(0);
+}
+
+PG_FUNCTION_INFO_V1(revoke_guest_from_mapped_logins);
+Datum
+revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_authid_user_ext_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+	List	   *dbo_list = NIL;
+	StringInfoData query;
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+	const char *prev_current_user;
+	int			saved_dialect = sql_dialect;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"add_existing_users_to_catalog()")));
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(), AccessShareLock);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum datum = heap_getattr(tuple,
+								   Anum_bbf_authid_user_ext_login_name,
+								   bbf_authid_user_ext_rel->rd_att,
+								   &is_null);
+		if (!is_null)
+		{
+			char *login = NameStr(*DatumGetName(datum));
+
+			/* Revoke guest user from login as login already has a mapped database user. */
+			if (strlen(login) > 0)
+			{
+				Datum name = heap_getattr(tuple,
+									Anum_bbf_authid_user_ext_database_name,
+									bbf_authid_user_ext_rel->rd_att,
+									&is_null);
+
+				char *db_name = TextDatumGetCString(name);
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), true);
+				pfree(db_name);
+			}
+		}
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
 }
 
 void
