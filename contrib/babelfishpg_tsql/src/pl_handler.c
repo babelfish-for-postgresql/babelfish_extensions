@@ -3064,8 +3064,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				/*
 				 * Set current user to bbf_role_admin while restoring babelfish roles/grants
-				 * so that it becomes its admin/GRANTOR. We will do this only if the current is
-				 * superuser since only superuser is allowed to perform dump/restore.
+				 * so that it becomes their admin/GRANTOR. We will do this only if the current
+				 * user is superuser since only superuser is allowed to perform dump/restore.
 				 * Note that no additional permission checks are needed as superusers can
 				 * anyway perform this action.
 				 */
@@ -3869,8 +3869,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			/*
 			 * Set current user to bbf_role_admin while restoring babelfish roles/grants
-			 * so that it becomes its admin/GRANTOR. We will do this only if the current is
-			 * superuser since only superuser is allowed to perform dump/restore.
+			 * so that it becomes their admin/GRANTOR. We will do this only if the current
+			 * user is superuser since only superuser is allowed to perform dump/restore.
 			 * Note that no additional permission checks are needed as superusers can
 			 * anyway perform this action.
 			 */
