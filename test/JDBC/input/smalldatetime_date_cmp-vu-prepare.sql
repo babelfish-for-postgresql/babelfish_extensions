@@ -3,22 +3,7 @@ CREATE TABLE smalldate_date_cmp_t1 (
 )
 GO
 
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-06-15 14:30:00' as smalldatetime) from generate_series(1, 100000)
-GO
-
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-09-30 14:30:00' as smalldatetime) from generate_series(1, 100000)
-GO
-
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-10-15 14:30:00' as smalldatetime) from generate_series(1, 100000)
-GO
-
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-10-06 14:30:00' as smalldatetime) from generate_series(1, 100000)
-GO
-
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-09-30 16:30:00' as smalldatetime) from generate_series(1, 100000)
-GO
-
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-06-15 10:30:00' as smalldatetime) from generate_series(1, 100000)
+INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-06-15 14:30:00' as smalldatetime) from generate_series(1, 100)
 GO
 
 CREATE NONCLUSTERED INDEX smalldate_date_cmp_ind1 ON smalldate_date_cmp_t1

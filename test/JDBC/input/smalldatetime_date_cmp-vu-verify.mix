@@ -20,6 +20,24 @@ GO
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE);
 GO
 
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-09-30' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
+GO
+
 EXEC test_smalldatetime_date_p1;
 GO
 
