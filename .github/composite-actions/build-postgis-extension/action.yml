@@ -20,10 +20,10 @@ runs:
         retries=0
         until [ $retries -ge $max_retries ]
         do
-          wget http://postgis.net/stuff/postgis-3.4.0.tar.gz && break
+          wget http://postgis.net/stuff/postgis-3.5.0.tar.gz && break
           retries=$((retries+1))
         done
-        tar -xvzf postgis-3.4.0.tar.gz
+        tar -xvzf postgis-3.5.0.tar.gz
         retries1=0
         until [ $retries1 -ge $max_retries ]
         do
@@ -39,7 +39,7 @@ runs:
         cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
         cmake --build .
         sudo cmake --build . --target install
-        cd ../../postgis-3.4.0
+        cd ../../postgis-3.5.0
         ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
