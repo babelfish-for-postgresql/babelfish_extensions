@@ -32,6 +32,7 @@ runs:
         cd contrib/babelfishpg_money
         make -j 4 && make install
         cd ../babelfishpg_common
+        make && make install
         cd ../babelfishpg_tds
         make -j 4 && make install
         cd ../babelfishpg_tsql
