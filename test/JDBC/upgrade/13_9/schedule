@@ -308,6 +308,7 @@ Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
+Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText

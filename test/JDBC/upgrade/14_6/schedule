@@ -377,6 +377,7 @@ Test-sp_helprole-dep
 Test-sp_helprolemember-dep
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
+Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText

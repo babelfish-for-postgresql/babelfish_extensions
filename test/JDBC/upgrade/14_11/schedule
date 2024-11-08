@@ -169,6 +169,7 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+Test-Role-Member
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN
