@@ -69,6 +69,7 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--4.1.0--4.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--4.2.0--4.3.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--4.3.0--4.4.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--4.4.0--5.0.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_table in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--1.0.0--1.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--2.1.0--2.2.0.sql

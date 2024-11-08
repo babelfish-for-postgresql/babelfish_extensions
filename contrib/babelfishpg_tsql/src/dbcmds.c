@@ -89,7 +89,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	const char     *guest;
 	const char     *guest_schema;
 	Oid       	owner_oid;
-	bool     	owner_is_sa_or_superuser;
+	bool     	owner_is_sa_or_superuser = false;
 
 	schema = get_dbo_schema_name(dbname);
 	dbo = get_dbo_role_name(dbname);

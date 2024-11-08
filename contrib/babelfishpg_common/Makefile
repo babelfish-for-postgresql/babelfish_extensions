@@ -98,8 +98,7 @@ $(EXTENSION).control: $(EXTENSION).control.in
 		| sed -e 's|@MODULEPATH@|$(MODULEPATH)|g' \
 		> $@
 
-# TODO: [BABEL-5326] Enable Geospatial datatypes when PostGIS gets enabled
-# FLAG_TO_CHECK := -DENABLE_SPATIAL_TYPES
+FLAG_TO_CHECK := -DENABLE_SPATIAL_TYPES
 
 # Check if the flag is present in PG_CPPFLAGS
 ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
