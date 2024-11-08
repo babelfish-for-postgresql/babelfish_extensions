@@ -35,6 +35,12 @@ GO
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE);
 GO
 
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+GO
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
 GO
 
@@ -59,6 +65,12 @@ GO
 EXEC test_smalldatetime_date_p7;
 GO
 
+EXEC test_smalldatetime_date_p8;
+GO
+
+EXEC test_smalldatetime_date_p9;
+GO
+
 SELECT * FROM test_smalldatetime_date_v1;
 GO
 
@@ -80,7 +92,40 @@ GO
 SELECT * FROM test_smalldatetime_date_v7;
 GO
 
+SELECT * FROM test_smalldatetime_date_v8;
+GO
+
+SELECT * FROM test_smalldatetime_date_v9;
+GO
+
 SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT test_smalldatetime_date_f1();
+GO
+
+SELECT test_smalldatetime_date_f2();
+GO
+
+SELECT test_smalldatetime_date_f3();
+GO
+
+SELECT test_smalldatetime_date_f4();
+GO
+
+SELECT test_smalldatetime_date_f5();
+GO
+
+SELECT test_smalldatetime_date_f6();
+GO
+
+SELECT test_smalldatetime_date_f7();
+GO
+
+SELECT test_smalldatetime_date_f8();
+GO
+
+SELECT test_smalldatetime_date_f9();
 GO
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)

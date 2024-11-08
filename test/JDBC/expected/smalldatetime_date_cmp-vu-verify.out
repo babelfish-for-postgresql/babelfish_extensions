@@ -54,7 +54,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 280.516 ms
+Babelfish T-SQL Batch Parsing Time: 281.035 ms
 ~~END~~
 
 
@@ -70,7 +70,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.391 ms
+Babelfish T-SQL Batch Parsing Time: 2.208 ms
 ~~END~~
 
 
@@ -86,7 +86,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.942 ms
+Babelfish T-SQL Batch Parsing Time: 8.763 ms
 ~~END~~
 
 
@@ -102,7 +102,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.408 ms
+Babelfish T-SQL Batch Parsing Time: 9.499 ms
 ~~END~~
 
 
@@ -118,7 +118,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.211 ms
+Babelfish T-SQL Batch Parsing Time: 0.209 ms
 ~~END~~
 
 
@@ -134,7 +134,39 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.153 ms
+Babelfish T-SQL Batch Parsing Time: 1.116 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.451 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.297 ms
 ~~END~~
 
 
@@ -150,7 +182,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.639 ms
+Babelfish T-SQL Batch Parsing Time: 1.675 ms
 ~~END~~
 
 
@@ -167,7 +199,7 @@ Query Text: EXEC test_smalldatetime_date_p1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.352 ms
+Babelfish T-SQL Batch Parsing Time: 0.314 ms
 ~~END~~
 
 
@@ -184,7 +216,7 @@ Query Text: EXEC test_smalldatetime_date_p2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.205 ms
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -201,7 +233,7 @@ Query Text: EXEC test_smalldatetime_date_p3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.202 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -235,7 +267,7 @@ Query Text: EXEC test_smalldatetime_date_p5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.322 ms
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -252,7 +284,7 @@ Query Text: EXEC test_smalldatetime_date_p6
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.203 ms
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
 ~~END~~
 
 
@@ -269,7 +301,41 @@ Query Text: EXEC test_smalldatetime_date_p7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.202 ms
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p8;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p8
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.234 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p9;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p9
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
@@ -285,7 +351,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.366 ms
+Babelfish T-SQL Batch Parsing Time: 1.062 ms
 ~~END~~
 
 
@@ -301,7 +367,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -317,7 +383,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -333,7 +399,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -349,7 +415,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -365,7 +431,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -381,12 +447,116 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v8;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v8
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v9;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v9
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
+
+SELECT test_smalldatetime_date_f1();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f2();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f3();
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT test_smalldatetime_date_f4();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f5();
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT test_smalldatetime_date_f6();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f7();
+GO
+~~START~~
+int
+10000
+~~END~~
+
+
+SELECT test_smalldatetime_date_f8();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f9();
+GO
+~~START~~
+int
+0
+~~END~~
+
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 GO
@@ -466,7 +636,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.281 ms
+Babelfish T-SQL Batch Parsing Time: 0.268 ms
 ~~END~~
 
 

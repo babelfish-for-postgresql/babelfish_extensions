@@ -1,9 +1,9 @@
 CREATE TABLE smalldate_date_cmp_t1 (
-    smalldatetime_col SMALLDATETIME NULL
+    smalldatetime_col SMALLDATETIME
 )
 GO
 
-INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-06-15 14:30:00' as smalldatetime) from generate_series(1, 100)
+INSERT INTO smalldate_date_cmp_t1 (smalldatetime_col) SELECT cast('2023-06-15 14:30:00' as smalldatetime) from generate_series(1, 10000)
 GO
 
 CREATE NONCLUSTERED INDEX smalldate_date_cmp_ind1 ON smalldate_date_cmp_t1
@@ -40,6 +40,14 @@ CREATE PROCEDURE test_smalldatetime_date_p7 AS
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
 GO
 
+CREATE PROCEDURE test_smalldatetime_date_p8 AS
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+GO
+
+CREATE PROCEDURE test_smalldatetime_date_p9 AS
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+
 CREATE VIEW test_smalldatetime_date_v1 AS
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE);
 GO
@@ -68,8 +76,106 @@ CREATE VIEW test_smalldatetime_date_v7 AS
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
 GO
 
+CREATE VIEW test_smalldatetime_date_v8 AS
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+GO
+
+CREATE VIEW test_smalldatetime_date_v9 AS
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f1() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count =  COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f2() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count =  COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-09-30' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f3() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f4() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f5() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f6() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f7() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f8() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+    RETURN @count;
+END
+GO
+
+CREATE FUNCTION test_smalldatetime_date_f9() 
+RETURNS INT 
+AS
+BEGIN
+    DECLARE @count INT;
+    SELECT @count = COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL;
+    RETURN @count;
+END
+GO
+
 CREATE TABLE smalldate_date_cmp_t2 (
-    smalldatetime_col SMALLDATETIME NULL
+    smalldatetime_col SMALLDATETIME
 )
 GO
 
