@@ -374,6 +374,25 @@ GO
 SELECT * FROM dbo.babel_cross_db_vu_prepare_v1 ORDER BY id;
 GO
 
+-- tsql user=babel_cross_db_vu_prepare_l3 password=12345678
+USE master
+GO
+
+-- login babel_cross_db_vu_prepare_l3 has mapped user in master
+-- database so following SELECT should fail.
+SELECT * FROM babel_cross_db_vu_prepare_t4;
+GO
+
+-- now moreve mapped user from login babel_cross_db_vu_prepare_l3 in master database
+-- tsql
+DROP USER babel_cross_db_vu_prepare_u3;
+GO
+
+-- now that login babel_cross_db_vu_prepare_l3 does not have a mapped user in master
+-- database so following SELECT should succeed as guest was granted SELECT privilege.
+SELECT * FROM babel_cross_db_vu_prepare_t4;
+GO
+
 -- tsql
 USE master
 GO
