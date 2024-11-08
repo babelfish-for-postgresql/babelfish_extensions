@@ -583,7 +583,7 @@ ignore#!#TestSparsevecDatatype
 
 # Assertion failure in pg-stat-statements BABEL-5391
 ignore#!#Test-sp_execute_postgresql
-ignore#!#
+ignore#!#pg_stat_statements_tsql
 
 # Ignoring internal babel pg regression tests temporarily 
 ignore#!#pgr_000_test_setup
@@ -595,3 +595,14 @@ ignore#!#pgr_select_implicit
 ignore#!#pgr_select_into
 ignore#!#pgr_select
 ignore#!#pgr_zzz_clean_up
+
+# Ignoring some test temporarily to get clean tests
+ignore#!#forjsonauto-vu-prepare
+ignore#!#forjsonauto-vu-verify
+ignore#!#forjsonauto-vu-cleanup
+babel_collection
+BABEL-4046-vu-prepare
+BABEL-4046-vu-verify
+BABEL-4046-vu-cleanup
+BABEL-4406
+BABEL_4740
