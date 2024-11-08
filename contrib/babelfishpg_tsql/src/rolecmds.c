@@ -1499,7 +1499,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 									&is_null);
 
 				char *db_name = TextDatumGetCString(name);
-				grant_revoke_role_to_login(login, get_guest_role_name(db_name), true);
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), false);
 				pfree(db_name);
 			}
 		}
