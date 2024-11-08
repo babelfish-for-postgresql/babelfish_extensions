@@ -1468,13 +1468,6 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 	TableScanDesc scan;
 	HeapTuple	tuple;
 	bool		is_null;
-	List	   *dbo_list = NIL;
-	StringInfoData query;
-	List	   *parsetree_list;
-	Node	   *stmt;
-	PlannedStmt *wrapper;
-	const char *prev_current_user;
-	int			saved_dialect = sql_dialect;
 
 	/* We only allow this to be called from an extension's SQL script. */
 	if (!creating_extension)
@@ -1515,6 +1508,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
 }
 
 void
