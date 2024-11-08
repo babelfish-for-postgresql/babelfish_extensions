@@ -1537,6 +1537,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	char	   *new_user_name = NULL;
 	char	   *physical_name = NULL;
 	char	   *login_name_str = NULL;
+	char	   *old_login_name = NULL;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1632,8 +1633,16 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (login_name_str)
 	{
-		namestrcpy(&login_name_str_namedata, login_name_str);
+		bool is_null;
+		Datum old_login = heap_getattr(tuple,
+									   Anum_bbf_authid_user_ext_login_name,
+									   bbf_authid_user_ext_dsc,
+									   &is_null);
+		/* Fetch the login name which was previously mapped to this user. */
+		if (!is_null)
+			old_login_name = pstrdup(NameStr(*DatumGetName(old_login)));
 
+		namestrcpy(&login_name_str_namedata, login_name_str);
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_str_namedata);
 		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
 	}
@@ -1653,6 +1662,22 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	heap_freetuple(new_tuple);
 
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	if (login_name_str)
+	{
+		if (old_login_name && strlen(old_login_name) > 0)
+		{
+			/* First revoke this user from old login as the user is being mapped to a new login. */
+			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, NULL, false);
+			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
+			/* Now grant guest user to old login as it's mapped user is being removed. */
+			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+		}
+
+		/* Revoke guest user from new login as login now has a mapped user in current database. */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), NULL, false);
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+	}
 
 	if (new_user_name)
 	{
