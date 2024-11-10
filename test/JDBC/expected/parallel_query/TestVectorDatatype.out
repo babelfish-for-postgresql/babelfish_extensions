@@ -516,8 +516,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
-        Order By: (val <=> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <=> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -610,8 +610,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <#> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <#> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -704,8 +704,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <-> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <-> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -872,8 +872,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <=> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <=> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -973,8 +973,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
-        Order By: (val <#> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <#> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -1074,8 +1074,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
-        Order By: (val <-> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <-> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2163,8 +2163,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
-        Order By: (val <=> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <=> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2257,8 +2257,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <#> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <#> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2351,8 +2351,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <-> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <-> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2519,8 +2519,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
-        Order By: (val <=> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <=> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2620,8 +2620,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
-        Order By: (val <#> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <#> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
@@ -2721,8 +2721,8 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
-        Order By: (val <-> $0)
-        InitPlan 1 (returns $0)
+        Order By: (val <-> (InitPlan 1).col1)
+        InitPlan 1
           ->  Result (actual rows=1 loops=1)
 ~~END~~
 
