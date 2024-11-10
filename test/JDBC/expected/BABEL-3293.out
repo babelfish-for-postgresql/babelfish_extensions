@@ -961,7 +961,6 @@ Update on babel_3293_t1
               Sort Key: babel_3293_t1.a1
               ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
                     Index Cond: (b1 = 1)
-                    Filter: (ctid IS NOT NULL)
         ->  Sort
               Sort Key: babel_3293_t2.a2
               ->  Bitmap Heap Scan on babel_3293_t2

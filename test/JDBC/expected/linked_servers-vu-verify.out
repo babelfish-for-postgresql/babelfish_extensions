@@ -283,7 +283,7 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: user mapping not found for "master_dbo")~~
+~~ERROR (Message: user mapping not found for user "master_dbo", server "test_server")~~
 
 
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
