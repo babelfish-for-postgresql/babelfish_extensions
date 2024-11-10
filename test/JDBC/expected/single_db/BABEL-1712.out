@@ -40,7 +40,7 @@ SELECT * FROM dbo.t1; -- error expected, querying master.dbo.t1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_dbo.t1" does not exist)~~
+~~ERROR (Message: relation "dbo.t1" does not exist)~~
 
 -- search path
 USE db1;
