@@ -81,7 +81,7 @@ Query Text: EXEC    table_variable_vu_prepareouter_proc @a, @b
     Query Text: ASSIGN @b = SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
       Query Text: SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
       ->  Result  (cost=49.55..49.56 rows=1 width=4)
-            InitPlan 1 (returns $0)
+            InitPlan 1
               ->  Limit  (cost=49.55..49.55 rows=1 width=8)
                     ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
                           Sort Key: table_variable_vu_preparet1.b NULLS FIRST
