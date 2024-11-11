@@ -213,7 +213,6 @@ jobs:
           echo 'ignore#!#babel_tds_fault_injection' >> jdbc_schedule
           echo 'ignore#!#tds_faultinjection' >> jdbc_schedule
           echo jdbc_schedule
-          cat jdbc_schedule
 
       - name: Run JDBC Tests
         id: jdbc
@@ -223,7 +222,6 @@ jobs:
           export PATH=~/${{env.NEW_INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
-          cat jdbc_schedule
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
           mvn -B -ntp test
