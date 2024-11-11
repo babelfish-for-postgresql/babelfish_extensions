@@ -142,7 +142,7 @@ upgrade-version: [{
     },
     { 
       version: target.latest,
-      upgrade-type: minor
+      upgrade-type: major
     }
   ]
 },
@@ -154,7 +154,7 @@ upgrade-version: [{
     },
     { 
       version: target.latest,
-      upgrade-type: minor
+      upgrade-type: major
     }
   ]
 },
@@ -166,7 +166,7 @@ upgrade-version: [{
     },
     { 
       version: target.latest,
-      upgrade-type: minor
+      upgrade-type: major
     }
   ]
 },
@@ -255,7 +255,7 @@ upgrade-version: [{
     },
     { 
       version: target.latest,
-      upgrade-type: minor,
+      upgrade-type: major,
     }
   ],
   babelfishpg_tsql_server_collation_name: chinese_prc_ci_as
