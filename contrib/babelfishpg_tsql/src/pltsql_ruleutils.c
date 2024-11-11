@@ -425,7 +425,7 @@ tsql_get_expr(PG_FUNCTION_ARGS)
 	if (relname == NULL)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
+	PG_RETURN_VARCHAR_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
 }
 
 static text *
