@@ -452,7 +452,8 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 
 			/* Grant guest user to login if it's mapped user is being dropped. */
 			if (strlen(login) > 0)
-				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), NULL, true);
+				//grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
 		}
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
@@ -566,7 +567,7 @@ grant_guests_to_login(const char *login)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	update_GrantRoleStmt(stmt, guests, list_make1(make_rolespec_node(login)));
+	update_GrantRoleStmt(stmt, guests, list_make1(make_rolespec_node(login)), NULL);
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -622,15 +623,17 @@ grant_revoke_role_to_login(const char* login, const char *role_name, const char 
 	if (is_grant)
 	{
 		/* Build dummy GRANT statement to grant membership to login  */
-		appendStringInfo(&query, "GRANT dummy TO dummy ");
+		appendStringInfo(&query, "GRANT dummy TO dummy");
 	}
 	else
 	{
 		/* Build dummy REVOKE statement to revoke membership from login */
-		appendStringInfo(&query, "REVOKE dummy FROM dummy ");
+		appendStringInfo(&query, "REVOKE dummy FROM dummy");
 	}
 	if (grantor)
-		appendStringInfo(&query, "GRANTED BY %s; ", grantor);
+		appendStringInfo(&query, " GRANTED BY dummy; ");
+	else
+		appendStringInfo(&query, "; ");
 
 	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -642,7 +645,7 @@ grant_revoke_role_to_login(const char* login, const char *role_name, const char 
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	update_GrantRoleStmt(stmt, rolelist, list_make1(make_rolespec_node(login)));
+	update_GrantRoleStmt(stmt, rolelist, list_make1(make_rolespec_node(login)), grantor);
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -655,7 +658,7 @@ grant_revoke_role_to_login(const char* login, const char *role_name, const char 
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				   "(ALTER DATABASE OWNER )",
+				   "GRANT/REVOKE ROLE TO LOGIN",
 				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
@@ -1308,7 +1311,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		login_name_str = login->rolename;
 		/* Revoke guest user from login as login now has a mapped user in current database. */
 		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), NULL, false);
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		//grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
 
@@ -1504,7 +1507,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 
 				char *db_name = TextDatumGetCString(name);
 				grant_revoke_role_to_login(login, get_guest_role_name(db_name), NULL, false);
-				grant_revoke_role_to_login(login, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+				//grant_revoke_role_to_login(login, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 				pfree(db_name);
 			}
 		}
@@ -1669,14 +1672,15 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		{
 			/* First revoke this user from old login as the user is being mapped to a new login. */
 			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, NULL, false);
-			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
+			//grant_revoke_role_to_login(old_login_name, stmt->role->rolename, "bbf_role_admin", false);
 			/* Now grant guest user to old login as it's mapped user is being removed. */
-			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+			//grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", true);
+			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), NULL, true);
 		}
 
 		/* Revoke guest user from new login as login now has a mapped user in current database. */
 		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), NULL, false);
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		//grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 	}
 
 	if (new_user_name)
