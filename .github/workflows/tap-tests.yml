@@ -142,10 +142,3 @@ jobs:
         with:
           name: tap_tests_logs
           path: contrib/babelfishpg_tds/test/tmp_check
-
-      - name: Upload postgres engine build error logs
-        if: always() && steps.tap.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: modified_postgres_build_failures
-          path: postgresql_modified_for_babelfish/error.txt
