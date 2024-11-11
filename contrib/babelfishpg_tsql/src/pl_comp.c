@@ -127,7 +127,7 @@ static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 								ColumnRef *cref, bool error_if_no_field);
 static Node *make_datum_param(PLtsql_expr *expr, int dno, int location);
-static Node *make_const_from_var(PLtsql_expr *expr, int dno, int location);
+// static Node *make_const_from_var(PLtsql_expr *expr, int dno, int location);
 static PLtsql_row *build_row_from_vars(PLtsql_variable **vars, int numvars);
 static PLtsql_type *build_datatype(HeapTuple typeTup, int32 typmod,
 								   Oid collation, TypeName *origtypname);
@@ -1766,12 +1766,10 @@ resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 		case PLTSQL_NSTYPE_VAR:
 			if (nnames == nnames_scalar)
 			{
-				if (pstate->p_expr_kind == EXPR_KIND_SELECT_TARGET || 
-					pstate->p_expr_kind == EXPR_KIND_EXECUTE_PARAMETER ||
-					pstate->p_expr_kind == EXPR_KIND_CALL_ARGUMENT)
+				// if (pstate->p_expr_kind != EXPR_KIND_WHERE)
 					return make_datum_param(expr, nse->itemno, cref->location);
-				else
-					return make_const_from_var(expr, nse->itemno, cref->location);
+				// else
+				// 	return make_const_from_var(expr, nse->itemno, cref->location);
 			}
 			break;
 		case PLTSQL_NSTYPE_REC:
@@ -1826,6 +1824,7 @@ resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 	return NULL;
 }
 
+#if 0
 static Node *
 make_const_from_var(PLtsql_expr *expr, int dno, int location)
 {
@@ -1861,6 +1860,7 @@ make_const_from_var(PLtsql_expr *expr, int dno, int location)
 	con->location = location;
 	return (Node *) con;
 }
+#endif
 
 /*
  * Helper for columnref parsing: build a Param referencing a pltsql datum,

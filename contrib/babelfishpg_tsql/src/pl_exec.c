@@ -69,6 +69,7 @@ List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
 int			fetch_status_var = 0;
+int			saved_expr_kind = -1;
 
 typedef struct
 {
@@ -7857,8 +7858,16 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
-	/* Let extension to set value of param dynamically during execution */
-	prm->pflags = 0;
+	if (saved_expr_kind == EXPRKIND_TARGET)
+	{
+		/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
+		prm->pflags = 0;
+	}
+	else
+	{
+		/* We can always mark params as "const" for executor's purposes */
+		prm->pflags = PARAM_FLAG_CONST;
+	}
 
 	/* Return "no such parameter" if not ok */
 	if (!ok)
