@@ -1299,20 +1299,24 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 {
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid 						expr_result_type;
+	Oid 						expr_second_arg;
 	char					   *proc_nsname;
 	char					   *proc_name;
-	bool						is_func_validated;
+	// bool						is_func_validated;
 	int							ncandidates;
 	Oid							rettype;
 	Oid							sys_oid = get_namespace_oid("sys", false);
+	Oid 						*argtypes;
+	int							nargs_func = 0;
+	Oid							second_arg;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
+	// is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
 
 	/* Return NULL if function is not a special function */
-	if (!is_func_validated)
-		return NULL;
+	// if (!is_func_validated)
+	// 	return NULL;
 
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
@@ -1322,6 +1326,19 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
+	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
+		{
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+		}
+		else
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+		}
+	}
+	
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
@@ -1449,6 +1466,24 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	/* Get the candidate with matching return type */
 	ncandidates = 0;
 	best_candidate = NULL;
+
+	for (current_candidate = candidates;
+			current_candidate != NULL;
+			current_candidate = current_candidate->next)
+	{
+		/* we should only consider candidates for special function from sys schema */
+		if (get_func_namespace(current_candidate->oid) != sys_oid)
+			continue;
+
+		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
+		second_arg = argtypes[1];
+		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && second_arg == expr_second_arg  && ncandidates < 1)
+		{
+			best_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+
 	for (current_candidate = candidates;
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)
@@ -1458,7 +1493,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 			continue;
 
 		rettype = get_func_rettype(current_candidate->oid);
-		if (expr_result_type == rettype)
+		if (expr_result_type == rettype && ncandidates < 1)
 		{
 			best_candidate = current_candidate;
 			ncandidates++;

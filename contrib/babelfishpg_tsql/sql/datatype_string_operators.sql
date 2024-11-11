@@ -1,10 +1,14 @@
-CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg VARCHAR, IN data VARCHAR) RETURNS sys.bbf_varbinary
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg VARCHAR, IN data VARCHAR) RETURNS sys.varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.hashbytes(IN VARCHAR, IN VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg VARCHAR, IN VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg VARCHAR, IN data sys.bbf_varbinary) RETURNS sys.bbf_varbinary
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg VARCHAR, IN data NVARCHAR) RETURNS sys.varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.hashbytes(IN VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg VARCHAR, IN NVARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg VARCHAR, IN data sys.bbf_varbinary) RETURNS sys.varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.quotename(IN input_string VARCHAR, IN delimiter char default '[') RETURNS
 sys.nvarchar AS 'babelfishpg_tsql', 'quotename' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

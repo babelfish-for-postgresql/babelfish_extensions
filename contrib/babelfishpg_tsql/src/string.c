@@ -70,6 +70,7 @@ hashbytes(PG_FUNCTION_ARGS)
 {
 	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
 	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+	// bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	size_t		len = VARSIZE_ANY_EXHDR(in);
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
@@ -84,12 +85,28 @@ hashbytes(PG_FUNCTION_ARGS)
     // {
     //     is_nvarchar = true;
     // }
+	// 	VarChar *varchar_input = DatumGetVarCharP(in);
+    //     data = (const uint8 *) VARDATA_ANY(varchar_input);
+    //     len = VARSIZE_ANY_EXHDR(varchar_input);
+	// // if(input_type == (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type) || input_type == (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_type))
+	// // {
+	// // 	VarChar *varchar_input = DatumGetVarCharP(in);
+    // //     data = (const uint8 *) VARDATA_ANY(varchar_input);
+    // //     len = VARSIZE_ANY_EXHDR(varchar_input);
+	// // }
+	// if(!(input_type == (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type) || input_type == (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_type)))
+	// {
+	// 	bytea *bytea_input = DatumGetByteaP(in);
+    //     data = (const uint8 *) VARDATA_ANY(bytea_input);
+    //     len = VARSIZE_ANY_EXHDR(bytea_input);
+	// }
+
 	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
 		(common_utility_plugin_ptr->tsql_utf8_to_utf16)(&utf16_data, data, len);
         data = (const uint8 *) utf16_data.data;
         len = utf16_data.len;
-	}	
+	}
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
