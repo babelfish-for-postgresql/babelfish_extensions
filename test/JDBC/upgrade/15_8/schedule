@@ -475,7 +475,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
 datetimeoffset-timezone
-BABEL-4046
+# BABEL-4046 - TODO JIRA -  BABEL-5397
 host_id-before-16_5-or-15_9
 drop_index
 linked_srv_4229

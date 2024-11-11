@@ -466,7 +466,7 @@ doublequoted_string
 alter_authorization_change_db_owner
 sp_changedbowner
 datetimeoffset-timezone
-BABEL-4046
+# BABEL-4046 - TODO JIRA -  BABEL-5397
 table_constraint_wo_comma-before-15_6-or-16_2
 host_id-before-16_5-or-15_9
 linked_srv_4229

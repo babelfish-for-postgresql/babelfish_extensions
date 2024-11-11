@@ -353,7 +353,7 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
-BABEL-4046
+# BABEL-4046 - TODO JIRA -  BABEL-5397
 table_constraint_wo_comma-before-15_6-or-16_2
 getdate-before-15_9-or-16_5
 BABEL_4330-before-15_8-or-16_4
