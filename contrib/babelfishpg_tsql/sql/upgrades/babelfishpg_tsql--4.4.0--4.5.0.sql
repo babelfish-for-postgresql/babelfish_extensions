@@ -11,6 +11,10 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_get_expr'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
