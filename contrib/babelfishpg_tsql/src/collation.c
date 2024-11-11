@@ -1154,6 +1154,7 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 
 	if (EXPRKIND_TARGET == kind)
 	{
+		saved_expr_kind = EXPRKIND_TARGET;
 		/*
 		 * If expr is NOT a Boolean expression then recurse through its
 		 * expresion tree
