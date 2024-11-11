@@ -107,7 +107,7 @@ using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
 template <class T>
 using GetCtxFunc = std::function <ParserRuleContext * (T)>;
 
-void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm);
+void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *originalQuery);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
 PLtsql_stmt_block *makeEmptyBlockStmt(int lineno);
@@ -1942,21 +1942,66 @@ public:
 			if (ctx->select_statement_standalone() && stmt->need_to_push_result)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statement returning result to a client cannot be used in a function", getLineAndPos(ctx->select_statement_standalone()));
 
-			/* T-SQL doens't allow side-effecting operations in CREATE FUNCTION */
+			/* T-SQL doesn't allow side-effecting operations in CREATE FUNCTION */
 			if (ctx->insert_statement())
 			{
 				auto ddl_object = ctx->insert_statement()->ddl_object();
 				if (stmt->insert_exec && ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
+				}
 				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
+				}
 			}
-			else if (ctx->update_statement() && ctx->update_statement()->ddl_object() && !ctx->update_statement()->ddl_object()->local_id() && 
-					(ctx->update_statement()->table_sources() ? ::getFullText(ctx->update_statement()->table_sources()).c_str()[0] != '@' : true)) /* update non-local object, table variables are allowed */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'UPDATE' cannot be used within a function", getLineAndPos(ctx->update_statement()->ddl_object()));
-			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()  &&
-					(ctx->delete_statement()->table_sources() ? ::getFullText(ctx->delete_statement()->table_sources()).c_str()[0] != '@' : true)) /* delete non-local object, table variables are allowed */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
+			else if (ctx->update_statement() || ctx->delete_statement())
+			{
+				std::string dmlType = "";
+				TSqlParser::Ddl_objectContext *ddl_object = nullptr;
+				TSqlParser::Table_sourcesContext * table_sources = nullptr;
+				std::pair<int,int> line_and_pos;
+
+				if (ctx->update_statement())
+				{
+					ddl_object = ctx->update_statement()->ddl_object();
+					table_sources = ctx->update_statement()->table_sources();
+					dmlType = "UPDATE";
+				}
+				else
+				{
+					ddl_object = ctx->delete_statement()->delete_statement_from()->ddl_object();
+					table_sources = ctx->delete_statement()->table_sources();
+					dmlType = "DELETE";
+				}
+
+				bool dmlTargetAllowed = false;
+				if (ddl_object && ddl_object->local_id())
+				{
+					// DML target is a table variable
+					dmlTargetAllowed = true;
+				}
+				else if (ddl_object && !ddl_object->local_id())
+				{
+					if (ddl_object && ddl_object->full_object_name())
+					{
+						// DML target can be an alias: verify that the alias is for a table variable
+						if (table_sources)
+						{
+							line_and_pos = getLineAndPos(ddl_object);
+							// DML target can be an alias: verify that the alias is for a table variable
+							if (table_sources)
+							{
+								line_and_pos = getLineAndPos(ddl_object->full_object_name());								
+								std::string dmlTarget = getFullText(ddl_object->full_object_name());
+								dmlTargetAllowed = dmlTargetIsTabvar(table_sources->table_source_item(), dmlTarget);
+							}
+						}
+					}
+				}
+				if (!dmlTargetAllowed)
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, format_errmsg("'%s' cannot be used within a function", dmlType.c_str()), line_and_pos);
+			}
 
 			/*
 			 * Reject if OUTPUT clause is missing INTO (returning to client) or OUTPUT INTO non local object
@@ -1998,6 +2043,43 @@ public:
 		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
 		clear_tables_info();
+	}
+
+	bool dmlTargetIsTabvar(std::vector<TSqlParser::Table_source_itemContext *> table_source_item, std::string dmlTarget)
+	{
+		// Potential optimization: as soon as we find the alias matching the DML target, and it's not a table variable, 
+		// we can stop searching through the rest of the table_source_items. 
+		// But some quick testing did not show a measurable difference so this may not be worth doing.
+		
+		// Search through table_source_item, including nested ones, to find the alias and whether it is for a table variable
+		for (size_t i=0; i<table_source_item.size(); ++i)
+		{
+			// First recurse deep until the lowest level of nested table_source_item, if any
+			if (table_source_item[i]->table_source_item().size() > 0)
+			{
+				if (dmlTargetIsTabvar(table_source_item[i]->table_source_item(), dmlTarget))
+					return true;
+			}
+
+			// At this point, there is no deeper nested table_source_item so we can look for the alias
+
+			// Find alias matching the DML target
+			if (table_source_item[i]->as_table_alias().size() == 0)
+				continue;  // No alias found in this table_source_item
+
+			std::string alias = getFullText(table_source_item[i]->as_table_alias()[0]->table_alias());
+			if (pg_strcasecmp(alias.c_str(), dmlTarget.c_str()) != 0)
+				continue;  // This alias is not matching the DML target
+
+			if (table_source_item[i]->local_id())
+			{
+				// Table variable, with alias matching the DML target
+				return true;
+			}
+		}
+
+		// We did not find the target alias, or it was not a table variable
+		return false;
 	}
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *selectCtx) override
@@ -3583,7 +3665,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			 * and there should be exactly one batch_level_statement there
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
-			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get(), sourceText);
 
 			/* If PARSEONLY is enabled, replace with empty statement */
 			if (pltsql_parseonly)
@@ -3992,8 +4074,33 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 	return nullptr;
 }
 
+char*
+storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, const char *originalQuery)
+{
+	int startIndex = -1;
+	int endIndex = -1;
+	std::string originalQueryCopy = originalQuery;
+
+	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
+	{
+		startIndex = ctx->create_or_alter_procedure()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	else if (ctx->create_or_alter_function() && ctx->create_or_alter_function()->ALTER())
+	{
+		startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	else
+		return pstrdup(originalQueryCopy.c_str());
+}
+
 void
-handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm)
+handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, const char *originalQuery)
 {
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
 	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
@@ -4016,7 +4123,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
-	execsql->original_query = pstrdup((makeTsqlExpr(ctx, false))->query);
+	execsql->original_query = storeOriginalQueryForBatchLevelStatement(ctx, originalQuery);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
@@ -8435,7 +8542,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
 	
-	/* writting the previously rewritten XML and/or Geospatial context */
+	/* writing the previously rewritten XML and/or Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= method->stop->getStopIndex())
@@ -8514,7 +8621,7 @@ rewrite_geospatial_col_ref_query_helper(T ctx, TSqlParser::Method_callContext *m
 	int index = 0;
 	int offset1 = 0;
 	
-	/* writting the previously rewritten Geospatial context */
+	/* writing the previously rewritten Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= method->stop->getStopIndex())
@@ -8552,7 +8659,7 @@ rewrite_geospatial_func_ref_no_arg_query_helper(T ctx, TSqlParser::Method_callCo
 	int index = 0;
 	int offset1 = 0;
 	
-	/* writting the previously rewritten Geospatial context */
+	/* writing the previously rewritten Geospatial context */
 	for (auto &entry : rewritten_query_fragment)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= method->stop->getStopIndex())
@@ -8668,7 +8775,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	std::vector<std::pair<int, int>> arg_offset_list;
 	int local_id_end_offset = 0;
 	
-	/* writting the previously rewritten Dot Function context */
+	/* writing the previously rewritten Dot Function context */
 	for (auto &entry : rewritten_query_fragment)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())

@@ -88,7 +88,7 @@ select definition from sys.sql_modules where object_id = object_id('babel_4475_v
 go
 ~~START~~
 nvarchar
-create view babel_4475_v1 as select cast(cast('a' as binary(2)) as varchar(2))
+create view babel_4475_v1 as select cast(cast('a' as binary(2)) as varchar(2))<newline>
 ~~END~~
 
 
@@ -96,7 +96,7 @@ select definition from sys.sql_modules where object_id = object_id('babel_4475_v
 go
 ~~START~~
 nvarchar
-create view babel_4475_v2 as select cast(cast('a' as binary(2)) as pg_catalog.varchar(2))
+create view babel_4475_v2 as select cast(cast('a' as binary(2)) as pg_catalog.varchar(2))<newline>
 ~~END~~
 
 
@@ -104,7 +104,7 @@ select definition from sys.sql_modules where object_id = object_id('babel_4475_v
 go
 ~~START~~
 nvarchar
-create view babel_4475_v3 as select cast(cast('ab' as rowversion) as varchar(2))
+create view babel_4475_v3 as select cast(cast('ab' as rowversion) as varchar(2))<newline>
 ~~END~~
 
 
@@ -112,7 +112,7 @@ select definition from sys.sql_modules where object_id = object_id('babel_4475_v
 go
 ~~START~~
 nvarchar
-create view babel_4475_v4 as select cast(cast('ab' as rowversion) as pg_catalog.varchar(2))
+create view babel_4475_v4 as select cast(cast('ab' as rowversion) as pg_catalog.varchar(2))<newline>
 ~~END~~
 
 

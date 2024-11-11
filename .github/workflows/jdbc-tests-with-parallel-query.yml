@@ -62,7 +62,7 @@ jobs:
           cd test/JDBC/
           # set env variable isParallelQueryMode to true to let jdbc know not to run tests of file parallel_query_jdbc_schedule
           export isParallelQueryMode=true
-          mvn test
+          mvn -B -ntp test
           # reset env variable
           unset isParallelQueryMode
 

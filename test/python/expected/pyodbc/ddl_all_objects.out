@@ -92,12 +92,14 @@ SET QUOTED_IDENTIFIER ON
 CREATE VIEW sys_all_views_select_chk_option_vu_prepare AS
 SELECT * FROM sys_all_views_table_vu_prepare
 WITH CHECK OPTION
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE VIEW sys_all_views_select_vu_prepare AS
 SELECT * FROM sys_all_views_table_vu_prepare
+
 GO
 
 SET ANSI_NULLS ON
@@ -107,36 +109,43 @@ AS
 BEGIN
         SELECT @test_nvar_b=8;
 END
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc2(@fc2_a varchar) RETURNS varchar AS BEGIN return @fc2_a END;
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc3(@fc3_a nchar) RETURNS nchar AS BEGIN return @fc3_a END;
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc4(@fc4_a binary, @fc4_b tinyint, @fc4_c BIGINT, @fc4_d float) RETURNS binary AS BEGIN return @fc4_a END;
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc5(@fc5_a varbinary) RETURNS varbinary AS BEGIN return @fc5_a END;
+
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 create function routines_fc6(@fc6_a char) RETURNS char AS BEGIN return @fc6_a END;
+
 GO
 
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
@@ -155,6 +164,7 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
 	select COLUMNS_UPDATED();
+
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
 GO
 
