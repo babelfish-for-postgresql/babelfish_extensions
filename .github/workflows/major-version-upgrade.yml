@@ -209,6 +209,7 @@ jobs:
           && steps.check-babelfish-inconsistency.outputs.check_result == 0
         run: |
           cd test/JDBC/
+          echo "" >> jdbc_schedule
           echo 'ignore#!#babel_tds_fault_injection' >> jdbc_schedule
           echo 'ignore#!#tds_faultinjection' >> jdbc_schedule
           echo jdbc_schedule
