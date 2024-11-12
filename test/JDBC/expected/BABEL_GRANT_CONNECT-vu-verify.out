@@ -1,13 +1,4 @@
 -- tsql
-use grant_connect_db1
-go
-
-revoke connect from guest;
-go
-
-use master
-go
-
 grant connect to guest;
 go
 
