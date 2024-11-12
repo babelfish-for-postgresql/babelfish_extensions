@@ -1295,8 +1295,9 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
+
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid 						expr_result_type;
 	Oid 						expr_second_arg;
@@ -1304,19 +1305,104 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	char					   *proc_name;
 	// bool						is_func_validated;
 	int							ncandidates;
-	Oid							rettype;
+	// Oid							rettype;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid 						*argtypes;
 	int							nargs_func = 0;
 	Oid							second_arg;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
+	
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
 
-	// is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
+	expr_result_type = InvalidOid;
+	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
+		{
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(input_typeids[1]))
+		{
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1]))
+		{
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varchar");	
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+		}
+	}
+
+
+	if (!OidIsValid(expr_result_type))
+		return NULL;
+
+	/* Get the candidate with matching return type */
+	ncandidates = 0;
+	best_candidate = NULL;
+
+	for (current_candidate = candidates;
+		current_candidate != NULL;
+		current_candidate = current_candidate->next)
+	{
+		/* we should only consider candidates for special function from sys schema */
+		if (get_func_namespace(current_candidate->oid) != sys_oid)
+			continue;
+
+		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
+		second_arg = argtypes[1];
+		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && second_arg == expr_second_arg  && ncandidates < 1)
+		{
+			best_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+
+		/* Only one definition should exists per return type for special function */
+	if (ncandidates == 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("function %s.%s with return type %s does not exists.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+	else if (ncandidates > 1)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+
+	if (best_candidate != NULL)
+		best_candidate->next = NULL;
+	return best_candidate;
+
+}
+
+static FuncCandidateList
+tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+{
+	FuncCandidateList			current_candidate, best_candidate;
+	Oid 						expr_result_type;
+	char					   *proc_nsname;
+	char					   *proc_name;
+	bool						is_func_validated;
+	int							ncandidates;
+	Oid							rettype;
+	Oid							sys_oid = get_namespace_oid("sys", false);
+
+	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
+
+	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
 
 	/* Return NULL if function is not a special function */
-	// if (!is_func_validated)
-	// 	return NULL;
+	if (!is_func_validated)
+		return NULL;
 
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
@@ -1326,18 +1412,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
-	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
-	{
-		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
-		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
-		}
-		else
-		{
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
-		}
-	}
 	
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0)
 	{
@@ -1475,23 +1549,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 		if (get_func_namespace(current_candidate->oid) != sys_oid)
 			continue;
 
-		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
-		second_arg = argtypes[1];
-		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && second_arg == expr_second_arg  && ncandidates < 1)
-		{
-			best_candidate = current_candidate;
-			ncandidates++;
-		}
-	}
-
-	for (current_candidate = candidates;
-			current_candidate != NULL;
-			current_candidate = current_candidate->next)
-	{
-		/* we should only consider candidates for special function from sys schema */
-		if (get_func_namespace(current_candidate->oid) != sys_oid)
-			continue;
-
 		rettype = get_func_rettype(current_candidate->oid);
 		if (expr_result_type == rettype && ncandidates < 1)
 		{
@@ -1534,6 +1591,7 @@ tsql_func_select_candidate(List *names,
 	int			i;
 	bool			  candidates_are_opers = false;
 
+
 	if (is_special)
 	{
 		/*
@@ -1541,6 +1599,15 @@ tsql_func_select_candidate(List *names,
 		 */
 		if (babelfish_dump_restore)
 			return NULL;
+
+		if (list_length(names) > 0)
+        {
+            char *func_name = strVal(llast(names));
+            if (strcmp(func_name, "hashbytes") == 0)
+            {
+                return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
+            }
+        }
 
 		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
 	}
