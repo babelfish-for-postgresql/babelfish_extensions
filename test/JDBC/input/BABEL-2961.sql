@@ -36,3 +36,110 @@ GO
 
 DROP DATABASE TestDB2961
 GO
+
+USE master
+GO
+
+IF OBJECT_ID('dbo.NonExistentTable', 'U') IS NOT NULL
+    DROP TABLE dbo.NonExistentTable
+GO
+
+-- Create a view that attempts to select from a non-existent table
+CREATE VIEW dbo.NonExistentTableView AS
+SELECT * FROM dbo.NonExistentTable
+GO
+
+IF OBJECT_ID('dbo.NonExistentTableView', 'V') IS NOT NULL
+    DROP VIEW dbo.NonExistentTableView
+GO
+
+-- Create a function that attempts to select from a non-existent table
+CREATE FUNCTION dbo.NonExistentTableFunc()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT * FROM dbo.NonExistentTable
+)
+GO
+
+IF OBJECT_ID('dbo.NonExistentTableFunc', 'IF') IS NOT NULL
+    DROP FUNCTION dbo.NonExistentTableFunc
+GO
+
+IF OBJECT_ID('dbo.CallNonExistentProc', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.CallNonExistentProc
+GO
+
+-- Create a procedure that attempts to execute a non-existent procedure
+CREATE PROCEDURE dbo.CallNonExistentProc
+AS
+BEGIN
+    EXEC dbo.NonExistentProc
+END
+GO
+EXEC dbo.CallNonExistentProc
+GO
+
+IF OBJECT_ID('dbo.DropNonExistentUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.DropNonExistentUser
+GO
+
+IF OBJECT_ID('dbo.NonExistentProc', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.NonExistentProc
+GO
+
+
+-- Create a function that attempts to use a non-existent schema
+CREATE FUNCTION nonexistent_schema.TestFunc()
+RETURNS INT
+AS
+BEGIN
+    RETURN 1
+END
+GO
+
+IF OBJECT_ID('nonexistent_schema.TestFunc', 'FN') IS NOT NULL
+    DROP FUNCTION nonexistent_schema.TestFunc
+GO
+
+
+-- Create a procedure that attempts to drop a non-existent user
+CREATE PROCEDURE dbo.DropNonExistentUser
+AS
+BEGIN
+    DROP USER NonExistentUser
+END
+GO
+
+EXEC dbo.DropNonExistentUser
+GO
+
+IF OBJECT_ID('dbo.DropNonExistentUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.DropNonExistentUser
+GO
+
+IF OBJECT_ID('dbo.NonExistentProc', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.NonExistentProc
+GO
+
+
+-- Attempt multiple operations within a single transaction
+BEGIN TRANSACTION
+    CREATE TABLE dbo.TestTable (ID INT)
+    INSERT INTO dbo.TestTable VALUES (1)
+    SELECT * FROM dbo.NonExistentTable
+COMMIT
+GO
+
+-- Verify if the transaction rolled back correctly
+SELECT * FROM dbo.TestTable
+GO
+
+IF OBJECT_ID('dbo.TestTable', 'U') IS NOT NULL
+    DROP TABLE dbo.TestTable
+GO
+
+IF OBJECT_ID('dbo.NonExistentTable', 'U') IS NOT NULL
+    DROP TABLE dbo.NonExistentTable
+GO
