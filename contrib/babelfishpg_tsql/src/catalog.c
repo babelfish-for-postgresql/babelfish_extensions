@@ -1123,7 +1123,7 @@ get_user_for_database(const char *db_name)
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
 	if (user && !user_has_dbaccess(user) && !guest_has_dbaccess((char *) db_name))
-			user = NULL;
+		user = NULL;
 
 	if (!user)
 	{

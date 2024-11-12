@@ -10,3 +10,5 @@ go
 create login grant_connect_abc with password = 'Babel123'
 go
 
+grant connect to guest;
+go

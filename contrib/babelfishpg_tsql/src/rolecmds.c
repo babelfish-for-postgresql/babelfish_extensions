@@ -1305,11 +1305,16 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	if (has_login)
 	{
 		char *db_name = get_cur_db_name();
+		int         save_sec_context;
+		Oid         save_userid;
 
 		verify_login_for_bbf_authid_user_ext(login);
 		login_name_str = login->rolename;
 		/* Revoke guest user from login as login now has a mapped user in current database. */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), NULL, false);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
