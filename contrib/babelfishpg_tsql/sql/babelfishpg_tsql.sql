@@ -301,87 +301,80 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- BABEL-1784: support for sp_columns/sp_columns_100
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
-  SELECT 
-  CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-  CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-  CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
-  CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+WITH base_query AS (
+  SELECT t1.oid AS table_oid,
+         t1.reloptions AS reloptions,
+         t2.nspname,
+         t4.*,
+         a.attoptions,
+         a.atttypid,
+         a.atttypmod,
+         a.attlen,
+         t.typname,
+         t.typtypmod,
+         ext.dbid,
+         t6.is_computed,
+         t6.is_identity
+  FROM pg_catalog.pg_class t1
+  JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+  JOIN information_schema_tsql.columns_internal t4 ON t1.oid = t4."TABLE_OID"
+  LEFT JOIN pg_attribute a ON a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+  LEFT JOIN pg_type t ON t.oid = a.atttypid
+  LEFT JOIN sys.babelfish_namespace_ext ext ON t2.nspname = ext.nspname
+  LEFT JOIN sys.columns t6 ON t1.oid = t6.object_id AND t4."ORDINAL_POSITION" = t6.column_id
+  WHERE ext.dbid = sys.db_id()
+)
+SELECT 
+  CAST(b."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+  CAST(b."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+  -- CAST(b."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+  CAST(
+    CASE WHEN b.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(b.reloptions[1], 23)
+      ELSE b."TABLE_NAME" END
+            AS sys.sysname) AS TABLE_NAME,
+  -- CAST(b."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+  CAST(
+			CASE WHEN b.attoptions[1] LIKE 'bbf_original_name%' THEN substring(b.attoptions[1], 19)
+			ELSE b."COLUMN_NAME" END
+            AS sys.sysname) AS COLUMN_NAME,
   CAST(t5.data_type AS smallint) AS DATA_TYPE,
-  CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
-
-  CASE WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
-    WHEN a.atttypmod != -1
-    THEN
-    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
-    WHEN tsql_type_name = 'timestamp'
-    THEN 8
-    ELSE
-    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
+  CAST(COALESCE(tsql_type_name, b.typname) AS sys.sysname) AS TYPE_NAME,
+  CASE 
+    WHEN b."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    WHEN b.atttypmod != -1 THEN CAST(COALESCE(b."NUMERIC_PRECISION", b."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(b."DATA_TYPE", b.atttypmod)) AS INT)
+    WHEN tsql_type_name = 'timestamp' THEN 8
+    ELSE CAST(COALESCE(b."NUMERIC_PRECISION", b."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(b."DATA_TYPE", b.typtypmod)) AS INT)
   END AS PRECISION,
-
-  CASE WHEN a.atttypmod != -1
-    THEN
-    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
-    ELSE
-    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
-  END AS LENGTH,
-
-
-  CASE WHEN a.atttypmod != -1
-    THEN
-    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
-    ELSE
-    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
-  END AS SCALE,
-
-
-  CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
-  case
-    when t4."IS_NULLABLE" = 'YES' then CAST(1 AS smallint)
-    else CAST(0 AS smallint)
-  end AS NULLABLE,
-
+  CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, COALESCE(b.atttypmod, b.typtypmod)) AS int) AS LENGTH,
+  CAST(COALESCE(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", COALESCE(b.atttypmod, b.typtypmod), true)) AS smallint) AS SCALE,
+  CAST(COALESCE(b."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(b."DATA_TYPE")) AS smallint) AS RADIX,
+  CAST(CASE WHEN b."IS_NULLABLE" = 'YES' THEN 1 ELSE 0 END AS smallint) AS NULLABLE,
   CAST(NULL AS varchar(254)) AS remarks,
-  CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
+  CAST(b."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
   CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
   CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
-
-  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
-    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
-    WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
-    ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
+  CASE 
+    WHEN b."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN b."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+    WHEN b."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    ELSE CAST(b."CHARACTER_OCTET_LENGTH" AS int)
   END AS CHAR_OCTET_LENGTH,
-
-  CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
-  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
+  CAST(b."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
+  CAST(b."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
   CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
   CAST(0 AS smallint) AS SS_IS_SPARSE,
   CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
-  CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
-  CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
-  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
-  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
-  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
-  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
-  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
-  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
-
-  FROM pg_catalog.pg_class t1
-     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
-     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
-     LEFT JOIN pg_type t ON t.oid = a.atttypid
-     LEFT JOIN sys.columns t6 ON
-     (
-      t1.oid = t6.object_id AND
-      t4."ORDINAL_POSITION" = t6.column_id
-     )
-     , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
-     , sys.spt_datatype_info_table AS t5
-  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
-    AND ext.dbid = sys.db_id();
+  CAST(b.is_computed AS smallint) AS SS_IS_COMPUTED,
+  CAST(b.is_identity AS smallint) AS SS_IS_IDENTITY,
+  CAST(NULL AS varchar(254)) AS SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) AS SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) AS SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) AS SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) AS SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) AS SS_XML_SCHEMACOLLECTION_NAME
+FROM base_query b
+CROSS JOIN LATERAL sys.translate_pg_type_to_tsql(b.atttypid) AS tsql_type_name
+JOIN sys.spt_datatype_info_table t5 ON (b."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (b."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'));
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
