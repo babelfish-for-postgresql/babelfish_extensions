@@ -676,8 +676,49 @@ int
 ~~END~~
 
 
+create user user_cannot_connect for login babel_cross_db_vu_prepare_l2;
+go
+
+revoke connect from user_cannot_connect;
+go
+
 GRANT CONNECT TO guest;
 GO
+
+grant select on babel_cross_db_vu_prepare_db1_t1 to guest;
+go
+
+-- tsql user=babel_cross_db_vu_prepare_l2 password=12345678
+USE my_babel_cross_db_vu_prepare_db1
+GO
+
+select current_user
+go
+~~START~~
+varchar
+user_cannot_connect
+~~END~~
+
+
+select * from dbo.babel_cross_db_vu_prepare_db1_t1; -- should not use guest privilege
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_db1_t1)~~
+
+
+USE master
+GO
+
+-- tsql
+USE my_babel_cross_db_vu_prepare_db1
+GO
+
+revoke select on babel_cross_db_vu_prepare_db1_t1 from guest;
+go
+
+drop user user_cannot_connect;
+go
 
 -- tsql user=babel_cross_db_vu_prepare_l2 password=12345678
 -- cross-db tests for guest user

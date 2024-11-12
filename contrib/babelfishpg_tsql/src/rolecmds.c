@@ -1490,7 +1490,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 	{
 		Datum datum = heap_getattr(tuple,
 								   Anum_bbf_authid_user_ext_login_name,
-								   bbf_authid_user_ext_rel->rd_att,
+								   RelationGetDescr(bbf_authid_user_ext_rel),
 								   &is_null);
 		if (!is_null)
 		{
@@ -1501,7 +1501,7 @@ revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
 			{
 				Datum name = heap_getattr(tuple,
 									Anum_bbf_authid_user_ext_database_name,
-									bbf_authid_user_ext_rel->rd_att,
+									RelationGetDescr(bbf_authid_user_ext_rel),
 									&is_null);
 
 				char *db_name = TextDatumGetCString(name);
