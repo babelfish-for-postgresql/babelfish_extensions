@@ -1273,22 +1273,10 @@ float
 ~~END~~
 
 
-<<<<<<< HEAD
--- additional testing for update with dynamic variables
-GO
-
-create table local_var_tst (id int) 
-GO
-
-TRUNCATE table local_var_tst
-GO
-
-=======
 -- variables only in select target list shows dynamic behavior
 create table local_var_tst (id int) 
 GO
 
->>>>>>> jira-babel-5188
 insert into local_var_tst values (1)
 insert into local_var_tst values (2)
 GO
@@ -1297,7 +1285,45 @@ GO
 ~~ROW COUNT: 1~~
 
 
-<<<<<<< HEAD
+declare @i int = 1
+declare @j int = 0
+select @j += id, @i = id + 1  from local_var_tst where id = @i
+select @i, @j
+go
+~~START~~
+int#!#int
+2#!#1
+~~END~~
+
+
+declare @i int = 1
+select @i = id * 2 from local_var_tst where id = @i
+select @i
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+drop table local_var_tst
+GO
+
+-- additional testing for update with dynamic variables
+GO
+
+create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
 set QUOTED_IDENTIFIER off
 GO
 
@@ -1449,11 +1475,11 @@ declare @i int = 1
 update local_var_tst set id = @i, @i = id * 2 where id = @i
 select @i
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
-4
+2
 ~~END~~
 
 
@@ -1462,7 +1488,7 @@ go
 ~~START~~
 int
 2
-4
+2
 ~~END~~
 
 
@@ -1661,6 +1687,40 @@ GO
 ~~ROW COUNT: 1~~
 
 
+
+-- variables in the where clause should be treated as const
+declare @i int = 1;
+update local_var_tst set id = @i * 100, @i = id * 2 where id = @i
+select @i
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+
+select * from local_var_tst order by id;
+GO
+~~START~~
+int
+2
+200
+~~END~~
+
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 CREATE PARTITION FUNCTION RangePF1 ( INT )  
 AS RANGE RIGHT FOR VALUES (10, 100, 1000) ;  
 GO
@@ -1795,21 +1855,10 @@ off
 ~~START~~
 text
 off
-=======
-declare @i int = 1
-declare @j int = 0
-select @j += id, @i = id + 1  from local_var_tst where id = @i
-select @i, @j
-go
-~~START~~
-int#!#int
-2#!#1
->>>>>>> jira-babel-5188
 ~~END~~
 
 
 declare @i int = 1
-<<<<<<< HEAD
 update local_var_tst_1 set id = @i, @i = id * 5 where id = 1
 select @i
 GO
@@ -1823,14 +1872,10 @@ int
 
 declare @i int = 1
 update local_var_tst_1 set id = 10 output deleted.id where id = 1
-=======
-select @i = id * 2 from local_var_tst where id = @i
->>>>>>> jira-babel-5188
 select @i
 GO
 ~~START~~
 int
-<<<<<<< HEAD
 ~~END~~
 
 ~~START~~
@@ -1936,11 +1981,5 @@ DROP TABLE update_test_tbl2;
 GO
 
 DROP TABLE update_test_tbl
-=======
-2
-~~END~~
-
-
-drop table local_var_tst
->>>>>>> jira-babel-5188
 GO
+

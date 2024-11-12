@@ -691,11 +691,12 @@ select @a = -2.e-
 select @a
 go
 
-TRUNCATE table local_var_tst
-GO
-
 -- variables only in select target list shows dynamic behavior
 create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
 GO
 
 declare @i int = 1
@@ -889,6 +890,23 @@ select @i
 GO
 
 select * from local_var_tst;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- variables in the where clause should be treated as const
+
+declare @i int = 1;
+update local_var_tst set id = @i * 100, @i = id * 2 where id = @i
+select @i
+GO
+
+select * from local_var_tst order by id;
 GO
 
 TRUNCATE table local_var_tst
