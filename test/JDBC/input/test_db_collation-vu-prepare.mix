@@ -248,15 +248,28 @@ RETURNS TABLE
 AS
 RETURN
 (
-    SELECT t1.nv
+    SELECT t1.nv as col
     FROM test_db_collation_vu_prepare_db121_t1 t1
     INNER JOIN test_db_collation_vu_prepare_db121_t2 t2 ON t1.nv = t2.nv ORDER BY t1.nv
 );
 GO
 
-EXEC sp_describe_first_result_set @tsql = N'SELECT * FROM test_db_collation_vu_prepare_db121_f1()';
+-- Create view to hold the function's output
+CREATE VIEW func_output1 AS
+SELECT * FROM test_db_collation_vu_prepare_db121_f1();
 GO
 
+-- Query INFORMATION_SCHEMA to get column information
+SELECT 
+    c.COLUMN_NAME,
+    c.COLLATION_NAME
+FROM 
+    INFORMATION_SCHEMA.COLUMNS c
+JOIN
+    INFORMATION_SCHEMA.VIEWS v ON c.TABLE_NAME = v.TABLE_NAME
+WHERE 
+    v.TABLE_NAME = 'func_output1';
+GO
 
 CREATE FUNCTION test_db_collation_vu_prepare_db121_f2()
 RETURNS @res_tab TABLE
@@ -274,8 +287,23 @@ BEGIN
 END;
 GO
 
-EXEC sp_describe_first_result_set @tsql = N'SELECT * FROM test_db_collation_vu_prepare_db121_f2()';
+-- Create view to hold the function's output
+CREATE VIEW func_output2 AS
+SELECT * FROM test_db_collation_vu_prepare_db121_f2();
 GO
+
+-- Query INFORMATION_SCHEMA to get column information
+SELECT 
+    c.COLUMN_NAME,
+    c.COLLATION_NAME
+FROM 
+    INFORMATION_SCHEMA.COLUMNS c
+JOIN
+    INFORMATION_SCHEMA.VIEWS v ON c.TABLE_NAME = v.TABLE_NAME
+WHERE 
+    v.TABLE_NAME = 'func_output2';
+GO
+
 
 CREATE VIEW test_db_collation_vu_prepare_db121_v1 AS SELECT nv FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
 GO
