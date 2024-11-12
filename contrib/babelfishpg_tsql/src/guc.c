@@ -1657,7 +1657,8 @@ void
 pltsql_validate_set_config_function(char *name, char *value)
 {
 	if (strncmp(name, PLTSQL_SESSION_ISOLATION_LEVEL, strlen(PLTSQL_SESSION_ISOLATION_LEVEL)) == 0 ||
-		strncmp(name, PLTSQL_TRANSACTION_ISOLATION_LEVEL, strlen(PLTSQL_TRANSACTION_ISOLATION_LEVEL)) == 0)
+		strncmp(name, PLTSQL_TRANSACTION_ISOLATION_LEVEL, strlen(PLTSQL_TRANSACTION_ISOLATION_LEVEL)) == 0 ||
+		strncmp(name, "role", strlen("role")) == 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
