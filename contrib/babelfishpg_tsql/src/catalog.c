@@ -981,12 +981,6 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	return user_name;
 }
 
-//char *
-//get_authid_user_ext_physical_name(const char *db_name, const char *login)
-//{
-//	return get_authid_user_ext_physical_name_user_enabled(db_name, login, true);
-//}
-
 char *
 get_authid_user_ext_schema_name(const char *db_name, const char *user)
 {
@@ -1077,7 +1071,7 @@ get_authid_user_ext_db_users(const char *db_name)
 
 /* Checks if the user is enabled on a given database. */
 static bool
-user_has_dbaccess(const char *db_name, const char *user)
+user_has_dbaccess(const char *user)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
@@ -1125,19 +1119,11 @@ get_user_for_database(const char *db_name)
 	bool		guest_is_enabled = false;
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
-	//if (set_user)
-	//	user = get_authid_user_ext_physical_name_user_enabled(db_name, login, false);
-	//else
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
-	//user is disabled && guest is enabled
-	// user = NULL
-	if (user && !user_has_dbaccess(db_name, user))
-	{
-		if (!guest_has_dbaccess((char *) db_name))
+	if (user && !user_has_dbaccess(user) && !guest_has_dbaccess((char *) db_name))
 			user = NULL;
-	}
 
 	if (!user)
 	{
@@ -1168,12 +1154,6 @@ get_user_for_database(const char *db_name)
 
 	return user;
 }
-
-//char *
-//get_user_for_database(const char *db_name)
-//{
-//	return get_user_for_database_for_set_user(db_name, false);
-//}
 
 /*****************************************
  *			VIEW_DEF
