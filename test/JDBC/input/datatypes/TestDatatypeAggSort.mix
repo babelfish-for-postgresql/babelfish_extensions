@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- MAX/MIN functionality already verified in upgrade scripts.
 -- This test mainly focuses on query plans.
 

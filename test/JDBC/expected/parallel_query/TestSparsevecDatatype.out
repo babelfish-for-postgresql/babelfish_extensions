@@ -1066,11 +1066,15 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <-> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
-        Order By: (val <-> (InitPlan 1).col1)
-        InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+              Order By: (val <-> (InitPlan 1).col1)
+              InitPlan 1
+                ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 
@@ -1187,11 +1191,15 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <#> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
-        Order By: (val <#> (InitPlan 1).col1)
-        InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+              Order By: (val <#> (InitPlan 1).col1)
+              InitPlan 1
+                ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 
@@ -1287,11 +1295,15 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <=> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=3 loops=1)
-        Order By: (val <=> (InitPlan 1).col1)
-        InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=3 loops=1)
+              Order By: (val <=> (InitPlan 1).col1)
+              InitPlan 1
+                ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 
@@ -1368,11 +1380,15 @@ int
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM sparsevec_table ORDER BY val <+> (SELECT CAST(NULL as sparsevec)) NULLS LAST) t2
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
-        Order By: (val <+> (InitPlan 1).col1)
-        InitPlan 1
-          ->  Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Index Scan using idxsparsevec_table7f9bec28bc8902d45d905788d7aa59a1 on sparsevec_table (actual rows=4 loops=1)
+              Order By: (val <+> (InitPlan 1).col1)
+              InitPlan 1
+                ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 
