@@ -465,41 +465,41 @@ CREATE OPERATOR sys.- (
 
 
 
-CREATE FUNCTION  smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME)
+CREATE FUNCTION  sys.smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME)
 RETURNS INT4
 AS 'timestamp_cmp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION  smalldatetime_date_cmp(sys.SMALLDATETIME, date)
+CREATE OR REPLACE FUNCTION  sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date)
 RETURNS INT4
 AS 'timestamp_cmp_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION  smalldatetime_hash(sys.SMALLDATETIME)
+CREATE FUNCTION  sys.smalldatetime_hash(sys.SMALLDATETIME)
 RETURNS INT4
 AS 'timestamp_hash'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR CLASS sys.smalldatetime_ops
 DEFAULT FOR TYPE sys.SMALLDATETIME USING btree AS
-    OPERATOR    1   <  (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    OPERATOR    2   <= (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    OPERATOR    3   =  (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    OPERATOR    4   >= (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    OPERATOR    5   >  (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    1   sys.<  (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    2   sys.<= (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    3   sys.=  (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    4   sys.>= (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    5   sys.>  (sys.SMALLDATETIME, sys.SMALLDATETIME),
     FUNCTION    1   smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME);
 
 CREATE OPERATOR CLASS sys.smalldatetime_ops
 DEFAULT FOR TYPE sys.SMALLDATETIME USING hash AS
-    OPERATOR    1   =  (sys.SMALLDATETIME, sys.SMALLDATETIME),
+    OPERATOR    1   sys.=  (sys.SMALLDATETIME, sys.SMALLDATETIME),
     FUNCTION    1   smalldatetime_hash(sys.SMALLDATETIME);
 
-ALTER OPERATOR FAMILY smalldatetime_ops USING btree ADD
-    OPERATOR    1   <  (sys.SMALLDATETIME, date),
-    OPERATOR    2   <= (sys.SMALLDATETIME, date),
-    OPERATOR    3   =  (sys.SMALLDATETIME, date),
-    OPERATOR    4   >= (sys.SMALLDATETIME, date),
-    OPERATOR    5   >  (sys.SMALLDATETIME, date),
+ALTER OPERATOR FAMILY sys.smalldatetime_ops USING btree ADD
+    OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
+    OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
+    OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
+    OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
+    OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
     FUNCTION    1   smalldatetime_date_cmp(sys.SMALLDATETIME, date);
 
 CREATE OR REPLACE FUNCTION sys.timestamp2smalldatetime(TIMESTAMP)
