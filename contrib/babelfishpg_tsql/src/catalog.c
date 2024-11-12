@@ -938,11 +938,10 @@ get_authid_user_ext_idx_oid(void)
 }
 
 char *
-get_authid_user_ext_physical_name(const char *db_name, const char *login)
+get_authid_user_ext_physical_name_user_enabled(const char *db_name, const char *login, bool user_enabled)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
 	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
@@ -955,20 +954,36 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
-	ScanKeyInit(&key[0],
+	if (user_enabled)
+	{
+		ScanKeyData key[3];
+		ScanKeyInit(&key[0],
 				Anum_bbf_authid_user_ext_login_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
+		ScanKeyInit(&key[1],
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
-	//ScanKeyInit(&key[2],
-	//			Anum_bbf_authid_user_ext_user_can_connect,
-	//			BTEqualStrategyNumber, F_INT4EQ,
-	//			Int32GetDatum(1));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+		ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
+		scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	}
+	else
+	{
+		ScanKeyData key[2];
+		ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+		ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+		scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	}
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -983,6 +998,12 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return user_name;
+}
+
+char *
+get_authid_user_ext_physical_name(const char *db_name, const char *login)
+{
+	return get_authid_user_ext_physical_name_user_enabled(db_name, login, true);
 }
 
 char *
@@ -1080,14 +1101,18 @@ get_authid_user_ext_db_users(const char *db_name)
  * returns the user name.
  */
 char *
-get_user_for_database(const char *db_name)
+get_user_for_database_for_set_user(const char *db_name, bool set_user)
 {
 	char	   *user = NULL;
 	const char *login;
 	bool		login_is_db_owner;
+	bool		guest_is_enabled = false;
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
-	user = get_authid_user_ext_physical_name(db_name, login);
+	if (set_user)
+		user = get_authid_user_ext_physical_name_user_enabled(db_name, login, false);
+	else
+		user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
 	if (!user)
@@ -1104,17 +1129,26 @@ get_user_for_database(const char *db_name)
 			 * current db.
 			 */
 			if (guest_has_dbaccess((char *) db_name))
+			{
 				user = (char *) get_guest_role_name(db_name);
+				guest_is_enabled = true;
+			}
 			else
 				user = NULL;
 		}
 	}
 
-	//if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false))
-	//			  || login_is_db_owner))
-	//	user = NULL;
+	if (!guest_is_enabled && user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false))
+				  || login_is_db_owner))
+		user = NULL;
 
 	return user;
+}
+
+char *
+get_user_for_database(const char *db_name)
+{
+	return get_user_for_database_for_set_user(db_name, false);
 }
 
 /*****************************************
@@ -2993,6 +3027,8 @@ guest_has_dbaccess(const char *db_name)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	return has_access;
 }
+
+
 
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest);
 Datum
