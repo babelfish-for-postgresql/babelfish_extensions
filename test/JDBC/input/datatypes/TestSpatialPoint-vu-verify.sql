@@ -1,3 +1,5 @@
+-- sla_for_parallel_query_enforced 60000
+
 -- single_db_mode_expected
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
