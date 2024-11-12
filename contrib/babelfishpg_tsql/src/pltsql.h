@@ -2228,6 +2228,13 @@ extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
 
 /*
+ * saved_expr_kind - special context to store which kind of expression if being processed.
+ * This is useful specially when handling declared variables because variables are dynamic only when it appears
+ * in the TargetList. Should be folded as const otherwise.
+ */
+extern int saved_expr_kind;
+
+/*
  * Functions in cursor.c
  */
 int			execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List *values);
@@ -2242,6 +2249,7 @@ int			execute_sp_cursorfetch(int cursor_handle, int *fetchtype, int *rownum, int
 int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
+void		reset_cached_cursor(void);
 
 /*
  * Functions in string.c

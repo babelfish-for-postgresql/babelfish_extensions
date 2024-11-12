@@ -179,7 +179,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.310 ms
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -192,12 +192,12 @@ Query Text: EXEC    p_alter_recomp_02 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-              Index Cond: (c1 = $1)
+              Index Cond: (c1 = 0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.158 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 execute p_alter_recomp_11 0  -- altered with recompile; for MVU test
@@ -210,12 +210,12 @@ Query Text: EXEC    p_alter_recomp_11 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-              Index Cond: (c1 = $1)
+              Index Cond: (c1 = 0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 execute p_alter_recomp_12 0  -- altered without recompile; for MVU test
@@ -233,7 +233,7 @@ Query Text: EXEC    p_alter_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -259,7 +259,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.156 ms
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -272,12 +272,12 @@ Query Text: EXEC    p_alter_recomp_02 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-              Index Cond: (c1 = $1)
+              Index Cond: (c1 = 0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -380,12 +380,12 @@ Query Text: EXEC    p_alter_recomp_01 0
         Workers Planned: 1
         Single Copy: true
         ->  Index Scan using tb_alter_recomp_1_pkey on tb_alter_recomp_1
-              Index Cond: (c1 = $1)
+              Index Cond: (c1 = 0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- altered without recompile
@@ -403,7 +403,7 @@ Query Text: EXEC    p_alter_recomp_02 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 set babelfish_showplan_all off

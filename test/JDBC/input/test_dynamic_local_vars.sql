@@ -295,7 +295,7 @@ drop type num_def
 GO
 
 /*
- * UPDATE test
+ * select/update test
  */
 create table local_var_tst (id int) 
 GO
@@ -307,24 +307,6 @@ insert into local_var_tst values (1)
 insert into local_var_tst values (2)
 insert into local_var_tst values (6)
 GO
-
--- declare @i int 
--- update local_var_tst set id =10, @i = id * 5
--- select @i
--- GO
-
--- select * from local_var_tst;
--- GO
-
--- -- need to fix this
--- declare @i int 
--- set @i = 0
--- update local_var_tst set id = @i, @i = id * 5
--- select @i
--- GO
-
--- select * from local_var_tst;
--- GO
 
 -- txn does not affect local variables
 begin tran
@@ -398,12 +380,6 @@ GO
 insert into local_var_tst values (1)
 insert into local_var_tst values (2)
 GO
-
-declare @i int = 1
-declare @j int = 0
-select @j += id, @i = id + 1  from local_var_tst where id = @i
-select @j
-go
 
 DECLARE @ans INT
 SELECT @ans = AVG(id) FROM local_var_tst
@@ -715,18 +691,37 @@ select @a = -2.e-
 select @a
 go
 
+TRUNCATE table local_var_tst
+GO
+
+-- variables only in select target list shows dynamic behavior
+create table local_var_tst (id int) 
+GO
+
+declare @i int = 1
+declare @j int = 0
+select @j += id, @i = id + 1  from local_var_tst where id = @i
+select @i, @j
+go
+
+declare @i int = 1
+select @i = id * 2 from local_var_tst where id = @i
+select @i
+GO
+
+drop table local_var_tst
+GO
+
 -- additional testing for update with dynamic variables
 GO
 
 create table local_var_tst (id int) 
 GO
 
-TRUNCATE table local_var_tst
-GO
-
 insert into local_var_tst values (1)
 insert into local_var_tst values (2)
 GO
+
 
 set QUOTED_IDENTIFIER off
 GO
@@ -1049,3 +1044,4 @@ GO
 
 DROP TABLE update_test_tbl
 GO
+
