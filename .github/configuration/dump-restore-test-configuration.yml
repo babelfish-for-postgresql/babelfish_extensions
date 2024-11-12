@@ -103,7 +103,7 @@ dump-restore-version: [[
     type: full
   },
   {
-    version: 15.5,
+    version: target.latest,
     dump-data-as: copy,
     dump-format: tar,
     database-level: true,
@@ -119,7 +119,7 @@ dump-restore-version: [[
     type: full
   },
   {
-    version: 16.1,
+    version: target.latest,
     dump-data-as: inserts,
     dump-format: custom,
     database-level: true,
