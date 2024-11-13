@@ -3859,10 +3859,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	}
 
 	/* Revoke dbo role from the previous owner */
-	grant_revoke_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+	grant_revoke_role_to_login(get_owner_of_db(stmt->db_name), get_dbo_role_name(stmt->db_name), false);
 
 	/* Grant dbo role to the new owner */
-	grant_revoke_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+	grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), true);
 	update_db_owner(stmt->new_owner_name, stmt->db_name);
 
 	return PLTSQL_RC_OK;
