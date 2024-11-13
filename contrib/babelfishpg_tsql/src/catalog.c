@@ -1073,34 +1073,21 @@ get_authid_user_ext_db_users(const char *db_name)
 static bool
 user_has_dbaccess(const char *user)
 {
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
+	HeapTuple	tuple;
 	bool		has_access = false;
-	NameData   *user_name;
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", user);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple_user_ext))
-		has_access = true;
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isnull = true;
+		int	user_can_connect = 0;
+		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+		if (user_can_connect == 1)
+			has_access = true;
+		ReleaseSysCache(tuple);
+	}
 	return has_access;
 }
 
