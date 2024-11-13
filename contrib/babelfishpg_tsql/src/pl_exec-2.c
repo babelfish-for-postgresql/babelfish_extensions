@@ -2514,6 +2514,26 @@ is_char_identpart(char c)
 }
 
 /*
+ * Check for allowed chars in @variable name
+ * ToDo: support non-standard ASCII chars (Unicode ranges)
+ * and align with is_identifier_char()
+ */
+static inline bool
+is_variable_name_char(unsigned char c)
+{
+	bool valid = (
+					isalpha(c) ||
+					isdigit(c) ||
+					c == '_' || 
+					c == '@' || 
+					c == '$' || 
+					c == '#'
+				);
+
+	return valid;	
+}
+
+/*
  * Put delimiters around a T-SQL variable/parameter that is
  * named '@@var' or contains a hash, e.g. '@var#'.
  * Without delimiters, the backend will raise an error.
@@ -2564,8 +2584,8 @@ delimit_tsql_atatuservar(const char *src)
 		/* Find end of variable name */
 		while (*s)
 		{
-			/* Allowed chars in @variable name: */
-			if (isalpha(*s) || isdigit(*s) || (*s == '_') || (*s == '@') || (*s == '#'))
+			/* Check for allowed chars in @variable name */
+			if (is_variable_name_char(*s))
 			{
 				/* Name contains # */
 				if (*s == '#')
@@ -2637,8 +2657,8 @@ is_tsql_atatuservar(const char *varname)
 
 	while (*s)
 	{
-		/* Allowed chars in @variable name: */
-		if (isalpha(*s) || isdigit(*s) || (*s == '_') || (*s == '@') || (*s == '#'))
+		/* Check for allowed chars in @variable name */
+		if (is_variable_name_char(*s))
 		{
 			/* Name contains # */
 			if (*s == '#')

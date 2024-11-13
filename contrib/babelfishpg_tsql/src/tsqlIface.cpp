@@ -9555,7 +9555,7 @@ isAtAtUserVarName(const std::string name)
 				(name[1] == '@')
 			   )
 			   {
-					if (name.find_first_not_of("@#_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") == std::string::npos)
+					if (name.find_first_not_of("@#$_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") == std::string::npos)
 					{
 						if (!is_tsql_atatglobalvar(name.c_str()))
 						{
