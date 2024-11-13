@@ -444,7 +444,7 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 
 		Datum datum = heap_getattr(tuple,
 								   Anum_bbf_authid_user_ext_login_name,
-								   bbf_authid_user_ext_rel->rd_att,
+								   RelationGetDescr(bbf_authid_user_ext_rel),
 								   &is_null);
 		if (!is_null)
 		{
@@ -819,7 +819,7 @@ user_name(PG_FUNCTION_ARGS)
 
 	datum = heap_getattr(tuple,
 						 Anum_bbf_authid_user_ext_orig_username,
-						 bbf_authid_user_ext_rel->rd_att,
+						 RelationGetDescr(bbf_authid_user_ext_rel),
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
 
@@ -1314,7 +1314,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		PG_TRY();
 		{
-			/* Older version before APG16 did not store grantor information.
+			/*
+			 * Older version before APG16 did not store grantor information.
 			 * After MVU to APG16, the grantor for these GRANTs on older roles
 			 * becomes BOOTSTRAP_SUPERUSER. We need SA privilege to revoke the guest
 			 * membership from these roles.
@@ -1325,9 +1326,9 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		PG_FINALLY();
 		{
 			SetUserIdAndSecContext(save_userid, save_sec_context);
-			grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		}
 		PG_END_TRY();
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		pfree(db_name);
 	}
 
@@ -1699,7 +1700,8 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		PG_TRY();
 		{
-			/* Older version before APG16 did not store grantor information.
+			/*
+			 * Older version before APG16 did not store grantor information.
 			 * After MVU to APG16, the grantor for these GRANTs on older roles
 			 * becomes BOOTSTRAP_SUPERUSER. We need SA privilege to revoke the guest
 			 * membership from these roles.
@@ -1710,9 +1712,9 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		PG_FINALLY();
 		{
 			SetUserIdAndSecContext(save_userid, save_sec_context);
-			grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 		}
 		PG_END_TRY();
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
 	}
 
 	if (new_user_name)
@@ -2171,7 +2173,7 @@ has_user_in_db(const char *login, char **db_name)
 	{
 
 		Datum		name = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_database_name,
-										bbf_authid_user_ext_rel->rd_att, &is_null);
+										RelationGetDescr(bbf_authid_user_ext_rel), &is_null);
 
 		*db_name = pstrdup(TextDatumGetCString(name));
 
