@@ -4800,6 +4800,10 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
 		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
 		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
+		(*pltsql_protocol_plugin_ptr)->get_authid_user_ext_schema_name = &get_authid_user_ext_schema_name;
+		(*pltsql_protocol_plugin_ptr)->fetch_func_input_arg_names = &fetch_func_input_arg_names;
+		(*pltsql_protocol_plugin_ptr)->split_object_name = &split_object_name;
+		
 
 		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
 		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;

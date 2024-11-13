@@ -16,10 +16,6 @@
 #define TDS_REQUEST_H
 
 #define BBF_NAMEDATALEND (NAMEDATALEN + 2)
-#define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
-#define Anum_bbf_authid_user_ext_rolname				1
-#define Anum_bbf_authid_user_ext_database_name			12
-#define Anum_bbf_authid_user_ext_default_schema_name	13
 
 #include "postgres.h"
 #include "port.h"
@@ -292,157 +288,6 @@ typedef TDSRequestData *TDSRequest;
 #define TVP_COLUMN_ORDERING_TOKEN		0x11
 #define TVP_END_TOKEN				0x00
 
-static Oid
-get_authid_user_ext_oid()
-{
-	Oid			bbf_authid_user_ext_oid = InvalidOid;
-	if (!OidIsValid(bbf_authid_user_ext_oid))
-		bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-													get_namespace_oid("sys", false));
-
-	return bbf_authid_user_ext_oid;
-}
-
-static char *
-get_authid_user_ext_schema_name1(const char *db_name, const char *user)
-{
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
-	char	   *schema_name = NULL;
-	NameData   *user_name;
-
-	if (!db_name || !user)
-		return NULL;
-
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", user);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple_user_ext))
-	{
-		Datum		datum;
-		bool		is_null;
-
-		datum = heap_getattr(tuple_user_ext,
-							 Anum_bbf_authid_user_ext_default_schema_name,
-							 bbf_authid_user_ext_rel->rd_att,
-							 &is_null);
-		schema_name = pstrdup(TextDatumGetCString(datum));
-	}
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
-	return schema_name;
-}
-
-
-static int
-babelfish_get_delimiter_pos(char *str)
-{
-	char	   *ptr;
-
-	if (strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
-		return -1;
-	else if (str[0] == '[')
-	{
-		ptr = strstr(str, "].");
-		if (ptr == NULL)
-			return -1;
-		else
-			return (int) (ptr - str) + 1;
-	}
-	else if (str[0] == '"')
-	{
-		ptr = strstr(&str[1], "\".");
-		if (ptr == NULL)
-			return -1;
-		else
-			return (int) (ptr - str) + 1;
-	}
-	else
-	{
-		ptr = strstr(str, ".");
-		if (ptr == NULL)
-			return -1;
-		else
-			return (int) (ptr - str);
-	}
-
-	return -1;
-}
-
-/*
- * Extract string from input of given length and remove delimited identifiers.
- */
-static char *
-remove_delimited_identifiers(char *str, int len)
-{
-
-	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
-	{
-		if (len > 2)
-			return pnstrdup(&str[1], len - 2);
-		else
-			return pstrdup("");
-	}
-	else
-		return pnstrdup(str, len);
-}
-
-/*
- * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers.
- */
-static char	  **
-split_object_name1(char *name)
-{
-	char	  **res = palloc(4 * sizeof(char *));
-	char	   *temp[4];
-	char	   *str;
-	int			cur_pos,
-				next_pos;
-	int			count = 0;
-
-	/* extract and remove the delimited identifiers from input into temp array */
-	cur_pos = 0;
-	next_pos = babelfish_get_delimiter_pos(name);
-	while (next_pos != -1 && count < 3)
-	{
-		str = remove_delimited_identifiers(&name[cur_pos], next_pos);
-		temp[count++] = str;
-		cur_pos += next_pos + 1;
-		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
-	}
-	str = remove_delimited_identifiers(&name[cur_pos], strlen(&name[cur_pos]));
-	temp[count++] = str;
-
-	/* fill unspecified parts with empty strings */
-	for (int i = 0; i < 4; i++)
-	{
-		if (i < 4 - count)
-			res[i] = pstrdup("");
-		else
-			res[i] = temp[i - (4 - count)];
-	}
-
-	return res;
-}
-
 static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 {
 	char *logical_sch_name;
@@ -452,7 +297,7 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 	char	  **splited_object_name;
 	Oid obj_schema_oid = InvalidOid;
 
-	splited_object_name = split_object_name1(*proc_name);
+	splited_object_name = pltsql_plugin_handler_ptr->split_object_name(*proc_name);
 	db_name = splited_object_name[1];
 	schema_name = splited_object_name[2];
 	*proc_name = splited_object_name[3];
@@ -467,7 +312,7 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 		* name
 		*/
 		const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
-		schema_name = get_authid_user_ext_schema_name1((const char *) db_name, user);
+		schema_name = pltsql_plugin_handler_ptr->get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
 
 	logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true);
@@ -478,30 +323,6 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 }
 
-static inline char** fetch_func_input_arg_names1(HeapTuple func_tuple)
-{
-	Datum proargnames;
-	Datum		proargmodes;
-	char**		arg_names;
-	bool 		isnull;
-
-	proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
-					Anum_pg_proc_proargnames,
-					&isnull);
-
-	proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
-					Anum_pg_proc_proargmodes,
-					&isnull);
-
-	if (isnull)
-		proargmodes = PointerGetDatum(NULL);	/* just to be sure */
-
-	get_func_input_arg_names(proargnames,
-									proargmodes,
-									&arg_names);
-	return arg_names;
-}
-
 static inline Oid
 tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
 {
@@ -510,7 +331,6 @@ tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targ
     Oid matched_type = InvalidOid;
 
     /* first search in pg_proc by name */
-
     catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 
     for (int i = 0; i < catlist->n_members; i++)
@@ -523,7 +343,7 @@ tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targ
         if (procform->pronamespace == pronamespace &&
             object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
         {
-            char **proargnames = fetch_func_input_arg_names1(tuple);
+            char **proargnames = pltsql_plugin_handler_ptr->fetch_func_input_arg_names(tuple);
             Oid *proargtypes = procform->proargtypes.values;
 
             for (int j = 0; j < procform->pronargs; j++)

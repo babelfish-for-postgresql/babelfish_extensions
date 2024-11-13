@@ -1800,6 +1800,9 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_reset_tds_connection_flag) ();
 
 	bool		(*get_reset_tds_connection_flag) ();
+	char 		*(*get_authid_user_ext_schema_name) (const char *db_name, const char *user);
+	char		**(*fetch_func_input_arg_names) (HeapTuple func_tuple);
+	char 		**(*split_object_name) (char *name);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
