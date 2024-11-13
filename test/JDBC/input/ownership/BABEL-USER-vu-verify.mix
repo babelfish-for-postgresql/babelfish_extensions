@@ -102,6 +102,9 @@ GO
 ALTER LOGIN babel_user_vu_prepare_test5 WITH PASSWORD = 'abc';
 GO
 
+ALTER LOGIN babel_user_vu_prepare_test6 WITH PASSWORD = 'abc';
+GO
+
 -- tsql user=babel_user_vu_prepare_test5 password=abc
 SELECT CURRENT_USER;
 go
@@ -110,6 +113,30 @@ go
 -- psql
 SELECT pg_has_role('babel_user_vu_prepare_test5', 'master_babel_user_vu_prepare_test3', 'member')
 GO
+
+-- Now map user babel_user_vu_prepare_test3 to a different login babel_user_vu_prepare_test6
+-- tsql
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test6;
+GO
+
+-- Login babel_user_vu_prepare_test5 should no longer be a member of user babel_user_vu_prepare_test3
+-- psql
+SELECT pg_has_role('babel_user_vu_prepare_test5', 'master_babel_user_vu_prepare_test3', 'member')
+GO
+
+-- Login babel_user_vu_prepare_test6 should be a member of user babel_user_vu_prepare_test3
+SELECT pg_has_role('babel_user_vu_prepare_test6', 'master_babel_user_vu_prepare_test3', 'member')
+GO
+
+-- Again map user babel_user_vu_prepare_test3 to login babel_user_vu_prepare_test5
+-- tsql
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;
+GO
+
+-- Login babel_user_vu_prepare_test6 should now be mapped to guest user
+-- tsql user=babel_user_vu_prepare_test6 password=abc
+SELECT CURRENT_USER;
+go
 
 -- tsql
 -- both of the commands below should fail

@@ -92,6 +92,14 @@ go
 use grant_connect_db1;
 go
 
+select has_dbaccess('grant_connect_db1');
+go
+~~START~~
+int
+1
+~~END~~
+
+
 select user_name();
 go
 ~~START~~
@@ -182,6 +190,9 @@ go
 grant connect to grant_connect_abc
 go
 
+ALTER USER grant_connect_abc WITH NAME = grant_connect_abc_new;
+go
+
 -- tsql  user=grant_connect_abc password=Babel123
 -- should succeed because login has a user for grant_connect_db1 and it is enabled
 use grant_connect_db1
@@ -191,7 +202,14 @@ select user_name();
 go
 ~~START~~
 nvarchar
-grant_connect_abc
+grant_connect_abc_new
 ~~END~~
 
+
+select has_dbaccess('grant_connect_db1');
+go
+~~START~~
+int
+1
+~~END~~
 

@@ -2168,7 +2168,7 @@ extern void update_CreateSchemaStmt(Node *n, const char *schemaname, const char 
 extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
-extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
+extern void update_GrantRoleStmt(Node *n, List *privs, List *roles, const char *grantor);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
