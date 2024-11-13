@@ -12,13 +12,13 @@ RETURNS INT4
 AS 'timestamp_cmp_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-ALTER OPERATOR FAMILY smalldatetime_ops USING btree ADD
+ALTER OPERATOR FAMILY sys.smalldatetime_ops USING btree ADD
     OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
     OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
     OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
     OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
     OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
-    FUNCTION    1   smalldatetime_date_cmp(sys.SMALLDATETIME, date);
+    FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
