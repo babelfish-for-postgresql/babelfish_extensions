@@ -1563,7 +1563,7 @@ static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, 
 				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
 					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
-					iocoerce->resulttype = T_JsonArrayQueryConstructor;
+					iocoerce->resulttype = TypenameGetTypid("json");
 					iocoerce->resultcollid = 0;
 					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
 					buildJsonEntry(1, "temp", te);
