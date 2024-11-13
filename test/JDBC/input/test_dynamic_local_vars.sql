@@ -697,6 +697,7 @@ GO
 
 insert into local_var_tst values (1)
 insert into local_var_tst values (2)
+insert into local_var_tst values (1)
 GO
 
 declare @i int = 1
@@ -708,6 +709,36 @@ go
 declare @i int = 1
 select @i = id * 2 from local_var_tst where id = @i
 select @i
+GO
+
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+
+set babelfish_statistics profile On;
+GO
+
+declare @i int = 1
+declare @j int = 0
+select @j += id, @i = id + 1  from local_var_tst where id = @i
+select @i, @j
+go
+
+declare @i int = 1
+select @i = @i * 2 from local_var_tst where id = @i
+select @i
+GO
+
+set babelfish_statistics profile OFF
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
 GO
 
 drop table local_var_tst

@@ -7865,7 +7865,7 @@ pltsql_param_fetch(ParamListInfo params,
 	}
 	else
 	{
-		/* We can always mark params as "const" for executor's purposes */
+		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
 		prm->pflags = PARAM_FLAG_CONST;
 	}
 
@@ -10434,6 +10434,12 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 PG_FUNCTION_INFO_V1(pltsql_assign_var);
 
+/*
+ * pltsql_assign_var - Helper function to update local variables dynamically during execution.
+ * Any statement which updates local variables as part of TargetList will be re-written using
+ * this function. for example,
+ * @var = expr will be re-written to @var=sys.pltsql_assign_var(dno, cast((expr) as type)).
+ */
 Datum
 pltsql_assign_var(PG_FUNCTION_ARGS)
 {

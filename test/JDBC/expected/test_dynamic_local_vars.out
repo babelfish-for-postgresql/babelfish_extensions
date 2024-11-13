@@ -1279,7 +1279,10 @@ GO
 
 insert into local_var_tst values (1)
 insert into local_var_tst values (2)
+insert into local_var_tst values (1)
 GO
+~~ROW COUNT: 1~~
+
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
@@ -1292,7 +1295,7 @@ select @i, @j
 go
 ~~START~~
 int#!#int
-2#!#1
+2#!#2
 ~~END~~
 
 
@@ -1303,6 +1306,94 @@ GO
 ~~START~~
 int
 2
+~~END~~
+
+
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_statistics profile On;
+GO
+
+declare @i int = 1
+declare @j int = 0
+select @j += id, @i = id + 1  from local_var_tst where id = @i
+select @i, @j
+go
+~~START~~
+text
+Query Text: select       sys.pltsql_assign_var(3, @j + cast((id) as int)),      sys.pltsql_assign_var(2, cast((id + 1) as int))  from local_var_tst where id = "@i"
+Seq Scan on local_var_tst  (cost=0.00..42.01 rows=13 width=8) (actual rows=2 loops=1)
+  Filter: (id = 1)
+  Rows Removed by Filter: 1
+~~END~~
+
+~~START~~
+int#!#int
+2#!#2
+~~END~~
+
+~~START~~
+text
+Query Text: select "@i", "@j"
+Result  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
+~~END~~
+
+
+declare @i int = 1
+select @i = @i * 2 from local_var_tst where id = @i
+select @i
+GO
+~~START~~
+text
+Query Text: select      sys.pltsql_assign_var(2, cast((@i * 2) as int)) from local_var_tst where id = "@i"
+Seq Scan on local_var_tst  (cost=0.00..41.94 rows=13 width=4) (actual rows=2 loops=1)
+  Filter: (id = 1)
+  Rows Removed by Filter: 1
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+text
+Query Text: select "@i"
+Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
+~~END~~
+
+
+set babelfish_statistics profile OFF
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+~~START~~
+text
+on
 ~~END~~
 
 
