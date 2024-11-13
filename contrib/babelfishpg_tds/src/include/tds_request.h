@@ -304,7 +304,7 @@ get_authid_user_ext_oid()
 }
 
 static char *
-get_authid_user_ext_schema_name1(const char *db_name, const char *user) // db1 , db1_use1
+get_authid_user_ext_schema_name1(const char *db_name, const char *user)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
@@ -467,19 +467,11 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 		* name
 		*/
 		const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
-		// char 	   *guest_role_name = get_guest_role_name(db_name);
-
-		// if ((guest_role_name && strcmp(user, guest_role_name) == 0))
-		// {
-		// 	physical_schema_name = pstrdup(get_guest_schema_name(db_name));
-		// }
 		schema_name = get_authid_user_ext_schema_name1((const char *) db_name, user);
 	}
 
-	logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true); // dbo
-
-	physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name); // db1_dbo
-
+	logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true);
+	physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name);
 	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
 
 	return obj_schema_oid;
