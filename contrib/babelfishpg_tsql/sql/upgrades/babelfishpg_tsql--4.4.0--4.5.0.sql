@@ -100,6 +100,17 @@ CROSS JOIN LATERAL sys.translate_pg_type_to_tsql(b.atttypid) AS tsql_type_name
 JOIN sys.spt_datatype_info_table t5 ON (b."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (b."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'));
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
+
+-- This is a temporary procedure which is only meant to be called during upgrade
+CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
+
+CALL sys.babelfish_revoke_guest_from_mapped_logins();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins();
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
