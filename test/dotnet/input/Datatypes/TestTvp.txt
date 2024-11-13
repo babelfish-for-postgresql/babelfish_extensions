@@ -16,16 +16,18 @@ prepst#!#Select * from @this_tvp_parameter_name_is_very_looooooooooooooooooooooo
 drop type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
 
 #test tvp with huge type name and parameter name but this time executing a stored proc using SP CUSTOMTYPE
-Create table tvp_table_without_tvp(a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
+Create table tvp_table(a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
 create type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
-create procedure tvp_table_without_tvp @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong READONLY AS BEGIN insert into tvp_table_without_tvp select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
-storedproc#!#prep#!#tvp_table_without_tvp#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|../../../utils/tvp-dotnet.csv
-# without passing tvp value
-storedproc#!#prep#!#tvp_table_without_tvp#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-dotnet.csv
+create procedure tvp_table @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong READONLY AS BEGIN insert into tvp_table select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#tvp_table#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|../../../utils/tvp-dotnet.csv
+Select * from tvp_table
 
-Select * from tvp_table_without_tvp
-drop procedure tvp_table_without_tvp
-drop table tvp_table_without_tvp
+# executing stored proc without passing tvp value for huge parameter name
+storedproc#!#prep#!#tvp_table#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-dotnet.csv
+Select * from tvp_table
+
+drop procedure tvp_table
+drop table tvp_table
 drop type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
 
 #testt tvp with huge type name and parameter name and huge schema name

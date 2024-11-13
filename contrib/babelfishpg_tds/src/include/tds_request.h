@@ -16,6 +16,7 @@
 #define TDS_REQUEST_H
 
 #define BBF_NAMEDATALEND (NAMEDATALEN + 2)
+#define MD5_HASH_LEN 32
 
 #include "postgres.h"
 #include "port.h"
@@ -39,8 +40,7 @@
 #include "utils/varlena.h"
 #include "catalog/pg_type.h"
 #include "parser/scansup.h"
-#include "utils/builtins.h"
-#include "access/heapam.h"
+#include "parser/parser.h"
 
 
 /* Different TDS request types returned by GetTDSRequest() */
@@ -288,7 +288,9 @@ typedef TDSRequestData *TDSRequest;
 #define TVP_COLUMN_ORDERING_TOKEN		0x11
 #define TVP_END_TOKEN				0x00
 
-static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
+/* Find namespace oid of a procedure based on proc name. */
+static inline Oid
+get_proc_namespace_oid(char **proc_name, char *curr_db)
 {
 	char *logical_sch_name;
 	char *physical_sch_name;
@@ -297,6 +299,7 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 	char	  **splited_object_name;
 	Oid obj_schema_oid = InvalidOid;
 
+	/* resolve the three part name */
 	splited_object_name = pltsql_plugin_handler_ptr->split_object_name(*proc_name);
 	db_name = splited_object_name[1];
 	schema_name = splited_object_name[2];
@@ -307,16 +310,15 @@ static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 	if (!strcmp(schema_name, ""))
 	{
-		/*
-		* find the default schema for current user and get physical schema
-		* name
-		*/
+		/* Find the default schema for current user and get physical schema name */
 		const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
 		schema_name = pltsql_plugin_handler_ptr->get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
 
 	logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true);
+	/* Get physical schema name from logical schema name */
 	physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name);
+	/* Get namespace oid from physical schema name */
 	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
 
 	return obj_schema_oid;
@@ -329,8 +331,25 @@ tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targ
     HeapTuple    tuple;
     CatCList   *catlist;
     Oid matched_type = InvalidOid;
+	char *hash;
+	char new_target_name[NAMEDATALEN];
 
-    /* first search in pg_proc by name */
+    if (strlen(targeted_arg_name) >= NAMEDATALEN)
+    {
+        /* Truncate the targeted_arg_name to 31 characters */
+        strncpy(new_target_name, targeted_arg_name, NAMEDATALEN - MD5_HASH_LEN - 1);
+        new_target_name[NAMEDATALEN - MD5_HASH_LEN - 1] = '\0';
+        /* Generate the hash */
+        hash = pltsql_plugin_handler_ptr->construct_unique_hash(targeted_arg_name);
+        /* Append the hash to the truncated name */
+        strcat(new_target_name, hash);
+        targeted_arg_name = new_target_name;
+    }
+
+    /*
+	 * Search pg_proc for the procedure by name in the specified namespace and
+	 * return the argument type, if the targeted argument name matches
+	 */
     catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 
     for (int i = 0; i < catlist->n_members; i++)
@@ -339,7 +358,7 @@ tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targ
 
         tuple = &catlist->members[i]->tuple;
         procform = (Form_pg_proc) GETSTRUCT(tuple);
-        /* then consider only procs in specified namespace */
+
         if (procform->pronamespace == pronamespace &&
             object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
         {
@@ -350,7 +369,6 @@ tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targ
             {
                 if (strcmp(proargnames[j], targeted_arg_name) == 0)
                 {
-                    /* Match found, set the matched type and return the index */
                     matched_type = proargtypes[j];
                     break;
                 }
@@ -599,26 +617,26 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 static inline void
 SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset, char *proc_name)
 {
-	uint8_t		len;
-	uint16		colCount;
-	uint16		isTvpNull;
-	char	   *tempString;
-	int			i = 0;
-	char	   *messageData = message->data;
-	StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
-	uint32_t	collation;
-	bool		xactStarted = IsTransactionOrTransactionBlock();
-	Oid result_proargtype = InvalidOid;
-	Oid user_id = InvalidOid;
-	Oid obj_schema_oid = InvalidOid;
-	char *target_arg_name;
-	HeapTuple    tuple;
-	char        *typename = NULL;
-	Oid typnamespace_oid = InvalidOid;
-	char *nsp_name;
-	char *tvpschemaname;
-	char *beginingofdb;
-	char *curr_db;
+	uint8_t			len;
+	uint16			colCount;
+	uint16			isTvpNull;
+	char			*tempString;
+	int				i = 0;
+	char	   		*messageData = message->data;
+	StringInfo		tempStringInfo = palloc(sizeof(StringInfoData));
+	uint32_t		collation;
+	bool			xactStarted = IsTransactionOrTransactionBlock();
+	Oid 			tvp_proargtype = InvalidOid;
+	Oid 			user_id = InvalidOid;
+	Oid 			obj_schema_oid = InvalidOid;
+	char 			*target_arg_name;
+	HeapTuple    	tuple;
+	char        	*typename = NULL;
+	Oid 			typnamespace_oid = InvalidOid;
+	char 			*typnamespace;
+	char 			*tvpschemaname;
+	char 			*db_prefix;
+	char 			*curr_db;
 	MemoryContext oldContext;
 
 	/* Database-Name.Schema-Name.TableType-Name */
@@ -661,30 +679,28 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			target_arg_name = temp->paramMeta.colName.data;
 			curr_db = pltsql_plugin_handler_ptr->get_cur_db_name();
 
+			/* Get procedure namespaceid. */
 			obj_schema_oid = get_proc_namespace_oid(&proc_name,curr_db);
 
-			/* Fetch proargtype value of our targeted variable*/ 
-			result_proargtype = tds_get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
+			/* Fetch proargtype value of our targeted variable */
+			tvp_proargtype = tds_get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
 
-			/* --------- pg_type -------- */
-			/* search in pg_type by object_id */
-			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(result_proargtype));
+			/* Search in pg_type by object_id */
+			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
 			/* check if user have right permission on object */
-			if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, result_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+			if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
 				typename = NameStr(pg_type->typname);
 				typnamespace_oid = pg_type->typnamespace;
-				nsp_name = get_namespace_name(typnamespace_oid);
+				typnamespace = get_namespace_name(typnamespace_oid);
 
-				/* Remove db_ from begining of nsp_name to get the tvpTypeSchemaName*/
-				beginingofdb = palloc0(BBF_NAMEDATALEND);
-				snprintf(beginingofdb, BBF_NAMEDATALEND , "%s_", curr_db); 
+				db_prefix = palloc0(BBF_NAMEDATALEND);
+				snprintf(db_prefix, BBF_NAMEDATALEND , "%s_", curr_db);
 
-				/* Check if nsp_name starts with beginingofdb */ 
-				if (strncmp(nsp_name, beginingofdb, strlen(beginingofdb)) == 0) {
-					/* If it starts with "beginingofdb", remove the prefix and return the rest of the string */ 
-					tvpschemaname = nsp_name + strlen(beginingofdb);
+				/* Remove db_prefix from begining of typnamespace to get the tvpTypeSchemaName*/
+				if (strncmp(typnamespace, db_prefix, strlen(db_prefix)) == 0) {
+					tvpschemaname = typnamespace + strlen(db_prefix);
 					oldContext = MemoryContextSwitchTo(TopMemoryContext);
 					temp->len += strlen(tvpschemaname);
 					temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvpschemaname);
@@ -696,6 +712,8 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
             temp->len += strlen(typename);
             temp->tvpInfo->tvpTypeName = typename;
 			temp->tvpInfo->tableName = typename;
+
+			pfree(curr_db);
 
 			if(!xactStarted)
                 CommitTransactionCommand();

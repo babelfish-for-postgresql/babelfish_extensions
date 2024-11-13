@@ -22,6 +22,12 @@
 #Q#Select * from tvp_table
 #D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
 1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
+#Q#tvp_table
+#Q#Select * from tvp_table
+#D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
+1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
+#D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
+1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
 #Q#drop procedure tvp_proc
 #Q#drop table tvp_table
 #Q#drop type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong

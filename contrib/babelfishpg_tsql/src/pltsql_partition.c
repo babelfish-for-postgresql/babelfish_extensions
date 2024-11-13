@@ -44,7 +44,7 @@
 
 #define MD5_HASH_LEN 32
 
-static char *construct_unique_hash(char *relation_name);
+char *construct_unique_hash(char *relation_name);
 static void set_partition_range_bounds(PartitionBoundSpec *partbound, Datum *range_values, int idx,
 					int total_partitions, bool is_binary_datatype);
 static void set_node_value_from_datum(A_Const *node, Datum val, bool is_binary_datatype);
@@ -350,7 +350,7 @@ create_partition_stmt(char *physical_schema_name, char *relname)
  * 	Constructs a unique hash based on the relation name,
  * 	this is used to construct unique names for partitions.
  */
-static char*
+char*
 construct_unique_hash(char *relation_name)
 {
 	char		*md5;

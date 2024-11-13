@@ -4803,7 +4803,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_authid_user_ext_schema_name = &get_authid_user_ext_schema_name;
 		(*pltsql_protocol_plugin_ptr)->fetch_func_input_arg_names = &fetch_func_input_arg_names;
 		(*pltsql_protocol_plugin_ptr)->split_object_name = &split_object_name;
-		
+		(*pltsql_protocol_plugin_ptr)->construct_unique_hash = &construct_unique_hash;
 
 		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
 		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;
