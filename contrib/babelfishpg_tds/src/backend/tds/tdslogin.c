@@ -1614,6 +1614,9 @@ CheckGSSAuth(Port *port)
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pfree(port->user_name);
 	port->user_name = convertUsernameToCanonicalform(gbuf.value);
+
+	/* Assign canonical form username to loginInfo->username. */
+	loginInfo->username = pstrdup(port->user_name);
 	if ((at_pos = strchr(gbuf.value, '@')) != NULL && loginInfo)
 	{
 		/* skip '@' */

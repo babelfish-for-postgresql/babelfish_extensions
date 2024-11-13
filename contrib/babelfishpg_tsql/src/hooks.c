@@ -89,12 +89,6 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
-#define OID_TO_BUFFER_START(oid) 		((oid) + INT_MIN)
-#define BUFFER_START_TO_OID 			((Oid) (temp_oid_buffer_start) - INT_MIN)
-
-/* For unit testing, to avoid concurrent heap update issues. */
-bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
-
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
@@ -162,12 +156,6 @@ static void preserve_view_constraints_from_base_table(ColumnDef *col, Oid tableO
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
-static void pltsql_GetNewObjectId(VariableCache variableCache);
-static Oid  pltsql_GetNewTempObjectId(void);
-static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
-static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
-static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
-static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -221,6 +209,22 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
+
+/***************************************************
+ * 			Temp Table Related Declarations + Hooks
+ ***************************************************/
+#define OID_TO_BUFFER_START(oid) 		((oid) + INT_MIN)
+#define BUFFER_START_TO_OID 			((Oid) (temp_oid_buffer_start) - INT_MIN)
+
+/* For unit testing, to avoid concurrent heap update issues. */
+bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
+
+static void pltsql_GetNewObjectId(VariableCache variableCache);
+static Oid  pltsql_GetNewTempObjectId(void);
+static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
+static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
+static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -4796,7 +4800,7 @@ pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg)
 static EphemeralNamedRelation
 pltsql_get_tsql_enr_from_oid(const Oid oid)
 {
-	return temp_oid_buffer_size > 0 ? get_ENR_withoid(currentQueryEnv, oid, ENR_TSQL_TEMP) : NULL;
+	return temp_oid_buffer_size > 0 ? GetENRTempTableWithOid(oid) : NULL;
 }
 
 /*
