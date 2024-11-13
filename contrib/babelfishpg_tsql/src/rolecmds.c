@@ -1312,10 +1312,22 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		login_name_str = login->rolename;
 		/* Revoke guest user from login as login now has a mapped user in current database. */
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
-		SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), NULL, false);
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		PG_TRY();
+		{
+			/* Older version before APG16 did not store grantor information.
+			 * After MVU to APG16, the grantor for these GRANTs on older roles
+			 * becomes BOOTSTRAP_SUPERUSER. We need SA privilege to revoke the guest
+			 * membership from these roles.
+			 */
+			SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), NULL, false);
+		}
+		PG_FINALLY();
+		{
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+			grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		}
+		PG_END_TRY();
 		pfree(db_name);
 	}
 
@@ -1672,6 +1684,8 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (login_name_str)
 	{
+		int         save_sec_context;
+		Oid         save_userid;
 		if (old_login_name && strlen(old_login_name) > 0)
 		{
 			/* First revoke this user from old login as the user is being mapped to a new login. */
@@ -1682,8 +1696,23 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		}
 
 		/* Revoke guest user from new login as login now has a mapped user in current database. */
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), NULL, false);
-		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		PG_TRY();
+		{
+			/* Older version before APG16 did not store grantor information.
+			 * After MVU to APG16, the grantor for these GRANTs on older roles
+			 * becomes BOOTSTRAP_SUPERUSER. We need SA privilege to revoke the guest
+			 * membership from these roles.
+			 */
+			SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), NULL, false);
+		}
+		PG_FINALLY();
+		{
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+			grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), "bbf_role_admin", false); /* revoke even membership granted by bbf_role_admin */
+		}
+		PG_END_TRY();
 	}
 
 	if (new_user_name)

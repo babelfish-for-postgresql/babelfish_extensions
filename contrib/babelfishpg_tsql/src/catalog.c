@@ -1116,7 +1116,6 @@ get_user_for_database(const char *db_name)
 	char	   *user = NULL;
 	const char *login;
 	bool		login_is_db_owner;
-	bool		guest_is_enabled = false;
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
@@ -1139,16 +1138,13 @@ get_user_for_database(const char *db_name)
 			 * current db.
 			 */
 			if (guest_has_dbaccess((char *) db_name))
-			{
 				user = (char *) get_guest_role_name(db_name);
-				guest_is_enabled = true;
-			}
 			else
 				user = NULL;
 		}
 	}
 
-	if (!guest_is_enabled && user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false))
+	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false))
 				  || login_is_db_owner))
 		user = NULL;
 

@@ -369,6 +369,9 @@ GO
 select current_user
 go
 
+select has_dbaccess('my_babel_cross_db_vu_prepare_db1');
+go
+
 select * from dbo.babel_cross_db_vu_prepare_db1_t1; -- should not use guest privilege
 go
 

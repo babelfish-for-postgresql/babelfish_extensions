@@ -700,6 +700,14 @@ user_cannot_connect
 ~~END~~
 
 
+select has_dbaccess('my_babel_cross_db_vu_prepare_db1');
+go
+~~START~~
+int
+1
+~~END~~
+
+
 select * from dbo.babel_cross_db_vu_prepare_db1_t1; -- should not use guest privilege
 go
 ~~ERROR (Code: 33557097)~~
