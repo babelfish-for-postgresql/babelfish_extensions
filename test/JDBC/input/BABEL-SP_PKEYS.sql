@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 60000
 create database db1
 go
 
