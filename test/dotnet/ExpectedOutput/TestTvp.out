@@ -32,3 +32,13 @@
 1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
 #Q#drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
 #Q#drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create table t(a int)
+#Q#create type t1 as table (a int)
+#Q#create procedure proc1 @t2 as t1 readonly as begin set nocount on; insert into t (a) select a from @t2 end
+#Q#proc1
+#Q#Select * from t
+#D#int
+5
+#Q#drop procedure proc1
+#Q#drop table t
+#Q#drop type t1

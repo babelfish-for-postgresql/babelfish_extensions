@@ -15,14 +15,37 @@
 #ifndef TDS_REQUEST_H
 #define TDS_REQUEST_H
 
+#define BBF_NAMEDATALEND (NAMEDATALEN + 2)
+#define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
+#define Anum_bbf_authid_user_ext_rolname				1
+#define Anum_bbf_authid_user_ext_database_name			12
+#define Anum_bbf_authid_user_ext_default_schema_name	13
+
 #include "postgres.h"
+#include "port.h"
 
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 
-#include "src/include/tds_int.h"
+#include "src/include/tds_int.h" // this is for pltsql_plugin_handler_ptr->get_physical_schema_name(
 #include "src/include/tds_typeio.h"
 #include "src/collation.h"
+#include "catalog/pg_proc.h"
+#include "utils/syscache.h"
+#include "utils/catcache.h"
+#include "funcapi.h"
+#include "utils/acl.h"
+#include "utils/fmgroids.h"
+#include "access/table.h"
+#include "access/genam.h"
+#include "utils/lsyscache.h"
+#include "access/xact.h"
+#include "utils/varlena.h"
+#include "catalog/pg_type.h"
+#include "parser/scansup.h" // downcase_truncate_identifier
+#include "utils/builtins.h" // CStringGetTextDatum
+#include "access/heapam.h" // heap_getnext
+
 
 /* Different TDS request types returned by GetTDSRequest() */
 typedef enum TDSRequestType
@@ -269,6 +292,231 @@ typedef TDSRequestData *TDSRequest;
 #define TVP_COLUMN_ORDERING_TOKEN		0x11
 #define TVP_END_TOKEN				0x00
 
+static Oid
+get_authid_user_ext_oid()
+{
+	Oid			bbf_authid_user_ext_oid = InvalidOid;
+	if (!OidIsValid(bbf_authid_user_ext_oid))
+		bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+													get_namespace_oid("sys", false));
+
+	return bbf_authid_user_ext_oid;
+}
+
+static char *
+get_authid_user_ext_schema_name1(const char *db_name, const char *user) // db1 , db1_use1
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData key[2];
+	TableScanDesc scan;
+	char	   *schema_name = NULL;
+	NameData   *user_name;
+
+	if (!db_name || !user)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", user);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(user_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+		Datum		datum;
+		bool		is_null;
+
+		datum = heap_getattr(tuple_user_ext,
+							 Anum_bbf_authid_user_ext_default_schema_name,
+							 bbf_authid_user_ext_rel->rd_att,
+							 &is_null);
+		schema_name = pstrdup(TextDatumGetCString(datum));
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return schema_name;
+}
+
+
+static int
+babelfish_get_delimiter_pos(char *str)
+{
+	char	   *ptr;
+
+	if (strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
+		return -1;
+	else if (str[0] == '[')
+	{
+		ptr = strstr(str, "].");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str) + 1;
+	}
+	else if (str[0] == '"')
+	{
+		ptr = strstr(&str[1], "\".");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str) + 1;
+	}
+	else
+	{
+		ptr = strstr(str, ".");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str);
+	}
+
+	return -1;
+}
+
+/*
+ * Extract string from input of given length and remove delimited identifiers.
+ */
+static char *
+remove_delimited_identifiers(char *str, int len)
+{
+
+	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
+	{
+		if (len > 2)
+			return pnstrdup(&str[1], len - 2);
+		else
+			return pstrdup("");
+	}
+	else
+		return pnstrdup(str, len);
+}
+
+/*
+ * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers.
+ */
+static char	  **
+split_object_name1(char *name)
+{
+	char	  **res = palloc(4 * sizeof(char *));
+	char	   *temp[4];
+	char	   *str;
+	int			cur_pos,
+				next_pos;
+	int			count = 0;
+
+	/* extract and remove the delimited identifiers from input into temp array */
+	cur_pos = 0;
+	next_pos = babelfish_get_delimiter_pos(name);
+	while (next_pos != -1 && count < 3)
+	{
+		str = remove_delimited_identifiers(&name[cur_pos], next_pos);
+		temp[count++] = str;
+		cur_pos += next_pos + 1;
+		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
+	}
+	str = remove_delimited_identifiers(&name[cur_pos], strlen(&name[cur_pos]));
+	temp[count++] = str;
+
+	/* fill unspecified parts with empty strings */
+	for (int i = 0; i < 4; i++)
+	{
+		if (i < 4 - count)
+			res[i] = pstrdup("");
+		else
+			res[i] = temp[i - (4 - count)];
+	}
+
+	return res;
+}
+
+// static oid get_proc_oid(char *proc_name){
+
+// }
+
+static inline char** fetch_func_input_arg_names1(HeapTuple func_tuple)
+{
+	Datum proargnames;
+	Datum		proargmodes;
+	char**		arg_names;
+	bool 		isnull;
+
+	proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargnames,
+					&isnull);
+
+	proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargmodes,
+					&isnull);
+
+	if (isnull)
+		proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+
+	get_func_input_arg_names(proargnames,
+									proargmodes,
+									&arg_names);
+	return arg_names;
+}
+
+static inline Oid
+tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
+{
+    HeapTuple    tuple;
+    CatCList   *catlist;
+    Oid matched_type = InvalidOid;
+
+    /* first search in pg_proc by name */
+
+    catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+
+    for (int i = 0; i < catlist->n_members; i++)
+    {
+        Form_pg_proc procform;
+
+        tuple = &catlist->members[i]->tuple;
+        procform = (Form_pg_proc) GETSTRUCT(tuple);
+        /* then consider only procs in specified namespace */
+        if (procform->pronamespace == pronamespace &&
+            object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+        {
+            char **proargnames = fetch_func_input_arg_names1(tuple);
+            Oid *proargtypes = procform->proargtypes.values;
+
+            for (int j = 0; j < procform->pronargs; j++)
+            {
+                if (strcmp(proargnames[j], targeted_arg_name) == 0)
+                {
+                    /* Match found, set the matched type and return the index */
+                    matched_type = proargtypes[j];
+                    break;
+                }
+            }
+        }
+    }
+    ReleaseSysCacheList(catlist);
+	if (matched_type == InvalidOid)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_FUNCTION),
+                 errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
+                        proname, targeted_arg_name)));
+    }
+    return matched_type;
+}
+
 static inline void
 SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 {
@@ -498,7 +746,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 }
 
 static inline void
-SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset)
+SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset, char *proc_name)
 {
 	uint8_t		len;
 	uint16		colCount;
@@ -508,6 +756,24 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	char	   *messageData = message->data;
 	StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
 	uint32_t	collation;
+	bool		xactStarted = IsTransactionOrTransactionBlock();
+	Oid result_proargtype = InvalidOid;
+	Oid user_id = InvalidOid;
+	Oid obj_schema_oid = InvalidOid;
+	char *target_arg_name;
+	HeapTuple    tuple;
+	char        *typename = NULL;
+	Oid typnamespace_oid = InvalidOid;
+	char *nsp_name;
+	char *logical_sch_name;
+	char *physical_sch_name;
+	char *db_name;
+	char *schema_name;
+	char *actual_proc_name;
+	char	  **splited_object_name;
+	char *tvpschemaname;
+	char *beginingofdb;
+	char *curr_db;
 
 	/* Database-Name.Schema-Name.TableType-Name */
 	for (; i < 3; i++)
@@ -527,7 +793,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			initStringInfo(tempStringInfo);
 
 			tempString = palloc0(len * 2);
-			memcpy(tempString, &messageData[*offset], len * 2);
+			memcpy(tempString, &messageData[*offset], len * 2); 
 			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
 
 			*offset += len * 2;
@@ -536,21 +802,106 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			if (i == 1)
 				temp->tvpInfo->tvpTypeSchemaName = tempStringInfo->data;
 			else
+			{
 				temp->tvpInfo->tvpTypeName = tempStringInfo->data;
-
+				temp->tvpInfo->tableName = tempStringInfo->data;
+			}
 		}
 		else if (i == 2)
 		{
-			/* Throw error if TabelType-Name is not provided */
-			ereport(ERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							"Table-valued parameter %d, to a parameterized string has no table type defined.",
-							temp->paramOrdinal + 1)));
+			if (!xactStarted)
+				StartTransactionCommand(); 
+			user_id = GetSessionUserId();
+			target_arg_name = temp->paramMeta.colName.data;
+			curr_db = pltsql_plugin_handler_ptr->get_cur_db_name();
+
+			splited_object_name = split_object_name1(proc_name);
+			db_name = splited_object_name[1];
+			// char *default_schema = get_default_schema(db_name);
+			schema_name = splited_object_name[2];
+			actual_proc_name = splited_object_name[3];
+
+			if (!strcmp(db_name, ""))
+				db_name = curr_db;
+
+			if (!strcmp(schema_name, ""))
+			{
+				/*
+				* find the default schema for current user and get physical schema
+				* name
+				*/
+				const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
+				// char 	   *guest_role_name = get_guest_role_name(db_name);
+
+				// if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+				// {
+				// 	physical_schema_name = pstrdup(get_guest_schema_name(db_name));
+				// }
+				// else
+				// {
+				// 	pfree(schema_name);
+				schema_name = get_authid_user_ext_schema_name1((const char *) db_name, user);
+					// physical_schema_name = get_physical_schema_name(db_name, schema_name);
+				// }
+
+				// pfree(guest_role_name);
+			}
+
+			// obj_schema_oid = get_proc_oid(&proc_name)
+
+
+			// db_name = !strcmp(splited_object_name[1], "")? curr_db : splited_object_name[1];
+			// // char *default_schema = get_default_schema(db_name);
+			// schema_name = !strcmp(splited_object_name[2], "")? default_schema : splited_object_name[2];
+			// actual_proc_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
+
+			logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true); // dbo
+
+			physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name); // db1_dbo
+
+			obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+
+			/* Fetch proargtype value of our targeted variable*/ 
+			result_proargtype = tds_get_proargtypes_oid(actual_proc_name, obj_schema_oid, user_id, target_arg_name);
+
+			/* --------- pg_type -------- */
+			/* search in pg_type by object_id */
+			tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(result_proargtype));
+			/* check if user have right permission on object */
+			if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, result_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+			{
+				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+				typename = NameStr(pg_type->typname);
+				typnamespace_oid = pg_type->typnamespace;
+				nsp_name = get_namespace_name(typnamespace_oid);
+
+				/* Remove db_ from begining of nsp_name to get the tvpTypeSchemaName*/
+				beginingofdb = palloc0(BBF_NAMEDATALEND);
+				snprintf(beginingofdb, BBF_NAMEDATALEND , "%s_", db_name); 
+
+				// Check if nsp_name starts with beginingofdb
+				if (strncmp(nsp_name, beginingofdb, strlen(beginingofdb)) == 0) {
+					// If it starts with "beginingofdb", remove the prefix and return the rest of the string
+					tvpschemaname = nsp_name + strlen(beginingofdb);
+					if (strcmp(tvpschemaname, "dbo") != 0) {
+						MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+						temp->len += strlen(tvpschemaname);
+						temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvpschemaname);
+						MemoryContextSwitchTo(oldContext);
+					}
+				}
+				ReleaseSysCache(tuple);
+			}
+
+            temp->len += strlen(typename);
+            temp->tvpInfo->tvpTypeName = typename;
+			temp->tvpInfo->tableName = typename;
+
+			if(!xactStarted)
+                CommitTransactionCommand();
 		}
 	}
 
-	temp->tvpInfo->tableName = tempStringInfo->data;
 	i = 0;
 
 	memcpy(&isTvpNull, &messageData[*offset], sizeof(uint16));
