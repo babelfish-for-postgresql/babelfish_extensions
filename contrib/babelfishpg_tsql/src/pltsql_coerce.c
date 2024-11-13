@@ -1288,24 +1288,15 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 	return true;
 }
 
-/*
- * tsql_func_select_candidate_for_special_func()
- *
- * For functions present in special function list, and try to find best candidate 
- * based on matching return type. Also throw error in case of invalid argument data type.
- */
 static FuncCandidateList
 tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 
 	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_result_type;
 	Oid 						expr_second_arg;
 	char					   *proc_nsname;
 	char					   *proc_name;
-	// bool						is_func_validated;
 	int							ncandidates;
-	// Oid							rettype;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid 						*argtypes;
 	int							nargs_func = 0;
@@ -1319,29 +1310,22 @@ tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Failed to find common utility plugin.")));
 
-	expr_result_type = InvalidOid;
 	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
 		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");		
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(input_typeids[1]))
 		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");		
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1]))
 		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varchar");	
-			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");	
+			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varchar");		
 		}
 	}
 
-
-	if (!OidIsValid(expr_result_type))
-		return NULL;
 
 	/* Get the candidate with matching return type */
 	ncandidates = 0;
@@ -1364,26 +1348,18 @@ tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids,
 		}
 	}
 
-		/* Only one definition should exists per return type for special function */
-	if (ncandidates == 0)
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("function %s.%s with return type %s does not exists.", proc_nsname, proc_name, format_type_be(expr_result_type))));
-	}
-	else if (ncandidates > 1)
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
-	}
-
 	if (best_candidate != NULL)
 		best_candidate->next = NULL;
 	return best_candidate;
 
 }
 
+/*
+ * tsql_func_select_candidate_for_special_func()
+ *
+ * For functions present in special function list, and try to find best candidate 
+ * based on matching return type. Also throw error in case of invalid argument data type.
+ */
 static FuncCandidateList
 tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {

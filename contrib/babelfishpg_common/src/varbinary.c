@@ -676,16 +676,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
 	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	// bool        is_varchar;
-	// common_utility_plugin **common_utility_plugin_ptr;
-
-
-	// if(is_varchar == false)
-	// 	return nvarcharvarbinary(fcinfo);
-	// if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type))
-	// {
-	// 	return nvarcharvarbinary(fcinfo);
-	// }
+	
 	if (tsql_nvarchar_oid == InvalidOid)
 		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
 

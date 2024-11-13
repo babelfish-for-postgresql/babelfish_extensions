@@ -19,10 +19,6 @@
 #include "c.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
-// #include "../../babelfishpg_common/src/sqlvariant.h"
-// #include "../../babelfishpg_common/src/typecode.h"
-// #include "../../babelfishpg_common/src/varchar.h"
-// #include "utils/syscache.h"
 
 
 #define MD5_RESULTLEN  (16)
@@ -44,13 +40,6 @@ static int	round_float_char(char *float_char, int round_pos, int has_neg_sign);
 static int	find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digits, int input_deci_digits, int input_deci_point, int deci_sig);
 static Datum return_varchar_pointer(char *buf, int size);
 
-/*
- * Helper functions for hashbytes()
- */
-void TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len);
-void AddUTF16ToStringInfo(int32_t code, StringInfo buf);
-int32_t GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p);
-// bool is_basetype_nvarchar(Oid typid);
 
 /*
  * Hashbytes implementation
@@ -70,36 +59,11 @@ hashbytes(PG_FUNCTION_ARGS)
 {
 	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
 	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-	// bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	size_t		len = VARSIZE_ANY_EXHDR(in);
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
 	bytea	   *result;
 	StringInfoData utf16_data;
-	// Oid		   *argtypes = NULL;	
-	// int			nargs = 0;
-	// input_type = argtypes[1];
-	// bool        is_nvarchar = false;
-	// common_utility_plugin **common_utility_plugin_ptr;
-	// if (len >= 2 && data[len] == '~' && data[len+1] == '(')
-    // {
-    //     is_nvarchar = true;
-    // }
-	// 	VarChar *varchar_input = DatumGetVarCharP(in);
-    //     data = (const uint8 *) VARDATA_ANY(varchar_input);
-    //     len = VARSIZE_ANY_EXHDR(varchar_input);
-	// // if(input_type == (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type) || input_type == (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_type))
-	// // {
-	// // 	VarChar *varchar_input = DatumGetVarCharP(in);
-    // //     data = (const uint8 *) VARDATA_ANY(varchar_input);
-    // //     len = VARSIZE_ANY_EXHDR(varchar_input);
-	// // }
-	// if(!(input_type == (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type) || input_type == (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_type)))
-	// {
-	// 	bytea *bytea_input = DatumGetByteaP(in);
-    //     data = (const uint8 *) VARDATA_ANY(bytea_input);
-    //     len = VARSIZE_ANY_EXHDR(bytea_input);
-	// }
 
 	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
