@@ -328,62 +328,62 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 static inline Oid
 tds_get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
 {
-    HeapTuple    tuple;
-    CatCList   *catlist;
-    Oid matched_type = InvalidOid;
+	HeapTuple    tuple;
+	CatCList   *catlist;
+	Oid matched_type = InvalidOid;
 	char *hash;
 	char new_target_name[NAMEDATALEN];
 
-    if (strlen(targeted_arg_name) >= NAMEDATALEN)
-    {
-        /* Truncate the targeted_arg_name to 31 characters */
-        strncpy(new_target_name, targeted_arg_name, NAMEDATALEN - MD5_HASH_LEN - 1);
-        new_target_name[NAMEDATALEN - MD5_HASH_LEN - 1] = '\0';
-        /* Generate the hash */
-        hash = pltsql_plugin_handler_ptr->construct_unique_hash(targeted_arg_name);
-        /* Append the hash to the truncated name */
-        strcat(new_target_name, hash);
-        targeted_arg_name = new_target_name;
-    }
+	if (strlen(targeted_arg_name) >= NAMEDATALEN)
+	{
+		/* Truncate the targeted_arg_name to 31 characters */
+		strncpy(new_target_name, targeted_arg_name, NAMEDATALEN - MD5_HASH_LEN - 1);
+		new_target_name[NAMEDATALEN - MD5_HASH_LEN - 1] = '\0';
+		/* Generate the hash */
+		hash = pltsql_plugin_handler_ptr->construct_unique_hash(targeted_arg_name);
+		/* Append the hash to the truncated name */
+		strcat(new_target_name, hash);
+		targeted_arg_name = new_target_name;
+	}
 
-    /*
+	/*
 	 * Search pg_proc for the procedure by name in the specified namespace and
 	 * return the argument type, if the targeted argument name matches
 	 */
-    catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 
-    for (int i = 0; i < catlist->n_members; i++)
-    {
-        Form_pg_proc procform;
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
 
-        tuple = &catlist->members[i]->tuple;
-        procform = (Form_pg_proc) GETSTRUCT(tuple);
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
 
-        if (procform->pronamespace == pronamespace &&
-            object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
-        {
-            char **proargnames = pltsql_plugin_handler_ptr->fetch_func_input_arg_names(tuple);
-            Oid *proargtypes = procform->proargtypes.values;
+		if (procform->pronamespace == pronamespace &&
+			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+		{
+			char **proargnames = pltsql_plugin_handler_ptr->fetch_func_input_arg_names(tuple);
+			Oid *proargtypes = procform->proargtypes.values;
 
-            for (int j = 0; j < procform->pronargs; j++)
-            {
-                if (strcmp(proargnames[j], targeted_arg_name) == 0)
-                {
-                    matched_type = proargtypes[j];
-                    break;
-                }
-            }
-        }
-    }
-    ReleaseSysCacheList(catlist);
+			for (int j = 0; j < procform->pronargs; j++)
+			{
+				if (strcmp(proargnames[j], targeted_arg_name) == 0)
+				{
+					matched_type = proargtypes[j];
+					break;
+				}
+			}
+		}
+	}
+	ReleaseSysCacheList(catlist);
 	if (matched_type == InvalidOid)
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_FUNCTION),
-                 errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
-                        proname, targeted_arg_name)));
-    }
-    return matched_type;
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
+						proname, targeted_arg_name)));
+	}
+	return matched_type;
 }
 
 static inline void
@@ -630,8 +630,8 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	Oid 			user_id = InvalidOid;
 	Oid 			obj_schema_oid = InvalidOid;
 	char 			*target_arg_name;
-	HeapTuple    	tuple;
-	char        	*typename = NULL;
+	HeapTuple		tuple;
+	char			*typename = NULL;
 	Oid 			typnamespace_oid = InvalidOid;
 	char 			*typnamespace;
 	char 			*tvpschemaname;
@@ -709,14 +709,14 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 				ReleaseSysCache(tuple);
 			}
 
-            temp->len += strlen(typename);
-            temp->tvpInfo->tvpTypeName = typename;
+			temp->len += strlen(typename);
+			temp->tvpInfo->tvpTypeName = typename;
 			temp->tvpInfo->tableName = typename;
 
 			pfree(curr_db);
 
 			if(!xactStarted)
-                CommitTransactionCommand();
+				CommitTransactionCommand();
 		}
 	}
 

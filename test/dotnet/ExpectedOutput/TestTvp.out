@@ -22,12 +22,6 @@
 #Q#Select * from tvp_table
 #D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
 1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
-#Q#tvp_table
-#Q#Select * from tvp_table
-#D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
-1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
-#D#int#!#smallint#!#bigint#!#tinyint#!#bit#!#char#!#nchar#!#varchar#!#nvarchar#!#varbinary#!#binary#!#date#!#datetime#!#money#!#uniqueidentifier#!#float#!#real#!#decimal#!#decimal#!#time#!#datetime2
-1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
 #Q#drop procedure tvp_proc
 #Q#drop table tvp_table
 #Q#drop type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
@@ -66,14 +60,22 @@
 #Q#Select * from t3
 #D#int
 5
+#Q#create table t4(a int)
+#Q#create procedure test_tvp2.proc3 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as t1 READONLY AS BEGIN insert into t4 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#test_tvp2.proc3
+#Q#Select * from t4
+#D#int
+5
 #Q#drop procedure proc1
 #Q#drop procedure proc2
 #Q#drop procedure test_tvp1.proc1
 #Q#drop procedure test_tvp2.proc2
+#Q#drop procedure test_tvp2.proc3
 #Q#drop table t
 #Q#drop table tab1
 #Q#drop table t2
 #Q#drop table t3
+#Q#drop table t4
 #Q#drop type t1
 #Q#drop type test_tvp1.t1
 #Q#drop schema test_tvp1
