@@ -27,7 +27,7 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 
-#include "src/include/tds_int.h" // this is for pltsql_plugin_handler_ptr->get_physical_schema_name(
+#include "src/include/tds_int.h"
 #include "src/include/tds_typeio.h"
 #include "src/collation.h"
 #include "catalog/pg_proc.h"
@@ -42,9 +42,9 @@
 #include "access/xact.h"
 #include "utils/varlena.h"
 #include "catalog/pg_type.h"
-#include "parser/scansup.h" // downcase_truncate_identifier
-#include "utils/builtins.h" // CStringGetTextDatum
-#include "access/heapam.h" // heap_getnext
+#include "parser/scansup.h"
+#include "utils/builtins.h"
+#include "access/heapam.h"
 
 
 /* Different TDS request types returned by GetTDSRequest() */
@@ -443,9 +443,48 @@ split_object_name1(char *name)
 	return res;
 }
 
-// static oid get_proc_oid(char *proc_name){
+static Oid get_proc_namespace_oid(char **proc_name, char *curr_db)
+{
+	char *logical_sch_name;
+	char *physical_sch_name;
+	char *db_name;
+	char *schema_name;
+	char	  **splited_object_name;
+	Oid obj_schema_oid = InvalidOid;
 
-// }
+	splited_object_name = split_object_name1(*proc_name);
+	db_name = splited_object_name[1];
+	schema_name = splited_object_name[2];
+	*proc_name = splited_object_name[3];
+
+	if (!strcmp(db_name, ""))
+		db_name = curr_db;
+
+	if (!strcmp(schema_name, ""))
+	{
+		/*
+		* find the default schema for current user and get physical schema
+		* name
+		*/
+		const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
+		// char 	   *guest_role_name = get_guest_role_name(db_name);
+
+		// if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+		// {
+		// 	physical_schema_name = pstrdup(get_guest_schema_name(db_name));
+		// }
+		schema_name = get_authid_user_ext_schema_name1((const char *) db_name, user);
+	}
+
+	logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true); // dbo
+
+	physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name); // db1_dbo
+
+	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+
+	return obj_schema_oid;
+
+}
 
 static inline char** fetch_func_input_arg_names1(HeapTuple func_tuple)
 {
@@ -765,15 +804,10 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	char        *typename = NULL;
 	Oid typnamespace_oid = InvalidOid;
 	char *nsp_name;
-	char *logical_sch_name;
-	char *physical_sch_name;
-	char *db_name;
-	char *schema_name;
-	char *actual_proc_name;
-	char	  **splited_object_name;
 	char *tvpschemaname;
 	char *beginingofdb;
 	char *curr_db;
+	MemoryContext oldContext;
 
 	/* Database-Name.Schema-Name.TableType-Name */
 	for (; i < 3; i++)
@@ -793,7 +827,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			initStringInfo(tempStringInfo);
 
 			tempString = palloc0(len * 2);
-			memcpy(tempString, &messageData[*offset], len * 2); 
+			memcpy(tempString, &messageData[*offset], len * 2);
 			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
 
 			*offset += len * 2;
@@ -815,54 +849,10 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			target_arg_name = temp->paramMeta.colName.data;
 			curr_db = pltsql_plugin_handler_ptr->get_cur_db_name();
 
-			splited_object_name = split_object_name1(proc_name);
-			db_name = splited_object_name[1];
-			// char *default_schema = get_default_schema(db_name);
-			schema_name = splited_object_name[2];
-			actual_proc_name = splited_object_name[3];
-
-			if (!strcmp(db_name, ""))
-				db_name = curr_db;
-
-			if (!strcmp(schema_name, ""))
-			{
-				/*
-				* find the default schema for current user and get physical schema
-				* name
-				*/
-				const char *user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(db_name);
-				// char 	   *guest_role_name = get_guest_role_name(db_name);
-
-				// if ((guest_role_name && strcmp(user, guest_role_name) == 0))
-				// {
-				// 	physical_schema_name = pstrdup(get_guest_schema_name(db_name));
-				// }
-				// else
-				// {
-				// 	pfree(schema_name);
-				schema_name = get_authid_user_ext_schema_name1((const char *) db_name, user);
-					// physical_schema_name = get_physical_schema_name(db_name, schema_name);
-				// }
-
-				// pfree(guest_role_name);
-			}
-
-			// obj_schema_oid = get_proc_oid(&proc_name)
-
-
-			// db_name = !strcmp(splited_object_name[1], "")? curr_db : splited_object_name[1];
-			// // char *default_schema = get_default_schema(db_name);
-			// schema_name = !strcmp(splited_object_name[2], "")? default_schema : splited_object_name[2];
-			// actual_proc_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
-
-			logical_sch_name = downcase_truncate_identifier(schema_name,strlen(schema_name), true); // dbo
-
-			physical_sch_name = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_sch_name); // db1_dbo
-
-			obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+			obj_schema_oid = get_proc_namespace_oid(&proc_name,curr_db);
 
 			/* Fetch proargtype value of our targeted variable*/ 
-			result_proargtype = tds_get_proargtypes_oid(actual_proc_name, obj_schema_oid, user_id, target_arg_name);
+			result_proargtype = tds_get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
 
 			/* --------- pg_type -------- */
 			/* search in pg_type by object_id */
@@ -877,18 +867,16 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 
 				/* Remove db_ from begining of nsp_name to get the tvpTypeSchemaName*/
 				beginingofdb = palloc0(BBF_NAMEDATALEND);
-				snprintf(beginingofdb, BBF_NAMEDATALEND , "%s_", db_name); 
+				snprintf(beginingofdb, BBF_NAMEDATALEND , "%s_", curr_db); 
 
-				// Check if nsp_name starts with beginingofdb
+				/* Check if nsp_name starts with beginingofdb */ 
 				if (strncmp(nsp_name, beginingofdb, strlen(beginingofdb)) == 0) {
-					// If it starts with "beginingofdb", remove the prefix and return the rest of the string
+					/* If it starts with "beginingofdb", remove the prefix and return the rest of the string */ 
 					tvpschemaname = nsp_name + strlen(beginingofdb);
-					if (strcmp(tvpschemaname, "dbo") != 0) {
-						MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-						temp->len += strlen(tvpschemaname);
-						temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvpschemaname);
-						MemoryContextSwitchTo(oldContext);
-					}
+					oldContext = MemoryContextSwitchTo(TopMemoryContext);
+					temp->len += strlen(tvpschemaname);
+					temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvpschemaname);
+					MemoryContextSwitchTo(oldContext);
 				}
 				ReleaseSysCache(tuple);
 			}
