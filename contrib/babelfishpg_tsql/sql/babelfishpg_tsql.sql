@@ -345,8 +345,20 @@ SELECT
     WHEN tsql_type_name = 'timestamp' THEN 8
     ELSE CAST(COALESCE(b."NUMERIC_PRECISION", b."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(b."DATA_TYPE", b.typtypmod)) AS INT)
   END AS PRECISION,
-  CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, COALESCE(b.atttypmod, b.typtypmod)) AS int) AS LENGTH,
-  CAST(COALESCE(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", COALESCE(b.atttypmod, b.typtypmod), true)) AS smallint) AS SCALE,
+--   CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, COALESCE(b.atttypmod, b.typtypmod)) AS int) AS LENGTH,
+  CASE WHEN b.atttypmod != -1
+    THEN
+    CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, b.atttypmod) AS int)
+    ELSE
+    CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, b.typtypmod) AS int)
+  END AS LENGTH,
+--   CAST(COALESCE(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", COALESCE(b.atttypmod, b.typtypmod), true)) AS smallint) AS SCALE,
+  CASE WHEN b.atttypmod != -1
+    THEN
+    CAST(coalesce(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", b.atttypmod, true)) AS smallint)
+    ELSE
+    CAST(coalesce(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", b.typtypmod, true)) AS smallint)
+  END AS SCALE,
   CAST(COALESCE(b."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(b."DATA_TYPE")) AS smallint) AS RADIX,
   CAST(CASE WHEN b."IS_NULLABLE" = 'YES' THEN 1 ELSE 0 END AS smallint) AS NULLABLE,
   CAST(NULL AS varchar(254)) AS remarks,
