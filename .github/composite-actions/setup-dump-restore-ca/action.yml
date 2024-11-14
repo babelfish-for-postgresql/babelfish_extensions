@@ -40,6 +40,12 @@ runs:
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
           pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $dump_restore_version))
+          if [[ "$dump_restore_version" == 'target.latest' || "$dump_restore_version" -ge 16.6 ]]
+          then
+            antlr_version=4.13.2
+          else
+            antlr_version=4.9.3
+          fi
 
           if [[ "$previous_installed_version" == "$dump_restore_version" ]]; then
             pg_new_dir=$(echo $pg_new_dir.$i)
@@ -56,7 +62,7 @@ runs:
           type_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"type\""
           type=$(yq $type_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
 
-          printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        database_level: ${database_level}\n        dump_data_as: ${dump_data_as}\n        dump_format: ${dump_format}\n        type: ${type}\n\n"   >> $dump_restore_version_dir_path/action.yml
+          printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        database_level: ${database_level}\n        dump_data_as: ${dump_data_as}\n        dump_format: ${dump_format}\n        type: ${type}\n        antlr_version: ${antlr_version}\n\n"   >> $dump_restore_version_dir_path/action.yml
 
           previous_installed_version=$dump_restore_version
         done

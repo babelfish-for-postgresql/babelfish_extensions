@@ -9,6 +9,10 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
+  antlr_version:
+    description: "ANTLR version to use (based on Extension Branch)"
+    required: false
+    default: 4.13.2
 
 runs:
   using: "composite"
@@ -21,15 +25,17 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
 
-    - name: Copy ANTLR
-      id: copy-antlr
+    - name: Compile new ANTLR
+      id: compile-new-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
-      run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.pg_new_dir }}/lib/
-      shell: bash
+      uses: ./.github/composite-actions/compile-antlr
+      with:
+        version: ${{ inputs.antlr_version }}
+        install_dir: ${{inputs.pg_new_dir}}
 
     - name: Build Extensions
       id: build-extensions-new
-      if: always() && steps.copy-antlr.outcome == 'success'
+      if: always() && steps.compile-new-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with:
         install_dir: ${{ inputs.pg_new_dir }}

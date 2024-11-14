@@ -23,6 +23,7 @@ jobs:
           extension_branch: ${{ env.EXTENSION_BRANCH_FROM }}
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
+          antlr_version: 4.9.3
 
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency

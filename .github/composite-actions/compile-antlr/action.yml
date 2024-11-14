@@ -1,6 +1,10 @@
 name: 'Compile ANTLR'
 
 inputs:
+  version:
+    description: 'version of ANTLR to install'
+    required: no
+    default: 4.13.2
   install_dir:
     description: 'Engine install directory'
     required: no
@@ -12,9 +16,12 @@ runs:
 
     - name: Compile ANTLR
       run: |
-        ANTLR_VERSION=4.9.3
+        ANTLR_VERSION=${{inputs.version}}
         
         cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
+        if [ ! -f antlr-$ANTLR_VERSION-complete.jar ]; then
+          wget "http://www.antlr.org/download/antlr-$ANTLR_VERSION-complete.jar"
+        fi
         sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
         cd ..
         wget "http://www.antlr.org/download/antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"

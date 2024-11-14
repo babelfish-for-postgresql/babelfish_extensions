@@ -67,6 +67,7 @@ jobs:
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
           server_collation_name: ${{ matrix.upgrade-path.server_collation_name }}
+          antlr_version: ${{ (steps.read-base-and-final-version.outputs.base-version == 'source.latest' || fromJSON(steps.read-base-and-final-version.outputs.base-version) >= 16.6 ) && '4.13.2' || '4.9.3' }}
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca

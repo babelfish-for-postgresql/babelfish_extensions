@@ -33,6 +33,10 @@ inputs:
     description: "Dump type full or combination of schema-only and data-only"
     required: false
     default: 'full'
+  antlr_version:
+    description: "ANTLR version to use (based on Extension Branch)"
+    required: false
+    default: 4.13.2
 
 runs:
   using: "composite"
@@ -45,6 +49,7 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        antlr_version: ${{ inputs.antlr_version }}
 
     - name: Build latest dump/restore utilities
       id: build-dump-utils

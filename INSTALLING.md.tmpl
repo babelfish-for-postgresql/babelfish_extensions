@@ -55,19 +55,19 @@ export PG_SRC=$(realpath $PWD)
 
 ### Compile ANTLR 4
 
-Unfortunately, there are [no prebuilt C++ binaries for the Antlr 4.9.3 runtime version](https://www.antlr.org/download.html) for Linux. You will need to compile and install ANTLR manually.
+Unfortunately, there are [no prebuilt C++ binaries for the Antlr 4.13.2 runtime version](https://www.antlr.org/download.html) for Linux. You will need to compile and install ANTLR manually.
 
 First, define the following variables in your environment:
 
 ```sh
-export ANTLR4_VERSION=4.9.3
+export ANTLR4_VERSION=4.13.2
 export ANTLR4_JAVA_BIN=/usr/bin/java
 export ANTLR4_RUNTIME_LIBRARIES=/usr/include/antlr4-runtime
 export ANTLR_EXECUTABLE=/usr/local/lib/antlr-${ANTLR4_VERSION}-complete.jar
 export ANTLR_RUNTIME=~/antlr4
 ```
 
-The [Antlr 4.9.3 Runtime](https://www.antlr.org/) files are distributed with the Babelfish source code.  Use the following commands to copy the files into place:
+The [Antlr 4.13.2 Runtime](https://www.antlr.org/) files are distributed with the Babelfish source code.  Use the following commands to copy the files into place:
 
 ```sh
 sudo cp ${PG_SRC}/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr-${ANTLR4_VERSION}-complete.jar /usr/local/lib
