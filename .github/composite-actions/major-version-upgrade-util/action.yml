@@ -22,6 +22,10 @@ inputs:
     description: "Server collation name"
     required: false
     default: "default"
+  antlr_version:
+    description: "ANTLR version to use (based on Extension Branch)"
+    required: false
+    default: 4.13.2
 
 runs:
   using: "composite"
@@ -34,6 +38,7 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        antlr_version: ${{ inputs.antlr_version }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade
