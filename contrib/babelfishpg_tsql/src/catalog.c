@@ -897,10 +897,10 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
 	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
+	ScanKeyData key[2];
 
 	if (!db_name || !login)
 		return NULL;
@@ -910,20 +910,16 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_login_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	ScanKeyInit(&key[0],
+			Anum_bbf_authid_user_ext_login_name,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			NameGetDatum(login_name));
+	ScanKeyInit(&key[1],
+			Anum_bbf_authid_user_ext_database_name,
+			BTEqualStrategyNumber, F_TEXTEQ,
+			CStringGetTextDatum(db_name));
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -1028,6 +1024,28 @@ get_authid_user_ext_db_users(const char *db_name)
 	return db_users_list;
 }
 
+/* Checks if the user is enabled on a given database. */
+static bool
+user_has_dbaccess(const char *user)
+{
+	HeapTuple	tuple;
+	bool		has_access = false;
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isnull = true;
+		int	user_can_connect = 0;
+		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+		if (user_can_connect == 1)
+			has_access = true;
+		ReleaseSysCache(tuple);
+	}
+	return has_access;
+}
+
 /*
  * Checks if there exists any user for respective database and login,
  * if there is not any then use dbo or guest user.
@@ -1044,6 +1062,9 @@ get_user_for_database(const char *db_name)
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
+
+	if (user && !user_has_dbaccess(user) && !guest_has_dbaccess((char *) db_name))
+		user = NULL;
 
 	if (!user)
 	{
