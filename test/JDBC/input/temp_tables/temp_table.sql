@@ -185,6 +185,16 @@ GO
 CREATE TABLE #t1 (a INT DEFAULT temp_table_func1(5))
 GO
 
+-- also block adding columns via ALTER TABLE
+CREATE TABLE #t1 (a INT)
+GO
+
+ALTER TABLE #t1 ADD b INT DEFAULT temp_table_func1(5)
+GO
+
+DROP TABLE #t1
+GO
+
 -- same with table variables
 DECLARE @tv TABLE (a INT DEFAULT temp_table_func1(5))
 INSERT INTO @tv VALUES (DEFAULT)
@@ -195,7 +205,10 @@ GO
 CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
 GO
 
-INSERT INTO #t1 VALUES (DEFAULT)
+ALTER TABLE #t1 ADD b INT DEFAULT ISJSON('b')
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT, DEFAULT)
 GO
 
 SELECT * FROM #t1
