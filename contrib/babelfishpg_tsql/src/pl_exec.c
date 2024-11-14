@@ -10110,7 +10110,6 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int			rc;
 	PLtsql_tbl *tbl;
 	bool		old_pltsql_explain_only = pltsql_explain_only;
-	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 	bool old_abort_curr_txn = AbortCurTransaction;
 
@@ -10132,7 +10131,13 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 			if (!tbl->need_drop)
 				continue;
 
-			query = psprintf(query_fmt, tbl->tblname);
+			/*
+			 * Use delimiters for names like @@var or @var#
+			 */
+			if (is_tsql_atatuservar(tbl->tblname))
+				query = psprintf("DROP TABLE [%s]", tbl->tblname);
+			else
+				query = psprintf("DROP TABLE %s", tbl->tblname);	
 
 			pltsql_explain_only = false;	/* Drop temporary table even in
 											 * EXPLAIN ONLY mode */
