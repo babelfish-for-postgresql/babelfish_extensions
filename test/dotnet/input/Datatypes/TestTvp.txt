@@ -66,18 +66,28 @@ create procedure test_tvp2.proc3 @this_tvp_parameter_name_is_very_looooooooooooo
 storedproc#!#prep#!#test_tvp2.proc3#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
 Select * from t4
 
+# when parameter and type both are very long, and both are part of schema other than dbo
+create table t5(a int)
+create type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+create procedure test_tvp2.proc4 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t5 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#test_tvp2.proc4#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t5
+
 drop procedure proc1
 drop procedure proc2
 drop procedure test_tvp1.proc1
 drop procedure test_tvp2.proc2
 drop procedure test_tvp2.proc3
+drop procedure test_tvp2.proc4
 drop table t
 drop table tab1
 drop table t2
 drop table t3
 drop table t4
+drop table t5
 drop type t1
 drop type test_tvp1.t1
+drop type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
 drop schema test_tvp1
 drop schema test_tvp2
 
