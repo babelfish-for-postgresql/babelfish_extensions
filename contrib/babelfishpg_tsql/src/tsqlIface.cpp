@@ -3657,7 +3657,7 @@ static void process_query_specification(
 
 			Assert(elem->expression());
 			if (!nse)
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str), getLineAndPos(elem));
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", ::getFullText(elem->LOCAL_ID()).c_str()), getLineAndPos(elem));
 
 			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, cast((expr) as type)) */
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
@@ -3701,7 +3701,7 @@ static void process_query_specification(
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 												format_errmsg("\"%s\" is not a known variable",
-												var_str), getLineAndPos(elem));
+												::getFullText(elem->LOCAL_ID()).c_str()), getLineAndPos(elem));
 
 			/* 
 			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + cast((expr) as type)).
