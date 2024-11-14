@@ -3,6 +3,7 @@
 #include <iostream>
 #include <strstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #pragma GCC diagnostic ignored "-Wattributes"
@@ -10,6 +11,7 @@
 #include "antlr4-runtime.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
+#include "support/Utf8.h"
 
 #include "../antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
@@ -568,7 +570,7 @@ format_errmsg(const char *fmt, const char *arg1, const char *arg2);
 
 inline std::u32string utf8_to_utf32(const char* s)
 {
-	return antlrcpp::utf8_to_utf32(s, s + strlen(s));
+	return antlrcpp::Utf8::lenientDecode(std::string_view(s, strlen(s)));
 }
 
 class MyInputStream : public ANTLRInputStream
@@ -582,7 +584,7 @@ public:
     
 		void setText(size_t pos, const char *newText)
 		{
-			UTF32String	newText32 = utf8_to_utf32(newText);
+			std::u32string	newText32 = utf8_to_utf32(newText);
 
 			_data.replace(pos, newText32.size(), newText32);
 		}
@@ -723,7 +725,7 @@ void PLtsql_expr_query_mutator::run()
 		rewritten_query += query.substr(cursor); // copy remaining expr->query
 		
 	// update query string
-	std::string new_query = antlrcpp::utf32_to_utf8(rewritten_query);
+	std::string new_query = antlrcpp::Utf8::lenientEncode(std::u32string_view(rewritten_query));
 	expr->query = pstrdup(new_query.c_str());
 }
 
