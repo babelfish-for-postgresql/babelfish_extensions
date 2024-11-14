@@ -499,6 +499,7 @@ alter_proc_recompile
 catalogs_dbo_sys_schema-upgrade
 unary_plus_op_string
 tabvar_in_function
+atatuservar
 BABEL-4217
 Test_ISNULL
 BABEL-4270

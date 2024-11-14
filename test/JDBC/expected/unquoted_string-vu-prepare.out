@@ -119,15 +119,6 @@ go
 ~~ERROR (Message: column "@p1" does not exist)~~
 
 
--- should raise error:
-create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
-as select @p1
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function sys.myvar() does not exist)~~
-
-
 create procedure unqStr_proc_7 @p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z"
 as select @p1, @p2, @p3
 go

@@ -358,7 +358,7 @@ raiseerror_statement
     ;
 	
 raiseerror_msg
-    : DECIMAL | char_string | LOCAL_ID
+    : DECIMAL | char_string | local_id
     ;		
     
 raiseerror_option
@@ -2004,7 +2004,7 @@ func_body_return_select_body
     ;
 
 func_body_returns_table
-    : RETURNS LOCAL_ID table_type_definition
+    : RETURNS local_id table_type_definition
         (WITH function_option (COMMA function_option)*)?
         AS?
         BEGIN sql_clauses* SEMI? END
@@ -2031,7 +2031,7 @@ atomic_func_body
 
 // CREATE PROC p @p INT NULL --> this appears to be accepted syntax for non-native compiled procs, though formally not allowed
 procedure_param
-    : LOCAL_ID AS? data_type VARYING? (NOT? NULL_P)? (EQUAL default_val=expression)? param_option=(OUT | OUTPUT | READONLY)?
+    : local_id AS? data_type VARYING? (NOT? NULL_P)? (EQUAL default_val=expression)? param_option=(OUT | OUTPUT | READONLY)?
     ;
 
 //  drop_procedure_param can be used in a DROP FUNCTION or DROP PROCEDURE command
@@ -2640,7 +2640,7 @@ predict_function
 
 // https://msdn.microsoft.com/en-us/library/ms188927.aspx
 declare_statement
-    : DECLARE LOCAL_ID AS? table_type_definition SEMI?
+    : DECLARE local_id AS? table_type_definition SEMI?
     | DECLARE loc+=declare_local (COMMA loc+=declare_local)* SEMI?
     ;
     
@@ -2842,7 +2842,7 @@ execute_statement_arg
     ;    
 
 execute_statement_arg_named
-    : name=LOCAL_ID  EQUAL  value=execute_parameter
+    : name=local_id  EQUAL  value=execute_parameter
     ;
 
 execute_statement_arg_unnamed
@@ -2851,13 +2851,13 @@ execute_statement_arg_unnamed
 
 execute_parameter
     : constant   
-    | LOCAL_ID (OUTPUT | OUT)?
+    | local_id (OUTPUT | OUT)?
     | id
     | DEFAULT    
     ;    
 
 execute_var_string
-    : LOCAL_ID
+    : local_id
     | char_string
     ;
     
@@ -3098,21 +3098,21 @@ set_statement
 // https://msdn.microsoft.com/en-us/library/ms174377.aspx
 transaction_statement
     // https://msdn.microsoft.com/en-us/library/ms188386.aspx
-    : BEGIN DISTRIBUTED (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    : BEGIN DISTRIBUTED (TRAN | TRANSACTION) (id | local_id)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms188929.aspx
-    | BEGIN (TRAN | TRANSACTION) ((id | LOCAL_ID) (WITH MARK char_string)?)? SEMI?
+    | BEGIN (TRAN | TRANSACTION) ((id | local_id) (WITH MARK char_string)?)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms190295.aspx
-    | COMMIT (TRAN | TRANSACTION) (id | LOCAL_ID)? (WITH LR_BRACKET DELAYED_DURABILITY EQUAL (OFF | ON) RR_BRACKET )? SEMI?
+    | COMMIT (TRAN | TRANSACTION) (id | local_id)? (WITH LR_BRACKET DELAYED_DURABILITY EQUAL (OFF | ON) RR_BRACKET )? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms178628.aspx
     | COMMIT WORK? SEMI?
     | COMMIT id
     | ROLLBACK id
     // https://msdn.microsoft.com/en-us/library/ms181299.aspx
-    | ROLLBACK (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    | ROLLBACK (TRAN | TRANSACTION) (id | local_id)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms174973.aspx
     | ROLLBACK WORK? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms188378.aspx
-    | SAVE (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    | SAVE (TRAN | TRANSACTION) (id | local_id)? SEMI?
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188366.aspx
@@ -3135,7 +3135,7 @@ shutdown_statement
     ;
 
 dbcc_statement
-    : DBCC CHECKIDENT ( LR_BRACKET table_name_string ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
+    : DBCC CHECKIDENT ( LR_BRACKET dbcc_table_name ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? checkident_new_value)?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
     | DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
     //These are dbcc commands with strange syntax that doesn't fit the regular dbcc syntax
     | DBCC SHRINKLOG ( LR_BRACKET SIZE  EQUAL   (constant_expression| id | DEFAULT) (KB | MB | GB | TB)? RR_BRACKET )? (WITH dbcc_options)? SEMI?
@@ -3175,12 +3175,17 @@ dbcc_options
     :  ID (COMMA ID)?
     ;
 
-
-table_name_string
+dbcc_table_name
     : table = id
     | char_string
+    | local_id
     ;
 
+checkident_new_value
+    : DECIMAL
+    | FLOAT
+    | local_id
+    ;
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
@@ -3459,7 +3464,7 @@ set_offsets_keyword
 
 constant_LOCAL_ID
     : constant
-    | LOCAL_ID
+    | local_id
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/expressions-transact-sql

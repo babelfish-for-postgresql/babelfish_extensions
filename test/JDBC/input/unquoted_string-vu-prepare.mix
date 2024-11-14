@@ -109,11 +109,6 @@ create procedure unqStr_proc_5 @p1 varchar(20), @p2 varchar(20) = @p1
 as select @p2
 go
 
--- should raise error:
-create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
-as select @p1
-go
-
 create procedure unqStr_proc_7 @p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z"
 as select @p1, @p2, @p3
 go

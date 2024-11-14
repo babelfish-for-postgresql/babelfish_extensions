@@ -405,6 +405,57 @@ check_restricted_stored_procedure(Oid proc_id)
 	}
 }
 
+/* Determine whether a variable name is a predefined T-SQL global variable */
+bool 
+is_tsql_atatglobalvar(const char *varname)
+{
+	size_t varname_len = strlen(varname);
+	if ((varname_len < 6) || (varname_len > 18))
+		return false;
+		
+	// List of all T-SQL global "@@" variables:
+	if (
+		(pg_strcasecmp("@@CONNECTIONS",      varname) == 0) ||
+		(pg_strcasecmp("@@CPU_BUSY",         varname) == 0) ||
+		(pg_strcasecmp("@@CURSOR_ROWS",      varname) == 0) ||
+		(pg_strcasecmp("@@DATEFIRST",        varname) == 0) ||
+		(pg_strcasecmp("@@DBTS",             varname) == 0) ||
+		(pg_strcasecmp("@@ERROR",            varname) == 0) ||
+		(pg_strcasecmp("@@PGERROR",          varname) == 0) ||   // added by Babelfish
+		(pg_strcasecmp("@@FETCH_STATUS",     varname) == 0) ||
+		(pg_strcasecmp("@@IDENTITY",         varname) == 0) ||
+		(pg_strcasecmp("@@IDLE",             varname) == 0) ||
+		(pg_strcasecmp("@@IO_BUSY",          varname) == 0) ||
+		(pg_strcasecmp("@@LANGID",           varname) == 0) ||
+		(pg_strcasecmp("@@LANGUAGE",         varname) == 0) ||
+		(pg_strcasecmp("@@LOCK_TIMEOUT",     varname) == 0) ||
+		(pg_strcasecmp("@@MAX_CONNECTIONS",  varname) == 0) ||
+		(pg_strcasecmp("@@MAX_PRECISION",    varname) == 0) ||
+		(pg_strcasecmp("@@NESTLEVEL",        varname) == 0) ||
+		(pg_strcasecmp("@@OPTIONS",          varname) == 0) ||
+		(pg_strcasecmp("@@PACKET_ERRORS",    varname) == 0) ||
+		(pg_strcasecmp("@@PACK_RECEIVED",    varname) == 0) ||
+		(pg_strcasecmp("@@PACK_SENT",        varname) == 0) ||
+		(pg_strcasecmp("@@PROCID",           varname) == 0) ||
+		(pg_strcasecmp("@@REMSERVER",        varname) == 0) ||
+		(pg_strcasecmp("@@ROWCOUNT",         varname) == 0) ||
+		(pg_strcasecmp("@@SERVERNAME",       varname) == 0) ||
+		(pg_strcasecmp("@@SERVICENAME",      varname) == 0) ||
+		(pg_strcasecmp("@@SPID",             varname) == 0) ||
+		(pg_strcasecmp("@@TEXTSIZE",         varname) == 0) ||
+		(pg_strcasecmp("@@TIMETICKS",        varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_ERRORS",     varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_READ",       varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_WRITE",      varname) == 0) ||
+		(pg_strcasecmp("@@TRANCOUNT",        varname) == 0) ||
+		(pg_strcasecmp("@@VERSION",          varname) == 0) ||
+		(pg_strcasecmp("@@MICROSOFTVERSION", varname) == 0) 
+	   ) 
+	   	return true;
+	else
+		return false;	
+}
+
 /***********************************************************************************
  *                            FREE FUNCTIONS
  **********************************************************************************/

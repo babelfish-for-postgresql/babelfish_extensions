@@ -311,7 +311,10 @@ go
 -- should raise an error about column not found:
 CALL unqStr_pgproc_1(aBc);
 go
-
+-- should raise an error since variable is not defined
+create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
+as select @p1
+go
 -- should print 'aBc':
 select unqStr_pgfunc_1('aBc'); 
 go
