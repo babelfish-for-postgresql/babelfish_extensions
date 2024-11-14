@@ -20,6 +20,12 @@ drop procedure p2_empty_dq_string
 go
 drop function f2_empty_dq_string
 go
+drop procedure p2a_empty_dq_string
+go
+drop function f2a_empty_dq_string
+go
+drop procedure p2b_empty_dq_string
+go
 drop procedure p3_empty_dq_string
 go
 drop procedure p4_empty_dq_string
@@ -35,4 +41,18 @@ go
 drop procedure p7_empty_dq_string
 go
 drop procedure p7a_empty_dq_string
+go
+drop procedure p7b_empty_dq_string
+go
+drop function f7b_empty_dq_string
+go
+drop procedure p7c_empty_dq_string
+go
+set quoted_identifier on
+go
+drop table "t8_empty_dq_string"
+go
+drop procedure "p8_empty_dq_string"
+go
+drop function "f8_empty_dq_string"
 go

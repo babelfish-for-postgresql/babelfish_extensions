@@ -46,7 +46,7 @@ as
 begin
 declare @v varchar(10) = ""
 set @v = ""
-return @v
+return '['+@v+']'
 end
 go
 select dbo.f2_empty_dq_string(), len(dbo.f2_empty_dq_string())
@@ -59,6 +59,37 @@ select @v
 end
 go
 insert t2_empty_dq_string values(1)
+go
+
+-- execute immediate
+execute("")
+go
+
+-- argument for procedure/function call
+create procedure p2a_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p2a_empty_dq_string ""
+go
+exec p2a_empty_dq_string @p=""
+go
+create function f2a_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+
+create procedure p2b_empty_dq_string @p varchar(10)
+as
+exec p2a_empty_dq_string ""
+exec p2a_empty_dq_string @p=""
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+exec p2b_empty_dq_string ""
 go
 
 -- print "" (not visible in JDBC test output)
@@ -117,7 +148,7 @@ as
 begin
 declare @v int
 select @v = count(*) from t5_empty_dq_string where b = "" 
-return @v
+return '['+@v+']'
 end
 go
 select dbo.f5_empty_dq_string()
@@ -170,7 +201,7 @@ go
 select a, '['+b+']' as b from t7_empty_dq_string order by a
 go
 
--- single-space string in update
+-- single-space string in update: not affected
 create procedure p7a_empty_dq_string as
 update t7_empty_dq_string set b = " " where a = 1
 go
@@ -186,4 +217,75 @@ go
 insert t7_empty_dq_string values(3, 'test 3')
 go
 select a, '['+b+']' as b from t7_empty_dq_string order by a
+go
+
+
+-- single-space string: argument for procedure/function call
+create procedure p7b_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p7b_empty_dq_string " "
+go
+exec p7b_empty_dq_string @p=" "
+go
+create function f7b_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+
+create procedure p7c_empty_dq_string @p varchar(10)
+as
+exec p7b_empty_dq_string " "
+exec p7b_empty_dq_string @p=" "
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+exec p7c_empty_dq_string " "
+go
+
+-- double-quoted identifier: not affected
+set quoted_identifier on
+go
+
+-- SELECT ""
+select * from "t8_empty_dq_string" order by "a"
+go
+create procedure "p8_empty_dq_string"
+as
+select * from "t8_empty_dq_string" order by "a"
+go
+exec "p8_empty_dq_string"
+go
+create function "f8_empty_dq_string"() returns varchar(10)
+as
+begin
+return ''
+end
+go
+select dbo."f8_empty_dq_string"(), len(dbo."f8_empty_dq_string"())
+go
+create trigger "tr8_empty_dq_string" on "t8_empty_dq_string" for insert as
+begin
+select * from "t8_empty_dq_string" order by "a"
+end
+go
+insert "t8_empty_dq_string" values(2, 'test 2')
+go
+select * from "t8_empty_dq_string" order by "a"
+go
+
+-- double-quoted identifier of length 0: invalid in T-SQL, should raise error
+create table "" (a int)
+go
+select * from ""
+go
+-- execute immediate
+execute("")
+go
+
+set quoted_identifier off
 go

@@ -78,14 +78,14 @@ as
 begin
 declare @v varchar(10) = ""
 set @v = ""
-return @v
+return '['+@v+']'
 end
 go
 select dbo.f2_empty_dq_string(), len(dbo.f2_empty_dq_string())
 go
 ~~START~~
 varchar#!#int
-#!#0
+[]#!#2
 ~~END~~
 
 create trigger tr2_empty_dq_string on t2_empty_dq_string for insert as
@@ -103,6 +103,67 @@ varchar
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+
+-- execute immediate
+execute("")
+go
+
+-- argument for procedure/function call
+create procedure p2a_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p2a_empty_dq_string ""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+exec p2a_empty_dq_string @p=""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+create function f2a_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+~~START~~
+varchar#!#int
+[]#!#2
+~~END~~
+
+
+create procedure p2b_empty_dq_string @p varchar(10)
+as
+exec p2a_empty_dq_string ""
+exec p2a_empty_dq_string @p=""
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+exec p2b_empty_dq_string ""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[]#!#2
+~~END~~
 
 
 -- print "" (not visible in JDBC test output)
@@ -198,15 +259,16 @@ as
 begin
 declare @v int
 select @v = count(*) from t5_empty_dq_string where b = "" 
-return @v
+return '['+@v+']'
 end
 go
 select dbo.f5_empty_dq_string()
 go
 ~~START~~
 int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "[")~~
 
 create trigger tr5_empty_dq_string on t5_empty_dq_string for insert as
 begin
@@ -305,7 +367,7 @@ int#!#varchar
 ~~END~~
 
 
--- single-space string in update
+-- single-space string in update: not affected
 create procedure p7a_empty_dq_string as
 update t7_empty_dq_string set b = " " where a = 1
 go
@@ -343,3 +405,145 @@ int#!#varchar
 3#!#[test 3]
 ~~END~~
 
+
+
+-- single-space string: argument for procedure/function call
+create procedure p7b_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p7b_empty_dq_string " "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+exec p7b_empty_dq_string @p=" "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+create function f7b_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+~~START~~
+varchar#!#int
+[ ]#!#3
+~~END~~
+
+
+create procedure p7c_empty_dq_string @p varchar(10)
+as
+exec p7b_empty_dq_string " "
+exec p7b_empty_dq_string @p=" "
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+exec p7c_empty_dq_string " "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[ ]#!#3
+~~END~~
+
+
+-- double-quoted identifier: not affected
+set quoted_identifier on
+go
+
+-- SELECT ""
+select * from "t8_empty_dq_string" order by "a"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+~~END~~
+
+create procedure "p8_empty_dq_string"
+as
+select * from "t8_empty_dq_string" order by "a"
+go
+exec "p8_empty_dq_string"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+~~END~~
+
+create function "f8_empty_dq_string"() returns varchar(10)
+as
+begin
+return ''
+end
+go
+select dbo."f8_empty_dq_string"(), len(dbo."f8_empty_dq_string"())
+go
+~~START~~
+varchar#!#int
+#!#0
+~~END~~
+
+create trigger "tr8_empty_dq_string" on "t8_empty_dq_string" for insert as
+begin
+select * from "t8_empty_dq_string" order by "a"
+end
+go
+insert "t8_empty_dq_string" values(2, 'test 2')
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+2#!#test 2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select * from "t8_empty_dq_string" order by "a"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+2#!#test 2
+~~END~~
+
+
+-- double-quoted identifier of length 0: invalid in T-SQL, should raise error
+create table "" (a int)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero-length delimited identifier at or near """")~~
+
+select * from ""
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero-length delimited identifier at or near """")~~
+
+-- execute immediate
+execute("")
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '""' at line 2 and character position 8)~~
+
+
+set quoted_identifier off
+go
