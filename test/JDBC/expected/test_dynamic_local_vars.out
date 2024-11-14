@@ -1397,5 +1397,159 @@ on
 ~~END~~
 
 
+-- declared variable name with length > 63
+declare @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr += 1
+select @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- variable names starting with @@
+declare @@a int = 1;
+select @@a = @@a + 1
+select @@a 
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+declare @@a int = 1;
+select @@a += 1
+select @@a 
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr + 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+truncate table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+insert into local_var_tst values (1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr + id from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = id + @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr += id from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+truncate table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_statistics profile On;
+GO
+
+-- error while evaluating const expression
+declare @a int = 1;
+select @a = 1 / 0 from local_var_tst
+select * from local_var_tst where id = @a
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+Query Text: select * from local_var_tst where id = "@a"
+Seq Scan on local_var_tst  (cost=0.00..41.88 rows=13 width=4) (actual rows=1 loops=1)
+  Filter: (id = 1)
+~~END~~
+
+
+set babelfish_statistics profile OFF
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 drop table local_var_tst
 GO

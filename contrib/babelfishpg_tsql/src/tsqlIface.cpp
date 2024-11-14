@@ -3651,13 +3651,13 @@ static void process_query_specification(
 		}
 		else if(process_local_id_assignment && elem->LOCAL_ID() && elem->EQUAL())
 		{
-			std::string var_str = ::getFullText(elem->LOCAL_ID());
-			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
+			const char *var_str = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(),  ::getFullText(elem->LOCAL_ID()).length(), true);
+			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str, nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
 
 			Assert(elem->expression());
 			if (!nse)
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str.c_str()), getLineAndPos(elem));
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", var_str), getLineAndPos(elem));
 
 			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, cast((expr) as type)) */
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
@@ -3670,8 +3670,8 @@ static void process_query_specification(
 		}
 		else if(process_local_id_assignment && elem->LOCAL_ID() && elem->assignment_operator())
 		{
-			std::string var_str = ::getFullText(elem->LOCAL_ID());
-			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str.c_str(), nullptr, nullptr, nullptr);
+			const char *var_str = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(), ::getFullText(elem->LOCAL_ID()).length(), true);
+			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str, nullptr, nullptr, nullptr);
 			char *repl_text = NULL;
 			tree::TerminalNode *anode = nullptr;
 
@@ -3701,7 +3701,7 @@ static void process_query_specification(
 			if (!nse)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 												format_errmsg("\"%s\" is not a known variable",
-												var_str.c_str()), getLineAndPos(elem));
+												var_str), getLineAndPos(elem));
 
 			/* 
 			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + cast((expr) as type)).
@@ -3711,7 +3711,7 @@ static void process_query_specification(
 			 */
 			repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s %s)",
 									nse->itemno,
-									var_str.c_str(),
+									delimitIfAtAtUserVarName(::getFullText(elem->LOCAL_ID())).c_str(),
 									rewrite_assign_operator(anode),
 									rewrite_assignment_expression((PLtsql_var *) pltsql_Datums[nse->itemno],
 																	elem->expression()));
@@ -7259,8 +7259,8 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 			auto elem = elems[i];
 			if (elem->LOCAL_ID())
 			{
-				std::string nameStr = ::getFullText(elem->LOCAL_ID());
-				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, nameStr.c_str(), nullptr, nullptr, nullptr);
+				const char *nameStr = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(), ::getFullText(elem->LOCAL_ID()).length(), true);
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, nameStr, nullptr, nullptr, nullptr);
 				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
 
 				add_assignment_target_field(target, elem->LOCAL_ID(), returning_col_cnt);

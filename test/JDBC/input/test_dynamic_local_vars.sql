@@ -742,5 +742,80 @@ GO
 select set_config('babelfishpg_tsql.explain_summary', 'on', false);
 GO
 
+-- declared variable name with length > 63
+declare @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr += 1
+select @abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+
+-- variable names starting with @@
+declare @@a int = 1;
+select @@a = @@a + 1
+select @@a 
+GO
+
+declare @@a int = 1;
+select @@a += 1
+select @@a 
+GO
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr + 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+
+truncate table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+insert into local_var_tst values (1)
+GO
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr + id from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr = id + @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+
+declare @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr int = 1
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr += id from local_var_tst
+select @@abcbjbnjfbjrnfjrnfkrelnfksnrfenjkfrfrfrfrfrfnknslkrnflkernklfnkmklfr
+GO
+
+truncate table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+
+set babelfish_statistics profile On;
+GO
+
+-- error while evaluating const expression
+declare @a int = 1;
+select @a = 1 / 0 from local_var_tst
+select * from local_var_tst where id = @a
+GO
+
+set babelfish_statistics profile OFF
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+
 drop table local_var_tst
 GO
