@@ -106,7 +106,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -123,7 +123,7 @@ Query Text: EXEC babel_3592_insert_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 
@@ -192,7 +192,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -209,7 +209,7 @@ Query Text: EXEC babel_3592_updates_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.064 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -279,7 +279,7 @@ Query Text: EXEC babel_3592_insert_multiline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.059 ms
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
 ~~END~~
 
 
@@ -296,7 +296,7 @@ Query Text: EXEC babel_3592_delete_singleline
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.064 ms
+Babelfish T-SQL Batch Parsing Time: 0.063 ms
 ~~END~~
 
 
@@ -366,27 +366,21 @@ Query Text: EXEC babel_3592_proc_mixed_statements
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1  (cost=0.12..8.14 rows=1 width=10)
               Index Cond: (b1 = 1)
   Query Text: select/*+ nestloop(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2
-  ->  Gather  (cost=0.00..0.01 rows=1 width=16)
-        Workers Planned: 1
-        Single Copy: true
-        ->  Nested Loop  (cost=0.00..0.01 rows=1 width=16)
-              Join Filter: (babel_3592_t1.a1 = babel_3592_t2.a2)
-              ->  Seq Scan on babel_3592_t1  (cost=0.00..0.00 rows=1 width=8)
-              ->  Seq Scan on babel_3592_t2  (cost=0.00..0.00 rows=1 width=8)
+  ->  Nested Loop  (cost=0.00..0.01 rows=1 width=16)
+        Join Filter: (babel_3592_t1.a1 = babel_3592_t2.a2)
+        ->  Seq Scan on babel_3592_t1  (cost=0.00..0.00 rows=1 width=8)
+        ->  Seq Scan on babel_3592_t2  (cost=0.00..0.00 rows=1 width=8)
   Query Text: select/*+ mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      
      join babel_3592_t2
       on babel_3592_t1.a1 = babel_3592_t2.a2
-  ->  Gather  (cost=0.02..0.05 rows=1 width=16)
-        Workers Planned: 1
-        Single Copy: true
-        ->  Merge Join  (cost=0.02..0.05 rows=1 width=16)
-              Merge Cond: (babel_3592_t1.a1 = babel_3592_t2.a2)
-              ->  Sort  (cost=0.01..0.02 rows=1 width=8)
-                    Sort Key: babel_3592_t1.a1
-                    ->  Seq Scan on babel_3592_t1  (cost=0.00..0.00 rows=1 width=8)
-              ->  Sort  (cost=0.01..0.02 rows=1 width=8)
-                    Sort Key: babel_3592_t2.a2
-                    ->  Seq Scan on babel_3592_t2  (cost=0.00..0.00 rows=1 width=8)
+  ->  Merge Join  (cost=0.02..0.05 rows=1 width=16)
+        Merge Cond: (babel_3592_t1.a1 = babel_3592_t2.a2)
+        ->  Sort  (cost=0.01..0.02 rows=1 width=8)
+              Sort Key: babel_3592_t1.a1
+              ->  Seq Scan on babel_3592_t1  (cost=0.00..0.00 rows=1 width=8)
+        ->  Sort  (cost=0.01..0.02 rows=1 width=8)
+              Sort Key: babel_3592_t2.a2
+              ->  Seq Scan on babel_3592_t2  (cost=0.00..0.00 rows=1 width=8)
   Query Text: update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1
   ->  Update on babel_3592_t1  (cost=0.12..8.14 rows=0 width=0)
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1  (cost=0.12..8.14 rows=1 width=10)
@@ -434,19 +428,16 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1  (cost=0.12..8.14 rows=1 width=10)
               Index Cond: (b1 = 1)
   Query Text: select/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) indexscan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
-  ->  Gather  (cost=0.25..16.30 rows=1 width=16)
-        Workers Planned: 1
-        Single Copy: true
-        ->  Nested Loop  (cost=0.25..16.30 rows=1 width=16)
-              ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1  (cost=0.12..8.14 rows=1 width=8)
-                    Index Cond: (b1 = 1)
-              ->  Index Scan using index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d on babel_3592_t2  (cost=0.12..8.14 rows=1 width=8)
-                    Index Cond: (b2 = 1)
+  ->  Nested Loop  (cost=0.25..16.30 rows=1 width=16)
+        ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1  (cost=0.12..8.14 rows=1 width=8)
+              Index Cond: (b1 = 1)
+        ->  Index Scan using index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d on babel_3592_t2  (cost=0.12..8.14 rows=1 width=8)
+              Index Cond: (b2 = 1)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
