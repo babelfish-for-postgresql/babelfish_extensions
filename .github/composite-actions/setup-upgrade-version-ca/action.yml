@@ -45,6 +45,12 @@ runs:
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
           pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $upgrade_version))
+          if [[ "$upgrade_version" == 'target.latest' || "$upgrade_version" -ge 16.6 ]]
+          then
+            antlr_version=4.13.2
+          else
+            antlr_version=4.9.3
+          fi
           
           upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}]."upgrade-path"[$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
@@ -60,9 +66,9 @@ runs:
           # Appending upgrade step in upgrade-version composite action based on upgrade type
           if [[ $upgrade_type == 'major' ]]
           then
-            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        server_collation_name: ${{ inputs.server_collation_name }}\n\n"   >> $upgrade_version_dir_path/action.yml
+            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        server_collation_name: ${{ inputs.server_collation_name }}\n        antlr_version: ${antlr_version}\n\n"   >> $upgrade_version_dir_path/action.yml
           else
-            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        install_dir: ${pg_new_dir}\n        server_collation_name: ${{ inputs.server_collation_name }}\n\n"   >> $upgrade_version_dir_path/action.yml
+            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        install_dir: ${pg_new_dir}\n        server_collation_name: ${{ inputs.server_collation_name }}\n        antlr_version: ${antlr_version}\n\n"   >> $upgrade_version_dir_path/action.yml
           fi
 
           previous_installed_version=$upgrade_version

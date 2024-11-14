@@ -29,6 +29,8 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres-older.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
+        with:
+          version: 4.9.3
 
       - uses: actions/checkout@v2
         with:
@@ -115,9 +117,15 @@ jobs:
         id: build-modified-postgres-newer
         if: always() && steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile new ANTLR
+        id: compile-new-antlr
+        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
 
       - name: Set env variables and build extensions
         id: build-extensions-newer
+        if: always() && steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
