@@ -258,3 +258,88 @@ int
 
 DROP TABLE #t1
 GO
+
+-- BABEL-4868 disallow the usage of user-defined functions in temp table column defaults (to prevent orphaned catalog entries)
+CREATE FUNCTION temp_table_func1(@a INT) RETURNS INT AS BEGIN RETURN 1 END
+GO
+
+-- normal tables should be ok
+CREATE TABLE temp_table_t1(a INT DEFAULT temp_table_func1(5))
+GO
+
+INSERT INTO temp_table_t1 VALUES (DEFAULT)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM temp_table_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE temp_table_t1
+GO
+
+-- temp tables should not work
+CREATE TABLE #t1 (a INT DEFAULT temp_table_func1(5))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+-- same with table variables
+DECLARE @tv TABLE (a INT DEFAULT temp_table_func1(5))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+-- system functions such as ISJSON() should work
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TABLE #t1
+GO
+
+DECLARE @tv TABLE (a INT DEFAULT ISJSON('a'))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- disallow "sys"-qualified function calls
+CREATE TABLE #t1 (a INT DEFAULT SYS.ISJSON('a'))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+DROP FUNCTION temp_table_func1
+GO

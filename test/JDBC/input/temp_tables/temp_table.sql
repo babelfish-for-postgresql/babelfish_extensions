@@ -163,3 +163,55 @@ GO
 
 DROP TABLE #t1
 GO
+
+-- BABEL-4868 disallow the usage of user-defined functions in temp table column defaults (to prevent orphaned catalog entries)
+CREATE FUNCTION temp_table_func1(@a INT) RETURNS INT AS BEGIN RETURN 1 END
+GO
+
+-- normal tables should be ok
+CREATE TABLE temp_table_t1(a INT DEFAULT temp_table_func1(5))
+GO
+
+INSERT INTO temp_table_t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM temp_table_t1
+GO
+
+DROP TABLE temp_table_t1
+GO
+
+-- temp tables should not work
+CREATE TABLE #t1 (a INT DEFAULT temp_table_func1(5))
+GO
+
+-- same with table variables
+DECLARE @tv TABLE (a INT DEFAULT temp_table_func1(5))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+
+-- system functions such as ISJSON() should work
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
+DECLARE @tv TABLE (a INT DEFAULT ISJSON('a'))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+
+-- disallow "sys"-qualified function calls
+CREATE TABLE #t1 (a INT DEFAULT SYS.ISJSON('a'))
+GO
+
+DROP FUNCTION temp_table_func1
+GO
