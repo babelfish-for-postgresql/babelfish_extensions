@@ -42,8 +42,8 @@ ANALYZE master_dbo.babel_3592_t3
 GO
 
 -- tsql
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
-go
+-- select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+-- go
 
 select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
