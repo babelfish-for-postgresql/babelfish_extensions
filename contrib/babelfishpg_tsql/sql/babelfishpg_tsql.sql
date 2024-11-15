@@ -506,20 +506,59 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		where table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
-			and ((SELECT coalesce(@table_owner,'')) = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
-			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier like sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
-			and ((SELECT coalesce(@column_name,'')) = '' or column_name like @column_name collate database_default)
+		where table_name like sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
+			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
 				 ordinal_position;
 	ELSE 
-		select table_qualifier, precision from sys.sp_columns_100_view
-			where @table_name = table_name collate database_default
-			and ((SELECT coalesce(@table_owner, '')) = '' or table_owner = @table_owner collate database_default)
-			and ((SELECT coalesce(sys.babelfish_truncate_identifier(@table_qualifier),'')) = '' or table_qualifier = sys.babelfish_truncate_identifier(@table_qualifier) collate database_default)
-			and ((SELECT coalesce(@column_name,'')) = '' or column_name = @column_name collate database_default)
+		select table_qualifier as TABLE_QUALIFIER, 
+			table_owner as TABLE_OWNER,
+			table_name as TABLE_NAME,
+			column_name as COLUMN_NAME,
+			data_type as DATA_TYPE,
+			type_name as TYPE_NAME,
+			precision as PRECISION,
+			length as LENGTH,
+			scale as SCALE,
+			radix as RADIX,
+			nullable as NULLABLE,
+			remarks as REMARKS,
+			column_def as COLUMN_DEF,
+			sql_data_type as SQL_DATA_TYPE,
+			sql_datetime_sub as SQL_DATETIME_SUB,
+			char_octet_length as CHAR_OCTET_LENGTH,
+			ordinal_position as ORDINAL_POSITION,
+			is_nullable as IS_NULLABLE,
+			ss_is_sparse as SS_IS_SPARSE,
+			ss_is_column_set as SS_IS_COLUMN_SET,
+			ss_is_computed as SS_IS_COMPUTED,
+			ss_is_identity as SS_IS_IDENTITY,
+			ss_udt_catalog_name as SS_UDT_CATALOG_NAME,
+			ss_udt_schema_name as SS_UDT_SCHEMA_NAME,
+			ss_udt_assembly_type_name as SS_UDT_ASSEMBLY_TYPE_NAME,
+			ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+			ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+			ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
+			(
+				CASE
+					WHEN ss_is_identity = 1 AND sql_data_type = -6 THEN 48 -- Tinyint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 5 THEN 52 -- Smallint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 4 THEN 56 -- Int Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = -5 THEN 63 -- Bigint Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 3 THEN 55 -- Decimal Identity
+					WHEN ss_is_identity = 1 AND sql_data_type = 2 THEN 63 -- Numeric Identity
+					ELSE ss_data_type
+				END
+			) as SS_DATA_TYPE
+		from sys.sp_columns_100_view
+			where sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) = table_name collate database_default
+			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
+			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
