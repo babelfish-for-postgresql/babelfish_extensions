@@ -220,7 +220,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
-# forjsonauto - TODO JIRA - BABEL-5398
+forjsonauto
 format
 format-dep
 forxml
