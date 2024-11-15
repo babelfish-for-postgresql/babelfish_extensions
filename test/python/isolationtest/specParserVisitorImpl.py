@@ -2,7 +2,7 @@ from .isolationTester import Session, Step, Permutation, TestSpec, Pstep, Blocke
 from .parser.specParserVisitor import specParserVisitor
 
 
-# Generated from specParser.g4 by ANTLR 4.9.3
+# Generated from specParser.g4 by ANTLR 4.13.2
 from antlr4 import *
 from .parser.specParser import specParser
 

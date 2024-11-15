@@ -114,9 +114,6 @@ Could not find upgrade tests for function sys.dateadd_internal
 Could not find upgrade tests for function sys.datediff_internal
 Could not find upgrade tests for function sys.datepart_internal
 Could not find upgrade tests for function sys.default_domain
-Could not find upgrade tests for function sys.error_procedure
-Could not find upgrade tests for function sys.exp
-Could not find upgrade tests for function sys.fetch_status
 Could not find upgrade tests for function sys.floor
 Could not find upgrade tests for function sys.fn_helpcollations
 Could not find upgrade tests for function sys.formatmessage
@@ -138,10 +135,8 @@ Could not find upgrade tests for function sys.openjson_with
 Could not find upgrade tests for function sys.openquery_internal
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.patindex_ai_collations
-Could not find upgrade tests for function sys.pgerror
 Could not find upgrade tests for function sys.remove_accents_internal_using_cache
 Could not find upgrade tests for function sys.role_id
-Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
 Could not find upgrade tests for function sys.sp_describe_first_result_set_internal
