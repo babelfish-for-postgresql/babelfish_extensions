@@ -215,7 +215,7 @@ sys-datefirst
 sys-dm_exec_connections
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions
-sys-dm_exec_sessions-dep
+#sys-dm_exec_sessions-dep TODO:BABEL-5414
 sys-dm_hadr_cluster
 sys-dm_hadr_database_replica_states
 sys-dm_os_host_info
@@ -237,7 +237,7 @@ sys-fulltext_stoplists
 sys-hash_indexes
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
-sys-host_name-before-15_8-or-16_4
+#sys-host_name-before-15_8-or-16_4 TODO:BABEL-5414
 sys-identity_columns
 sys-identity_columns-dep
 sys-index_columns

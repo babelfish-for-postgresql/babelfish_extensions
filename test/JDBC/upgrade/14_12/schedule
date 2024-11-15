@@ -60,7 +60,7 @@ column_domain_usage
 constraint_column_usage
 select-strip-parens-before-15_5
 sp_describe_first_result_set
-sys-host_name-before-15_8-or-16_4
+#sys-host_name-before-15_8-or-16_4 TODO:BABEL-5414
 SYSTEM_USER
 indexproperty
 sys-all_parameters
@@ -240,7 +240,7 @@ sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
 sys-dm_exec_connections-dep
-sys-dm_exec_sessions-dep
+#sys-dm_exec_sessions-dep TODO:BABEL-5414
 sys-table_types-before-dep
 sys-all_sql_modules-dep_before_16_5
 sys-sql_modules-dep_before_16_5

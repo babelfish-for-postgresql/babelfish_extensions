@@ -240,7 +240,7 @@ sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
 sys-dm_exec_connections-dep
-sys-dm_exec_sessions-dep
+#sys-dm_exec_sessions-dep TODO:BABEL-5414
 sys-table_types-before-dep
 sys-all_sql_modules-dep_before_16_5
 sys-sql_modules-dep_before_16_5

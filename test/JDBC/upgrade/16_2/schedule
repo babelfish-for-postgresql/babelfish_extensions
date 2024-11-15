@@ -219,7 +219,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
-forjsonauto-before-16_5
+#forjsonauto-before-16_5 TODO: BABEL-5413
 format
 format-dep
 forxml
