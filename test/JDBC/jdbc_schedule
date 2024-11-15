@@ -487,9 +487,6 @@ ignore#!#pgr_select
 ignore#!#pgr_zzz_clean_up
 
 # Ignoring some test temporarily to get clean tests
-ignore#!#forjsonauto-vu-prepare
-ignore#!#forjsonauto-vu-verify
-ignore#!#forjsonauto-vu-cleanup
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
 ignore#!#BABEL-4046-vu-prepare
