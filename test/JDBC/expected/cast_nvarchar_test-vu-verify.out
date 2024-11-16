@@ -107,3 +107,107 @@ a
 ~~END~~
 
 
+-- Test Case 5: Empty strings and NULL values
+SELECT HASHBYTES('SHA1', '') AS empty_varchar,
+       HASHBYTES('SHA1', N'') AS empty_nvarchar,
+       HASHBYTES('SHA1', NULL) AS null_input;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+DA39A3EE5E6B4B0D3255BFEF95601890AFD80709#!#DA39A3EE5E6B4B0D3255BFEF95601890AFD80709#!#<NULL>
+~~END~~
+
+
+-- Test Case 6: Unicode characters
+SELECT HASHBYTES('SHA1', N'こんにちは') AS japanese,
+       HASHBYTES('SHA1', N'Здравствуйте') AS russian,
+       HASHBYTES('SHA1', N'🙂😊😀') AS emojis;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+468B7C156768A579085BBBD1630D2ED215D3A86C#!#EBFDE11B499DEA0130EE3DFCDC632ADEA0AD71F2#!#4D4A69489A61649C1330FB5B600191E00B76B6A0
+~~END~~
+
+
+-- Test Case 8: Different collations
+SELECT HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CI_AS) AS ci_as,
+       HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CS_AS) AS cs_as;
+GO
+~~START~~
+varbinary#!#varbinary
+B6D795FBD58CC7592D955A219374339A323801A9#!#B6D795FBD58CC7592D955A219374339A323801A9
+~~END~~
+
+
+-- Test Case 9: Combining varchar and nvarchar
+SELECT HASHBYTES('SHA1', 'hello' + N'world') AS combined;
+GO
+~~START~~
+varbinary
+D981D4B037201043FFDCBD310FCDE36F44D9AAC5
+~~END~~
+
+
+-- Test Case 10: Roundtrip conversions
+SELECT CAST(CAST(N'test' AS VARBINARY(8)) AS NVARCHAR(4)) AS nvarchar_roundtrip,
+       CAST(CAST('test' AS VARBINARY(8)) AS VARCHAR(4)) AS varchar_roundtrip;
+GO
+~~START~~
+nvarchar#!#varchar
+test#!#test
+~~END~~
+
+
+-- Test Case 11: CAST and CONVERT between varchar, nvarchar, and varbinary
+SELECT CAST(N'hello' AS VARBINARY(10)) AS nvarchar_to_varbinary,
+       CAST('hello' AS VARBINARY(10)) AS varchar_to_varbinary,
+       CONVERT(VARBINARY(10), N'hello') AS nvarchar_to_varbinary_convert,
+       CONVERT(VARBINARY(10), 'hello') AS varchar_to_varbinary_convert;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary#!#varbinary
+680065006C006C006F00#!#68656C6C6F#!#68656C6C6F#!#68656C6C6F
+~~END~~
+
+
+-- Test Case 12: Testing with special characters
+SELECT HASHBYTES('SHA1', 'Hello, World!') AS varchar_special,
+       HASHBYTES('SHA1', N'Hello, World!') AS nvarchar_special,
+       HASHBYTES('SHA1', 'Hello' + CHAR(13) + CHAR(10) + 'World') AS varchar_newline,
+       HASHBYTES('SHA1', N'Hello' + NCHAR(13) + NCHAR(10) + N'World') AS nvarchar_newline;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary#!#varbinary
+0A0A9F2A6772942557AB5355D76AF442F8F65E01#!#1F725EE9D69965F6F755140E66089A041B5AACC2#!#62E451F6ED58D1FF234A05B8467C0CEB1D4B285F#!#C97EDD9DE05497798CBA896371C594DF87043753
+~~END~~
+
+
+-- Test Case 13: NVARCHAR -> VARBINARY -> VARCHAR -> NVARCHAR -> VARBINARY
+SELECT CAST(
+    CAST(
+        CAST(
+            CAST(N'Hello World' AS VARBINARY(100))
+        AS VARCHAR(100))
+    AS NVARCHAR(100))
+AS VARBINARY(100)) AS four_casts;
+GO
+~~START~~
+varbinary
+480065006C006C006F00200057006F0072006C006400
+~~END~~
+
+
+-- Test Case 14: VARCHAR -> NVARCHAR -> VARBINARY -> NVARCHAR -> VARCHAR
+SELECT CAST(
+    CAST(
+        CAST(
+            CAST('Test String' AS NVARCHAR(50))
+        AS VARBINARY(50))
+    AS NVARCHAR(50))
+AS VARCHAR(50)) AS four_casts;
+GO
+~~START~~
+varchar
+Test String
+~~END~~
+

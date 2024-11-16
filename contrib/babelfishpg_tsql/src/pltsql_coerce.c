@@ -1310,6 +1310,7 @@ tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Failed to find common utility plugin.")));
 
+	expr_second_arg = InvalidOid;
 	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))

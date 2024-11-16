@@ -45,3 +45,62 @@ GO
 SELECT cast(cast(cast('ab' AS nvarchar(10)) as varbinary(2)) as nvarchar(2));
 GO
 
+-- Test Case 5: Empty strings and NULL values
+SELECT HASHBYTES('SHA1', '') AS empty_varchar,
+       HASHBYTES('SHA1', N'') AS empty_nvarchar,
+       HASHBYTES('SHA1', NULL) AS null_input;
+GO
+
+-- Test Case 6: Unicode characters
+SELECT HASHBYTES('SHA1', N'こんにちは') AS japanese,
+       HASHBYTES('SHA1', N'Здравствуйте') AS russian,
+       HASHBYTES('SHA1', N'🙂😊😀') AS emojis;
+GO
+
+-- Test Case 8: Different collations
+SELECT HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CI_AS) AS ci_as,
+       HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CS_AS) AS cs_as;
+GO
+
+-- Test Case 9: Combining varchar and nvarchar
+SELECT HASHBYTES('SHA1', 'hello' + N'world') AS combined;
+GO
+
+-- Test Case 10: Roundtrip conversions
+SELECT CAST(CAST(N'test' AS VARBINARY(8)) AS NVARCHAR(4)) AS nvarchar_roundtrip,
+       CAST(CAST('test' AS VARBINARY(8)) AS VARCHAR(4)) AS varchar_roundtrip;
+GO
+
+-- Test Case 11: CAST and CONVERT between varchar, nvarchar, and varbinary
+SELECT CAST(N'hello' AS VARBINARY(10)) AS nvarchar_to_varbinary,
+       CAST('hello' AS VARBINARY(10)) AS varchar_to_varbinary,
+       CONVERT(VARBINARY(10), N'hello') AS nvarchar_to_varbinary_convert,
+       CONVERT(VARBINARY(10), 'hello') AS varchar_to_varbinary_convert;
+GO
+
+-- Test Case 12: Testing with special characters
+SELECT HASHBYTES('SHA1', 'Hello, World!') AS varchar_special,
+       HASHBYTES('SHA1', N'Hello, World!') AS nvarchar_special,
+       HASHBYTES('SHA1', 'Hello' + CHAR(13) + CHAR(10) + 'World') AS varchar_newline,
+       HASHBYTES('SHA1', N'Hello' + NCHAR(13) + NCHAR(10) + N'World') AS nvarchar_newline;
+GO
+
+-- Test Case 13: NVARCHAR -> VARBINARY -> VARCHAR -> NVARCHAR -> VARBINARY
+SELECT CAST(
+    CAST(
+        CAST(
+            CAST(N'Hello World' AS VARBINARY(100))
+        AS VARCHAR(100))
+    AS NVARCHAR(100))
+AS VARBINARY(100)) AS four_casts;
+GO
+
+-- Test Case 14: VARCHAR -> NVARCHAR -> VARBINARY -> NVARCHAR -> VARCHAR
+SELECT CAST(
+    CAST(
+        CAST(
+            CAST('Test String' AS NVARCHAR(50))
+        AS VARBINARY(50))
+    AS NVARCHAR(50))
+AS VARCHAR(50)) AS four_casts;
+GO

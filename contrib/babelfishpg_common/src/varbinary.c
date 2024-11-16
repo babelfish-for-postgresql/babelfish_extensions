@@ -101,6 +101,7 @@ PG_FUNCTION_INFO_V1(binaryfloat8);
 
 #define MAX_BINARY_SIZE 8000
 #define ROWVERSION_SIZE 8
+bool IS_UTF16 = false;
 
 static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -679,7 +680,8 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	
 	if (tsql_nvarchar_oid == InvalidOid)
 		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
-
+		
+	/* Calling the nvarcharvarbinary function if the input type is nvarchar */
 	if(tsql_nvarchar_oid == input_type)	
 	{
 		return nvarcharvarbinary(fcinfo);
@@ -765,9 +767,10 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For nvarchar ->
-		 * convert the string to UTF16 from UTF8 via TsqlUTF8toUTF16StringInfo();
+		 * convert the string to UTF16 from UTF8 irrespective of input encoding via TsqlUTF8toUTF16StringInfo();
 		 * For this we need to prepare a StringInfoData()
 		 */
+		IS_UTF16 = true;
 		initStringInfo(&s);
 		TsqlUTF8toUTF16StringInfo(&s, data, len);
 		encoded_data = s.data;
@@ -809,7 +812,6 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	memcpy(rp, encoded_data, encodedByteLen);
-	pfree(s.data);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -870,6 +872,7 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
+	StringInfoData s;
 
 	/*
 	 * Check whether the typmod argument exists, so that we 
@@ -900,6 +903,16 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	 */
 	PG_TRY();
 	{
+		if(IS_UTF16 == true)
+		{
+			initStringInfo(&s);
+			TsqlUTF16toUTF8StringInfo(&s,data,len+1);
+			data = s.data;
+			len= s.len;
+			IS_UTF16 = false;
+		}
+
+
 		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 		if (maxlen < 0 || len <= maxlen)
 			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
