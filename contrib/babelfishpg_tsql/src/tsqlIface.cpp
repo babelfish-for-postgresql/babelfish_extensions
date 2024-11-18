@@ -3349,6 +3349,24 @@ public:
 		}
 	}
 
+	void enterChar_string(TSqlParser::Char_stringContext *ctx) override
+	{
+		std::string str = getFullText(ctx);
+		if ((str.front() == '"') && (str.back() == '"') && (str.length() == 2))
+		{
+			// This means we have a double-quoted empty, zero-length string. The PG equivalent is a zero-length 
+			// single-quoted string.
+			// Whenever we reference a double-quoted empty string inside the body of a T-SQL procedure, function or trigger,
+			// this is passed onto the PG backend where PG interprets double-quoted items as delimited identifiers. 
+			// However those cannot be zero-length, so an error is then raised.
+			// By changing any double-quoted empty string to a single-quoted empty string we address this use case here.
+			// This also addresses any references outside those objects; those would otherwise have been rewritten as a
+			// single-quoted string by rewriteDoubleQuotedString() in the exitChar_string() functions, but doing it 
+			// here preempts that and removes potential complexity from the rewriting in the mutator. 
+			stream.setText(ctx->start->getStartIndex(), "''");	
+		}		
+	}
+	
 	// NB: similar code is in tsqlBuilder
 	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
 	{
