@@ -506,6 +506,7 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
+		-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
 		where table_name like sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
@@ -555,6 +556,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
+			-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
 			where sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) = table_name collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
