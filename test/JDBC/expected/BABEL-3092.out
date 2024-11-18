@@ -356,7 +356,7 @@ EXEC("SELECT * FROM t")
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column "select * from t" does not exist)~~
+~~ERROR (Message: relation "t" does not exist)~~
 
 EXEC(@v)
 GO
