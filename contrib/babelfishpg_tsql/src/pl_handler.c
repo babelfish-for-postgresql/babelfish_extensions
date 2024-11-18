@@ -3080,14 +3080,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-													params, queryEnv, dest,
-													qc);
 					}
 					PG_FINALLY();
 					{
@@ -3853,12 +3848,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						SetUserIdAndSecContext(BOOTSTRAP_SUPERUSERID, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 						PG_TRY();
 						{
-							if (prev_ProcessUtility)
-								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-							else
-								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-														queryEnv, dest, qc);
 						}
 						PG_FINALLY();
 						{
@@ -3926,14 +3917,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-					if (prev_ProcessUtility)
-						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 											params, queryEnv, dest,
 											qc);
-					else
-						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
 				}
 				PG_FINALLY();
 				{
