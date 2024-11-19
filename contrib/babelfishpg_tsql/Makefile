@@ -90,6 +90,7 @@ PG_CXXFLAGS += -Wno-deprecated -Wno-error=attributes -Wno-suggest-attribute=form
 PG_CXXFLAGS += -Wno-undef -Wall -Wcpp
 PG_CXXFLAGS += -Wno-register # otherwise C++17 gags on PostgreSQL headers
 PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
+PG_CXXFLAGS += -std=c++17
 PG_CFLAGS += -g -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR -Wfloat-conversion
