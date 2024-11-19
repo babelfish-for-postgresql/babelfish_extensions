@@ -226,5 +226,29 @@ GO
 CREATE TABLE #t1 (a INT DEFAULT SYS.ISJSON('a'))
 GO
 
+-- disallow user-defined overrides for system functions
+CREATE FUNCTION ISJSON(@json TEXT) RETURNS INT AS BEGIN RETURN 10 END
+GO
+
+-- cannot use schema-qualified name
+CREATE TABLE #t1 (a INT DEFAULT dbo.ISJSON('a'))
+GO
+
+-- should work, default to using the system function
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
+DROP FUNCTION dbo.ISJSON
+GO
+
 DROP FUNCTION temp_table_func1
 GO

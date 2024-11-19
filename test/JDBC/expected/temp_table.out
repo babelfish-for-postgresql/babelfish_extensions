@@ -355,8 +355,43 @@ CREATE TABLE #t1 (a INT DEFAULT SYS.ISJSON('a'))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+~~ERROR (Message: Column "sys" is not allowed in this context, and the user-defined function or aggregate "sys.isjson" could not be found.)~~
 
+
+-- disallow user-defined overrides for system functions
+CREATE FUNCTION ISJSON(@json TEXT) RETURNS INT AS BEGIN RETURN 10 END
+GO
+
+-- cannot use schema-qualified name
+CREATE TABLE #t1 (a INT DEFAULT dbo.ISJSON('a'))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Column "master_dbo" is not allowed in this context, and the user-defined function or aggregate "master_dbo.isjson" could not be found.)~~
+
+
+-- should work, default to using the system function
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TABLE #t1
+GO
+
+DROP FUNCTION dbo.ISJSON
+GO
 
 DROP FUNCTION temp_table_func1
 GO
