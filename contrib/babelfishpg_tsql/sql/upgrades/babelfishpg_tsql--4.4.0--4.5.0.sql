@@ -28,14 +28,16 @@ BEGIN
 
     FOR temprow IN
         WITH bbf_catalog AS (
-            SELECT rolname::regrole AS roleid
-            FROM sys.babelfish_authid_login_ext
-            WHERE rolname != init_user
+            SELECT r.oid AS roleid, ext1.rolname
+            FROM sys.babelfish_authid_login_ext ext1
+            INNER JOIN pg_roles r ON ext1.rolname = r.rolname
+            WHERE r.rolname != init_user
             UNION
-            SELECT rolname::regrole AS roleid
-            FROM sys.babelfish_authid_user_ext
+            SELECT r.oid AS roleid, ext2.rolname
+            FROM sys.babelfish_authid_user_ext ext2
+            INNER JOIN pg_roles r ON ext2.rolname = r.rolname
         )
-        SELECT am.roleid::regrole, am.member::regrole, am.grantor::regrole
+        SELECT cat.rolname AS rolname, cat2.rolname AS member, am.grantor::regrole
         FROM pg_auth_members am
         INNER JOIN bbf_catalog cat ON am.roleid = cat.roleid
         INNER JOIN bbf_catalog cat2 ON am.member = cat2.roleid
@@ -43,10 +45,10 @@ BEGIN
         AND am.grantor != 'bbf_role_admin'::regrole
     LOOP
         -- First revoke the existing grant
-        query := pg_catalog.format('REVOKE %I FROM %I GRANTED BY %I;', temprow.roleid, temprow.member, temprow.grantor);
+        query := pg_catalog.format('REVOKE %I FROM %I GRANTED BY %s;', temprow.rolname, temprow.member, temprow.grantor);
         EXECUTE query;
         -- Now create the grant with bbf_role_admin as grantor
-        query := pg_catalog.format('GRANT %I TO %I GRANTED BY bbf_role_admin;', temprow.roleid, temprow.member);
+        query := pg_catalog.format('GRANT %I TO %I GRANTED BY bbf_role_admin;', temprow.rolname, temprow.member);
         EXECUTE query;
     END LOOP;
 END;
