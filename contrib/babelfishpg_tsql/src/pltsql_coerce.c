@@ -130,6 +130,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "varbinarysysnvarchar", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
@@ -230,6 +231,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'i', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
@@ -475,6 +477,10 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isSqlVariantCast = false;
 	bool		isInt8Type = false;
 	bool		isInt8ToMoney = false;
+	bool		isVarbinaryToNvarchar = false;
+	bool		isVarbinary = false;
+	bool		isNvarchar = false;
+	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
 
@@ -507,6 +513,21 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				ReleaseSysCache(tuple);
 				break;
 			}
+
+			if (isVarbinary && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "nvarchar") == 0))
+				isVarbinaryToNvarchar = true;
+
+			/* Check if type is Varbinary */
+			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "varbinary") == 0)
+				isVarbinary = true;
+
+			if (isNvarchar && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "varbinary") == 0))
+				isNvarchartoVarbinary = true;
+
+			/* Check if type is INT8 */
+			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "nvarchar") == 0)
+				isNvarchar = true;
+
 			ReleaseSysCache(tuple);
 		}
 	}
@@ -514,7 +535,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
-		if (OidIsValid(sourceTypeId))
+		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*
@@ -522,7 +543,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 		 * target so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(targetTypeId) && !isInt8ToMoney)
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney && !isVarbinaryToNvarchar)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 
@@ -1311,19 +1332,11 @@ tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids,
 					errmsg("Failed to find common utility plugin.")));
 
 	expr_second_arg = InvalidOid;
-	if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0)
+	if (strncmp(proc_name,"hashbytes", 9) == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
 		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");		
-		}
-		else if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(input_typeids[1]))
-		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary");		
-		}
-		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[1]))
-		{
-			expr_second_arg = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varchar");		
+			expr_second_arg = input_typeids[1];		
 		}
 	}
 
@@ -1338,11 +1351,11 @@ tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids,
 	{
 		/* we should only consider candidates for special function from sys schema */
 		if (get_func_namespace(current_candidate->oid) != sys_oid)
-			continue;
+			return NULL;
 
 		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
 		second_arg = argtypes[1];
-		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && second_arg == expr_second_arg  && ncandidates < 1)
+		if(second_arg == expr_second_arg)
 		{
 			best_candidate = current_candidate;
 			ncandidates++;
@@ -1567,6 +1580,15 @@ tsql_func_select_candidate(List *names,
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
+
+	if (list_length(names) > 0)
+    {
+        char *func_name = strVal(llast(names));
+        if (strcmp(func_name, "hashbytes") == 0)
+        {
+            return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
+        }
+    }
 
 
 	if (is_special)

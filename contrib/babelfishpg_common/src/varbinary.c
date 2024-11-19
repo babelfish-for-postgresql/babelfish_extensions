@@ -63,6 +63,7 @@ PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(nvarcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
+PG_FUNCTION_INFO_V1(varbinarynvarchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
 PG_FUNCTION_INFO_V1(varcharrowversion);
@@ -676,17 +677,11 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
-	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	// Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	
 	if (tsql_nvarchar_oid == InvalidOid)
 		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
 		
-	/* Calling the nvarcharvarbinary function if the input type is nvarchar */
-	if(tsql_nvarchar_oid == input_type)	
-	{
-		return nvarcharvarbinary(fcinfo);
-	}
-
 	else
 	{
 		if (!isExplicit)
@@ -770,12 +765,11 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 		 * convert the string to UTF16 from UTF8 irrespective of input encoding via TsqlUTF8toUTF16StringInfo();
 		 * For this we need to prepare a StringInfoData()
 		 */
-		IS_UTF16 = true;
 		initStringInfo(&s);
 		TsqlUTF8toUTF16StringInfo(&s, data, len);
 		encoded_data = s.data;
 		encodedByteLen= s.len;
-
+		IS_UTF16 = true;
 
 	}
 	PG_CATCH();
@@ -872,7 +866,6 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
-	StringInfoData s;
 
 	/*
 	 * Check whether the typmod argument exists, so that we 
@@ -903,16 +896,6 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	 */
 	PG_TRY();
 	{
-		if(IS_UTF16 == true)
-		{
-			initStringInfo(&s);
-			TsqlUTF16toUTF8StringInfo(&s,data,len+1);
-			data = s.data;
-			len= s.len;
-			IS_UTF16 = false;
-		}
-
-
 		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 		if (maxlen < 0 || len <= maxlen)
 			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
@@ -940,6 +923,87 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VARCHAR_P(result);
 }
+
+Datum
+varbinarynvarchar(PG_FUNCTION_ARGS)
+{
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);		/* Source data is UTF16 encoded */
+	VarChar    *result;
+	char 	   *encoded_result;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = -1;
+	int32		maxlen = -1;
+	coll_info	collInfo;
+	int			encodedByteLen;
+	MemoryContext ccxt = CurrentMemoryContext;
+	StringInfoData s;
+
+	/*
+	 * Check whether the typmod argument exists, so that we 
+	 * will not be reading any garbage values for typmod 
+	 * which might cause Invalid read such as BABEL-4475
+	 */
+	if (PG_NARGS() > 1)
+	{
+		typmod = PG_GETARG_INT32(1);
+		maxlen = typmod - VARHDRSZ;
+	}
+
+	/*
+	 * Allow trailing null bytes 
+	 * Its safe since multi byte UTF-8 does not contain 0x00 
+	 * This is needed since we implicity add trailing zeroes to 
+	 * binary type if input is less than binary(n)
+	 * ex: CAST(CAST('a' AS BINARY(10)) AS VARCHAR) should work
+	 * and not fail because of null byte
+	 */
+	while(len>0 && data[len-1] == '\0')
+		len -= 1;
+	
+	/*
+	 * Cast the entire input binary data if maxlen is 
+	 * invalid or supplied data fits it
+	 * Else truncate it
+	 */
+	// NVARCHAR(UTF16)-> VARBINARY -> VARCHAR
+	PG_TRY();
+	{
+
+		initStringInfo(&s);
+		TsqlUTF16toUTF8StringInfo(&s,data,len+1);
+		data = s.data;
+		len= s.len;
+		IS_UTF16 = false;
+		
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
+		if (maxlen < 0 || len <= maxlen)
+			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+		else
+			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varbinary to varchar, %s",
+				errorData->message)));
+	}
+	PG_END_TRY();
+
+	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
+
+	PG_RETURN_VARCHAR_P(result);
+}
+
 
 Datum
 varcharbinary(PG_FUNCTION_ARGS)
