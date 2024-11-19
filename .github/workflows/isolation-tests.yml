@@ -53,12 +53,12 @@ jobs:
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime==4.9.3
+          pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime==4.13.2
       
       - name: Generate .spec file parser
         run: |
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python/isolationtest/
-          java -Xmx500M -cp /usr/local/lib/antlr-4.9.3-complete.jar org.antlr.v4.Tool -Dlanguage=Python3 ./parser/*.g4 -visitor -no-listener
+          java -Xmx500M -cp /usr/local/lib/antlr-4.13.2-complete.jar org.antlr.v4.Tool -Dlanguage=Python3 ./parser/*.g4 -visitor -no-listener
 
       - name: Run Isolation tests
         id: run-isolation-tests
