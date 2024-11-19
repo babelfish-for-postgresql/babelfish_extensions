@@ -819,6 +819,18 @@ GO
 drop table local_var_tst
 GO
 
+create table ident_tst(id_num INT IDENTITY(1, 1), b varchar(10))
+GO
+
+insert into ident_tst values ('test')
+GO
+
+declare @a int = 1
+select @a = @@IDENTITY
+select @a
+select 1 where @a = @@IDENTITY
+GO
+
 -- additional testing for update with dynamic variables
 GO
 
@@ -830,19 +842,50 @@ insert into local_var_tst values (2)
 GO
 
 
-set QUOTED_IDENTIFIER off
+set QUOTED_IDENTIFIER on
 GO
 
--- update of local vars should be done before update row
 declare @i varchar(100)
 update local_var_tst set id = id + 10, @i = cast("xmax" as varchar(100))
 select @i
 GO
 
-set QUOTED_IDENTIFIER on
+set QUOTED_IDENTIFIER off
 GO
 
 select * from local_var_tst order by id;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- long identifier with update
+declare @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx int
+update local_var_tst set id =10, @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx = id
+select @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx
+GO
+
+select * from local_var_tst
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- @@ variables
+declare @@incnjkdnc int
+update local_var_tst set id =10, @@incnjkdnc = id
+select @@incnjkdnc
+GO
+
+select * from local_var_tst
 GO
 
 TRUNCATE table local_var_tst
@@ -886,6 +929,29 @@ declare @i int, @j int;
 update local_var_tst set id = 10, @j = id, @i = case when @j =0 then 1 else 0 end;
 select @i, @j
 go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int, @j int = 0
+update local_var_tst set id =10, @i = charindex('a','a',@j)
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+declare @i int, @j int = 0
+update local_var_tst set id =10, @i = charindex('a','a',@j);
+select @i
+GO
+
+select * from local_var_tst;
+GO
 
 declare @i int, @j int;
 update local_var_tst set id = 10, @j = id, @i = @j * 2
@@ -1013,6 +1079,22 @@ select @i
 GO
 
 select * from local_var_tst order by id;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 1;
+update local_var_tst set id = @i * 100, @i = @@IDENTITY
+select @i
+select 1 where @i = @@IDENTITY
+GO
+
+select * from local_var_tst
 GO
 
 TRUNCATE table local_var_tst
@@ -1169,4 +1251,5 @@ GO
 DROP TABLE update_test_tbl
 GO
 
-
+drop table ident_tst
+GO
