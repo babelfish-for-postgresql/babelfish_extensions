@@ -677,13 +677,8 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
-	// Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	
-	if (tsql_nvarchar_oid == InvalidOid)
-		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
-		
-	else
-	{
+
 		if (!isExplicit)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -712,8 +707,6 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 					errorData->message)));
 		}
 		PG_END_TRY();
-	}
-
 
 	/* 
 	 * If typmod is -1 (or invalid), use the actual length
