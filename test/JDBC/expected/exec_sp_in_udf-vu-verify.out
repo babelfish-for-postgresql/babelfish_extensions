@@ -16,6 +16,67 @@ int
 
 ~~ERROR (Message: Only functions can be executed within a function)~~
 
+declare @v int = dbo.f1_exec_sp_in_udf()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+declare @v int 
+select @v = dbo.f1_exec_sp_in_udf()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+declare @v int
+set @v = dbo.f1_exec_sp_in_udf()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+select * from t1_exec_sp_in_udf where a = dbo.f1_exec_sp_in_udf()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+insert t1_exec_sp_in_udf values(dbo.f1_exec_sp_in_udf())
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+delete t1_exec_sp_in_udf where a = dbo.f1_exec_sp_in_udf()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+declare @v int
+set @v = (select dbo.f1_exec_sp_in_udf())
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+select sqrt(dbo.f1_exec_sp_in_udf())
+go
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
+create table t2_exec_sp_in_udf(a int, b int default dbo.f1_exec_sp_in_udf())
+go
+insert t2_exec_sp_in_udf(a) values(1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
+
 
 create function f2_exec_sp_in_udf() 
 returns int as
@@ -96,6 +157,23 @@ int
 
 ~~ERROR (Message: Only functions can be executed within a function)~~
 
+
+-- do not allow calling with EXEC
+create function f6a_exec_sp_in_udf(@p int) 
+returns int as
+begin
+declare @v int
+exec @v = f1_exec_sp_in_udf
+return @v
+end
+go
+select dbo.f6a_exec_sp_in_udf(123)
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only functions can be executed within a function)~~
 
 
 -- multi-statement TVF cannot be called with EXEC
