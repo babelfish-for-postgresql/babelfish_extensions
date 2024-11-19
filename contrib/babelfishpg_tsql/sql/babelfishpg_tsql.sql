@@ -299,7 +299,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
--- BABEL-1784: support for sp_columns/sp_columns_100
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 WITH base_query AS (
   SELECT t1.oid AS table_oid,
@@ -327,12 +326,10 @@ WITH base_query AS (
 SELECT 
   CAST(b."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
   CAST(b."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-  -- CAST(b."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
   CAST(
     CASE WHEN b.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(b.reloptions[1], 23)
       ELSE b."TABLE_NAME" END
             AS sys.sysname) AS TABLE_NAME,
-  -- CAST(b."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
   CAST(
 			CASE WHEN b.attoptions[1] LIKE 'bbf_original_name%' THEN substring(b.attoptions[1], 19)
 			ELSE b."COLUMN_NAME" END
@@ -345,14 +342,12 @@ SELECT
     WHEN tsql_type_name = 'timestamp' THEN 8
     ELSE CAST(COALESCE(b."NUMERIC_PRECISION", b."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(b."DATA_TYPE", b.typtypmod)) AS INT)
   END AS PRECISION,
---   CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, COALESCE(b.atttypmod, b.typtypmod)) AS int) AS LENGTH,
   CASE WHEN b.atttypmod != -1
     THEN
     CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, b.atttypmod) AS int)
     ELSE
     CAST(sys.tsql_type_length_for_sp_columns_helper(b."DATA_TYPE", b.attlen, b.typtypmod) AS int)
   END AS LENGTH,
---   CAST(COALESCE(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", COALESCE(b.atttypmod, b.typtypmod), true)) AS smallint) AS SCALE,
   CASE WHEN b.atttypmod != -1
     THEN
     CAST(coalesce(b."NUMERIC_SCALE", sys.tsql_type_scale_helper(b."DATA_TYPE", b.atttypmod, true)) AS smallint)
