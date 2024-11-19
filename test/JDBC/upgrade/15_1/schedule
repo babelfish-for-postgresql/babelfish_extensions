@@ -58,7 +58,6 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010-before-15_6
 BABEL-3116
-BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -137,7 +136,6 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
-BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -434,6 +432,7 @@ binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
 cast-varchar-to-time
 db_accessadmin
+db_ddladmin
 db_securityadmin
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9

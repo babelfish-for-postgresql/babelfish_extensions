@@ -22,6 +22,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 sp_rename_database1_db_accessadmin#!##!#db_accessadmin#!#sp_rename_database1
 sp_rename_database1_db_datareader#!##!#db_datareader#!#sp_rename_database1
 sp_rename_database1_db_datawriter#!##!#db_datawriter#!#sp_rename_database1
+sp_rename_database1_db_ddladmin#!##!#db_ddladmin#!#sp_rename_database1
 sp_rename_database1_db_owner#!##!#db_owner#!#sp_rename_database1
 sp_rename_database1_db_securityadmin#!##!#db_securityadmin#!#sp_rename_database1
 sp_rename_database1_dbo#!##!#dbo#!#sp_rename_database1
@@ -87,6 +88,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 sp_rename_database2_db_accessadmin#!##!#db_accessadmin#!#sp_rename_database2
 sp_rename_database2_db_datareader#!##!#db_datareader#!#sp_rename_database2
 sp_rename_database2_db_datawriter#!##!#db_datawriter#!#sp_rename_database2
+sp_rename_database2_db_ddladmin#!##!#db_ddladmin#!#sp_rename_database2
 sp_rename_database2_db_owner#!##!#db_owner#!#sp_rename_database2
 sp_rename_database2_db_securityadmin#!##!#db_securityadmin#!#sp_rename_database2
 sp_rename_database2_dbo#!##!#dbo#!#sp_rename_database2
@@ -203,6 +205,7 @@ sp_rename_thisnewdatabasenameisfacf8af797f428fdc401ffddc672894d#!#dbo
 
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar
+sp_rename_thisnewdatabasenameis13e6a4262544f66eae3d52bc3368a097#!##!#db_ddladmin#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameis1e39ca7c78a1fba2342467331fb5bd56#!##!#db_owner#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameis21f79a8b66248a73068dca6edd5b0ca3#!##!#guest#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
 sp_rename_thisnewdatabasenameis95c235131f6db63ef16f222aa48d0554#!##!#db_datareader#!#sp_rename_thisnewdatabasenameisb8bd7c94f797959aa629fc2f9e821637
