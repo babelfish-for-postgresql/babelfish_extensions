@@ -17,6 +17,8 @@ GO
 -- psql
 CREATE SCHEMA master_xyz;
 GO
+ALTER SCHEMA master_xyz OWNER TO master_dbo;
+GO
 
 -- tsql
 DROP SCHEMA xyz;

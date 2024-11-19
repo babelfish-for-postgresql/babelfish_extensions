@@ -605,6 +605,7 @@ GO
 ~~START~~
 nvarchar#!#varchar
 db_accessadmin#!#=C
+db_ddladmin#!#=C
 db_securityadmin#!#=C
 dbo#!#=CTc
 ~~END~~
