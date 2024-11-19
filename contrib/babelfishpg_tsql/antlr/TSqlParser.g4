@@ -4831,6 +4831,7 @@ keyword
     | PREDICATE
     | PREDICT
     | PRIMARY_ROLE
+    | PRIMARY_SQBRACKET
     | PRIOR
     | PRIORITY
     | PRIORITY_LEVEL
