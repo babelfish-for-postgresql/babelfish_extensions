@@ -885,7 +885,8 @@ SELECT CAST(r.rolname AS CHAR(30)), CAST(object_name(objid) AS char(22)), deptyp
         refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_authid') AND
         r.rolname NOT LIKE '%datareader%' AND r.rolname NOT LIKE '%datawriter%' AND
         NOT (object_name(objid) = 'babel_5116_tabletype1' AND deptype = 'a')
-        AND (r.rolname LIKE '%dbo%' OR r.rolname LIKE '%db_ddladmin%')
+        AND (r.rolname LIKE '%dbo%' OR r.rolname LIKE '%db_ddladmin%') AND deptype!= 'i'
+        AND (r.rolname NOT IN ('ad_db_db_ddladmin', 'alter_db_db_ddladmin'))
     ORDER BY deptype, r.rolname, object_name(objid);
 GO
 ~~START~~

@@ -1,5 +1,5 @@
 name: pg_dump/restore Test Framework
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   generate-dump-restore-tests:

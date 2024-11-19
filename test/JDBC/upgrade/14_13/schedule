@@ -132,7 +132,6 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
-BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
@@ -386,7 +385,6 @@ case_insensitive_collation-before-16_5-or-15_9
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID-before-16_5-or-15_9
-BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep

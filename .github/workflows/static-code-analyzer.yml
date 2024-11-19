@@ -1,5 +1,5 @@
 name: Static Code Analyzer
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   run-static-code-analyzer:

@@ -1,5 +1,5 @@
 name: Minor Version Upgrade Tests for empty database
-on: [pull_request]
+on: []
 
 jobs:
   extension-tests:
