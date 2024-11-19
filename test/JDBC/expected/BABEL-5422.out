@@ -11,6 +11,12 @@ CREATE TABLE babel_5422_table2 (
 );
 GO
 
+CREATE TABLE #babel_5422_table3 (
+    [primary_column] INT,
+    Age INT
+);
+GO
+
 -- Insert sample data
 INSERT INTO babel_5422_table ([primary], Name)
 VALUES (1, 'John'), (2, 'Jane'), (3, 'Bob');
@@ -24,6 +30,12 @@ GO
 ~~ROW COUNT: 2~~
 
 
+INSERT INTO #babel_5422_table3 ([primary_column], Age)
+VALUES (1, 30), (3, 40);
+GO
+~~ROW COUNT: 2~~
+
+
 -- Aliasing
 SELECT [primary] AS PrimaryKey, Name
 FROM babel_5422_table;
@@ -33,6 +45,16 @@ int#!#varchar
 1#!#John
 2#!#Jane
 3#!#Bob
+~~END~~
+
+
+SELECT [primary_column] AS [Primary], Age
+FROM #babel_5422_table3;
+GO
+~~START~~
+int#!#int
+1#!#30
+3#!#40
 ~~END~~
 
 
@@ -171,6 +193,9 @@ DROP PROCEDURE babel_5422_proc;
 GO
 
 DROP VIEW babel_5422_view;
+GO
+
+DROP TABLE #babel_5422_table3
 GO
 
 DROP TABLE babel_5422_table2;
