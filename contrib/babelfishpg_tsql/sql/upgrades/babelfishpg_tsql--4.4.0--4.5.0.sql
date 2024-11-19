@@ -54,6 +54,11 @@ BEGIN
 END;
 $$;
 
+/* Helper function to update local variables dynamically during execution */
+CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

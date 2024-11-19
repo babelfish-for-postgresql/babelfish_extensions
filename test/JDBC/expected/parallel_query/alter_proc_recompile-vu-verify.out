@@ -179,7 +179,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.199 ms
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -197,7 +197,7 @@ Query Text: EXEC    p_alter_recomp_02 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 execute p_alter_recomp_11 0  -- altered with recompile; for MVU test
@@ -215,7 +215,7 @@ Query Text: EXEC    p_alter_recomp_11 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.081 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 execute p_alter_recomp_12 0  -- altered without recompile; for MVU test
@@ -233,7 +233,7 @@ Query Text: EXEC    p_alter_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.075 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -259,7 +259,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.071 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- created with recompile
@@ -277,7 +277,7 @@ Query Text: EXEC    p_alter_recomp_02 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.074 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -385,7 +385,7 @@ Query Text: EXEC    p_alter_recomp_01 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 execute p_alter_recomp_02 0  -- altered without recompile
@@ -403,7 +403,7 @@ Query Text: EXEC    p_alter_recomp_02 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 set babelfish_showplan_all off

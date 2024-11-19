@@ -932,6 +932,11 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+/* Helper function to update local variables dynamically during execution */
+CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
