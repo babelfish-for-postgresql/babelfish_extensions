@@ -1,0 +1,11 @@
+DROP TABLE test_role_member_t1;
+GO
+
+DROP USER test_role_member_u1;
+GO
+
+DROP ROLE test_role_member_r1;
+GO
+
+DROP LOGIN test_role_member_l1;
+GO

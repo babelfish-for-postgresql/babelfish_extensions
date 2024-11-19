@@ -1,0 +1,24 @@
+-- tsql
+-- reset the login password
+ALTER LOGIN test_role_member_l1 WITH PASSWORD = '12345678'
+GO
+
+-- tsql		user=test_role_member_l1		password=12345678
+SELECT * FROM test_role_member_t1;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- tsql
+ALTER ROLE test_role_member_r1 DROP MEMBER test_role_member_u1;
+GO
+
+-- tsql		user=test_role_member_l1		password=12345678
+SELECT * FROM test_role_member_t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table test_role_member_t1)~~
+

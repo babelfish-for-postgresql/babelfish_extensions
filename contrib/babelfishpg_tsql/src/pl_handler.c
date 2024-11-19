@@ -3062,6 +3062,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
+				/*
+				 * Set current user to bbf_role_admin while restoring babelfish roles/grants
+				 * so that it becomes their admin/GRANTOR. We will do this only if the current
+				 * user is superuser since only superuser is allowed to perform dump/restore.
+				 * Note that no additional permission checks are needed as superusers can
+				 * anyway perform this action.
+				 */
+				else if (!IsBinaryUpgrade && babelfish_dump_restore && superuser())
+				{
+					Oid 		save_userid;
+					int 		save_sec_context;
+
+					/* Save the previous user to be restored after creating the user. */
+					GetUserIdAndSecContext(&save_userid, &save_sec_context);
+					PG_TRY();
+					{
+						SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+												params, queryEnv, dest,
+												qc);
+					}
+					PG_FINALLY();
+					{
+						SetUserIdAndSecContext(save_userid, save_sec_context);
+					}
+					PG_END_TRY();
+					return;
+				}
 				break;
 			}
 		case T_AlterRoleStmt:
@@ -3832,6 +3861,53 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_END_TRY();
 					return;
 				}
+			}
+			/*
+			 * Set current user to bbf_role_admin while restoring babelfish roles/grants
+			 * so that it becomes their admin/GRANTOR. We will do this only if the current
+			 * user is superuser since only superuser is allowed to perform dump/restore.
+			 * Note that no additional permission checks are needed as superusers can
+			 * anyway perform this action.
+			 */
+			else if (!IsBinaryUpgrade && babelfish_dump_restore && superuser())
+			{
+				Oid 			save_userid;
+				int 			save_sec_context;
+				ListCell		*item;
+				bool			isadmin = false;
+				GrantRoleStmt	*stmt = (GrantRoleStmt *) parsetree;
+
+				foreach(item, stmt->opt)
+				{
+					DefElem    *opt = (DefElem *) lfirst(item);
+					char	   *optval = defGetString(opt);
+
+					if (strcmp(opt->defname, "admin") == 0)
+					{
+						parse_bool(optval, &isadmin);
+						break;
+					}
+				}
+				/* Grantor of admin grants is always BOOTSTRAP_SUPERUSER so no need to update them */
+				if (isadmin)
+					break;
+
+				/* Save the previous user to be restored after executing the grant. */
+				GetUserIdAndSecContext(&save_userid, &save_sec_context);
+				PG_TRY();
+				{
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest,
+											qc);
+				}
+				PG_FINALLY();
+				{
+					SetUserIdAndSecContext(save_userid, save_sec_context);
+				}
+				PG_END_TRY();
+				return;
 			}
 			break;
 		case T_RenameStmt:
