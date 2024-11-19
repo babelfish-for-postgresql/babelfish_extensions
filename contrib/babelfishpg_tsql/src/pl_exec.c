@@ -4368,6 +4368,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
 	es_cs_entry->next = exec_state_call_stack;
 	exec_state_call_stack = es_cs_entry;
+	saved_expr_kind = -1;
 }
 
 /* ----------
@@ -7865,7 +7866,7 @@ pltsql_param_fetch(ParamListInfo params,
 	}
 	else
 	{
-		/* We can always mark params as "const" for executor's purposes */
+		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
 		prm->pflags = PARAM_FLAG_CONST;
 	}
 
@@ -10118,7 +10119,6 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int			rc;
 	PLtsql_tbl *tbl;
 	bool		old_pltsql_explain_only = pltsql_explain_only;
-	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 	bool old_abort_curr_txn = AbortCurTransaction;
 
@@ -10140,7 +10140,13 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 			if (!tbl->need_drop)
 				continue;
 
-			query = psprintf(query_fmt, tbl->tblname);
+			/*
+			 * Use delimiters for names like @@var or @var#
+			 */
+			if (is_tsql_atatuservar(tbl->tblname))
+				query = psprintf("DROP TABLE [%s]", tbl->tblname);
+			else
+				query = psprintf("DROP TABLE %s", tbl->tblname);	
 
 			pltsql_explain_only = false;	/* Drop temporary table even in
 											 * EXPLAIN ONLY mode */
@@ -10434,6 +10440,12 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 PG_FUNCTION_INFO_V1(pltsql_assign_var);
 
+/*
+ * pltsql_assign_var - Helper function to update local variables dynamically during execution.
+ * Any statement which updates local variables as part of TargetList will be re-written using
+ * this function. for example,
+ * @var = expr will be re-written to @var=sys.pltsql_assign_var(dno, cast((expr) as type)).
+ */
 Datum
 pltsql_assign_var(PG_FUNCTION_ARGS)
 {
