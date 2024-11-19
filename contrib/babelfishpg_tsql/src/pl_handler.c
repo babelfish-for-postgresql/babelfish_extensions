@@ -3836,32 +3836,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else if (is_alter_role_stmt(grant_role))
 				{
 					check_alter_role_stmt(grant_role);
-					GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
-					if (!grant_role->is_grant && !grant_role->grantor)
-					{
-						/*
-						 * First execute REVOKE statement using bootstrap user.
-						 * This is needed since grantor of GRANTs from previous versions might
-						 * not be bbf_role_admin.
-						 */
-						SetUserIdAndSecContext(BOOTSTRAP_SUPERUSERID, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-						PG_TRY();
-						{
-							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-													queryEnv, dest, qc);
-						}
-						PG_FINALLY();
-						{
-							/* Clean up. Restore previous state. */
-							SetUserIdAndSecContext(save_userid, save_sec_context);
-						}
-						PG_END_TRY();
-					}
 					/*
 					 * We have performed all the permissions checks.
 					 * Set current user to bbf_role_admin for grant permissions.
 					 */
+					GetUserIdAndSecContext(&save_userid, &save_sec_context);
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 					PG_TRY();
 					{
@@ -3908,10 +3888,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						break;
 					}
 				}
+				/* Grantor of admin grants is always BOOTSTRAP_SUPERUSER so no need to update them */
 				if (isadmin)
 					break;
 
-				/* Save the previous user to be restored after creating the login. */
+				/* Save the previous user to be restored after executing the grant. */
 				GetUserIdAndSecContext(&save_userid, &save_sec_context);
 				PG_TRY();
 				{
