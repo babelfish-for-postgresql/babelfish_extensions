@@ -45,6 +45,7 @@ extern "C" {
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
+#include "utils/builtins.h"
 
 #include "guc.h"
 
@@ -179,7 +180,7 @@ TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Sele
 static bool is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
-static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
+static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator, bool process_local_id_assignment);
 static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
 template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema, GetCtxFunc<T> getObject);
@@ -1363,7 +1364,7 @@ public:
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
 		if (mutator)
-			process_query_specification(ctx, mutator);
+			process_query_specification(ctx, mutator, false);
 	}
 
 	void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override 
@@ -2856,7 +2857,7 @@ public:
 		}
 		has_identity_function = false;
 		if (statementMutator)
-			process_query_specification(ctx, statementMutator.get());
+			process_query_specification(ctx, statementMutator.get(), true);
 	}
 
 	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
@@ -3496,11 +3497,89 @@ class MyParserErrorListener: public antlr4::BaseErrorListener
 };
 
 /*
- * Necessary checks and mutations for query_specification
+ * handle_local_ids_for_expression - removes all the local_ids from local_id_positions of given expression.
+ * This is useful in case of local_id assignement as part of select elements for which we don't want to quote local_id.
+ */
+static void
+handle_local_ids_for_expression(TSqlParser::ExpressionContext *ectx)
+{
+	std::vector<size_t> keysToRemove;
+	for(auto &it : local_id_positions)
+	{
+		if (it.first >= ectx->start->getStartIndex() && it.first <= ectx->stop->getStopIndex())
+		{
+			keysToRemove.push_back(it.first);
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+}
+
+/*
+ * add_rewritten_query_fragment_for_select_expression - should be called from the context of
+ * variable assignment expression. It will add all the already re-written query fragments to
+ * expression().
+ */
+static void
+add_rewritten_query_fragment_for_select_expression(PLtsql_expr_query_mutator *mutator)
+{
+	std::vector<size_t> keysToRemove;
+	Assert(mutator);
+	TSqlParser::ExpressionContext *ectx = (TSqlParser::ExpressionContext *) mutator->ctx;
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if (entry.first >= ectx->start->getStartIndex() && entry.first <= ectx->stop->getStopIndex())
+		{
+			mutator->add(entry.first, entry.second.first, entry.second.second);
+			keysToRemove.push_back(entry.first);
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+}
+
+/*
+ * rewrite_assignment_expression - This will re-write assignment expression by adding already re-written fragments to it.
+ * It also add appropriate cast around expression needed by sys.pltsql_assign_var to assign value to var.
+ */
+static char *
+rewrite_assignment_expression(PLtsql_var *var, TSqlParser::ExpressionContext *ectx)
+{
+	char *new_expr = NULL;
+	char *type_str = tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN);
+	PLtsql_expr *elem_expr = makeTsqlExpr(ectx, false);
+	PLtsql_expr_query_mutator expr_mutator(elem_expr, ectx);
+	add_rewritten_query_fragment_for_select_expression(&expr_mutator);
+	expr_mutator.run();
+
+	Assert(type_str);
+	/*
+	 * Extra handling for type - If var->datatype->atttypmod = -1 and if "max" typmod is allowed for type (e.g., varchar, varbinary etc)
+	 * then append explicit (max). Check implementation of parse_datatype and tsql_format_type_extended for more details.
+	 */
+	if (var->datatype->atttypmod == -1 && is_tsql_datatype_with_max_scale_expr_allowed(var->datatype->typoid))
+	{
+		char *tmp = psprintf("%s(max)", type_str);
+		pfree(type_str);
+		type_str = tmp;
+	}
+
+	new_expr = psprintf("cast((%s) as %s)",
+						elem_expr->query,
+						type_str);
+
+	return new_expr;
+}
+
+/*
+ * Necessary checks and mutations for query_specification.
+ * @process_local_id_assignment indicates whether local_id assignement should be re-written or not. Passed false when we are handling
+ * statement like create or alter function.
  */
 static void process_query_specification(
 	TSqlParser::Query_specificationContext *qctx,
-	PLtsql_expr_query_mutator *mutator)
+	PLtsql_expr_query_mutator *mutator,
+	bool process_local_id_assignment)
 {
 	Assert(qctx->select_list());
 	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
@@ -3589,6 +3668,76 @@ static void process_query_specification(
 				else
 					mutator->add(column_alias_as->start->getStartIndex(), "", " AS ");
 			}
+		}
+		else if(process_local_id_assignment && elem->LOCAL_ID() && elem->EQUAL())
+		{
+			const char *var_str = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(),  ::getFullText(elem->LOCAL_ID()).length(), true);
+			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str, nullptr, nullptr, nullptr);
+			char *repl_text = NULL;
+
+			Assert(elem->expression());
+			if (!nse)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", ::getFullText(elem->LOCAL_ID()).c_str()), getLineAndPos(elem));
+
+			/* Rewrite @var = expr to @var=sys.pltsql_assign_var(dno, cast((expr) as type)) */
+			repl_text = psprintf("sys.pltsql_assign_var(%d, %s)",
+									nse->itemno,
+									rewrite_assignment_expression((PLtsql_var *) pltsql_Datums[nse->itemno],
+																	elem->expression()));
+
+			handle_local_ids_for_expression(elem->expression());
+			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
+		}
+		else if(process_local_id_assignment && elem->LOCAL_ID() && elem->assignment_operator())
+		{
+			const char *var_str = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(), ::getFullText(elem->LOCAL_ID()).length(), true);
+			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, var_str, nullptr, nullptr, nullptr);
+			char *repl_text = NULL;
+			tree::TerminalNode *anode = nullptr;
+
+			if (elem->assignment_operator())
+			{
+				if (elem->assignment_operator()->PLUS_ASSIGN())
+					anode = elem->assignment_operator()->PLUS_ASSIGN();
+				else if (elem->assignment_operator()->MINUS_ASSIGN())
+					anode = elem->assignment_operator()->MINUS_ASSIGN();
+				else if (elem->assignment_operator()->MULT_ASSIGN())
+					anode = elem->assignment_operator()->MULT_ASSIGN();
+				else if (elem->assignment_operator()->DIV_ASSIGN())
+					anode = elem->assignment_operator()->DIV_ASSIGN();
+				else if (elem->assignment_operator()->MOD_ASSIGN())
+					anode = elem->assignment_operator()->MOD_ASSIGN();
+				else if (elem->assignment_operator()->AND_ASSIGN())
+					anode = elem->assignment_operator()->AND_ASSIGN();
+				else if (elem->assignment_operator()->XOR_ASSIGN())
+					anode = elem->assignment_operator()->XOR_ASSIGN();
+				else if (elem->assignment_operator()->OR_ASSIGN())
+					anode = elem->assignment_operator()->OR_ASSIGN();
+				else
+					Assert(0);
+			}
+
+			Assert(elem->expression());
+			if (!nse)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+												format_errmsg("\"%s\" is not a known variable",
+												::getFullText(elem->LOCAL_ID()).c_str()), getLineAndPos(elem));
+
+			/* 
+			 * Rewrite @var += expr to @var += sys.pltsql_assign_var(dno, "@var" + cast((expr) as type)).
+			 * Note that we only update expr with sys.pltsql_assign_var(dno, "@var" + (expr) here and
+			 * additional handling of assignment opetator will be done in process_execsql_destination_select
+			 * when we create target row.
+			 */
+			repl_text = psprintf("sys.pltsql_assign_var(%d, %s %s %s)",
+									nse->itemno,
+									delimitIfAtAtUserVarName(::getFullText(elem->LOCAL_ID())).c_str(),
+									rewrite_assign_operator(anode),
+									rewrite_assignment_expression((PLtsql_var *) pltsql_Datums[nse->itemno],
+																	elem->expression()));
+
+			handle_local_ids_for_expression(elem->expression());
+			mutator->add(elem->expression()->start->getStartIndex(), ::getFullText(elem->expression()), std::string(repl_text));
 		}
 	}
 }
@@ -5608,7 +5757,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 
 		char *target = pstrdup(targetText.c_str());
 		pltsql_parse_word(target, target, &wdatum, &word);
-		
 		PLtsql_stmt_assign *result =  (PLtsql_stmt_assign *) makeInitializer(dno, getLineNo(ctx), expr);	
 		
 		int posStart = expr->getStart()->getStartIndex();
@@ -7053,8 +7201,12 @@ void process_execsql_destination_select(TSqlParser::Select_statement_standaloneC
 
 			if (elem->EQUAL())
 			{
-				// in PG main parser, '@a=1' will be treated as a boolean expression to compare @a and 1. This is different T-SQL expected.
-				// We'll remove '@a=' from the query string so that main parser will return the expected result.
+				/*
+				 * In PG main parser, @a=expr will be treated as a boolean expression to compare @a and expr. This is different T-SQL expected.
+				 * We have re-written it as @a = sys.pltsql_assign_var(dno, expr) (check process_query_specification) so that appropriate result 
+				 * of expr is assigned to destination var dynamically and now we just need to remove '@a=' from the query string so that main parser 
+				 * will return the expected result.
+				 */
 				removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), ctx);
 				removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(), ctx);
 			}
@@ -7062,28 +7214,13 @@ void process_execsql_destination_select(TSqlParser::Select_statement_standaloneC
 			{
 				Assert(elem->assignment_operator());
 
-				/* We'll rewrite the query similar with EQUAL() but we'll just remove '=' character from token */
-				tree::TerminalNode *anode = nullptr;
-				if (elem->assignment_operator()->PLUS_ASSIGN())
-					anode = elem->assignment_operator()->PLUS_ASSIGN();
-				else if (elem->assignment_operator()->MINUS_ASSIGN())
-					anode = elem->assignment_operator()->MINUS_ASSIGN();
-				else if (elem->assignment_operator()->MULT_ASSIGN())
-					anode = elem->assignment_operator()->MULT_ASSIGN();
-				else if (elem->assignment_operator()->DIV_ASSIGN())
-					anode = elem->assignment_operator()->DIV_ASSIGN();
-				else if (elem->assignment_operator()->MOD_ASSIGN())
-					anode = elem->assignment_operator()->MOD_ASSIGN();
-				else if (elem->assignment_operator()->AND_ASSIGN())
-					anode = elem->assignment_operator()->AND_ASSIGN();
-				else if (elem->assignment_operator()->XOR_ASSIGN())
-					anode = elem->assignment_operator()->XOR_ASSIGN();
-				else if (elem->assignment_operator()->OR_ASSIGN())
-					anode = elem->assignment_operator()->OR_ASSIGN();
-				else
-					Assert(0);
-
-				replaceTokenStringFromQuery(stmt->sqlstmt, anode, rewrite_assign_operator(anode), ctx);
+				/* 
+				 * select with assignment_operator must be re-written already, check process_query_specification.
+				 * For example,  @var += expr is already re-written to @var += sys.pltsql_assign_var(dno, "@var" + (expr))
+				 * Now, We'll rewrite the query similar with EQUAL() but we need to remove '@var +=' from query string.
+				 */
+				removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), ctx);
+				removeCtxStringFromQuery(stmt->sqlstmt, elem->assignment_operator(), ctx);
 			}
 		}
 		else
@@ -7142,6 +7279,10 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 			auto elem = elems[i];
 			if (elem->LOCAL_ID())
 			{
+				const char *nameStr = downcase_truncate_identifier(::getFullText(elem->LOCAL_ID()).c_str(), ::getFullText(elem->LOCAL_ID()).length(), true);
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, nameStr, nullptr, nullptr, nullptr);
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
+
 				add_assignment_target_field(target, elem->LOCAL_ID(), returning_col_cnt);
 
 				if (returning_col_cnt > 0)
@@ -7150,16 +7291,22 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 
 				if (elem->full_column_name())
 				{
-					/* "SET @a=col=expr" => "SET col=expr ... RETURNING col" */
-					appendStringInfo(&ds, "%s", ::getFullText(elem->full_column_name()).c_str());
+					/* "SET @a=col=expr" => "SET col=expr ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+										nse->itemno,
+										::getFullText(elem->full_column_name()).c_str(),
+										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
 				}
 				else
 				{
-					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING expr" */
-					appendStringInfo(&ds, "%s", ::getFullText(elem->expression()).c_str());
+					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+										nse->itemno,
+										::getFullText(elem->expression()).c_str(),
+										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
