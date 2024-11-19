@@ -1,16 +1,30 @@
--- parallel_query_expected
 -- tsql
 -- 1. Test resets GUC variables
 SELECT @@lock_timeout;
 GO
+~~START~~
+int
+-1
+~~END~~
+
 SET lock_timeout 0;
 GO
 SELECT @@lock_timeout;
 GO
+~~START~~
+int
+0
+~~END~~
+
 EXEC sys.sp_reset_connection
 GO
 SELECT @@lock_timeout;
 GO
+~~START~~
+int
+-1
+~~END~~
+
 
 -- 2. Test open transactions are aborted on reset
 DROP TABLE IF EXISTS sp_reset_connection_test_table;
@@ -18,39 +32,77 @@ CREATE TABLE sp_reset_connection_test_table(id int);
 BEGIN TRANSACTION
 INSERT INTO sp_reset_connection_test_table VALUES(1)
 GO
+~~ROW COUNT: 1~~
+
 EXEC sys.sp_reset_connection
 GO
 COMMIT TRANSACTION
 GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
 SELECT * FROM sp_reset_connection_test_table
 GO
+~~START~~
+int
+~~END~~
+
 
 -- 3. Test temp tables are deleted on reset
 CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
 INSERT INTO #babel_temp_table (Data) VALUES (100), (200), (300)
 GO
+~~ROW COUNT: 3~~
+
 SELECT * from #babel_temp_table
 GO
+~~START~~
+int#!#int
+1#!#100
+2#!#200
+3#!#300
+~~END~~
+
 EXEC sys.sp_reset_connection
 GO
 SELECT * from #babel_temp_table
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#babel_temp_table" does not exist)~~
+
 
 -- 4. Test isolation level is reset
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
 GO
 select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
 GO
+~~START~~
+smallint
+1
+~~END~~
+
 EXEC sys.sp_reset_connection
 GO
 select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
 GO
+~~START~~
+smallint
+2
+~~END~~
+
 
 -- 5. Test sp_reset_connection called with sp_prepexec
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
 GO
 select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
 GO
+~~START~~
+smallint
+1
+~~END~~
+
 DECLARE @handle int;
 EXEC SP_PREPARE @handle output, NULL, N'exec sys.sp_reset_connection'
 EXEC SP_EXECUTE @handle
@@ -58,6 +110,11 @@ GO
 GO
 select transaction_isolation_level from sys.dm_exec_sessions where session_id=@@SPID
 GO
+~~START~~
+smallint
+2
+~~END~~
+
 
 -- 6. Test Database Context being reset
 --      Tests include negative cases where db is dropped or renamed
@@ -69,33 +126,66 @@ GO
 -- tsql database=reset_con_db1
 select db_name();
 GO
+~~START~~
+nvarchar
+reset_con_db1
+~~END~~
+
 exec sys.sp_reset_connection
 GO
 use master
 GO
 select db_name();
 GO
+~~START~~
+nvarchar
+master
+~~END~~
+
 exec sys.sp_reset_connection
 GO
 select db_name();
 GO
+~~START~~
+nvarchar
+reset_con_db1
+~~END~~
+
 -- test db being dropped before resetting to same db
 use master;
 drop database reset_con_db1;
 GO
 exec sys.sp_reset_connection
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "reset_con_db1" does not exist)~~
+
 -- tsql database=reset_con_db2
 select db_name();
 GO
+~~START~~
+nvarchar
+reset_con_db2
+~~END~~
+
 use master
 GO
 select db_name();
 GO
+~~START~~
+nvarchar
+master
+~~END~~
+
 ALTER DATABASE reset_con_db2 MODIFY NAME=reset_con_db3
 GO
 exec sys.sp_reset_connection
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "reset_con_db2" does not exist)~~
+
 
 -- tsql
 DROP DATABASE reset_con_db3
@@ -109,17 +199,39 @@ INSERT INTO babel_cursor_t1 VALUES (3, 333.333, 'cccc', '3E984725-C51C-4BF4-9960
 INSERT INTO babel_cursor_t1 VALUES (4, 4444.4444, 'dddddd', '4E984725-C51C-4BF4-9960-E1C80E27ABA0', cast('4E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier));
 INSERT INTO babel_cursor_t1 VALUES (NULL, NULL, NULL, NULL, NULL);
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 -- check the status of the cursor
 DECLARE @Report CURSOR;
 EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
 go
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
 
 -- This will work since we declared 180150001 handle
 EXEC sp_cursorfetch 180150001, 2, 0, 1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cursor "180150001" does not exist)~~
+
 EXEC sp_cursor 180150001, 40, 1, 0;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cursor "180150001" does not exist)~~
+
 
 exec sys.sp_reset_connection
 GO
@@ -132,11 +244,38 @@ SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 SELECT sys.babelfish_pltsql_get_last_cursor_handle();
 SELECT @@cursor_rows;
 GO
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
+~~START~~
+int
+1073741824
+~~END~~
+
+~~START~~
+int
+180150000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 -- This will not work since we 80150001 handle should have been cleaned up
 EXEC sp_cursorfetch 180150001, 2, 0, 1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cursor "180150001" does not exist)~~
+
 EXEC sp_cursor 180150001, 40, 1, 0;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cursor "180150001" does not exist)~~
+
 
 -- Testing with only Cursor Open
 DECLARE @cursor_handle int;
@@ -147,6 +286,15 @@ GO
 DECLARE @Report CURSOR;
 EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
 go
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+NULL#!#NULL#!#2#!#1#!#1#!#1#!#1#!#1#!#-1#!#0#!#4#!#0#!#1#!#180150001
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
 
 exec sys.sp_reset_connection
 GO
@@ -159,6 +307,25 @@ SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 SELECT sys.babelfish_pltsql_get_last_cursor_handle();
 SELECT @@cursor_rows;
 GO
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
+~~START~~
+int
+1073741824
+~~END~~
+
+~~START~~
+int
+180150000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 
 -- Testing with only Cursor Prepare
 DECLARE @stmt_handle int;
@@ -169,6 +336,11 @@ GO
 SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 exec sys.sp_reset_connection
 GO
+~~START~~
+int
+1073741825
+~~END~~
+
 
 -- Check cursor being cleaned up
 DECLARE @Report CURSOR;
@@ -178,6 +350,25 @@ SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 SELECT sys.babelfish_pltsql_get_last_cursor_handle();
 SELECT @@cursor_rows;
 GO
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
+~~START~~
+int
+1073741824
+~~END~~
+
+~~START~~
+int
+180150000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 
 -- Testing with only Cursor Prepare and Fetch
 DECLARE @stmt_handle int;
@@ -188,15 +379,39 @@ EXEC sp_cursorexecute @stmt_handle, @cursor_handle OUTPUT, 2, 1;
 EXEC sp_cursorfetch @cursor_handle, 2, 0, 1;
 EXEC sp_cursorexecute @stmt_handle, @cursor_handle2 OUTPUT, 2, 1;
 GO
+~~START~~
+int#!#float#!#varchar#!#uniqueidentifier
+1#!#1.1#!#a#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
 
 -- check the status of the cursor
 DECLARE @Report CURSOR;
 EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
 go
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+NULL#!#NULL#!#2#!#1#!#1#!#1#!#1#!#1#!#-1#!#0#!#4#!#1#!#2#!#180150001
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+NULL#!#NULL#!#2#!#1#!#1#!#1#!#1#!#1#!#-1#!#0#!#4#!#0#!#1#!#180150002
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
 -- check the status of the cursor should give 1073741825
 SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 exec sys.sp_reset_connection
 GO
+~~START~~
+int
+1073741825
+~~END~~
+
 
 exec sys.sp_reset_connection
 GO
@@ -209,6 +424,25 @@ SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 SELECT sys.babelfish_pltsql_get_last_cursor_handle();
 SELECT @@cursor_rows;
 GO
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
+~~START~~
+int
+1073741824
+~~END~~
+
+~~START~~
+int
+180150000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 
 -- Testing with only Cursor Prepare and Fetch but this time calling cursor close
 DECLARE @stmt_handle int;
@@ -222,15 +456,29 @@ EXEC sp_cursorclose @cursor_handle;
 EXEC sp_cursorclose @cursor_handle2;
 EXEC sp_cursorunprepare @stmt_handle;
 GO
+~~START~~
+int#!#float#!#varchar#!#uniqueidentifier
+1#!#1.1#!#a#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
 
 -- check the status of the cursor
 DECLARE @Report CURSOR;
 EXEC sys.sp_cursor_list @cursor_return = @Report OUTPUT,@cursor_scope = 2; FETCH NEXT from @Report; WHILE (@@FETCH_STATUS <> -1) BEGIN FETCH NEXT from @Report; END;
 go
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
 -- check the status of the cursor should give 1073741825
 SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 exec sys.sp_reset_connection
 GO
+~~START~~
+int
+1073741825
+~~END~~
+
 
 exec sys.sp_reset_connection
 GO
@@ -243,12 +491,31 @@ SELECT sys.babelfish_pltsql_get_last_stmt_handle();
 SELECT sys.babelfish_pltsql_get_last_cursor_handle()
 SELECT @@cursor_rows;
 GO
+~~START~~
+varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#smallint#!#numeric#!#smallint#!#smallint#!#numeric#!#smallint#!#int
+~~END~~
+
+~~START~~
+int
+1073741824
+~~END~~
+
+~~START~~
+int
+180150000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
 
 drop table babel_cursor_t1;
 GO
 
--- GUCs testing
 
+-- GUCs testing
 -- 1. Ansi defaults
 SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
@@ -257,6 +524,36 @@ SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
 GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
 
 SET ANSI_DEFAULTS ON
 GO
@@ -268,6 +565,36 @@ SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
 GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
 
 -- reset
 exec sys.sp_reset_connection
@@ -280,6 +607,36 @@ SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
 SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
 GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
 
 -- babelfish_showplan_all
 SET babelfish_showplan_all ON
@@ -288,6 +645,20 @@ GO
 -- explain output
 SELECT 1;
 GO
+~~START~~
+text
+Query Text: SELECT 1
+Gather  (cost=0.00..0.01 rows=1 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
 
 -- reset
 exec sys.sp_reset_connection
@@ -296,20 +667,46 @@ GO
 -- 1 output
 SELECT 1;
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- set_config testing.
-
 -- search_path has source < PGC_S_SESSION in TSQL but it gets reset during ResetAll Gucs.
 -- Whereas role does not get reset since it uses GUC_NO_RESET_ALL, so we should not allow
 -- set_config for this option.
 SELECT CURRENT_SETTING('search_path', true)
 SELECT CURRENT_SETTING('role', true)
 GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+text
+none
+~~END~~
+
 
 SELECT set_config('search_path', 'sys', false);
 GO
+~~START~~
+text
+sys
+~~END~~
+
 SELECT set_config('role', 'jdbc_user', false);
 GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: set_config not allowed for option role)~~
+
 
 -- reset
 exec sp_reset_connection
@@ -318,3 +715,13 @@ GO
 SELECT CURRENT_SETTING('search_path', true)
 SELECT CURRENT_SETTING('role', true)
 GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+text
+none
+~~END~~
+

@@ -303,6 +303,7 @@ extern void TdsSendLoginAck(Port *port);
 extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
 extern void TdsSetDbContext(void);
+extern void TdsResetLoginFlags(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
 extern int	TdsSocketBackend(void);

@@ -513,3 +513,212 @@ int
 
 drop table babel_cursor_t1;
 GO
+
+
+-- GUCs testing
+-- 1. Ansi defaults
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+SET ANSI_DEFAULTS ON
+GO
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+-- reset
+exec sys.sp_reset_connection
+GO
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+-- babelfish_showplan_all
+SET babelfish_showplan_all ON
+GO
+
+-- explain output
+SELECT 1;
+GO
+~~START~~
+text
+Query Text: SELECT 1
+Result  (cost=0.00..0.01 rows=1 width=4)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
+
+-- reset
+exec sys.sp_reset_connection
+GO
+
+-- 1 output
+SELECT 1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+-- set_config testing.
+-- search_path has source < PGC_S_SESSION in TSQL but it gets reset during ResetAll Gucs.
+-- Whereas role does not get reset since it uses GUC_NO_RESET_ALL, so we should not allow
+-- set_config for this option.
+SELECT CURRENT_SETTING('search_path', true)
+SELECT CURRENT_SETTING('role', true)
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+text
+master_dbo
+~~END~~
+
+
+SELECT set_config('search_path', 'sys', false);
+GO
+~~START~~
+text
+sys
+~~END~~
+
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: set_config not allowed for option role)~~
+
+
+-- reset
+exec sp_reset_connection
+GO
+
+SELECT CURRENT_SETTING('search_path', true)
+SELECT CURRENT_SETTING('role', true)
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+~~START~~
+text
+master_dbo
+~~END~~
+

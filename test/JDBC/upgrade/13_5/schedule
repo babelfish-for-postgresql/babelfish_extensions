@@ -83,7 +83,6 @@ babel_datatype_sqlvariant
 BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
 babelfish_cast_floor
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10

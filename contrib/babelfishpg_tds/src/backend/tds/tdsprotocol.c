@@ -154,6 +154,8 @@ ResetTDSConnection(void)
 	TdsResetCache();
 	TdsResponseReset();
 	TdsResetBcpOffset();
+	TdsResetLoginFlags();
+
 	/* Retore previous isolation level when not called by sys.sp_reset_connection. */
 	if (!resetTdsConnectionFlag)
 	{

@@ -1143,6 +1143,17 @@ ProcessLoginFlags(LoginRequest loginInfo)
 }
 
 /*
+ * TdsResetLoginFlags - Resets the session properties which
+ * we provided during login time.
+ * Wrapper of ProcessLoginFlags, since we do not expose loginInfo.
+ */
+void
+TdsResetLoginFlags()
+{
+	ProcessLoginFlags(loginInfo);
+}
+
+/*
  * ProcessLoginInternal - internal workhorse for processing login
  * request.
  *
