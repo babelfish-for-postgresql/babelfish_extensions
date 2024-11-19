@@ -754,7 +754,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
@@ -1178,7 +1178,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -2194,7 +2194,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -2407,7 +2407,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
@@ -3509,7 +3509,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -4515,7 +4515,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -5570,7 +5570,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -9399,8 +9399,8 @@ AS
 $BODY$
 BEGIN
   CASE
-    WHEN LOWER(in_str) = 'true' OR in_str = '1' THEN RETURN 1;
-    WHEN LOWER(in_str) = 'false' OR in_str = '0' THEN RETURN 0;
+    WHEN pg_catalog.LOWER(in_str) = 'true' OR in_str = '1' THEN RETURN 1;
+    WHEN pg_catalog.LOWER(in_str) = 'false' OR in_str = '0' THEN RETURN 0;
     ELSE RETURN 0;
   END CASE;
 END;
@@ -10266,7 +10266,7 @@ DECLARE
     counter int;
     cur_pos int;
 BEGIN
-    lower_object_name = lower(PG_CATALOG.rtrim(name));
+    lower_object_name = pg_catalog.lower(PG_CATALOG.rtrim(name));
 
     counter = 1;
     cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);

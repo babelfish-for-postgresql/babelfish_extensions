@@ -648,7 +648,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
@@ -745,7 +745,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
@@ -926,7 +926,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
@@ -1181,7 +1181,7 @@ BEGIN
     	RETURN NULL;
     END IF;
 
-    lower_tzn := lower(tzzone);
+    lower_tzn := pg_catalog.lower(tzzone);
     IF lower_tzn <> 'utc' THEN
         tz_name := sys.babelfish_timezone_mapping(lower_tzn);
     ELSE
@@ -2904,11 +2904,11 @@ BEGIN
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
-    cs_as_securable = lower(PG_CATALOG.rtrim(cs_as_securable));
-    cs_as_securable_class = lower(PG_CATALOG.rtrim(cs_as_securable_class));
-    cs_as_permission = lower(PG_CATALOG.rtrim(cs_as_permission));
-    cs_as_sub_securable = lower(PG_CATALOG.rtrim(cs_as_sub_securable));
-    cs_as_sub_securable_class = lower(PG_CATALOG.rtrim(cs_as_sub_securable_class));
+    cs_as_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable));
+    cs_as_securable_class = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable_class));
+    cs_as_permission = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_permission));
+    cs_as_sub_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_sub_securable_class));
 
     -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
     IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
@@ -3183,7 +3183,7 @@ DECLARE
     return_value INTEGER;
 BEGIN
 	return_value:=
-        CASE LOWER(property_name)
+        CASE pg_catalog.LOWER(property_name)
             WHEN 'charmaxlen' COLLATE sys.database_default THEN (SELECT
                 CASE
                     WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes
@@ -4847,13 +4847,13 @@ BEGIN
     END IF;
 
     -- Truncate and normalize the column name
-    col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+    col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(pg_catalog.lower(column_name)));
 
     -- Get the column ID, typeid, length, and typmod for the provided column_name
     SELECT attnum, a.atttypid, a.attlen, a.atttypmod
     INTO column_id, typeid, typelen, typemod
     FROM pg_attribute a
-    WHERE attrelid = object_id AND lower(attname) = col_name COLLATE sys.database_default;
+    WHERE attrelid = object_id AND pg_catalog.lower(attname) = col_name COLLATE sys.database_default;
 
     IF column_id IS NULL THEN
         RETURN NULL;
