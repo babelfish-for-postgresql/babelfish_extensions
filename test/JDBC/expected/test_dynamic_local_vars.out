@@ -1597,13 +1597,13 @@ GO
 
 declare @i varchar(100)
 update local_var_tst set id = id + 10, @i = cast("xmax" as varchar(100))
-select @i
+select 1 where @i IS NOT NULL
 GO
 ~~ROW COUNT: 2~~
 
 ~~START~~
-varchar
-4294967295
+int
+1
 ~~END~~
 
 

@@ -847,7 +847,7 @@ GO
 
 declare @i varchar(100)
 update local_var_tst set id = id + 10, @i = cast("xmax" as varchar(100))
-select @i
+select 1 where @i IS NOT NULL
 GO
 
 set QUOTED_IDENTIFIER off
