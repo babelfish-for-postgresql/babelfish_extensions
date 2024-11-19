@@ -149,7 +149,8 @@ extern bool pltsql_check_guc_plan(CachedPlanSource *plansource);
 bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
 extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
-static void check_invalid_constraints(RangeVar *relation, ColumnDef *column);
+static void check_invalid_column_constraints(RangeVar *relation, ColumnDef *column);
+static void check_invalid_constraints(RangeVar *relation, Constraint *constraint);
 static bool checkAndSetTsqlSystemFunc(FuncCall *fc);
 static bool is_identity_constraint(ColumnDef *column);
 extern PLtsql_function *find_cached_batch(int handle);
@@ -1090,7 +1091,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						switch (nodeTag(element))
 						{
 							case T_ColumnDef:
-								check_invalid_constraints(stmt->relation,
+								check_invalid_column_constraints(stmt->relation,
 																   (ColumnDef *) element);
 								if (is_identity_constraint((ColumnDef *) element))
 								{
@@ -1177,7 +1178,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						switch (cmd->subtype)
 						{
 							case AT_AddColumn:
-								check_invalid_constraints(atstmt->relation,
+								check_invalid_column_constraints(atstmt->relation,
 																   castNode(ColumnDef, cmd->def));
 								if (is_identity_constraint(castNode(ColumnDef, cmd->def)))
 								{
@@ -1204,6 +1205,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case AT_AddConstraint:
 								{
 									Constraint *c = castNode(Constraint, cmd->def);
+
+									check_invalid_constraints(atstmt->relation, c);
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
@@ -1254,6 +1257,17 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case AT_ColumnDefault:
 								{
 									int			colnamelen = strlen(cmd->name);
+
+									if (nodeTag(cmd->def) == T_FuncCall)
+									{
+										if (atstmt->relation->relpersistence == RELPERSISTENCE_TEMP && 
+											!checkAndSetTsqlSystemFunc(castNode(FuncCall, cmd->def)))
+										{
+											ereport(ERROR,
+													(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+													errmsg("User-defined functions, partition functions, and column references are not allowed in expressions in this context.")));
+										}
+									}
 
 									/*
 									 * Disallow defaults on a rowversion
@@ -1914,7 +1928,7 @@ revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, 
  * 2. User-defined functions (UDFs) are not allowed in TSQL temp table or table variable column defaults.
  */
 static void
-check_invalid_constraints(RangeVar *relation, ColumnDef *column)
+check_invalid_column_constraints(RangeVar *relation, ColumnDef *column)
 {
 	ListCell   *clist;
 	bool		is_null = false;
@@ -1923,6 +1937,7 @@ check_invalid_constraints(RangeVar *relation, ColumnDef *column)
 	foreach(clist, column->constraints)
 	{
 		Constraint *constraint = lfirst_node(Constraint, clist);
+		check_invalid_constraints(relation, constraint);
 
 		switch (constraint->contype)
 		{
@@ -1933,21 +1948,6 @@ check_invalid_constraints(RangeVar *relation, ColumnDef *column)
 			case CONSTR_IDENTITY:
 				is_identity = true;
 				break;
-			
-			case CONSTR_DEFAULT:
-			{
-				if (IsA(constraint->raw_expr, FuncCall))
-				{
-					FuncCall *fc = castNode(FuncCall, constraint->raw_expr);
-					if (relation->relpersistence == RELPERSISTENCE_TEMP && !checkAndSetTsqlSystemFunc(fc))
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-								errmsg("User-defined functions, partition functions, and column references are not allowed in expressions in this context.")));
-					}
-				}
-				break;
-			}
 
 			default:
 				break;
@@ -1960,6 +1960,35 @@ check_invalid_constraints(RangeVar *relation, ColumnDef *column)
 				 errmsg("Could not create IDENTITY attribute on nullable column '%s', table '%s'.",
 						column->colname,
 						relation->relname)));
+}
+
+/*
+ * Similar to check_invalid_column_constraints, but for individual constraints, such as added by
+ * ALTER TABLE ADD CONSTRAINT
+ */
+static void
+check_invalid_constraints(RangeVar *relation, Constraint *constraint)
+{
+	switch (constraint->contype)
+	{		
+		case CONSTR_DEFAULT:
+		{
+			if (IsA(constraint->raw_expr, FuncCall))
+			{
+				FuncCall *fc = castNode(FuncCall, constraint->raw_expr);
+				if (relation->relpersistence == RELPERSISTENCE_TEMP && !checkAndSetTsqlSystemFunc(fc))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+							errmsg("User-defined functions, partition functions, and column references are not allowed in expressions in this context.")));
+				}
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
 }
 
 /*

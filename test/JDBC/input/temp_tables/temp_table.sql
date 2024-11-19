@@ -247,6 +247,31 @@ GO
 DROP TABLE #t1
 GO
 
+-- also validate that the restrictions work for ALTER TABLE ADD CONSTRAINT
+CREATE TABLE #t1 (a INT)
+GO
+
+-- user-defined functions should not work
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT temp_table_func1(5) FOR a
+GO
+
+-- nor should system function overrides
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT dbo.ISJSON('a') FOR a
+GO
+
+-- but system functions should still work
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT ISJSON('a') FOR a
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
 DROP FUNCTION dbo.ISJSON
 GO
 
