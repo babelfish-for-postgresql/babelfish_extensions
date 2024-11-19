@@ -501,6 +501,7 @@ catalogs_dbo_sys_schema-upgrade
 unary_plus_op_string
 tabvar_in_function
 atatuservar
+exec_sp_in_udf
 BABEL-4217
 Test_ISNULL
 BABEL-4270
