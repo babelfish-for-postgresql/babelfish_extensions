@@ -1333,6 +1333,24 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTransaction_statement(TSql
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx)
 {
+	if (ctx->CHECKIDENT())
+	{
+		Assert(ctx->dbcc_table_name());
+		if (ctx->dbcc_table_name()->local_id())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"DBCC CHECKIDENT does not currently support a variable for the table name",
+					getLineAndPos(ctx->dbcc_table_name()));
+		}
+	
+		if (ctx->checkident_new_value())
+		{
+			if (ctx->checkident_new_value()->local_id())
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"DBCC CHECKIDENT does not currently support a variable for the RESEED value",
+					getLineAndPos(ctx->checkident_new_value()));
+		}
+	}
 
 	if (ctx->dbcc_command())
 	{

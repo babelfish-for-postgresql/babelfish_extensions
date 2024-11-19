@@ -49,6 +49,7 @@ jobs:
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
+          version: 4.9.3
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - name: Build PostGIS Extension using ${{env.EXTENSION_BRANCH_OLD}}
@@ -106,13 +107,17 @@ jobs:
         with:
           tap_tests: 'yes'
           install_dir: ${{env.NEW_INSTALL_DIR}}
-
-      - name: Copy ANTLR
-        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+      
+      - name: Compile new ANTLR
+        id: compile-new-antlr
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
