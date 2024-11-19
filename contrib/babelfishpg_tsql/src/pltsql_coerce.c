@@ -1386,6 +1386,15 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	Oid							rettype;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 
+	if (list_length(names) > 0)
+    {
+        char *func_name = strVal(llast(names));
+        if (strcmp(func_name, "hashbytes") == 0)
+        {
+            return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
+        }
+    }
+
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
 	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
@@ -1581,16 +1590,6 @@ tsql_func_select_candidate(List *names,
 	int			i;
 	bool			  candidates_are_opers = false;
 
-	if (list_length(names) > 0)
-    {
-        char *func_name = strVal(llast(names));
-        if (strcmp(func_name, "hashbytes") == 0)
-        {
-            return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
-        }
-    }
-
-
 	if (is_special)
 	{
 		/*
@@ -1598,15 +1597,6 @@ tsql_func_select_candidate(List *names,
 		 */
 		if (babelfish_dump_restore)
 			return NULL;
-
-		if (list_length(names) > 0)
-        {
-            char *func_name = strVal(llast(names));
-            if (strcmp(func_name, "hashbytes") == 0)
-            {
-                return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
-            }
-        }
 
 		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
 	}
