@@ -1,0 +1,611 @@
+-- single_db_mode_expected
+-- tsql
+-- RESET LOGIN PASSWORD
+ALTER LOGIN babel_5116_l1 WITH PASSWORD = '12345678'
+GO
+ALTER LOGIN babel_5116_l2 WITH PASSWORD = '12345678'
+GO
+ALTER LOGIN babel_5116_l3 WITH PASSWORD = '12345678'
+GO
+
+USE babel_5116_db
+GO
+
+ALTER ROLE db_ddladmin ADD MEMBER babel_5116_l1
+GO
+
+-- tsql user=babel_5116_l1 password=12345678 database=master
+-------------------------------------------------------------------
+---- babel_5116_l1 user SHOULD NOT BE ABLE TO DO ANY DDLS/DMLS ----
+---- IN BBF DATABASES WHERE IT IS NOT A MEMBER OF DB_DDLADMIN  ----
+-------------------------------------------------------------------
+SELECT IS_ROLEMEMBER('db_ddladmin')
+GO
+SELECT CURRENT_USER
+GO
+CREATE LOGIN l WITH PASSWORD = '12345678'
+GO
+CREATE USER u
+GO
+CREATE ROLE r
+GO
+CREATE TABLE t (id INT)
+GO
+CREATE INDEX babel_5116_idx1 ON babel_5116_t1 (id)
+GO
+CREATE TRIGGER trig ON babel_5116_t1 AFTER INSERT AS SELECT 1
+GO
+CREATE VIEW v AS SELECT * FROM babel_5116_t1
+GO
+CREATE SEQUENCE babel_5116_s2 START WITH 1000 INCREMENT BY 1
+GO
+CREATE PROCEDURE p AS SELECT 1
+GO
+CREATE FUNCTION f() RETURNS INT AS BEGIN RETURN 1 END
+GO
+CREATE FUNCTION tvff1()
+RETURNS TABLE AS RETURN
+(
+    SELECT '1' AS col
+);
+GO
+CREATE FUNCTION mtvf1()
+RETURNS @result TABLE([Id] int) AS
+BEGIN
+    INSERT INTO @result VALUES (1) RETURN
+END
+GO
+CREATE TYPE t FROM sys.varchar(10)
+GO
+CREATE TYPE tabletype AS TABLE (id INT)
+GO
+TRUNCATE TABLE babel_5116_t1
+GO
+CREATE SCHEMA babel_5116_sch1
+GO
+CREATE SCHEMA babel_5116_sch1 AUTHORIZATION babel_5116_r1
+GO
+
+CREATE PARTITION FUNCTION babel_5116_pf1 (datetime)
+AS RANGE RIGHT FOR VALUES 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+GO
+
+CREATE PARTITION SCHEME babel_5116_ps
+AS PARTITION babel_5116_pf1 
+ALL TO ([PRIMARY]);
+GO
+
+ALTER TABLE babel_5116_t3 ADD babel_5116_col_nw INT NULL;
+GO
+ALTER TABLE babel_5116_t3 DROP babel_5116_col_nw;
+GO
+ALTER TABLE babel_5116_t1 ADD CONSTRAINT babel_5116_constr2 UNIQUE (id)
+GO
+ALTER TABLE babel_5116_t1 ADD CONSTRAINT babel_5116_constrfk1 FOREIGN KEY (id_new) REFERENCES babel_5116_t2 (id)
+GO
+ALTER TABLE babel_5116_t1 DROP CONSTRAINT babel_5116_constrfk1
+GO
+ALTER TABLE babel_5116_t1 DROP CONSTRAINT babel_5116_constr2
+GO
+ALTER SEQUENCE babel_5116_s1 MINVALUE 99;
+GO
+
+
+ALTER FUNCTION babel_5116_f1() RETURNS INT AS BEGIN RETURN 2 END
+GO
+ALTER FUNCTION babel_5116_tvf1()
+RETURNS TABLE AS RETURN
+(
+    SELECT '2' AS col
+);
+GO
+ALTER FUNCTION babel_5116_mtvf1()
+RETURNS @result TABLE([Id] int) AS
+BEGIN
+    INSERT INTO @result VALUES (2) RETURN
+END
+GO
+ALTER FUNCTION babel_5116_tvf1()
+RETURNS TABLE AS RETURN
+(
+    SELECT '2' AS col
+);
+GO
+ALTER PROC babel_5116_p1 AS SELECT 2
+GO
+
+
+ENABLE TRIGGER babel_5116_trig1 ON babel_5116_t1
+GO
+DISABLE TRIGGER babel_5116_trig1 ON babel_5116_t1
+GO
+
+
+DROP LOGIN babel_5116_l1
+GO
+DROP USER babel_5116_l1
+GO
+DROP ROLE babel_5116_r1
+GO
+DROP VIEW babel_5116_v1
+GO
+DROP SEQUENCE babel_5116_s1
+GO
+DROP TRIGGER babel_5116_trig
+GO
+DROP INDEX babel_5116_idx1 ON babel_5116_t1
+GO
+DROP TABLE babel_5116_t1
+GO
+DROP FUNCTION babel_5116_f1
+GO
+DROP FUNCTION babel_5116_tvf1
+GO
+DROP FUNCTION babel_5116_mtvf1
+GO
+DROP PROC babel_5116_p1
+GO
+DROP TYPE babel_5116_type1
+GO
+DROP TYPE babel_5116_tabletype1
+GO
+
+/**********  TEMP TABLE AND TABLE VARIABLE SHOULD WORK **********/
+CREATE TABLE #babel_5116_temptbl1(a int, b int);
+GO
+
+ALTER TABLE #babel_5116_temptbl1 ADD c INT;
+GO
+
+DROP TABLE #babel_5116_temptbl1
+GO
+
+DECLARE @babel_5116_tblvar1 table(id int); SELECT * FROM @babel_5116_tblvar1;
+GO
+
+/**********  DATABASE DDLs ARE NOT ALLOWED **********/
+-- tsql
+USE master
+GO
+ALTER ROLE db_ddladmin ADD MEMBER babel_5116_l1
+GO
+
+-- tsql user=babel_5116_l1 password=12345678 database=master
+SELECT IS_ROLEMEMBER('db_ddladmin')
+GO
+
+CREATE DATABASE babel_5116_db1;
+GO
+ALTER AUTHORIZATION ON DATABASE::babel_5116_db TO babel_5116_l3;
+GO
+ALTER DATABASE babel_5116_db MODIFY NAME = babel_5116_dbx;
+GO
+DROP DATABASE babel_5116_db;
+GO
+
+-- tsql
+USE master
+GO
+ALTER ROLE db_ddladmin DROP MEMBER babel_5116_l1
+GO
+
+-- tsql user=babel_5116_l1 password=12345678 database=babel_5116_db
+/**********  LOGGED IN USING DDLADMIN **********/
+SELECT IS_ROLEMEMBER('db_ddladmin')
+GO
+
+/**********  ROLE DDLs ARE NOT ALLOWED **********/
+CREATE USER babel_5116_l3
+GO
+CREATE ROLE babel_5116_r2
+GO
+DROP USER babel_5116_l3
+GO
+DROP USER babel_5116_l2
+GO
+DROP ROLE babel_5116_r1
+GO
+DROP ROLE babel_5116_r2
+GO
+
+/********** CREATE DDLs ARE ALLOWED TO DDLADMIN **********/
+CREATE TABLE babel_5116_t2 (id INT)
+GO
+CREATE INDEX babel_5116_idx1 ON babel_5116_t2 (id)
+GO
+CREATE TRIGGER babel_5116_trig2 ON babel_5116_t2 AFTER INSERT AS SELECT 1
+GO
+CREATE VIEW babel_5116_v2 AS SELECT * FROM babel_5116_t2
+GO
+CREATE SEQUENCE babel_5116_s2 START WITH 1000 INCREMENT BY 1
+GO
+CREATE PROCEDURE babel_5116_p2 AS SELECT 1
+GO
+CREATE FUNCTION babel_5116_f2() RETURNS INT AS BEGIN RETURN 1 END
+GO
+CREATE FUNCTION babel_5116_tvf2()
+RETURNS TABLE AS RETURN
+(
+    SELECT '1' AS col
+);
+GO
+CREATE FUNCTION babel_5116_mtvf2()
+RETURNS @result TABLE([Id] int) AS
+BEGIN
+    INSERT INTO @result VALUES (1) RETURN
+END
+GO
+CREATE TYPE babel_5116_type2 FROM sys.varchar(10)
+GO
+CREATE TYPE babel_5116_tabletype2 AS TABLE (id INT)
+GO
+CREATE SCHEMA babel_5116_sch3
+GO
+CREATE SCHEMA babel_5116_sch4 AUTHORIZATION babel_5116_r1
+GO
+
+/********** ALTER DDLs ARE ALLOWED TO DDLADMIN **********/
+ALTER TABLE babel_5116_t1 ADD id_new INT
+GO
+ALTER TABLE babel_5116_t2 ADD id_new INT
+GO
+ALTER TABLE babel_5116_t3 ADD babel_5116_col_nw INT NULL;
+GO
+ALTER TABLE babel_5116_t3 DROP babel_5116_col_nw;
+GO
+ALTER TABLE babel_5116_t1 ADD CONSTRAINT babel_5116_constr2 UNIQUE (id)
+GO
+ALTER TABLE babel_5116_t2 ADD CONSTRAINT babel_5116_constr3 UNIQUE (id)
+GO
+ALTER TABLE babel_5116_t1 ADD CONSTRAINT babel_5116_constrfk1 FOREIGN KEY (id_new) REFERENCES babel_5116_t2 (id)
+GO
+ALTER TABLE babel_5116_t2 ADD CONSTRAINT babel_5116_constrfk2 FOREIGN KEY (id_new) REFERENCES babel_5116_t1 (id)
+GO
+ALTER TABLE babel_5116_t1 DROP CONSTRAINT babel_5116_constrfk1
+GO
+ALTER TABLE babel_5116_t2 DROP CONSTRAINT babel_5116_constrfk2
+GO
+ALTER TABLE babel_5116_t1 DROP CONSTRAINT babel_5116_constr1
+GO
+ALTER TABLE babel_5116_t1 DROP CONSTRAINT babel_5116_constr2
+GO
+ALTER TABLE babel_5116_t2 DROP CONSTRAINT babel_5116_constr3
+GO
+ALTER SEQUENCE babel_5116_s1 MINVALUE 99;
+GO
+ALTER SEQUENCE babel_5116_s2 MINVALUE 99;
+GO
+
+/********** ENABLE DISABLE TRIGGER SHOULD ALSO BE ALLOWED TO DDLADMIN **********/
+ENABLE TRIGGER babel_5116_trig1 ON babel_5116_t1
+GO
+ENABLE TRIGGER babel_5116_trig2 ON babel_5116_t2
+GO
+DISABLE TRIGGER babel_5116_trig1 ON babel_5116_t1
+GO
+DISABLE TRIGGER babel_5116_trig2 ON babel_5116_t2
+GO
+
+/********** TRUNCATE ON TABLE SHOULD BE ALLOWED **********/
+TRUNCATE TABLE babel_5116_t1
+GO
+TRUNCATE TABLE babel_5116_t2
+GO
+
+/********** TEMP TABLE AND TABLE VARIABLE SHOULD WORK **********/
+CREATE TABLE #babel_5116_temptbl2(a int, b int);
+GO
+
+ALTER TABLE #babel_5116_temptbl2 ADD c INT;
+GO
+
+DROP TABLE #babel_5116_temptbl2
+GO
+
+DECLARE @babel_5116_tblvar2 table(id int); SELECT * FROM @babel_5116_tblvar2;
+GO
+
+/**********  SHOULD BE ABLE TO CREATE PARTITION FUNCTIONS, SCHEMES OR TABLES **********/
+
+CREATE PARTITION FUNCTION babel_5116_pf1 (datetime)
+AS RANGE RIGHT FOR VALUES 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+GO
+
+CREATE PARTITION SCHEME babel_5116_ps
+AS PARTITION babel_5116_pf1 
+ALL TO ([PRIMARY]);
+GO
+
+CREATE TABLE babel_5116_pt
+(
+    SaleId INT IDENTITY(1,1),
+    SaleDate datetime,
+    Amount decimal(10,2),
+    CustomerId int,
+    ProductId int
+) ON babel_5116_ps(SaleDate);  -- Specify the partitioning column
+GO
+
+/********** DMLs SHOULD STILL BE BLOCKED **********/
+/********** ON ALL OBJECTS OLD OR NEW **********/
+/********** IRRESPECTIVE OF WHO CREATED **********/
+SELECT * FROM babel_5116_t1
+GO
+INSERT INTO babel_5116_t1 (id) VALUES (1)
+GO
+DELETE FROM babel_5116_t1
+GO
+UPDATE babel_5116_t1 SET id = 1
+GO
+SELECT * FROM babel_5116_t2
+GO
+INSERT INTO babel_5116_t2 (id) VALUES (1)
+GO
+DELETE FROM babel_5116_t2
+GO
+UPDATE babel_5116_t2 SET id = 1
+GO
+SELECT * FROM babel_5116_v1
+GO
+INSERT INTO babel_5116_v1 (id) VALUES (1)
+GO
+DELETE FROM babel_5116_v1
+GO
+UPDATE babel_5116_v1 SET id = 1
+GO
+SELECT * FROM babel_5116_v2
+GO
+INSERT INTO babel_5116_v2 (id) VALUES (1)
+GO
+DELETE FROM babel_5116_v2
+GO
+UPDATE babel_5116_v2 SET id = 1
+GO
+
+SELECT NEXT VALUE FOR babel_5116_s1;
+GO
+SELECT NEXT VALUE FOR babel_5116_s2;
+GO
+
+/********** EXECUTE SHOULD STILL BE BLOCKED **********/
+EXEC babel_5116_p1
+GO
+EXEC babel_5116_p2
+GO
+SELECT babel_5116_f1()
+GO
+SELECT babel_5116_f2()
+GO
+SELECT * FROM babel_5116_tvf1()
+GO
+SELECT * FROM babel_5116_mtvf1()
+GO
+
+/********** GRANT REVOKE IS NOT ALLOWED **********/
+ALTER ROLE babel_5116_r1 ADD MEMBER babel_5116_l2
+GO
+GRANT SELECT ON babel_5116_t1 TO babel_5116_l2
+GO
+GRANT CONNECT TO babel_5116_l2
+GO
+ALTER ROLE babel_5116_r1 DROP MEMBER babel_5116_l2
+GO
+REVOKE SELECT ON babel_5116_t1 TO babel_5116_l2
+GO
+REVOKE CONNECT TO babel_5116_l2
+GO
+
+/********** OBJECT OWNER SHOULD BE SCHEMA OWNER WHEN OBJECT IS CREATED BY DDLADMIN **********/
+SELECT CAST(relname AS CHAR(65)), CAST(r.rolname AS CHAR(20))
+    FROM pg_class c
+    JOIN pg_roles r ON (c.relowner = r.oid)
+    WHERE relname LIKE 'babel_5116%'
+    ORDER BY r.rolname, relname;
+GO
+SELECT CAST(proname AS CHAR(65)), CAST(r.rolname AS CHAR(20))
+    FROM pg_proc p
+    JOIN pg_roles r ON (p.proowner = r.oid)
+    WHERE proname LIKE 'babel_5116%'
+    ORDER BY r.rolname, proname;
+GO
+SELECT CAST(typname AS CHAR(65)), CAST(r.rolname AS CHAR(20))
+    FROM pg_type t
+    JOIN pg_roles r ON (t.typowner = r.oid)
+    WHERE typname LIKE 'babel_5116%'
+    ORDER BY r.rolname, typname;
+GO
+
+-- tsql database=babel_5116_db
+/********** DDLADMIN SHOULD NOT BE A DEPENDANT OF ANY OBJECT WE CREATED IN THIS TEST **********/
+SELECT CAST(r.rolname AS CHAR(30)), CAST(object_name(objid) AS char(22)), deptype FROM pg_depend d
+    JOIN pg_roles r ON (d.refobjid = r.oid)
+    WHERE
+        object_name(objid) LIKE 'babel_5116%' AND
+        refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_authid') AND
+        r.rolname NOT LIKE '%datareader%' AND r.rolname NOT LIKE '%datawriter%' AND
+        NOT (object_name(objid) = 'babel_5116_tabletype1' AND deptype = 'a')
+        AND (r.rolname LIKE '%dbo%' OR r.rolname LIKE '%db_ddladmin%')
+    ORDER BY deptype, r.rolname, object_name(objid);
+GO
+
+SELECT CAST(r.rolname AS CHAR(30)), CAST(object_name(objid) AS char(22)), deptype FROM pg_shdepend d
+    JOIN pg_roles r ON (d.refobjid = r.oid)
+    WHERE
+        object_name(objid) LIKE 'babel_5116%' AND
+        refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_authid') AND
+        r.rolname NOT LIKE '%datareader%' AND r.rolname NOT LIKE '%datawriter%' AND
+        NOT (object_name(objid) = 'babel_5116_tabletype1' AND deptype = 'a')
+        AND (r.rolname LIKE '%dbo%' OR r.rolname LIKE '%db_ddladmin%') AND deptype!= 'i'
+        AND (r.rolname NOT IN ('ad_db_db_ddladmin', 'alter_db_db_ddladmin'))
+    ORDER BY deptype, r.rolname, object_name(objid);
+GO
+
+/********** ALTER ROUTINES ARE ALLOWED TO DDLADMIN **********/
+ALTER FUNCTION babel_5116_f1() RETURNS INT AS BEGIN RETURN 2 END
+GO
+ALTER FUNCTION babel_5116_f2() RETURNS INT AS BEGIN RETURN 2 END
+GO
+ALTER FUNCTION babel_5116_tvf1()
+RETURNS TABLE AS RETURN
+(
+    SELECT '2' AS col
+);
+GO
+ALTER FUNCTION babel_5116_mtvf1()
+RETURNS @result TABLE([Id] int) AS
+BEGIN
+    INSERT INTO @result VALUES (2) RETURN
+END
+GO
+ALTER FUNCTION babel_5116_tvf2()
+RETURNS TABLE AS RETURN
+(
+    SELECT '2' AS col
+);
+GO
+ALTER FUNCTION babel_5116_mtvf2()
+RETURNS @result TABLE([Id] int) AS
+BEGIN
+    INSERT INTO @result VALUES (2) RETURN
+END
+GO
+
+ALTER PROC babel_5116_p1 AS SELECT 2
+GO
+ALTER PROC babel_5116_p2 AS SELECT 2
+GO
+
+
+-- tsql user=babel_5116_l1 password=12345678 database=babel_5116_db
+/********** RENAMING OBJECTs SHOULD BE ALLOWED **********/
+sp_rename 'babel_5116_t1.id_new', 'id_new_name', 'COLUMN'
+GO
+sp_rename 'babel_5116_t2.id_new', 'id_new_name', 'COLUMN'
+GO
+sp_rename 'babel_5116_trig1', 'babel_5116_trig1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_trig2', 'babel_5116_trig2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_v1', 'babel_5116_v1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_v2', 'babel_5116_v2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_s1', 'babel_5116_s1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_s2', 'babel_5116_s2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_t2', 'babel_5116_t2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_t1', 'babel_5116_t1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_f2', 'babel_5116_f2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_f1', 'babel_5116_f1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_tvf1', 'babel_5116_tvf1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_tvf2', 'babel_5116_tvf2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_mtvf1', 'babel_5116_mtvf1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_mtvf2', 'babel_5116_mtvf2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_p2', 'babel_5116_p2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_p1', 'babel_5116_p1_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_type2', 'babel_5116_type2_new_name', 'USERDATATYPE'
+GO
+sp_rename 'babel_5116_type1', 'babel_5116_type1_new_name', 'USERDATATYPE'
+GO
+sp_rename 'babel_5116_tabletype2', 'babel_5116_tabletype2_new_name', 'OBJECT'
+GO
+sp_rename 'babel_5116_tabletype1', 'babel_5116_tabletype1_new_name', 'OBJECT'
+GO
+
+/********** UNSUPPORTED RENAMING IN BABELFISH **********/
+/********** SHOULD BE ALLOWED WHENEVER SUPPORTED **********/
+sp_rename 'babel_5116_t1.babel_5116_idx1', 'babel_5116_idx1_new_name', 'INDEX'
+GO
+
+/********** NOT ALLOWED RENAMING TO DB_DDLADMIN **********/
+sp_rename 'babel_5116_db', 'babel_5116_db_new_name', 'DATABASE'
+GO
+
+/********** DROPPING BUILTIN SCHEMAs SHOULD NOT BE ALLOWED **********/
+DROP SCHEMA dbo
+GO
+DROP SCHEMA guest
+GO
+
+/********** DROP DDLs **********/
+DROP TRIGGER babel_5116_trig1_new_name
+GO
+DROP TRIGGER babel_5116_trig2_new_name
+GO
+DROP VIEW babel_5116_v1_new_name
+GO
+DROP VIEW babel_5116_v2_new_name
+GO
+DROP SEQUENCE babel_5116_s1_new_name
+GO
+DROP SEQUENCE babel_5116_s2_new_name
+GO
+DROP INDEX babel_5116_idx1 ON babel_5116_t1
+GO
+DROP TABLE babel_5116_t3
+GO
+DROP TABLE babel_5116_t2_new_name
+GO
+DROP TABLE babel_5116_t1_new_name
+GO
+DROP FUNCTION babel_5116_f2_new_name
+GO
+DROP FUNCTION babel_5116_f1_new_name
+GO
+DROP FUNCTION babel_5116_tvf1_new_name
+GO
+DROP FUNCTION babel_5116_tvf2_new_name
+GO
+DROP FUNCTION babel_5116_mtvf1_new_name
+GO
+DROP FUNCTION babel_5116_mtvf2_new_name
+GO
+DROP PROC babel_5116_p2_new_name
+GO
+DROP PROC babel_5116_p1_new_name
+GO
+DROP TYPE babel_5116_type2_new_name
+GO
+DROP TYPE babel_5116_type1_new_name
+GO
+DROP TYPE babel_5116_tabletype2_new_name
+GO
+DROP TYPE babel_5116_tabletype1_new_name
+GO
+
+DROP SCHEMA babel_5116_sch1
+GO
+DROP SCHEMA babel_5116_sch2
+GO
+DROP SCHEMA babel_5116_sch3
+GO
+DROP SCHEMA babel_5116_sch4
+GO
+
+DROP TABLE babel_5116_pt
+GO
+DROP PARTITION SCHEME babel_5116_ps
+GO
+DROP PARTITION FUNCTION babel_5116_pf1
+GO

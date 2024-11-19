@@ -35,6 +35,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
@@ -87,6 +88,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
@@ -139,6 +141,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
@@ -191,6 +194,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
@@ -255,6 +259,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
@@ -307,6 +312,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2
@@ -359,6 +365,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database1
 db_datareader#!##!#db_datareader#!#rename_db_database1
 db_datawriter#!##!#db_datawriter#!#rename_db_database1
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database1
 db_owner#!##!#db_owner#!#rename_db_database1
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database1
 dbo#!##!#dbo#!#rename_db_database1
@@ -411,6 +418,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar
 db_accessadmin#!##!#db_accessadmin#!#rename_db_database2
 db_datareader#!##!#db_datareader#!#rename_db_database2
 db_datawriter#!##!#db_datawriter#!#rename_db_database2
+db_ddladmin#!##!#db_ddladmin#!#rename_db_database2
 db_owner#!##!#db_owner#!#rename_db_database2
 db_securityadmin#!##!#db_securityadmin#!#rename_db_database2
 dbo#!##!#dbo#!#rename_db_database2

@@ -697,6 +697,7 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 db1_db_accessadmin#!#db_accessadmin#!##!#db1#!#
 db1_db_datareader#!#db_datareader#!##!#db1#!#
 db1_db_datawriter#!#db_datawriter#!##!#db1#!#
+db1_db_ddladmin#!#db_ddladmin#!##!#db1#!#
 db1_db_owner#!#db_owner#!##!#db1#!#
 db1_db_securityadmin#!#db_securityadmin#!##!#db1#!#
 db1_dbo#!#dbo#!##!#db1#!#dbo
@@ -704,6 +705,7 @@ db1_guest#!#guest#!##!#db1#!#guest
 master_db_accessadmin#!#db_accessadmin#!##!#master#!#
 master_db_datareader#!#db_datareader#!##!#master#!#
 master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
@@ -711,6 +713,7 @@ master_guest#!#guest#!##!#master#!#guest
 msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
 msdb_db_datareader#!#db_datareader#!##!#msdb#!#
 msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
@@ -718,6 +721,7 @@ msdb_guest#!#guest#!##!#msdb#!#guest
 tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
 tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
 tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
@@ -886,6 +890,7 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 master_db_accessadmin#!#db_accessadmin#!##!#master#!#
 master_db_datareader#!#db_datareader#!##!#master#!#
 master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
@@ -893,6 +898,7 @@ master_guest#!#guest#!##!#master#!#guest
 msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
 msdb_db_datareader#!#db_datareader#!##!#msdb#!#
 msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
@@ -900,6 +906,7 @@ msdb_guest#!#guest#!##!#msdb#!#guest
 tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
 tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
 tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
@@ -949,6 +956,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 db1_db_accessadmin#!##!#db_accessadmin#!#db1#!#
 db1_db_datareader#!##!#db_datareader#!#db1#!#
 db1_db_datawriter#!##!#db_datawriter#!#db1#!#
+db1_db_ddladmin#!##!#db_ddladmin#!#db1#!#
 db1_db_owner#!##!#db_owner#!#db1#!#
 db1_db_securityadmin#!##!#db_securityadmin#!#db1#!#
 db1_dbo#!##!#dbo#!#db1#!#dbo
@@ -956,6 +964,7 @@ db1_guest#!##!#guest#!#db1#!#guest
 db2_db_accessadmin#!##!#db_accessadmin#!#db2#!#
 db2_db_datareader#!##!#db_datareader#!#db2#!#
 db2_db_datawriter#!##!#db_datawriter#!#db2#!#
+db2_db_ddladmin#!##!#db_ddladmin#!#db2#!#
 db2_db_owner#!##!#db_owner#!#db2#!#
 db2_db_securityadmin#!##!#db_securityadmin#!#db2#!#
 db2_dbo#!##!#dbo#!#db2#!#dbo
@@ -963,6 +972,7 @@ db2_guest#!##!#guest#!#db2#!#guest
 master_db_accessadmin#!##!#db_accessadmin#!#master#!#
 master_db_datareader#!##!#db_datareader#!#master#!#
 master_db_datawriter#!##!#db_datawriter#!#master#!#
+master_db_ddladmin#!##!#db_ddladmin#!#master#!#
 master_db_owner#!##!#db_owner#!#master#!#
 master_db_securityadmin#!##!#db_securityadmin#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
@@ -970,6 +980,7 @@ master_guest#!##!#guest#!#master#!#guest
 msdb_db_accessadmin#!##!#db_accessadmin#!#msdb#!#
 msdb_db_datareader#!##!#db_datareader#!#msdb#!#
 msdb_db_datawriter#!##!#db_datawriter#!#msdb#!#
+msdb_db_ddladmin#!##!#db_ddladmin#!#msdb#!#
 msdb_db_owner#!##!#db_owner#!#msdb#!#
 msdb_db_securityadmin#!##!#db_securityadmin#!#msdb#!#
 msdb_dbo#!##!#dbo#!#msdb#!#dbo
@@ -977,6 +988,7 @@ msdb_guest#!##!#guest#!#msdb#!#guest
 tempdb_db_accessadmin#!##!#db_accessadmin#!#tempdb#!#
 tempdb_db_datareader#!##!#db_datareader#!#tempdb#!#
 tempdb_db_datawriter#!##!#db_datawriter#!#tempdb#!#
+tempdb_db_ddladmin#!##!#db_ddladmin#!#tempdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_db_securityadmin#!##!#db_securityadmin#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
@@ -995,6 +1007,7 @@ dbo#!#dbo
 db_accessadmin#!#
 db_datareader#!#
 db_datawriter#!#
+db_ddladmin#!#
 db_owner#!#
 db_securityadmin#!#
 INFORMATION_SCHEMA#!#<NULL>
@@ -1031,6 +1044,7 @@ dbo#!#dbo
 db_accessadmin#!#
 db_datareader#!#
 db_datawriter#!#
+db_ddladmin#!#
 db_owner#!#
 db_securityadmin#!#
 INFORMATION_SCHEMA#!#<NULL>
@@ -1169,6 +1183,7 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 db2_db_accessadmin#!#db_accessadmin#!##!#db2#!#
 db2_db_datareader#!#db_datareader#!##!#db2#!#
 db2_db_datawriter#!#db_datawriter#!##!#db2#!#
+db2_db_ddladmin#!#db_ddladmin#!##!#db2#!#
 db2_db_owner#!#db_owner#!##!#db2#!#
 db2_db_securityadmin#!#db_securityadmin#!##!#db2#!#
 db2_dbo#!#dbo#!##!#db2#!#dbo
@@ -1176,6 +1191,7 @@ db2_guest#!#guest#!##!#db2#!#guest
 master_db_accessadmin#!#db_accessadmin#!##!#master#!#
 master_db_datareader#!#db_datareader#!##!#master#!#
 master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
@@ -1183,6 +1199,7 @@ master_guest#!#guest#!##!#master#!#guest
 msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
 msdb_db_datareader#!#db_datareader#!##!#msdb#!#
 msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
@@ -1190,6 +1207,7 @@ msdb_guest#!#guest#!##!#msdb#!#guest
 tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
 tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
 tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
@@ -1209,6 +1227,7 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 master_db_accessadmin#!#db_accessadmin#!##!#master#!#
 master_db_datareader#!#db_datareader#!##!#master#!#
 master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
@@ -1216,6 +1235,7 @@ master_guest#!#guest#!##!#master#!#guest
 msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
 msdb_db_datareader#!#db_datareader#!##!#msdb#!#
 msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
 msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
@@ -1223,6 +1243,7 @@ msdb_guest#!#guest#!##!#msdb#!#guest
 tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
 tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
 tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
@@ -1499,6 +1520,7 @@ babel_4935_no_sysadmin2
 db_accessadmin
 db_datareader
 db_datawriter
+db_ddladmin
 db_owner
 db_securityadmin
 dbo
@@ -1520,6 +1542,7 @@ babel_4935_no_sysadmin2
 db_accessadmin
 db_datareader
 db_datawriter
+db_ddladmin
 db_owner
 db_securityadmin
 dbo
@@ -1540,6 +1563,7 @@ babel_4935_no_sysadmin1
 db_accessadmin
 db_datareader
 db_datawriter
+db_ddladmin
 db_owner
 db_securityadmin
 dbo
@@ -1559,6 +1583,7 @@ varchar
 db_accessadmin
 db_datareader
 db_datawriter
+db_ddladmin
 db_owner
 db_securityadmin
 dbo

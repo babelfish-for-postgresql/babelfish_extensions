@@ -30,6 +30,8 @@ extern Oid  get_db_securityadmin_oid(const char *dbname, bool missing_ok);
 extern Oid  get_db_owner_oid(const char *dbname, bool missing_ok);
 extern char *get_db_accessadmin_role_name(const char *dbname);
 extern Oid  get_db_accessadmin_oid(const char *dbname, bool missing_ok);
+extern char *get_db_ddladmin_role_name(const char *dbname);
+extern Oid  get_db_ddladmin_oid(const char *dbname, bool missing_ok);
 extern char *get_guest_role_name(const char *dbname);
 extern char *get_guest_schema_name(const char *dbname);
 extern char *get_db_datareader_name(const char *dbname);

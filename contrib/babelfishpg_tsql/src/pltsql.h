@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "collation.h"
 #include "executor/spi.h"
+#include "libpq/libpq-be.h"
 #include "optimizer/planner.h"
 #include "utils/expandedrecord.h"
 #include "utils/plancache.h"
@@ -1920,6 +1921,8 @@ extern common_utility_plugin *common_utility_plugin_ptr;
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
 
+#define IS_TDS_CONN() (MyProcPort && MyProcPort->is_tds_conn)
+
 extern Oid	procid_var;
 extern uint64 rowcount_var;
 extern List *columns_updated_list;
@@ -1988,6 +1991,7 @@ extern bool insert_bulk_check_constraints;
 #define CREATE_FIXED_DB_ROLES "(CREATE FIXED DATABASE ROLES )"
 #define ALTER_DEFAULT_PRIVILEGES "(ALTER DEFAULT PRIVILEGES )"
 #define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
+#define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
 
 /* FIXED DB PRINCIPALS */
 #define DBO "dbo"
@@ -1996,6 +2000,7 @@ extern bool insert_bulk_check_constraints;
 #define DB_SECURITYADMIN "db_securityadmin"
 #define DB_DATAREADER "db_datareader"
 #define DB_DATAWRITER "db_datawriter"
+#define DB_DDLADMIN "db_ddladmin"
 
 #define IS_BBF_BUILT_IN_DB(dbname) \
     (strcmp(dbname, "master") == 0 || \
@@ -2008,7 +2013,8 @@ extern bool insert_bulk_check_constraints;
 	 strcmp(rolname, DB_ACCESSADMIN) == 0 || \
 	 strcmp(rolname, DB_SECURITYADMIN) == 0 || \
 	 strcmp(rolname, DB_DATAREADER) == 0 || \
-	 strcmp(rolname, DB_DATAWRITER) == 0)
+	 strcmp(rolname, DB_DATAWRITER) == 0 || \
+	 strcmp(rolname, DB_DDLADMIN) == 0)
 
 /**********************************************************************
  * Function declarations
@@ -2092,7 +2098,7 @@ extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 extern Oid get_owner_of_schema(const char *schema);
-extern void exec_database_roles_subcmds(const char *physical_schema, char *schema_owner);
+extern void exec_database_roles_subcmds(const char *physical_schema);
 
 /*
  * Functions for namespace handling in pl_funcs.c

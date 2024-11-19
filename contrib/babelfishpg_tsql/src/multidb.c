@@ -1524,6 +1524,32 @@ get_db_securityadmin_oid(const char *dbname, bool missing_ok)
 }
 
 char *
+get_db_ddladmin_role_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL && strlen(dbname) != 0);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DDLADMIN);
+	else
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DDLADMIN);
+
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
+
+Oid
+get_db_ddladmin_oid(const char *dbname, bool missing_ok)
+{
+	char *db_ddladmin_name = get_db_ddladmin_role_name(dbname);
+	Oid  db_ddladmin_oid = get_role_oid(db_ddladmin_name, missing_ok);
+	pfree(db_ddladmin_name);
+	
+	return db_ddladmin_oid;
+}
+
+char *
 get_guest_schema_name(const char *dbname)
 {
 	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);

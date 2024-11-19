@@ -374,7 +374,7 @@ extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const ch
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant, const char *func_args);
 extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
-extern void exec_internal_grant_on_function(const char *logicalschema, const char *object_name, const char *object_type);
+extern void exec_internal_grant_on_function(Oid objectId);
 
 /*****************************************
  *			DOMAIN MAPPING

@@ -40,6 +40,18 @@ $$
     end;
 $$;
 
+/*
+ * Do this so that whenever we run grant statements during create logical database
+ * bbf_role_admin is never picked as the grantor
+ */
+DO $$
+BEGIN
+	EXECUTE format('REVOKE GRANT OPTION FOR CREATE ON DATABASE %s FROM bbf_role_admin; ', CURRENT_DATABASE());
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 -- This is a temporary procedure which is only meant to be called during upgrade
 CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
 LANGUAGE C
@@ -147,7 +159,7 @@ BEGIN
         END IF;
     ELSIF EXISTS (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE orig_username = role COLLATE sys.database_default)
     THEN
-        IF (((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' COLLATE sys.database_default) AND role COLLATE sys.database_default IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter'))
+        IF (((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' COLLATE sys.database_default) AND role COLLATE sys.database_default IN ('db_owner', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin'))
         THEN RETURN 1;
         ELSIF EXISTS (SELECT name FROM sys.user_token WHERE name = role COLLATE sys.database_default)
         THEN RETURN 1; -- Return 1 if current session user is a member of role or windows group
@@ -191,7 +203,7 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME()
-  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'guest') -- system users should always be visible
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
   OR pg_has_role(Ext.rolname, 'MEMBER')) -- Current user should be able to see users it has permission of
 UNION ALL
 SELECT
@@ -253,7 +265,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -285,7 +297,7 @@ BEGIN
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
-		AND Ext2.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		AND Ext2.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY Role_name, Users_in_role;
 	END
@@ -323,7 +335,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter')
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
@@ -1776,19 +1788,19 @@ $$
 BEGIN
 	-- Returns a list of the fixed database roles. 
 	IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IS NULL 
-		OR pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN ('db_owner', 'db_accessadmin', 'db_securityadmin', 'db_datareader', 'db_datawriter')
+		OR pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN ('db_owner', 'db_accessadmin', 'db_securityadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 	BEGIN
 		SELECT CAST(DbFixedRole as sys.SYSNAME) AS DbFixedRole, CAST(Description AS sys.nvarchar(70)) AS Description FROM (
 			VALUES ('db_owner', 'DB Owners'),
 			('db_accessadmin', 'DB Access Administrators'),
 			('db_securityadmin', 'DB Security Administrators'),
 			('db_datareader', 'DB Data Reader'),
-			('db_datawriter', 'DB Data Writer')) x(DbFixedRole, Description)
+			('db_datawriter', 'DB Data Writer'),
+			('db_ddladmin', 'DB DDL Administrators')) x(DbFixedRole, Description)
 			WHERE LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = DbFixedRole;
 	END
 	ELSE IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN (
-			'db_ddladmin', 'db_backupoperator',
-			'db_denydatareader', 'db_denydatawriter')
+			'db_backupoperator', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
 		-- Return an empty result set instead of raising an error
 		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
@@ -10194,6 +10206,142 @@ END;
 $body$
 LANGUAGE 'plpgsql'
 STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_renamedb(
+	IN "@objname" sys.SYSNAME,
+	IN "@newname" sys.SYSNAME
+)
+AS 'babelfishpg_tsql', 'sp_renamedb_internal'
+LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776) = NULL,
+	IN "@newname" sys.SYSNAME = NULL,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET @objtype = sys.TRIM(@objtype);
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	ELSE IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	ELSE IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	ELSE IF @objtype = 'DATABASE'
+		BEGIN
+			exec sys.sp_renamedb @objname, @newname;
+		END
+	ELSE
+		BEGIN
+			DECLARE @subname sys.nvarchar(776);
+			DECLARE @schemaname sys.nvarchar(776);
+			DECLARE @dbname sys.nvarchar(776);
+			DECLARE @curr_relname sys.nvarchar(776);
+			
+			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
+
+			DECLARE @currtype char(2);
+
+			IF @objtype = 'COLUMN'
+				BEGIN
+					DECLARE @col_count INT;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					IF @col_count < 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'CO';
+				END
+			ELSE IF @objtype = 'USERDATATYPE'
+				BEGIN
+					DECLARE @alias_count INT;
+					SELECT @alias_count = COUNT(*) FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND t1.name = @subname;
+					IF @alias_count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @alias_count < 1
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'AL';				
+				END
+			ELSE IF @objtype = 'OBJECT'
+				BEGIN
+					DECLARE @count INT;
+					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND o1.name = @subname;
+					SELECT @count = COUNT(*) FROM #tempTable;
+
+					IF @count < 1
+						BEGIN
+							-- sys.objects does not show routines which current user cannot execute but
+							-- roles like db_ddladmin allow renaming a procedure even though they cannot
+							-- execute it, so search again in pg_proc if count is zero
+							DROP TABLE #tempTable;
+							SELECT CAST(CASE 
+											WHEN p.prokind = 'p' THEN 'P'
+											WHEN p.prokind = 'a' THEN 'AF'
+											WHEN format_type(p.prorettype, NULL) = 'trigger' THEN 'TR'
+											ELSE 'FN'
+										END as sys.bpchar(2)) AS type INTO #tempTable
+							FROM pg_proc p INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id
+							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = @subname;
+							SELECT @count = COUNT(*) FROM #tempTable;
+						END
+					IF @count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @count < 1
+						BEGIN
+							-- TABLE TYPE: check if there is a match in sys.table_types (if we cannot alter sys.objects table_type naming)
+							SELECT @count = COUNT(*) FROM sys.table_types tt1 INNER JOIN sys.schemas s1 ON tt1.schema_id = s1.schema_id 
+							WHERE s1.name = @schemaname AND tt1.name = @subname;
+							IF @count > 1
+								BEGIN
+									THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+								END
+							ELSE IF @count < 1
+								BEGIN
+									THROW 33557097, N'There is no object with the given @objname.', 1;
+								END
+							ELSE
+								BEGIN
+									SET @currtype = 'TT'
+								END
+						END
+					IF @currtype IS NULL
+						BEGIN
+							SELECT @currtype = type from #tempTable;
+						END
+					IF @currtype = 'TR' OR @currtype = 'TA'
+						BEGIN
+							DECLARE @physical_schema_name sys.nvarchar(776) = '';
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
+							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
+							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+						END
+				END
+			ELSE
+				BEGIN
+					THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+				END
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
+		END
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_schedule (
   par_schedule_id integer,

@@ -76,9 +76,6 @@ del_ns_ext_info(const char *schemaname, bool missing_ok)
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 
-	if (get_namespace_oid(schemaname, missing_ok) == InvalidOid)
-		return;
-
 	rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	ScanKeyInit(&scanKey,
 				Anum_namespace_ext_namespace,
@@ -93,9 +90,10 @@ del_ns_ext_info(const char *schemaname, bool missing_ok)
 	{
 		systable_endscan(scan);
 		table_close(rel, RowExclusiveLock);
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not drop schema created under PostgreSQL dialect: \"%s\"", schemaname)));
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("Could not drop schema created under PostgreSQL dialect: \"%s\"", schemaname)));
 		return;
 	}
 
