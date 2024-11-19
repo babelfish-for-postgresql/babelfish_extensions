@@ -553,6 +553,8 @@ abc🙂defghi🙂🙂
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT LTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of ltrim function.)~~
@@ -561,6 +563,8 @@ GO
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT LTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type xml is invalid for argument 1 of ltrim function.)~~
@@ -569,6 +573,8 @@ GO
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT LTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of ltrim function.)~~
@@ -577,6 +583,8 @@ GO
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT LTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of ltrim function.)~~

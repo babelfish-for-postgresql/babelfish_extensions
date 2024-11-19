@@ -11,6 +11,11 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * final behaviour.
  */
 
+/* Helper function to update local variables dynamically during execution */
+CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
 -- This is a temporary procedure which is only meant to be called during upgrade
 CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
 LANGUAGE C

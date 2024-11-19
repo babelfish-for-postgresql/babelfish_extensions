@@ -62,7 +62,6 @@
 #include "guc.h"
 #include "multidb.h"
 #include "session.h"
-#include "guc.h"
 #include "catalog.h"
 
 uint64		rowcount_var = 0;
@@ -70,6 +69,7 @@ List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
 int			fetch_status_var = 0;
+int			saved_expr_kind = -1;
 
 typedef struct
 {
@@ -4368,6 +4368,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
 	es_cs_entry->next = exec_state_call_stack;
 	exec_state_call_stack = es_cs_entry;
+	saved_expr_kind = -1;
 }
 
 /* ----------
@@ -7858,12 +7859,22 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
+	if (saved_expr_kind == EXPRKIND_TARGET)
+	{
+		/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
+		prm->pflags = 0;
+	}
+	else
+	{
+		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
+		prm->pflags = PARAM_FLAG_CONST;
+	}
+
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
 		prm->value = (Datum) 0;
 		prm->isnull = true;
-		prm->pflags = 0;
 		prm->ptype = InvalidOid;
 		return prm;
 	}
@@ -7872,8 +7883,6 @@ pltsql_param_fetch(ParamListInfo params,
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
-	/* We can always mark params as "const" for executor's purposes */
-	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -10427,4 +10436,39 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(pltsql_assign_var);
+
+/*
+ * pltsql_assign_var - Helper function to update local variables dynamically during execution.
+ * Any statement which updates local variables as part of TargetList will be re-written using
+ * this function. for example,
+ * @var = expr will be re-written to @var=sys.pltsql_assign_var(dno, cast((expr) as type)).
+ */
+Datum
+pltsql_assign_var(PG_FUNCTION_ARGS)
+{
+	int dno = PG_GETARG_INT32(0);
+	Datum data = PG_GETARG_DATUM(1);
+	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	bool isNull = PG_ARGISNULL(1);
+	int32 valtypmod = -1;
+	PLtsql_datum *target;
+	MemoryContext oldcontext;
+
+	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+	oldcontext = MemoryContextSwitchTo(estate->datum_context);
+	target = estate->datums[dno];
+
+	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (isNull)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(data);
 }
