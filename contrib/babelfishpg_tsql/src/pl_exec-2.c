@@ -4108,7 +4108,8 @@ check_create_or_drop_permission_for_partition_specifier(const char *name, bool i
 	if (strncmp(login, get_owner_of_db(dbname), NAMEDATALEN) == 0)
 		login_is_db_owner = true;
 
-	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)))
+	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)) &&
+		!has_privs_of_role(GetUserId(), get_db_ddladmin_oid(dbname, false)))
 	{
 		if (is_create)
 			ereport(ERROR, 

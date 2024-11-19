@@ -2511,16 +2511,18 @@ get_owner_of_schema(const char *schema)
  * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
  */
 void
-exec_database_roles_subcmds(const char *schema, char *schema_owner)
+exec_database_roles_subcmds(const char *schema)
 {
 	StringInfoData	query;
 	char		*db_datareader;
 	char		*db_datawriter;
+	char		*db_ddladmin;
 	char		*dbo_role;
 	char		*db_owner;
-	const char	*dbname = get_cur_db_name();
+	char		*schema_owner;
+	const char	*dbname = get_current_pltsql_db_name();
 	List		*stmt_list;
-	int		expected_stmts = 2;
+	int 		expected_stmts = 4;
 	ListCell	*parsetree_item;
 	Node		*stmts;
 	int		i=0;
@@ -2529,25 +2531,23 @@ exec_database_roles_subcmds(const char *schema, char *schema_owner)
 
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
+	db_ddladmin = get_db_ddladmin_role_name(dbname);
 	dbo_role = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
-	/* If schema owner is not the dbo/db_owner role. */
-	if (schema_owner && strcmp(schema_owner, dbo_role) != 0 && strcmp(schema_owner, db_owner) != 0)
-	{
-		// do nothing
-	}
-	else
-	{
-		schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
-	}
+	schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
 
 	initStringInfo(&query);
 
+	/* Grant privileges to db_datareader */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	/* Grant privileges to db_datawriter */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+	/* Grant privileges to db_ddladmin */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
@@ -2561,6 +2561,11 @@ exec_database_roles_subcmds(const char *schema, char *schema_owner)
 
 	stmts = parsetree_nth_stmt(stmt_list, i++);
 	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_ddladmin, NULL);
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmts, schema, NULL, db_ddladmin, NULL);
 
 	PG_TRY();
 	{
@@ -2596,6 +2601,7 @@ exec_database_roles_subcmds(const char *schema, char *schema_owner)
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		pfree(db_datareader);
 		pfree(db_datawriter);
+		pfree(db_ddladmin);
 		pfree(dbo_role);
 		pfree(db_owner);
 	}

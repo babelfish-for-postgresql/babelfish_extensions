@@ -582,6 +582,7 @@ BABEL-5119
 dbcreator_role
 BABEL-5129
 db_accessadmin
+db_ddladmin
 db_securityadmin
 BABEL-CASE_EXPR
 charindex_replace_patindex

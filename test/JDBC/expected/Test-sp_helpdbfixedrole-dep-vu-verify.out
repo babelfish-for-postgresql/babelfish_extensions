@@ -7,6 +7,7 @@ db_accessadmin#!#DB Access Administrators
 db_securityadmin#!#DB Security Administrators
 db_datareader#!#DB Data Reader
 db_datawriter#!#DB Data Writer
+db_ddladmin#!#DB DDL Administrators
 ~~END~~
 
 
@@ -22,7 +23,7 @@ SELECT dbo.test_sp_helpdbfixedrole_func()
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 
@@ -30,7 +31,7 @@ SELECT * FROM test_sp_helpdbfixedrole_view
 GO
 ~~START~~
 int
-5
+6
 ~~END~~
 
 

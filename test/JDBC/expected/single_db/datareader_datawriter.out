@@ -284,7 +284,7 @@ go
 -- Insert the results of sp_helprole into the temporary table
 INSERT INTO #UserRoles EXEC sp_helprole;
 go
-~~ROW COUNT: 6~~
+~~ROW COUNT: 7~~
 
 -- Select the desired fields from the temporary table
 SELECT RoleName, IsAppRole FROM #UserRoles WHERE RoleName IN ('db_datareader', 'db_datawriter');
