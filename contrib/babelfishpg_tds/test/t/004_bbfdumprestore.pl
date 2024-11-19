@@ -65,6 +65,11 @@ my $tsql_newnode = new TDSNode($newnode);
 $tsql_newnode->init_tsql('test_master', 'testdb');
 $newnode->stop;
 
+# Setup pg16 node
+my $node16 =
+  PostgreSQL::Test::Cluster->new('node_16',
+	install_path => $ENV{installdir16});
+
 # Dump global objects using pg_dumpall. Note that we
 # need to use dump utilities from the new node here.
 $oldnode->start;
@@ -72,13 +77,13 @@ my @dumpall_command = (
 	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
 	'--port', $oldnode->port, '--roles-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump1_file);
-$newnode->command_ok(\@dumpall_command, 'Dump global objects.');
+$node16->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
 my @dump_command = (
 	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
 	'--port', $oldnode->port, '--verbose', '--dbname', 'testdb',
 	'--file', $dump2_file);
-$newnode->command_ok(\@dump_command, 'Dump Babelfish database.');
+$node16->command_ok(\@dump_command, 'Dump Babelfish database.');
 $oldnode->stop;
 
 # Retore the dumped files on the new server.

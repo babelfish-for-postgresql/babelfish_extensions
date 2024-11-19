@@ -152,7 +152,7 @@ GRANT EXECUTE ON babel_4768_s2.p1 TO babel_4768_u1
 go
 
 -- to test consistency in case of special characters in schema name
-CREATE SCHEMA babel_4768ログインαιώνια
+CREATE SCHEMA babel_4768ログイαιώνια
 GO
 
 CREATE SCHEMA [babel_4768 😎$chem@ #123 🌍rder]
@@ -161,10 +161,10 @@ GO
 CREATE SCHEMA [babel_4768유니코드스키마👻]
 GO
 
-CREATE TABLE babel_4768ログインαιώνια.t1 (a int)
+CREATE TABLE babel_4768ログイαιώνια.t1 (a int)
 go
 
-GRANT SELECT ON  babel_4768ログインαιώνια.t1 TO babel_4768_u1
+GRANT SELECT ON  babel_4768ログイαιώνια.t1 TO babel_4768_u1
 go
 
 CREATE TABLE "babel_4768 😎$chem@ #123 🌍rder".t1 (a int)

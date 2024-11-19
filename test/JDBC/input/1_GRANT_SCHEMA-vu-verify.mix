@@ -112,7 +112,7 @@ go
 REVOKE EXECUTE ON babel_4768_s2.p1 FROM babel_4768_u1
 go
 
-REVOKE SELECT ON babel_4768ログインαιώνια.t1 FROM babel_4768_u1
+REVOKE SELECT ON babel_4768ログイαιώνια.t1 FROM babel_4768_u1
 go
 
 REVOKE SELECT ON "babel_4768 😎$chem@ #123 🌍rder".t1 FROM babel_4768_u1

@@ -94,37 +94,4 @@ dump-restore-version: [[
     type: schema-cum-data-only
   }
 ]
-# TODO: 
-# [
-#   {
-#     version: 15.5,
-#     dump-data-as: copy,
-#     dump-format: tar,
-#     database-level: true,
-#     type: full
-#   },
-#   {
-#     version: 15.5,
-#     dump-data-as: copy,
-#     dump-format: tar,
-#     database-level: true,
-#     type: full
-#   }
-# ],
-# [
-#   {
-#     version: 16.1,
-#     dump-data-as: inserts,
-#     dump-format: custom,
-#     database-level: true,
-#     type: full
-#   },
-#   {
-#     version: 16.1,
-#     dump-data-as: inserts,
-#     dump-format: custom,
-#     database-level: true,
-#     type: full
-#   }
-# ]
 ]
