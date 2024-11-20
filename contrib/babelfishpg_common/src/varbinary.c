@@ -747,7 +747,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type varchar to "
+				 errmsg("Implicit conversion from data type nvarchar to "
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
@@ -925,28 +925,60 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	VarChar    *result;
 	char 	   *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
-	// int32		typmod = -1;
-	// int32		maxlen = -1;
+	int32		typmod = -1;
+	int32		maxlen = -1;
 	// coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
 	StringInfoData s;
+	int padding;
+	int paddedLen;
+	unsigned char* paddedData;
 
-	
+	if (PG_NARGS() > 1)
+	{
+		typmod = PG_GETARG_INT32(1);
+		maxlen = typmod - VARHDRSZ;
+	}
+
 	
 	/*
 	 * Cast the entire input binary data if maxlen is 
 	 * invalid or supplied data fits it
 	 * Else truncate it
 	 */
-	// NVARCHAR(UTF16)-> VARBINARY -> VARCHAR
 	PG_TRY();
 	{
+		if (maxlen < 0 || len <= maxlen)
+		{
+			initStringInfo(&s);
+			
+			if(len % 4 <= 2)
+				padding = (len % 4) % 4;
+			else
+				padding = (4- (len % 4)) % 4;
 
-		initStringInfo(&s);
-		TsqlUTF16toUTF8StringInfo(&s,data,len);
-		encoded_result = s.data;
-		encodedByteLen= s.len;
+    		paddedLen = len + padding;
+			paddedData = (unsigned char*)palloc(paddedLen);
+			memcpy(paddedData, data, len);
+			memset(paddedData + len, '\0', padding);
+
+			TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
+			pfree(paddedData);
+			encoded_result = s.data;
+			encodedByteLen= s.len;
+		}
+
+		else
+		{
+			initStringInfo(&s);
+			TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
+			encoded_result = s.data;
+			encodedByteLen= s.len;
+		}
+
+
+
 
 	}
 	PG_CATCH();
@@ -961,7 +993,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 		ereport(ERROR,
 			   (errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Failed to convert from data type varbinary to varchar, %s",
+				errmsg("Failed to convert from data type varbinary to nvarchar, %s",
 				errorData->message)));
 	}
 	PG_END_TRY();
