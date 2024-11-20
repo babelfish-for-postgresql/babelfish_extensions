@@ -152,7 +152,6 @@ babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
 check_for_inconsistent_metadata
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -433,7 +432,6 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -449,6 +447,7 @@ Test-sp_rename
 Test-sp_rename-dep
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText
