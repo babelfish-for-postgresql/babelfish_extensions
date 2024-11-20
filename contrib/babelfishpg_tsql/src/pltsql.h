@@ -1800,11 +1800,8 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_reset_tds_connection_flag) ();
 
 	bool		(*get_reset_tds_connection_flag) ();
-	char 		*(*get_authid_user_ext_schema_name) (const char *db_name, const char *user);
-	char		**(*fetch_func_input_arg_names) (HeapTuple func_tuple);
-	char 		**(*split_object_name) (char *name);
-	char        *(*construct_unique_hash)(char *relation_name);
-
+	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
+													char **tvp_type_name, char **tvp_type_schema_name);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2153,6 +2150,7 @@ extern void pltsql_read_procedure_info(StringInfo inout_str,
 void PLTsqlProcessTransaction(Node *parsetree,
 						            ParamListInfo params,
 						 			QueryCompletion *qc);
+extern void get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name);
 
 
 extern void PLTsqlStartTransaction(char *txnName);

@@ -1346,7 +1346,6 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 	TdsIoFunctionInfo tempFuncInfo;
 	uint16		paramOrdinal = 0;
 	int			retStatus;
-	char *proc_name;
 
 	while (offset < message->len)
 	{
@@ -1583,13 +1582,12 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			case TDS_TYPE_TABLE:
 				{
 					temp->tvpInfo = palloc0(sizeof(TvpData));
-					proc_name = request->name.data;
 
 					/*
 					 * Sets the col metadata and also the corresponding row
 					 * data.
 					 */
-					SetColMetadataForTvp(temp, message, &offset, proc_name);
+					SetColMetadataForTvp(temp, message, &offset, request->name.data);
 				}
 				break;
 			case TDS_TYPE_BINARY:
