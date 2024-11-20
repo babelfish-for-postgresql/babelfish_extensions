@@ -6058,14 +6058,27 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
  * 	@return - unmapped schema name char *
  */
 static const char *
-remove_db_name_in_schema(const char *schema_name)
+remove_db_name_in_schema(const char *object_name)
 {
+	char	**splited_object_name;
+	char	*db_name = NULL;
+	char	*schema_name = NULL;
+	char	*table_name = NULL;
+
+	splited_object_name = split_object_name(object_name);
+	// db_name = !strcmp(splited_object_name[1], "")? NULL : splited_object_name[1];
+	schema_name = !strcmp(splited_object_name[2], "")? NULL : splited_object_name[2];
+	// table_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
+
 	const char * cur_db_name = get_cur_db_name();
 	size_t db_name_len = strlen(cur_db_name);
+	
 	size_t prefix_len = db_name_len + 1;
 	if (strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 		// Return the part after the prefix
 		schema_name += prefix_len;
 	}
+	
+	
 	return schema_name;
 }
