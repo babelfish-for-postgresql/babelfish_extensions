@@ -112,6 +112,9 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
+	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
+	declare @truncated_ident sys.nvarchar(384);
+	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -154,8 +157,7 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-		where table_name like sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+		where table_name like @truncated_ident COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
@@ -204,8 +206,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-			where sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name)) = table_name collate database_default
+			where table_name = @truncated_ident collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
