@@ -143,7 +143,9 @@ CALL sys.babelfish_revoke_guest_from_mapped_logins();
  */
 DO $$
 BEGIN
-	EXECUTE format('REVOKE GRANT OPTION FOR CREATE ON DATABASE %s FROM bbf_role_admin; ', CURRENT_DATABASE());
+    SET babelfishpg_tsql.disable_storing_init_privs = TRUE;
+    EXECUTE format('REVOKE GRANT OPTION FOR CREATE ON DATABASE %s FROM bbf_role_admin; ', CURRENT_DATABASE());
+    RESET babelfishpg_tsql.disable_storing_init_privs;
 END;
 $$ LANGUAGE plpgsql;
 

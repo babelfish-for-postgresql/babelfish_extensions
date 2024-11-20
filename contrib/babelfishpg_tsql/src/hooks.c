@@ -28,6 +28,7 @@
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
+#include "commands/extension.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -186,6 +187,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static bool check_store_init_privs_flag(void);
 
 /*****************************************
  * 			Replication Hooks
@@ -513,6 +515,8 @@ InstallExtendedHooks(void)
 	pltsql_get_object_owner_hook = pltsql_get_object_owner;
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
+
+	pltsql_check_store_init_privs_flag_hook = check_store_init_privs_flag;
 }
 
 void
@@ -588,6 +592,7 @@ UninstallExtendedHooks(void)
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
+	pltsql_check_store_init_privs_flag_hook = NULL;
 }
 
 /*****************************************
@@ -5844,4 +5849,15 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 		return true;
 
 	return false;
+}
+
+static bool
+check_store_init_privs_flag(void)
+{
+	if (!(creating_extension &&
+		OidIsValid(CurrentExtensionObject) &&
+		CurrentExtensionObject == get_extension_oid("babelfishpg_tsql", true)))
+		return false;
+
+	return pltsql_disable_storing_init_privs;
 }

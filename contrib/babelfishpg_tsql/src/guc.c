@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "commands/explain.h"
+#include "commands/extension.h"
 #include "parser/scansup.h"		/* downcase_identifier */
 #include "utils/guc.h"
 #include "miscadmin.h"
@@ -69,6 +70,7 @@ char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
+bool		pltsql_disable_storing_init_privs = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -610,6 +612,22 @@ assign_datefirst(int newval, void *extra)
 {
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
+}
+
+static void
+assign_disable_storing_init_privs(bool newval, void *extra)
+{
+	if (superuser())
+		return;
+
+	if (newval == pltsql_disable_storing_init_privs)
+		return;
+
+	if (!creating_extension ||
+		(OidIsValid(CurrentExtensionObject) && CurrentExtensionObject != get_extension_oid("babelfishpg_tsql", true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script")));
 }
 
 void
@@ -1232,6 +1250,16 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.disable_storing_init_privs",
+							 gettext_noop("Disable storing initial privileges while "
+										  "CREATE/ALTER Babelfish TSQL extension"),
+							 NULL,
+							 &pltsql_disable_storing_init_privs,
+							 false,
+							 PGC_USERSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, assign_disable_storing_init_privs, NULL);
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;

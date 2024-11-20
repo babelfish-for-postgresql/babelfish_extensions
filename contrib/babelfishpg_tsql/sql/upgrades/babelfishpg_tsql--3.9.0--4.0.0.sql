@@ -31,6 +31,7 @@ $$
     end;
 $$;
 
+
 -- Give bbf_role_admin privileges on every Babelfish role
 DO
 LANGUAGE plpgsql
@@ -45,7 +46,11 @@ BEGIN
             RAISE EXCEPTION 'Role "bbf_role_admin" already exists.';
     ELSE
         EXECUTE format('CREATE ROLE bbf_role_admin WITH CREATEDB CREATEROLE INHERIT PASSWORD NULL');
+
+        SET babelfishpg_tsql.disable_storing_init_privs = TRUE;
         EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
+        RESET babelfishpg_tsql.disable_storing_init_privs;
+
         CALL sys.babel_initialize_logins('bbf_role_admin');
         FOR temprow IN
         SELECT rolname FROM sys.babelfish_authid_login_ext WHERE rolname != 'bbf_role_admin' UNION SELECT rolname FROM sys.babelfish_authid_user_ext
@@ -56,6 +61,7 @@ BEGIN
     END IF;
 END;
 $$;
+
 
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT

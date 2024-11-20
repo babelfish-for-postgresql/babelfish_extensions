@@ -2346,4 +2346,6 @@ extern void init_special_function_list(void);
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
+extern bool pltsql_disable_storing_init_privs;
+
 #endif							/* PLTSQL_H */
