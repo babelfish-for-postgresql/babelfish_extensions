@@ -947,16 +947,20 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	 * invalid or supplied data fits it
 	 * Else truncate it
 	 */
+
 	PG_TRY();
 	{
 		if (maxlen < 0 || len <= maxlen)
 		{
 			initStringInfo(&s);
-			
-			if(len % 4 <= 2)
-				padding = (len % 4) % 4;
-			else
-				padding = (4- (len % 4)) % 4;
+
+			if((2 * len) % 4 > 0)
+			{
+				if(len % 4 <= 2)
+					padding = (len % 4);
+				else
+					padding = (4- (len % 4)) % 4;
+			}
 
     		paddedLen = len + padding;
 			paddedData = (unsigned char*)palloc(paddedLen);
