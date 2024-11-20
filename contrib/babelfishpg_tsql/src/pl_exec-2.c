@@ -885,6 +885,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	else
 		estate->schema_name = NULL;
 
+	/*
+	 * We need to disable the explain gucs incase of sp_reset_connection
+	 * execution otherwise we will get explain output for it which is
+	 * not intended.
+	 */
+	if (strcmp(stmt->proc_name, "sp_reset_connection") == 0)
+	{
+		pltsql_explain_only = false;
+		pltsql_explain_analyze = false;
+	}
+
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
 	{
