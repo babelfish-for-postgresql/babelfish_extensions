@@ -217,7 +217,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
-#forjsonauto-before-16_5 TODO: BABEL-5413
+forjsonauto-before-16_5
 format
 format-dep
 forxml
@@ -448,6 +448,7 @@ Test-sp_rename
 Test-sp_rename-dep
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText
