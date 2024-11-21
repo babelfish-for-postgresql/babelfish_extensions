@@ -931,8 +931,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
 	StringInfoData s;
-	int padding;
-	int paddedLen;
+	int paddedLen = len;
 	unsigned char* paddedData;
 
 	if (PG_NARGS() > 1)
@@ -954,38 +953,49 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 		{
 			initStringInfo(&s);
 
-			// if((2 * len) % 4 > 0)
-			// {
-			// 	if(len % 4 <= 2)
-			// 		padding = (len % 4);
-			// 	else
-			// 		padding = (4- (len % 4)) % 4;
-			// }
-			if(len%2 != 0)
+			if(len % 2 != 0)
 			{
-			paddedLen = len + 1;
-			paddedData = (unsigned char*)palloc(paddedLen);
-			memcpy(paddedData, data, len);
-			memset(paddedData + len, '\0', 1)
+				paddedLen = len + 1;
+				paddedData = (unsigned char*)palloc(paddedLen);
+				memcpy(paddedData, data, len);
+				memset(paddedData + len, '\0', 1);
+
+				TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
+				pfree(paddedData);
+				encoded_result = s.data;
+				encodedByteLen= s.len;
+			}
+			else 
+			{
+				TsqlUTF16toUTF8StringInfo(&s,data,len);
+				encoded_result = s.data;
+				encodedByteLen= s.len;
 			}
 
-			// paddedLen = len + padding;
-			// paddedData = (unsigned char*)palloc(paddedLen);
-			// memcpy(paddedData, data, len);
-			// memset(paddedData + len, '\0', padding);
-
-			TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
-			pfree(paddedData);
-			encoded_result = s.data;
-			encodedByteLen= s.len;
 		}
 
 		else
 		{
-			initStringInfo(&s);
-			TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
-			encoded_result = s.data;
-			encodedByteLen= s.len;
+
+			if(maxlen % 2 != 0)
+			{
+				paddedLen = maxlen + 1;
+				paddedData = (unsigned char*)palloc(paddedLen);
+				memcpy(paddedData, data, maxlen);
+				memset(paddedData + maxlen, '\0', 1);
+
+				TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
+				pfree(paddedData);
+				encoded_result = s.data;
+				encodedByteLen= s.len;
+			}
+			else 
+			{
+				TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
+				encoded_result = s.data;
+				encodedByteLen= s.len;
+			}
+
 		}
 
 
