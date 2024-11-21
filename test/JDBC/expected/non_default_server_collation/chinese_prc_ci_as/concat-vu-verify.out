@@ -421,7 +421,7 @@ SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS cha
 GO
 ~~START~~
 nvarchar
-ab🙂🙂def比尔hijklmnopqrstuvwxyzABCDEFGHIJKLMefOPQRST🙂🙂VWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcdefg
+ab🙂🙂def比尔hijklmnopqrstuvwxyzABCDEFGHIJKLM晥OPQRST🙂🙂VWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcde杦
 ~~END~~
 
 
@@ -1247,16 +1247,16 @@ SELECT CONCAT(col_nvarchar, col_varbinary) from babel_3409_concat_t1 ORDER BY id
 GO
 ~~START~~
 nvarchar
-abcab
-🙂defghicd
-🙂🙂ef
-比尔·拉gh
-莫斯ip
+abc扡
+🙂defghi摣
+🙂🙂晥
+比尔·拉桧
+莫斯灩
 
 
-Anikaitqr
+Anikait牱
 
-Agrawalrs
+Agrawal獲
 ~~END~~
 
 
@@ -1596,7 +1596,7 @@ SELECT babel_3409_concat_dep_func2()
 GO
 ~~START~~
 nvarchar
-abcababcabc
+abc扡abcabc
 ~~END~~
 
 
