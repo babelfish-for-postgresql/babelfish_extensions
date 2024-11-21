@@ -2530,10 +2530,27 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 	schema_name = splited_object_name[2];
 	*proc_name = splited_object_name[3];
 
+	/* downcase identifier if needed */
+	if (pltsql_case_insensitive_identifiers)
+	{
+		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
+		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
+		*proc_name = downcase_identifier(*proc_name, strlen(*proc_name), false, false);
+		for (int j = 0; j < 4; j++)
+			pfree(splited_object_name[j]);
+	}
+	else
+		pfree(splited_object_name[0]);
+
+	pfree(splited_object_name);
+
+	/* truncate identifiers if needed */
+	truncate_tsql_identifier(db_name);
+	truncate_tsql_identifier(schema_name);
+	truncate_tsql_identifier(*proc_name);
+
 	if (!strcmp(db_name, ""))
 		db_name = curr_db;
-	else
-		db_name = downcase_truncate_identifier(db_name, strlen(db_name), true);
 
 	if (!strcmp(schema_name, ""))
 	{
@@ -2541,21 +2558,17 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 		const char *user = get_user_for_database(db_name);
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
-	else
-	{
-		schema_name = downcase_truncate_identifier(schema_name, strlen(schema_name), true);
-	}
-
-	/* Downcase and truncate identifier if needed. */
-	*proc_name = downcase_truncate_identifier(*proc_name, strlen(*proc_name), true);
 
 	/* Get physical schema name from logical schema name. */
 	physical_sch_name = get_physical_schema_name(db_name, schema_name);
 	/* Get namespace oid from physical schema name. */
 	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
 
-	return obj_schema_oid;
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_sch_name);
 
+	return obj_schema_oid;
 }
 
 /*
