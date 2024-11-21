@@ -489,9 +489,6 @@ ignore#!#pgr_zzz_clean_up
 # Ignoring some test temporarily to get clean tests
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
-ignore#!#BABEL-4046-vu-prepare
-ignore#!#BABEL-4046-vu-verify
-ignore#!#BABEL-4046-vu-cleanup
 ignore#!#babel_collection
 ignore#!#four-part-names-vu-prepare
 ignore#!#four-part-names-vu-verify

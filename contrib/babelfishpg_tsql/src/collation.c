@@ -1010,6 +1010,7 @@ pltsql_predicate_transformer(Node *expr)
 
 	if (IsA(expr, OpExpr))
 	{
+		expr = expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
 		/* Singleton predicate */
 		return transform_likenode(expr);
 	}
