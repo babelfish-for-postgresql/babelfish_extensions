@@ -73,20 +73,40 @@
 #Q#Select * from t5
 #D#int
 5
+#Q#create table t6(a int)
+#Q#create schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t6 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5
+#Q#Select * from t6
+#D#int
+5
+#Q#create table t7(a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t7 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#Select * from t7
+#D#int
+5
 #Q#drop procedure proc1
 #Q#drop procedure proc2
 #Q#drop procedure test_tvp1.proc1
 #Q#drop procedure test_tvp2.proc2
 #Q#drop procedure test_tvp2.proc3
 #Q#drop procedure test_tvp2.proc4
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
 #Q#drop table t
 #Q#drop table tab1
 #Q#drop table t2
 #Q#drop table t3
 #Q#drop table t4
 #Q#drop table t5
+#Q#drop table t6
+#Q#drop table t7
 #Q#drop type t1
 #Q#drop type test_tvp1.t1
 #Q#drop type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+#Q#drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
 #Q#drop schema test_tvp1
 #Q#drop schema test_tvp2
+#Q#drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong

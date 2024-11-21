@@ -549,7 +549,10 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 		else if (i == 2)
 		{
 			target_arg_name = temp->paramMeta.colName.data;
-
+			/*
+			 * Fetch the TVP typeName and schemaName from catalog search
+			 * based on object name.
+			 */
 			pltsql_plugin_handler_ptr->get_tvp_typename_typeschemaname(proc_name,
 																	target_arg_name,
 																	&tvp_type_name,

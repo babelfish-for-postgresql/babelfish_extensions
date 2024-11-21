@@ -2532,7 +2532,7 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 	if (!strcmp(schema_name, ""))
 	{
-		/* Find the default schema for current user and get physical schema name */
+		/* Find the default schema for current user and get physical schema name. */
 		const char *user = get_user_for_database(db_name);
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
@@ -2541,9 +2541,13 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 		schema_name = downcase_truncate_identifier(schema_name, strlen(schema_name), true);
 	}
 
-	/* Get physical schema name from logical schema name */
+	/* Downcase and truncate identifier if needed. */
+	*proc_name = downcase_truncate_identifier(*proc_name, strlen(*proc_name), true);
+	db_name = downcase_truncate_identifier(db_name, strlen(db_name), true);
+
+	/* Get physical schema name from logical schema name. */
 	physical_sch_name = get_physical_schema_name(db_name, schema_name);
-	/* Get namespace oid from physical schema name */
+	/* Get namespace oid from physical schema name. */
 	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
 
 	return obj_schema_oid;
@@ -2561,7 +2565,7 @@ get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted
 
 	/*
 	 * Search pg_proc for the procedure by name in the specified namespace and
-	 * return the argument type, if the targeted argument name matches
+	 * return the argument type, if the targeted argument name matches.
 	 */
 	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 
@@ -2625,7 +2629,7 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 
 	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
-	/* check if user have right permission on object */
+	/* Check if user have right permission on object. */
 	if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
 	{
 		Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);

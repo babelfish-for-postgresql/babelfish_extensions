@@ -1580,14 +1580,15 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				}
 				break;
 			case TDS_TYPE_TABLE:
-				{
+				{	char *proc_name;
+					proc_name = request->name.data;
 					temp->tvpInfo = palloc0(sizeof(TvpData));
 
 					/*
 					 * Sets the col metadata and also the corresponding row
 					 * data.
 					 */
-					SetColMetadataForTvp(temp, message, &offset, request->name.data);
+					SetColMetadataForTvp(temp, message, &offset, proc_name);
 				}
 				break;
 			case TDS_TYPE_BINARY:
