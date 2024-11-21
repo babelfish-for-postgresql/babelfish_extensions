@@ -558,10 +558,9 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 																	&tvp_type_name,
 																	&tvp_type_schema_name);
 			temp->len += strlen(tvp_type_schema_name);
-			temp->tvpInfo->tvpTypeSchemaName = tvp_type_schema_name;
+			temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvp_type_schema_name);
 
-			if (tvp_type_schema_name)
-				pfree(tvp_type_schema_name);
+			pfree(tvp_type_schema_name);
 
 			temp->len += strlen(tvp_type_name);
 			temp->tvpInfo->tvpTypeName = tvp_type_name;
