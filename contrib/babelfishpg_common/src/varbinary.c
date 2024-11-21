@@ -954,18 +954,25 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 		{
 			initStringInfo(&s);
 
-			if((2 * len) % 4 > 0)
+			// if((2 * len) % 4 > 0)
+			// {
+			// 	if(len % 4 <= 2)
+			// 		padding = (len % 4);
+			// 	else
+			// 		padding = (4- (len % 4)) % 4;
+			// }
+			if(len%2 != 0)
 			{
-				if(len % 4 <= 2)
-					padding = (len % 4);
-				else
-					padding = (4- (len % 4)) % 4;
-			}
-
-    		paddedLen = len + padding;
+			paddedLen = len + 1;
 			paddedData = (unsigned char*)palloc(paddedLen);
 			memcpy(paddedData, data, len);
-			memset(paddedData + len, '\0', padding);
+			memset(paddedData + len, '\0', 1)
+			}
+
+			// paddedLen = len + padding;
+			// paddedData = (unsigned char*)palloc(paddedLen);
+			// memcpy(paddedData, data, len);
+			// memset(paddedData + len, '\0', padding);
 
 			TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
 			pfree(paddedData);
