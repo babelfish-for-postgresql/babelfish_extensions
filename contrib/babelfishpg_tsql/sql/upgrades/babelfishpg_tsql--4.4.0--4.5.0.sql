@@ -54,6 +54,7 @@ BEGIN
 END;
 $$;
 
+
 /* Helper function to update local variables dynamically during execution */
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
 RETURNS ANYELEMENT
