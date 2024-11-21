@@ -385,6 +385,10 @@ END
 GO
 
 -- Creating index on date
+-- FIX ME: Following test cases are for the index
+-- created on date column, which will not choose 
+-- index clause when comparison between date 
+-- and smalldatetime.
 CREATE TABLE date_smalldatetime_cmp_t1 (
     date_col DATE
 )
