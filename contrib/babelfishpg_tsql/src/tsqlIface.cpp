@@ -7341,7 +7341,7 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 					}
 					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s %s %s)",
 										nse->itemno,
-										::getFullText(elem->LOCAL_ID()).c_str(),
+										delimitIfAtAtUserVarName(::getFullText(elem->LOCAL_ID())).c_str(),
 										rewrite_assign_operator(anode),
 										rewrite_assignment_expression(var, elem->expression()));
 
