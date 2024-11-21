@@ -2640,5 +2640,5 @@ update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grante
 	AccessPriv	*granted_rolespec = make_accesspriv_node(granted_role);
 	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
 
-	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec), NULL);
+	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec));
 }
