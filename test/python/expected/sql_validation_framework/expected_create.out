@@ -10,6 +10,7 @@ Could not find tests for function sys.babelfish_try_cast_floor_bigint
 Could not find tests for function sys.babelfish_try_cast_floor_int
 Could not find tests for function sys.babelfish_try_cast_floor_smallint
 Could not find tests for function sys.babelfish_try_cast_to_any
+Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
 Could not find tests for function sys.columns_internal
@@ -103,6 +104,7 @@ Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_try_cast_to_any
+Could not find upgrade tests for function sys.bbf_is_role_member
 Could not find upgrade tests for function sys.bbf_pivot
 Could not find upgrade tests for function sys.bbf_xmlexist
 Could not find upgrade tests for function sys.ceiling
