@@ -2404,3 +2404,47 @@ GO
 
 drop table ident_tst
 GO
+
+create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i = id, @j = @i * 2, @i = @j
+select @i, @j
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Babelfish does not support assignment to the same variable in SELECT. variable name: "@i")~~
+
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i += id, @j = @i * 2
+select @i, @j
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int
+7#!#14
+~~END~~
+
+
+select * from local_var_tst order by id
+GO
+~~START~~
+int
+3
+4
+~~END~~
+
+
+drop table local_var_tst
+GO

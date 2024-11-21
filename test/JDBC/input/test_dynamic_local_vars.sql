@@ -1253,3 +1253,26 @@ GO
 
 drop table ident_tst
 GO
+
+create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i = id, @j = @i * 2, @i = @j
+select @i, @j
+GO
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i += id, @j = @i * 2
+select @i, @j
+GO
+
+select * from local_var_tst order by id
+GO
+
+drop table local_var_tst
+GO
