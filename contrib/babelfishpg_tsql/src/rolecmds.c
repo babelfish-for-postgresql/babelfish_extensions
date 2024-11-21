@@ -35,6 +35,7 @@
 #include "commands/seclabel.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
+#include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
@@ -75,6 +76,7 @@ static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char *netbios);
 static void validateFQDN(char *fqdn);
+static void drop_db_owner_related_roles(Oid roleid, const char* rolname);
 
 static Oid bbf_admin_oid = InvalidOid;
 static Oid securityadmin_oid = InvalidOid;
@@ -463,6 +465,8 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
+
+	drop_db_owner_related_roles(roleid, NameStr(rolname));
 }
 
 static void
@@ -1740,48 +1744,90 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (new_user_name)
 	{
-		StringInfoData query;
-		List	   *parsetree_list;
-		Node	   *n;
-		PlannedStmt *wrapper;
+		StringInfoData	query;
+		List		*parsetree_list;
+		ListCell	*parsetree_item;
+		Node		*n;
+		int		expected_stmts = 1;
+
+		Oid 	db_owner_id, old_username_id;
+		char	*old_obj_rolname = NULL;
+		char	*new_obj_rolname = NULL;
+		bool	is_db_owner_member = false;
 
 		initStringInfo(&query);
 		appendStringInfo(&query, "ALTER ROLE dummy RENAME TO dummy; ");
 
+		db_owner_id = get_role_oid(get_db_owner_name(get_cur_db_name()), false);
+		old_username_id = get_role_oid(stmt->role->rolename, false);
+
+		/*
+		 * If user is member of db_owner role, we will also have to
+		 * rename the associated internal object owning role as well
+		 */
+		if (is_member_of_role(old_username_id, db_owner_id))
+		{
+			old_obj_rolname = get_obj_role(stmt->role->rolename);
+			new_obj_rolname = get_obj_role(physical_name);
+
+			appendStringInfo(&query, "ALTER ROLE dummy RENAME TO dummy; ");
+
+			is_db_owner_member = true;
+			expected_stmts++;
+		}
+
 		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-		if (list_length(parsetree_list) != 1)
+		if (list_length(parsetree_list) != expected_stmts)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("Expected 1 statement but get %d statements after parsing",
-							list_length(parsetree_list))));
+					 errmsg("Expected %d statement but got %d statements after parsing",
+							expected_stmts, list_length(parsetree_list))));
 
 		/* Update the dummy statement with real values */
 		n = parsetree_nth_stmt(parsetree_list, 0);
 
 		update_RenameStmt(n, stmt->role->rolename, physical_name);
 
-		/* Run the built query */
-		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = n;
-		wrapper->stmt_location = -1;
-		wrapper->stmt_len = -1;
+		if (is_db_owner_member)
+		{
+			n = parsetree_nth_stmt(parsetree_list, 1);
+			update_RenameStmt(n, old_obj_rolname, new_obj_rolname);
+		}
 
-		/* do this step */
-		ProcessUtility(wrapper,
-					   "(ALTER ROLE )",
-					   false,
-					   PROCESS_UTILITY_SUBCOMMAND,
-					   NULL,
-					   NULL,
-					   None_Receiver,
-					   NULL);
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(ALTER ROLE )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
 
 		pfree(query.data);
 		pfree(physical_name);
+
+		if (old_obj_rolname)
+			pfree(old_obj_rolname);
+
+		if (new_obj_rolname)
+			pfree(new_obj_rolname);
 	}
 }
 
@@ -1948,6 +1994,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 {
 	Oid			granted;
 	Oid			grantee;
+	Oid			db_owner;
 	const char *granted_name;
 	const char *grantee_name;
 	const char *original_user_name;
@@ -1972,15 +2019,23 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	granted_name = granted_spec->rolename;
 	granted = get_role_oid(granted_name, false);
 
-	original_user_name = get_authid_user_ext_original_name(granted_name, db_name);
+	original_user_name = get_authid_user_ext_original_name(granted_name, db_name, false);
 	Assert(original_user_name);
+
+	db_owner = get_db_owner_oid(db_name, false);
 
 	/* only members of db_owner can alter drop members of fixed db roles */
 	if (IS_FIXED_DB_PRINCIPAL(original_user_name) &&
-	    !has_privs_of_role(GetUserId(), get_db_owner_oid(db_name, false)))
+	    !has_privs_of_role(GetUserId(), db_owner))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", original_user_name)));
+
+	/*
+	 * Members of db_owner role can ALTER ANY ROLE
+	 */
+	if (has_privs_of_role(GetUserId(), db_owner))
+		return;
 
 	/*
 	 * Disallow ALTER ROLE if
@@ -2071,7 +2126,7 @@ role_id(PG_FUNCTION_ARGS)
 }
 
 /*
- * Internal function for IS_MEMBER and IS_ROLEMEMBER
+ * Internal function for IS_ROLEMEMBER
  */
 PG_FUNCTION_INFO_V1(is_rolemember);
 Datum
@@ -2135,25 +2190,27 @@ is_rolemember(PG_FUNCTION_ARGS)
 	if (role_oid == principal_oid)
 		PG_RETURN_INT32(1);
 
+	db_owner_name = get_db_owner_name(cur_db_name);
+	db_owner_oid = get_role_oid(db_owner_name, false);
+
 	/*
 	 * Return NULL if given role is not a real role, or if current user
 	 * doesn't directly/indirectly have privilges over the given role and
-	 * principal. Note that if given principal is current user, we'll always
-	 * have permissions.
+	 * principal. Note that if given principal is current user or current
+	 * user is member of db_owner role, we'll always have permissions.
 	 */
 	if (get_db_principal_kind(role_oid, cur_db_name) != BBF_ROLE ||
 		((principal_oid != cur_user_oid) &&
 		 (!has_privs_of_role(cur_user_oid, role_oid) ||
-		  !has_privs_of_role(cur_user_oid, principal_oid))))
+		  !has_privs_of_role(cur_user_oid, principal_oid)) &&
+		  !has_privs_of_role(cur_user_oid, db_owner_oid)))
 		PG_RETURN_NULL();
 
 	/*
 	 * Recursively check if the given principal is a member of the role, not
 	 * considering superuserness
 	 */
-	db_owner_name = get_db_owner_name(cur_db_name);
 	dbo_role_name = get_dbo_role_name(cur_db_name);
-	db_owner_oid = get_role_oid(db_owner_name, false);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
 	
 	pfree(cur_db_name);
@@ -2741,4 +2798,454 @@ bbf_is_member_of_role_nosuper(PG_FUNCTION_ARGS)
 	result = is_member_of_role_nosuper(member, role);
 
 	PG_RETURN_BOOL(result);
+}
+
+char*
+get_obj_role(const char *rolname)
+{
+	StringInfoData rolname_obj;
+
+	initStringInfo(&rolname_obj);
+
+	appendStringInfoString(&rolname_obj, rolname);
+	appendStringInfoString(&rolname_obj, "_obj");
+
+	truncate_tsql_identifier(rolname_obj.data);
+
+	return rolname_obj.data;
+}
+
+/*
+ * Helper function to generate "ALTER ROLE db_owner ADD MEMBER ..." subcommands.
+ */
+static List
+*gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
+{
+	StringInfoData	query;
+	List		*stmt_list;
+	Node		*stmt;
+	int		expected_stmts = 7;
+	int		i = 0;
+	int		schemas = 0;
+	const char	*db_owner_role = get_db_owner_role_name(dbname);
+	char		*rolname_obj = get_obj_role(rolname);
+	HeapTuple	tuple;
+	SysScanDesc	sscan;
+	ScanKeyData	skey;
+	Relation	rel;
+
+	initStringInfo(&query);
+
+	truncate_tsql_identifier(rolname_obj);
+
+	appendStringInfoString(&query, "CREATE ROLE dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+
+	/* We will first transfer ownership of all the schemas owned by user */
+	rel = table_open(NamespaceRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_namespace_nspowner,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(get_role_oid(rolname, false)));
+
+	sscan = systable_beginscan(rel, InvalidOid, false, NULL, 1, &skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
+	{
+		char		  *schema_name;
+		Form_pg_namespace namespaceform;
+
+		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
+		schema_name = pstrdup(NameStr(namespaceform->nspname));
+
+		appendStringInfo(&query, "ALTER SCHEMA %s OWNER TO %s; ", schema_name, rolname_obj);
+
+		schemas++;
+	}
+
+	systable_endscan(sscan);
+	table_close(rel, AccessShareLock);
+
+	/* Ownership of rest of the objects will be taken care of by REASSIGN OWNED */
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+
+	expected_stmts += schemas;
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_CreateRoleStmt(stmt, rolname_obj, NULL, NULL);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj, db_owner_role);
+
+	i += schemas;
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_ReassignOwnedStmt(stmt, rolname, rolname_obj);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, db_owner_role, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, get_dbo_role_name(dbname), rolname);
+
+	pfree(query.data);
+
+	if (rolname_obj)
+		pfree(rolname_obj);
+
+	return stmt_list;
+}
+
+/*
+ * Helper function to generate "ALTER ROLE db_owner DROP MEMBER ..." subcommands.
+ */
+static List
+*gen_alter_dbowner_drop_subcmds(const char *rolname, const char* dbname)
+{
+	StringInfoData query;
+	List		*stmt_list;
+	Node		*stmt;
+	int			expected_stmts = 7;
+	int			i = 0;
+	int			schemas = 0;
+	const char	*db_owner_role = get_db_owner_role_name(dbname);
+	char		*rolname_obj = get_obj_role(rolname);
+	HeapTuple	tuple;
+	SysScanDesc sscan;
+	ScanKeyData skey;
+	Relation	rel;
+
+	initStringInfo(&query);
+
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
+	appendStringInfoString(&query, "REVOKE dummy FROM dummy; ");
+
+	/* We will first transfer ownership of all the schemas owned by user */
+	rel = table_open(NamespaceRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_namespace_nspowner,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(get_role_oid(rolname_obj, false)));
+
+	sscan = systable_beginscan(rel, InvalidOid, false,
+							   NULL, 1, &skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
+	{
+		char		  *schema_name;
+		Form_pg_namespace namespaceform;
+
+		namespaceform = (Form_pg_namespace) GETSTRUCT(tuple);
+		schema_name = pstrdup(NameStr(namespaceform->nspname));
+
+		appendStringInfo(&query, "ALTER SCHEMA %s OWNER TO %s; ", schema_name, rolname);
+
+		schemas++;
+	}
+
+	systable_endscan(sscan);
+	table_close(rel, AccessShareLock);
+
+	/* Ownership of rest of the objects will be taken care of by REASSIGN OWNED */
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy; ");
+	appendStringInfoString(&query, "DROP OWNED BY dummy CASCADE; ");
+	appendStringInfoString(&query, "DROP ROLE dummy; ");
+
+	expected_stmts += schemas;
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, get_dbo_role_name(dbname), rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, db_owner_role, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname, db_owner_role);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantRoleStmtByName(stmt, rolname_obj, rolname);
+
+	i += schemas;
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_ReassignOwnedStmt(stmt, rolname_obj, rolname);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropOwnedStmt(stmt, list_make1(rolname_obj));
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, rolname_obj);
+
+	pfree(query.data);
+
+	if (rolname_obj)
+		pfree(rolname_obj);
+
+	return stmt_list;
+}
+
+/*
+ * Helper function to execute "ALTER ROLE db_owner ADD/DROP MEMBER ..."
+ * subcommands using ProcessUtility(). Caller should make sure
+ * their inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_alter_dbowner_subcmds(GrantRoleStmt *stmt)
+{
+	List		*parsetree_list;
+	ListCell	*parsetree_item;
+	RoleSpec	*grantee = linitial(stmt->grantee_roles);
+
+	const char *rolname = grantee->rolename;
+	const char *dbname = get_cur_db_name();
+
+	if (stmt->is_grant)
+		parsetree_list = gen_alter_dbowner_add_subcmds(rolname, dbname);
+	else
+		parsetree_list = gen_alter_dbowner_drop_subcmds(rolname, dbname);
+
+	/* Run all subcommands */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Node	    *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					INTERNAL_ALTER_ROLE,
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+
+		CommandCounterIncrement();
+	}
+}
+
+bool
+is_grantee_role_db_owner(GrantRoleStmt *stmt)
+{
+	if ((list_length(stmt->grantee_roles) == 1) && (list_length(stmt->granted_roles) == 1))
+	{
+		AccessPriv *granted = linitial(stmt->granted_roles);
+
+		if (strcmp(granted->priv_name, get_db_owner_role_name(get_cur_db_name())) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+void
+change_object_owner_if_db_owner()
+{
+	Oid		dbo_id = InvalidOid;
+	StringInfoData	query;
+	char		*rolname = NULL;
+	char 		*obj_rolname = NULL;
+	char		*cur_db_name = NULL;
+	Oid		role_oid = GetUserId();
+	List		*parsetree_list;
+	Node		*n;
+	PlannedStmt 	*wrapper;
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
+
+	cur_db_name = get_cur_db_name();
+	dbo_id = get_dbo_oid(cur_db_name, true);
+
+	/* Don't change object owner if current user is dbo */
+	if (role_oid == dbo_id || dbo_id == InvalidOid)
+		return;
+
+	rolname = GetUserNameFromId(role_oid, true);
+
+	if (!rolname)
+		return;
+
+	if (!user_exists_for_db(cur_db_name, rolname))
+		return;
+
+	if (!is_member_of_role(role_oid, get_db_owner_oid(cur_db_name, false)))
+		return;
+
+	obj_rolname = get_obj_role(rolname);
+
+	initStringInfo(&query);
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
+
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("Expected 1 statement but got %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	n = parsetree_nth_stmt(parsetree_list, 0);
+	update_ReassignOwnedStmt(n, rolname, obj_rolname);
+
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = n;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+					"(REASSIGN OWNED )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+
+	CommandCounterIncrement();
+
+	pfree(query.data);
+
+	if (obj_rolname)
+		pfree(obj_rolname);
+}
+
+PG_FUNCTION_INFO_V1(bbf_is_role_member);
+
+/*
+ * The bbf_is_role_memeber function will check if a user (u1) is member of a role (r1):
+ * - If role is not a member of db_owner, we will check if u1 is member of r1 role
+ * - If role is a member of db_owner, we will check if u1 is member of r1_obj role
+ */
+Datum
+bbf_is_role_member(PG_FUNCTION_ARGS)
+{
+	char	*username;
+	char	*rolename;
+
+	Oid	db_owner_id;
+	Oid	username_id;
+	Oid	rolename_id;
+
+	char	*dbname = get_cur_db_name();
+
+	username = NameStr(*PG_GETARG_NAME(0));
+	rolename = NameStr(*PG_GETARG_NAME(1));
+
+	db_owner_id = get_role_oid(get_db_owner_name(dbname), false);
+	username_id = get_role_oid(username, false);
+	rolename_id = get_role_oid(rolename, false);
+
+	if (is_member_of_role(rolename_id, db_owner_id))
+	{
+		Oid	obj_rolname_id = get_role_oid(get_obj_role(rolename), false);
+
+		PG_RETURN_BOOL(is_member_of_role(username_id, obj_rolname_id));
+	}
+	else
+	{
+		PG_RETURN_BOOL(is_member_of_role(username_id, rolename_id));
+	}
+}
+
+/*
+ * This helper function will first check if user is member of
+ * db_owner role. If it is, then we will attempt drop the linked
+ * "_obj" role. If it is not, this function will do nothing.
+ */
+static void
+drop_db_owner_related_roles(Oid roleid, const char* rolname)
+{
+	Oid	db_owner_id;
+	char	*obj_rolname = NULL;
+
+	db_owner_id = get_db_owner_oid(get_cur_db_name(), false);
+
+	if (is_member_of_role(roleid, db_owner_id) && (roleid != InvalidOid))
+	{
+		StringInfoData	query;
+		List		*parsetree_list;
+		Node		*n;
+		PlannedStmt	*wrapper;
+
+		initStringInfo(&query);
+		appendStringInfo(&query, "DROP ROLE dummy; ");
+
+		obj_rolname = get_obj_role(rolname);
+
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+		if (list_length(parsetree_list) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Expected 1 statement but got %d statements after parsing",
+							list_length(parsetree_list))));
+
+		/* Update the dummy statement with real values */
+		n = parsetree_nth_stmt(parsetree_list, 0);
+		update_DropRoleStmt(n, obj_rolname);
+
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = n;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					   "(DROP DATABASE )",
+					   false,
+					   PROCESS_UTILITY_SUBCOMMAND,
+					   NULL,
+					   NULL,
+					   None_Receiver,
+					   NULL);
+
+		pfree(query.data);
+		pfree(obj_rolname);
+	}
 }

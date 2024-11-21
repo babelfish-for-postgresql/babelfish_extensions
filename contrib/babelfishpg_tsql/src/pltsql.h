@@ -1992,6 +1992,7 @@ extern bool insert_bulk_check_constraints;
 #define ALTER_DEFAULT_PRIVILEGES "(ALTER DEFAULT PRIVILEGES )"
 #define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
 #define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
+#define INTERNAL_ALTER_ROLE "(ALTER ROLE ADD )"
 
 /* FIXED DB PRINCIPALS */
 #define DBO "dbo"
@@ -2215,6 +2216,8 @@ extern AccessPriv *make_accesspriv_node(const char *priv_name);
 extern RoleSpec   *make_rolespec_node(const char *rolename);
 extern void throw_error_for_fixed_db_role(char *rolname, char *dbname);
 extern void pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func);
+extern void update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role);
+extern void update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
