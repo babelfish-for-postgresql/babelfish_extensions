@@ -4,6 +4,8 @@ DECLARE @curr_date date;
 SET @curr_date = '12/01/1999';
 SELECT FORMAT(@curr_date, 'dd/yy/MM', 'dz-BT');
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
@@ -54,6 +56,8 @@ DECLARE @curr_datetime datetime;
 SET @curr_datetime = '1753-01-01 00:00:00.123';
 SELECT FORMAT(@curr_datetime, 'dd/yy/MM', 'dz-BT');
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
@@ -104,6 +108,8 @@ DECLARE @curr_datetime_2 datetime2;
 SET @curr_datetime_2 = '0001-01-01 00:00:00.123';
 SELECT FORMAT(@curr_datetime_2, 'dd/yy/MM', 'dz-BT');
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
