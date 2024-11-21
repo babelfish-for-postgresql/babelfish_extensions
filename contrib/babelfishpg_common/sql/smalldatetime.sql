@@ -487,12 +487,15 @@ DEFAULT FOR TYPE sys.SMALLDATETIME USING btree AS
     OPERATOR    3   =  (sys.SMALLDATETIME, sys.SMALLDATETIME),
     OPERATOR    4   >= (sys.SMALLDATETIME, sys.SMALLDATETIME),
     OPERATOR    5   >  (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    FUNCTION    1   sys.smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME),
-    OPERATOR    1   <  (sys.SMALLDATETIME, date),
-    OPERATOR    2   <= (sys.SMALLDATETIME, date),
-    OPERATOR    3   =  (sys.SMALLDATETIME, date),
-    OPERATOR    4   >= (sys.SMALLDATETIME, date),
-    OPERATOR    5  >  (sys.SMALLDATETIME, date),
+    FUNCTION    1   sys.smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME);
+
+CREATE OPERATOR CLASS sys.smalldatetime_date_ops
+FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
+    OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
+    OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
+    OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
+    OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
+    OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
     FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
 
 CREATE OPERATOR CLASS sys.smalldatetime_ops

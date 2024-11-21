@@ -24,133 +24,217 @@ text
 off
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-SELECT set_config('enable_bitmapscan', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
 
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE);
+-- seq scan
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-13' AS DATE);
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-13' AS DATE)
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-13'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 281.035 ms
+Babelfish T-SQL Batch Parsing Time: 197.069 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-09-30' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-15' AS DATE);
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-09-30' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-15' AS DATE)
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col = '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-15'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.208 ms
+Babelfish T-SQL Batch Parsing Time: 0.186 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-17' AS DATE);
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-17' AS DATE)
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col < '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-17'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.763 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-13' AS DATE) <> smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-13' AS DATE) <> smalldatetime_col
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col > '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-13'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.499 ms
+Babelfish T-SQL Batch Parsing Time: 13.503 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-15' AS DATE) <> smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-15' AS DATE) <> smalldatetime_col
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col <= '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-15'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.209 ms
+Babelfish T-SQL Batch Parsing Time: 0.213 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) <> smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) <> smalldatetime_col
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col >= '2023-08-31'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-17'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE);
+-- index scan
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE);
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE)
 Aggregate
   ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+        Index Cond: (smalldatetime_col < '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.451 ms
+Babelfish T-SQL Batch Parsing Time: 5.790 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-14' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-14' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col <= '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.088 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-18' AS DATE) AND smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-18' AS DATE) AND smalldatetime_col >= CAST('2023-06-16' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col <= '2023-06-18'::date) AND (smalldatetime_col >= '2023-06-16'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.311 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-06-17' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-06-17' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.231 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-06-16' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.121 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-06-16' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.186 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.629 ms
 ~~END~~
 
 
@@ -166,23 +250,135 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.297 ms
+Babelfish T-SQL Batch Parsing Time: 6.699 ms
 ~~END~~
 
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE);
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) > smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE)
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) > smalldatetime_col
 Aggregate
   ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Filter: (smalldatetime_col <> '2023-08-31'::date)
+        Index Cond: (smalldatetime_col < '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.675 ms
+Babelfish T-SQL Batch Parsing Time: 6.965 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) >= smalldatetime_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) >= smalldatetime_col
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col <= '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col AND CAST('2023-06-18' AS DATE) >= smalldatetime_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col AND CAST('2023-06-18' AS DATE) >= smalldatetime_col
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.542 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) = smalldatetime_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) = smalldatetime_col
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.424 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) < smalldatetime_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) < smalldatetime_col
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.707 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE)
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -191,15 +387,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p1
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-13' AS DATE)
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: (smalldatetime_col <> '2023-06-13'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.314 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -208,15 +404,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p2
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-09-30' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-15' AS DATE)
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: (smalldatetime_col = '2023-09-30'::date)
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: (smalldatetime_col <> '2023-06-15'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
 ~~END~~
 
 
@@ -225,15 +421,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p3
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-09-30' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-17' AS DATE)
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: (smalldatetime_col < '2023-09-30'::date)
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: (smalldatetime_col <> '2023-06-17'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.198 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -242,15 +438,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p4
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-09-30' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-13' AS DATE) <> smalldatetime_col
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: (smalldatetime_col > '2023-09-30'::date)
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: ('2023-06-13'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.259 ms
 ~~END~~
 
 
@@ -259,15 +455,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p5
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-15' AS DATE) <> smalldatetime_col
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: (smalldatetime_col <= '2023-09-30'::date)
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: ('2023-06-15'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -276,15 +472,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p6
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-08-31' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) <> smalldatetime_col
   ->  Aggregate
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: (smalldatetime_col >= '2023-08-31'::date)
+        ->  Seq Scan on smalldate_date_cmp_t1
+              Filter: ('2023-06-17'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.201 ms
+Babelfish T-SQL Batch Parsing Time: 0.184 ms
 ~~END~~
 
 
@@ -293,15 +489,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p7
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-08-31' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE)
   ->  Aggregate
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Filter: (smalldatetime_col <> '2023-08-31'::date)
+              Index Cond: (smalldatetime_col < '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.201 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -310,15 +506,15 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p8
-  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-08-31' AS DATE) AND CAST('2023-09-30' AS DATE)
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-14' AS DATE)
   ->  Aggregate
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-              Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+              Index Cond: (smalldatetime_col <= '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.234 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -327,6 +523,91 @@ GO
 ~~START~~
 text
 Query Text: EXEC test_smalldatetime_date_p9
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-18' AS DATE) AND smalldatetime_col >= CAST('2023-06-16' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: ((smalldatetime_col <= '2023-06-18'::date) AND (smalldatetime_col >= '2023-06-16'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.218 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p10;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p10
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-06-17' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p11;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p11
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-06-16' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p12;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p12
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-06-16' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p13;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p13
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE)
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.312 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p14;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p14
   Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
   ->  Aggregate
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
@@ -335,7 +616,109 @@ Query Text: EXEC test_smalldatetime_date_p9
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.154 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p15;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p15
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) > smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col < '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.267 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p16;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p16
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) >= smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col <= '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.266 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p17;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p17
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col AND CAST('2023-06-18' AS DATE) >= smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.220 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p18;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p18
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) = smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.190 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p19;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p19
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) < smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.247 ms
+~~END~~
+
+
+EXEC test_smalldatetime_date_p20;
+GO
+~~START~~
+text
+Query Text: EXEC test_smalldatetime_date_p20
+  Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col
+  ->  Aggregate
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+              Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -345,13 +728,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v1
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-13'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.062 ms
+Babelfish T-SQL Batch Parsing Time: 0.737 ms
 ~~END~~
 
 
@@ -361,13 +744,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v2
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col = '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-15'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -377,13 +760,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v3
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col < '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: (smalldatetime_col <> '2023-06-17'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -393,13 +776,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v4
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col > '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-13'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -409,13 +792,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v5
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col <= '2023-09-30'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-15'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -425,13 +808,13 @@ GO
 text
 Query Text: SELECT * FROM test_smalldatetime_date_v6
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: (smalldatetime_col >= '2023-08-31'::date)
+  ->  Seq Scan on smalldate_date_cmp_t1
+        Filter: ('2023-06-17'::date <> smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -442,12 +825,12 @@ text
 Query Text: SELECT * FROM test_smalldatetime_date_v7
 Aggregate
   ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Filter: (smalldatetime_col <> '2023-08-31'::date)
+        Index Cond: (smalldatetime_col < '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -458,12 +841,12 @@ text
 Query Text: SELECT * FROM test_smalldatetime_date_v8
 Aggregate
   ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
-        Index Cond: ((smalldatetime_col >= '2023-08-31'::date) AND (smalldatetime_col <= '2023-09-30'::date))
+        Index Cond: (smalldatetime_col <= '2023-06-14'::date)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -474,23 +857,977 @@ text
 Query Text: SELECT * FROM test_smalldatetime_date_v9
 Aggregate
   ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col <= '2023-06-18'::date) AND (smalldatetime_col >= '2023-06-16'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v10;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v10
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v11;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v11
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v12;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v12
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v13;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v13
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v14;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v14
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
         Index Cond: (smalldatetime_col IS NULL)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v15;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v15
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col < '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v16;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v16
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col <= '2023-06-14'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v17;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v17
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: ((smalldatetime_col >= '2023-06-16'::date) AND (smalldatetime_col <= '2023-06-18'::date))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v18;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v18
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col = '2023-06-17'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v19;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v19
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col > '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v20;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_smalldatetime_date_v20
+Aggregate
+  ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1
+        Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f1();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f1()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f2();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f2()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f3();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f3()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f4();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f4()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f5();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f5()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f6();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f6()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f7();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f7()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f8();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f8()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f9();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f9()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f10();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f10()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f11();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f11()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f12();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f12()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f13();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f13()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f14();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f14()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f15();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f15()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f16();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f16()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f17();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f17()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f18();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f18()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.131 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f19();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f19()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
+~~END~~
+
+
+SELECT test_smalldatetime_date_f20();
+GO
+~~START~~
+text
+Query Text: SELECT test_smalldatetime_date_f20()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
-SELECT test_smalldatetime_date_f1();
+-- seq scan
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-13' AS DATE);
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-15' AS DATE);
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <> CAST('2023-06-17' AS DATE);
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-13' AS DATE) <> smalldatetime_col;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-15' AS DATE) <> smalldatetime_col;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) <> smalldatetime_col;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+-- index scan
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-14' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-18' AS DATE) AND smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-06-17' AS DATE);
 GO
 ~~START~~
 int
 0
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) > smalldatetime_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-14' AS DATE) >= smalldatetime_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col AND CAST('2023-06-18' AS DATE) >= smalldatetime_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) = smalldatetime_col;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) < smalldatetime_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-16' AS DATE) <= smalldatetime_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC test_smalldatetime_date_p1;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p2;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p3;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p4;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p5;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p6;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+EXEC test_smalldatetime_date_p7;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p8;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p9;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p10;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC test_smalldatetime_date_p11;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p12;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p13;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC test_smalldatetime_date_p15;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p16;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p17;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p18;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC test_smalldatetime_date_p19;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_smalldatetime_date_p20;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v1;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v2;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v3;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v4;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v5;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v6;
+GO
+~~START~~
+int
+100020
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v7;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v8;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v9;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v10;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v11;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v12;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v13;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v15;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v16;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v17;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v18;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v19;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_smalldatetime_date_v20;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f1();
+GO
+~~START~~
+int
+100020
 ~~END~~
 
 
@@ -498,7 +1835,7 @@ SELECT test_smalldatetime_date_f2();
 GO
 ~~START~~
 int
-0
+100020
 ~~END~~
 
 
@@ -506,7 +1843,7 @@ SELECT test_smalldatetime_date_f3();
 GO
 ~~START~~
 int
-10000
+100020
 ~~END~~
 
 
@@ -514,7 +1851,7 @@ SELECT test_smalldatetime_date_f4();
 GO
 ~~START~~
 int
-0
+100020
 ~~END~~
 
 
@@ -522,7 +1859,7 @@ SELECT test_smalldatetime_date_f5();
 GO
 ~~START~~
 int
-10000
+100020
 ~~END~~
 
 
@@ -530,7 +1867,7 @@ SELECT test_smalldatetime_date_f6();
 GO
 ~~START~~
 int
-0
+100020
 ~~END~~
 
 
@@ -538,7 +1875,7 @@ SELECT test_smalldatetime_date_f7();
 GO
 ~~START~~
 int
-10000
+10
 ~~END~~
 
 
@@ -546,7 +1883,7 @@ SELECT test_smalldatetime_date_f8();
 GO
 ~~START~~
 int
-0
+10
 ~~END~~
 
 
@@ -554,7 +1891,95 @@ SELECT test_smalldatetime_date_f9();
 GO
 ~~START~~
 int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f10();
+GO
+~~START~~
+int
 0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f11();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f12();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f13();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f14();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f15();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f16();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f17();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f18();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT test_smalldatetime_date_f19();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_smalldatetime_date_f20();
+GO
+~~START~~
+int
+10
 ~~END~~
 
 
@@ -565,23 +1990,10 @@ text
 on
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-SELECT set_config('enable_bitmapscan', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
 
 -- psql
-ANALYZE master_dbo.smalldate_date_cmp_t2;
+-- tests for index on date column
+ANALYZE master_dbo.date_smalldatetime_cmp_t1;
 GO
 
 -- tsql
@@ -606,58 +2018,1843 @@ text
 off
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-SELECT set_config('enable_bitmapscan', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
 
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
-SELECT COUNT(*) FROM smalldate_date_cmp_t2 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE);
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-13' AS SMALLDATETIME);
 GO
 ~~START~~
 text
-Query Text: SELECT COUNT(*) FROM smalldate_date_cmp_t2 WHERE smalldatetime_col <= CAST('2023-09-30' AS DATE) AND smalldatetime_col >= CAST('2023-08-31' AS DATE)
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-13' AS SMALLDATETIME)
 Aggregate
-  ->  Index Only Scan using smalldate_date_cmp_ind2smalldat4c549f48a1bc5e5f6920677e03332728 on smalldate_date_cmp_t2
-        Index Cond: ((smalldatetime_col <= '2023-09-30'::date) AND (smalldatetime_col >= '2023-08-31'::date))
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-13 00:00:00'::smalldatetime(0) without time zone)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.268 ms
+Babelfish T-SQL Batch Parsing Time: 0.496 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-15' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-15' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-15 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-17' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-17' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.262 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-13' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-13' AS SMALLDATETIME) <> date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-13 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-15' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-15' AS SMALLDATETIME) <> date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-15 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) <> date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col < CAST('2023-06-14' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col < CAST('2023-06-14' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col < '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.210 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-14' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-14' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <= '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-18' AS SMALLDATETIME) AND date_col >= CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-18' AS SMALLDATETIME) AND date_col >= CAST('2023-06-16' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ((date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone) AND (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.224 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col = CAST('2023-06-17' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col = CAST('2023-06-17' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col = '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col > CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col > CAST('2023-06-16' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col > '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.269 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col >= CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col >= CAST('2023-06-16' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.246 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ((date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone) AND (date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.201 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) > date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) > date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone > date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) >= date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) >= date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone >= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col AND CAST('2023-06-18' AS SMALLDATETIME) >= date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col AND CAST('2023-06-18' AS SMALLDATETIME) >= date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col) AND ('2023-06-18 00:00:00'::smalldatetime(0) without time zone >= date_col))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.353 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) = date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) = date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone = date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) < date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) < date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone < date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME);
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME)
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ((date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone) AND (date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p1;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p1
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-13' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col <> '2023-06-13 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.182 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p2;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p2
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-15' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col <> '2023-06-15 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p3;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p3
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-17' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col <> '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p4;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p4
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-13' AS SMALLDATETIME) <> date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-13 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p5;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p5
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-15' AS SMALLDATETIME) <> date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-15 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p6;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p6
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) <> date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p7;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p7
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col < CAST('2023-06-14' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col < '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p8;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p8
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-14' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col <= '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p9;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p9
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-18' AS SMALLDATETIME) AND date_col >= CAST('2023-06-16' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ((date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone) AND (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p10;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p10
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col = CAST('2023-06-17' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col = '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p11;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p11
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col > CAST('2023-06-16' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col > '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p12;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p12
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col >= CAST('2023-06-16' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p13;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p13
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME)
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ((date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone) AND (date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p15;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p15
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) > date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone > date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p16;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p16
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) >= date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone >= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p17;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p17
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col AND CAST('2023-06-18' AS SMALLDATETIME) >= date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: (('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col) AND ('2023-06-18 00:00:00'::smalldatetime(0) without time zone >= date_col))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.219 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p18;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p18
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) = date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone = date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p19;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p19
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) < date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone < date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.169 ms
+~~END~~
+
+
+EXEC test_date_smalldatetime_p20;
+GO
+~~START~~
+text
+Query Text: EXEC test_date_smalldatetime_p20
+  Query Text: SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col
+  ->  Aggregate
+        ->  Seq Scan on date_smalldatetime_cmp_t1
+              Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v1;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v1
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-13 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v2;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v2
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-15 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v3;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v3
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <> '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v4;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v4
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-13 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v5;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v5
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-15 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v6;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v6
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone <> date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v7;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v7
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col < '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v8;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v8
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col <= '2023-06-14 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v9;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v9
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ((date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone) AND (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v10;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v10
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col = '2023-06-17 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v11;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v11
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col > '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.082 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v12;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v12
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v13;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v13
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ((date_col >= '2023-06-16 00:00:00'::smalldatetime(0) without time zone) AND (date_col <= '2023-06-18 00:00:00'::smalldatetime(0) without time zone))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v15;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v15
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone > date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v16;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v16
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-14 00:00:00'::smalldatetime(0) without time zone >= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v17;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v17
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: (('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col) AND ('2023-06-18 00:00:00'::smalldatetime(0) without time zone >= date_col))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v18;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v18
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-17 00:00:00'::smalldatetime(0) without time zone = date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v19;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v19
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone < date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v20;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM test_date_smalldatetime_v20
+Aggregate
+  ->  Seq Scan on date_smalldatetime_cmp_t1
+        Filter: ('2023-06-16 00:00:00'::smalldatetime(0) without time zone <= date_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f1();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f1()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f2();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f2()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f3();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f3()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f4();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f4()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f5();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f5()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f6();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f6()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f7();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f7()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f8();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f8()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f9();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f9()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f10();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f10()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f11();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f11()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f12();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f12()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f13();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f13()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f15();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f15()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f16();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f16()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f17();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f17()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f18();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f18()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f19();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f19()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
+~~END~~
+
+
+SELECT test_date_smalldatetime_f20();
+GO
+~~START~~
+text
+Query Text: SELECT test_date_smalldatetime_f20()
+Result
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-13' AS SMALLDATETIME);
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-15' AS SMALLDATETIME);
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <> CAST('2023-06-17' AS SMALLDATETIME);
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-13' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-15' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) <> date_col;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col < CAST('2023-06-14' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-14' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col <= CAST('2023-06-18' AS SMALLDATETIME) AND date_col >= CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col = CAST('2023-06-17' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col > CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col >= CAST('2023-06-16' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) > date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-14' AS SMALLDATETIME) >= date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col AND CAST('2023-06-18' AS SMALLDATETIME) >= date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-17' AS SMALLDATETIME) = date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) < date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE CAST('2023-06-16' AS SMALLDATETIME) <= date_col;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COUNT(*) FROM date_smalldatetime_cmp_t1 WHERE date_col BETWEEN CAST('2023-06-16' AS SMALLDATETIME) AND CAST('2023-06-18' AS SMALLDATETIME);
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p1;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+EXEC test_date_smalldatetime_p2;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+EXEC test_date_smalldatetime_p3;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+EXEC test_date_smalldatetime_p4;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+EXEC test_date_smalldatetime_p5;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+EXEC test_date_smalldatetime_p6;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+EXEC test_date_smalldatetime_p7;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p8;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p9;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p10;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p11;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p12;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p13;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p15;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p16;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p17;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p18;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p19;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC test_date_smalldatetime_p20;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v1;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v2;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v3;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v4;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v5;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v6;
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v7;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v8;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v9;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v10;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v11;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v12;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v13;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v15;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v16;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v17;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v18;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v19;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT * FROM test_date_smalldatetime_v20;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f1();
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT test_date_smalldatetime_f2();
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT test_date_smalldatetime_f3();
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT test_date_smalldatetime_f4();
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT test_date_smalldatetime_f5();
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT test_date_smalldatetime_f6();
+GO
+~~START~~
+int
+100010
+~~END~~
+
+
+SELECT test_date_smalldatetime_f7();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f8();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f9();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f10();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f11();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f12();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f13();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f15();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f16();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f17();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f18();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f19();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT test_date_smalldatetime_f20();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-GO
-~~START~~
-text
-on
-~~END~~
-
-SELECT set_config('enable_seqscan', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-SELECT set_config('enable_bitmapscan', 'on', false);
 GO
 ~~START~~
 text

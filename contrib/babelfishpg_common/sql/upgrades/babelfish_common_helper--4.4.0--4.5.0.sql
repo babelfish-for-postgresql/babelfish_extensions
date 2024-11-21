@@ -12,37 +12,20 @@ RETURNS INT4
 AS 'timestamp_cmp_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-create or replace function get_bbf_smalldatetime_ops_count(opffamily varchar) returns int as $$
-	begin
-		return (select count(*) FROM pg_am am, pg_opfamily opf, pg_amop amop WHERE 
-			opf.opfmethod = am.oid AND amop.amopfamily = opf.oid and opf.opfname = opffamily);
-	end; 
-$$ LANGUAGE plpgsql;
-
+-- Opartor class for smalldatetime_ops to incorporate various operator between smalldatetime and date for Index scan
 DO $$
-    DECLARE bbf_smalldatetime_ops_c INT:=(select * from get_bbf_smalldatetime_ops_count('smalldatetime_ops'));
 BEGIN
-	IF bbf_smalldatetime_ops_c = 6 then
-		-- PG will create operator family when creating operator class for bbf_smalldatetime_ops
-		-- when didn't assign a operator family when creating
-		ALTER OPERATOR FAMILY sys.smalldatetime_ops USING btree ADD
-			OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
-			OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
-			OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
-			OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
-			OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
-			FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
-	else 
-		if bbf_smalldatetime_ops_c = 11 THEN
-			raise notice 'operator of bbf_smalldatetime_ops is installed';
-		else 
-			raise exception 'wrong operator numbers in bbf_smalldatetime_ops';
-		END IF;
-	END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-drop function get_bbf_smalldatetime_ops_count(varchar);
+IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid WHERE opc.opcname = 'smalldatetime_date_ops' AND opc.opcnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys') AND opf.opfname = 'smalldatetime_ops') THEN
+CREATE OPERATOR CLASS sys.smalldatetime_date_ops
+FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
+    OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
+    OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
+    OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
+    OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
+    OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
+    FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
+END IF;
+END $$;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
