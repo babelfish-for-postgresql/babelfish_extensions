@@ -102,7 +102,6 @@ PG_FUNCTION_INFO_V1(binaryfloat8);
 
 #define MAX_BINARY_SIZE 8000
 #define ROWVERSION_SIZE 8
-bool IS_UTF16 = false;
 
 static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -762,7 +761,6 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 		TsqlUTF8toUTF16StringInfo(&s, data, len);
 		encoded_data = s.data;
 		encodedByteLen= s.len;
-		IS_UTF16 = true;
 
 	}
 	PG_CATCH();
@@ -927,10 +925,9 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = -1;
 	int32		maxlen = -1;
-	// coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
-	StringInfoData s;
+	StringInfoData 		s;
 	int paddedLen = len;
 	unsigned char* paddedData;
 
@@ -976,9 +973,9 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 		else
 		{
-				TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
-				encoded_result = s.data;
-				encodedByteLen= s.len;
+			TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
+			encoded_result = s.data;
+			encodedByteLen= s.len;
 		}
 
 

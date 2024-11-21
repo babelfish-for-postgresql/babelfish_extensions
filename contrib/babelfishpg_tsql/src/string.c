@@ -40,7 +40,6 @@ static int	round_float_char(char *float_char, int round_pos, int has_neg_sign);
 static int	find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digits, int input_deci_digits, int input_deci_point, int deci_sig);
 static Datum return_varchar_pointer(char *buf, int size);
 
-
 /*
  * Hashbytes implementation
  *
@@ -63,13 +62,13 @@ hashbytes(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(in);
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
 	bytea	   *result;
-	StringInfoData utf16_data;
+	StringInfoData 		utf16_data;
 
 	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
 		(common_utility_plugin_ptr->tsql_utf8_to_utf16)(&utf16_data, data, len);
-        data = (const uint8 *) utf16_data.data;
-        len = utf16_data.len;
+		data = (const uint8 *) utf16_data.data;
+		len = utf16_data.len;
 	}
 
 	if (strcasecmp(algorithm, "MD2") == 0)
