@@ -2511,14 +2511,17 @@ get_owner_of_schema(const char *schema)
 	return result;
 }
 
-/* Find namespace oid of a procedure based on proc name. */
+/*
+ * get_proc_namespace_oid
+ * Find namespace oid of a procedure based on proc name.
+ */
 static Oid
 get_proc_namespace_oid(char **proc_name, char *curr_db)
 {
 	char *physical_sch_name;
 	char *db_name;
 	char *schema_name;
-	char	  **splited_object_name;
+	char **splited_object_name;
 	Oid obj_schema_oid = InvalidOid;
 
 	/* Resolve the three part name. */
@@ -2529,10 +2532,12 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 	if (!strcmp(db_name, ""))
 		db_name = curr_db;
+	else
+		db_name = downcase_truncate_identifier(db_name, strlen(db_name), true);
 
 	if (!strcmp(schema_name, ""))
 	{
-		/* Find the default schema for current user and get physical schema name. */
+		/* Find the default schema for current user. */
 		const char *user = get_user_for_database(db_name);
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
@@ -2543,7 +2548,6 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 	/* Downcase and truncate identifier if needed. */
 	*proc_name = downcase_truncate_identifier(*proc_name, strlen(*proc_name), true);
-	db_name = downcase_truncate_identifier(db_name, strlen(db_name), true);
 
 	/* Get physical schema name from logical schema name. */
 	physical_sch_name = get_physical_schema_name(db_name, schema_name);
@@ -2554,6 +2558,14 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 
 }
 
+/*
+ * get_proargtypes_oid
+ * Given a procedure name, namespace,
+ * user ID, and target argument name
+ * return the OID of the argument's type in the procedure.
+ *
+ * Returns InvalidOid if no matching procedure argument is found.
+ */
 static Oid
 get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
 {
@@ -2561,12 +2573,10 @@ get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted
 	CatCList   *catlist;
 	Oid matched_type = InvalidOid;
 
+	/* Downcase and truncate identifier if needed. */
 	targeted_arg_name = downcase_truncate_identifier(targeted_arg_name, strlen(targeted_arg_name), true);
 
-	/*
-	 * Search pg_proc for the procedure by name in the specified namespace and
-	 * return the argument type, if the targeted argument name matches.
-	 */
+	/* First search in pg_proc by name. */
 	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 
 	for (int i = 0; i < catlist->n_members; i++)
@@ -2576,12 +2586,15 @@ get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted
 		tuple = &catlist->members[i]->tuple;
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 
+		/* Then consider only procs in specified namespace. */
 		if (procform->pronamespace == pronamespace &&
 			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
+			/* Get the list of proargames and corresponding proargtypes oids. */
 			char **proargnames = fetch_func_input_arg_names(tuple);
 			Oid *proargtypes = procform->proargtypes.values;
 
+			/* Find the typeoid corresponding to target TVP argument. */
 			for (int j = 0; j < procform->pronargs; j++)
 			{
 				if (strcmp(proargnames[j], targeted_arg_name) == 0)
@@ -2603,6 +2616,11 @@ get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted
 	return matched_type;
 }
 
+/*
+ * get_tvp_typename_typeschemaname
+ * Retrieves the type name and schema name of a Table-Valued Parameter (TVP)
+ * for a given stored procedure and argument name.
+ */
 void
 get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name)
 {
@@ -2614,17 +2632,17 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 	Oid 			typnamespace_oid = InvalidOid;
 	char 			*typnamespace;
 	char 			*curr_db;
-	MemoryContext oldContext;
+	MemoryContext 	oldContext;
 
 	if (!xactStarted)
 		StartTransactionCommand();
-	user_id = GetSessionUserId();
+	user_id = GetUserId();
 	curr_db = get_cur_db_name();
 
 	/* Get procedure namespaceid. */
 	obj_schema_oid = get_proc_namespace_oid(&proc_name, curr_db);
 
-	/* Fetch proargtype value of our targeted variable */
+	/* Fetch proargtype value of our targeted variable. */
 	tvp_proargtype = get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
 
 	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
@@ -2642,8 +2660,6 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 		MemoryContextSwitchTo(oldContext);
 		ReleaseSysCache(tuple);
 	}
-
-	pfree(curr_db);
 
 	if(!xactStarted)
 		CommitTransactionCommand();
