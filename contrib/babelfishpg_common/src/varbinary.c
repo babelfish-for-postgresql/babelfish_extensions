@@ -949,7 +949,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		if (maxlen < 0 || len <= maxlen)
+		if (maxlen < 0 || (len) <= (maxlen*2))
 		{
 			initStringInfo(&s);
 
@@ -976,26 +976,9 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 		else
 		{
-
-			if(maxlen % 2 != 0)
-			{
-				paddedLen = maxlen + 1;
-				paddedData = (unsigned char*)palloc(paddedLen);
-				memcpy(paddedData, data, maxlen);
-				memset(paddedData + maxlen, '\0', 1);
-
-				TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
-				pfree(paddedData);
-				encoded_result = s.data;
-				encodedByteLen= s.len;
-			}
-			else 
-			{
 				TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
 				encoded_result = s.data;
 				encodedByteLen= s.len;
-			}
-
 		}
 
 
