@@ -2457,7 +2457,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Check if the member oid is already a member of given role oid */
-		if (is_member_of_role_nosuper(role_oid, member_oid))
+		if (is_member_of_role_nosuper(role_oid, member_oid) && role_oid != get_db_owner_oid(db_name, false))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("Cannot make a role a member of itself.")));
