@@ -9,4 +9,8 @@ ignore#!#BABEL-CROSS-DB
 ignore#!#BABEL-SYS-DATABASES
 ignore#!#Test-sp_reset_connection
 ignore#!#test_search_path
+ignore#!#db_owner-vu-prepare
+ignore#!#db_owner-vu-verify
+ignore#!#db_owner-vu-cleanup
+
 

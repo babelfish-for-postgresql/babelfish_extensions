@@ -85,6 +85,10 @@ extern bool windows_domain_contains_invalid_chars(char *input);
 extern bool check_windows_logon_length(char *input);
 extern char* get_windows_domain_name(char* input);
 extern bool windows_domain_is_not_supported(char* domain_name);
+extern void exec_alter_dbowner_subcmds(GrantRoleStmt *stmt);
+extern bool is_grantee_role_db_owner(GrantRoleStmt *stmt);
+extern void change_object_owner_if_db_owner(void);
+extern char* get_obj_role(const char *rolname);
 extern void grant_revoke_role_to_login(const char* login, const char *role_name, const char *grantor, bool is_grant);
 
 #endif

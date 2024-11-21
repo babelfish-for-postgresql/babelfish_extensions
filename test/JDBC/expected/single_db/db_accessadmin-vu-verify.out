@@ -360,7 +360,7 @@ ALTER ROLE db_owner ADD MEMBER babel_5136_u1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+~~ERROR (Message: Cannot alter the role 'db_owner', because it does not exist or you do not have permission.)~~
 
 ALTER ROLE babel_5136_r1 ADD MEMBER babel_5136_u1
 GO
