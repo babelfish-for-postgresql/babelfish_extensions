@@ -885,6 +885,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	else
 		estate->schema_name = NULL;
 
+	/*
+	 * We need to disable the explain gucs incase of sp_reset_connection
+	 * execution otherwise we will get explain output for it which is
+	 * not intended.
+	 */
+	if (strcmp(stmt->proc_name, "sp_reset_connection") == 0)
+	{
+		pltsql_explain_only = false;
+		pltsql_explain_analyze = false;
+	}
+
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
 	{
@@ -945,7 +956,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doesn't allow call procedure in function */
+		/* T-SQL doesn't allow procedure calls in a function */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
@@ -1822,6 +1833,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	int			ret = 0;
+
+	/* T-SQL doesn't allow procedure calls in a function */
+	if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("Only functions can be executed within a function")));
+	}
 
 	switch (stmt->sp_type_code)
 	{
