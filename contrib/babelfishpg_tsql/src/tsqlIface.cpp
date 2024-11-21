@@ -7292,10 +7292,9 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 				if (elem->EQUAL(0) && elem->full_column_name())
 				{
 					/* "SET @a=col=expr" => "SET col=expr ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)",
 										nse->itemno,
-										::getFullText(elem->full_column_name()).c_str(),
-										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+										rewrite_assignment_expression(var, elem->expression()));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
@@ -7303,10 +7302,9 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 				else if(elem->EQUAL(0) && elem->expression())
 				{
 					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)",
 										nse->itemno,
-										::getFullText(elem->expression()).c_str(),
-										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+										rewrite_assignment_expression(var, elem->expression()));
 
 					handle_local_ids_for_expression(elem->expression());
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);

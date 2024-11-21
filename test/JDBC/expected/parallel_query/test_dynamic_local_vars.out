@@ -2056,17 +2056,20 @@ select @i = ''
 update local_var_tst set id = @i, @i = TRIM(@i + cast(id as varchar(10)));
 select @i
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 2~~
 
-~~ERROR (Message: syntax error at or near "sys")~~
+~~START~~
+varchar
+00
+~~END~~
 
 
 select * from local_var_tst;
 GO
 ~~START~~
 int
-1
-2
+0
+0
 ~~END~~
 
 
@@ -2168,16 +2171,19 @@ int
 2
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 2~~
 
-~~ERROR (Message: syntax error at or near "sys")~~
+~~START~~
+int
+2
+~~END~~
 
 
 select * from local_var_tst;
 GO
 ~~START~~
 int
-1
+2
 2
 ~~END~~
 
