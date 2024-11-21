@@ -342,16 +342,18 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	foreach(elem, db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
-		char 	   *original_user_name = get_authid_user_ext_original_name(user_name, dbname);
+		char 	   *original_user_name = get_authid_user_ext_original_name(user_name, dbname, true);
 
-		if (!IS_FIXED_DB_PRINCIPAL(original_user_name))
+		/* If original_user_name is NULL, it means it is an internal role so we will drop it */
+		if (original_user_name == NULL || !IS_FIXED_DB_PRINCIPAL(original_user_name))
 		{
 			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
 			appendStringInfo(&query, "DROP ROLE dummy; ");
 			expected_stmts += 2;
 		}
 
-		pfree(original_user_name);
+		if (original_user_name)
+			pfree(original_user_name);
 	}
 	appendStringInfo(&query, "DROP OWNED BY dummylist CASCADE; ");
 
@@ -391,9 +393,9 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 	foreach(elem, db_users)
 	{
 		char	   *user_name = (char *) lfirst(elem);
-		char 	   *original_user_name = get_authid_user_ext_original_name(user_name, dbname);
+		char 	   *original_user_name = get_authid_user_ext_original_name(user_name, dbname, true);
 
-		if (!IS_FIXED_DB_PRINCIPAL(original_user_name))
+		if (original_user_name == NULL || !IS_FIXED_DB_PRINCIPAL(original_user_name))
 		{
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_DropOwnedStmt(stmt, list_make1(user_name));
@@ -402,7 +404,8 @@ gen_dropdb_subcmds(const char *dbname, List *db_users)
 			update_DropRoleStmt(stmt, user_name);
 		}
 
-		pfree(original_user_name);
+		if (original_user_name)
+			pfree(original_user_name);
 	}
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
@@ -790,6 +793,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	int                save_sec_context;
 	bool               is_set_userid = false;
 	Oid                save_userid;
+	Oid                prev_session_user_id;
 
 	if (IS_BBF_BUILT_IN_DB(dbname))
 	{
@@ -833,19 +837,27 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 				 errmsg("Cannot drop database \"%s\" because it is currently in use", dbname)));
 
 	/* Set current user to session user for dropping permissions */
+	prev_session_user_id = GetSessionUserId();
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
 
 	bbf_set_current_user("sysadmin");
 
 	PG_TRY();
 	{
+		Oid			db_owner_oid;
+		const char *db_owner_role;
 		Oid			roleid = GetSessionUserId();
 		const char *login = GetUserNameFromId(roleid, false);
 		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 
+		db_owner_role = get_db_owner_name(dbname);
+		db_owner_oid = get_role_oid(db_owner_role, false);
+
 		/* Check if login has required privilege to drop the database */
-		if (!(has_privs_of_role(roleid, get_sysadmin_oid()) 
-			|| has_privs_of_role(roleid, get_dbcreator_oid()) || login_is_db_owner))
+		/* If current login's associated user in database is member of db_owner role, allow it to drop the database */
+		if (!has_privs_of_role(prev_session_user_id, db_owner_oid) &&
+			(!(has_privs_of_role(roleid, get_sysadmin_oid())
+			|| has_privs_of_role(roleid, get_dbcreator_oid()) || login_is_db_owner)))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -869,7 +881,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 		dbo_role = get_dbo_role_name(dbname);
 		/* Get a list of all the database's users */
-		db_users_list = get_authid_user_ext_db_users(dbname);
+		db_users_list = get_authid_user_ext_db_users(dbname, dbo_role, db_owner_oid);
 
 		parsetree_list = gen_dropdb_subcmds(dbname, db_users_list);
 

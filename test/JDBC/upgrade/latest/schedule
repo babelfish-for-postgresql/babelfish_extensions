@@ -590,3 +590,4 @@ BABEL-5186
 BABEL-2736
 smalldatetime_date_cmp
 datareader_datawriter
+db_owner

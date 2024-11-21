@@ -13,7 +13,7 @@ declare @P3 sys.nvarchar='%     '
 declare @P4 sys.nvarchar=NULL
 declare @fUsePattern bit = 1
 INSERT INTO babel_5010_temp_table EXEC [sys].sp_tables @p1, @P2, @P3, @P4, @fUsePattern = @fUsePattern;
-SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1');
+SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1') ORDER BY TABLE_QUALIFIER;
 DELETE FROM babel_5010_temp_table;
 GO
 ~~START~~
@@ -31,7 +31,7 @@ declare @P3 sys.nvarchar='%'
 declare @P4 sys.nvarchar=NULL
 declare @fUsePattern bit = 1
 INSERT INTO babel_5010_temp_table EXEC [sys].sp_tables @p1, @P2, @P3, @P4, @fUsePattern = @fUsePattern;
-SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1');
+SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1') ORDER BY TABLE_QUALIFIER;
 DELETE FROM babel_5010_temp_table;
 GO
 ~~START~~
@@ -57,7 +57,7 @@ tempdb#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 
 
 INSERT INTO babel_5010_temp_table EXEC [sys].sp_tables @table_name = '', @table_owner = '', @table_qualifier = '%', @table_type = NULL, @fUsePattern = 1;
-SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1');
+SELECT * FROM babel_5010_temp_table WHERE TABLE_QUALIFIER IN ('master', 'tempdb', 'msdb', 'babel_5010_vu_prepare_db1') ORDER BY TABLE_QUALIFIER;
 DELETE FROM babel_5010_temp_table;
 GO
 ~~START~~

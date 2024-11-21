@@ -3069,7 +3069,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								*/
 							stmt->options = list_concat(stmt->options,
 														user_options);
-							create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
+
+							/*
+							 * If the role is created internally as part of ALTER ROLE
+							 * db_owner ADD MEMBER ... statement, we should not add this to
+							 * our babelfish catalog. These roles are meant to be internal
+							 * and not be visible to customer from Babelfish endpoint.
+							 */
+							if (strcmp(queryString, INTERNAL_ALTER_ROLE) != 0)
+								create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
 						}
 
 					}
@@ -3771,6 +3779,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							create_schema->authrole = NULL;
 							alter_owner = true;
 						}
+
+						if (has_privs_of_role(owner_oid, get_db_owner_oid(db_name, false)) && owner_oid != get_dbo_oid(db_name, false))
+						{
+							const char* new_owner = get_obj_role(get_rolespec_name(rolspec));
+							create_schema->authrole = make_rolespec_node(new_owner);
+							alter_owner = false;
+						}
 					}
 
 					if (prev_ProcessUtility)
@@ -3993,13 +4008,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 					PG_TRY();
 					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-												queryEnv, dest, qc);
+						if (is_grantee_role_db_owner(grant_role) && strcmp(queryString, INTERNAL_ALTER_ROLE) != 0)
+							exec_alter_dbowner_subcmds(grant_role);
 						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-													queryEnv, dest, qc);
-
+							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);
 					}
 					PG_FINALLY();
 					{
