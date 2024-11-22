@@ -40,7 +40,7 @@ runs:
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
           pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $dump_restore_version))
-          if [[ "$dump_restore_version" == 'target.latest' || "$dump_restore_version" -ge 16.6 ]]
+          if [[ "$dump_restore_version" == 'target.latest' || "$dump_restore_version" -ge 16.7 ]]
           then
             antlr_version=4.13.2
           else
