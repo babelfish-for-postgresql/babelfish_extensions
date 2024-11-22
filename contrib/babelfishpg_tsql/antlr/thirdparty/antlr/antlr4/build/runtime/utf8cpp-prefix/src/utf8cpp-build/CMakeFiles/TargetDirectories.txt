@@ -1,6 +1,0 @@
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/install/strip.dir
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/edit_cache.dir
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/list_install_components.dir
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/install/local.dir
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/rebuild_cache.dir
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-build/CMakeFiles/install.dir

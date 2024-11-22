@@ -1,1 +1,0 @@
-cmd='/usr/bin/cmake3;-DCMAKE_INSTALL_PREFIX=/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install;-DUTF8_TESTS=off;-DUTF8_SAMPLES=off;-GUnix Makefiles;<SOURCE_DIR><SOURCE_SUBDIR>'

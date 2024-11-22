@@ -1,6 +1,0 @@
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/include/utf8cpp/utf8.h
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/include/utf8cpp/utf8/checked.h
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/include/utf8cpp/utf8/core.h
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/include/utf8cpp/utf8/unchecked.h
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/include/utf8cpp/utf8/cpp11.h
-/home/rluo/babel-open-source/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/thirdparty/utfcpp/install/lib64/cmake/utf8cpp/utf8cppConfig.cmake
