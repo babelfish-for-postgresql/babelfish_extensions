@@ -1310,7 +1310,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 }
 
 static FuncCandidateList
-tsql_func_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 
 	FuncCandidateList			current_candidate, best_candidate;
@@ -1391,7 +1391,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	if (strcmp(proc_name, "hashbytes") == 0)
 	{
-		return tsql_func_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
+		return tsql_func_select_candidate_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
 	}
 
 	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);

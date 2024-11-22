@@ -937,13 +937,6 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 		maxlen = typmod - VARHDRSZ;
 	}
 
-	
-	/*
-	 * Cast the entire input binary data if maxlen is 
-	 * invalid or supplied data fits it
-	 * Else truncate it
-	 */
-
 	PG_TRY();
 	{
 		if (maxlen < 0 || (len) <= (maxlen*2))
