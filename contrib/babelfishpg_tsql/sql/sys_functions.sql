@@ -465,7 +465,7 @@ EXCEPTION
 
    WHEN numeric_value_out_of_range THEN
       GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-      v_err_message := upper(split_part(v_err_message, ' ', 1));
+      v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
 
       RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
                   DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
@@ -714,7 +714,7 @@ EXCEPTION
 
     WHEN numeric_value_out_of_range THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := upper(split_part(v_err_message, ' ', 1));
+        v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
                     DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
@@ -897,7 +897,7 @@ EXCEPTION
 
     WHEN numeric_value_out_of_range THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := upper(split_part(v_err_message, ' ', 1));
+        v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
                     DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
@@ -4240,7 +4240,7 @@ DECLARE
     json_new_value JSONB;
     result_json sys.NVARCHAR;
 BEGIN
-    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    path_split_array = regexp_split_to_array(PG_CATALOG.btrim(path_json) COLLATE "C",'\s+');
     word_count = array_length(path_split_array,1);
     /* 
      * This if else block is added to set the create_if_missing and append_modifier flags.
@@ -4698,8 +4698,8 @@ $BODY$
 DECLARE
 ret_val INT;
 BEGIN
-	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name)) COLLATE sys.database_default;
-	property = LOWER(TRIM(property)) COLLATE sys.database_default;
+	index_or_statistics_name = LOWER(PG_CATALOG.btrim(index_or_statistics_name)) COLLATE sys.database_default;
+	property = LOWER(PG_CATALOG.btrim(property)) COLLATE sys.database_default;
     SELECT INTO ret_val
     CASE
        

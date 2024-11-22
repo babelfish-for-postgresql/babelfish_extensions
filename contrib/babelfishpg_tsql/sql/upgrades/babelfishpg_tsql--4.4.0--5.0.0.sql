@@ -18,7 +18,7 @@ BEGIN
     query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
-    execute query1;
+    execute query1;\q
     execute query2;
 EXCEPTION
     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
@@ -452,7 +452,7 @@ BEGIN
 			('db_datareader', 'DB Data Reader'),
 			('db_datawriter', 'DB Data Writer'),
 			('db_ddladmin', 'DB DDL Administrators')) x(DbFixedRole, Description)
-			WHERE LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = DbFixedRole;
+			WHERE PG_CATALOG.LOWER(PG_CATALOG.RTRIM(@rolename)) IS NULL OR PG_CATALOG.LOWER(PG_CATALOG.RTRIM(@rolename)) = DbFixedRole;
 	END
 	ELSE IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN (
 			'db_backupoperator', 'db_denydatareader', 'db_denydatawriter')
@@ -817,7 +817,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_rename(
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
-	SET @objtype = TRIM(@objtype);
+	SET @objtype = sys.TRIM(@objtype);
 	If @objtype IS NULL
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
@@ -842,7 +842,9 @@ BEGIN
 			DECLARE @curr_relname sys.nvarchar(776);
 			
 			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
+
 			DECLARE @currtype char(2);
+
 			IF @objtype = 'COLUMN'
 				BEGIN
 					DECLARE @col_count INT;
@@ -874,6 +876,7 @@ BEGIN
 					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 					WHERE s1.name = @schemaname AND o1.name = @subname;
 					SELECT @count = COUNT(*) FROM #tempTable;
+
 					IF @count < 1
 						BEGIN
 							-- sys.objects does not show routines which current user cannot execute but
@@ -1456,7 +1459,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 						AND (pg_catalog.lower(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -1467,13 +1470,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -1485,7 +1488,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -1499,7 +1502,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -1516,7 +1519,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 				AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -1531,7 +1534,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -1730,7 +1733,7 @@ BEGIN
 	
 	IF @option IS NOT NULL
 	BEGIN
-		IF pg_catalog.lower(TRIM(@option)) <> 'postgres' 
+		IF pg_catalog.lower(sys.TRIM(@option)) <> 'postgres' 
 		BEGIN
 			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
 			RETURN			
@@ -1744,7 +1747,7 @@ BEGIN
 	-- This is for informational purposes only
 	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
+	UPDATE #sp_who_tmp SET query = ' ' + sys.TRIM(CAST(pg_catalog.UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
@@ -1775,7 +1778,7 @@ BEGIN
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(query)
+	UPDATE #sp_who_tmp SET query = sys.TRIM(query)
 
 	-- Get all current connections
 	SELECT 
@@ -1840,7 +1843,7 @@ BEGIN
 	-- Apply filter if specified
 	IF (@loginame IS NOT NULL)
 	BEGIN
-		IF (TRIM(@loginame) = '')
+		IF (sys.TRIM(@loginame) = '')
 		BEGIN
 			-- Raise error
 			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
@@ -1885,12 +1888,12 @@ BEGIN
 	SELECT distinct 
 		p.spid AS spid, 
 		p.ecid AS ecid, 
-		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
-		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
-		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		CAST(pg_catalog.LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(pg_catalog.LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(pg_catalog.LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
 		p.blocked AS blk, 
-		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
-		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		CAST(pg_catalog.LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(pg_catalog.LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
 		p.request_id AS request_id,
 		connection
 	INTO #sp_who_tmp2
@@ -1901,11 +1904,11 @@ BEGIN
 	-- Patch up remaining cases
 	UPDATE #sp_who_tmp2
 	SET cmd = 'AWAITING COMMAND'
-	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	WHERE sys.TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
 	
 	UPDATE #sp_who_tmp2
 	SET cmd = 'UNKNOWN'
-	WHERE TRIM(cmd) = ''	
+	WHERE sys.TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
 	SET @hide_col += ',hostprocess'
@@ -3044,7 +3047,7 @@ DECLARE
     DIGITMASK2_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\d{8}$';
 BEGIN
     v_style := floor(p_style)::SMALLINT;
-    v_datestring := trim(p_datestring);
+    v_datestring := pg_catalog.btrim(p_datestring);
 
     IF (scale(p_style) > 0) THEN
         RAISE most_specific_type_mismatch;
@@ -3058,7 +3061,7 @@ BEGIN
 
     IF (v_datestring ~* HHMMSSFS_PART_REGEXP AND v_datestring !~* HHMMSSFS_REGEXP)
     THEN
-        v_datestring := trim(regexp_pg_catalog.replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
+        v_datestring := pg_catalog.btrim(regexp_pg_catalog.replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
     END IF;
 
     BEGIN
@@ -3404,7 +3407,7 @@ BEGIN
         IF (v_short_year <= 99)
         THEN
             v_base_century := CASE
-                                 WHEN (p_base_century ~ '^\s*([1-9]{1,2})\s*$') THEN pg_catalog.concat(trim(p_base_century), '00')::SMALLINT
+                                 WHEN (p_base_century ~ '^\s*([1-9]{1,2})\s*$') THEN pg_catalog.concat(pg_catalog.btrim(p_base_century), '00')::SMALLINT
                                  ELSE trunc(extract(year from current_date)::NUMERIC, -2)
                               END;
 
@@ -3461,7 +3464,7 @@ DECLARE
     v_pureplaces_len INTEGER;
     v_err_message VARCHAR COLLATE "C";
 BEGIN
-    v_fractsecs := trim(p_fractsecs);
+    v_fractsecs := pg_catalog.btrim(p_fractsecs);
     v_fractsecs_len := char_length(v_fractsecs);
     v_scale := floor(p_scale)::SMALLINT;
 
@@ -3865,8 +3868,8 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datestring := pg_catalog.upper(trim(p_datestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datestring := pg_catalog.upper(pg_catalog.btrim(p_datestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_dayparts := ARRAY(SELECT pg_catalog.upper(array_to_string(regexp_matches(v_datestring, '[AP]M|ص|م', 'gi'), '')));
 
@@ -3910,7 +3913,7 @@ BEGIN
                                        'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -4853,9 +4856,9 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datatype := trim(p_datatype);
-    v_datetimestring := pg_catalog.upper(trim(p_datetimestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_datetimestring := pg_catalog.upper(pg_catalog.btrim(p_datetimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
@@ -4916,7 +4919,7 @@ BEGIN
                                            'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -5911,9 +5914,9 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datatype := trim(p_datatype);
-    v_srctimestring := pg_catalog.upper(trim(p_srctimestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_srctimestring := pg_catalog.upper(pg_catalog.btrim(p_srctimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
@@ -5971,7 +5974,7 @@ BEGIN
                                           'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -6633,6 +6636,3585 @@ END;
 $$
 LANGUAGE plpgsql
 STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_schedule (
+  par_schedule_id integer,
+  par_name varchar,
+  par_enabled smallint,
+  par_freq_type integer,
+  inout par_freq_interval integer,
+  inout par_freq_subday_type integer,
+  inout par_freq_subday_interval integer,
+  inout par_freq_relative_interval integer,
+  inout par_freq_recurrence_factor integer,
+  inout par_active_start_date integer,
+  inout par_active_start_time integer,
+  inout par_active_end_date integer,
+  inout par_active_end_time integer,
+  par_owner_sid char,
+  out returncode integer
+)
+RETURNS record AS
+$body$
+DECLARE
+  var_return_code INT;
+  var_isAdmin INT;
+BEGIN
+  /* Remove any leading/trailing spaces from parameters */
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name)) INTO par_name;
+
+  /* Make sure that NULL input/output parameters - if NULL - are initialized to 0 */
+  SELECT COALESCE(par_freq_interval, 0) INTO par_freq_interval;
+  SELECT COALESCE(par_freq_subday_type, 0) INTO par_freq_subday_type;
+  SELECT COALESCE(par_freq_subday_interval, 0) INTO par_freq_subday_interval;
+  SELECT COALESCE(par_freq_relative_interval, 0) INTO par_freq_relative_interval;
+  SELECT COALESCE(par_freq_recurrence_factor, 0) INTO par_freq_recurrence_factor;
+  SELECT COALESCE(par_active_start_date, 0) INTO par_active_start_date;
+  SELECT COALESCE(par_active_start_time, 0) INTO par_active_start_time;
+  SELECT COALESCE(par_active_end_date, 0) INTO par_active_end_date;
+  SELECT COALESCE(par_active_end_time, 0) INTO par_active_end_time;
+
+  /* Verify name (we disallow schedules called 'ALL' since this has special meaning in sp_delete_jobschedules) */
+  SELECT 0 INTO var_isAdmin;
+
+  IF (
+    EXISTS (
+      SELECT *
+        FROM sys.sysschedules
+       WHERE (name = par_name)
+    )
+  )
+  THEN /* Failure */
+    RAISE 'The specified % ("%") already exists.', 'par_name', par_name USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+  END IF;
+
+  IF (pg_catalog.UPPER(par_name) = 'ALL')
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid.', 'name' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Verify enabled state */
+  IF (par_enabled <> 0) AND (par_enabled <> 1)
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', '@enabled', '0, 1' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Verify frequency type */
+  IF (par_freq_type = 2) /* OnDemand is no longer supported */
+  THEN /* Failure */
+    RAISE 'Frequency Type 0x2 (OnDemand) is no longer supported.' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_freq_type NOT IN (1, 4, 8, 16, 32, 64, 128))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', 'freq_type', '1, 4, 8, 16, 32, 64, 128' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Verify frequency sub-day type */
+  IF (par_freq_subday_type <> 0) AND (par_freq_subday_type NOT IN (1, 2, 4, 8))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', 'freq_subday_type', '1, 2, 4, 8' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Default active start/end date/times (if not supplied, or supplied as NULLs or 0) */
+  IF (par_active_start_date = 0)
+  THEN
+    SELECT date_part('year', NOW()::TIMESTAMP) * 10000 + date_part('month', NOW()::TIMESTAMP) * 100 + date_part('day', NOW()::TIMESTAMP)
+      INTO par_active_start_date;
+  END IF;
+
+  /* This is an ISO format: "yyyymmdd" */
+  IF (par_active_end_date = 0)
+  THEN
+    /* December 31st 9999 */
+    SELECT 99991231 INTO par_active_end_date;
+  END IF;
+
+  IF (par_active_start_time = 0)
+  THEN
+    /* 12:00:00 am */
+    SELECT 000000 INTO par_active_start_time;
+  END IF;
+
+  IF (par_active_end_time = 0)
+  THEN
+    /* 11:59:59 pm */
+    SELECT 235959 INTO par_active_end_time;
+  END IF;
+
+  /* Verify active start/end dates */
+  IF (par_active_end_date = 0)
+  THEN
+    SELECT 99991231 INTO par_active_end_date;
+  END IF;
+
+  SELECT t.returncode
+    FROM sys.babelfish_sp_verify_job_date(par_active_end_date, 'active_end_date') t
+    INTO var_return_code;
+
+  IF (var_return_code <> 0)
+  THEN /* Failure */
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  SELECT t.returncode
+    FROM sys.babelfish_sp_verify_job_date(par_active_start_date, '@active_start_date') t
+    INTO var_return_code;
+
+  IF (var_return_code <> 0)
+  THEN /* Failure */
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_active_end_date < par_active_start_date)
+  THEN /* Failure */
+    RAISE '% cannot be before %.', 'active_end_date', 'active_start_date' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  SELECT t.returncode
+    FROM sys.babelfish_sp_verify_job_time(par_active_end_time, '@active_end_time') t
+    INTO var_return_code;
+
+  IF (var_return_code <> 0)
+  THEN /* Failure */
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  SELECT t.returncode
+    FROM sys.babelfish_sp_verify_job_time(par_active_start_time, '@active_start_time') t
+    INTO var_return_code;
+
+  IF (var_return_code <> 0)
+  THEN /* Failure */
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_active_start_time = par_active_end_time AND (par_freq_subday_type IN (2, 4, 8)))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', 'active_end_time', 'before or after active_start_time' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF ((par_freq_type = 1) /* FREQTYPE_ONETIME */
+    OR (par_freq_type = 64) /* FREQTYPE_AUTOSTART */
+    OR (par_freq_type = 128)) /* FREQTYPE_ONIDLE */
+  THEN /* Set standard defaults for non-required parameters */
+    SELECT 0 INTO par_freq_interval;
+    SELECT 0 INTO par_freq_subday_type;
+    SELECT 0 INTO par_freq_subday_interval;
+    SELECT 0 INTO par_freq_relative_interval;
+    SELECT 0 INTO par_freq_recurrence_factor;
+    /* Success */
+    returncode := 0;
+    RETURN;
+  END IF;
+
+  IF (par_freq_subday_type = 0) /* FREQSUBTYPE_ONCE */
+  THEN
+    SELECT 1 INTO par_freq_subday_type;
+  END IF;
+
+  IF ((par_freq_subday_type <> 1) /* FREQSUBTYPE_ONCE */
+    AND (par_freq_subday_type <> 2) /* FREQSUBTYPE_SECOND */
+    AND (par_freq_subday_type <> 4) /* FREQSUBTYPE_MINUTE */
+    AND (par_freq_subday_type <> 8)) /* FREQSUBTYPE_HOUR */
+  THEN /* Failure */
+    RAISE 'The schedule for this job is invalid (reason: The specified @freq_subday_type is invalid (valid values are: 0x1, 0x2, 0x4, 0x8).).' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF ((par_freq_subday_type <> 1) AND (par_freq_subday_interval < 1)) /* FREQSUBTYPE_ONCE and less than 1 interval */
+    OR ((par_freq_subday_type = 2) AND (par_freq_subday_interval < 10)) /* FREQSUBTYPE_SECOND and less than 10 seconds (see MIN_SCHEDULE_GRANULARITY in SqlAgent source code) */
+  THEN /* Failure */
+    RAISE 'The schedule for this job is invalid (reason: The specified @freq_subday_interval is invalid).' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_freq_type = 4) /* FREQTYPE_DAILY */
+  THEN
+    SELECT 0 INTO par_freq_recurrence_factor;
+
+    IF (par_freq_interval < 1) THEN /* Failure */
+      RAISE 'The schedule for this job is invalid (reason: @freq_interval must be at least 1 for a daily job.).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF (par_freq_type = 8) /* FREQTYPE_WEEKLY */
+  THEN
+    IF (par_freq_interval < 1) OR (par_freq_interval > 127) /* (2^7)-1 [freq_interval is a bitmap (Sun=1..Sat=64)] */
+    THEN /* Failure */
+      RAISE 'The schedule for this job is invalid (reason: @freq_interval must be a valid day of the week bitmask [Sunday = 1 .. Saturday = 64] for a weekly job.).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF (par_freq_type = 16) /* FREQTYPE_MONTHLY */
+  THEN
+    IF (par_freq_interval < 1) OR (par_freq_interval > 31)
+    THEN /* Failure */
+      RAISE 'The schedule for this job is invalid (reason: @freq_interval must be between 1 and 31 for a monthly job.).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF (par_freq_type = 32) /* FREQTYPE_MONTHLYRELATIVE */
+  THEN
+    IF (par_freq_relative_interval <> 1) /* RELINT_1ST */
+      AND (par_freq_relative_interval <> 2) /* RELINT_2ND */
+      AND (par_freq_relative_interval <> 4) /* RELINT_3RD */
+      AND (par_freq_relative_interval <> 8) /* RELINT_4TH */
+      AND (par_freq_relative_interval <> 16) /* RELINT_LAST */
+    THEN /* Failure */
+      RAISE 'The schedule for this job is invalid (reason: @freq_relative_interval must be one of 1st (0x1), 2nd (0x2), 3rd [0x4], 4th (0x8) or Last (0x10).).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF (par_freq_type = 32) /* FREQTYPE_MONTHLYRELATIVE */
+  THEN
+    IF (par_freq_interval <> 1) /* RELATIVE_SUN */
+      AND (par_freq_interval <> 2) /* RELATIVE_MON */
+      AND (par_freq_interval <> 3) /* RELATIVE_TUE */
+      AND (par_freq_interval <> 4) /* RELATIVE_WED */
+      AND (par_freq_interval <> 5) /* RELATIVE_THU */
+      AND (par_freq_interval <> 6) /* RELATIVE_FRI */
+      AND (par_freq_interval <> 7) /* RELATIVE_SAT */
+      AND (par_freq_interval <> 8) /* RELATIVE_DAY */
+      AND (par_freq_interval <> 9) /* RELATIVE_WEEKDAY */
+      AND (par_freq_interval <> 10) /* RELATIVE_WEEKENDDAY */
+    THEN /* Failure */
+      RAISE 'The schedule for this job is invalid (reason: @freq_interval must be between 1 and 10 (1 = Sunday .. 7 = Saturday, 8 = Day, 9 = Weekday, 10 = Weekend-day) for a monthly-relative job.).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+  END IF;
+
+  IF ((par_freq_type = 8) /* FREQTYPE_WEEKLY */
+    OR (par_freq_type = 16) /* FREQTYPE_MONTHLY */
+    OR (par_freq_type = 32)) /* FREQTYPE_MONTHLYRELATIVE */
+    AND (par_freq_recurrence_factor < 1)
+  THEN /* Failure */
+    RAISE 'The schedule for this job is invalid (reason: @freq_recurrence_factor must be at least 1.).' USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+  END IF;
+  /* Success */
+  returncode := 0;
+  RETURN;
+END;
+$body$
+LANGUAGE 'plpgsql'
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_jobstep (
+  par_job_id integer,
+  par_step_id integer,
+  par_step_name varchar,
+  par_subsystem varchar,
+  par_command text,
+  par_server varchar,
+  par_on_success_action smallint,
+  par_on_success_step_id integer,
+  par_on_fail_action smallint,
+  par_on_fail_step_id integer,
+  par_os_run_priority integer,
+  par_flags integer,
+  par_output_file_name varchar,
+  par_proxy_id integer,
+  out returncode integer
+)
+AS
+$body$
+DECLARE
+  var_max_step_id INT;
+  var_retval INT;
+  var_valid_values VARCHAR(50);
+  var_database_name_temp VARCHAR(258);
+  var_database_user_name_temp VARCHAR(256);
+  var_temp_command TEXT;
+  var_iPos INT;
+  var_create_count INT;
+  var_destroy_count INT;
+  var_is_olap_subsystem SMALLINT;
+  var_owner_sid CHAR(85);
+  var_owner_name VARCHAR(128);
+BEGIN
+  /* Remove any leading/trailing spaces from parameters */
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_subsystem)) INTO par_subsystem;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_server)) INTO par_server;
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_output_file_name)) INTO par_output_file_name;
+
+  /* Get current maximum step id */
+  SELECT COALESCE(MAX(step_id), 0)
+    INTO var_max_step_id
+    FROM sys.sysjobsteps
+   WHERE (job_id = par_job_id);
+
+  /* Check step id */
+  IF (par_step_id < 1) OR (par_step_id > var_max_step_id + 1)  /* Failure */
+  THEN
+    SELECT '1..' || CAST (var_max_step_id + 1 AS VARCHAR(1)) INTO var_valid_values;
+      RAISE 'The specified "%" is invalid (valid values are: %).', '@step_id', var_valid_values USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+  END IF;
+
+  /* Check step name */
+  IF (
+    EXISTS (
+      SELECT *
+        FROM sys.sysjobsteps
+       WHERE (job_id = par_job_id) AND (step_name = par_step_name)
+    )
+  )
+  THEN /* Failure */
+    RAISE 'The specified % ("%") already exists.', 'step_name', par_step_name USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Check on-success action/step */
+  IF (par_on_success_action <> 1) /* Quit Qith Success */
+    AND (par_on_success_action <> 2) /* Quit Qith Failure */
+    AND (par_on_success_action <> 3) /* Goto Next Step */
+    AND (par_on_success_action <> 4) /* Goto Step */
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', 'on_success_action', '1, 2, 3, 4' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_on_success_action = 4) AND ((par_on_success_step_id < 1) OR (par_on_success_step_id = par_step_id))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are greater than 0 but excluding %ld).', 'on_success_step', par_step_id USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Check on-fail action/step */
+  IF (par_on_fail_action <> 1) /* Quit With Success */
+    AND (par_on_fail_action <> 2) /* Quit With Failure */
+    AND (par_on_fail_action <> 3) /* Goto Next Step */
+    AND (par_on_fail_action <> 4) /* Goto Step */
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', 'on_failure_action', '1, 2, 3, 4' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (par_on_fail_action = 4) AND ((par_on_fail_step_id < 1) OR (par_on_fail_step_id = par_step_id))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are greater than 0 but excluding %).', 'on_failure_step', par_step_id USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Warn the user about forward references */
+  IF ((par_on_success_action = 4) AND (par_on_success_step_id > var_max_step_id))
+  THEN
+    RAISE 'Warning: Non-existent step referenced by %.', 'on_success_step_id' USING ERRCODE := '50000';
+  END IF;
+
+  IF ((par_on_fail_action = 4) AND (par_on_fail_step_id > var_max_step_id))
+  THEN
+    RAISE 'Warning: Non-existent step referenced by %.', '@on_fail_step_id' USING ERRCODE := '50000';
+  END IF;
+
+  /* Check run priority: must be a valid value to pass to SetThreadPriority: */
+  /* [-15 = IDLE, -1 = BELOW_NORMAL, 0 = NORMAL, 1 = ABOVE_NORMAL, 15 = TIME_CRITICAL] */
+  IF (par_os_run_priority NOT IN (- 15, - 1, 0, 1, 15))
+  THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', '@os_run_priority', '-15, -1, 0, 1, 15' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  /* Check flags */
+  IF ((par_flags < 0) OR (par_flags > 114)) THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', '@flags', '0..114' USING ERRCODE := '50000';
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (LOWER(pg_catalog.UPPER(par_subsystem)) <> LOWER('TSQL')) THEN /* Failure */
+    RAISE 'The specified "%" is invalid (valid values are: %).', '@subsystem', 'TSQL' USING ERRCODE := '50000';
+    returncode := (1);
+    RETURN;
+  END IF;
+
+  /* Success */
+  returncode := 0;
+  RETURN;
+END;
+$body$
+LANGUAGE 'plpgsql'
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_delete_jobschedule (
+  par_job_id integer = NULL::integer,
+  par_job_name varchar = NULL::character varying,
+  par_name varchar = NULL::character varying,
+  par_keep_schedule integer = 0,
+  par_automatic_post smallint = 1,
+  out returncode integer
+)
+RETURNS integer AS
+$body$
+DECLARE
+  var_retval INT;
+  var_sched_count INT;
+  var_schedule_id INT;
+  var_job_owner_sid CHAR(85);
+BEGIN
+  /* Remove any leading/trailing spaces from parameters */
+  SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_name)) INTO par_name;
+
+  /* Check that we can uniquely identify the job */
+  SELECT t.par_job_name
+       , t.par_job_id
+       , t.par_owner_sid
+       , t.returncode
+    FROM sys.babelfish_sp_verify_job_identifiers(
+         '@job_name'
+       , '@job_id'
+       , par_job_name
+       , par_job_id
+       , 'TEST'
+       , var_job_owner_sid
+       ) t
+    INTO par_job_name
+       , par_job_id
+       , var_job_owner_sid
+       , var_retval;
+
+  IF (var_retval <> 0) THEN /* Failure */
+    returncode := 1;
+    RETURN;
+  END IF;
+
+  IF (LOWER(pg_catalog.UPPER(par_name)) = LOWER('ALL'))
+  THEN
+    SELECT - 1 INTO var_schedule_id;
+
+    /* We use this in the call to sp_sqlagent_notify */
+    /* Delete the schedule(s) if it isn't being used by other jobs */
+    CREATE TEMPORARY TABLE "#temp_schedules_to_delete" (schedule_id INT NOT NULL)
+    /* If user requests that the schedules be removed (the legacy behavoir) */
+    /* make sure it isnt being used by other jobs */;
+
+    IF (par_keep_schedule = 0)
+    THEN
+      /* Get the list of schedules to delete */
+      INSERT INTO "#temp_schedules_to_delete"
+      SELECT DISTINCT schedule_id
+        FROM sys.sysschedules
+       WHERE (schedule_id IN (SELECT schedule_id
+                                FROM sys.sysjobschedules
+                               WHERE (job_id = par_job_id)));
+      /* make sure no other jobs use these schedules */
+      IF (EXISTS (SELECT *
+                    FROM sys.sysjobschedules
+                   WHERE (job_id <> par_job_id)
+                     AND (schedule_id IN (SELECT schedule_id
+                                            FROM "#temp_schedules_to_delete"))))
+      THEN /* Failure */
+        RAISE 'One or more schedules were not deleted because they are being used by at least one other job. Use "sp_detach_schedule" to remove schedules from a job.' USING ERRCODE := '50000';
+        returncode := 1;
+        RETURN;
+      END IF;
+    END IF;
+
+    /* OK to delete the jobschedule */
+    DELETE FROM sys.sysjobschedules
+     WHERE (job_id = par_job_id);
+
+    /* OK to delete the schedule - temp_schedules_to_delete is empty if @keep_schedule <> 0 */
+    DELETE FROM sys.sysschedules
+     WHERE schedule_id IN (SELECT schedule_id FROM "#temp_schedules_to_delete");
+  ELSE ---- IF (LOWER(UPPER(par_name)) = LOWER('ALL'))
+
+    -- Need to use sp_detach_schedule to remove this ambiguous schedule name
+    IF(var_sched_count > 1) /* Failure */
+    THEN
+      RAISE 'More than one schedule named "%" is attached to job "%". Use "sp_detach_schedule" to remove schedules from a job.', par_name, par_job_name  USING ERRCODE := '50000';
+      returncode := 1;
+      RETURN;
+    END IF;
+
+    --If user requests that the schedule be removed (the legacy behavoir)
+    --make sure it isnt being used by another job
+    IF (par_keep_schedule = 0)
+    THEN
+      IF(EXISTS(SELECT *
+                  FROM sys.sysjobschedules
+                 WHERE (schedule_id = var_schedule_id)
+                   AND (job_id <> par_job_id)))
+      THEN /* Failure */
+        RAISE 'Schedule "%" was not deleted because it is being used by at least one other job. Use "sp_detach_schedule" to remove schedules from a job.', par_name USING ERRCODE := '50000';
+        returncode := 1;
+        RETURN;
+      END IF;
+    END IF;
+
+    /* Delete the job schedule link first */
+    DELETE FROM sys.sysjobschedules
+     WHERE (job_id = par_job_id)
+       AND (schedule_id = var_schedule_id);
+
+    /* Delete schedule if required */
+    IF (par_keep_schedule = 0)
+    THEN
+      /* Now delete the schedule if required */
+      DELETE FROM sys.sysschedules
+       WHERE (schedule_id = var_schedule_id);
+    END IF;
+
+    SELECT t.returncode
+    FROM sys.babelfish_sp_aws_del_jobschedule(par_job_id, var_schedule_id) t
+    INTO var_retval;
+
+
+  END IF;
+
+  /* Update the job's version/last-modified information */
+  UPDATE sys.sysjobs
+     SET version_number = version_number + 1
+       -- , date_modified = GETDATE() /
+   WHERE job_id = par_job_id;
+
+  DROP TABLE IF EXISTS "#temp_schedules_to_delete";
+
+
+  /* 0 means success */
+  returncode := var_retval;
+  RETURN;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
+                                                           IN p_minute NUMERIC,
+                                                           IN p_seconds NUMERIC,
+                                                           IN p_fractions NUMERIC,
+                                                           IN p_precision NUMERIC)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_fractions VARCHAR;
+    v_precision SMALLINT;
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+BEGIN
+    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF ((p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+           (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
+
+    RETURN make_time(floor(p_hour)::SMALLINT,
+                     floor(p_minute)::SMALLINT,
+                     v_calc_seconds);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type time, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.datetimefromparts(IN p_year NUMERIC,
+                                                               IN p_month NUMERIC,
+                                                               IN p_day NUMERIC,
+                                                               IN p_hour NUMERIC,
+                                                               IN p_minute NUMERIC,
+                                                               IN p_seconds NUMERIC,
+                                                               IN p_milliseconds NUMERIC)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+    v_milliseconds SMALLINT;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+BEGIN
+    -- Check if arguments are out of range
+    IF ((floor(p_year)::SMALLINT NOT BETWEEN 1753 AND 9999) OR
+        (floor(p_month)::SMALLINT NOT BETWEEN 1 AND 12) OR
+        (floor(p_day)::SMALLINT NOT BETWEEN 1 AND 31) OR
+        (floor(p_hour)::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (floor(p_minute)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_milliseconds)::SMALLINT NOT BETWEEN 0 AND 999))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_milliseconds := sys.babelfish_round_fractseconds(p_milliseconds::INTEGER);
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             CASE v_milliseconds
+                                WHEN 1000 THEN '0'
+                                ELSE lpad(v_milliseconds::VARCHAR, 3, '0')
+                             END)::NUMERIC;
+
+    v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                                    floor(p_month)::SMALLINT,
+                                    floor(p_day)::SMALLINT,
+                                    floor(p_hour)::SMALLINT,
+                                    floor(p_minute)::SMALLINT,
+                                    v_calc_seconds);
+    RETURN CASE
+              WHEN (v_milliseconds != 1000) THEN v_resdatetime
+              ELSE v_resdatetime + INTERVAL '1 second'
+           END;
+EXCEPTION
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
+                                                                IN p_month NUMERIC,
+                                                                IN p_day NUMERIC,
+                                                                IN p_hour NUMERIC,
+                                                                IN p_minute NUMERIC,
+                                                                IN p_seconds NUMERIC,
+                                                                IN p_fractions NUMERIC,
+                                                                IN p_precision NUMERIC)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+DECLARE
+   v_fractions VARCHAR;
+   v_precision SMALLINT;
+   v_err_message VARCHAR;
+   v_calc_seconds NUMERIC;
+   v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+   v_string pg_catalog.text;
+BEGIN
+   v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+   v_precision := p_precision::SMALLINT;
+
+   IF (scale(p_precision) > 0) THEN
+      RAISE most_specific_type_mismatch;
+   ELSIF ((p_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
+       (p_month::SMALLINT NOT BETWEEN 1 AND 12) OR
+       (p_day::SMALLINT NOT BETWEEN 1 AND 31) OR
+       (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+       (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
+   THEN
+      RAISE invalid_datetime_format;
+   ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+      RAISE invalid_parameter_value;
+   END IF;
+
+   v_calc_seconds := pg_catalog.format('%s.%s',
+                            floor(p_seconds)::SMALLINT,
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
+
+   v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                         floor(p_month)::SMALLINT,
+                         floor(p_day)::SMALLINT,
+                         floor(p_hour)::SMALLINT,
+                         floor(p_minute)::SMALLINT,
+                         v_calc_seconds);
+
+   v_string := v_resdatetime::pg_catalog.text;
+
+   RETURN CAST(v_string AS sys.DATETIME2);
+EXCEPTION
+   WHEN most_specific_type_mismatch THEN
+      RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_parameter_value THEN
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_datetime_format THEN
+      RAISE USING MESSAGE := 'Cannot construct data type DATETIME2, some of the arguments have values which are not valid.',
+                  DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                  HINT := 'Check each input argument belongs to the valid range and try again.';
+
+   WHEN numeric_value_out_of_range THEN
+      GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+      v_err_message := pg_catalog.upper(split_part(v_err_message, ' ', 1));
+
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                 v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE PROCEDURE sys.sp_statistics(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+	IF @index_name = '%'
+	BEGIN
+		SELECT @index_name = ''
+	END
+	select * from sys.sp_statistics_view
+	where @table_name = table_name
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+	IF @index_name = '%'
+	BEGIN
+		SELECT @index_name = ''
+	END
+	select * from sys.sp_statistics_view
+	where @table_name = table_name
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
+	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    sys.VARCHAR(1000) DEFAULT '',
+	IN "@printrc"    sys.bit DEFAULT 1,
+	IN "@hiddencols" sys.VARCHAR(1000) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @rc INT
+	DECLARE @id INT
+	DECLARE @objtype sys.VARCHAR(2)	
+	DECLARE @msg sys.VARCHAR(200)	
+	
+	IF @tab IS NULL
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END
+	
+	IF sys.TRIM(@tab) = ''
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END	
+	
+	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
+	-- their existence other than by trying to select from them
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, it would be of 
+	-- little use here. 
+	-- NB: not handling uncommon but valid T-SQL syntax '<schemaname>.#tmp' for #tmp tables
+	IF sys.SUBSTRING(@tab,1,1) <> '#'
+	BEGIN
+		SET @id = sys.OBJECT_ID(@tab)
+		IF @id IS NULL
+		BEGIN
+			IF sys.SUBSTRING(pg_catalog.UPPER(@tab),1,4) = 'DBO.'
+			BEGIN
+				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
+			END
+			IF @id IS NULL
+			BEGIN		
+				SET @msg = 'Table or view '''+@tab+''' not found'
+				RAISERROR(@msg, 16, 1)
+				RETURN		
+			END
+		END
+	END
+	
+	SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = @id 
+	IF @objtype NOT IN ('U', 'S', 'V') 
+	BEGIN
+		SET @msg = ''''+@tab+''' is not a table or view'
+		RAISERROR(@msg, 16, 1)
+		RETURN		
+	END
+	
+	-- check for 'ORDER BY', if specified
+	SET @orderby = sys.TRIM(@orderby)
+	IF @orderby <> ''
+	BEGIN
+		IF pg_catalog.UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		BEGIN
+			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
+			RETURN
+		END
+	END
+	
+	-- columns to hide in final client output
+	-- assuming delimited column names do not contain spaces or commas inside the name
+	-- remove any spaces around the commas:
+	WHILE (sys.CHARINDEX(' ,', @hiddencols) > 0) or (sys.CHARINDEX(', ', @hiddencols) > 0)
+	BEGIN
+		SET @hiddencols = sys.REPLACE(@hiddencols, ' ,', ',')
+		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
+	END
+	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	SET @hiddencols = pg_catalog.UPPER(@hiddencols)	
+
+	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
+	-- access the metadata in case a #tmp table is passed as argument
+	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(CAST(NEWID() AS sys.NVARCHAR(36)), '-', '')
+	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	
+	BEGIN TRY
+		-- create the first work table
+		EXECUTE(@cmd)
+
+		-- Get the columns
+		SELECT 
+		   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+		INTO #sp_bbf_autoformat
+		FROM sys.syscolumns c left join sys.systypes t 
+		ON c.xusertype = t.xusertype		
+		WHERE c.id = sys.OBJECT_ID(@tmptab)
+		ORDER BY c.colid
+
+		-- Get max length for each column based on the data
+		DECLARE @colname sys.VARCHAR(63), @basetype sys.VARCHAR(63), @maxlen int
+		DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(sys.LEN(CAST([' + @colname + '] AS sys.VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+			EXECUTE(@cmd)
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Generate the final SELECT
+		DECLARE @selectlist sys.VARCHAR(8000) = ''
+		DECLARE @collist sys.VARCHAR(8000) = ''
+		DECLARE @fmtstart sys.VARCHAR(30) = ''
+		DECLARE @fmtend sys.VARCHAR(30) = ''
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
+			IF @maxlen <= 0 SET @maxlen = 1
+			
+			IF (sys.CHARINDEX(',' + pg_catalog.UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + pg_catalog.UPPER(@colname) + '],', @hiddencols) > 0) 
+			BEGIN
+				SET @selectlist += ' [' + @colname + '],'			
+			END
+			ELSE 
+			BEGIN
+				SET @fmtstart = ''
+				SET @fmtend = ''
+				IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+				BEGIN
+					SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS sys.VARCHAR)+')+'
+					SET @fmtend = ','+CAST(@maxlen AS sys.VARCHAR)+') AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'
+				END
+
+				SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+				SET @collist += '['+@colname + '],'
+			END
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Remove redundant commas
+		SET @collist = sys.SUBSTRING(@collist, 1, sys.LEN(@collist)-1)
+		SET @selectlist = sys.SUBSTRING(@selectlist, 1, sys.LEN(@selectlist)-1)	
+		SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+		
+		-- create the second work table
+		EXECUTE(@selectlist)
+		
+		-- perform the final SELECT to generate the result set for the client
+		EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+			
+		-- PRINT rowcount if desired
+		SET @rc = @@rowcount
+		IF @printrc = 1
+		BEGIN
+			PRINT '   '
+			SET @cmd = '(' + CAST(@rc AS sys.VARCHAR) + ' rows affected)'
+			PRINT @cmd
+		END
+		
+		-- Cleanup: these work tables are permanent tables after all
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)	
+	END TRY	
+	BEGIN CATCH
+		-- Cleanup in case of an unexpected error
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)		
+	END CATCH
+
+	RETURN
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_update_job (
+  par_job_id integer = NULL::integer,
+  par_job_name varchar = NULL::character varying,
+  par_new_name varchar = NULL::character varying,
+  par_enabled smallint = NULL::smallint,
+  par_description varchar = NULL::character varying,
+  par_start_step_id integer = NULL::integer,
+  par_category_name varchar = NULL::character varying,
+  par_owner_login_name varchar = NULL::character varying,
+  par_notify_level_eventlog integer = NULL::integer,
+  par_notify_level_email integer = NULL::integer,
+  par_notify_level_netsend integer = NULL::integer,
+  par_notify_level_page integer = NULL::integer,
+  par_notify_email_operator_name varchar = NULL::character varying,
+  par_notify_netsend_operator_name varchar = NULL::character varying,
+  par_notify_page_operator_name varchar = NULL::character varying,
+  par_delete_level integer = NULL::integer,
+  par_automatic_post smallint = 1,
+  out returncode integer
+)
+RETURNS integer AS
+$body$
+DECLARE
+    var_retval INT;
+    var_category_id INT;
+    var_notify_email_operator_id INT;
+    var_notify_netsend_operator_id INT;
+    var_notify_page_operator_id INT;
+    var_owner_sid CHAR(85);
+    var_alert_id INT;
+    var_cached_attribute_modified INT;
+    var_is_sysadmin INT;
+    var_current_owner VARCHAR(128);
+    var_enable_only_used INT;
+    var_x_new_name VARCHAR(128);
+    var_x_enabled SMALLINT;
+    var_x_description VARCHAR(512);
+    var_x_start_step_id INT;
+    var_x_category_name VARCHAR(128);
+    var_x_category_id INT;
+    var_x_owner_sid CHAR(85);
+    var_x_notify_level_eventlog INT;
+    var_x_notify_level_email INT;
+    var_x_notify_level_netsend INT;
+    var_x_notify_level_page INT;
+    var_x_notify_email_operator_name VARCHAR(128);
+    var_x_notify_netsnd_operator_name VARCHAR(128);
+    var_x_notify_page_operator_name VARCHAR(128);
+    var_x_delete_level INT;
+    var_x_originating_server_id INT;
+    var_x_master_server SMALLINT;
+BEGIN
+    /* Not updatable */
+    /* Remove any leading/trailing spaces from parameters (except @owner_login_name) */
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_job_name))
+        INTO par_job_name;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_new_name))
+        INTO par_new_name;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_description))
+        INTO par_description;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_category_name))
+        INTO par_category_name;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_email_operator_name))
+        INTO par_notify_email_operator_name;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_netsend_operator_name))
+        INTO par_notify_netsend_operator_name;
+    SELECT
+        PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_notify_page_operator_name))
+        INTO par_notify_page_operator_name
+    /* Are we modifying an attribute which tsql agent caches? */;
+
+    IF ((par_new_name IS NOT NULL) OR (par_enabled IS NOT NULL) OR (par_start_step_id IS NOT NULL) OR (par_owner_login_name IS NOT NULL) OR (par_notify_level_eventlog IS NOT NULL) OR (par_notify_level_email IS NOT NULL) OR (par_notify_level_netsend IS NOT NULL) OR (par_notify_level_page IS NOT NULL) OR (par_notify_email_operator_name IS NOT NULL) OR (par_notify_netsend_operator_name IS NOT NULL) OR (par_notify_page_operator_name IS NOT NULL) OR (par_delete_level IS NOT NULL)) THEN
+        SELECT
+            1
+            INTO var_cached_attribute_modified;
+    ELSE
+        SELECT
+            0
+            INTO var_cached_attribute_modified;
+    END IF
+    /* Is @enable the only parameter used beside jobname and jobid? */;
+
+    IF ((par_enabled IS NOT NULL) AND (par_new_name IS NULL) AND (par_description IS NULL) AND (par_start_step_id IS NULL) AND (par_category_name IS NULL) AND (par_owner_login_name IS NULL) AND (par_notify_level_eventlog IS NULL) AND (par_notify_level_email IS NULL) AND (par_notify_level_netsend IS NULL) AND (par_notify_level_page IS NULL) AND (par_notify_email_operator_name IS NULL) AND (par_notify_netsend_operator_name IS NULL) AND (par_notify_page_operator_name IS NULL) AND (par_delete_level IS NULL)) THEN
+        SELECT
+            1
+            INTO var_enable_only_used;
+    ELSE
+        SELECT
+            0
+            INTO var_enable_only_used;
+    END IF;
+
+    IF (par_new_name = '') THEN
+        SELECT
+            NULL
+            INTO par_new_name;
+    END IF
+    /* Fill out the values for all non-supplied parameters from the existing values */;
+
+    IF (par_new_name IS NULL) THEN
+        SELECT
+            var_x_new_name
+            INTO par_new_name;
+    END IF;
+
+    IF (par_enabled IS NULL) THEN
+        SELECT
+            var_x_enabled
+            INTO par_enabled;
+    END IF;
+
+    IF (par_description IS NULL) THEN
+        SELECT
+            var_x_description
+            INTO par_description;
+    END IF;
+
+    IF (par_start_step_id IS NULL) THEN
+        SELECT
+            var_x_start_step_id
+            INTO par_start_step_id;
+    END IF;
+
+    IF (par_category_name IS NULL) THEN
+        SELECT
+            var_x_category_name
+            INTO par_category_name;
+    END IF;
+
+    IF (var_owner_sid IS NULL) THEN
+        SELECT
+            var_x_owner_sid
+            INTO var_owner_sid;
+    END IF;
+
+    IF (par_notify_level_eventlog IS NULL) THEN
+        SELECT
+            var_x_notify_level_eventlog
+            INTO par_notify_level_eventlog;
+    END IF;
+
+    IF (par_notify_level_email IS NULL) THEN
+        SELECT
+            var_x_notify_level_email
+            INTO par_notify_level_email;
+    END IF;
+
+    IF (par_notify_level_netsend IS NULL) THEN
+        SELECT
+            var_x_notify_level_netsend
+            INTO par_notify_level_netsend;
+    END IF;
+
+    IF (par_notify_level_page IS NULL) THEN
+        SELECT
+            var_x_notify_level_page
+            INTO par_notify_level_page;
+    END IF;
+
+    IF (par_notify_email_operator_name IS NULL) THEN
+        SELECT
+            var_x_notify_email_operator_name
+            INTO par_notify_email_operator_name;
+    END IF;
+
+    IF (par_notify_netsend_operator_name IS NULL) THEN
+        SELECT
+            var_x_notify_netsnd_operator_name
+            INTO par_notify_netsend_operator_name;
+    END IF;
+
+    IF (par_notify_page_operator_name IS NULL) THEN
+        SELECT
+            var_x_notify_page_operator_name
+            INTO par_notify_page_operator_name;
+    END IF;
+
+    IF (par_delete_level IS NULL) THEN
+        SELECT
+            var_x_delete_level
+            INTO par_delete_level;
+    END IF
+    /* Turn [nullable] empty string parameters into NULLs */;
+
+    IF (pg_catalog.LOWER(par_description) = pg_catalog.LOWER('')) THEN
+        SELECT
+            NULL
+            INTO par_description;
+    END IF;
+
+    IF (par_category_name = '') THEN
+        SELECT
+            NULL
+            INTO par_category_name;
+    END IF;
+
+    IF (par_notify_email_operator_name = '') THEN
+        SELECT
+            NULL
+            INTO par_notify_email_operator_name;
+    END IF;
+
+    IF (par_notify_netsend_operator_name = '') THEN
+        SELECT
+            NULL
+            INTO par_notify_netsend_operator_name;
+    END IF;
+
+    IF (par_notify_page_operator_name = '') THEN
+        SELECT
+            NULL
+            INTO par_notify_page_operator_name;
+    END IF
+    /* Check new values */;
+    SELECT
+        t.par_owner_sid, t.par_notify_level_email, t.par_notify_level_netsend, t.par_notify_level_page,
+        t.par_category_id, t.par_notify_email_operator_id, t.par_notify_netsend_operator_id, t.par_notify_page_operator_id, t.par_originating_server, t.ReturnCode
+        FROM sys.babelfish_sp_verify_job(par_job_id, par_new_name, par_enabled, par_start_step_id, par_category_name, var_owner_sid, par_notify_level_eventlog, par_notify_level_email, par_notify_level_netsend, par_notify_level_page, par_notify_email_operator_name, par_notify_netsend_operator_name, par_notify_page_operator_name, par_delete_level, var_category_id, var_notify_email_operator_id, var_notify_netsend_operator_id, var_notify_page_operator_id, NULL) t
+        INTO var_owner_sid, par_notify_level_email, par_notify_level_netsend, par_notify_level_page, var_category_id, var_notify_email_operator_id, var_notify_netsend_operator_id, var_notify_page_operator_id, var_retval;
+
+    IF (var_retval <> 0) THEN
+        ReturnCode := (1);
+        RETURN;
+    END IF
+    /* Failure */
+    /* BEGIN TRANSACTION */
+    /* If the job is being re-assigned, modify sysjobsteps.database_user_name as necessary */;
+
+    IF (par_owner_login_name IS NOT NULL) THEN
+        IF (EXISTS (SELECT
+            1
+            FROM sys.sysjobsteps
+            WHERE (job_id = par_job_id) AND (pg_catalog.LOWER(subsystem) = pg_catalog.LOWER('TSQL')))) THEN
+            /* The job is being re-assigned to an non-SA */
+            UPDATE sys.sysjobsteps
+            SET database_user_name = NULL
+                WHERE (job_id = par_job_id) AND (pg_catalog.LOWER(subsystem) = pg_catalog.LOWER('TSQL'));
+        END IF;
+    END IF;
+    UPDATE sys.sysjobs
+    SET name = par_new_name, enabled = par_enabled, description = par_description, start_step_id = par_start_step_id, category_id = var_category_id
+    /* Returned from sp_verify_job */, owner_sid = var_owner_sid, notify_level_eventlog = par_notify_level_eventlog, notify_level_email = par_notify_level_email, notify_level_netsend = par_notify_level_netsend, notify_level_page = par_notify_level_page, notify_email_operator_id = var_notify_email_operator_id
+    /* Returned from sp_verify_job */, notify_netsend_operator_id = var_notify_netsend_operator_id
+    /* Returned from sp_verify_job */, notify_page_operator_id = var_notify_page_operator_id
+    /* Returned from sp_verify_job */, delete_level = par_delete_level, version_number = version_number + 1
+    /* ,  -- Update the job's version */
+    /* date_modified              = GETDATE()            -- Update the job's last-modified information */
+        WHERE (job_id = par_job_id);
+    SELECT
+        0
+        INTO var_retval
+    /* @@error */
+    /* COMMIT TRANSACTION */;
+    ReturnCode := (var_retval);
+    RETURN
+    /* 0 means success */;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_update_jobstep (
+  par_job_id integer = NULL::integer,
+  par_job_name varchar = NULL::character varying,
+  par_step_id integer = NULL::integer,
+  par_step_name varchar = NULL::character varying,
+  par_subsystem varchar = NULL::character varying,
+  par_command text = NULL::text,
+  par_additional_parameters text = NULL::text,
+  par_cmdexec_success_code integer = NULL::integer,
+  par_on_success_action smallint = NULL::smallint,
+  par_on_success_step_id integer = NULL::integer,
+  par_on_fail_action smallint = NULL::smallint,
+  par_on_fail_step_id integer = NULL::integer,
+  par_server varchar = NULL::character varying,
+  par_database_name varchar = NULL::character varying,
+  par_database_user_name varchar = NULL::character varying,
+  par_retry_attempts integer = NULL::integer,
+  par_retry_interval integer = NULL::integer,
+  par_os_run_priority integer = NULL::integer,
+  par_output_file_name varchar = NULL::character varying,
+  par_flags integer = NULL::integer,
+  par_proxy_id integer = NULL::integer,
+  par_proxy_name varchar = NULL::character varying,
+  out returncode integer
+)
+RETURNS integer AS
+$body$
+DECLARE
+    var_retval INT;
+    var_os_run_priority_code INT;
+    var_step_id_as_char VARCHAR(10);
+    var_new_step_name VARCHAR(128);
+    var_x_step_name VARCHAR(128);
+    var_x_subsystem VARCHAR(40);
+    var_x_command TEXT;
+    var_x_flags INT;
+    var_x_cmdexec_success_code INT;
+    var_x_on_success_action SMALLINT;
+    var_x_on_success_step_id INT;
+    var_x_on_fail_action SMALLINT;
+    var_x_on_fail_step_id INT;
+    var_x_server VARCHAR(128);
+    var_x_database_name VARCHAR(128);
+    var_x_database_user_name VARCHAR(128);
+    var_x_retry_attempts INT;
+    var_x_retry_interval INT;
+    var_x_os_run_priority INT;
+    var_x_output_file_name VARCHAR(200);
+    var_x_proxy_id INT;
+    var_x_last_run_outcome SMALLINT;
+    var_x_last_run_duration INT;
+    var_x_last_run_retries INT;
+    var_x_last_run_date INT;
+    var_x_last_run_time INT;
+    var_new_proxy_id INT;
+    var_subsystem_id INT;
+    var_auto_proxy_name VARCHAR(128);
+    var_job_owner_sid CHAR(85);
+    var_step_uid CHAR(85);
+BEGIN
+    SELECT NULL INTO var_new_proxy_id;
+    /* Remove any leading/trailing spaces from parameters */
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_step_name)) INTO par_step_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_subsystem)) INTO par_subsystem;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_command)) INTO par_command;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_server)) INTO par_server;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_database_name)) INTO par_database_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_database_user_name)) INTO par_database_user_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_output_file_name)) INTO par_output_file_name;
+    SELECT PG_CATALOG.LTRIM(PG_CATALOG.RTRIM(par_proxy_name)) INTO par_proxy_name;
+    /* Make sure Dts is translated into new subsystem's name SSIS */
+    /* IF (@subsystem IS NOT NULL AND UPPER(@subsystem collate SQL_Latin1_General_CP1_CS_AS) = N'DTS') */
+    /* BEGIN */
+    /* SET @subsystem = N'SSIS' */
+    /* END */
+    SELECT
+        t.par_job_name, t.par_job_id, t.par_owner_sid, t.ReturnCode
+        FROM sys.babelfish_sp_verify_job_identifiers('@job_name'
+        /* @name_of_name_parameter */, '@job_id'
+        /* @name_of_id_parameter */, par_job_name
+        /* @job_name */, par_job_id
+        /* @job_id */, 'TEST'
+        /* @sqlagent_starting_test */, var_job_owner_sid)
+        INTO par_job_name, par_job_id, var_job_owner_sid, var_retval
+    /* @owner_sid */;
+
+    IF (var_retval <> 0) THEN
+        ReturnCode := (1);
+        RETURN;
+    END IF;
+    /* Failure */
+    /* Check that the step exists */
+
+    IF (NOT EXISTS (SELECT
+        *
+        FROM sys.sysjobsteps
+        WHERE (job_id = par_job_id) AND (step_id = par_step_id))) THEN
+        SELECT
+            CAST (par_step_id AS VARCHAR(10))
+            INTO var_step_id_as_char;
+        RAISE 'Error %, severity %, state % was raised. Message: %. Argument: %. Argument: %', '50000', 0, 0, 'The specified %s ("%s") does not exist.', '@step_id', var_step_id_as_char USING ERRCODE := '50000';
+        ReturnCode := (1);
+        RETURN;
+        /* Failure */
+    END IF;
+    /* Set the x_ (existing) variables */
+    SELECT
+        step_name, subsystem, command, flags, cmdexec_success_code, on_success_action, on_success_step_id, on_fail_action, on_fail_step_id, server, database_name, database_user_name, retry_attempts, retry_interval, os_run_priority, output_file_name, proxy_id, last_run_outcome, last_run_duration, last_run_retries, last_run_date, last_run_time
+        INTO var_x_step_name, var_x_subsystem, var_x_command, var_x_flags, var_x_cmdexec_success_code, var_x_on_success_action, var_x_on_success_step_id, var_x_on_fail_action, var_x_on_fail_step_id, var_x_server, var_x_database_name, var_x_database_user_name, var_x_retry_attempts, var_x_retry_interval, var_x_os_run_priority, var_x_output_file_name, var_x_proxy_id, var_x_last_run_outcome, var_x_last_run_duration, var_x_last_run_retries, var_x_last_run_date, var_x_last_run_time
+        FROM sys.sysjobsteps
+        WHERE (job_id = par_job_id) AND (step_id = par_step_id);
+
+    IF ((par_step_name IS NOT NULL) AND (par_step_name <> var_x_step_name)) THEN
+        SELECT
+            par_step_name
+            INTO var_new_step_name;
+    END IF;
+    /* Fill out the values for all non-supplied parameters from the existing values */
+
+    IF (par_step_name IS NULL) THEN
+        SELECT var_x_step_name INTO par_step_name;
+    END IF;
+
+    IF (par_subsystem IS NULL) THEN
+        SELECT var_x_subsystem INTO par_subsystem;
+    END IF;
+
+    IF (par_command IS NULL) THEN
+        SELECT var_x_command INTO par_command;
+    END IF;
+
+    IF (par_flags IS NULL) THEN
+        SELECT var_x_flags INTO par_flags;
+    END IF;
+
+    IF (par_cmdexec_success_code IS NULL) THEN
+        SELECT var_x_cmdexec_success_code INTO par_cmdexec_success_code;
+    END IF;
+
+    IF (par_on_success_action IS NULL) THEN
+        SELECT var_x_on_success_action INTO par_on_success_action;
+    END IF;
+
+    IF (par_on_success_step_id IS NULL) THEN
+        SELECT var_x_on_success_step_id INTO par_on_success_step_id;
+    END IF;
+
+    IF (par_on_fail_action IS NULL) THEN
+        SELECT var_x_on_fail_action INTO par_on_fail_action;
+    END IF;
+
+    IF (par_on_fail_step_id IS NULL) THEN
+        SELECT var_x_on_fail_step_id INTO par_on_fail_step_id;
+    END IF;
+
+    IF (par_server IS NULL) THEN
+        SELECT var_x_server INTO par_server;
+    END IF;
+
+    IF (par_database_name IS NULL) THEN
+        SELECT var_x_database_name INTO par_database_name;
+    END IF;
+
+    IF (par_database_user_name IS NULL) THEN
+        SELECT var_x_database_user_name INTO par_database_user_name;
+    END IF;
+
+    IF (par_retry_attempts IS NULL) THEN
+        SELECT var_x_retry_attempts INTO par_retry_attempts;
+    END IF;
+
+    IF (par_retry_interval IS NULL) THEN
+        SELECT var_x_retry_interval INTO par_retry_interval;
+    END IF;
+
+    IF (par_os_run_priority IS NULL) THEN
+        SELECT var_x_os_run_priority INTO par_os_run_priority;
+    END IF;
+
+    IF (par_output_file_name IS NULL) THEN
+        SELECT var_x_output_file_name INTO par_output_file_name;
+    END IF;
+
+    IF (par_proxy_id IS NULL) THEN
+        SELECT var_x_proxy_id INTO var_new_proxy_id;
+    END IF;
+    /* if an empty proxy_name is supplied the proxy is removed */
+
+    IF par_proxy_name = '' THEN
+        SELECT NULL INTO var_new_proxy_id;
+    END IF;
+    /* Turn [nullable] empty string parameters into NULLs */
+
+    IF (pg_catalog.LOWER(par_command) = pg_catalog.LOWER('')) THEN
+        SELECT NULL INTO par_command;
+    END IF;
+
+    IF (par_server = '') THEN
+        SELECT NULL INTO par_server;
+    END IF;
+
+    IF (par_database_name = '') THEN
+        SELECT NULL INTO par_database_name;
+    END IF;
+
+    IF (par_database_user_name = '') THEN
+        SELECT NULL INTO par_database_user_name;
+    END IF;
+
+    IF (pg_catalog.LOWER(par_output_file_name) = pg_catalog.LOWER('')) THEN
+        SELECT NULL INTO par_output_file_name;
+    END IF
+    /* Check new values */;
+    SELECT
+        t.par_database_name, t.par_database_user_name, t.ReturnCode
+        FROM sys.babelfish_sp_verify_jobstep(par_job_id, par_step_id, var_new_step_name, par_subsystem, par_command, par_server, par_on_success_action, par_on_success_step_id, par_on_fail_action, par_on_fail_step_id, par_os_run_priority, par_database_name, par_database_user_name, par_flags, par_output_file_name, var_new_proxy_id) t
+        INTO par_database_name, par_database_user_name, var_retval;
+
+    IF (var_retval <> 0) THEN
+        ReturnCode := (1);
+        RETURN;
+    END IF
+    /* Failure */
+    /* Update the job's version/last-modified information */;
+    UPDATE sys.sysjobs
+    SET version_number = version_number + 1
+    /* date_modified = GETDATE() */
+        WHERE (job_id = par_job_id)
+    /* Update the step */;
+    UPDATE sys.sysjobsteps
+    SET step_name = par_step_name, subsystem = par_subsystem, command = par_command, flags = par_flags, additional_parameters = par_additional_parameters, cmdexec_success_code = par_cmdexec_success_code, on_success_action = par_on_success_action, on_success_step_id = par_on_success_step_id, on_fail_action = par_on_fail_action, on_fail_step_id = par_on_fail_step_id, server = par_server, database_name = par_database_name, database_user_name = par_database_user_name, retry_attempts = par_retry_attempts, retry_interval = par_retry_interval, os_run_priority = par_os_run_priority, output_file_name = par_output_file_name, last_run_outcome = var_x_last_run_outcome, last_run_duration = var_x_last_run_duration, last_run_retries = var_x_last_run_retries, last_run_date = var_x_last_run_date, last_run_time = var_x_last_run_time, proxy_id = var_new_proxy_id
+        WHERE (job_id = par_job_id) AND (step_id = par_step_id);
+
+    SELECT step_uid
+    FROM sys.sysjobsteps
+    WHERE job_id = par_job_id AND step_id = par_step_id
+    INTO var_step_uid;
+
+    -- PERFORM sys.sp_jobstep_create_proc (var_step_uid);
+
+    ReturnCode := (0);
+    RETURN
+    /* Success */;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE PROCEDURE sys.sp_describe_cursor (INOUT "@cursor_return" refcursor,
+                                                   IN "@cursor_source" nvarchar(30),
+                                                   IN "@cursor_identity" nvarchar(30))
+AS $$
+DECLARE
+  cur refcursor;
+  cursor_source int;
+BEGIN
+  IF pg_catalog.lower("@cursor_source") = 'local' THEN
+    cursor_source := 1;
+  ELSIF pg_catalog.lower("@cursor_source") = 'global' THEN
+    cursor_source := 2;
+  ELSIF pg_catalog.lower("@cursor_source") = 'variable' THEN
+    cursor_source := 3;
+  ELSE
+    RAISE 'invalid @cursor_source: %', "@cursor_source";
+  END IF;
+
+  OPEN cur FOR EXECUTE 'SELECT reference_name::name, cursor_name::name, cursor_scope::smallint, status::smallint, model::smallint, concurrency::smallint, scrollable::smallint, open_status::smallint, cursor_rows::numeric(10,0), fetch_status::smallint, column_count::smallint, row_count::numeric(10,0), last_operation::smallint, cursor_handle::int FROM sys.babelfish_cursor_list($1) WHERE cursor_source = $1 and reference_name = $2' USING cursor_source, "@cursor_identity";
+
+  -- PG cursor evaluates the query at first fetch. We need to evaluate table function now because cursor_list() depeneds on "current" tsql_estate().
+  -- Running MOVE fowrard and backward to force evaluating sys.babelfish_cursor_list() now.
+  MOVE NEXT FROM cur;
+  MOVE PRIOR FROM cur;
+  SELECT cur INTO "@cursor_return";
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_describe_cursor(
+	INOUT refcursor, IN nvarchar(30), IN nvarchar(30)
+) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
+AS $$
+DECLARE
+  normalized_name varchar(256);
+  default_value text;
+  value_type text;
+  enum_value text[];
+  cnt int;
+  cur refcursor;
+  guc_name varchar(256);
+  server boolean := false;
+  prev_user text;
+BEGIN
+  IF pg_catalog.lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
+    SELECT "@option_name" INTO normalized_name;
+  ELSE
+    SELECT pg_catalog.concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+  END IF;
+
+  IF PG_CATALOG.lower("@option_scope") = 'server' THEN
+    server := true;
+  ELSIF btrim("@option_scope") != '' THEN
+    RAISE EXCEPTION 'invalid option: %', "@option_scope";
+  END IF;
+
+  SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
+  IF cnt = 0 THEN 
+    IF pg_catalog.LOWER(normalized_name) = 'babelfishpg_tsql.escape_hatch_unique_constraint' COLLATE C THEN
+      CALl sys.printarg('Config option babelfishpg_tsql.escape_hatch_unique_constraint has been deprecated, babelfish now supports unique constraints on nullable columns');
+    ELSE
+      RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+    END IF;
+  ELSIF cnt > 1 AND (pg_catalog.lower("@option_value") != 'ignore' AND pg_catalog.lower("@option_value") != 'strict' 
+                AND pg_catalog.lower("@option_value") != 'default') THEN
+    RAISE EXCEPTION 'unvalid option: %', pg_catalog.lower("@option_value");
+  END IF;
+
+  OPEN cur FOR SELECT name FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
+  LOOP
+    FETCH NEXT FROM cur into guc_name;
+    exit when not found;
+
+    SELECT boot_val, vartype, enumvals INTO default_value, value_type, enum_value FROM pg_catalog.pg_settings WHERE name = guc_name;
+    IF pg_catalog.lower("@option_value") = 'default' THEN
+        PERFORM pg_catalog.set_config(guc_name, default_value, 'false');
+    ELSIF pg_catalog.lower("@option_value") = 'ignore' or pg_catalog.lower("@option_value") = 'strict' THEN
+      IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
+      ELSE
+        CONTINUE;
+      END IF;
+    ELSE
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
+    END IF;
+    IF server THEN
+      SELECT current_user INTO prev_user;
+      PERFORM sys.babelfish_set_role(session_user);
+      IF pg_catalog.lower("@option_value") = 'default' THEN
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, default_value);
+      ELSIF pg_catalog.lower("@option_value") = 'ignore' or pg_catalog.lower("@option_value") = 'strict' THEN
+        IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+          EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
+        ELSE
+          CONTINUE;
+        END IF;
+      ELSE
+        -- store the setting in PG master database so that it can be applied to all bbf databases
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
+      END IF;
+      PERFORM sys.babelfish_set_role(prev_user);
+    END IF;
+  END LOOP;
+
+  CLOSE cur;
+
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
+	IN varchar(128), IN varchar(128), IN varchar(128)
+) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.syslanguages
+AS
+SELECT
+    lang_id AS langid,
+    CAST(pg_catalog.lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
+    CAST(lang_data_jsonb -> 'date_first'::TEXT AS SYS.TINYINT) AS datefirst,
+    CAST(NULL AS INT) AS upgrade,
+    CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
+    CAST(coalesce(lang_alias_mssql, lang_alias_pg) AS SYS.SYSNAME) AS alias,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_names'::TEXT)), ',') AS SYS.NVARCHAR(372)) AS months,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_shortnames'::TEXT)),',') AS SYS.NVARCHAR(132)) AS shortmonths,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'days_shortnames'::TEXT)),',') AS SYS.NVARCHAR(217)) AS days,
+    CAST(NULL AS INT) AS lcid,
+    CAST(NULL AS SMALLINT) AS msglangid
+FROM sys.babelfish_syslanguages;
+GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
+RETURNS INT AS
+$BODY$
+DECLARE
+ret_val INT;
+BEGIN
+	index_or_statistics_name = LOWER(PG_CATALOG.btrim(index_or_statistics_name)) COLLATE sys.database_default;
+	property = LOWER(PG_CATALOG.btrim(property)) COLLATE sys.database_default;
+    SELECT INTO ret_val
+    CASE
+       
+        WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
+        THEN CAST(NULL AS int)
+	    
+        WHEN property = 'indexdepth' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+
+        WHEN property = 'indexfillfactor' COLLATE sys.database_default
+        THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'indexid' COLLATE sys.database_default
+        THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'isautostatistics' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+
+        WHEN property = 'isclustered' COLLATE sys.database_default
+        THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isdisabled' COLLATE sys.database_default
+        THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isfulltextkey' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'ishypothetical' COLLATE sys.database_default
+        THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispadindex' COLLATE sys.database_default
+        THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispagelockdisallowed' COLLATE sys.database_default
+        THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isrowlockdisallowed' COLLATE sys.database_default
+        THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isstatistics' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isunique' COLLATE sys.database_default
+        THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'iscolumnstore' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isoptimizedforsequentialkey' COLLATE sys.database_default
+        THEN CAST(0 AS int)
+    ELSE
+        CAST(NULL AS int)
+    END;
+RETURN ret_val;
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value ANYELEMENT, in escape bool)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    json_new_value JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(PG_CATALOG.btrim(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+     * Comparisons for comparison_string are case-sensitive.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path COLLATE "C", '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert COLLATE "C", '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = PG_CATALOG.CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+
+    IF escape THEN
+        json_new_value = new_value::JSONB;
+    ELSE
+        json_new_value = to_jsonb(new_value);
+    END IF;
+
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,json_new_value);
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value);
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
+                                                                 IN p_dateval DATE,
+                                                                 IN p_style NUMERIC DEFAULT 20)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_dateval DATE;
+    v_style SMALLINT;
+    v_month SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_maxlength SMALLINT;
+    v_res_length SMALLINT;
+    v_err_message VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_lang_metadata_json JSONB;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+BEGIN
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_style := floor(p_style)::SMALLINT;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 113) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF (v_style IN (8, 24, 108)) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
+
+        v_maxlength := CASE
+                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          ELSE NVARCHAR_MAX
+                       END;
+
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+
+    v_dateval := CASE
+                    WHEN (v_style NOT IN (130, 131)) THEN p_dateval
+                    ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
+                 END;
+
+    v_day := PG_CATALOG.ltrim(to_char(v_dateval, 'DD'), '0');
+    v_month := to_char(v_dateval, 'MM')::SMALLINT;
+
+    v_language := CASE
+                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
+                     ELSE CONVERSION_LANG
+                  END;
+ RAISE NOTICE 'v_language=[%]', v_language;		  
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_character_value_for_cast;
+    END;
+
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+
+    v_resmask := CASE
+                    WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
+                    WHEN (v_style = 101) THEN 'MM/DD/YYYY'
+                    WHEN (v_style = 2) THEN 'YY.MM.DD'
+                    WHEN (v_style = 102) THEN 'YYYY.MM.DD'
+                    WHEN (v_style = 3) THEN 'DD/MM/YY'
+                    WHEN (v_style = 103) THEN 'DD/MM/YYYY'
+                    WHEN (v_style = 4) THEN 'DD.MM.YY'
+                    WHEN (v_style = 104) THEN 'DD.MM.YYYY'
+                    WHEN (v_style = 5) THEN 'DD-MM-YY'
+                    WHEN (v_style = 105) THEN 'DD-MM-YYYY'
+                    WHEN (v_style = 6) THEN 'DD $mnme$ YY'
+                    WHEN (v_style IN (13, 106, 113)) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 7) THEN '$mnme$ DD, YY'
+                    WHEN (v_style = 107) THEN '$mnme$ DD, YYYY'
+                    WHEN (v_style = 10) THEN 'MM-DD-YY'
+                    WHEN (v_style = 110) THEN 'MM-DD-YYYY'
+                    WHEN (v_style = 11) THEN 'YY/MM/DD'
+                    WHEN (v_style = 111) THEN 'YYYY/MM/DD'
+                    WHEN (v_style = 12) THEN 'YYMMDD'
+                    WHEN (v_style = 112) THEN 'YYYYMMDD'
+                    WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
+                    WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
+                 END;
+
+    v_resstring := to_char(v_dateval, v_resmask);
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', pg_catalog.btrim(p_datatype)),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+   WHEN interval_field_overflow THEN
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr,
+                                     pg_catalog.lower(v_res_datatype),
+                                     v_maxlength),
+                   DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
+                                                                     IN p_src_datatype TEXT,
+                                                                     IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
+                                                                     IN p_style NUMERIC DEFAULT -1)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_hour VARCHAR COLLATE "C";
+    v_month SMALLINT;
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_fractsep VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_maxlength SMALLINT;
+    v_res_length SMALLINT;
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_lang_metadata_json JSONB;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^(?:DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
+BEGIN
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_src_datatype := pg_catalog.upper(pg_catalog.btrim(p_src_datatype));
+    v_style := floor(p_style)::SMALLINT;
+
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
+    THEN
+        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
+
+        v_src_datatype := PG_CATALOG.rtrim(split_part(v_src_datatype, '(', 1));
+
+        IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
+            RAISE invalid_indicator_parameter_value;
+        ELSIF (v_scale NOT BETWEEN 0 AND 7) THEN
+            RAISE invalid_regular_expression;
+        END IF;
+
+        v_scale := coalesce(v_scale, 7);
+    ELSE
+        RAISE most_specific_type_mismatch;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE escape_character_conflict;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 114) OR
+                v_style IN (-1, 120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
+
+        v_maxlength := CASE
+                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          ELSE NVARCHAR_MAX
+                       END;
+
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
+        THEN
+            RAISE interval_field_overflow;
+        END IF;
+
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+
+    v_datetimeval := CASE
+                        WHEN (v_style NOT IN (130, 131)) THEN p_datetimeval
+                        ELSE sys.babelfish_conv_greg_to_hijri(p_datetimeval) + INTERVAL '1 day'
+                     END;
+
+    v_day := PG_CATALOG.ltrim(to_char(v_datetimeval, 'DD'), '0');
+    v_hour := PG_CATALOG.ltrim(to_char(v_datetimeval, 'HH12'), '0');
+    v_month := to_char(v_datetimeval, 'MM')::SMALLINT;
+
+    v_language := CASE
+                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
+                     ELSE CONVERSION_LANG
+                  END;
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_character_value_for_cast;
+    END;
+
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+
+    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
+        v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
+
+        IF (v_fseconds::INTEGER = 1000) THEN
+            v_fseconds := '000';
+            v_datetimeval := v_datetimeval + INTERVAL '1 second';
+        ELSE
+            v_fseconds := lpad(v_fseconds, 3, '0');
+        END IF;
+    ELSE
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
+
+        IF (v_scale = 7) THEN
+            v_fseconds := pg_catalog.concat(v_fseconds, '0');
+        END IF;
+    END IF;
+
+    v_fractsep := CASE v_src_datatype
+                     WHEN 'DATETIME2' THEN '.'
+                     ELSE ':'
+                  END;
+
+    IF ((v_style = -1 AND v_src_datatype <> 'DATETIME2') OR
+        v_style IN (0, 9, 100, 109))
+    THEN
+        v_resmask := pg_catalog.format('$mnme$ %s YYYY %s:MI%s',
+                            lpad(v_day, 2, ' '),
+                            lpad(v_hour, 2, ' '),
+                            CASE
+                               WHEN (v_style IN (-1, 0, 100)) THEN 'AM'
+                               ELSE pg_catalog.format(':SS:%sAM', v_fseconds)
+                            END);
+    ELSIF (v_style = 1) THEN
+        v_resmask := 'MM/DD/YY';
+    ELSIF (v_style = 101) THEN
+        v_resmask := 'MM/DD/YYYY';
+    ELSIF (v_style = 2) THEN
+        v_resmask := 'YY.MM.DD';
+    ELSIF (v_style = 102) THEN
+        v_resmask := 'YYYY.MM.DD';
+    ELSIF (v_style = 3) THEN
+        v_resmask := 'DD/MM/YY';
+    ELSIF (v_style = 103) THEN
+        v_resmask := 'DD/MM/YYYY';
+    ELSIF (v_style = 4) THEN
+        v_resmask := 'DD.MM.YY';
+    ELSIF (v_style = 104) THEN
+        v_resmask := 'DD.MM.YYYY';
+    ELSIF (v_style = 5) THEN
+        v_resmask := 'DD-MM-YY';
+    ELSIF (v_style = 105) THEN
+        v_resmask := 'DD-MM-YYYY';
+    ELSIF (v_style = 6) THEN
+        v_resmask := 'DD $mnme$ YY';
+    ELSIF (v_style = 106) THEN
+        v_resmask := 'DD $mnme$ YYYY';
+    ELSIF (v_style = 7) THEN
+        v_resmask := '$mnme$ DD, YY';
+    ELSIF (v_style = 107) THEN
+        v_resmask := '$mnme$ DD, YYYY';
+    ELSIF (v_style IN (8, 24, 108)) THEN
+        v_resmask := 'HH24:MI:SS';
+    ELSIF (v_style = 10) THEN
+        v_resmask := 'MM-DD-YY';
+    ELSIF (v_style = 110) THEN
+        v_resmask := 'MM-DD-YYYY';
+    ELSIF (v_style = 11) THEN
+        v_resmask := 'YY/MM/DD';
+    ELSIF (v_style = 111) THEN
+        v_resmask := 'YYYY/MM/DD';
+    ELSIF (v_style = 12) THEN
+        v_resmask := 'YYMMDD';
+    ELSIF (v_style = 112) THEN
+        v_resmask := 'YYYYMMDD';
+    ELSIF (v_style IN (13, 113)) THEN
+        v_resmask := pg_catalog.format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+    ELSIF (v_style IN (14, 114)) THEN
+        v_resmask := pg_catalog.format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+    ELSIF (v_style IN (20, 120)) THEN
+        v_resmask := 'YYYY-MM-DD HH24:MI:SS';
+    ELSIF ((v_style = -1 AND v_src_datatype = 'DATETIME2') OR
+           v_style IN (21, 25, 121))
+    THEN
+        v_resmask := pg_catalog.format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
+    ELSIF (v_style = 22) THEN
+        v_resmask := pg_catalog.format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
+    ELSIF (v_style = 23) THEN
+        v_resmask := 'YYYY-MM-DD';
+    ELSIF (v_style IN (126, 127)) THEN
+        v_resmask := CASE v_src_datatype
+                        WHEN 'SMALLDATETIME' THEN 'YYYY-MM-DDT$rem$HH24:MI:SS'
+                        ELSE pg_catalog.format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
+                     END;
+    ELSIF (v_style IN (130, 131)) THEN
+        v_resmask := pg_catalog.concat(CASE p_style
+                               WHEN 131 THEN pg_catalog.format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
+                               ELSE pg_catalog.format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
+                            END,
+                            pg_catalog.format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
+    END IF;
+
+    v_resstring := to_char(v_datetimeval, v_resmask);
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := pg_catalog.replace(v_resstring, '$rem$', '');
+
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2'' or ''DATETIME2(n)''.',
+                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
+                    HINT := 'Change "srcdatatype" parameter to the proper value and try again.';
+
+   WHEN invalid_regular_expression THEN
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+                                     v_scale),
+                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
+                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
+
+    WHEN invalid_indicator_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_src_datatype),
+                    DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
+                    HINT := 'Change data type scale component or select different data type and try again.';
+
+    WHEN escape_character_conflict THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from %s to a character string.',
+                                      v_style, v_src_datatype),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN interval_field_overflow THEN
+        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                      v_lengthexpr, pg_catalog.lower(v_res_datatype), v_maxlength),
+                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
+                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
+                                                                     IN p_datetimestring TEXT,
+                                                                     IN p_style NUMERIC DEFAULT 0)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_year VARCHAR COLLATE "C";
+    v_month VARCHAR COLLATE "C";
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_hours VARCHAR COLLATE "C";
+    v_hijridate DATE;
+    v_minutes VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timepart VARCHAR COLLATE "C";
+    v_leftpart VARCHAR COLLATE "C";
+    v_middlepart VARCHAR COLLATE "C";
+    v_rightpart VARCHAR COLLATE "C";
+    v_datestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_datetimestring VARCHAR COLLATE "C";
+    v_datatype_groups TEXT[];
+    v_regmatch_groups TEXT[];
+    v_lang_metadata_json JSONB;
+    v_compmonth_regexp VARCHAR COLLATE "C";
+    v_resdatetime TIMESTAMP(6) WITHOUT TIME ZONE;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2}|\d{4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M)';
+    MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\.|-|/)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,9}\s*';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    DIGITREPRESENT_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\-?\d+\.?(?:\d+)?$';
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
+                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
+                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
+                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.|\:)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
+    HHMMSSFS_DOT_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
+                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
+                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
+                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')$');
+    DEFMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
+    DEFMASK1_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
+    DEFMASK2_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', COMPYEAR_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK2_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK2_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK3_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK3_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
+    DEFMASK3_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
+    DEFMASK4_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK4_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK4_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK5_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK5_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK5_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK6_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK6_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
+    DEFMASK6_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
+    DEFMASK7_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK7_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK7_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK8_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK8_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK8_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK9_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP,
+                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK9_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
+    DEFMASK9_2_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
+    DEFMASK10_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                  DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP,
+                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DEFMASK10_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_COMPYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                                 DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP,
+                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DOT_SLASH_DASH_COMPYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', SHORTYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_FULLYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                                 DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', FULLYEAR_REGEXP,
+                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    DOT_SLASH_DASH_FULLYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', FULLYEAR_REGEXP, '$');
+    FULLYEAR_DOT_SLASH_DASH1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+                                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP,
+                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    FULLYEAR_DOT_SLASH_DASH1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '$');
+    SHORT_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{6}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+BEGIN
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_datetimestring := pg_catalog.upper(pg_catalog.btrim(p_datetimestring));
+    v_style := floor(p_style)::SMALLINT;
+
+    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
+
+    v_res_datatype := pg_catalog.upper(v_datatype_groups[1]);
+    v_scale := v_datatype_groups[2]::SMALLINT;
+
+    IF (v_res_datatype IS NULL) THEN
+        RAISE datatype_mismatch;
+    ELSIF (v_res_datatype <> 'DATETIME2' AND v_scale IS NOT NULL)
+    THEN
+        RAISE invalid_indicator_parameter_value;
+    ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
+    THEN
+        RAISE interval_field_overflow;
+    ELSIF (v_scale IS NULL) THEN
+        v_scale := 7;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+             (v_style BETWEEN 20 AND 25) OR
+             (v_style BETWEEN 100 AND 114) OR
+             (v_style IN (120, 121, 126, 127, 130, 131))) AND
+             v_res_datatype = 'DATETIME2')
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+
+    v_timepart := pg_catalog.btrim(substring(v_datetimestring, HHMMSSFS_PART_REGEXP));
+    v_datestring := pg_catalog.btrim(regexp_replace(v_datetimestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
+
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(CONVERSION_LANG);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_escape_sequence;
+    END;
+
+    v_date_format := coalesce(nullif(DATE_FORMAT, ''), v_lang_metadata_json ->> 'date_format');
+
+    v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
+                                                    ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
+
+    IF (v_datetimestring ~* pg_catalog.replace(DEFMASK1_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK2_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK3_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK4_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK5_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK6_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK7_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK8_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK9_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK10_0_REGEXP, '$comp_month$', v_compmonth_regexp))
+    THEN
+        IF ((v_style IN (127, 130, 131) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+            (v_style IN (130, 131) AND v_res_datatype = 'DATETIME2'))
+        THEN
+            RAISE invalid_datetime_format;
+        END IF;
+
+        IF ((v_datestring ~* pg_catalog.replace(DEFMASK1_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK2_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK3_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK4_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK5_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK6_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK7_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK8_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK9_2_REGEXP, '$comp_month$', v_compmonth_regexp)) AND
+            v_res_datatype = 'DATETIME2')
+        THEN
+            RAISE invalid_datetime_format;
+        END IF;
+
+        IF (v_datestring ~* pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[2];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
+            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[1];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
+            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[3];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
+            v_year := v_regmatch_groups[1];
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[2];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
+            v_year := v_regmatch_groups[1];
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[1];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
+            v_year := sys.babelfish_get_full_year(v_regmatch_groups[2]);
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[3];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
+            v_year := v_regmatch_groups[2];
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[2];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
+            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := '01';
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
+            v_year := v_regmatch_groups[1];
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := '01';
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
+            v_year := v_regmatch_groups[2];
+
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        THEN
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_day := v_regmatch_groups[1];
+            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
+            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
+        ELSE
+            RAISE invalid_character_value_for_cast;
+        END IF;
+    ELSIF (v_datetimestring ~* DOT_SLASH_DASH_COMPYEAR1_0_REGEXP)
+    THEN
+        IF (v_style IN (6, 7, 8, 9, 12, 13, 14, 24, 100, 106, 107, 108, 109, 112, 113, 114, 130) AND
+            v_res_datatype = 'DATETIME2')
+        THEN
+            RAISE invalid_regular_expression;
+        END IF;
+
+        v_regmatch_groups := regexp_matches(v_datestring, DOT_SLASH_DASH_COMPYEAR1_1_REGEXP, 'gi');
+        v_leftpart := v_regmatch_groups[1];
+        v_middlepart := v_regmatch_groups[2];
+        v_rightpart := v_regmatch_groups[3];
+
+        IF (v_datestring ~* DOT_SLASH_DASH_SHORTYEAR_REGEXP)
+        THEN
+            IF ((v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11, 12) AND v_res_datatype = 'DATETIME2'))
+            THEN
+                RAISE invalid_datetime_format;
+            END IF;
+
+            IF ((v_style IN (1, 10) AND v_date_format <> 'MDY' AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style IN (0, 1, 10) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style IN (0, 1, 10, 22) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
+                (v_style IN (1, 10, 22) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2'))
+            THEN
+                v_day := v_middlepart;
+                v_month := v_leftpart;
+                v_year := sys.babelfish_get_full_year(v_rightpart);
+
+            ELSIF ((v_style IN (2, 11) AND v_date_format <> 'YMD') OR
+                   (v_style IN (0, 2, 11) AND v_date_format = 'YMD'))
+            THEN
+                v_day := v_rightpart;
+                v_month := v_middlepart;
+                v_year := sys.babelfish_get_full_year(v_leftpart);
+
+            ELSIF ((v_style IN (3, 4, 5) AND v_date_format <> 'DMY') OR
+                   (v_style IN (0, 3, 4, 5) AND v_date_format = 'DMY'))
+            THEN
+                v_day := v_leftpart;
+                v_month := v_middlepart;
+                v_year := sys.babelfish_get_full_year(v_rightpart);
+
+            ELSIF (v_style = 0 AND v_date_format = 'DYM')
+            THEN
+                v_day = v_leftpart;
+                v_month = v_rightpart;
+                v_year = sys.babelfish_get_full_year(v_middlepart);
+
+            ELSIF (v_style = 0 AND v_date_format = 'MYD')
+            THEN
+                v_day := v_rightpart;
+                v_month := v_leftpart;
+                v_year = sys.babelfish_get_full_year(v_middlepart);
+
+            ELSIF (v_style = 0 AND v_date_format = 'YDM')
+            THEN
+                IF (v_res_datatype = 'DATETIME2') THEN
+                    RAISE character_not_in_repertoire;
+                END IF;
+
+                v_day := v_middlepart;
+                v_month := v_rightpart;
+                v_year := sys.babelfish_get_full_year(v_leftpart);
+            ELSE
+                RAISE invalid_character_value_for_cast;
+            END IF;
+        ELSIF (v_datestring ~* DOT_SLASH_DASH_FULLYEAR1_1_REGEXP)
+        THEN
+            IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
+                v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
+            THEN
+                RAISE invalid_datetime_format;
+            ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME') THEN
+                RAISE invalid_character_value_for_cast;
+            END IF;
+
+            v_year := v_rightpart;
+            IF (v_leftpart::SMALLINT <= 12)
+            THEN
+                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
+                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
+                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
+                THEN
+                    v_day := v_leftpart;
+                    v_month := v_middlepart;
+
+                ELSIF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                       (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                       (v_style IN (101, 110) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
+                       (v_style IN (0, 101, 110) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2'))
+                THEN
+                    v_day := v_middlepart;
+                    v_month := v_leftpart;
+                END IF;
+            ELSE
+                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
+                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
+                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
+                THEN
+                    v_day := v_leftpart;
+                    v_month := v_middlepart;
+                ELSE
+                    IF (v_res_datatype = 'DATETIME2') THEN
+                        RAISE invalid_datetime_format;
+                    END IF;
+
+                    RAISE invalid_character_value_for_cast;
+                END IF;
+            END IF;
+        END IF;
+    ELSIF (v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP)
+    THEN
+        IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
+            v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
+        THEN
+            RAISE invalid_datetime_format;
+        ELSIF (v_style IN (6, 7, 8, 9, 12, 13, 14, 24, 100, 106, 107, 108, 109, 112, 113, 114, 130) AND
+            v_res_datatype = 'DATETIME2')
+        THEN
+            RAISE invalid_regular_expression;
+        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
+        THEN
+            RAISE invalid_character_value_for_cast;
+        END IF;
+
+        v_regmatch_groups := regexp_matches(v_datestring, FULLYEAR_DOT_SLASH_DASH1_1_REGEXP, 'gi');
+        v_year := v_regmatch_groups[1];
+        v_middlepart := v_regmatch_groups[2];
+        v_rightpart := v_regmatch_groups[3];
+
+        IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT <= 12) OR v_res_datatype = 'DATETIME2')
+        THEN
+            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
+                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
+                (v_style IN (0, 20, 21, 23, 25, 101, 102, 110, 111, 120, 121, 126, 127) AND v_res_datatype = 'DATETIME2'))
+            THEN
+                v_day := v_rightpart;
+                v_month := v_middlepart;
+
+            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM'))
+            THEN
+                v_day := v_middlepart;
+                v_month := v_rightpart;
+            END IF;
+        ELSIF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT > 12)
+        THEN
+            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM')) OR
+                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')))
+            THEN
+                v_day := v_rightpart;
+                v_month := v_middlepart;
+
+            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                   (v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM')))
+            THEN
+                RAISE invalid_character_value_for_cast;
+            END IF;
+        END IF;
+    ELSIF (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR
+           v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP)
+    THEN
+        IF (v_style = 127 AND v_res_datatype <> 'DATETIME2')
+        THEN
+            RAISE invalid_datetime_format;
+        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
+        THEN
+            RAISE invalid_character_value_for_cast;
+        END IF;
+
+        IF (v_datestring ~* '^\d{6}$')
+        THEN
+            v_day := substr(v_datestring, 5, 2);
+            v_month := substr(v_datestring, 3, 2);
+            v_year := sys.babelfish_get_full_year(substr(v_datestring, 1, 2));
+
+        ELSIF (v_datestring ~* '^\d{8}$')
+        THEN
+            v_day := substr(v_datestring, 7, 2);
+            v_month := substr(v_datestring, 5, 2);
+            v_year := substr(v_datestring, 1, 4);
+        END IF;
+    ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP)
+    THEN
+        v_day := '01';
+        v_month := '01';
+        v_year := '1900';
+    ELSIF (v_datetimestring ~* DIGITREPRESENT_REGEXP)
+    THEN
+        v_resdatetime = CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + v_datetimestring::NUMERIC;
+        RETURN v_resdatetime;
+    ELSE
+        RAISE invalid_datetime_format;
+    END IF;
+
+    IF (((v_datetimestring ~* HHMMSSFS_PART_REGEXP AND v_res_datatype = 'DATETIME2') OR
+        (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP OR
+          v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP OR v_datetimestring ~* DOT_SLASH_DASH_FULLYEAR1_0_REGEXP)) AND
+        v_style IN (130, 131))
+    THEN
+        v_hijridate := sys.babelfish_conv_hijri_to_greg(v_day, v_month, v_year) - 1;
+        v_day = to_char(v_hijridate, 'DD');
+        v_month = to_char(v_hijridate, 'MM');
+        v_year = to_char(v_hijridate, 'YYYY');
+    END IF;
+
+    v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
+    v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
+    v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
+    v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
+
+    IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') OR
+         (v_res_datatype = 'DATETIME2' AND v_timepart !~* HHMMSSFS_DOT_PART_REGEXP)) AND
+        char_length(v_fseconds) > 3)
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    BEGIN
+        IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
+        THEN
+            v_resdatetime := sys.datetimefromparts(v_year, v_month, v_day,
+                                                                 v_hours, v_minutes, v_seconds,
+                                                                 rpad(v_fseconds, 3, '0'));
+            IF (v_res_datatype = 'SMALLDATETIME' AND
+                to_char(v_resdatetime, 'SS') <> '00')
+            THEN
+                IF (to_char(v_resdatetime, 'SS')::SMALLINT >= 30) THEN
+                    v_resdatetime := v_resdatetime + INTERVAL '1 minute';
+                END IF;
+
+                v_resdatetime := to_timestamp(to_char(v_resdatetime, 'DD.MM.YYYY.HH24.MI'), 'DD.MM.YYYY.HH24.MI');
+            END IF;
+        ELSIF (v_res_datatype = 'DATETIME2')
+        THEN
+            v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+            v_seconds := pg_catalog.concat_ws('.', v_seconds, v_fseconds);
+            v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
+                                            v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
+        END IF;
+    EXCEPTION
+        WHEN datetime_field_overflow THEN
+            RAISE invalid_datetime_format;
+        WHEN OTHERS THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+
+        IF (v_err_message ~* 'Cannot construct data type') THEN
+            RAISE invalid_character_value_for_cast;
+        END IF;
+    END;
+
+    RETURN v_resdatetime;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of conv_string_to_datetime function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to %s.', v_style, v_res_datatype),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_regular_expression THEN
+        RAISE USING MESSAGE := pg_catalog.format('The input character string doesn''t follow style %s.', v_style),
+                    DETAIL := 'Selected "style" param value isn''t valid for conversion of passed character string.',
+                    HINT := 'Either change the input character string or use a different style.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2''/''DATETIME2(n)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_indicator_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_res_datatype),
+                    DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
+                    HINT := 'Change data type scale component or select different data type and try again.';
+
+    WHEN interval_field_overflow THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
+                    DETAIL := 'Use of incorrect data type scale value during conversion process.',
+                    HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := CASE v_res_datatype
+                                  WHEN 'SMALLDATETIME' THEN 'Conversion failed when converting character string to SMALLDATETIME data type.'
+                                  ELSE 'Conversion failed when converting date and time from character string.'
+                               END,
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+        RAISE USING MESSAGE := 'The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.',
+                    DETAIL := 'Use of incorrect pair of input parameter values during conversion process.',
+                    HINT := 'Check input parameter values, correct them if needed, and try again.';
+
+    WHEN character_not_in_repertoire THEN
+        RAISE USING MESSAGE := 'The YDM date format isn''t supported when converting from this string format to date and time.',
+                    DETAIL := 'Use of incorrect DATE_FORMAT constant value regarding string format parameter during conversion process.',
+                    HINT := 'Change DATE_FORMAT constant to one of these values: MDY|DMY|DYM, recompile function and try again.';
+
+    WHEN invalid_escape_sequence THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Passed argument value contains illegal characters.',
+                    HINT := 'Correct passed argument value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
+                                                                 IN p_timestring TEXT,
+                                                                 IN p_style NUMERIC DEFAULT 0)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hours SMALLINT;
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_daypart VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_minutes SMALLINT;
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
+    v_datatype_groups TEXT[];
+    v_regmatch_groups TEXT[];
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '(?:\.|\:)', FRACTSECS_REGEXP, '$');
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '$');
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+BEGIN
+    v_datatype := pg_catalog.btrim(regexp_replace(p_datatype COLLATE "C", 'DATETIME', 'TIME', 'gi'));
+    v_timestring := pg_catalog.upper(pg_catalog.btrim(p_timestring));
+    v_style := floor(p_style)::SMALLINT;
+
+    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
+
+    v_src_datatype := pg_catalog.upper(v_datatype_groups[1]);
+    v_scale := v_datatype_groups[2]::SMALLINT;
+
+    IF (v_src_datatype IS NULL) THEN
+        RAISE datatype_mismatch;
+    ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
+    THEN
+        RAISE interval_field_overflow;
+    ELSIF (v_scale IS NULL) THEN
+        v_scale := 7;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+             (v_style BETWEEN 20 AND 25) OR
+             (v_style BETWEEN 100 AND 114) OR
+             v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+
+    v_daypart := substring(v_timestring, 'AM|PM');
+    v_timestring := pg_catalog.btrim(regexp_replace(v_timestring, coalesce(v_daypart, ''), ''));
+
+    v_timeunit_mask :=
+        CASE
+           WHEN (v_timestring ~* HHMMSSFS_REGEXP) THEN HHMMSSFS_REGEXP
+           WHEN (v_timestring ~* HHMMSS_REGEXP) THEN HHMMSS_REGEXP
+           WHEN (v_timestring ~* HHMMFS_REGEXP) THEN HHMMFS_REGEXP
+           WHEN (v_timestring ~* HHMM_REGEXP) THEN HHMM_REGEXP
+           WHEN (v_timestring ~* HH_REGEXP) THEN HH_REGEXP
+        END;
+
+    IF (v_timeunit_mask IS NULL) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_regmatch_groups := regexp_matches(v_timestring, v_timeunit_mask, 'gi');
+
+    v_hours := v_regmatch_groups[1]::SMALLINT;
+    v_minutes := v_regmatch_groups[2]::SMALLINT;
+
+    IF (v_timestring ~* HHMMFS_REGEXP) THEN
+        v_fseconds := v_regmatch_groups[3];
+    ELSE
+        v_seconds := v_regmatch_groups[3];
+        v_fseconds := v_regmatch_groups[4];
+    END IF;
+
+   IF (v_daypart IS NOT NULL) THEN
+      IF ((v_daypart = 'AM' AND v_hours NOT BETWEEN 0 AND 12) OR
+          (v_daypart = 'PM' AND v_hours NOT BETWEEN 1 AND 23))
+      THEN
+          RAISE numeric_value_out_of_range;
+      ELSIF (v_daypart = 'PM' AND v_hours < 12) THEN
+          v_hours := v_hours + 12;
+      ELSIF (v_daypart = 'AM' AND v_hours = 12) THEN
+          v_hours := v_hours - 12;
+      END IF;
+   END IF;
+
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+    v_seconds := pg_catalog.concat_ws('.', v_seconds, v_fseconds);
+
+    RETURN make_time(v_hours, v_minutes, v_seconds::NUMERIC);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of conv_string_to_time function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to TIME.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN interval_field_overflow THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
+                    DETAIL := 'Use of incorrect data type scale value during conversion process.',
+                    HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := 'Could not extract correct hour value due to it''s inconsistency with AM|PM day part mark.',
+                    DETAIL := 'Extracted hour value doesn''t fall in correct day part mark range: 0..12 for "AM" or 1..23 for "PM".',
+                    HINT := 'Correct a hour value in the source string or remove AM|PM day part mark out of it.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Conversion failed when converting time from character string.',
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
+                                                                 IN p_src_datatype TEXT,
+                                                                 IN p_timeval TIME(6) WITHOUT TIME ZONE,
+                                                                 IN p_style NUMERIC DEFAULT 25)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_hours VARCHAR COLLATE "C";
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_res_length SMALLINT;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_maxlength SMALLINT;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    -- We use the regex below to make sure input p_datatype is one of them
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    -- We use the regex below to get the length of the datatype, if specified
+    -- For example, to get the '10' out of 'varchar(10)'
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
+BEGIN
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_src_datatype := pg_catalog.upper(pg_catalog.btrim(p_src_datatype));
+    v_style := floor(p_style)::SMALLINT;
+
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
+    THEN
+        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
+
+        IF (v_scale NOT BETWEEN 0 AND 7) THEN
+            RAISE invalid_regular_expression;
+        END IF;
+    ELSE
+        RAISE most_specific_type_mismatch;
+    END IF;
+
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP)
+    THEN
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
+
+        v_res_maxlength := CASE
+                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                              ELSE NVARCHAR_MAX
+                           END;
+
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_res_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE escape_character_conflict;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 114) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF ((v_style BETWEEN 1 AND 7) OR
+           (v_style BETWEEN 10 AND 12) OR
+           (v_style BETWEEN 101 AND 107) OR
+           (v_style BETWEEN 110 AND 112) OR
+           v_style = 23)
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_hours := PG_CATALOG.ltrim(to_char(p_timeval, 'HH12'), '0');
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
+
+    IF (v_scale = 7) THEN
+        v_fseconds := pg_catalog.concat(v_fseconds, '0');
+    END IF;
+
+    IF (v_style IN (0, 100))
+    THEN
+        v_resmask := pg_catalog.concat(v_hours, ':MIAM');
+    ELSIF (v_style IN (8, 20, 24, 108, 120))
+    THEN
+        v_resmask := 'HH24:MI:SS';
+    ELSIF (v_style IN (9, 109))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN pg_catalog.concat(v_hours, ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
+                     END;
+    ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN 'HH24:MI:SS'
+                        ELSE pg_catalog.concat('HH24:MI:SS.', v_fseconds)
+                     END;
+    ELSIF (v_style = 22)
+    THEN
+        v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+    ELSIF (v_style IN (130, 131))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN pg_catalog.concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
+                     END;
+    END IF;
+
+    v_resstring := to_char(p_timeval, v_resmask);
+
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
+                    HINT := 'Change "src_datatype" parameter to the proper value and try again.';
+
+   WHEN invalid_regular_expression THEN
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+                                     v_scale),
+                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
+                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
+
+   WHEN interval_field_overflow THEN
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr, pg_catalog.lower(v_res_datatype), v_res_maxlength),
+                   DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+
+    WHEN escape_character_conflict THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
+                                      PG_CATALOG.rtrim(split_part(pg_catalog.btrim(p_datatype), '(', 1))),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
+RETURNS JSONB
+AS
+$BODY$
+DECLARE
+    v_locale_parts TEXT[] COLLATE "C";
+    v_lang_data_jsonb JSONB;
+    v_lang_spec_culture VARCHAR COLLATE "C";
+    v_is_cached BOOLEAN := FALSE;
+BEGIN
+    v_lang_spec_culture := pg_catalog.upper(pg_catalog.btrim(p_lang_spec_culture));
+
+    IF (char_length(v_lang_spec_culture) > 0)
+    THEN
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            IF (v_lang_spec_culture IN ('AR', 'FI') OR
+                v_lang_spec_culture ~ '_')
+            THEN
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE spec_culture = v_lang_spec_culture;
+            ELSE
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE lang_name_mssql = v_lang_spec_culture
+                    OR lang_alias_mssql = v_lang_spec_culture;
+            END IF;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    ELSE
+        v_lang_spec_culture := current_setting('LC_TIME');
+
+        v_lang_spec_culture := CASE
+                                  WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
+                               END;
+
+        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            BEGIN
+                IF (char_length(v_lang_spec_culture) = 5)
+                THEN
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+                ELSE
+                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
+
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2];
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_lang_spec_culture := 'EN_US';
+
+                    SELECT lang_data_jsonb
+                      INTO v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+            END;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    END IF;
+
+    IF (NOT v_is_cached) THEN
+        PERFORM set_config(format('sys.lang_metadata_json.%s',
+                                  v_lang_spec_culture),
+                           v_lang_data_jsonb::TEXT,
+                           FALSE);
+    END IF;
+
+    RETURN v_lang_data_jsonb;
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        RAISE USING MESSAGE := pg_catalog.format('The language metadata JSON value extracted from chache is not a valid JSON object.',
+                                      p_lang_spec_culture),
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
+
+    WHEN OTHERS THEN
+        RAISE USING MESSAGE := pg_catalog.format('"%s" is not a valid special culture or language name parameter.',
+                                      p_lang_spec_culture),
+                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
+                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_monthnum_by_name(IN p_monthname TEXT,
+                                                                  IN p_lang_metadata_json JSONB)
+RETURNS VARCHAR
+AS
+$BODY$
+DECLARE
+    v_monthname TEXT;
+    v_monthnum SMALLINT;
+BEGIN
+    v_monthname := pg_catalog.lower(pg_catalog.btrim(p_monthname));
+
+    v_monthnum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_shortnames'))), v_monthname);
+
+    v_monthnum := coalesce(v_monthnum,
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_names'))), v_monthname));
+
+    v_monthnum := coalesce(v_monthnum,
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extrashortnames'))), v_monthname));
+
+    v_monthnum := coalesce(v_monthnum,
+                           array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_extranames'))), v_monthname));
+
+    IF (v_monthnum IS NULL) THEN
+        RAISE datetime_field_overflow;
+    END IF;
+
+    RETURN v_monthnum;
+EXCEPTION
+    WHEN datetime_field_overflow THEN
+        RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct month number.',
+                                      pg_catalog.btrim(p_monthname)),
+                    DETAIL := 'Supplied month name is not valid.',
+                    HINT := 'Correct supplied month name value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string(IN p_timepart TEXT,
+                                                                      IN p_timeunit TEXT)
+RETURNS VARCHAR
+AS
+$BODY$
+DECLARE
+    v_hours VARCHAR COLLATE "C";
+    v_minutes VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_fractsecs VARCHAR COLLATE "C";
+    v_daypart VARCHAR COLLATE "C";
+    v_timepart VARCHAR COLLATE "C";
+    v_timeunit VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
+    v_regmatch_groups TEXT[];
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '(?:\.|\:)', FRACTSECS_REGEXP, '$');
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '$');
+BEGIN
+    v_timepart := pg_catalog.upper(pg_catalog.btrim(p_timepart));
+    v_timeunit := pg_catalog.upper(pg_catalog.btrim(p_timeunit));
+
+    v_daypart := substring(v_timepart, 'AM|PM');
+    v_timepart := pg_catalog.btrim(regexp_replace(v_timepart, coalesce(v_daypart, ''), ''));
+
+    v_timeunit_mask :=
+        CASE
+           WHEN (v_timepart ~* HHMMSSFS_REGEXP) THEN HHMMSSFS_REGEXP
+           WHEN (v_timepart ~* HHMMSS_REGEXP) THEN HHMMSS_REGEXP
+           WHEN (v_timepart ~* HHMMFS_REGEXP) THEN HHMMFS_REGEXP
+           WHEN (v_timepart ~* HHMM_REGEXP) THEN HHMM_REGEXP
+           WHEN (v_timepart ~* HH_REGEXP) THEN HH_REGEXP
+        END;
+
+    v_regmatch_groups := regexp_matches(v_timepart, v_timeunit_mask, 'gi');
+
+    v_hours := v_regmatch_groups[1];
+    v_minutes := v_regmatch_groups[2];
+
+    IF (v_timepart ~* HHMMFS_REGEXP) THEN
+        v_fractsecs := v_regmatch_groups[3];
+    ELSE
+        v_seconds := v_regmatch_groups[3];
+        v_fractsecs := v_regmatch_groups[4];
+    END IF;
+
+    IF (v_timeunit = 'HOURS' AND v_daypart IS NOT NULL)
+    THEN
+        IF ((v_daypart = 'AM' AND v_hours::SMALLINT NOT BETWEEN 0 AND 12) OR
+            (v_daypart = 'PM' AND v_hours::SMALLINT NOT BETWEEN 1 AND 23))
+        THEN
+            RAISE numeric_value_out_of_range;
+        ELSIF (v_daypart = 'PM' AND v_hours::SMALLINT < 12) THEN
+            v_hours := (v_hours::SMALLINT + 12)::VARCHAR;
+        ELSIF (v_daypart = 'AM' AND v_hours::SMALLINT = 12) THEN
+            v_hours := (v_hours::SMALLINT - 12)::VARCHAR;
+        END IF;
+    END IF;
+
+    RETURN CASE v_timeunit
+              WHEN 'HOURS' THEN v_hours
+              WHEN 'MINUTES' THEN v_minutes
+              WHEN 'SECONDS' THEN v_seconds
+              WHEN 'FRACTSECONDS' THEN v_fractsecs
+           END;
+EXCEPTION
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := 'Could not extract correct hour value due to it''s inconsistency with AM|PM day part mark.',
+                    DETAIL := 'Extracted hour value doesn''t fall in correct day part mark range: 0..12 for "AM" or 1..23 for "PM".',
+                    HINT := 'Correct a hour value in the source string or remove AM|PM day part mark out of it.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_weekdaynum_by_name(IN p_weekdayname TEXT,
+                                                                    IN p_lang_metadata_json JSONB)
+RETURNS SMALLINT
+AS
+$BODY$
+DECLARE
+    v_weekdayname TEXT;
+    v_weekdaynum SMALLINT;
+BEGIN
+    v_weekdayname := pg_catalog.lower(pg_catalog.btrim(p_weekdayname));
+
+    v_weekdaynum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_names'))), v_weekdayname);
+
+    v_weekdaynum := coalesce(v_weekdaynum,
+                             array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_shortnames'))), v_weekdayname));
+
+    v_weekdaynum := coalesce(v_weekdaynum,
+                             array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_extrashortnames'))), v_weekdayname));
+
+    IF (v_weekdaynum IS NULL) THEN
+        RAISE datetime_field_overflow;
+    END IF;
+
+    RETURN v_weekdaynum;
+EXCEPTION
+    WHEN datetime_field_overflow THEN
+        RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct weekday number.',
+                                      pg_catalog.btrim(p_weekdayname)),
+                    DETAIL := 'Supplied weekday name is not valid.',
+                    HINT := 'Correct supplied weekday name value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_round_fractseconds(IN p_fractseconds TEXT)
+RETURNS INTEGER
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_round_fractseconds(p_fractseconds::NUMERIC);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', pg_catalog.btrim(p_fractseconds)),
+                    DETAIL := 'Passed argument value contains illegal characters.',
+                    HINT := 'Correct passed argument value, remove all illegal characters.';
+
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
