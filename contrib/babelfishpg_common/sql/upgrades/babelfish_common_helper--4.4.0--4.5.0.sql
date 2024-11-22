@@ -12,6 +12,11 @@ RETURNS INT4
 AS 'timestamp_cmp_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION  sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME)
+RETURNS INT4
+AS 'date_cmp_timestamp'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Opartor class for smalldatetime_ops to incorporate various operator between smalldatetime and date for Index scan
 DO $$
 BEGIN
@@ -24,6 +29,21 @@ FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
     OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
     OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
     FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
+END IF;
+END $$;
+
+-- Opartor class for smalldatetime_ops to incorporate various operator between date and smalldatetime for Index scan
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid WHERE opc.opcname = 'date_smalldatetime_ops' AND opc.opcnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys') AND opf.opfname = 'smalldatetime_ops') THEN
+CREATE OPERATOR CLASS sys.date_smalldatetime_ops
+FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
+    OPERATOR    1   sys.<  (date, sys.SMALLDATETIME),
+    OPERATOR    2   sys.<= (date, sys.SMALLDATETIME),
+    OPERATOR    3   sys.=  (date, sys.SMALLDATETIME),
+    OPERATOR    4   sys.>= (date, sys.SMALLDATETIME),
+    OPERATOR    5   sys.>  (date, sys.SMALLDATETIME),
+    FUNCTION    1   sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME);
 END IF;
 END $$;
 
