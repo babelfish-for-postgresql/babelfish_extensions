@@ -1148,7 +1148,7 @@ BEGIN
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
-		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
 	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
@@ -1175,7 +1175,7 @@ BEGIN
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
-		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
 	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
@@ -1953,7 +1953,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 						AND (pg_catalog.lower(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -1964,13 +1964,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -1982,7 +1982,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -1996,7 +1996,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2013,7 +2013,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
 				AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2028,7 +2028,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2940,7 +2940,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_rename(
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
-	SET @objtype = TRIM(@objtype);
+	SET @objtype = sys.TRIM(@objtype);
 	If @objtype IS NULL
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
@@ -3102,7 +3102,7 @@ BEGIN
 		RETURN		
 	END
 	
-	IF TRIM(@tab) = ''
+	IF sys.TRIM(@tab) = ''
 	BEGIN
 		RAISERROR('Must specify table name', 16, 1)
 		RETURN		
@@ -3119,7 +3119,7 @@ BEGIN
 		SET @id = sys.OBJECT_ID(@tab)
 		IF @id IS NULL
 		BEGIN
-			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			IF sys.SUBSTRING(pg_catalog.UPPER(@tab),1,4) = 'DBO.'
 			BEGIN
 				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
 			END
@@ -3141,10 +3141,10 @@ BEGIN
 	END
 	
 	-- check for 'ORDER BY', if specified
-	SET @orderby = TRIM(@orderby)
+	SET @orderby = sys.TRIM(@orderby)
 	IF @orderby <> ''
 	BEGIN
-		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		IF pg_catalog.UPPER(@orderby) NOT LIKE 'ORDER BY%'
 		BEGIN
 			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
 			RETURN
@@ -3160,7 +3160,7 @@ BEGIN
 		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
 	END
 	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
-	SET @hiddencols = UPPER(@hiddencols)	
+	SET @hiddencols = pg_catalog.UPPER(@hiddencols)	
 
 	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
 	-- access the metadata in case a #tmp table is passed as argument
@@ -3209,7 +3209,7 @@ BEGIN
 			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
 			IF @maxlen <= 0 SET @maxlen = 1
 			
-			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+			IF (sys.CHARINDEX(',' + pg_catalog.UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + pg_catalog.UPPER(@colname) + '],', @hiddencols) > 0) 
 			BEGIN
 				SET @selectlist += ' [' + @colname + '],'			
 			END
@@ -3282,7 +3282,7 @@ BEGIN
 	
 	IF @option IS NOT NULL
 	BEGIN
-		IF pg_catalog.lower(TRIM(@option)) <> 'postgres' 
+		IF pg_catalog.lower(sys.TRIM(@option)) <> 'postgres' 
 		BEGIN
 			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
 			RETURN			
@@ -3296,7 +3296,7 @@ BEGIN
 	-- This is for informational purposes only
 	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
+	UPDATE #sp_who_tmp SET query = ' ' + sys.TRIM(CAST(pg_catalog.UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
@@ -3327,7 +3327,7 @@ BEGIN
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(query)
+	UPDATE #sp_who_tmp SET query = sys.TRIM(query)
 
 	-- Get all current connections
 	SELECT 
@@ -3392,7 +3392,7 @@ BEGIN
 	-- Apply filter if specified
 	IF (@loginame IS NOT NULL)
 	BEGIN
-		IF (TRIM(@loginame) = '')
+		IF (sys.TRIM(@loginame) = '')
 		BEGIN
 			-- Raise error
 			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
@@ -3437,12 +3437,12 @@ BEGIN
 	SELECT distinct 
 		p.spid AS spid, 
 		p.ecid AS ecid, 
-		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
-		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
-		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		CAST(pg_catalog.LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(pg_catalog.LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(pg_catalog.LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
 		p.blocked AS blk, 
-		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
-		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		CAST(pg_catalog.LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(pg_catalog.LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
 		p.request_id AS request_id,
 		connection
 	INTO #sp_who_tmp2
@@ -3453,11 +3453,11 @@ BEGIN
 	-- Patch up remaining cases
 	UPDATE #sp_who_tmp2
 	SET cmd = 'AWAITING COMMAND'
-	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	WHERE sys.TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
 	
 	UPDATE #sp_who_tmp2
 	SET cmd = 'UNKNOWN'
-	WHERE TRIM(cmd) = ''	
+	WHERE sys.TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
 	SET @hide_col += ',hostprocess'

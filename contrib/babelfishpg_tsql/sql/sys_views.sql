@@ -2477,7 +2477,7 @@ CREATE OR REPLACE VIEW sys.syslanguages
 AS
 SELECT
     lang_id AS langid,
-    CAST(lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
+    CAST(pg_catalog.lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
     CAST(lang_data_jsonb -> 'date_first'::TEXT AS SYS.TINYINT) AS datefirst,
     CAST(NULL AS INT) AS upgrade,
     CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
