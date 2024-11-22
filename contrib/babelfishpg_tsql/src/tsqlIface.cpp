@@ -7289,28 +7289,69 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 					appendStringInfo(&ds, ", ");
 				++returning_col_cnt;
 
-				if (elem->full_column_name())
+				if (elem->EQUAL(0) && elem->full_column_name())
 				{
 					/* "SET @a=col=expr" => "SET col=expr ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)",
 										nse->itemno,
-										::getFullText(elem->full_column_name()).c_str(),
-										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+										rewrite_assignment_expression(var, elem->expression()));
 
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
 				}
-				else
+				else if(elem->EQUAL(0) && elem->expression())
 				{
 					/* "SET @a=expr, col=expr2" => "SET col=expr2 ... RETURNING sys.pltsql_assign_var(dno, cast(expr as type))" */
-					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, cast(%s as %s))",
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s)",
 										nse->itemno,
-										::getFullText(elem->expression()).c_str(),
-										tsql_format_type_extended(var->datatype->typoid, var->datatype->atttypmod, FORMAT_TYPE_TYPEMOD_GIVEN));
+										rewrite_assignment_expression(var, elem->expression()));
 
+					handle_local_ids_for_expression(elem->expression());
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
 					removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(0), uctx);
 					removeCtxStringFromQuery(stmt->sqlstmt, elem->expression(), uctx);
+				}
+				else if(elem->assignment_operator() && elem->expression())
+				{
+					/* "SET @a+=expr, col=expr2" => "SET col=expr2 ... RETURNING sys.pltsql_assign_var(dno, "@var" + cast((expr) as type))" */
+					tree::TerminalNode *anode = nullptr;
+
+					if (elem->assignment_operator())
+					{
+						if (elem->assignment_operator()->PLUS_ASSIGN())
+							anode = elem->assignment_operator()->PLUS_ASSIGN();
+						else if (elem->assignment_operator()->MINUS_ASSIGN())
+							anode = elem->assignment_operator()->MINUS_ASSIGN();
+						else if (elem->assignment_operator()->MULT_ASSIGN())
+							anode = elem->assignment_operator()->MULT_ASSIGN();
+						else if (elem->assignment_operator()->DIV_ASSIGN())
+							anode = elem->assignment_operator()->DIV_ASSIGN();
+						else if (elem->assignment_operator()->MOD_ASSIGN())
+							anode = elem->assignment_operator()->MOD_ASSIGN();
+						else if (elem->assignment_operator()->AND_ASSIGN())
+							anode = elem->assignment_operator()->AND_ASSIGN();
+						else if (elem->assignment_operator()->XOR_ASSIGN())
+							anode = elem->assignment_operator()->XOR_ASSIGN();
+						else if (elem->assignment_operator()->OR_ASSIGN())
+							anode = elem->assignment_operator()->OR_ASSIGN();
+						else
+							Assert(0);
+					}
+					appendStringInfo(&ds, "sys.pltsql_assign_var(%d, %s %s %s)",
+										nse->itemno,
+										delimitIfAtAtUserVarName(::getFullText(elem->LOCAL_ID())).c_str(),
+										rewrite_assign_operator(anode),
+										rewrite_assignment_expression(var, elem->expression()));
+
+					handle_local_ids_for_expression(elem->expression());
+					removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), uctx);
+					removeCtxStringFromQuery(stmt->sqlstmt, elem->assignment_operator(), uctx);
+					removeCtxStringFromQuery(stmt->sqlstmt, elem->expression(), uctx);
+				}
+				else
+				{
+					/* Syntax error should already be handled. */
+					Assert(0);
 				}
 
 				// Conceptually we have to remove any nearest COMMA.
@@ -7326,9 +7367,19 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 					/* remove prev COMMA by default */
 					removeTokenStringFromQuery(stmt->sqlstmt, uctx->COMMA(i-1), uctx);
 				}
+
 			}
 			else
 				comma_carry_over = false;
+		}
+
+		/*
+		 * Should remove semi colon before appending RETURNING clause. Otherwise syntax
+		 * error will be thrown.
+		 */
+		if (uctx->SEMI())
+		{
+			removeTokenStringFromQuery(stmt->sqlstmt, uctx->SEMI(), uctx);
 		}
 
 		pltsql_adddatum((PLtsql_datum *) target);
