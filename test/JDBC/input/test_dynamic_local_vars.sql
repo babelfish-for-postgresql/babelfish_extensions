@@ -712,7 +712,6 @@ select @i = id * 2 from local_var_tst where id = @i
 select @i
 GO
 
-
 select set_config('babelfishpg_tsql.explain_timing', 'off', false);
 GO
 
@@ -815,6 +814,464 @@ select set_config('babelfishpg_tsql.explain_timing', 'on', false);
 GO
 
 select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+
+drop table local_var_tst
+GO
+
+create table ident_tst(id_num INT IDENTITY(1, 1), b varchar(10))
+GO
+
+insert into ident_tst values ('test')
+GO
+
+declare @a int = 1
+select @a = @@IDENTITY
+select @a
+select 1 where @a = @@IDENTITY
+GO
+
+-- additional testing for update with dynamic variables
+GO
+
+create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+
+set QUOTED_IDENTIFIER on
+GO
+
+declare @i varchar(100)
+update local_var_tst set id = id + 10, @i = cast("xmax" as varchar(100))
+select 1 where @i IS NOT NULL
+GO
+
+set QUOTED_IDENTIFIER off
+GO
+
+select * from local_var_tst order by id;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- long identifier with update
+declare @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx int
+update local_var_tst set id =10, @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx = id
+select @incnjkdncjknxdjnkxnknvjkdfjvbdfbvjbdfhjbvjdbfvkjbdnjnlkanjfnvjnjfdlsahdnuejncdiebnjcnjksndjnjxndjcx
+GO
+
+select * from local_var_tst
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- @@ variables
+declare @@incnjkdnc int
+update local_var_tst set id =10, @@incnjkdnc = id
+select @@incnjkdnc
+GO
+
+select * from local_var_tst
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int 
+update local_var_tst set id = id + 2, @i = id * 5;
+select @i
+GO
+
+select * from local_var_tst order by id;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int, @j int;
+update local_var_tst set id =10, @i = case when @j =0 then 1 else 0 end;
+select @i, @j
+go
+
+select * from local_var_tst;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int, @j int;
+update local_var_tst set id = 10, @j = id, @i = case when @j =0 then 1 else 0 end;
+select @i, @j
+go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int, @j int = 0
+update local_var_tst set id =10, @i = charindex('a','a',@j)
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+declare @i int, @j int = 0
+update local_var_tst set id =10, @i = charindex('a','a',@j);
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+declare @i int, @j int;
+update local_var_tst set id = 10, @j = id, @i = @j * 2
+select @i, @j
+go
+
+select * from local_var_tst;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 1
+update local_var_tst set id = @i, @i = id * 2 where id = @i
+select @i
+GO
+
+select * from local_var_tst
+go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 1
+update local_var_tst set id = @i, @i += id * 2 where id = @i
+select @i
+GO
+
+select * from local_var_tst
+go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i VARCHAR(200) = ''
+update local_var_tst set id = id * 2, @i = @i + cast(id as varchar(20))
+select @i
+GO
+
+select * from local_var_tst order by id
+go
+
+-- @i should be NULL as no row passes the qual condition
+declare @i int 
+update local_var_tst set id =10, @i = id * 5 where id = 1
+select @i
+GO
+
+select * from local_var_tst order by id
+go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+
+declare @i int = 1
+update local_var_tst set id = @i, @i = id * 5 where id = @i
+select @i
+GO
+
+select * from local_var_tst order by id
+go
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int 
+set @i = 0
+update local_var_tst set id = @i, @i = id * 5
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- trim is re-written by antlr
+declare @i varchar(200) 
+select @i = ''
+update local_var_tst set id = @i, @i = TRIM(@i + cast(id as varchar(10)));
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+-- variables in the where clause should be treated as const
+
+declare @i int = 1;
+update local_var_tst set id = @i * 100, @i = id * 2 where id = @i
+select @i
+GO
+
+select * from local_var_tst order by id;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 1;
+update local_var_tst set id = @i * 100, @i = @@IDENTITY
+select @i
+select 1 where @i = @@IDENTITY
+GO
+
+select * from local_var_tst
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+CREATE PARTITION FUNCTION RangePF1 ( INT )  
+AS RANGE RIGHT FOR VALUES (10, 100, 1000) ;  
+GO
+
+declare @i int = -1;
+SELECT @i = $PARTITION.RangePF1 (10);
+select @i
+update local_var_tst set id = @i, @i = $PARTITION.RangePF1 (10);
+select @i
+GO
+
+select * from local_var_tst;
+GO
+
+DROP PARTITION FUNCTION RangePF1 
+GO
+
+CREATE PROCEDURE var_with_procedure (@i int, @a numeric(10,4) OUTPUT) AS
+BEGIN
+  update local_var_tst set id = @i * 2, @a = id * 5 where id = @i
+  select @a
+END;
+GO
+
+TRUNCATE table local_var_tst
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @input int = 1, @res int;
+exec var_with_procedure @input, @res
+select @res
+GO
+
+select * from local_var_tst
+go
+
+declare @input int = 2, @a int;
+exec var_with_procedure @input, @a
+select @a
+GO
+
+DROP PROCEDURE var_with_procedure;
+GO
+
+DROP TABLE local_var_tst
+GO
+
+create table local_var_tst_1 (id int) 
+GO
+
+insert into local_var_tst_1 values (1)
+insert into local_var_tst_1 values (2)
+GO
+
+create unique index idx_local_var_tst_1 on local_var_tst_1(id)
+GO
+
+
+SELECT set_config('enable_indexscan', '1', false);
+SELECT set_config('enable_indexonlyscan', '0', false);
+SELECT set_config('enable_seqscan', '0', false);
+GO
+
+declare @i int = 1
+update local_var_tst_1 set id = @i, @i = id * 5 where id = 1
+select @i
+GO
+
+declare @i int = 1
+update local_var_tst_1 set id = 10 output deleted.id where id = 1
+select @i
+GO
+
+SELECT set_config('enable_indexscan', '1', false);
+SELECT set_config('enable_indexonlyscan', '1', false);
+SELECT set_config('enable_seqscan', '1', false);
+GO
+
+DROP TABLE local_var_tst_1
+GO
+
+CREATE TABLE update_test_tbl (
+    age int,
+    fname char(10),
+    lname char(10),
+    city nchar(20)
+)
+GO
+
+TRUNCATE TABLE update_test_tbl
+GO
+
+INSERT INTO update_test_tbl(age, fname, lname, city) 
+VALUES  (50, 'fname1', 'lname1', 'london'),
+        (34, 'fname2', 'lname2', 'paris'),
+        (35, 'fname3', 'lname3', 'brussels'),
+        (90, 'fname4', 'lname4', 'new york'),
+        (26, 'fname5', 'lname5', 'los angeles'),
+        (74, 'fname6', 'lname6', 'tokyo'),
+        (44, 'fname7', 'lname7', 'oslo'),
+        (19, 'fname8', 'lname8', 'hong kong'),
+        (61, 'fname9', 'lname9', 'shanghai'),
+        (29, 'fname10', 'lname10', 'mumbai')
+GO
+
+CREATE TABLE update_test_tbl2 (
+    year int,
+    lname char(10),
+)
+GO
+
+TRUNCATE TABLE update_test_tbl2
+GO
+
+INSERT INTO update_test_tbl2(year, lname) 
+VALUES  (51, 'lname1'),
+        (34, 'lname3'),
+        (25, 'lname8'),
+        (95, 'lname9'),
+        (36, 'lname10')
+GO
+
+UPDATE update_test_tbl SET fname = 'fname13'
+FROM update_test_tbl t1
+INNER JOIN update_test_tbl2 t2
+ON t1.lname = t2.lname
+WHERE year > 50
+GO
+
+declare @a varchar(4000) = '';
+UPDATE update_test_tbl SET fname = 'fname13', @a = @a + fname
+FROM update_test_tbl t1
+INNER JOIN update_test_tbl2 t2
+ON t1.lname = t2.lname
+WHERE year > 50
+select @a
+GO
+
+DROP TABLE update_test_tbl2;
+GO
+
+DROP TABLE update_test_tbl
+GO
+
+drop table ident_tst
+GO
+
+create table local_var_tst (id int) 
+GO
+
+insert into local_var_tst values (1)
+insert into local_var_tst values (2)
+GO
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i = id, @j = @i * 2, @i = @j
+select @i, @j
+GO
+
+declare @i int = 0, @j int
+update local_var_tst set id = id + 2, @i += id, @j = @i * 2
+select @i, @j
+GO
+
+select * from local_var_tst order by id
 GO
 
 drop table local_var_tst
