@@ -62,13 +62,13 @@ jobs:
         uses: ./.github/composite-actions/run-jdbc-tests
 
       - name: Start secondary server
-        id: start-secondary
-        if: always() && steps.jdbc.outcome == 'success'
-        uses: ./.github/composite-actions/install-extensions
-        with:
-          psql_port: 5433
-          tsql_port: 8199
-          wal_level: logical
+        # id: start-secondary
+        # if: always() && steps.jdbc.outcome == 'success'
+        # uses: ./.github/composite-actions/install-extensions
+        # with:
+        #   psql_port: 5433
+        #   tsql_port: 8199
+        #   wal_level: logical
 
       - name: Setup Publication and Subscription
         id: setup-pub-sub
