@@ -305,7 +305,7 @@ SELECT
 	CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 	CAST(
 		COALESCE(
-			(SELECT string_agg(
+			(SELECT pg_catalog.string_agg(
 				CASE
 					WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
 					ELSE NULL
@@ -315,7 +315,7 @@ SELECT
 		AS sys.sysname) AS TABLE_NAME,
 	CAST(
 		COALESCE(
-			(SELECT string_agg(
+			(SELECT pg_catalog.string_agg(
 				CASE
 					WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
 					ELSE NULL
