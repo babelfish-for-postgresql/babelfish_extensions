@@ -2127,6 +2127,8 @@ extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
 extern void check_restricted_stored_procedure(Oid proc_id);
+extern bool is_tsql_atatglobalvar(const char *varname);
+extern bool is_tsql_atatuservar(const char *varname);
 
 /*
  * Scanner functions in pl_scanner.c
@@ -2205,7 +2207,7 @@ extern void update_CreateSchemaStmt(Node *n, const char *schemaname, const char 
 extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
-extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
+extern void update_GrantRoleStmt(Node *n, List *privs, List *roles, const char *grantor);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
@@ -2266,6 +2268,13 @@ extern bool pltsql_trace_tree;
 extern bool pltsql_trace_exec_codes;
 extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
+
+/*
+ * saved_expr_kind - special context to store which kind of expression if being processed.
+ * This is useful specially when handling declared variables because variables are dynamic only when it appears
+ * in the TargetList. Should be folded as const otherwise.
+ */
+extern int saved_expr_kind;
 
 /*
  * Functions in cursor.c
@@ -2331,5 +2340,10 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
  */
 extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids, bool num_args_match);
 extern void init_special_function_list(void);
+
+/*
+ * Function in pltsql_ruleutils.c
+ */
+extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
 #endif							/* PLTSQL_H */
