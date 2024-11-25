@@ -46,6 +46,7 @@ AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
 CALL sys.babelfish_revoke_guest_from_mapped_logins();
 
 -- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins();
 
 DO $$
 DECLARE
