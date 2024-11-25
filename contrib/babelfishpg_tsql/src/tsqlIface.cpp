@@ -3841,7 +3841,6 @@ antlr_parser_cpp(const char *sourceText)
 		return result;
 	}
 
-pltsql_enable_antlr_detailed_log = true;
 	if (pltsql_enable_antlr_detailed_log)
 	{
 		std::string sep(120, '=');
