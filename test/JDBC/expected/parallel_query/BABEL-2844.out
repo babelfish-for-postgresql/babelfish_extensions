@@ -21,7 +21,7 @@ Query Text: create table babel_2844_t1 (a1 int, b1 int);
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 63.926 ms
+Babelfish T-SQL Batch Parsing Time: 64.356 ms
 ~~END~~
 
 select * from babel_2844_t1 where b1 = 1;
@@ -42,7 +42,7 @@ Function Scan on set_config  (cost=0.00..0.01 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 23.541 ms
+Babelfish T-SQL Batch Parsing Time: 24.000 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -79,7 +79,7 @@ Insert on babel_2844_t1  (cost=0.00..0.01 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 insert into babel_2844_t2 select * from babel_2844_t1 where a1 = 1;
@@ -94,7 +94,7 @@ Insert on babel_2844_t2  (cost=0.00..38.25 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.550 ms
+Babelfish T-SQL Batch Parsing Time: 0.580 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -129,7 +129,7 @@ Gather  (cost=0.00..0.01 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.158 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 select * from babel_2844_t1 where b1 = 1;
@@ -145,7 +145,7 @@ Gather  (cost=0.00..19.11 rows=11 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.200 ms
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
 ~~END~~
 
 
@@ -174,7 +174,7 @@ Gather  (cost=0.00..19.11 rows=11 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms<newline>
+Babelfish T-SQL Batch Parsing Time: 0.145 ms<newline>
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -201,7 +201,7 @@ Gather  (cost=0.00..19.11 rows=11 width=8)
 
 ~~START~~
 text
-[<newline>  "Babelfish T-SQL Batch Parsing Time": 0.118<newline>]
+Babelfish T-SQL Batch Parsing Time: 0.126 ms<newline>
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -227,7 +227,7 @@ Gather  (cost=0.00..19.11 rows=11 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.228
+Babelfish T-SQL Batch Parsing Time: 0.241 ms<newline>
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -268,7 +268,7 @@ Gather  (cost=0.00..17.29 rows=2260 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 10.543 ms
+Babelfish T-SQL Batch Parsing Time: 10.599 ms
 ~~END~~
 
 
@@ -313,7 +313,7 @@ Query Text: EXEC    babel_2844_proc 3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 25.537 ms
+Babelfish T-SQL Batch Parsing Time: 25.709 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -341,7 +341,7 @@ Query Text: EXEC SP_PREPARE @handle OUT, NULL, 'select * from babel_2844_t1'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 27.045 ms
+Babelfish T-SQL Batch Parsing Time: 26.758 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -366,7 +366,7 @@ Function Scan on babel_2844_itvf  (cost=0.25..10.25 rows=1000 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -395,7 +395,7 @@ Function Scan on babel_2844_mstvf  (cost=0.25..10.25 rows=1000 width=8)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.103 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 set BABELFISH_SHOWPLAN_ALL OFF;
@@ -445,7 +445,7 @@ Query Text: set BABELFISH_STATISTICS PROFILE ON;
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.448 ms
+Babelfish T-SQL Batch Parsing Time: 3.442 ms
 ~~END~~
 
 
@@ -483,7 +483,7 @@ Query Text: SELECT * INTO t3 FROM t1 WHERE t1.b = 1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 30.196 ms
+Babelfish T-SQL Batch Parsing Time: 31.453 ms
 ~~END~~
 
 
@@ -507,7 +507,7 @@ Insert on t1  (cost=0.00..0.04 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -523,7 +523,7 @@ Delete on t1  (cost=0.15..8.17 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 57.541 ms
+Babelfish T-SQL Batch Parsing Time: 60.549 ms
 ~~END~~
 
 
@@ -539,7 +539,7 @@ Update on t1  (cost=0.15..8.17 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 46.745 ms
+Babelfish T-SQL Batch Parsing Time: 49.259 ms
 ~~END~~
 
 
@@ -563,7 +563,7 @@ END
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 35.848 ms
+Babelfish T-SQL Batch Parsing Time: 35.948 ms
 ~~END~~
 
 

@@ -193,7 +193,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 		/* Grant dbo role to owner */
 		stmt = parsetree_nth_stmt(res, i++);
 		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(dbo)),
-							list_make1(make_rolespec_node(owner)));
+							list_make1(make_rolespec_node(owner)), NULL);
 	}
 
 	stmt = parsetree_nth_stmt(res, i++);
@@ -228,7 +228,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 		if (list_length(logins) > 0)
 		{
 			stmt = parsetree_nth_stmt(res, i++);
-			update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins);
+			update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins, NULL);
 		}
 	}
 

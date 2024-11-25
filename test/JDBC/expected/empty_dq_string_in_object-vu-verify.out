@@ -1,0 +1,549 @@
+
+-- Purpose: a double-quoted empty string inside a SQL object body should be treated as an empty string
+set quoted_identifier off
+go
+
+-- SELECT ""
+select "" as empty_str
+go
+~~START~~
+varchar
+
+~~END~~
+
+create procedure p1_empty_dq_string
+as
+select "" as empty_str
+go
+exec p1_empty_dq_string
+go
+~~START~~
+varchar
+
+~~END~~
+
+create function f1_empty_dq_string() returns varchar(10)
+as
+begin
+return ""
+end
+go
+select dbo.f1_empty_dq_string(), len(dbo.f1_empty_dq_string())
+go
+~~START~~
+varchar#!#int
+#!#0
+~~END~~
+
+create trigger tr1_empty_dq_string on t1_empty_dq_string for insert as
+begin
+select "" as empty_str
+end
+go
+insert t1_empty_dq_string values(1)
+go
+~~START~~
+varchar
+
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- variable declaration and assignment
+declare @v varchar(10) = ""
+set @v = ""
+select @v
+go
+~~START~~
+varchar
+
+~~END~~
+
+create procedure p2_empty_dq_string
+as
+declare @v varchar(10) = ""
+set @v = ""
+select @v
+go
+exec p2_empty_dq_string
+go
+~~START~~
+varchar
+
+~~END~~
+
+create function f2_empty_dq_string() returns varchar(10)
+as
+begin
+declare @v varchar(10) = ""
+set @v = ""
+return '['+@v+']'
+end
+go
+select dbo.f2_empty_dq_string(), len(dbo.f2_empty_dq_string())
+go
+~~START~~
+varchar#!#int
+[]#!#2
+~~END~~
+
+create trigger tr2_empty_dq_string on t2_empty_dq_string for insert as
+begin
+declare @v varchar(10) = ""
+set @v = ""
+select @v
+end
+go
+insert t2_empty_dq_string values(1)
+go
+~~START~~
+varchar
+
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- execute immediate
+execute("")
+go
+
+-- argument for procedure/function call
+create procedure p2a_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p2a_empty_dq_string ""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+exec p2a_empty_dq_string @p=""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+create function f2a_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+~~START~~
+varchar#!#int
+[]#!#2
+~~END~~
+
+
+create procedure p2b_empty_dq_string @p varchar(10)
+as
+exec p2a_empty_dq_string ""
+exec p2a_empty_dq_string @p=""
+select dbo.f2a_empty_dq_string(""), len(dbo.f2a_empty_dq_string(""))
+go
+exec p2b_empty_dq_string ""
+go
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[]#!#2
+~~END~~
+
+
+-- print "" (not visible in JDBC test output)
+print ""
+go
+create procedure p3_empty_dq_string
+as
+print ""
+go
+exec p3_empty_dq_string
+go
+create trigger tr3_empty_dq_string on t3_empty_dq_string for insert as
+begin
+select 'trigger'
+print ""
+end
+go
+insert t3_empty_dq_string values(1)
+go
+~~START~~
+varchar
+trigger
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- usage in condition
+if 'a' = "" select 'branch 1' else select 'branch 2'
+go
+~~START~~
+varchar
+branch 2
+~~END~~
+
+create procedure p4_empty_dq_string as
+if 'a' = "" select 'branch 1' else select 'branch 2'
+go
+exec p4_empty_dq_string
+go
+~~START~~
+varchar
+branch 2
+~~END~~
+
+create function f4_empty_dq_string() returns int
+as
+begin
+if 'a' = "" return 1 
+return 2
+end
+go
+select dbo.f4_empty_dq_string()
+go
+~~START~~
+int
+2
+~~END~~
+
+create trigger tr4_empty_dq_string on t4_empty_dq_string for insert as
+begin
+if 'a' = "" select 'branch 1' else select 'branch 2'
+end
+go
+insert t4_empty_dq_string values(1)
+go
+~~START~~
+varchar
+branch 2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- usage in WHERE_clause
+select * from t5_empty_dq_string where b = "" order by a
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+create procedure p5_empty_dq_string as
+select a, '['+b+']' as b from t5_empty_dq_string where b = "" order by a
+go
+exec p5_empty_dq_string
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+create function f5_empty_dq_string() returns int
+as
+begin
+declare @v int
+select @v = count(*) from t5_empty_dq_string where b = "" 
+return '['+@v+']'
+end
+go
+select dbo.f5_empty_dq_string()
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "[")~~
+
+create trigger tr5_empty_dq_string on t5_empty_dq_string for insert as
+begin
+select a, '['+b+']' as b from t5_empty_dq_string where b = "" order by a
+end
+go
+insert t5_empty_dq_string values(1, 'test 1')
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- usage in insert
+insert t6_empty_dq_string values (2, "")
+go
+~~ROW COUNT: 1~~
+
+create procedure p6_empty_dq_string as
+insert t6_empty_dq_string values (3, "")
+go
+exec p6_empty_dq_string
+go
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t6_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[test 1]
+2#!#[]
+3#!#[]
+~~END~~
+
+create trigger tr6_empty_dq_string on t6_empty_dq_string for insert as
+begin
+insert t6_empty_dq_string values (4, "")
+end
+go
+insert t6_empty_dq_string values(1, 'test 1')
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t6_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[test 1]
+1#!#[test 1]
+2#!#[]
+3#!#[]
+4#!#[]
+~~END~~
+
+
+-- usage in update
+update t7_empty_dq_string set b = "" where a = 1
+go
+~~ROW COUNT: 1~~
+
+create procedure p7_empty_dq_string as
+update t7_empty_dq_string set b = "" where a = 1
+go
+exec p7_empty_dq_string
+go
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t7_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[]
+~~END~~
+
+create trigger tr7_empty_dq_string on t7_empty_dq_string for insert as
+begin
+update t7_empty_dq_string set b = "" where a = 1
+end
+go
+insert t7_empty_dq_string values(2, 'test 2')
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t7_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[]
+2#!#[test 2]
+~~END~~
+
+
+-- single-space string in update: not affected
+create procedure p7a_empty_dq_string as
+update t7_empty_dq_string set b = " " where a = 1
+go
+exec p7a_empty_dq_string
+go
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t7_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[ ]
+2#!#[test 2]
+~~END~~
+
+create trigger tr7a_empty_dq_string on t7_empty_dq_string for insert as
+begin
+update t7_empty_dq_string set b = " " where a = 1
+end
+go
+insert t7_empty_dq_string values(3, 'test 3')
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select a, '['+b+']' as b from t7_empty_dq_string order by a
+go
+~~START~~
+int#!#varchar
+1#!#[ ]
+2#!#[test 2]
+3#!#[test 3]
+~~END~~
+
+
+
+-- single-space string: argument for procedure/function call
+create procedure p7b_empty_dq_string @p varchar(10)
+as
+select '['+@p+']' as p, len(@p) as len
+go
+exec p7b_empty_dq_string " "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+exec p7b_empty_dq_string @p=" "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+create function f7b_empty_dq_string(@p varchar(10)) returns varchar(10)
+as
+begin
+return '['+@p+']'
+end
+go
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+~~START~~
+varchar#!#int
+[ ]#!#3
+~~END~~
+
+
+create procedure p7c_empty_dq_string @p varchar(10)
+as
+exec p7b_empty_dq_string " "
+exec p7b_empty_dq_string @p=" "
+select dbo.f7b_empty_dq_string(" "), len(dbo.f7b_empty_dq_string(" "))
+go
+exec p7c_empty_dq_string " "
+go
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[ ]#!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+[ ]#!#3
+~~END~~
+
+
+-- double-quoted identifier: not affected
+set quoted_identifier on
+go
+
+-- SELECT ""
+select * from "t8_empty_dq_string" order by "a"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+~~END~~
+
+create procedure "p8_empty_dq_string"
+as
+select * from "t8_empty_dq_string" order by "a"
+go
+exec "p8_empty_dq_string"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+~~END~~
+
+create function "f8_empty_dq_string"() returns varchar(10)
+as
+begin
+return ''
+end
+go
+select dbo."f8_empty_dq_string"(), len(dbo."f8_empty_dq_string"())
+go
+~~START~~
+varchar#!#int
+#!#0
+~~END~~
+
+create trigger "tr8_empty_dq_string" on "t8_empty_dq_string" for insert as
+begin
+select * from "t8_empty_dq_string" order by "a"
+end
+go
+insert "t8_empty_dq_string" values(2, 'test 2')
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+2#!#test 2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select * from "t8_empty_dq_string" order by "a"
+go
+~~START~~
+int#!#varchar
+1#!#test 1
+2#!#test 2
+~~END~~
+
+
+-- double-quoted identifier of length 0: invalid in T-SQL, should raise error
+create table "" (a int)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero-length delimited identifier at or near """")~~
+
+select * from ""
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero-length delimited identifier at or near """")~~
+
+-- execute immediate
+execute("")
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '""' at line 2 and character position 8)~~
+
+
+set quoted_identifier off
+go
