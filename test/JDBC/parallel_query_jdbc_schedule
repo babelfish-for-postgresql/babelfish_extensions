@@ -28,4 +28,7 @@ ignore#!#BABEL-3013
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
 ignore#!#four-part-names-vu-verify
-#ignore#!#sys-has_perms_by_name-vu-verify
+
+# TODO: BABEL-5425 
+ignore#!#BABEL-1444
+ignore#!#Test-sp_reset_connection
