@@ -576,8 +576,6 @@ varchar
 DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @characters NCHAR(20) = N'比拉斯 ', @translations NCHAR(20) = N'尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -655,8 +653,6 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = 'ab?', @translations VARCHAR(40) = 'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -697,8 +693,6 @@ GO
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -707,8 +701,6 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -758,8 +750,6 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -800,8 +790,6 @@ GO
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations CHAR(40) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -810,8 +798,6 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations CHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -921,8 +907,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @characters CHAR(20) = '比拉斯 ', @translations CHAR(20) = '尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -958,8 +942,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @characters NCHAR(20) = N'比拉斯 ', @translations NCHAR(20) = N'尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1028,8 +1010,6 @@ GO
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1038,8 +1018,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1080,8 +1058,6 @@ GO
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1090,8 +1066,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1141,8 +1115,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1192,8 +1164,6 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1303,8 +1273,6 @@ nvarchar
 DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @characters CHAR(20) = '比拉斯 ', @translations CHAR(20) = '尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1400,8 +1368,6 @@ GO
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1410,8 +1376,6 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1452,8 +1416,6 @@ GO
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1462,8 +1424,6 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1513,8 +1473,6 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1564,8 +1522,6 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1675,8 +1631,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @characters CHAR(20) = '比拉斯 ', @translations CHAR(20) = '尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1739,8 +1693,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @characters NCHAR(20) = N'比拉斯 ', @translations NCHAR(20) = N'尔·比?'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1773,8 +1725,6 @@ GO
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1783,8 +1733,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1825,8 +1773,6 @@ GO
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1835,8 +1781,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1886,8 +1830,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
@@ -1937,8 +1879,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂yw'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~

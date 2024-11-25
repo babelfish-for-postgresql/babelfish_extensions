@@ -20,10 +20,6 @@ inputs:
     description: "Whether it is version upgrade or dump/restore"
     required: false
     default: 'false'
-  antlr_version:
-    description: "ANTLR version to use (based on Extension Branch)"
-    required: false
-    default: 4.13.2
 
 runs:
   using: "composite"
@@ -46,7 +42,6 @@ runs:
       if: always() && steps.build-modified-postgres.outcome == 'success'
       uses: ./.github/composite-actions/compile-antlr
       with:
-        version: ${{ inputs.antlr_version }}
         install_dir: ${{ inputs.install_dir }}
 
     - name: Set env variables and build extensions

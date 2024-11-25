@@ -256,8 +256,6 @@ varchar
 DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -298,8 +296,6 @@ varchar
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -340,8 +336,6 @@ varchar
 DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1) COLLATE CHINESE_PRC_CI_AS
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -383,8 +377,6 @@ varchar
 DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -425,8 +417,6 @@ varchar
 DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -467,8 +457,6 @@ varchar
 DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1) COLLATE CHINESE_PRC_CI_AS
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -612,8 +600,6 @@ nvarchar
 DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -654,8 +640,6 @@ nvarchar
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -707,8 +691,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -749,8 +731,6 @@ nvarchar
 DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -792,8 +772,6 @@ varbinary
 DECLARE @inputString BINARY(10) = 0x6162636465666768
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -835,8 +813,6 @@ varbinary
 DECLARE @inputString VARBINARY(10) = 0x6162636465666768
 SELECT substring(@inputString, 2, -1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: negative substring length not allowed)~~
@@ -978,8 +954,6 @@ de
 DECLARE @inputString date = '2016-12-21';
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type date is invalid for argument 1 of substring function.)~~
@@ -989,8 +963,6 @@ DECLARE @date date = '12-21-16';
 DECLARE @inputString datetime = @date;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type datetime is invalid for argument 1 of substring function.)~~
@@ -999,8 +971,6 @@ varbinary
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of substring function.)~~
@@ -1009,8 +979,6 @@ varbinary
 DECLARE @inputString time(4) = '12:10:05.1237';
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type time is invalid for argument 1 of substring function.)~~
@@ -1019,8 +987,6 @@ varbinary
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of substring function.)~~
@@ -1029,8 +995,6 @@ varbinary
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of substring function.)~~
@@ -1039,8 +1003,6 @@ varbinary
 DECLARE @inputString decimal = 123456;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
@@ -1049,8 +1011,6 @@ varbinary
 DECLARE @inputString numeric = 12345.12;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type numeric is invalid for argument 1 of substring function.)~~
@@ -1059,8 +1019,6 @@ varbinary
 DECLARE @inputString float = 12345.1;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type float is invalid for argument 1 of substring function.)~~
@@ -1069,8 +1027,6 @@ varbinary
 DECLARE @inputString real = 12345.1;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type real is invalid for argument 1 of substring function.)~~
@@ -1079,8 +1035,6 @@ varbinary
 DECLARE @inputString bigint = 12345678;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type bigint is invalid for argument 1 of substring function.)~~
@@ -1089,8 +1043,6 @@ varbinary
 DECLARE @inputString int = 12345678;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
@@ -1099,8 +1051,6 @@ varbinary
 DECLARE @inputString smallint = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type smallint is invalid for argument 1 of substring function.)~~
@@ -1109,8 +1059,6 @@ varbinary
 DECLARE @inputString tinyint = 235;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of substring function.)~~
@@ -1119,8 +1067,6 @@ varbinary
 DECLARE @inputString money = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type money is invalid for argument 1 of substring function.)~~
@@ -1129,8 +1075,6 @@ varbinary
 DECLARE @inputString smallmoney = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of substring function.)~~
@@ -1139,8 +1083,6 @@ varbinary
 DECLARE @inputString bit = 1;
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type bit is invalid for argument 1 of substring function.)~~
@@ -1149,8 +1091,6 @@ varbinary
 DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of substring function.)~~
@@ -1272,8 +1212,6 @@ bc🙂defghi🙂🙂
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of substring function.)~~
@@ -1282,8 +1220,6 @@ varbinary
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type xml is invalid for argument 1 of substring function.)~~
@@ -1292,8 +1228,6 @@ varbinary
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of substring function.)~~
@@ -1302,8 +1236,6 @@ varbinary
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of substring function.)~~

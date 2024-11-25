@@ -688,8 +688,6 @@ abc🙂d
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT LEFT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of left function.)~~
@@ -698,8 +696,6 @@ varchar
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT LEFT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type xml is invalid for argument 1 of left function.)~~
@@ -708,8 +704,6 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT LEFT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of left function.)~~
@@ -718,8 +712,6 @@ varchar
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT LEFT(@inputString, 3)
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of left function.)~~
