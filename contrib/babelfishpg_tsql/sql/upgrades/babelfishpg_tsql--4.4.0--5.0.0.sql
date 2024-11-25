@@ -18,7 +18,7 @@ BEGIN
     query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
-    execute query1;\q
+    execute query1;
     execute query2;
 EXCEPTION
     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
@@ -842,9 +842,7 @@ BEGIN
 			DECLARE @curr_relname sys.nvarchar(776);
 			
 			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
-
 			DECLARE @currtype char(2);
-
 			IF @objtype = 'COLUMN'
 				BEGIN
 					DECLARE @col_count INT;
@@ -876,7 +874,6 @@ BEGIN
 					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 					WHERE s1.name = @schemaname AND o1.name = @subname;
 					SELECT @count = COUNT(*) FROM #tempTable;
-
 					IF @count < 1
 						BEGIN
 							-- sys.objects does not show routines which current user cannot execute but
