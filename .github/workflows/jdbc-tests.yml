@@ -92,14 +92,14 @@ jobs:
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: postgres-log-jdbc
           path: |
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
-
+      # if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
