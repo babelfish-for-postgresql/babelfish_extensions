@@ -535,8 +535,16 @@ do_compile(FunctionCallInfo fcinfo,
 				 */
 				if (function->is_mstvf)
 				{
+					/* 
+					 * For a user-defined @@var or @var# name,
+					 * delimit with square brackets
+					 */
+					char *typname_fmt = "%s.\"%s\"";
+					if (!is_tsql_atatuservar(argdtype->typname))
+						typname_fmt = pstrdup("%s.%s");
+
 					tbl_dno = argvariable->dno;
-					tbl_typ = psprintf("%s.%s",
+					tbl_typ = psprintf(typname_fmt,
 									   get_namespace_name(
 														  get_rel_namespace(get_typ_typrelid(argtypeid))),
 									   argdtype->typname);

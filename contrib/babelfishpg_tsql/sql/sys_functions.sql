@@ -4484,7 +4484,7 @@ CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
 $$
 DECLARE
-    is_windows_grp boolean := (CHARINDEX('\', role) != 0);
+    is_windows_grp boolean := (CHARINDEX('\', role) != 0); -- '  adding quote in comment to suppress build warning
 BEGIN
     -- Always return 1 for 'public'
     IF (role = 'public' COLLATE sys.database_default )
@@ -5416,3 +5416,7 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
     PARALLEL = SAFE
 );
 
+/* Helper function to update local variables dynamically during execution */
+CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;

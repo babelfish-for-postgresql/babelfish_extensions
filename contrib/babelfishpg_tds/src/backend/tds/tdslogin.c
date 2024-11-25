@@ -1143,6 +1143,17 @@ ProcessLoginFlags(LoginRequest loginInfo)
 }
 
 /*
+ * TdsResetLoginFlags - Resets the session properties which
+ * we provided during login time.
+ * Wrapper of ProcessLoginFlags, since we do not expose loginInfo.
+ */
+void
+TdsResetLoginFlags()
+{
+	ProcessLoginFlags(loginInfo);
+}
+
+/*
  * ProcessLoginInternal - internal workhorse for processing login
  * request.
  *
@@ -1614,6 +1625,9 @@ CheckGSSAuth(Port *port)
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pfree(port->user_name);
 	port->user_name = convertUsernameToCanonicalform(gbuf.value);
+
+	/* Assign canonical form username to loginInfo->username. */
+	loginInfo->username = pstrdup(port->user_name);
 	if ((at_pos = strchr(gbuf.value, '@')) != NULL && loginInfo)
 	{
 		/* skip '@' */
