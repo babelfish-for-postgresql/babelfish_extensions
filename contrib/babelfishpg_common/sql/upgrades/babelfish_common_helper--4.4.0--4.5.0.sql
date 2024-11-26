@@ -17,7 +17,7 @@ RETURNS INT4
 AS 'date_cmp_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
--- Opartor class for smalldatetime_ops to incorporate various operator between smalldatetime and date for Index scan
+-- Operator class for smalldatetime_ops to incorporate various operator between smalldatetime and date for Index scan
 DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid WHERE opc.opcname = 'smalldatetime_date_ops' AND opc.opcnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys') AND opf.opfname = 'smalldatetime_ops') THEN
@@ -32,7 +32,7 @@ FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
 END IF;
 END $$;
 
--- Opartor class for smalldatetime_ops to incorporate various operator between date and smalldatetime for Index scan
+-- Operator class for smalldatetime_ops to incorporate various operator between date and smalldatetime for Index scan
 DO $$
 BEGIN
 IF NOT EXISTS(SELECT 1 FROM pg_opclass opc JOIN pg_opfamily opf ON opc.opcfamily = opf.oid WHERE opc.opcname = 'date_smalldatetime_ops' AND opc.opcnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys') AND opf.opfname = 'smalldatetime_ops') THEN
