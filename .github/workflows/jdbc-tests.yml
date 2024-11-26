@@ -61,7 +61,7 @@ jobs:
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests
 
-      - name: Start secondary server
+      # - name: Start secondary server
         # id: start-secondary
         # if: always() && steps.jdbc.outcome == 'success'
         # uses: ./.github/composite-actions/install-extensions
