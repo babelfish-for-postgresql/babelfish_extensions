@@ -83,7 +83,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
 GO
 ~~START~~
-varchar#!#int
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 
@@ -229,7 +229,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
 GO
 ~~START~~
-varchar#!#int
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 

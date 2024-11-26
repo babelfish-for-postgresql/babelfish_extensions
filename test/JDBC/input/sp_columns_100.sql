@@ -1,4 +1,4 @@
--- sla_for_parallel_query_enforced 55000
+-- sla_for_parallel_query_enforced 110000
 -- create tables with most of the datatypes
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
@@ -316,3 +316,214 @@ go
 drop database sp_cols
 go
 
+-- regular identifier
+CREATE TABLE RegularTable (RegularColumn int, Name varchar(50))
+GO
+
+EXEC sys.sp_columns_100 'RegularTable%'
+GO
+
+EXEC sys.sp_columns_100 '%regulartable'
+GO
+
+EXEC sys.sp_columns_100 'regulartable', @column_name = 'RegularColumn'
+GO
+
+EXEC sys.sp_columns_100 'regulartable', @column_name = 'regularColumn'
+GO
+
+EXEC sys.sp_columns_100 'RegularTable', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 'regulartable', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 'regulartable', @column_name = 'RegularColumn', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 'regulartable', @column_name = 'regularColumn', @fUsePattern = 0
+GO
+
+
+EXEC sys.sp_columns_100 'regulartable%', @column_name = 'regularColumn', @fUsePattern = 0
+GO
+
+DROP TABLE RegularTable
+GO
+
+-- quoted identifiers 
+CREATE TABLE [Quoted Table] (ID int, Name varchar(50))
+GO
+
+EXEC sys.sp_columns_100 'Quoted Table'
+GO
+
+EXEC sys.sp_columns_100 'Quoted[ ]Table%'
+GO
+
+EXEC sys.sp_columns_100 'Quoted table'
+GO
+
+EXEC sys.sp_columns_100 'Quoted table', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 'Quoted table', @column_name = 'id'
+GO
+
+EXEC sys.sp_columns_100 'Quoted table', @column_name = 'i[d]'
+GO
+
+EXEC sys.sp_columns_100 'Quoted table', @column_name = 'id', @fUsePattern = 0
+GO
+
+DROP TABLE [Quoted Table]
+GO
+
+-- regular identifier with chinese chars
+CREATE TABLE [テーブル] (ID int, [名前] nvarchar(50), [年齢] int)
+GO
+
+EXEC sys.sp_columns_100 N'テーブル'
+GO
+
+EXEC sys.sp_columns_100 N'テーブル%'
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', 'dbo'
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', @column_name = N'年齢'
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', @column_name = N'年齢%'
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', @column_name = N'年齢%', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 N'テーブル', @column_name = N'年齢', @fUsePattern = 0
+GO
+
+DROP TABLE [テーブル]
+GO
+
+-- quoted identifiers with chinese chars
+
+CREATE TABLE [テーブル 名前] ([名前] int)
+GO
+
+EXEC sys.sp_columns_100 N'テーブル 名前'
+GO
+
+EXEC sys.sp_columns_100  N'テーブル 名前', @column_name = N'名前'
+GO
+
+EXEC sys.sp_columns_100  N'%テーブル 名前', @column_name = N'名前%'
+GO
+
+EXEC sys.sp_columns_100  N'%テーブル[ ]名前', @column_name = N'名前%'
+GO
+
+EXEC sys.sp_columns_100  N'テーブル 名前', @column_name = N'名前', @fUsePattern = 0
+GO
+
+DROP TABLE [テーブル 名前] 
+GO
+
+-- regular identifiers with length > 63
+CREATE TABLE dbo.tidentityintbiddgwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63(a int)
+GO
+
+EXEC sys.sp_columns_100 'tidentityintbiddgwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63'
+GO
+
+EXEC sys.sp_columns_100 'tidentityintbiddgwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63', @fUsePattern = 0
+GO
+
+-- should be fixed with BABEL-5416
+EXEC sys.sp_columns_100 '%tidentityintbiddgwithareallylongtablenamewhickcausesbabelfish%'
+GO
+
+drop table tidentityintbiddgwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63
+GO
+
+create table long_colname(xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb int)
+GO
+
+EXEC sys.sp_columns_100 'long_colname'
+GO
+
+EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb'
+GO
+
+EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb'
+GO
+
+drop table long_colname
+GO
+
+-- quoted identifiers with length > 63
+
+CREATE TABLE [tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63](a int)
+GO
+
+EXEC sys.sp_columns_100 N'tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63'
+GO
+
+EXEC sys.sp_columns_100 N'tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63', @fUsePattern = 0
+GO
+
+-- should be fixed with BABEL-5416
+EXEC sys.sp_columns_100 N'tide[ ]Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63'
+GO
+
+DROP TABLE [tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63]
+GO
+
+create table long_col_name ([tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63] int)
+GO
+
+EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63'
+GO
+
+EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63', @fUsePattern = 0
+GO
+
+EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide[ ]Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63'
+GO
+
+EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'Tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63'
+GO
+
+DROP table long_col_name
+GO
+
+CREATE SCHEMA [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema]
+GO
+
+CREATE TABLE [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema].[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable] (ID int)
+GO
+
+EXEC sys.sp_columns_100 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable', 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema'
+GO
+
+EXEC sys.sp_columns_100 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable', 'ABCdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema'
+GO
+
+EXEC sys.sp_columns_100 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable', 'ABCdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[_]LongSchema'
+GO
+
+EXEC sys.sp_columns_100 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable', 'ABCdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema', @fUsePattern = 0
+GO
+
+DROP TABLE [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema].[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongTable]
+GO
+
+DROP SCHEMA [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema]
+GO

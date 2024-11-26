@@ -71,7 +71,7 @@ babel_sp_columns_vu_prepare_mydb1#!#dbo#!#babel_sp_columns_vu_prepare_t_money#!#
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
 GO
 ~~START~~
-varchar#!#int
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 
