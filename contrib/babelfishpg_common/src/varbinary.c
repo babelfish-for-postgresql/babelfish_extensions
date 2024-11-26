@@ -676,11 +676,11 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
-	
+
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("Implicit conversion from data type varchar to "
+				 errmsg("Implicit conversion from data type varchar to "
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
@@ -700,7 +700,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
+				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Failed to convert from data type varchar to varbinary, %s",
 				errorData->message)));
 	}
@@ -950,7 +950,6 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 		if (maxlen < 0 || (len) <= (maxlen*2))
 		{
 			initStringInfo(&s);
-
 			if(len % 2 != 0)
 			{
 				paddedLen = len + 1;
@@ -989,7 +988,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,
-			   (errcode(ERRCODE_INTERNAL_ERROR),
+				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Failed to convert from data type varbinary to nvarchar, %s",
 				errorData->message)));
 	}
