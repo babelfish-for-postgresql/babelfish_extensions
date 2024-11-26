@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 -- 1. Test resets GUC variables
 SELECT @@lock_timeout;
@@ -228,4 +229,76 @@ SELECT @@cursor_rows;
 GO
 
 drop table babel_cursor_t1;
+GO
+
+-- GUCs testing
+
+-- 1. Ansi defaults
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+
+SET ANSI_DEFAULTS ON
+GO
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+
+-- reset
+exec sys.sp_reset_connection
+GO
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+
+-- babelfish_showplan_all
+SET babelfish_showplan_all ON
+GO
+
+-- explain output
+SELECT 1;
+GO
+
+-- reset
+exec sys.sp_reset_connection
+GO
+
+-- 1 output
+SELECT 1;
+GO
+
+-- set_config testing.
+
+-- search_path has source < PGC_S_SESSION in TSQL but it gets reset during ResetAll Gucs.
+-- Whereas role does not get reset since it uses GUC_NO_RESET_ALL, so we should not allow
+-- set_config for this option.
+SELECT CURRENT_SETTING('search_path', true)
+SELECT CURRENT_SETTING('role', true)
+GO
+
+SELECT set_config('search_path', 'sys', false);
+GO
+SELECT set_config('role', 'jdbc_user', false);
+GO
+
+-- reset
+exec sp_reset_connection
+GO
+
+SELECT CURRENT_SETTING('search_path', true)
+SELECT CURRENT_SETTING('role', true)
 GO

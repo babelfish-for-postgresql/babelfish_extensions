@@ -618,7 +618,10 @@ GO
 ~~START~~
 text
 Query Text: SELECT 1
-Result  (cost=0.00..0.01 rows=1 width=4)
+Gather  (cost=0.00..0.01 rows=1 width=4)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
 ~~END~~
 
 
@@ -650,7 +653,7 @@ master_dbo, "$user", sys, pg_catalog
 
 ~~START~~
 text
-master_dbo
+none
 ~~END~~
 
 
@@ -684,6 +687,6 @@ master_dbo, "$user", sys, pg_catalog
 
 ~~START~~
 text
-master_dbo
+none
 ~~END~~
 
