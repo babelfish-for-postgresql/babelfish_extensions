@@ -98,7 +98,7 @@ jobs:
           name: postgres-log-jdbc
           path: |
             ~/psql/data/logfile
-            ~/psql/data_5433/logfile
+            # ~/psql/data_5433/logfile
       # if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
