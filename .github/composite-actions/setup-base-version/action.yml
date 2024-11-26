@@ -139,7 +139,7 @@ runs:
       run: |
         cd ~
         sudo apt-get install odbc-postgresql
-        pip3 install pyodbc==4.0.35 pymssql
+        pip3 install pyodbc==4.0.35 pymssql==2.2.7
       shell: bash
 
     - name: Run dependency check
