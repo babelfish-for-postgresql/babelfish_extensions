@@ -371,16 +371,6 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_columns_100 TO PUBLIC;
 
--- This is a temporary procedure which is only meant to be called during upgrade
-CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
-
-CALL sys.babelfish_revoke_guest_from_mapped_logins();
-
--- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins();
-
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
