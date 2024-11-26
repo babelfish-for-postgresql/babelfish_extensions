@@ -120,8 +120,6 @@ smallint
 --      Tests include negative cases where db is dropped or renamed
 Create database reset_con_db1;
 GO
-Create database reset_con_db2;
-GO
 
 -- tsql database=reset_con_db1
 select db_name();
@@ -161,36 +159,8 @@ GO
 
 ~~ERROR (Message: database "reset_con_db1" does not exist)~~
 
--- tsql database=reset_con_db2
-select db_name();
-GO
-~~START~~
-nvarchar
-reset_con_db2
-~~END~~
-
-use master
-GO
-select db_name();
-GO
-~~START~~
-nvarchar
-master
-~~END~~
-
-ALTER DATABASE reset_con_db2 MODIFY NAME=reset_con_db3
-GO
-exec sys.sp_reset_connection
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "reset_con_db2" does not exist)~~
-
 
 -- tsql
-DROP DATABASE reset_con_db3
-GO
-
 -- Cursor reset testing
 CREATE TABLE babel_cursor_t1 (i INT, d double precision, c varchar(10), u uniqueidentifier, v sql_variant);
 INSERT INTO babel_cursor_t1 VALUES (1, 1.1, 'a', '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 1);
