@@ -1012,6 +1012,7 @@ pltsql_predicate_transformer(Node *expr)
 	{
 		Node *ret = transform_likenode(expr);
 		if (expr == ret)
+			/* If it's not a like Opexpr, then walk through args */
 			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
 		else 
 			/* Singleton predicate */
