@@ -145,7 +145,6 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -432,6 +431,7 @@ Test-sp_rename
 Test-sp_rename-dep
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+Test-Role-Member
 TestSQLVariant
 TestTableType
 TestText

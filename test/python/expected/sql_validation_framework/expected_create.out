@@ -32,6 +32,7 @@ Could not find tests for function sys.openjson_simple
 Could not find tests for function sys.openjson_with
 Could not find tests for function sys.openquery_internal
 Could not find tests for function sys.patindex_ai_collations
+Could not find tests for function sys.pltsql_assign_var
 Could not find tests for function sys.remove_accents_internal_using_cache
 Could not find tests for function sys.role_id
 Could not find tests for function sys.sp_columns_managed_internal
@@ -135,6 +136,7 @@ Could not find upgrade tests for function sys.openjson_with
 Could not find upgrade tests for function sys.openquery_internal
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.patindex_ai_collations
+Could not find upgrade tests for function sys.pltsql_assign_var
 Could not find upgrade tests for function sys.remove_accents_internal_using_cache
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.sp_columns_managed_internal

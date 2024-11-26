@@ -167,6 +167,7 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
+Test-Role-Member
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN
@@ -177,7 +178,6 @@ babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
-babelfish_migration_mode
 schema_resolution_func
 BABEL-3147
 collation_tests_arabic

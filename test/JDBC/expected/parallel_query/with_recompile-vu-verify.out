@@ -115,7 +115,7 @@ Query Text: EXEC    p_recomp_11 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 156.798 ms
+Babelfish T-SQL Batch Parsing Time: 197.649 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -205,7 +205,7 @@ Query Text: EXEC    p_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.187 ms
+Babelfish T-SQL Batch Parsing Time: 0.261 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -256,7 +256,7 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.990 ms
+Babelfish T-SQL Batch Parsing Time: 7.061 ms
 ~~END~~
 
 exec    p_recomp_12 0 with recompile
@@ -282,7 +282,7 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -314,7 +314,7 @@ Query Text: EXEC p_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.406 ms
+Babelfish T-SQL Batch Parsing Time: 4.194 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -349,7 +349,7 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.875 ms
+Babelfish T-SQL Batch Parsing Time: 1.439 ms
 ~~END~~
 
 -- test case without execute keyword
@@ -376,7 +376,7 @@ Query Text: EXEC p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.102 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -411,7 +411,7 @@ Query Text: EXEC    p_recomp_13 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.395 ms
 ~~END~~
 
 exec    p_recomp_13 0 with recompile
@@ -439,7 +439,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -545,7 +545,7 @@ Query Text: EXEC    p_recomp_11 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 exec    p_recomp_12 0 with recompile 
@@ -569,7 +569,7 @@ Query Text: EXEC    p_recomp_12 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -600,7 +600,7 @@ Query Text: EXEC    p_recomp_12 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.068 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -633,7 +633,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.074 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -668,7 +668,7 @@ Query Text: EXEC    p_recomp_13 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 exec    p_recomp_13 0 with recompile
@@ -694,7 +694,7 @@ Query Text: EXEC    p_recomp_13 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -753,7 +753,7 @@ Query Text: EXEC    p_recomp_21 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.291 ms
+Babelfish T-SQL Batch Parsing Time: 0.470 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -803,7 +803,7 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -834,7 +834,7 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.243 ms
+Babelfish T-SQL Batch Parsing Time: 0.469 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -869,7 +869,7 @@ Query Text: EXEC    p_recomp_22 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -917,7 +917,7 @@ Query Text: EXEC    p_recomp_21 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.183 ms
 ~~END~~
 
 
@@ -946,7 +946,7 @@ Query Text: EXEC    p_recomp_22 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -981,7 +981,7 @@ Query Text: EXEC    p_recomp_22 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1038,7 +1038,7 @@ Query Text: EXEC    p_recomp_31 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.304 ms
+Babelfish T-SQL Batch Parsing Time: 0.318 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1089,7 +1089,7 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 
@@ -1120,7 +1120,7 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.232 ms
+Babelfish T-SQL Batch Parsing Time: 0.404 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1155,7 +1155,7 @@ Query Text: EXEC    p_recomp_32 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1190,7 +1190,7 @@ Query Text: EXEC    p_recomp_33 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.219 ms
+Babelfish T-SQL Batch Parsing Time: 0.370 ms
 ~~END~~
 
 --- tb_recomp_33: with RECOMPILE: bitmap scans ----
@@ -1220,7 +1220,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1268,7 +1268,7 @@ Query Text: EXEC    p_recomp_31 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 --- p_recomp_32: EXEC with RECOMPILE: recompiled plan: index scan for paramtrized, bitmap scan for non-parametrized ----
@@ -1296,7 +1296,7 @@ Query Text: EXEC    p_recomp_32 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.077 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1329,7 +1329,7 @@ Query Text: EXEC    p_recomp_32 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.064 ms
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1362,7 +1362,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.072 ms
+Babelfish T-SQL Batch Parsing Time: 0.079 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1395,7 +1395,7 @@ Query Text: EXEC    p_recomp_33 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 --- tb_recomp_33 with RECOMPILE: index scan for paramtrized stmt, bitmap scan for non-param stmt  ----
@@ -1423,7 +1423,7 @@ Query Text: EXEC    p_recomp_33 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.076 ms
+Babelfish T-SQL Batch Parsing Time: 0.150 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1608,7 +1608,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.213 ms
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1675,7 +1675,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1724,7 +1724,7 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.206 ms
+Babelfish T-SQL Batch Parsing Time: 0.319 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1787,7 +1787,7 @@ Query Text: EXEC    p_recomp_61 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.149 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -1832,7 +1832,7 @@ Query Text: EXEC    p_recomp_61 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2317,7 +2317,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2453,7 +2453,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2574,7 +2574,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2701,7 +2701,7 @@ Query Text: EXEC    p_recomp_51 0
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 set babelfish_showplan_all off
@@ -2811,7 +2811,7 @@ Query Text: EXEC    p_recomp_51 0 /* EXECUTE WITH RECOMPILE */
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 set babelfish_showplan_all off
