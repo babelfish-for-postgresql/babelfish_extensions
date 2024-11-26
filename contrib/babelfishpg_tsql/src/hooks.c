@@ -2881,7 +2881,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		temp_col_list = NIL;
 
-		if (att->attnum > 0)
+		/*
+		 * We must skip the generated or identity columns while inserting.
+		 * Note that in case of IDENTITY_INSERT Explicit col-name must be specified
+		 * so stmt->col will be NOT NULL.
+		 */
+		if (att->attnum > 0
+			&& !(att->attgenerated || att->attidentity == ATTRIBUTE_IDENTITY_ALWAYS))
 		{
 			/*
  			* Do a deep copy of attname because tuple is a pointer 
