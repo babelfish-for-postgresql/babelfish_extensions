@@ -52,18 +52,25 @@ static Datum return_varchar_pointer(char *buf, int size);
  *
  * We use the Postgres implementations where available (for sha256 and md5),
  * and OpenSSL for the rest.
+ * 
+ * For varchar/nvarchar the input string is in UTF-8 encoding.
+ * So for varchar we keep it as it is but for nvarchar we change the encodign to UTF-16
+ * 
  */
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
-	Oid         input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
-	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-	bytea	   *in = PG_GETARG_BYTEA_PP(1);
-	size_t		len = VARSIZE_ANY_EXHDR(in);
-	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
-	bytea	   *result;
-	StringInfoData 		utf16_data;
+	Oid         	input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
+	const char 	*algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+	bytea	   	*in = PG_GETARG_BYTEA_PP(1);
+	size_t	    	len = VARSIZE_ANY_EXHDR(in);
+	const uint8 	*data = (unsigned char *) VARDATA_ANY(in);
+	bytea	    	*result;
+	StringInfoData 	utf16_data;
 
+	/*
+	 * If the input_type is nvarchar then we convert it to UTF-16 encoding
+	 */
 	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
 		(common_utility_plugin_ptr->tsql_utf8_to_utf16)(&utf16_data, data, len);
