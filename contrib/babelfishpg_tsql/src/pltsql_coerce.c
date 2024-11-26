@@ -514,6 +514,7 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				break;
 			}
 
+			/* We've found VARBINARY To NVARCHAR casting */
 			if (isVarbinary && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "nvarchar") == 0))
 				isVarbinaryToNvarchar = true;
 
@@ -521,10 +522,11 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "varbinary") == 0)
 				isVarbinary = true;
 
+			/* We've found NVARCHAR TO VARBINARY casting */
 			if (isNvarchar && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "varbinary") == 0))
 				isNvarchartoVarbinary = true;
 
-			/* Check if type is INT8 */
+			/* Check if type is NVARCHAR */
 			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "nvarchar") == 0)
 				isNvarchar = true;
 
@@ -535,11 +537,16 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
+		/*
+		 * if we are casting from NVARCHAR TO VARBINARY, don't look for base type of
+		 * source so that it can call the cast function which matches with the
+		 * exact types
+		 */
 		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*
-		 * if we are casting from INT8 to MONEY, don't look for base type of
+		 * if we are casting from INT8 to MONEY or VARBINARY To NVARCHAR, don't look for base type of
 		 * target so that it can call the cast function which matches with the
 		 * exact types
 		 */
@@ -1309,6 +1316,11 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 	return true;
 }
 
+/*
+ * Selects the best candidate function for HASHBYTES based on input types.
+ * Focuses on matching the second argument type, particularly for NVARCHAR.
+ * Returns a single best candidate from the sys schema, or NULL if none found.
+ */
 static FuncCandidateList
 tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
@@ -1332,16 +1344,12 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 					errmsg("Failed to find common utility plugin.")));
 
 	expr_second_arg = InvalidOid;
-	if (strncmp(proc_name,"hashbytes", 9) == 0)
+	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
 	{
-		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
-		{
-			expr_second_arg = input_typeids[1];		
-		}
+		expr_second_arg = input_typeids[1];		
 	}
 
-
-	/* Get the candidate with matching return type */
+	/* Get the candidate with matching second argument type */
 	ncandidates = 0;
 	best_candidate = NULL;
 
@@ -1349,7 +1357,7 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 		current_candidate != NULL;
 		current_candidate = current_candidate->next)
 	{
-		/* we should only consider candidates for special function from sys schema */
+		/* we should only consider candidates for hashbytes function from sys schema */
 		if (get_func_namespace(current_candidate->oid) != sys_oid)
 			return NULL;
 
@@ -1388,7 +1396,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-
+	/* Specific handling for hashbytes function based on second input argument via tsql_func_select_candidate_for_hashbytes() */
 	if (strcmp(proc_name, "hashbytes") == 0)
 	{
 		return tsql_func_select_candidate_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
@@ -1536,7 +1544,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	/* Get the candidate with matching return type */
 	ncandidates = 0;
 	best_candidate = NULL;
-
 	for (current_candidate = candidates;
 			current_candidate != NULL;
 			current_candidate = current_candidate->next)

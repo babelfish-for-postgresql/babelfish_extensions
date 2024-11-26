@@ -753,17 +753,16 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
+	initStringInfo(&s);
 	PG_TRY();
 	{
 		/*
 		 * For nvarchar convert the string to UTF16 from UTF8 irrespective of input encoding via TsqlUTF8toUTF16StringInfo()
 		 * For this we need to prepare a StringInfoData() and assign the encoded_data, encodedByteLen from the string info data we prepared
 		 */
-		initStringInfo(&s);
 		TsqlUTF8toUTF16StringInfo(&s, data, len);
 		encoded_data = s.data;
 		encodedByteLen= s.len;
-
 	}
 	PG_CATCH();
 	{
@@ -777,7 +776,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 
 		ereport(ERROR,
 			   (errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Failed to convert from data type varchar to varbinary, %s",
+				errmsg("Failed to convert from data type nvarchar to varbinary, %s",
 				errorData->message)));
 	}
 	PG_END_TRY();
@@ -799,6 +798,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	memcpy(rp, encoded_data, encodedByteLen);
+	pfree(s.data);
 
 	PG_RETURN_BYTEA_P(result);
 }

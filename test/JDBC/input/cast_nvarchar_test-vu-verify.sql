@@ -104,3 +104,7 @@ SELECT CAST(
     AS NVARCHAR(50))
 AS VARCHAR(50)) AS four_casts;
 GO
+
+-- Test Case 15: Implicit conversion from data type nvarchar to varbinary is not allowed.
+DECLARE @a varbinary(10); SET @a = CAST(N'21' AS nvarchar(10)); SELECT @a
+GO
