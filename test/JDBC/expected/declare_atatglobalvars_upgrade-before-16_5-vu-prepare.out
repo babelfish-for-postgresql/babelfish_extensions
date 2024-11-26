@@ -15,7 +15,7 @@ go
 exec p1_declare_atatglobalvars_upgrade
 go
 ~~START~~
-int
+tinyint
 38
 ~~END~~
 
@@ -47,7 +47,7 @@ insert into t1_declare_atatglobalvars_upgrade values(3)
 go
 ~~ROW COUNT: 1~~
 ~~START~~
-int
+tinyint
 38
 ~~END~~
 
