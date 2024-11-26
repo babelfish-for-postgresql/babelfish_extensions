@@ -1,0 +1,16 @@
+exec p1_declare_atatglobalvars_upgrade
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure p1_declare_atatglobalvars_upgrade() does not exist)~~
+
+select dbo.f1_declare_atatglobalvars_upgrade() 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function master_dbo.f1_declare_atatglobalvars_upgrade() does not exist)~~
+
+insert into t1_declare_atatglobalvars_upgrade values(4)
+go
+~~ROW COUNT: 1~~
+
