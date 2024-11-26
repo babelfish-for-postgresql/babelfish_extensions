@@ -108,7 +108,6 @@ CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.bbf_var
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
 
-=======
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 SELECT 
 	CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
