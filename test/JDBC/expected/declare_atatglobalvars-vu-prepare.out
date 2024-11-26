@@ -4,3 +4,5 @@ insert t1_declare_atatglobalvars values (1), (2)
 go
 ~~ROW COUNT: 2~~
 
+create type tt_declare_atatglobalvars as table (a int)
+go

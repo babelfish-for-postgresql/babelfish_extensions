@@ -103,6 +103,12 @@ as
 return 0
 go
 
+create procedure p1_declare_atatglobalvars 
+@@dbts tt_declare_atatglobalvars readonly
+as
+return 0
+go
+
 create function f1_declare_atatglobalvars() 
 returns int 
 as 
@@ -160,19 +166,25 @@ go
 
 -- verify @@rowcount etc. still work orrectly (NB. this is just a brief test, other test cases already exist for these)
 select a from t1_declare_atatglobalvars order by a
-select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
 go
 
 create procedure p2_declare_atatglobalvars
 as
 select a from t1_declare_atatglobalvars order by a
-select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
 go
 exec p2_declare_atatglobalvars
 go
 begin tran
 exec p2_declare_atatglobalvars
 rollback
+go
+
+-- non-zero @@PGERROR:
+select 1/0
+go
+select @@error as err, @@pgerror as pgerr
 go
 
 create procedure p3_declare_atatglobalvars @@myparam int

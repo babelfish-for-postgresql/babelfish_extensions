@@ -271,6 +271,16 @@ go
 ~~ERROR (Message: Incorrect syntax near '@@options'.)~~
 
 
+create procedure p1_declare_atatglobalvars 
+@@dbts tt_declare_atatglobalvars readonly
+as
+return 0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@dbts'.)~~
+
+
 create function f1_declare_atatglobalvars() 
 returns int 
 as 
@@ -356,7 +366,7 @@ go
 
 -- verify @@rowcount etc. still work orrectly (NB. this is just a brief test, other test cases already exist for these)
 select a from t1_declare_atatglobalvars order by a
-select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
 go
 ~~START~~
 int
@@ -365,15 +375,15 @@ int
 ~~END~~
 
 ~~START~~
-int#!#int#!#int
-2#!#0#!#0
+int#!#int#!#int#!#int#!#varchar
+2#!#0#!#0#!#0#!#00000
 ~~END~~
 
 
 create procedure p2_declare_atatglobalvars
 as
 select a from t1_declare_atatglobalvars order by a
-select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
 go
 exec p2_declare_atatglobalvars
 go
@@ -384,8 +394,8 @@ int
 ~~END~~
 
 ~~START~~
-int#!#int#!#int
-2#!#1#!#0
+int#!#int#!#int#!#int#!#varchar
+2#!#1#!#0#!#0#!#00000
 ~~END~~
 
 begin tran
@@ -399,8 +409,23 @@ int
 ~~END~~
 
 ~~START~~
-int#!#int#!#int
-2#!#1#!#1
+int#!#int#!#int#!#int#!#varchar
+2#!#1#!#1#!#0#!#00000
+~~END~~
+
+
+-- non-zero @@PGERROR:
+select 1/0
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select @@error as err, @@pgerror as pgerr
+go
+~~START~~
+int#!#varchar
+8134#!#22012
 ~~END~~
 
 
