@@ -41,7 +41,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 210.708 ms
+Babelfish T-SQL Batch Parsing Time: 197.796 ms
 ~~END~~
 
 
@@ -57,7 +57,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.191 ms
+Babelfish T-SQL Batch Parsing Time: 0.210 ms
 ~~END~~
 
 
@@ -73,7 +73,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -89,7 +89,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.507 ms
+Babelfish T-SQL Batch Parsing Time: 13.683 ms
 ~~END~~
 
 
@@ -105,7 +105,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -138,7 +138,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 5.788 ms
+Babelfish T-SQL Batch Parsing Time: 5.765 ms
 ~~END~~
 
 
@@ -154,7 +154,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.143 ms
+Babelfish T-SQL Batch Parsing Time: 1.109 ms
 ~~END~~
 
 
@@ -170,7 +170,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.247 ms
+Babelfish T-SQL Batch Parsing Time: 1.296 ms
 ~~END~~
 
 
@@ -186,7 +186,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.192 ms
+Babelfish T-SQL Batch Parsing Time: 1.187 ms
 ~~END~~
 
 
@@ -202,7 +202,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.376 ms
+Babelfish T-SQL Batch Parsing Time: 6.324 ms
 ~~END~~
 
 
@@ -218,7 +218,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.768 ms
+Babelfish T-SQL Batch Parsing Time: 0.764 ms
 ~~END~~
 
 
@@ -234,7 +234,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.627 ms
+Babelfish T-SQL Batch Parsing Time: 8.595 ms
 ~~END~~
 
 
@@ -250,7 +250,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.202 ms
+Babelfish T-SQL Batch Parsing Time: 6.429 ms
 ~~END~~
 
 
@@ -266,7 +266,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.585 ms
+Babelfish T-SQL Batch Parsing Time: 6.828 ms
 ~~END~~
 
 
@@ -282,7 +282,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.183 ms
 ~~END~~
 
 
@@ -298,7 +298,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.430 ms
+Babelfish T-SQL Batch Parsing Time: 0.353 ms
 ~~END~~
 
 
@@ -314,7 +314,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.121 ms
+Babelfish T-SQL Batch Parsing Time: 1.098 ms
 ~~END~~
 
 
@@ -330,7 +330,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 5.863 ms
+Babelfish T-SQL Batch Parsing Time: 5.817 ms
 ~~END~~
 
 
@@ -346,7 +346,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.176 ms
+Babelfish T-SQL Batch Parsing Time: 0.181 ms
 ~~END~~
 
 
@@ -362,7 +362,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.194 ms
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -378,7 +378,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.132 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -394,7 +394,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.902 ms
+Babelfish T-SQL Batch Parsing Time: 15.153 ms
 ~~END~~
 
 
@@ -409,7 +409,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
+Babelfish T-SQL Batch Parsing Time: 0.194 ms
 ~~END~~
 
 
@@ -424,7 +424,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.232 ms
+Babelfish T-SQL Batch Parsing Time: 0.239 ms
 ~~END~~
 
 
@@ -439,7 +439,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.190 ms
 ~~END~~
 
 
@@ -454,7 +454,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -469,7 +469,7 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.188 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
@@ -484,152 +484,108 @@ Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.208 ms
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
 -- testing with joins
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col < CAST('2023-06-14' AS DATE);
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col < s2.smalldatetime_col
 GO
 ~~START~~
 text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col < CAST('2023-06-14' AS DATE)
-Nested Loop
-  ->  Seq Scan on smalldate_date_cmp_t1 s2
-  ->  Materialize
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s1
-              Index Cond: (smalldatetime_col < '2023-06-14'::date)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 57.515 ms
-~~END~~
-
-
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col < CAST('2023-06-14' AS DATE);
-GO
-~~START~~
-text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col < CAST('2023-06-14' AS DATE)
+Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col < s2.smalldatetime_col
 Nested Loop
   ->  Seq Scan on smalldate_date_cmp_t1 s1
-  ->  Materialize
+  ->  Memoize
+        Cache Key: s1.smalldatetime_col
+        Cache Mode: binary
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s2
-              Index Cond: (smalldatetime_col < '2023-06-14'::date)
+              Index Cond: (smalldatetime_col > s1.smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 60.743 ms
 ~~END~~
 
 
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col <= CAST('2023-06-14' AS DATE);
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col > s2.smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col <= CAST('2023-06-14' AS DATE)
-Nested Loop
-  ->  Seq Scan on smalldate_date_cmp_t1 s2
-  ->  Materialize
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s1
-              Index Cond: (smalldatetime_col <= '2023-06-14'::date)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.211 ms
-~~END~~
-
-
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col <= CAST('2023-06-14' AS DATE);
-GO
-~~START~~
-text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col <= CAST('2023-06-14' AS DATE)
+Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col > s2.smalldatetime_col
 Nested Loop
   ->  Seq Scan on smalldate_date_cmp_t1 s1
-  ->  Materialize
+  ->  Memoize
+        Cache Key: s1.smalldatetime_col
+        Cache Mode: binary
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s2
-              Index Cond: (smalldatetime_col <= '2023-06-14'::date)
+              Index Cond: (smalldatetime_col < s1.smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.211 ms
+Babelfish T-SQL Batch Parsing Time: 0.761 ms
 ~~END~~
 
 
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col > CAST('2023-06-16' AS DATE);
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col <= s2.smalldatetime_col
 GO
 ~~START~~
 text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col > CAST('2023-06-16' AS DATE)
-Nested Loop
-  ->  Seq Scan on smalldate_date_cmp_t1 s2
-  ->  Materialize
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s1
-              Index Cond: (smalldatetime_col > '2023-06-16'::date)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 1.166 ms
-~~END~~
-
-
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col > CAST('2023-06-16' AS DATE);
-GO
-~~START~~
-text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col > CAST('2023-06-16' AS DATE)
+Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col <= s2.smalldatetime_col
 Nested Loop
   ->  Seq Scan on smalldate_date_cmp_t1 s1
-  ->  Materialize
+  ->  Memoize
+        Cache Key: s1.smalldatetime_col
+        Cache Mode: binary
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s2
-              Index Cond: (smalldatetime_col > '2023-06-16'::date)
+              Index Cond: (smalldatetime_col >= s1.smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
 ~~END~~
 
 
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col >= CAST('2023-06-16' AS DATE);
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col >= s2.smalldatetime_col;
 GO
 ~~START~~
 text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col >= CAST('2023-06-16' AS DATE)
-Nested Loop
-  ->  Seq Scan on smalldate_date_cmp_t1 s2
-  ->  Materialize
-        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s1
-              Index Cond: (smalldatetime_col >= '2023-06-16'::date)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.212 ms
-~~END~~
-
-
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col >= CAST('2023-06-16' AS DATE);
-GO
-~~START~~
-text
-Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col >= CAST('2023-06-16' AS DATE)
+Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col >= s2.smalldatetime_col
 Nested Loop
   ->  Seq Scan on smalldate_date_cmp_t1 s1
-  ->  Materialize
+  ->  Memoize
+        Cache Key: s1.smalldatetime_col
+        Cache Mode: binary
         ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s2
-              Index Cond: (smalldatetime_col >= '2023-06-16'::date)
+              Index Cond: (smalldatetime_col <= s1.smalldatetime_col)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.212 ms
+Babelfish T-SQL Batch Parsing Time: 0.190 ms
+~~END~~
+
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col = s2.smalldatetime_col
+GO
+~~START~~
+text
+Query Text: SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col = s2.smalldatetime_col
+Nested Loop
+  ->  Seq Scan on smalldate_date_cmp_t1 s1
+  ->  Memoize
+        Cache Key: s1.smalldatetime_col
+        Cache Mode: binary
+        ->  Index Only Scan using smalldate_date_cmp_ind1smalldat671b849847ebd8ff45b7a2a5182502b2 on smalldate_date_cmp_t1 s2
+              Index Cond: (smalldatetime_col = s1.smalldatetime_col)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.592 ms
 ~~END~~
 
 
@@ -646,7 +602,7 @@ Query Text: EXEC test_smalldatetime_date_p1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.213 ms
 ~~END~~
 
 
@@ -680,7 +636,7 @@ Query Text: EXEC test_smalldatetime_date_p3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -697,7 +653,7 @@ Query Text: EXEC test_smalldatetime_date_p4
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -714,7 +670,7 @@ Query Text: EXEC test_smalldatetime_date_p5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -731,7 +687,7 @@ Query Text: EXEC test_smalldatetime_date_p6
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -748,7 +704,7 @@ Query Text: EXEC test_smalldatetime_date_p7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -765,7 +721,7 @@ Query Text: EXEC test_smalldatetime_date_p8
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -782,7 +738,7 @@ Query Text: EXEC test_smalldatetime_date_p9
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.219 ms
+Babelfish T-SQL Batch Parsing Time: 0.235 ms
 ~~END~~
 
 
@@ -799,7 +755,7 @@ Query Text: EXEC test_smalldatetime_date_p10
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -816,7 +772,7 @@ Query Text: EXEC test_smalldatetime_date_p11
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -833,7 +789,7 @@ Query Text: EXEC test_smalldatetime_date_p12
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -850,7 +806,7 @@ Query Text: EXEC test_smalldatetime_date_p13
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.195 ms
+Babelfish T-SQL Batch Parsing Time: 0.200 ms
 ~~END~~
 
 
@@ -867,7 +823,7 @@ Query Text: EXEC test_smalldatetime_date_p14
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.132 ms
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
 ~~END~~
 
 
@@ -884,7 +840,7 @@ Query Text: EXEC test_smalldatetime_date_p15
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -901,7 +857,7 @@ Query Text: EXEC test_smalldatetime_date_p16
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -918,7 +874,7 @@ Query Text: EXEC test_smalldatetime_date_p17
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.224 ms
+Babelfish T-SQL Batch Parsing Time: 0.222 ms
 ~~END~~
 
 
@@ -935,7 +891,7 @@ Query Text: EXEC test_smalldatetime_date_p18
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
 ~~END~~
 
 
@@ -952,7 +908,7 @@ Query Text: EXEC test_smalldatetime_date_p19
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -969,7 +925,7 @@ Query Text: EXEC test_smalldatetime_date_p20
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -985,7 +941,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.745 ms
+Babelfish T-SQL Batch Parsing Time: 0.694 ms
 ~~END~~
 
 
@@ -1001,7 +957,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1017,7 +973,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1049,7 +1005,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -1081,7 +1037,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -1097,7 +1053,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -1113,7 +1069,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -1129,7 +1085,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -1145,7 +1101,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 
@@ -1161,7 +1117,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -1177,7 +1133,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1193,7 +1149,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -1241,7 +1197,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -1257,7 +1213,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -1273,7 +1229,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1289,7 +1245,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -1845,7 +1801,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.574 ms
+Babelfish T-SQL Batch Parsing Time: 0.582 ms
 ~~END~~
 
 
@@ -1861,7 +1817,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.183 ms
 ~~END~~
 
 
@@ -1877,7 +1833,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -1909,7 +1865,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.180 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -1925,7 +1881,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -1941,7 +1897,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -1957,7 +1913,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.181 ms
 ~~END~~
 
 
@@ -1973,7 +1929,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.240 ms
+Babelfish T-SQL Batch Parsing Time: 0.238 ms
 ~~END~~
 
 
@@ -1989,7 +1945,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -2005,7 +1961,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -2021,7 +1977,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -2037,7 +1993,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.237 ms
+Babelfish T-SQL Batch Parsing Time: 0.208 ms
 ~~END~~
 
 
@@ -2053,7 +2009,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
@@ -2101,7 +2057,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.177 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
@@ -2133,7 +2089,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -2166,7 +2122,7 @@ Query Text: EXEC test_date_smalldatetime_p1
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -2183,7 +2139,7 @@ Query Text: EXEC test_date_smalldatetime_p2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -2200,7 +2156,7 @@ Query Text: EXEC test_date_smalldatetime_p3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -2217,7 +2173,7 @@ Query Text: EXEC test_date_smalldatetime_p4
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -2268,7 +2224,7 @@ Query Text: EXEC test_date_smalldatetime_p7
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -2285,7 +2241,7 @@ Query Text: EXEC test_date_smalldatetime_p8
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -2302,7 +2258,7 @@ Query Text: EXEC test_date_smalldatetime_p9
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.223 ms
+Babelfish T-SQL Batch Parsing Time: 0.227 ms
 ~~END~~
 
 
@@ -2319,7 +2275,7 @@ Query Text: EXEC test_date_smalldatetime_p10
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.198 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -2336,7 +2292,7 @@ Query Text: EXEC test_date_smalldatetime_p11
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -2353,7 +2309,7 @@ Query Text: EXEC test_date_smalldatetime_p12
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.175 ms
 ~~END~~
 
 
@@ -2387,7 +2343,7 @@ Query Text: EXEC test_date_smalldatetime_p15
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -2404,7 +2360,7 @@ Query Text: EXEC test_date_smalldatetime_p16
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.207 ms
 ~~END~~
 
 
@@ -2421,7 +2377,7 @@ Query Text: EXEC test_date_smalldatetime_p17
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.299 ms
+Babelfish T-SQL Batch Parsing Time: 0.229 ms
 ~~END~~
 
 
@@ -2438,7 +2394,7 @@ Query Text: EXEC test_date_smalldatetime_p18
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -2455,7 +2411,7 @@ Query Text: EXEC test_date_smalldatetime_p19
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.255 ms
 ~~END~~
 
 
@@ -2472,7 +2428,7 @@ Query Text: EXEC test_date_smalldatetime_p20
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -2488,7 +2444,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -2504,7 +2460,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2520,7 +2476,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -2536,7 +2492,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -2552,7 +2508,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -2568,7 +2524,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -2584,7 +2540,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -2600,7 +2556,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -2616,7 +2572,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.127 ms
 ~~END~~
 
 
@@ -2632,7 +2588,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2648,7 +2604,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 
@@ -2664,7 +2620,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2680,7 +2636,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -2696,7 +2652,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
 ~~END~~
 
 
@@ -2712,7 +2668,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -2728,7 +2684,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -2744,7 +2700,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2760,7 +2716,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -2776,7 +2732,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
