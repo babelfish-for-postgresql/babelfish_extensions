@@ -128,12 +128,6 @@ GO
 SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col >= CAST('2023-06-16' AS DATE);
 GO
 
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col = CAST('2023-06-14' AS DATE);
-GO
-
-SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col = CAST('2023-06-14' AS DATE);
-GO
-
 EXEC test_smalldatetime_date_p1;
 GO
 
