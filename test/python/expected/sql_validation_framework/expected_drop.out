@@ -88,3 +88,4 @@ Unexpected drop found for procedure sys.create_db_roles_during_upgrade in file b
 Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.2.0--4.3.0.sql
+Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.4.0--5.0.0.sql
