@@ -10,6 +10,17 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+-- This is a temporary procedure which is only meant to be called during upgrade
+CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
+
+CALL sys.babelfish_revoke_guest_from_mapped_logins();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins();
+
 -- Update all grants to babelfish users to make bbf_role_admin as grantor.
 DO
 LANGUAGE plpgsql
