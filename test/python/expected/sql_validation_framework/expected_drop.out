@@ -78,3 +78,4 @@ Unexpected drop found for procedure sys.babelfish_update_user_catalog_for_guest_
 Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--3.6.0--3.7.0.sql
+Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--3.8.0--3.9.0.sql

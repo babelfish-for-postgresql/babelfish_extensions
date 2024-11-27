@@ -60,11 +60,11 @@ DECLARE
   cur refcursor;
   cursor_source int;
 BEGIN
-  IF lower("@cursor_source") = 'local' THEN
+  IF pg_catalog.lower("@cursor_source") = 'local' THEN
     cursor_source := 1;
-  ELSIF lower("@cursor_source") = 'global' THEN
+  ELSIF pg_catalog.lower("@cursor_source") = 'global' THEN
     cursor_source := 2;
-  ELSIF lower("@cursor_source") = 'variable' THEN
+  ELSIF pg_catalog.lower("@cursor_source") = 'variable' THEN
     cursor_source := 3;
   ELSE
     RAISE 'invalid @cursor_source: %', "@cursor_source";
@@ -123,7 +123,7 @@ DECLARE
   server boolean := false;
   prev_user text;
 BEGIN
-  IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
+  IF pg_catalog.lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
     SELECT "@option_name" INTO normalized_name;
   ELSE
     SELECT pg_catalog.concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
@@ -137,7 +137,7 @@ BEGIN
 
   SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
   IF cnt = 0 THEN 
-    IF LOWER(normalized_name) = 'babelfishpg_tsql.escape_hatch_unique_constraint' COLLATE C THEN
+    IF pg_catalog.LOWER(normalized_name) = 'babelfishpg_tsql.escape_hatch_unique_constraint' COLLATE C THEN
       CALl sys.printarg('Config option babelfishpg_tsql.escape_hatch_unique_constraint has been deprecated, babelfish now supports unique constraints on nullable columns');
     ELSE
       RAISE EXCEPTION 'unknown configuration: %', normalized_name;
