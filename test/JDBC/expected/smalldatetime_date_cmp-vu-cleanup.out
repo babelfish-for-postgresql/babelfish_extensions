@@ -118,66 +118,6 @@ GO
 DROP VIEW test_smalldatetime_date_v20;
 GO
 
-DROP FUNCTION test_smalldatetime_date_f1;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f2;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f3;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f4;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f5;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f6;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f7;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f8;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f9;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f10;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f11;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f12;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f13;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f14;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f15;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f16;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f17;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f18;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f19;
-GO
-
-DROP FUNCTION test_smalldatetime_date_f20;
-GO
-
 DROP INDEX smalldate_date_cmp_ind1 on smalldate_date_cmp_t1;
 GO
 
@@ -297,63 +237,6 @@ DROP VIEW test_date_smalldatetime_v19;
 GO
 
 DROP VIEW test_date_smalldatetime_v20;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f1;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f2;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f3;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f4;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f5;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f6;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f7;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f8;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f9;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f10;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f11;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f12;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f13;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f15;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f16;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f17;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f18;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f19;
-GO
-
-DROP FUNCTION test_date_smalldatetime_f20;
 GO
 
 DROP INDEX date_smalldatetime_cmp_ind1 on date_smalldatetime_cmp_t1;

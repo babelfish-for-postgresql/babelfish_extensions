@@ -12,7 +12,7 @@ RETURNS INT4
 AS 'timestamp_cmp_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION  sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME)
+CREATE OR REPLACE FUNCTION  sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME)
 RETURNS INT4
 AS 'date_cmp_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;

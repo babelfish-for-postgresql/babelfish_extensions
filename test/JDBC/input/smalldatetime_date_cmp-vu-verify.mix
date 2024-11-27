@@ -81,6 +81,59 @@ GO
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col IS NULL
 GO
 
+-- ORDER BY clause 
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-14' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col <= CAST('2023-06-18' AS DATE) AND smalldatetime_col >= CAST('2023-06-16' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col = CAST('2023-06-17' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col > CAST('2023-06-16' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col >= CAST('2023-06-16' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+SELECT smalldatetime_col FROM smalldate_date_cmp_t1 WHERE smalldatetime_col BETWEEN CAST('2023-06-16' AS DATE) AND CAST('2023-06-18' AS DATE) ORDER BY smalldatetime_col;
+GO
+
+-- testing with joins
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col < CAST('2023-06-14' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col < CAST('2023-06-14' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col <= CAST('2023-06-14' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col <= CAST('2023-06-14' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col > CAST('2023-06-16' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col > CAST('2023-06-16' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col >= CAST('2023-06-16' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s1.smalldatetime_col = CAST('2023-06-14' AS DATE);
+GO
+
+SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1, smalldate_date_cmp_t1 s2 WHERE s2.smalldatetime_col = CAST('2023-06-14' AS DATE);
+GO
+
 EXEC test_smalldatetime_date_p1;
 GO
 
@@ -199,66 +252,6 @@ SELECT * FROM test_smalldatetime_date_v19;
 GO
 
 SELECT * FROM test_smalldatetime_date_v20;
-GO
-
-SELECT test_smalldatetime_date_f1();
-GO
-
-SELECT test_smalldatetime_date_f2();
-GO
-
-SELECT test_smalldatetime_date_f3();
-GO
-
-SELECT test_smalldatetime_date_f4();
-GO
-
-SELECT test_smalldatetime_date_f5();
-GO
-
-SELECT test_smalldatetime_date_f6();
-GO
-
-SELECT test_smalldatetime_date_f7();
-GO
-
-SELECT test_smalldatetime_date_f8();
-GO
-
-SELECT test_smalldatetime_date_f9();
-GO
-
-SELECT test_smalldatetime_date_f10();
-GO
-
-SELECT test_smalldatetime_date_f11();
-GO
-
-SELECT test_smalldatetime_date_f12();
-GO
-
-SELECT test_smalldatetime_date_f13();
-GO
-
-SELECT test_smalldatetime_date_f14();
-GO
-
-SELECT test_smalldatetime_date_f15();
-GO
-
-SELECT test_smalldatetime_date_f16();
-GO
-
-SELECT test_smalldatetime_date_f17();
-GO
-
-SELECT test_smalldatetime_date_f18();
-GO
-
-SELECT test_smalldatetime_date_f19();
-GO
-
-SELECT test_smalldatetime_date_f20();
 GO
 
 SET BABELFISH_SHOWPLAN_ALL OFF
@@ -450,66 +443,6 @@ SELECT * FROM test_smalldatetime_date_v19;
 GO
 
 SELECT * FROM test_smalldatetime_date_v20;
-GO
-
-SELECT test_smalldatetime_date_f1();
-GO
-
-SELECT test_smalldatetime_date_f2();
-GO
-
-SELECT test_smalldatetime_date_f3();
-GO
-
-SELECT test_smalldatetime_date_f4();
-GO
-
-SELECT test_smalldatetime_date_f5();
-GO
-
-SELECT test_smalldatetime_date_f6();
-GO
-
-SELECT test_smalldatetime_date_f7();
-GO
-
-SELECT test_smalldatetime_date_f8();
-GO
-
-SELECT test_smalldatetime_date_f9();
-GO
-
-SELECT test_smalldatetime_date_f10();
-GO
-
-SELECT test_smalldatetime_date_f11();
-GO
-
-SELECT test_smalldatetime_date_f12();
-GO
-
-SELECT test_smalldatetime_date_f13();
-GO
-
-SELECT test_smalldatetime_date_f14();
-GO
-
-SELECT test_smalldatetime_date_f15();
-GO
-
-SELECT test_smalldatetime_date_f16();
-GO
-
-SELECT test_smalldatetime_date_f17();
-GO
-
-SELECT test_smalldatetime_date_f18();
-GO
-
-SELECT test_smalldatetime_date_f19();
-GO
-
-SELECT test_smalldatetime_date_f20();
 GO
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
@@ -705,63 +638,6 @@ GO
 SELECT * FROM test_date_smalldatetime_v20;
 GO
 
-SELECT test_date_smalldatetime_f1();
-GO
-
-SELECT test_date_smalldatetime_f2();
-GO
-
-SELECT test_date_smalldatetime_f3();
-GO
-
-SELECT test_date_smalldatetime_f4();
-GO
-
-SELECT test_date_smalldatetime_f5();
-GO
-
-SELECT test_date_smalldatetime_f6();
-GO
-
-SELECT test_date_smalldatetime_f7();
-GO
-
-SELECT test_date_smalldatetime_f8();
-GO
-
-SELECT test_date_smalldatetime_f9();
-GO
-
-SELECT test_date_smalldatetime_f10();
-GO
-
-SELECT test_date_smalldatetime_f11();
-GO
-
-SELECT test_date_smalldatetime_f12();
-GO
-
-SELECT test_date_smalldatetime_f13();
-GO
-
-SELECT test_date_smalldatetime_f15();
-GO
-
-SELECT test_date_smalldatetime_f16();
-GO
-
-SELECT test_date_smalldatetime_f17();
-GO
-
-SELECT test_date_smalldatetime_f18();
-GO
-
-SELECT test_date_smalldatetime_f19();
-GO
-
-SELECT test_date_smalldatetime_f20();
-GO
-
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
@@ -937,63 +813,6 @@ SELECT * FROM test_date_smalldatetime_v19;
 GO
 
 SELECT * FROM test_date_smalldatetime_v20;
-GO
-
-SELECT test_date_smalldatetime_f1();
-GO
-
-SELECT test_date_smalldatetime_f2();
-GO
-
-SELECT test_date_smalldatetime_f3();
-GO
-
-SELECT test_date_smalldatetime_f4();
-GO
-
-SELECT test_date_smalldatetime_f5();
-GO
-
-SELECT test_date_smalldatetime_f6();
-GO
-
-SELECT test_date_smalldatetime_f7();
-GO
-
-SELECT test_date_smalldatetime_f8();
-GO
-
-SELECT test_date_smalldatetime_f9();
-GO
-
-SELECT test_date_smalldatetime_f10();
-GO
-
-SELECT test_date_smalldatetime_f11();
-GO
-
-SELECT test_date_smalldatetime_f12();
-GO
-
-SELECT test_date_smalldatetime_f13();
-GO
-
-SELECT test_date_smalldatetime_f15();
-GO
-
-SELECT test_date_smalldatetime_f16();
-GO
-
-SELECT test_date_smalldatetime_f17();
-GO
-
-SELECT test_date_smalldatetime_f18();
-GO
-
-SELECT test_date_smalldatetime_f19();
-GO
-
-SELECT test_date_smalldatetime_f20();
 GO
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
