@@ -182,11 +182,18 @@ CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
+-- At this point, there will be only one server role which is sysadmin.
+UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolename = 'sysadmin';
+
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
+
 CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_db_roles_during_upgrade';
 CALL sys.create_db_roles_during_upgrade();
 DROP PROCEDURE sys.create_db_roles_during_upgrade();
+
 DO
 LANGUAGE plpgsql
 $$
