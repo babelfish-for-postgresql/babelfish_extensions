@@ -35,6 +35,5 @@ GO
 ~~START~~
 varchar#!#bit
 jdbc_user#!#0
-sysadmin#!#1
 ~~END~~
 

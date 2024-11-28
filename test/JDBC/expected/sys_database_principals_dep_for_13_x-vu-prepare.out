@@ -40,7 +40,7 @@ ORDER BY name;
 GO
 ~~START~~
 nvarchar#!#bit
-db_owner#!#0
-dbo#!#0
+db_owner#!#1
+dbo#!#1
 ~~END~~
 
