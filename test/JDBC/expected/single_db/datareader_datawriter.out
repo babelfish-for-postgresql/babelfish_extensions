@@ -239,19 +239,19 @@ go
 alter role db_datawriter add member db_roles_r1; 
 go
 
-select count(*) from sys.database_principals where name like '%db_datareader%';
+select name, is_fixed_role from sys.database_principals where name like '%db_datareader%' order by name;
 go
 ~~START~~
-int
-1
+varchar#!#bit
+db_datareader#!#1
 ~~END~~
 
 
-select count(*) from sys.database_principals where name like '%db_datawriter%';
+select name, is_fixed_role from sys.database_principals where name like '%db_datawriter%' order by name;
 go
 ~~START~~
-int
-1
+varchar#!#bit
+db_datawriter#!#1
 ~~END~~
 
 

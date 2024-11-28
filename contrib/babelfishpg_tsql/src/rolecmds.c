@@ -157,7 +157,10 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1);	/* placeholder */
 	new_record_login_ext[LOGIN_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1);	/* placeholder */
-	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
+	if (IS_BBF_FIXED_SERVER_ROLE(stmt->role))
+		new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(1);
+	else
+		new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
 	new_record_login_ext[LOGIN_EXT_CREATE_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(default_database);
@@ -1254,7 +1257,10 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	else
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1);	/* placeholder */
-	new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(-1);	/* placeholder */
+	if (strncmp(orig_user_name, DBO, 3) != 0 && IS_FIXED_DB_PRINCIPAL(orig_user_name))
+		new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(1);
+	else
+		new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
 	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE] = Int32GetDatum(-1);	/* placeholder */
 	new_record_user_ext[USER_EXT_DEFAULT_LANGUAGE_LCID] = Int32GetDatum(-1);	/* placeholder */
 	new_record_user_ext[USER_EXT_ALLOW_ENCRYPTED_VALUE_MODIFICATIONS] = Int32GetDatum(-1);	/* placeholder */

@@ -2,8 +2,8 @@ SELECT * FROM database_principals_dep_for_13_x_vu_prepare_view
 GO
 ~~START~~
 nvarchar#!#char#!#nvarchar#!#nvarchar#!#bit#!#int#!#nvarchar#!#bit
-database_principals_dep_for_13_x_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
-database_principals_dep_for_13_x_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
+database_principals_dep_for_13_x_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
+database_principals_dep_for_13_x_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
 ~~END~~
 
 
@@ -11,8 +11,8 @@ EXEC database_principals_dep_for_13_x_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#bit#!#int#!#varchar#!#bit
-database_principals_dep_for_13_x_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
-database_principals_dep_for_13_x_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
+database_principals_dep_for_13_x_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
+database_principals_dep_for_13_x_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
 ~~END~~
 
 
@@ -34,4 +34,14 @@ database_principals_dep_for_13_x_vu_prepare_user1
 database_principals_dep_for_13_x_vu_prepare_user2
 ~~END~~
 
+
+SELECT name, is_fixed_role FROM sys.database_principals
+WHERE name IN ('dbo', 'db_owner')
+ORDER BY name;
+GO
+~~START~~
+varchar#!#bit
+db_owner#!#1
+dbo#!#0
+~~END~~
 
