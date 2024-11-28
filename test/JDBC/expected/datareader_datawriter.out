@@ -261,15 +261,13 @@ go
 -- Insert the results of sp_helpuser into the temporary table
 INSERT INTO #UserRoles EXEC sp_helpuser;
 go
-~~ROW COUNT: 8~~
+~~ROW COUNT: 6~~
 
 -- Select the desired fields from the temporary table
 SELECT userName, roleName FROM #UserRoles WHERE roleName IN ('db_datareader', 'db_datawriter');
 go
 ~~START~~
 varchar#!#varchar
-db_roles_r1#!#db_datareader
-db_roles_r1#!#db_datawriter
 db_roles_u1#!#db_datareader
 db_roles_u1#!#db_datawriter
 ~~END~~
