@@ -70,6 +70,7 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
+static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -483,6 +484,15 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
+	Oid			UDT_sourceBaseType;
+
+	/* Check if the UDT's base type is nvarchar or varbinary. If so, use the immediate base type for further processing. */
+	UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_sourceBaseType)))
+	{
+		typeIds[0] = UDT_sourceBaseType;
+		sourceTypeId = UDT_sourceBaseType;
+	}
 
 	for (int i = 0; i < 2; i++)
 	{

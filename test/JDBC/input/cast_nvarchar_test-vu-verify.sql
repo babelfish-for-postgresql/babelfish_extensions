@@ -108,3 +108,13 @@ GO
 -- Test Case 15: Implicit conversion from data type nvarchar to varbinary is not allowed.
 DECLARE @a varbinary(10); SET @a = CAST(N'21' AS nvarchar(10)); SELECT @a
 GO
+
+-- Test Case 16: Casting with UDT
+create type user_defined_nvarchar from nvarchar(50);
+select cast(cast(N'test string' as user_defined_nvarchar) as varbinary)
+GO
+
+create type user_defined_varbinary from varbinary(50);
+select cast(cast(0x7400650073007400200073007400720069006E006700 as user_defined_varbinary) as nvarchar)
+GO
+
