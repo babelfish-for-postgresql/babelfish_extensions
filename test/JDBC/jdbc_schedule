@@ -501,4 +501,5 @@ ignore#!#pgr_zzz_clean_up
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
 ignore#!#babel_collection
-ignore#!#BABEL-SP_TABLE_PRIVILEGES # getting timed out (TODO: BABEL-5353)
+# getting timed out (TODO: BABEL-5353)
+ignore#!#BABEL-SP_TABLE_PRIVILEGES
