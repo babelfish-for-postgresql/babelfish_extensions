@@ -8,15 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-four-part-names-vu-prepare
-four-part-names-vu-verify
-four-part-names-vu-cleanup
-BABEL-4168-vu-prepare
-BABEL-4168-vu-verify
-BABEL-4168-vu-cleanup
-openquery-vu-prepare
-openquery-vu-verify
-openquery-vu-cleanup
+all
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
