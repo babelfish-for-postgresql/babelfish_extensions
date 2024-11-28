@@ -1083,7 +1083,7 @@ update_DropStmt(Node *n, const char *object)
 }
 
 void
-update_GrantRoleStmt(Node *n, List *privs, List *roles)
+update_GrantRoleStmt(Node *n, List *privs, List *roles, const char *grantor)
 {
 	GrantRoleStmt *stmt = (GrantRoleStmt *) n;
 
@@ -1092,6 +1092,11 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 
 	stmt->granted_roles = privs;
 	stmt->grantee_roles = roles;
+
+	if (grantor && stmt->grantor)
+	{
+		stmt->grantor->rolename = pstrdup(grantor);
+	}
 }
 
 void
@@ -2640,5 +2645,5 @@ update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grante
 	AccessPriv	*granted_rolespec = make_accesspriv_node(granted_role);
 	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
 
-	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec));
+	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec), NULL);
 }

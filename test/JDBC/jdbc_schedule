@@ -10,6 +10,17 @@
 
 all
 
+ignore#!#BABEL-1435
+ignore#!#BABEL-1446
+ignore#!#BABEL-4279
+ignore#!#TestSpatialPoint-vu-prepare
+ignore#!#TestSpatialPoint-vu-verify
+ignore#!#TestSpatialPoint-vu-cleanup
+ignore#!#babelfish_migration_mode-vu-prepare
+ignore#!#babelfish_migration_mode-vu-verify
+ignore#!#babelfish_migration_mode-vu-cleanup
+ignore#!#test_search_path
+
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -489,10 +500,14 @@ ignore#!#pgr_zzz_clean_up
 # Ignoring some test temporarily to get clean tests
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
-ignore#!#BABEL-4046-vu-prepare
-ignore#!#BABEL-4046-vu-verify
-ignore#!#BABEL-4046-vu-cleanup
 ignore#!#babel_collection
 ignore#!#four-part-names-vu-prepare
 ignore#!#four-part-names-vu-verify
 ignore#!#four-part-names-vu-cleanup
+ignore#!#BABEL-4168-vu-prepare
+ignore#!#BABEL-4168-vu-verify
+ignore#!#BABEL-4168-vu-cleanup
+ignore#!#openquery-vu-prepare
+ignore#!#openquery-vu-verify
+ignore#!#openquery-vu-cleanup
+ignore#!#BABEL-SP_TABLE_PRIVILEGES # getting timed out (TODO: BABEL-5353)

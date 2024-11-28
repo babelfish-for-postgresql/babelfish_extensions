@@ -1010,8 +1010,13 @@ pltsql_predicate_transformer(Node *expr)
 
 	if (IsA(expr, OpExpr))
 	{
-		/* Singleton predicate */
-		return transform_likenode(expr);
+		Node *ret = transform_likenode(expr);
+		if (expr == ret)
+			/* If it's not a like Opexpr, then walk through args */
+			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
+		else 
+			/* Singleton predicate */
+			return ret;
 	}
 	else
 	{
@@ -1137,6 +1142,16 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 								int kind)
 {
 	/*
+	 * check if this is called to reset saved expression kind. Quickly return if so.
+	 */
+	if (kind == -1)
+	{
+		Assert(expr == NULL);
+		saved_expr_kind = -1;
+		return NULL;
+	}
+
+	/*
 	 * Fall out quickly if expression is empty.
 	 */
 	if (expr == NULL)
@@ -1144,6 +1159,7 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 
 	if (EXPRKIND_TARGET == kind)
 	{
+		saved_expr_kind = EXPRKIND_TARGET;
 		/*
 		 * If expr is NOT a Boolean expression then recurse through its
 		 * expresion tree

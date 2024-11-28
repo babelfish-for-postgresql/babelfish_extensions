@@ -2,7 +2,7 @@
 use grant_connect_db1;
 go
 
-drop user grant_connect_abc
+drop user grant_connect_abc_new
 go
 
 drop table grant_connect_t1;

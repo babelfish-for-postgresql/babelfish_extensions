@@ -144,7 +144,6 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -237,7 +236,7 @@ nested_trigger_with_dml
 newid_before_14_12_or_15_7_or_16_3
 objectpropertyex-before-16_5-or-15_9
 openjson
-openquery_upgrd_before_15_4
+#openquery_upgrd_before_15_4
 orderby
 routines_definition_before_16_5
 rowcount

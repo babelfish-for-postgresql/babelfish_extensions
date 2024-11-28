@@ -39,6 +39,12 @@ GO
 DROP TABLE babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
 GO
 
+DROP TABLE babel_cross_db_vu_prepare_t4;
+GO
+
+DROP LOGIN babel_cross_db_vu_prepare_l3;
+GO
+
 DROP FUNCTION babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_f1;
 GO
 
