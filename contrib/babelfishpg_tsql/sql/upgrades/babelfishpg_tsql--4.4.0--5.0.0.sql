@@ -160,7 +160,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
                             WHEN 'f' THEN 'FOREIGN KEY'
                             WHEN 'p' THEN 'PRIMARY KEY'
                             WHEN 'u' THEN 'UNIQUE' END
-             AS sys.varchar(11)) COLLATE sys.database_default AS "CONSTRAINT_TYPE",
+             AS sys.varchar(11)) AS "CONSTRAINT_TYPE",
            CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
            CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
 
