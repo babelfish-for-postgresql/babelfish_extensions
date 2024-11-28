@@ -1609,7 +1609,7 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 
 /*
 * This function is only being used during upgrade to v4.4.0
-* to create database roles db_accessadmin for each database
+* to create database roles for each database
 */
 PG_FUNCTION_INFO_V1(create_db_roles_during_upgrade);
 Datum
