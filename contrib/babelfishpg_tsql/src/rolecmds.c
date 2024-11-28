@@ -1257,7 +1257,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	else
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1);	/* placeholder */
-	if (strcmp(orig_user_name, DBO) != 0 && IS_FIXED_DB_PRINCIPAL(orig_user_name))
+	if (strncmp(orig_user_name, DBO, 3) != 0 && IS_FIXED_DB_PRINCIPAL(orig_user_name))
 		new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(1);
 	else
 		new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
