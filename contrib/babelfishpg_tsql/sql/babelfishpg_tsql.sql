@@ -879,10 +879,10 @@ BEGIN
             CAST(is_filestream AS int)
         FROM sys.spt_columns_view_managed s_cv
         WHERE
-        (in_catalog IS NULL OR s_cv.TABLE_CATALOG LIKE LOWER(in_catalog)) AND
-        (in_owner IS NULL OR s_cv.TABLE_SCHEMA LIKE LOWER(in_owner)) AND
-        (in_table IS NULL OR s_cv.TABLE_NAME LIKE LOWER(in_table)) AND
-        (in_column IS NULL OR s_cv.COLUMN_NAME LIKE LOWER(in_column)) AND
+        (in_catalog IS NULL OR s_cv.TABLE_CATALOG LIKE pg_catalog.lower(in_catalog)) AND
+        (in_owner IS NULL OR s_cv.TABLE_SCHEMA LIKE pg_catalog.lower(in_owner)) AND
+        (in_table IS NULL OR s_cv.TABLE_NAME LIKE pg_catalog.lower(in_table)) AND
+        (in_column IS NULL OR s_cv.COLUMN_NAME LIKE pg_catalog.lower(in_column)) AND
         (in_schematype = 0 AND (s_cv.IS_SPARSE = 0) OR in_schematype = 1 OR in_schematype = 2 AND (s_cv.IS_SPARSE = 1));
 END;
 $$
@@ -1025,7 +1025,7 @@ BEGIN
 
 	SELECT @current_db_name = sys.db_name();
 
-	IF (@table_qualifier != '' AND LOWER(@table_qualifier) != LOWER(@current_db_name))
+	IF (@table_qualifier != '' AND pg_catalog.lower(@table_qualifier) != pg_catalog.lower(@current_db_name))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -1189,7 +1189,7 @@ CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
 -- the ones not in pg_constraint) and restoring it back before display
 CASE 
 WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+ELSE CAST(pg_catalog.SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
 END AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -1234,7 +1234,7 @@ BEGIN
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
-		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
 	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
@@ -1261,7 +1261,7 @@ BEGIN
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
-		and ((UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(@is_unique) = 'N'))
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
 	order by non_unique, type, index_name, seq_in_index;
 END;
 $$
@@ -1351,7 +1351,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
 )
 AS $$
 BEGIN
-    IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+    IF (@table_qualifier != '') AND (pg_catalog.lower(@table_qualifier) != pg_catalog.lower(sys.db_name()))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -1361,7 +1361,7 @@ BEGIN
 		
 		IF EXISTS ( 
 			SELECT * FROM sys.sp_column_privileges_view 
-			WHERE LOWER(@table_name) = LOWER(table_name) and LOWER(SCHEMA_NAME()) = LOWER(table_qualifier)
+			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
 			)
 		BEGIN 
 			SELECT 
@@ -1374,10 +1374,10 @@ BEGIN
 			PRIVILEGE,
 			IS_GRANTABLE
 			FROM sys.sp_column_privileges_view
-			WHERE LOWER(@table_name) = LOWER(table_name)
-				AND (LOWER(SCHEMA_NAME()) = LOWER(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND (pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
 			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 		END
 		ELSE
@@ -1392,10 +1392,10 @@ BEGIN
 			PRIVILEGE,
 			IS_GRANTABLE
 			FROM sys.sp_column_privileges_view
-			WHERE LOWER(@table_name) = LOWER(table_name)
-				AND (LOWER('dbo')= LOWER(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
 			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 		END
 	END
@@ -1411,10 +1411,10 @@ BEGIN
 		PRIVILEGE,
 		IS_GRANTABLE
 		FROM sys.sp_column_privileges_view
-		WHERE LOWER(@table_name) = LOWER(table_name)
-			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@table_qualifier))
-			AND ((SELECT COALESCE(@column_name,'')) = '' OR LOWER(column_name) LIKE LOWER(@column_name))
+		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
 		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 END; 
@@ -1460,7 +1460,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
 AS $$
 BEGIN
 	
-	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	IF (@table_qualifier != '') AND (pg_catalog.lower(@table_qualifier) != pg_catalog.lower(sys.db_name()))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -1475,8 +1475,8 @@ BEGIN
 		GRANTEE,
 		PRIVILEGE,
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
-		WHERE LOWER(TABLE_NAME) LIKE LOWER(@table_name)
-			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) LIKE LOWER(@table_owner))
+		WHERE pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) LIKE pg_catalog.lower(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	ELSE 
@@ -1489,8 +1489,8 @@ BEGIN
 		GRANTEE,
 		PRIVILEGE,
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
-		WHERE LOWER(TABLE_NAME) = LOWER(@table_name)
-			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) = LOWER(@table_owner))
+		WHERE pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) = pg_catalog.lower(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	
@@ -1602,23 +1602,23 @@ AS $$
 DECLARE @special_col_type sys.sysname;
 DECLARE @constraint_name sys.sysname;
 BEGIN
-	IF (@qualifier != '') AND (LOWER(@qualifier) != LOWER(sys.db_name()))
+	IF (@qualifier != '') AND (pg_catalog.lower(@qualifier) != pg_catalog.lower(sys.db_name()))
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 		
 	END
 	
-	IF (LOWER(@col_type) = LOWER('V'))
+	IF (pg_catalog.lower(@col_type) = pg_catalog.lower('V'))
 	BEGIN
 		THROW 33557097, N'TIMESTAMP datatype is not currently supported in Babelfish', 1;
 	END
 	
-	IF (LOWER(@nullable) = LOWER('O'))
+	IF (pg_catalog.lower(@nullable) = pg_catalog.lower('O'))
 	BEGIN
 		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
-		WHERE LOWER(@table_name) = LOWER(table_name)
-			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0)
+		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0)
 		ORDER BY constraint_type, index_id;
 	
 		IF @special_col_type='u'
@@ -1634,9 +1634,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 				
@@ -1652,9 +1652,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 			END
@@ -1674,9 +1674,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
@@ -1690,9 +1690,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN  FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
@@ -1702,9 +1702,9 @@ BEGIN
 	ELSE 
 	BEGIN
 		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
-		WHERE LOWER(@table_name) = LOWER(table_name)
-			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier))
+		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier))
 		ORDER BY constraint_type, index_id;
 
 		IF @special_col_type='u'
@@ -1720,9 +1720,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 			END
@@ -1737,9 +1737,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 			END
@@ -1758,9 +1758,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name; 
 			END
@@ -1775,9 +1775,9 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE LOWER(@table_name) = LOWER(table_name)
-				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
-				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
@@ -1909,12 +1909,12 @@ BEGIN
 	PK_NAME,
 	DEFERRABILITY
 	FROM sys.sp_fkeys_view
-	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
-		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
-		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
-		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
-		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
-		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR pg_catalog.lower(pktable_name) = pg_catalog.lower(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR pg_catalog.lower(fktable_name) = pg_catalog.lower(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR pg_catalog.lower(pktable_owner) = pg_catalog.lower(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR pg_catalog.lower(pktable_qualifier) = pg_catalog.lower(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR pg_catalog.lower(fktable_owner) = pg_catalog.lower(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR pg_catalog.lower(fktable_qualifier) = pg_catalog.lower(@fktable_qualifier))
 	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
 
 END; 
@@ -1974,7 +1974,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
 )
 AS $$
 BEGIN
-	IF (@sp_qualifier != '') AND LOWER(sys.db_name()) != LOWER(@sp_qualifier)
+	IF (@sp_qualifier != '') AND pg_catalog.lower(sys.db_name()) != pg_catalog.lower(@sp_qualifier)
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
 	END
@@ -2013,7 +2013,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
 		ELSE
@@ -2027,7 +2027,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
 	END
@@ -2039,8 +2039,8 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-						AND (LOWER(procedure_owner) = 'sys'))
+					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+						AND (pg_catalog.lower(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
 				PROCEDURE_OWNER,
@@ -2050,14 +2050,14 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = 'sys')
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 					)
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -2068,8 +2068,8 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE -- Search in the dbo schema (if nothing exists it should just return nothing). 
@@ -2082,8 +2082,8 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = 'dbo')
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			
@@ -2099,8 +2099,8 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) = LOWER(@sp_name))
-				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
+			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
 		ELSE -- fusepattern = 1
@@ -2114,8 +2114,8 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, LEN(procedure_name)-2)) LIKE LOWER(@sp_name))
-				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
+				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
 	END	
@@ -2130,14 +2130,14 @@ $$
 DECLARE has_role BOOLEAN;
 DECLARE login_valid BOOLEAN;
 BEGIN
-	role  := TRIM(trailing from LOWER(role));
-	login := TRIM(trailing from LOWER(login));
+	role  := TRIM(trailing from pg_catalog.lower(role));
+	login := TRIM(trailing from pg_catalog.lower(login));
 	
 	login_valid = (login = suser_name() COLLATE sys.database_default) OR 
 		(EXISTS (SELECT name
 	 			FROM sys.server_principals
 		 	 	WHERE 
-				LOWER(name) = login COLLATE sys.database_default
+				pg_catalog.lower(name) = login COLLATE sys.database_default
 				AND type = 'S'));
  	
  	IF NOT login_valid THEN
@@ -2308,7 +2308,7 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1 
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
-					OR lower(orig_username) = lower(@rolename))
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
 					AND database_name = DB_NAME()
 					AND type = 'R')
 	BEGIN
@@ -2320,7 +2320,7 @@ BEGIN
 		ON Base.rolname = Ext.rolname
 		WHERE Ext.database_name = DB_NAME()
 		AND Ext.type = 'R'
-		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
+		AND (Ext.orig_username = @rolename OR pg_catalog.lower(Ext.orig_username) = pg_catalog.lower(@rolename))
 		ORDER BY RoleName;
 	END
 	-- If the specified role is not valid
@@ -2356,7 +2356,7 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
-					OR lower(orig_username) = lower(@rolename))
+					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
 					AND database_name = DB_NAME()
 					AND type = 'R')
 	BEGIN
@@ -2372,7 +2372,7 @@ BEGIN
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
-		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
+		AND (Ext1.orig_username = @rolename OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@rolename))
 		ORDER BY RoleName, MemberName;
 	END
 	-- If the specified role is not valid
@@ -2405,10 +2405,10 @@ BEGIN
 	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_login_ext
-					WHERE (rolname = RTRIM(@srvrolename)
-					OR lower(rolname) = lower(RTRIM(@srvrolename)))
+					WHERE (rolname = PG_CATALOG.RTRIM(@srvrolename)
+					OR pg_catalog.lower(rolname) = pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)))
 					AND type = 'R')
-					OR lower(RTRIM(@srvrolename)) IN (
+					OR pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)) IN (
 					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
 					'dbcreator', 'diskadmin', 'bulkadmin')
 	BEGIN
@@ -2421,7 +2421,7 @@ BEGIN
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
-		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
+		AND (Ext1.rolname = PG_CATALOG.RTRIM(@srvrolename) OR pg_catalog.lower(Ext1.rolname) = pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)))
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If the specified server role is not valid
@@ -2437,11 +2437,11 @@ $$
 BEGIN
 	-- Returns a list of the fixed database roles. 
 	-- Only fixed role present in babelfish is db_owner.
-	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
+	IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IS NULL OR pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) = 'db_owner'
 	BEGIN
 		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
 	END
-	ELSE IF LOWER(RTRIM(@rolename)) IN (
+	ELSE IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN (
 			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
 			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
@@ -2790,12 +2790,12 @@ CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
 	"@fusepattern" sys.bit = '1'
 )	
 AS $$
-	SELECT @procedure_name = LOWER(COALESCE(@procedure_name, ''))
-	SELECT @procedure_owner = LOWER(COALESCE(@procedure_owner, ''))
-	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
-	SELECT @column_name = LOWER(COALESCE(@column_name, ''))
+	SELECT @procedure_name = pg_catalog.lower(COALESCE(@procedure_name, ''))
+	SELECT @procedure_owner = pg_catalog.lower(COALESCE(@procedure_owner, ''))
+	SELECT @procedure_qualifier = pg_catalog.lower(COALESCE(@procedure_qualifier, ''))
+	SELECT @column_name = pg_catalog.lower(COALESCE(@column_name, ''))
 BEGIN 
-	IF (@procedure_qualifier != '' AND (SELECT LOWER(sys.db_name())) != @procedure_qualifier)
+	IF (@procedure_qualifier != '' AND (SELECT pg_catalog.lower(sys.db_name())) != @procedure_qualifier)
 		BEGIN
 			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
  	   	END
@@ -3026,7 +3026,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_rename(
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
-	SET @objtype = TRIM(@objtype);
+	SET @objtype = sys.TRIM(@objtype);
 	If @objtype IS NULL
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
@@ -3188,7 +3188,7 @@ BEGIN
 		RETURN		
 	END
 	
-	IF TRIM(@tab) = ''
+	IF sys.TRIM(@tab) = ''
 	BEGIN
 		RAISERROR('Must specify table name', 16, 1)
 		RETURN		
@@ -3205,7 +3205,7 @@ BEGIN
 		SET @id = sys.OBJECT_ID(@tab)
 		IF @id IS NULL
 		BEGIN
-			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			IF sys.SUBSTRING(pg_catalog.UPPER(@tab),1,4) = 'DBO.'
 			BEGIN
 				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
 			END
@@ -3227,10 +3227,10 @@ BEGIN
 	END
 	
 	-- check for 'ORDER BY', if specified
-	SET @orderby = TRIM(@orderby)
+	SET @orderby = sys.TRIM(@orderby)
 	IF @orderby <> ''
 	BEGIN
-		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		IF pg_catalog.UPPER(@orderby) NOT LIKE 'ORDER BY%'
 		BEGIN
 			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
 			RETURN
@@ -3246,7 +3246,7 @@ BEGIN
 		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
 	END
 	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
-	SET @hiddencols = UPPER(@hiddencols)	
+	SET @hiddencols = pg_catalog.UPPER(@hiddencols)	
 
 	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
 	-- access the metadata in case a #tmp table is passed as argument
@@ -3295,7 +3295,7 @@ BEGIN
 			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
 			IF @maxlen <= 0 SET @maxlen = 1
 			
-			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+			IF (sys.CHARINDEX(',' + pg_catalog.UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + pg_catalog.UPPER(@colname) + '],', @hiddencols) > 0) 
 			BEGIN
 				SET @selectlist += ' [' + @colname + '],'			
 			END
@@ -3368,7 +3368,7 @@ BEGIN
 	
 	IF @option IS NOT NULL
 	BEGIN
-		IF LOWER(TRIM(@option)) <> 'postgres' 
+		IF pg_catalog.lower(sys.TRIM(@option)) <> 'postgres' 
 		BEGIN
 			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
 			RETURN			
@@ -3382,7 +3382,7 @@ BEGIN
 	-- This is for informational purposes only
 	SELECT pid, CAST(query AS sys.VARCHAR(MAX)) INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
+	UPDATE #sp_who_tmp SET query = ' ' + sys.TRIM(CAST(pg_catalog.UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
@@ -3413,7 +3413,7 @@ BEGIN
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(query)
+	UPDATE #sp_who_tmp SET query = sys.TRIM(query)
 
 	-- Get all current connections
 	SELECT 
@@ -3450,7 +3450,7 @@ BEGIN
 	WHERE hostprocess IS NULL 
 
 	-- Keep or delete PG connections
-	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
+	IF (pg_catalog.lower(@loginame) = 'postgres' OR pg_catalog.lower(@option) = 'postgres')
 	begin    
 		-- Show PG connections; these have dbid = 0
 		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
@@ -3458,7 +3458,7 @@ BEGIN
 		SET @show_pg = 1
 		
 		-- blank out the loginame parameter for the tests below
-		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
+		IF pg_catalog.lower(@loginame) = 'postgres' SET @loginame = NULL
 	END
 	
 	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
@@ -3478,7 +3478,7 @@ BEGIN
 	-- Apply filter if specified
 	IF (@loginame IS NOT NULL)
 	BEGIN
-		IF (TRIM(@loginame) = '')
+		IF (sys.TRIM(@loginame) = '')
 		BEGIN
 			-- Raise error
 			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
@@ -3494,7 +3494,7 @@ BEGIN
 		END
 		ELSE 
 		BEGIN	
-			IF (LOWER(@loginame) = 'active')
+			IF (pg_catalog.lower(@loginame) = 'active')
 			BEGIN
 				-- Remove all 'idle' connections 
 				DELETE #sp_who_proc
@@ -3523,12 +3523,12 @@ BEGIN
 	SELECT distinct 
 		p.spid AS spid, 
 		p.ecid AS ecid, 
-		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
-		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
-		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		CAST(pg_catalog.LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(pg_catalog.LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(pg_catalog.LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
 		p.blocked AS blk, 
-		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
-		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		CAST(pg_catalog.LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(pg_catalog.LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
 		p.request_id AS request_id,
 		connection
 	INTO #sp_who_tmp2
@@ -3539,11 +3539,11 @@ BEGIN
 	-- Patch up remaining cases
 	UPDATE #sp_who_tmp2
 	SET cmd = 'AWAITING COMMAND'
-	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	WHERE sys.TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
 	
 	UPDATE #sp_who_tmp2
 	SET cmd = 'UNKNOWN'
-	WHERE TRIM(cmd) = ''	
+	WHERE sys.TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
 	SET @hide_col += ',hostprocess'
