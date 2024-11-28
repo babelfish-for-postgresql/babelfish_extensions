@@ -25,14 +25,14 @@ select
   , 0 as parent_object_id
   , CAST('U' as sys.bpchar(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
-  , CAST((select string_agg(
+  , CAST((select PG_CATALOG.string_agg(
                   case
                   when option like 'bbf_rel_create_date=%%' then substring(option, 21)
                   else NULL
                   end, ',')
           from unnest(t.reloptions) as option)
         as sys.datetime) as create_date
-  , CAST((select string_agg(
+  , CAST((select PG_CATALOG.string_agg(
                   case
                   when option like 'bbf_rel_create_date=%%' then substring(option, 21)
                   else NULL
@@ -1881,14 +1881,14 @@ select
   , CAST(0 as int) as parent_object_id
   , CAST('TT' as char(2)) as type
   , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST((select string_agg(
+  , CAST((select PG_CATALOG.string_agg(
                     case
                     when option like 'bbf_rel_create_date=%%' then substring(option, 21)
                     else NULL
                     end, ',')
           from unnest(c.reloptions) as option)
      as sys.datetime) as create_date
-  , CAST((select string_agg(
+  , CAST((select PG_CATALOG.string_agg(
                     case
                     when option like 'bbf_rel_create_date=%%' then substring(option, 21)
                     else NULL
@@ -2388,7 +2388,7 @@ CREATE OR REPLACE VIEW sys.syslanguages
 AS
 SELECT
     lang_id AS langid,
-    CAST(lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
+    CAST(pg_catalog.lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
     CAST(lang_data_jsonb -> 'date_first'::TEXT AS SYS.TINYINT) AS datefirst,
     CAST(NULL AS INT) AS upgrade,
     CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
@@ -3147,7 +3147,7 @@ SELECT
   CAST(f.srvname as sys.sysname) AS name,
   CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST((select string_agg(
+  CAST((select PG_CATALOG.string_agg(
                   case
                   when option like 'servername=%%' then substring(option, 12)
                   else NULL
@@ -3155,7 +3155,7 @@ SELECT
           from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,
   CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST((select string_agg(
+  CAST((select PG_CATALOG.string_agg(
                   case
                   when option like 'database=%%' then substring(option, 10)
                   else NULL
@@ -3191,7 +3191,7 @@ SELECT
   CAST(u.srvid as int) AS server_id,
   CAST(0 as int) AS local_principal_id,
   CAST(0 as sys.bit) AS uses_self_credential,
-  CAST((select string_agg(
+  CAST((select PG_CATALOG.string_agg(
                   case
                   when option like 'username=%%' then substring(option, 10)
                   else NULL

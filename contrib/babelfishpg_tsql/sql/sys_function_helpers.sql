@@ -115,7 +115,7 @@ DECLARE
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (scale(p_style) > 0) THEN
@@ -227,7 +227,7 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', trim(p_datatype)),
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', pg_catalog.btrim(p_datatype)),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 
@@ -299,8 +299,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
 BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
-    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_src_datatype := pg_catalog.upper(pg_catalog.btrim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -754,7 +754,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
@@ -868,7 +868,7 @@ DECLARE
     DIGITMASK2_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\d{8}$';
 BEGIN
     v_style := floor(p_style)::SMALLINT;
-    v_datestring := trim(p_datestring);
+    v_datestring := pg_catalog.btrim(p_datestring);
 
     IF (scale(p_style) > 0) THEN
         RAISE most_specific_type_mismatch;
@@ -882,7 +882,7 @@ BEGIN
 
     IF (v_datestring ~* HHMMSSFS_PART_REGEXP AND v_datestring !~* HHMMSSFS_REGEXP)
     THEN
-        v_datestring := trim(regexp_pg_catalog.replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
+        v_datestring := pg_catalog.btrim(regexp_pg_catalog.replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
     END IF;
 
     BEGIN
@@ -1178,7 +1178,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -1310,8 +1310,8 @@ DECLARE
     SHORT_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{6}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
     FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
 BEGIN
-    v_datatype := trim(p_datatype);
-    v_datetimestring := pg_catalog.upper(trim(p_datetimestring));
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_datetimestring := pg_catalog.upper(pg_catalog.btrim(p_datetimestring));
     v_style := floor(p_style)::SMALLINT;
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
@@ -1342,8 +1342,8 @@ BEGIN
         RAISE invalid_parameter_value;
     END IF;
 
-    v_timepart := trim(substring(v_datetimestring, HHMMSSFS_PART_REGEXP));
-    v_datestring := trim(regexp_replace(v_datetimestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
+    v_timepart := pg_catalog.btrim(substring(v_datetimestring, HHMMSSFS_PART_REGEXP));
+    v_datestring := pg_catalog.btrim(regexp_replace(v_datetimestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
 
     BEGIN
         v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(CONVERSION_LANG);
@@ -1819,8 +1819,8 @@ DECLARE
     HH_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '$');
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
 BEGIN
-    v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
-    v_timestring := pg_catalog.upper(trim(p_timestring));
+    v_datatype := pg_catalog.btrim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
+    v_timestring := pg_catalog.upper(pg_catalog.btrim(p_timestring));
     v_style := floor(p_style)::SMALLINT;
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
@@ -1848,7 +1848,7 @@ BEGIN
     END IF;
 
     v_daypart := substring(v_timestring, 'AM|PM');
-    v_timestring := trim(regexp_replace(v_timestring, coalesce(v_daypart, ''), ''));
+    v_timestring := pg_catalog.btrim(regexp_replace(v_timestring, coalesce(v_daypart, ''), ''));
 
     v_timeunit_mask :=
         CASE
@@ -1965,8 +1965,8 @@ DECLARE
     DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
 BEGIN
-    v_datatype := pg_catalog.upper(trim(p_datatype));
-    v_src_datatype := pg_catalog.upper(trim(p_src_datatype));
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_src_datatype := pg_catalog.upper(pg_catalog.btrim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
@@ -2105,7 +2105,7 @@ EXCEPTION
 
     WHEN invalid_datetime_format THEN
         RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
-                                      PG_CATALOG.rtrim(split_part(trim(p_datatype), '(', 1))),
+                                      PG_CATALOG.rtrim(split_part(pg_catalog.btrim(p_datatype), '(', 1))),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 END;
@@ -2164,7 +2164,7 @@ BEGIN
         IF (v_short_year <= 99)
         THEN
             v_base_century := CASE
-                                 WHEN (p_base_century ~ '^\s*([1-9]{1,2})\s*$') THEN pg_catalog.concat(trim(p_base_century), '00')::SMALLINT
+                                 WHEN (p_base_century ~ '^\s*([1-9]{1,2})\s*$') THEN pg_catalog.concat(pg_catalog.btrim(p_base_century), '00')::SMALLINT
                                  ELSE trunc(extract(year from current_date)::NUMERIC, -2)
                               END;
 
@@ -2194,7 +2194,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -2261,7 +2261,7 @@ DECLARE
     v_lang_spec_culture VARCHAR COLLATE "C";
     v_is_cached BOOLEAN := FALSE;
 BEGIN
-    v_lang_spec_culture := pg_catalog.upper(trim(p_lang_spec_culture));
+    v_lang_spec_culture := pg_catalog.upper(pg_catalog.btrim(p_lang_spec_culture));
 
     IF (char_length(v_lang_spec_culture) > 0)
     THEN
@@ -2382,7 +2382,7 @@ DECLARE
     v_pureplaces_len INTEGER;
     v_err_message VARCHAR COLLATE "C";
 BEGIN
-    v_fractsecs := trim(p_fractsecs);
+    v_fractsecs := pg_catalog.btrim(p_fractsecs);
     v_fractsecs_len := char_length(v_fractsecs);
     v_scale := floor(p_scale)::SMALLINT;
 
@@ -2407,7 +2407,7 @@ BEGIN
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
@@ -2427,7 +2427,7 @@ DECLARE
     v_monthname TEXT;
     v_monthnum SMALLINT;
 BEGIN
-    v_monthname := pg_catalog.lower(trim(p_monthname));
+    v_monthname := pg_catalog.lower(pg_catalog.btrim(p_monthname));
 
     v_monthnum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'months_shortnames'))), v_monthname);
 
@@ -2448,7 +2448,7 @@ BEGIN
 EXCEPTION
     WHEN datetime_field_overflow THEN
         RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct month number.',
-                                      trim(p_monthname)),
+                                      pg_catalog.btrim(p_monthname)),
                     DETAIL := 'Supplied month name is not valid.',
                     HINT := 'Correct supplied month name value and try again.';
 END;
@@ -2507,11 +2507,11 @@ DECLARE
     HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
     HH_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', TIMEUNIT_REGEXP, '$');
 BEGIN
-    v_timepart := pg_catalog.upper(trim(p_timepart));
-    v_timeunit := pg_catalog.upper(trim(p_timeunit));
+    v_timepart := pg_catalog.upper(pg_catalog.btrim(p_timepart));
+    v_timeunit := pg_catalog.upper(pg_catalog.btrim(p_timeunit));
 
     v_daypart := substring(v_timepart, 'AM|PM');
-    v_timepart := trim(regexp_replace(v_timepart, coalesce(v_daypart, ''), ''));
+    v_timepart := pg_catalog.btrim(regexp_replace(v_timepart, coalesce(v_daypart, ''), ''));
 
     v_timeunit_mask :=
         CASE
@@ -2598,7 +2598,7 @@ DECLARE
     v_weekdayname TEXT;
     v_weekdaynum SMALLINT;
 BEGIN
-    v_weekdayname := pg_catalog.lower(trim(p_weekdayname));
+    v_weekdayname := pg_catalog.lower(pg_catalog.btrim(p_weekdayname));
 
     v_weekdaynum := array_position(ARRAY(SELECT pg_catalog.lower(jsonb_array_elements_text(p_lang_metadata_json -> 'days_names'))), v_weekdayname);
 
@@ -2616,7 +2616,7 @@ BEGIN
 EXCEPTION
     WHEN datetime_field_overflow THEN
         RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct weekday number.',
-                                      trim(p_weekdayname)),
+                                      pg_catalog.btrim(p_weekdayname)),
                     DETAIL := 'Supplied weekday name is not valid.',
                     HINT := 'Correct supplied weekday name value and try again.';
 END;
@@ -3111,8 +3111,8 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datestring := pg_catalog.upper(trim(p_datestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datestring := pg_catalog.upper(pg_catalog.btrim(p_datestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_dayparts := ARRAY(SELECT pg_catalog.upper(array_to_string(regexp_matches(v_datestring, '[AP]M|ص|م', 'gi'), '')));
 
@@ -3156,7 +3156,7 @@ BEGIN
                                        'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -3509,7 +3509,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -4099,9 +4099,9 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datatype := trim(p_datatype);
-    v_datetimestring := pg_catalog.upper(trim(p_datetimestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_datetimestring := pg_catalog.upper(pg_catalog.btrim(p_datetimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
@@ -4162,7 +4162,7 @@ BEGIN
                                            'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -4515,7 +4515,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -5157,9 +5157,9 @@ DECLARE
     CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
     DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
-    v_datatype := trim(p_datatype);
-    v_srctimestring := pg_catalog.upper(trim(p_srctimestring));
-    v_culture := coalesce(nullif(pg_catalog.upper(trim(p_culture)), ''), 'EN-US');
+    v_datatype := pg_catalog.btrim(p_datatype);
+    v_srctimestring := pg_catalog.upper(pg_catalog.btrim(p_srctimestring));
+    v_culture := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(p_culture)), ''), 'EN-US');
 
     v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
@@ -5217,7 +5217,7 @@ BEGIN
                                           'gi');
     END IF;
 
-    v_date_format := coalesce(nullif(pg_catalog.upper(trim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(pg_catalog.upper(pg_catalog.btrim(DATE_FORMAT)), ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp :=
         array_to_string(array_cat(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
@@ -5570,7 +5570,7 @@ BEGIN
                 END IF;
 
                 v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-                v_raw_year := sys.babelfish_get_full_year(substring(v_year::TEXT, 3, 2), '14');
+                v_raw_year := sys.babelfish_get_full_year(pg_catalog.substring(v_year::TEXT, 3, 2), '14');
 
             ELSIF (v_resmask_cnt = 12)
             THEN
@@ -5862,7 +5862,7 @@ BEGIN
     RETURN sys.babelfish_round_fractseconds(p_fractseconds::NUMERIC);
 EXCEPTION
     WHEN invalid_text_representation THEN
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', trim(p_fractseconds)),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', pg_catalog.btrim(p_fractseconds)),
                     DETAIL := 'Passed argument value contains illegal characters.',
                     HINT := 'Correct passed argument value, remove all illegal characters.';
 
@@ -6937,7 +6937,7 @@ BEGIN
     RETURN;
   END IF;
 
-  IF (LOWER(UPPER(par_name)) = LOWER('ALL'))
+  IF (LOWER(pg_catalog.UPPER(par_name)) = LOWER('ALL'))
   THEN
     SELECT - 1 INTO var_schedule_id;
 
@@ -7771,7 +7771,7 @@ BEGIN
     END IF
     /* Turn [nullable] empty string parameters into NULLs */;
 
-    IF (LOWER(par_description) = LOWER('')) THEN
+    IF (pg_catalog.LOWER(par_description) = pg_catalog.LOWER('')) THEN
         SELECT
             NULL
             INTO par_description;
@@ -7819,11 +7819,11 @@ BEGIN
         IF (EXISTS (SELECT
             1
             FROM sys.sysjobsteps
-            WHERE (job_id = par_job_id) AND (LOWER(subsystem) = LOWER('TSQL')))) THEN
+            WHERE (job_id = par_job_id) AND (pg_catalog.LOWER(subsystem) = pg_catalog.LOWER('TSQL')))) THEN
             /* The job is being re-assigned to an non-SA */
             UPDATE sys.sysjobsteps
             SET database_user_name = NULL
-                WHERE (job_id = par_job_id) AND (LOWER(subsystem) = LOWER('TSQL'));
+                WHERE (job_id = par_job_id) AND (pg_catalog.LOWER(subsystem) = pg_catalog.LOWER('TSQL'));
         END IF;
     END IF;
     UPDATE sys.sysjobs
@@ -8235,7 +8235,7 @@ BEGIN
     END IF;
     /* Turn [nullable] empty string parameters into NULLs */
 
-    IF (LOWER(par_command) = LOWER('')) THEN
+    IF (pg_catalog.LOWER(par_command) = pg_catalog.LOWER('')) THEN
         SELECT NULL INTO par_command;
     END IF;
 
@@ -8251,7 +8251,7 @@ BEGIN
         SELECT NULL INTO par_database_user_name;
     END IF;
 
-    IF (LOWER(par_output_file_name) = LOWER('')) THEN
+    IF (pg_catalog.LOWER(par_output_file_name) = pg_catalog.LOWER('')) THEN
         SELECT NULL INTO par_output_file_name;
     END IF
     /* Check new values */;
@@ -8899,7 +8899,7 @@ BEGIN
     RETURN;
   END IF;
 
-  IF (LOWER(UPPER(par_subsystem)) <> LOWER('TSQL')) THEN /* Failure */
+  IF (LOWER(pg_catalog.UPPER(par_subsystem)) <> LOWER('TSQL')) THEN /* Failure */
     RAISE 'The specified "%" is invalid (valid values are: %).', '@subsystem', 'TSQL' USING ERRCODE := '50000';
     returncode := (1);
     RETURN;
@@ -8966,7 +8966,7 @@ BEGIN
       RETURN;
   END IF;
 
-  IF (UPPER(par_name) = 'ALL')
+  IF (pg_catalog.UPPER(par_name) = 'ALL')
   THEN /* Failure */
     RAISE 'The specified "%" is invalid.', 'name' USING ERRCODE := '50000';
     returncode := 1;
@@ -9399,8 +9399,8 @@ AS
 $BODY$
 BEGIN
   CASE
-    WHEN LOWER(in_str) = 'true' OR in_str = '1' THEN RETURN 1;
-    WHEN LOWER(in_str) = 'false' OR in_str = '0' THEN RETURN 0;
+    WHEN pg_catalog.LOWER(in_str) = 'true' OR in_str = '1' THEN RETURN 1;
+    WHEN pg_catalog.LOWER(in_str) = 'false' OR in_str = '0' THEN RETURN 0;
     ELSE RETURN 0;
   END CASE;
 END;
@@ -10266,7 +10266,7 @@ DECLARE
     counter int;
     cur_pos int;
 BEGIN
-    lower_object_name = lower(PG_CATALOG.rtrim(name));
+    lower_object_name = pg_catalog.lower(PG_CATALOG.rtrim(name));
 
     counter = 1;
     cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
