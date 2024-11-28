@@ -185,6 +185,7 @@ GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 -- At this point, there will be only one server role which is sysadmin.
 UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sysadmin';
 
+-- At this point, there will be only one database fixed role which is db_owner.
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
