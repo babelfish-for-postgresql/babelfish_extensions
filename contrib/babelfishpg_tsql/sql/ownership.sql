@@ -382,7 +382,7 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SY
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
-CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
   OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')

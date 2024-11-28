@@ -34,3 +34,13 @@ RETURN (SELECT COUNT(*) FROM sys.database_principals WHERE name LIKE '%database_
 END
 GO
 
+SELECT name, is_fixed_role FROM sys.database_principals
+WHERE name IN ('dbo', 'db_owner')
+ORDER BY name;
+GO
+~~START~~
+nvarchar#!#bit
+db_owner#!#1
+dbo#!#1
+~~END~~
+
