@@ -2624,12 +2624,12 @@ babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 				 errmsg("Current login %s does not have permission to remove domain mapping entry",
 						GetUserNameFromId(GetSessionUserId(), true))));
 
-	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), AccessExclusiveLock);
 
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_domain_mapping_rel);
 
-	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	table_close(bbf_domain_mapping_rel, AccessExclusiveLock);
 	return (Datum) 0;
 }
 
