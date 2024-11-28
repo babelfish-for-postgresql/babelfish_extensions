@@ -8,7 +8,15 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+four-part-names-vu-prepare
+four-part-names-vu-verify
+four-part-names-vu-cleanup
+BABEL-4168-vu-prepare
+BABEL-4168-vu-verify
+BABEL-4168-vu-cleanup
+openquery-vu-prepare
+openquery-vu-verify
+openquery-vu-cleanup
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
@@ -501,13 +509,4 @@ ignore#!#pgr_zzz_clean_up
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
 ignore#!#babel_collection
-ignore#!#four-part-names-vu-prepare
-ignore#!#four-part-names-vu-verify
-ignore#!#four-part-names-vu-cleanup
-ignore#!#BABEL-4168-vu-prepare
-ignore#!#BABEL-4168-vu-verify
-ignore#!#BABEL-4168-vu-cleanup
-ignore#!#openquery-vu-prepare
-ignore#!#openquery-vu-verify
-ignore#!#openquery-vu-cleanup
 ignore#!#BABEL-SP_TABLE_PRIVILEGES # getting timed out (TODO: BABEL-5353)
