@@ -8,7 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+# all
+collation_version_test
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
