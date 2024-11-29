@@ -33,3 +33,9 @@ end
 go
 insert into t1_declare_atatglobalvars_upgrade values(3)
 go
+-- check catalogs
+select * from pg_catalog.pg_proc where proname = 'myproc29'
+go
+select * from sysobjects where name = 'myproc29'
+go
+
