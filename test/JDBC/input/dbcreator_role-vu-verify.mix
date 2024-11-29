@@ -1,4 +1,12 @@
 -- tsql
+-- dbcreator should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'dbcreator';
+go
+
 -- should be 0
 select is_srvrolemember('sysadmin', 'dbcreator')
 go
@@ -62,6 +70,14 @@ go
 
 -- owner should be dbcreator_login1
 SELECT owner AS database_owner FROM sys.babelfish_sysdatabases WHERE name = 'dbcreator_db';
+go
+
+-- should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'dbcreator';
 go
 
 use dbcreator_db

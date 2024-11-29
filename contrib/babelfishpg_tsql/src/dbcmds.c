@@ -1129,7 +1129,8 @@ grant_guest_to_logins(StringInfoData *query)
 		const char *name = NameStr(*(DatumGetName(rolname)));
 		Oid			roleid = get_role_oid(name, false);
 
-		if (!role_is_sa(roleid))
+		/* sa and fixed server roles except sysadmin should not have membership in database guest roles */
+		if (!(role_is_sa(roleid) || ((get_sysadmin_oid() != roleid) && IS_BBF_FIXED_SERVER_ROLE(name))))
 		{
 			logins = lappend(logins, make_rolespec_node(name));
 		}

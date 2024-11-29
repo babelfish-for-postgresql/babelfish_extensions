@@ -1,4 +1,16 @@
 -- tsql
+-- dbcreator should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'dbcreator';
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
 -- should be 0
 select is_srvrolemember('sysadmin', 'dbcreator')
 go
@@ -100,6 +112,18 @@ go
 ~~START~~
 varchar
 dbcreator_login1
+~~END~~
+
+
+-- should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'dbcreator';
+go
+~~START~~
+varchar#!#varchar
 ~~END~~
 
 

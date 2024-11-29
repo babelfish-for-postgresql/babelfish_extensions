@@ -1,4 +1,16 @@
 -- tsql
+-- securityadmin should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'securityadmin';
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
 select is_srvrolemember('sysadmin', 'securityadmin')
 go
 ~~START~~
@@ -458,6 +470,18 @@ go
 
 create database securityadmin_db1
 go
+
+-- should not have membership in database guest role
+SELECT r.rolname AS parent_role, mr.rolname as member 
+FROM pg_auth_members m 
+JOIN pg_roles r ON (m.roleid = r.oid) 
+JOIN pg_roles mr ON (m.member = mr.oid) 
+where mr.rolname = 'securityadmin';
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
 
 -- terminate-tsql-conn
 
