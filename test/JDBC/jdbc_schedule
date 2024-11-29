@@ -10,8 +10,6 @@
 
 all
 
-ignore#!#BABEL-1435
-ignore#!#BABEL-1446
 ignore#!#BABEL-4279
 ignore#!#TestSpatialPoint-vu-prepare
 ignore#!#TestSpatialPoint-vu-verify
