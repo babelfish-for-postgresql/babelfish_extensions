@@ -2181,8 +2181,7 @@ BEGIN
         input_expr_tx := input_expr::TEXT;
         input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
 
-        result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
-        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
         if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := PG_CATALOG.concat('+',tz_diff);
         END IF;
@@ -2193,7 +2192,7 @@ BEGIN
         input_expr_tx := input_expr::TEXT;
         input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
         result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
-        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
         if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := PG_CATALOG.concat('+',tz_diff);
         END IF;
