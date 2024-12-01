@@ -233,6 +233,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'i', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
@@ -479,19 +480,31 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isInt8Type = false;
 	bool		isInt8ToMoney = false;
 	bool		isVarbinaryToNvarchar = false;
-	bool		isVarbinary = false;
-	bool		isNvarchar = false;
 	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
 	Oid			UDT_sourceBaseType;
+	Oid			UDT_targetBaseType;
 
-	/* Check if the UDT's base type is nvarchar or varbinary. If so, use the immediate base type for further processing. */
+
+	/* Check if the UDT's base type is nvarchar or varbinary.
+	 * If so, use the immediate base type for further processing.
+	 */
 	UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
-	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_sourceBaseType)))
+	UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
+
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_sourceBaseType) 
+	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(UDT_sourceBaseType)))
 	{
 		typeIds[0] = UDT_sourceBaseType;
 		sourceTypeId = UDT_sourceBaseType;
+	}
+
+	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_targetBaseType)
+	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(UDT_targetBaseType) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(UDT_targetBaseType)))
+	{
+		typeIds[1] = UDT_targetBaseType;
+		targetTypeId = UDT_targetBaseType;
 	}
 
 	for (int i = 0; i < 2; i++)
@@ -525,20 +538,15 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 			}
 
 			/* We've found VARBINARY To NVARCHAR casting */
-			if (isVarbinary && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "nvarchar") == 0))
+			if (strcmp(type_nsname, "sys") == 0 && (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(typeIds[0]) 
+			&& (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
 				isVarbinaryToNvarchar = true;
 
-			/* Check if type is Varbinary */
-			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "varbinary") == 0)
-				isVarbinary = true;
-
-			/* We've found NVARCHAR TO VARBINARY casting */
-			if (isNvarchar && strcmp(type_nsname, "sys") == 0 && (strcmp(type_name, "varbinary") == 0))
+			/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
+			if (strcmp(type_nsname, "sys") == 0 && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0])) 
+			&& ((*common_utility_plugin_ptr->is_tsql_binary_datatype)(typeIds[1]) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(typeIds[1]) 
+			|| (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(typeIds[1]) || (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(typeIds[1])))
 				isNvarchartoVarbinary = true;
-
-			/* Check if type is NVARCHAR */
-			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "nvarchar") == 0)
-				isNvarchar = true;
 
 			ReleaseSysCache(tuple);
 		}
@@ -1336,16 +1344,12 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 {
 
 	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_second_arg;
-	char					   *proc_nsname;
-	char					   *proc_name;
-	int							ncandidates;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid 						*argtypes;
 	int							nargs_func = 0;
-	Oid							second_arg;
+	int input_typeids_length = sizeof(input_typeids) / sizeof(input_typeids[0]);
+	int argtypes_length;
 
-	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 	
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
@@ -1353,14 +1357,7 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Failed to find common utility plugin.")));
 
-	expr_second_arg = InvalidOid;
-	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1]))
-	{
-		expr_second_arg = input_typeids[1];		
-	}
-
 	/* Get the candidate with matching second argument type */
-	ncandidates = 0;
 	best_candidate = NULL;
 
 	for (current_candidate = candidates;
@@ -1369,14 +1366,13 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 	{
 		/* we should only consider candidates for hashbytes function from sys schema */
 		if (get_func_namespace(current_candidate->oid) != sys_oid)
-			return NULL;
+			continue;
 
 		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
-		second_arg = argtypes[1];
-		if(second_arg == expr_second_arg)
+		argtypes_length = sizeof(argtypes) / sizeof(argtypes[0]);
+		if(input_typeids_length >= 2 && argtypes_length >= 2 &&input_typeids[1] == argtypes[1])
 		{
 			best_candidate = current_candidate;
-			ncandidates++;
 		}
 	}
 

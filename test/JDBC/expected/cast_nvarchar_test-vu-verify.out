@@ -237,4 +237,40 @@ nvarchar
 test string
 ~~END~~
 
+-- Test Case 17: NVARCHAR-> BINARY
+select cast(N'test string' as binary)
+GO
+~~START~~
+binary
+7400650073007400200073007400720069006E0067000000000000000000
+~~END~~
+
+-- Test Case 18: NVARCHAR-> User Defined varbinary
+select cast(N'test string' as user_defined_varbinary)
+GO
+~~START~~
+varbinary
+7400650073007400200073007400720069006E006700
+~~END~~
+
+-- Test Case 19: User defined ahsbytes function
+create function dbo.hashbytes(@data sys.varchar)returns sys.varchar AS BEGIN    return "dummy hashbytes";END
+GO
+SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+661295C9CBF9D6B2F6428414504A8DEED3020641#!#B4AA115AEBADD046850F18E1DF71A8BF254CD688
+~~END~~
+
+select hashbytes('abc')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dummy hashbytes" does not exist)~~
+
+drop function dbo.hashbytes
+GO
 

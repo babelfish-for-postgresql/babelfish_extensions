@@ -62,6 +62,7 @@ PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(nvarcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
+PG_FUNCTION_INFO_V1(nvarcharbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
 PG_FUNCTION_INFO_V1(varbinarynvarchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
@@ -743,7 +744,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	int32		maxlen;
 	bytea	        *result;
 	int		encodedByteLen;
-	StringInfoData  s; 
+	StringInfoData  buf; 
 	MemoryContext   ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
@@ -753,16 +754,16 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	initStringInfo(&s);
+	initStringInfo(&buf);
 	PG_TRY();
 	{
 		/*
 		 * For nvarchar convert the string to UTF16 from UTF8 irrespective of input encoding via TsqlUTF8toUTF16StringInfo()
 		 * For this we need to prepare a StringInfoData() and assign the encoded_data, encodedByteLen from the string info data we prepared
 		 */
-		TsqlUTF8toUTF16StringInfo(&s, data, len);
-		encoded_data = s.data;
-		encodedByteLen= s.len;
+		TsqlUTF8toUTF16StringInfo(&buf, data, len);
+		encoded_data = buf.data;
+		encodedByteLen= buf.len;
 	}
 	PG_CATCH();
 	{
@@ -798,7 +799,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	memcpy(rp, encoded_data, encodedByteLen);
-	pfree(s.data);
+	pfree(buf.data);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -814,7 +815,6 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
 	bytea	   *result;
-
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -930,7 +930,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int		encodedByteLen;
 	int 		paddedLen;
 	char 		*paddedData;
-	StringInfoData 	s;
+	StringInfoData 	buf;
 	MemoryContext   ccxt = CurrentMemoryContext;
 
 	if (PG_NARGS() > 1)
@@ -949,7 +949,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	{
 		if (maxlen < 0 || (len) <= (maxlen*2))
 		{
-			initStringInfo(&s);
+			initStringInfo(&buf);
 			if(len % 2 != 0)
 			{
 				paddedLen = len + 1;
@@ -959,22 +959,22 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 				TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
 				pfree(paddedData);
-				encoded_result = s.data;
-				encodedByteLen= s.len;
+				encoded_result = buf.data;
+				encodedByteLen= buf.len;
 			}
 			else 
 			{
-				TsqlUTF16toUTF8StringInfo(&s,data,len);
-				encoded_result = s.data;
-				encodedByteLen= s.len;
+				TsqlUTF16toUTF8StringInfo(&buf,data,len);
+				encoded_result = buf.data;
+				encodedByteLen= buf.len;
 			}
 		}
 
 		else
 		{
-			TsqlUTF16toUTF8StringInfo(&s,data,maxlen);
-			encoded_result = s.data;
-			encodedByteLen= s.len;
+			TsqlUTF16toUTF8StringInfo(&buf,data,maxlen);
+			encoded_result = buf.data;
+			encodedByteLen= buf.len;
 		}
 	}
 	PG_CATCH();
@@ -995,6 +995,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
+	pfree(buf.data);
 
 	PG_RETURN_VARCHAR_P(result);
 }
@@ -1036,6 +1037,52 @@ varcharbinary(PG_FUNCTION_ARGS)
 
 	/* NULL pad the rest of the space */
 	memset(rp + len, '\0', maxlen - len);
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+nvarcharbinary(PG_FUNCTION_ARGS)
+{
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
+	StringInfoData 		buf;
+
+	if (!isExplicit)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Implicit conversion from data type varchar to "
+						"binary is not allowed. Use the CONVERT function "
+						"to run this query.")));
+
+	initStringInfo(&buf);
+	TsqlUTF8toUTF16StringInfo(&buf, data, len);
+	data = buf.data;
+	len= buf.len;
+
+	/* If typmod is -1 (or invalid), use the actual length */
+	if (typmod < (int32) VARHDRSZ)
+		maxlen = len;
+	else
+		maxlen = typmod - VARHDRSZ;
+
+	if (len > maxlen)
+		len = maxlen;
+
+	result = (bytea *) palloc(maxlen + VARHDRSZ);
+	SET_VARSIZE(result, maxlen + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
+	/* NULL pad the rest of the space */
+	memset(rp + len, '\0', maxlen - len);
+	pfree(buf.data);
 	PG_RETURN_BYTEA_P(result);
 }
 

@@ -117,4 +117,19 @@ GO
 create type user_defined_varbinary from varbinary(50);
 select cast(cast(0x7400650073007400200073007400720069006E006700 as user_defined_varbinary) as nvarchar)
 GO
+-- Test Case 17: NVARCHAR-> BINARY
+select cast(N'test string' as binary)
+GO
+-- Test Case 18: NVARCHAR-> User Defined varbinary
+select cast(N'test string' as user_defined_varbinary)
+GO
+-- Test Case 19: User defined ahsbytes function
+create function dbo.hashbytes(@data sys.varchar)returns sys.varchar AS BEGIN    return "dummy hashbytes";END
+GO
+SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
+GO
+select hashbytes('abc')
+GO
+drop function dbo.hashbytes
+GO
 
