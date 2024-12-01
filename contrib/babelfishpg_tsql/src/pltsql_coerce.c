@@ -232,8 +232,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
-	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'i', 'f'},
-	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},

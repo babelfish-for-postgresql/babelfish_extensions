@@ -957,7 +957,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 				memcpy(paddedData, data, len);
 				memset(paddedData + len, '\0', 1);
 
-				TsqlUTF16toUTF8StringInfo(&s,paddedData,paddedLen);
+				TsqlUTF16toUTF8StringInfo(&buf,paddedData,paddedLen);
 				pfree(paddedData);
 				encoded_result = buf.data;
 				encodedByteLen= buf.len;
