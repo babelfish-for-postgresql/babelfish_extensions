@@ -1347,9 +1347,6 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid 						*argtypes;
 	int							nargs_func = 0;
-	int input_typeids_length = sizeof(input_typeids) / sizeof(input_typeids[0]);
-	int argtypes_length;
-
 	
 	/* if common_utility_plugin_ptr is not initialised */
 	if (common_utility_plugin_ptr == NULL)
@@ -1369,8 +1366,7 @@ tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oi
 			continue;
 
 		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
-		argtypes_length = sizeof(argtypes) / sizeof(argtypes[0]);
-		if(input_typeids_length >= 2 && argtypes_length >= 2 &&input_typeids[1] == argtypes[1])
+		if(input_typeids[1] == argtypes[1])
 		{
 			best_candidate = current_candidate;
 		}
