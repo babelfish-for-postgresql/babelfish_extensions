@@ -23,6 +23,14 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BBF_VARBINARY AS sys.NVARCHAR)
 WITH FUNCTION sys.varbinarysysnvarchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
 
+CREATE OR REPLACE FUNCTION sys.nvarcharbinary(sys.NVARCHAR, integer, boolean)
+RETURNS sys.BBF_BINARY
+AS 'babelfishpg_common', 'nvarcharbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.NVARCHAR AS sys.BBF_BINARY)
+WITH FUNCTION sys.nvarcharbinary (sys.NVARCHAR, integer, boolean) AS ASSIGNMENT;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
