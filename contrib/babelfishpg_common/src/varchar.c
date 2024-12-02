@@ -615,11 +615,6 @@ tsql_varchar_input(const char *s, size_t len, int32 atttypmod)
 {
 	return varchar_input(s, len, atttypmod);
 }
-void
-tsql_utf8_to_utf16(StringInfoData *utf16_data, const unsigned char *data, size_t len)
-{
-    TsqlUTF8toUTF16StringInfo(utf16_data, data, len);
-}
 /*
  * Convert a C string to VARCHAR internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.

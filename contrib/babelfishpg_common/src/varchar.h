@@ -13,5 +13,4 @@ extern int  TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len);
 extern void TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len);
 extern bool is_basetype_nchar_nvarchar(Oid typid);
-extern void tsql_utf8_to_utf16(StringInfoData *utf16_data, const uint8 *data, size_t len);
 #endif
