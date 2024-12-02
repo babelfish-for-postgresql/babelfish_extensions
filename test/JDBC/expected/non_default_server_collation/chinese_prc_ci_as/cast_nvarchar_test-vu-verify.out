@@ -219,7 +219,7 @@ GO
 ~~ERROR (Message: Implicit conversion from data type nvarchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
 
 
--- Test Case 16: Casting with UDT
+-- Test Case 16: Casting with UDT on nvarchar -> varbinary, UDT on varbinary to nvarchar, UDT on nvarchar to UDT on varbinary
 create type user_defined_nvarchar from nvarchar(50);
 select cast(cast(N'test string' as user_defined_nvarchar) as varbinary)
 GO
@@ -235,6 +235,14 @@ GO
 ~~START~~
 nvarchar
 test string
+~~END~~
+
+
+select cast(cast(N'test string' as user_defined_nvarchar) as user_defined_varbinary)
+go
+~~START~~
+varbinary
+7400650073007400200073007400720069006E006700
 ~~END~~
 
 -- Test Case 17: NVARCHAR-> BINARY
@@ -253,7 +261,7 @@ varbinary
 7400650073007400200073007400720069006E006700
 ~~END~~
 
--- Test Case 19: User defined ahsbytes function
+-- Test Case 19: User defined hashbytes function
 create function dbo.hashbytes(@data sys.varchar)returns sys.varchar AS BEGIN    return "dummy hashbytes";END
 GO
 SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
@@ -273,4 +281,79 @@ varchar
 
 drop function dbo.hashbytes
 GO
+
+
+-- Test 20: Calling the function, procedure, views from prepare scripts
+-- Test CastNVarcharToVarbinary function
+DECLARE @TestString NVARCHAR(100) = N'Test String';
+DECLARE @BinaryResult VARBINARY(MAX);
+SET @BinaryResult = dbo.CastNVarcharToVarbinary(@TestString);
+select cast (@BinaryResult as nvarchar)
+GO
+~~START~~
+nvarchar
+Test String
+~~END~~
+
+
+
+-- Test CastVarbinaryToNVarchar function
+DECLARE @TestBinary VARBINARY(100) = 0x54657374537472696E67; -- 'Test String' in ASCII
+DECLARE @StringResult NVARCHAR(MAX);
+SET @StringResult = dbo.CastVarbinaryToNVarchar(@TestBinary);
+select cast (@StringResult as nvarchar)
+GO
+~~START~~
+nvarchar
+敔瑳瑓楲杮
+~~END~~
+
+
+
+-- Test CastDemoView
+DECLARE @ViewResult TABLE (
+    NVarcharToVarbinary VARBINARY(MAX),
+    VarbinaryToNVarchar NVARCHAR(MAX)
+);
+INSERT INTO @ViewResult
+SELECT * FROM dbo.CastDemoView;
+go
+~~ROW COUNT: 1~~
+
+
+-- TEST CASE 21: Assigned Casting
+DECLARE @NVarcharValue NVARCHAR(100) = N'Hello, World!';
+DECLARE @AssignedVarbinary VARBINARY(100);
+SET @AssignedVarbinary = CAST(@NVarcharValue AS VARBINARY(100));
+select CAST(@AssignedVarbinary AS NVARCHAR(100));
+GO
+~~START~~
+nvarchar
+Hello, World!
+~~END~~
+
+
+
+
+--TEST CASE 22: Calling hashbytes via function, procedure, views
+-- Test the HashMultipleTypes function
+DECLARE @TestVarchar VARCHAR(10) = 'Test';
+DECLARE @TestNVarchar NVARCHAR(10) = N'Test';
+DECLARE @TestVarbinary VARBINARY(10) = 0x54657374; -- 'Test' in ASCII
+SELECT * FROM dbo.HashMultipleTypes(@TestVarchar, @TestNVarchar, @TestVarbinary);
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#E6FA3CA87B1B641AB646D3B4933BBA8D0970763F030B6578A60ABDEAE7366247#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25
+~~END~~
+
+-- Test the HashDemoView
+SELECT * FROM dbo.HashDemoView;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+185F8DB32271FE25F561A6FC938B2E264306EC304EDA518007D1764826381969#!#A07E4F7343246C82B26F32E56F85418D518D8B2F2DAE77F1D56FE7AF50DB97AF#!#185F8DB32271FE25F561A6FC938B2E264306EC304EDA518007D1764826381969
+~~END~~
+
+
 
