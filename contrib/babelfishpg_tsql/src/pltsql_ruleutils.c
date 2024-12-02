@@ -424,7 +424,7 @@ tsql_get_expr(PG_FUNCTION_ARGS)
 	if (relname == NULL)
 		PG_RETURN_NULL();
 
-	PG_RETURN_VARCHAR_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
+	PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
 }
 
 static text *
@@ -1910,8 +1910,9 @@ get_const_collation(Const *constval, deparse_context *context)
 	if (OidIsValid(constval->constcollid))
 	{
 		Oid			typcollation = get_typcollation(constval->consttype);
+		const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
-		if (constval->constcollid != typcollation)
+		if (constval->constcollid != typcollation && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
 		{
 			appendStringInfo(buf, " COLLATE %s",
 							 generate_tsql_collation_name(constval->constcollid));

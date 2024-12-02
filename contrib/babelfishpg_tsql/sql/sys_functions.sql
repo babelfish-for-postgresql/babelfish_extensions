@@ -169,7 +169,7 @@ AS 'babelfishpg_tsql', 'tsql_get_functiondef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
-RETURNS sys.VARCHAR
+RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_expr'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
