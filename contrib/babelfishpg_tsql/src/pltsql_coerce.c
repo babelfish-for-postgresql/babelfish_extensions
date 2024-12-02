@@ -131,13 +131,14 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "binarysysnvarchar", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "varbinarysysnvarchar", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "binaryrowversion", 'i', 'f'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nvarchar", "binarysysnvarchar", 'i', 'f'},
 /*  rowversion */
 	{PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int4", NULL, 'i', 'f'},
@@ -466,6 +467,18 @@ static tsql_cast_info_entry_t *tsql_cast_info_entries = NULL;
 static HTAB *ht_tsql_cast_info = NULL;
 bool		inited_ht_tsql_cast_info = false;
 
+/* Returns true if the oid belongs to binary, bbf_binary, varbinary, bbf_varbinary datatype */
+static bool
+is_tsql_binary_family_datatype(Oid oid)
+{
+	if((*common_utility_plugin_ptr->is_tsql_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(oid)
+	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(oid))
+	{
+		return true;
+	}
+	return false;
+}
+
 static CoercionPathType
 tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -493,15 +506,13 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
 	UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
 
-	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_sourceBaseType) 
-	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(UDT_sourceBaseType) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(UDT_sourceBaseType)))
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
 	{
 		typeIds[0] = UDT_sourceBaseType;
 		sourceTypeId = UDT_sourceBaseType;
 	}
 
-	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(UDT_targetBaseType)
-	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(UDT_targetBaseType) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(UDT_targetBaseType)))
+	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
 	{
 		typeIds[1] = UDT_targetBaseType;
 		targetTypeId = UDT_targetBaseType;
@@ -537,20 +548,17 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				break;
 			}
 
-			/* We've found VARBINARY To NVARCHAR casting */
-			if (strcmp(type_nsname, "sys") == 0 && (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(typeIds[0]) 
-			&& (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
-				isVarbinaryToNvarchar = true;
-
-			/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
-			if (strcmp(type_nsname, "sys") == 0 && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0])) 
-			&& ((*common_utility_plugin_ptr->is_tsql_binary_datatype)(typeIds[1]) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(typeIds[1]) 
-			|| (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(typeIds[1]) || (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(typeIds[1])))
-				isNvarchartoVarbinary = true;
-
 			ReleaseSysCache(tuple);
 		}
 	}
+
+	/* We've found VARBINARY To NVARCHAR casting */
+	if (is_tsql_binary_family_datatype(typeIds[0]) && (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
+		isVarbinaryToNvarchar = true;
+
+	/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
+	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
+		isNvarchartoVarbinary = true;
 
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
@@ -1340,19 +1348,13 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
  * Returns a single best candidate from the sys schema, or NULL if none found.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_hashbytes(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList candidates)
 {
 
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid 						*argtypes;
 	int							nargs_func = 0;
-	
-	/* if common_utility_plugin_ptr is not initialised */
-	if (common_utility_plugin_ptr == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("Failed to find common utility plugin.")));
 
 	/* Get the candidate with matching second argument type */
 	best_candidate = NULL;
@@ -1401,7 +1403,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	/* Specific handling for hashbytes function based on second input argument via tsql_func_select_candidate_for_hashbytes() */
 	if (strcmp(proc_name, "hashbytes") == 0)
 	{
-		return tsql_func_select_candidate_for_hashbytes(names, fargs, nargs, input_typeids, candidates);
+		return tsql_func_select_candidate_for_hashbytes(input_typeids, candidates);
 	}
 
 	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);

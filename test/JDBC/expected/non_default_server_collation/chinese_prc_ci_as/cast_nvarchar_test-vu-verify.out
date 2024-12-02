@@ -356,4 +356,13 @@ varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
+--TEST CASE 23: BINARY TO NVARCHAR
+select cast(cast(N'test string' as binary) as nvarchar)
+GO
+~~START~~
+nvarchar
+test string
+~~END~~
+
+
 

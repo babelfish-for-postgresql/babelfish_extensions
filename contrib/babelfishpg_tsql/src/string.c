@@ -64,29 +64,32 @@ hashbytes(PG_FUNCTION_ARGS)
 	const char 	*algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
 	bytea	   	*in = PG_GETARG_BYTEA_PP(1);
 	size_t	    	len = VARSIZE_ANY_EXHDR(in);
-	const unsigned char 	*data = (unsigned char *) VARDATA_ANY(in);
+	unsigned char 	*data = (unsigned char *) VARDATA_ANY(in);
 	bytea	    	*result;
 	StringInfoData 	utf16_data;
 
-	initStringInfo(&utf16_data);
+
 	/*
 	 * If the input_type is nvarchar then we convert it to UTF-16 encoding
 	 */
 	if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
 	{
+		unsigned char *temp_data = (unsigned char *) palloc(utf16_data.len);
+		initStringInfo(&utf16_data);
 		(common_utility_plugin_ptr->tsql_utf8_to_utf16)(&utf16_data, data, len);
-		data = (const unsigned char *) utf16_data.data;
+		memcpy(temp_data, utf16_data.data, utf16_data.len);
+		data = temp_data;
 		len = utf16_data.len;
+		pfree(utf16_data.data);
 	}
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
-		pfree(utf16_data.data);
 		PG_RETURN_NULL();
 	}
 	else if (strcasecmp(algorithm, "MD4") == 0)
 	{
-		pfree(utf16_data.data);
+
 		PG_RETURN_NULL();
 	}
 	else if (strcasecmp(algorithm, "MD5") == 0)
@@ -106,7 +109,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
-		pfree(utf16_data.data);
+
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -121,7 +124,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
-		pfree(utf16_data.data);	
+
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -142,7 +145,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
-		pfree(utf16_data.data);
+
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -156,13 +159,13 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
-		pfree(utf16_data.data);
+
 
 		PG_RETURN_BYTEA_P(result);
 	}
 	else
 	{
-		pfree(utf16_data.data);
+
 		PG_RETURN_NULL();
 	}
 }

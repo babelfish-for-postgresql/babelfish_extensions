@@ -183,4 +183,8 @@ GO
 SELECT * FROM dbo.HashDemoView;
 GO
 
+--TEST CASE 23: BINARY TO NVARCHAR
+select cast(cast(N'test string' as binary) as nvarchar)
+GO
+
 

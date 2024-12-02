@@ -944,6 +944,9 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
         * Respects maxlen if specified, otherwise processes full input.
         * Uses TsqlUTF16toUTF8StringInfo for conversion, with error handling via PG_TRY.
         */
+	while(len>1 && data[len-2] == '\0' && data[len-1] == '\0')
+		len -= 1;
+
 	paddedLen = len;
 	PG_TRY();
 	{
