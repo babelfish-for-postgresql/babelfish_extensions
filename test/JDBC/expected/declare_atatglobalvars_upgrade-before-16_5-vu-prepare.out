@@ -45,7 +45,6 @@ end
 go
 insert into t1_declare_atatglobalvars_upgrade values(3)
 go
-~~ROW COUNT: 1~~
 ~~START~~
 tinyint
 38
