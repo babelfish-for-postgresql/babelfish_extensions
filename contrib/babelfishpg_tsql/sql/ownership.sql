@@ -154,7 +154,7 @@ BEGIN
       CAST('' AS sys.NVARCHAR) AS target_query_expression,
       CAST(1 as sys.BIT) AS result
     WHERE FALSE;
-  GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
+  -- GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
 
   CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
