@@ -470,6 +470,16 @@ RETURNS INT4
 AS 'timestamp_cmp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION  sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date)
+RETURNS INT4
+AS 'timestamp_cmp_date'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION  sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME)
+RETURNS INT4
+AS 'date_cmp_timestamp'
+LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE FUNCTION  smalldatetime_hash(sys.SMALLDATETIME)
 RETURNS INT4
 AS 'timestamp_hash'
@@ -482,7 +492,25 @@ DEFAULT FOR TYPE sys.SMALLDATETIME USING btree AS
     OPERATOR    3   =  (sys.SMALLDATETIME, sys.SMALLDATETIME),
     OPERATOR    4   >= (sys.SMALLDATETIME, sys.SMALLDATETIME),
     OPERATOR    5   >  (sys.SMALLDATETIME, sys.SMALLDATETIME),
-    FUNCTION    1   smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME);
+    FUNCTION    1   sys.smalldatetime_cmp(sys.SMALLDATETIME, sys.SMALLDATETIME);
+
+CREATE OPERATOR CLASS sys.smalldatetime_date_ops
+FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
+    OPERATOR    1   sys.<  (sys.SMALLDATETIME, date),
+    OPERATOR    2   sys.<= (sys.SMALLDATETIME, date),
+    OPERATOR    3   sys.=  (sys.SMALLDATETIME, date),
+    OPERATOR    4   sys.>= (sys.SMALLDATETIME, date),
+    OPERATOR    5   sys.>  (sys.SMALLDATETIME, date),
+    FUNCTION    1   sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date);
+
+CREATE OPERATOR CLASS sys.date_smalldatetime_ops
+FOR TYPE sys.SMALLDATETIME USING btree FAMILY smalldatetime_ops AS
+    OPERATOR    1   sys.<  (date, sys.SMALLDATETIME),
+    OPERATOR    2   sys.<= (date, sys.SMALLDATETIME),
+    OPERATOR    3   sys.=  (date, sys.SMALLDATETIME),
+    OPERATOR    4   sys.>= (date, sys.SMALLDATETIME),
+    OPERATOR    5   sys.>  (date, sys.SMALLDATETIME),
+    FUNCTION    1   sys.date_smalldatetime_cmp(date, sys.SMALLDATETIME);
 
 CREATE OPERATOR CLASS sys.smalldatetime_ops
 DEFAULT FOR TYPE sys.SMALLDATETIME USING hash AS

@@ -549,4 +549,5 @@ BABEL-5119_before_16_5
 BABEL-CASE_EXPR
 BABEL-5186
 BABEL-2736
+smalldatetime_date_cmp
 
