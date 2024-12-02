@@ -539,3 +539,5 @@ BABEL-5186
 BABEL-2736-before-16_5
 securityadmin_role
 datareader_datawriter
+smalldatetime_date_cmp
+
