@@ -1164,7 +1164,7 @@ SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
 GO
 ~~START~~
 nvarchar
-比尔·晥斯            
+比尔·晥斯             
 ~~END~~
 
 DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
