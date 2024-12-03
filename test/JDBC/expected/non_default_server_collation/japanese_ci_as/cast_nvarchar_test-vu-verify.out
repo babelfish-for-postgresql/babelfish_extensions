@@ -364,5 +364,21 @@ nvarchar
 test string
 ~~END~~
 
+--TEST CASE 24: NVARCHAR TO BINARY with maxlen < length of actual string
+select cast(0x610061006100610061006100610061006100 as nvarchar(5))
+GO
+~~START~~
+nvarchar
+aaaaa
+~~END~~
+
+select cast(0x8765 as nvarchar(1))
+GO
+~~START~~
+nvarchar
+文
+~~END~~
+
+
 
 

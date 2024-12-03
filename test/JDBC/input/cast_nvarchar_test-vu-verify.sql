@@ -186,5 +186,11 @@ GO
 --TEST CASE 23: BINARY TO NVARCHAR
 select cast(cast(N'test string' as binary) as nvarchar)
 GO
+--TEST CASE 24: NVARCHAR TO BINARY with maxlen < length of actual string
+select cast(0x610061006100610061006100610061006100 as nvarchar(5))
+GO
+select cast(0x8765 as nvarchar(1))
+GO
+
 
 

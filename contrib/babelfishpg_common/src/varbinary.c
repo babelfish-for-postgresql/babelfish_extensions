@@ -759,7 +759,8 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * For nvarchar convert the string to UTF16 from UTF8 irrespective of input encoding via TsqlUTF8toUTF16StringInfo()
-		 * For this we need to prepare a StringInfoData() and assign the encoded_data, encodedByteLen from the string info data we prepared
+		 * For this we need to prepare a StringInfoData() and assign the encoded_data,
+		 * encodedByteLen from the string info data we prepared
 		 */
 		TsqlUTF8toUTF16StringInfo(&buf, data, len);
 		encoded_data = buf.data;
@@ -927,60 +928,50 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	char 	        *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = -1;
-	int32		maxlen = -1;
+	int		maxlen = -1;
 	int		encodedByteLen;
-	int 		paddedLen;
 	char 		*paddedData;
 	StringInfoData 	buf;
 	MemoryContext   ccxt = CurrentMemoryContext;
 
-	if (PG_NARGS() > 1)
-	{
-		typmod = PG_GETARG_INT32(1);
-		maxlen = typmod - VARHDRSZ;
-	}
+	typmod = PG_GETARG_INT32(1);
+	maxlen = typmod - VARHDRSZ;
 
-        /*
-        * Converts UTF-16 to UTF-8, handling odd-length inputs by padding.
-        * Respects maxlen if specified, otherwise processes full input.
-        * Uses TsqlUTF16toUTF8StringInfo for conversion, with error handling via PG_TRY.
-        */
+    /*
+    * Converts UTF-16 to UTF-8, handling odd-length inputs by padding.
+    * Respects maxlen if specified, otherwise processes full input.
+    * Uses TsqlUTF16toUTF8StringInfo for conversion, with error handling via PG_TRY.
+    */
+
+    /* truncating NULL bytes from end */
 	while(len>0  && data[len-1] == '\0')
 		len -= 1;
 
-	paddedLen = len;
+	/* Initialising the paddedData as data only */
+	paddedData = (char*)palloc(len + 1);
+	memcpy(paddedData, data, len);
+
+	/* Do the Padding if lenngth is odd */
+	if(len % 2 != 0)
+	{
+		memset(paddedData + len, '\0', 1);
+		len = len + 1;
+	}
+
+	if(!(maxlen < 0 || (len >> 1) <= maxlen))
+	{
+		len = maxlen << 1;
+	}
+
 	PG_TRY();
 	{
-		if (maxlen < 0 || (len) <= (maxlen*2))
-		{
-			initStringInfo(&buf);
-			if(len % 2 != 0)
-			{
-				paddedLen = len + 1;
-				paddedData = (char*)palloc(paddedLen);
-				memcpy(paddedData, data, len);
-				memset(paddedData + len, '\0', 1);
-
-				TsqlUTF16toUTF8StringInfo(&buf,paddedData,paddedLen);
-				pfree(paddedData);
-				encoded_result = buf.data;
-				encodedByteLen= buf.len;
-			}
-			else 
-			{
-				TsqlUTF16toUTF8StringInfo(&buf,data,len);
-				encoded_result = buf.data;
-				encodedByteLen= buf.len;
-			}
-		}
-
-		else
-		{
-			TsqlUTF16toUTF8StringInfo(&buf,data,maxlen);
-			encoded_result = buf.data;
-			encodedByteLen= buf.len;
-		}
+		initStringInfo(&buf);
+		TsqlUTF16toUTF8StringInfo(&buf,paddedData,len);
+		encoded_result = buf.data;
+		encodedByteLen= buf.len;
 	}
+
+
 	PG_CATCH();
 	{
 		MemoryContext ectx;
@@ -1000,6 +991,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 
 	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
 	pfree(buf.data);
+	pfree(paddedData);
 
 	PG_RETURN_VARCHAR_P(result);
 }
@@ -1060,7 +1052,7 @@ nvarcharbinary(PG_FUNCTION_ARGS)
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Implicit conversion from data type varchar to "
+				 errmsg("Implicit conversion from data type nvarchar to "
 						"binary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
