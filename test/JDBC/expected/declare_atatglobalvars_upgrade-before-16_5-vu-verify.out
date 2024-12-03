@@ -10,7 +10,7 @@ go
 
 ~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
 
-select dbo.f1_declare_atatglobalvars_upgrade()
+select dbo.f1_declare_atatglobalvars_upgrade() 
 go
 ~~START~~
 int
