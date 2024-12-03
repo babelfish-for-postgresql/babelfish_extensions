@@ -77,7 +77,6 @@ babel_datatype_sqlvariant
 BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
 babelfish_cast_floor
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -252,4 +251,5 @@ space
 binary-datatype-operators
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5059-before-14_7-or-15_2
+smalldatetime_date_cmp
 

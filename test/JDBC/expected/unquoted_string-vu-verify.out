@@ -713,6 +713,15 @@ go
   Position: 71
     Server SQLState: 42703)~~
 
+-- should raise an error since variable is not defined
+create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
+as select @p1
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: syntax error at or near "@"
+  Position: 87
+    Server SQLState: 42601)~~
 
 -- should print 'aBc':
 select unqStr_pgfunc_1('aBc'); 
