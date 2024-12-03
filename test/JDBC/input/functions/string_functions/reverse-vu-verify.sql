@@ -148,7 +148,54 @@ GO
 SELECT reverse(b) FROM babel_4839_reverse_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t1
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t2
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t3
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t4
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t5
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t6
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t7
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t8
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t9
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t10
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t11
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t12
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t13
+GO
+
+SELECT reverse(a) FROM dbo.babel_4839_reverse_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT reverse(@inputString)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT reverse(@inputString)
 GO

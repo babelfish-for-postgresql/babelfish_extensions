@@ -1,13 +1,14 @@
-CREATE TYPE dbo.babel_5156_string_agg_imageUDT FROM image;
+-- tsql
+CREATE TYPE dbo.babel_3409_concat_imageUDT FROM image;
 GO
 
-CREATE TYPE dbo.babel_5156_string_agg_varUDT FROM varchar(50);
+CREATE TYPE dbo.babel_3409_concat_varUDT FROM varchar(50);
 GO
 
 -- Test with different datatypes supported & non-supported for arguments
--- Supported: char, varchar, nchar, nvarchar, int, bigint, smallint, tinyint, numeric, float, real, bit, decimal, smallmoney, money, datetime, datetime2
--- Unsupported: binary, varbinary, date, time, datetimeoffset, smalldatetime, image, text, ntext, sql_variant, xml
-CREATE TABLE babel_5156_string_agg_t1(
+-- Supported: char, varchar, nchar, nvarchar, int, bigint, smallint, tinyint, numeric, float, real, bit, decimal, smallmoney, money, datetime, datetime2, binary, varbinary, date, time, datetimeoffset, smalldatetime, image, text, ntext
+-- Unsupported: geometry, geography, sql_variant, xml
+CREATE TABLE babel_3409_concat_t1(
     id int,
     col_char char(20),
     col_varchar varchar(50),
@@ -37,16 +38,15 @@ CREATE TABLE babel_5156_string_agg_t1(
     col_ntext ntext,
     col_sql_variant sql_variant,
     col_xml xml,
-    col_varUDT dbo.babel_5156_string_agg_varUDT,
-    col_imageUDT dbo.babel_5156_string_agg_imageUDT,
+    col_varUDT dbo.babel_3409_concat_varUDT,
+    col_imageUDT dbo.babel_3409_concat_imageUDT,
     col_geometry geometry,
-    col_geography geography,
-    group_id int 
+    col_geography geography
 )
 GO
 
 
-INSERT INTO babel_5156_string_agg_t1 VALUES(
+INSERT INTO babel_3409_concat_t1 VALUES(
     1,
     N'abc',
     N'abc',
@@ -71,16 +71,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-12 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-12 12:43:10' AS SMALLDATETIME),
-    CAST(N'abc' AS IMAGE),
+    CAST('abc' AS IMAGE),
     N'abc',
     N'abc',
     CAST(N'abc' AS SQL_VARIANT),
     CAST ('<body><apple/></body>' AS xml),
-    CAST(N'abc' AS dbo.babel_5156_string_agg_varUDT),
-    CAST(N'abc' AS dbo.babel_5156_string_agg_imageUDT),
+    'abc',
+    0x6364,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    1
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     2,
@@ -107,16 +106,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-13 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-13 12:43:10' AS SMALLDATETIME),
-    CAST(N'🙂defghi' AS IMAGE),
+    CAST('🙂defghi' AS IMAGE),
     N'🙂defghi',
     N'🙂defghi',
     CAST(N'🙂defghi' AS SQL_VARIANT),
     CAST ('<body><banana/></body>' AS xml),
-    CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_varUDT),
-    CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_imageUDT),
+    '🙂defghi',
+    0x6364,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    1
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     3,
@@ -143,16 +141,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-14 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-14 12:43:10' AS SMALLDATETIME),
-    CAST(N'🙂🙂' AS IMAGE),
+    CAST('🙂🙂' AS IMAGE),
     N'🙂🙂',
     N'🙂🙂',
     CAST(N'🙂🙂' AS SQL_VARIANT),
     CAST ('<body><chikoo/></body>' AS xml),
-    CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_varUDT),
-    CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_imageUDT),
+    '🙂🙂',
+    0x6566,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    1
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     4,
@@ -179,16 +176,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-15 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-15 12:43:10' AS SMALLDATETIME),
-    CAST(N'比尔·拉' AS IMAGE),
+    CAST('比尔·拉' AS IMAGE),
     N'比尔·拉',
     N'比尔·拉',
     CAST(N'比尔·拉' AS SQL_VARIANT),
     CAST ('<body><dragonfruit/></body>' AS xml),
-    CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_varUDT),
-    CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_imageUDT),
+    '比尔·拉',
+    0x6768,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    2
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     5,
@@ -215,16 +211,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-16 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-16 12:43:10' AS SMALLDATETIME),
-    CAST(N'莫斯' AS IMAGE),
+    CAST('莫斯' AS IMAGE),
     N'莫斯',
     N'莫斯',
     CAST(N'莫斯' AS SQL_VARIANT),
     CAST ('<body><mango/></body>' AS xml),
-    CAST(N'莫斯' AS dbo.babel_5156_string_agg_varUDT),
-    CAST(N'莫斯' AS dbo.babel_5156_string_agg_imageUDT),
+    '莫斯',
+    0x6970,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    2
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     6,
@@ -256,11 +251,10 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
-    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    NULL,
+    NULL,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    3
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     7,
@@ -292,18 +286,17 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
-    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    NULL,
+    NULL,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    3
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     8,
-    'Rohit',
-    'Rohit',
-    'Rohit',
-    'Rohit',
+    'Anikait',
+    'Anikait',
+    'Anikait',
+    'Anikait',
     CAST(17 AS INT),
     CAST(17 AS BIGINT),
     CAST(17 AS SMALLINT),
@@ -323,16 +316,15 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-17 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-17 12:43:10' AS SMALLDATETIME),
-    CAST(N'Rohit' AS IMAGE),
-    N'Rohit',
-    N'Rohit',
-    CAST(N'Rohit' AS SQL_VARIANT),
+    CAST('Anikait' AS IMAGE),
+    N'Anikait',
+    N'Anikait',
+    CAST(N'Anikait' AS SQL_VARIANT),
     CAST ('<body><papaya/></body>' AS xml),
-    CAST('Rohit' AS dbo.babel_5156_string_agg_varUDT),
-    CAST('Rohit' AS dbo.babel_5156_string_agg_imageUDT),
+    'Anikait',
+    0x7172,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    4
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     9,
@@ -364,18 +356,17 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
-    CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
+    NULL,
+    NULL,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    4
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 ),
 (
     10,
-    'Bhagat',
-    'Bhagat',
-    'Bhagat',
-    'Bhagat',
+    'Agrawal',
+    'Agrawal',
+    'Agrawal',
+    'Agrawal',
     CAST(18 AS INT),
     CAST(18 AS BIGINT),
     CAST(18 AS SMALLINT),
@@ -395,32 +386,30 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST(N'12:43:10' AS TIME),
     CAST(N'2000-12-18 12:43:10.1234 +10:0' AS DATETIMEOFFSET),
     CAST(N'2000-12-18 12:43:10' AS SMALLDATETIME),
-    CAST(N'Bhagat' AS IMAGE),
-    N'Bhagat',
-    N'Bhagat',
-    CAST(N'Bhagat' AS SQL_VARIANT),
+    CAST('Agrawal' AS IMAGE),
+    N'Agrawal',
+    N'Agrawal',
+    CAST(N'Agrawal' AS SQL_VARIANT),
     CAST ('<body><orange/></body>' AS xml),
-    CAST('Bhagat' AS dbo.babel_5156_string_agg_varUDT),
-    CAST('Bhagat' AS dbo.babel_5156_string_agg_imageUDT),
+    'Agrawal',
+    0x7273,
     geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
-    4
+    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
 )
 GO
 
-CREATE TABLE babel_5156_string_agg_t2(
+CREATE TABLE babel_3409_concat_t2(
     id int,
     col1_cias varchar(50) collate chinese_prc_ci_as,
     col1_ciai varchar(50) collate chinese_prc_ci_ai,
     col1_csas varchar(50) collate chinese_prc_cs_as,
     col2_cias varchar(50) collate arabic_ci_as,
     col2_ciai varchar(50) collate arabic_ci_ai,
-    col2_csas varchar(50) collate arabic_cs_as,
-    group_id int
+    col2_csas varchar(50) collate arabic_cs_as
 )
 GO
 
-INSERT INTO babel_5156_string_agg_t2 VALUES
+INSERT INTO babel_3409_concat_t2 VALUES
 (
     1,
     N'比尔·拉',
@@ -428,8 +417,7 @@ INSERT INTO babel_5156_string_agg_t2 VALUES
     N'比尔·拉',
     N'الله',
     N'الله',
-    N'الله',
-    1
+    N'الله'
 ),
 (
     2,
@@ -438,8 +426,7 @@ INSERT INTO babel_5156_string_agg_t2 VALUES
     N'莫',
     N' مع ',
     N' مع ',
-    N' مع ',
-    1
+    N' مع '
 ),
 (
     3,
@@ -448,60 +435,59 @@ INSERT INTO babel_5156_string_agg_t2 VALUES
     N'斯',
     N'المتقين',
     N'المتقين',
-    N'المتقين',
-    1
+    N'المتقين'
 )
 GO
 
-CREATE VIEW babel_5156_string_agg_dep_view1 AS
-    SELECT STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+CREATE VIEW babel_3409_concat_dep_view1 AS
+    SELECT CONCAT(col_varchar, col_char, col_varbinary, col_text) AS concatenated_column FROM babel_3409_concat_t1
 GO
 
-CREATE PROCEDURE babel_5156_string_agg_dep_proc1 AS
-    SELECT STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+CREATE PROCEDURE babel_3409_concat_dep_proc1 AS
+    SELECT CONCAT(col_varchar, col_char, col_varbinary, col_text) FROM babel_3409_concat_t1 ORDER BY id
 GO
 
-CREATE FUNCTION babel_5156_string_agg_dep_func1()
+CREATE FUNCTION babel_3409_concat_dep_func1()
 RETURNS NVARCHAR(50)
 AS
 BEGIN
-RETURN (SELECT TOP 1 STRING_AGG(col_varchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+RETURN (SELECT TOP 1 CONCAT(col_varchar, col_char, col_varbinary, col_text) FROM babel_3409_concat_t1 ORDER BY id)
 END
 GO
 
-CREATE FUNCTION babel_5156_string_agg_itvf_func1()
+CREATE FUNCTION babel_3409_concat_itvf_func1()
 RETURNS TABLE
 AS
-RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+RETURN (SELECT TOP 1 CONCAT(col_nvarchar, col_nchar, col_int, col_bigint, col_smallint, col_tinyint, col_numeric, col_float, col_real, col_bit) AS concatenated_column FROM babel_3409_concat_t1 ORDER BY id)
 GO
 
-CREATE VIEW babel_5156_string_agg_dep_view2 AS
-    SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+CREATE VIEW babel_3409_concat_dep_view2 AS
+    SELECT CONCAT(col_nvarchar, col_nchar, col_varchar, col_decimal, col_smallmoney, col_smalldatetime) AS concatenated_column FROM babel_3409_concat_t1
 GO
 
-CREATE PROCEDURE babel_5156_string_agg_dep_proc2 AS
-    SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
+CREATE PROCEDURE babel_3409_concat_dep_proc2 AS
+    SELECT CONCAT(col_nvarchar, col_money, col_datetime, col_datetime2, col_binary, col_date, col_time, col_datetimeoffset) FROM babel_3409_concat_t1 ORDER BY id
 GO
 
-CREATE FUNCTION babel_5156_string_agg_dep_func2()
+CREATE FUNCTION babel_3409_concat_dep_func2()
 RETURNS NVARCHAR(50)
 AS
 BEGIN
-RETURN (SELECT TOP 1 STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+RETURN (SELECT TOP 1 CONCAT(col_nvarchar, col_varbinary, col_text, col_ntext) FROM babel_3409_concat_t1 ORDER BY id)
 END
 GO
 
-CREATE FUNCTION babel_5156_string_agg_itvf_func2()
+CREATE FUNCTION babel_3409_concat_itvf_func2()
 RETURNS TABLE
 AS
-RETURN (SELECT STRING_AGG(col_nvarchar, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id)
+RETURN (SELECT TOP 1 CONCAT(col_nvarchar, col_varchar, col_char, col_nchar) AS concatenated_column FROM babel_3409_concat_t1 ORDER BY id)
 GO
 
-CREATE PROCEDURE babel_5156_cast_bit_to_varchar_proc @a VARCHAR(100) AS
+CREATE PROCEDURE babel_3409_cast_time_to_varchar_proc @a VARCHAR(100) AS
     SELECT @a;
 GO
 
-CREATE FUNCTION babel_5156_cast_bit_to_varchar_func(@a VARCHAR(100))
+CREATE FUNCTION babel_3409_cast_time_to_varchar_func(@a VARCHAR(100))
 RETURNS VARCHAR(100)
 AS
 BEGIN
@@ -509,14 +495,189 @@ RETURN @a;
 END
 GO
 
-CREATE PROCEDURE babel_5156_cast_bit_to_nvarchar_proc @a NVARCHAR(100) AS
+CREATE PROCEDURE babel_3409_cast_time_to_nvarchar_proc @a NVARCHAR(100) AS
     SELECT @a;
 GO
 
-CREATE FUNCTION babel_5156_cast_bit_to_nvarchar_func(@a NVARCHAR(100))
+CREATE FUNCTION babel_3409_cast_time_to_nvarchar_func(@a NVARCHAR(100))
 RETURNS NVARCHAR(100)
 AS
 BEGIN
 RETURN @a;
 END
+GO
+
+CREATE PROCEDURE babel_3409_cast_date_to_varchar_proc @a VARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_3409_cast_date_to_varchar_func(@a VARCHAR(100))
+RETURNS VARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+CREATE PROCEDURE babel_3409_cast_date_to_nvarchar_proc @a NVARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_3409_cast_date_to_nvarchar_func(@a NVARCHAR(100))
+RETURNS NVARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+CREATE PROCEDURE babel_3409_cast_datetimeoffset_to_varchar_proc @a VARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_3409_cast_datetimeoffset_to_varchar_func(@a VARCHAR(100))
+RETURNS VARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+CREATE PROCEDURE babel_3409_cast_datetimeoffset_to_nvarchar_proc @a NVARCHAR(100) AS
+    SELECT @a;
+GO
+
+CREATE FUNCTION babel_3409_cast_datetimeoffset_to_nvarchar_func(@a NVARCHAR(100))
+RETURNS NVARCHAR(100)
+AS
+BEGIN
+RETURN @a;
+END
+GO
+
+-- psql
+CREATE TABLE master_dbo.babel_3409_concat_psql_t1(a CHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t1 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t1 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t2(a BPCHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t2 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t2 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t3(a CHARACTER(50))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t3 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t3 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t4(a VARCHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t4 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t4 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t5(a character varying(50))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t5 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t5 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t6(a INTEGER)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t6 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t6 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t7(a BIGINT)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t7 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t7 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t8(a MONEY)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t8 VALUES (123456)
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t8 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t9(a BYTEA)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t9 VALUES ('\x656667686970'::bytea)
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t9 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t10(a TIMESTAMP)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t10 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t10 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t11(a DATE)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t11 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t11 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t12(a BOOLEAN)
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t12 VALUES (TRUE)
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t12 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t13(a BIT(3), b BIT(3))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t13 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t13 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_3409_concat_psql_t14(a BIT VARYING(3), b BIT VARYING(3))
+GO
+
+INSERT INTO master_dbo.babel_3409_concat_psql_t14 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_3409_concat_psql_t14 TO master_dbo;
 GO

@@ -4,94 +4,66 @@ GO
 INSERT INTO babel_4489_trim_t1 VALUES(N'  abc🙂defghi🙂🙂    ', N'ab🙂 ')
 INSERT INTO babel_4489_trim_t1 VALUES(N'  比尔·拉莫斯    ', N'比拉斯 ')
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_t2(a NVARCHAR(50), b NVARCHAR(20))
 GO
 INSERT INTO babel_4489_trim_t2 VALUES(N'  abc🙂defghi🙂🙂    ', N'ab🙂 ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_t3(a CHAR(50), b CHAR(20))
 GO
 INSERT INTO babel_4489_trim_t3 VALUES('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_t4(a VARCHAR(50), b VARCHAR(20))
 GO
 INSERT INTO babel_4489_trim_t4 VALUES('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_t5(a VARBINARY(50), b VARBINARY(50))
 GO
 INSERT INTO babel_4489_trim_t5 VALUES(0x61626364, 0x6164)
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_chinese_prc_ci_as(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS, b VARCHAR(20) COLLATE CHINESE_PRC_CI_AS)
 GO
 INSERT INTO babel_4489_trim_chinese_prc_ci_as VALUES(N'  比尔·拉莫斯    ', N'比拉斯 ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_chinese_prc_cs_as(a VARCHAR(50) COLLATE CHINESE_PRC_CS_AS, b VARCHAR(20) COLLATE CHINESE_PRC_CS_AS)
 GO
 INSERT INTO babel_4489_trim_chinese_prc_cs_as VALUES(N'  比尔·拉莫斯    ', N'比拉斯 ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_chinese_prc_ci_ai(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AI, b VARCHAR(20) COLLATE CHINESE_PRC_CI_AI)
 GO
 INSERT INTO babel_4489_trim_chinese_prc_ci_ai VALUES(N'  比尔·拉莫斯    ', N'比拉斯 ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_arabic_ci_as(a VARCHAR(50) COLLATE ARABIC_CI_AS, b VARCHAR(20) COLLATE ARABIC_CI_AS)
 GO
 INSERT INTO babel_4489_trim_arabic_ci_as VALUES(N'  الله مع المتقين    ', N'ين ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_arabic_cs_as(a VARCHAR(50) COLLATE ARABIC_CS_AS, b VARCHAR(20) COLLATE ARABIC_CS_AS)
 GO
 INSERT INTO babel_4489_trim_arabic_cs_as VALUES(N'  الله مع المتقين    ', N'ين ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_arabic_ci_ai(a VARCHAR(50) COLLATE ARABIC_CI_AI, b VARCHAR(20) COLLATE ARABIC_CI_AI)
 GO
 INSERT INTO babel_4489_trim_arabic_ci_ai VALUES(N'  الله مع المتقين    ', N'ين ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_image(a IMAGE)
 GO
 INSERT INTO babel_4489_trim_image values(CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS image))
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE babel_4489_trim_text(a TEXT, b NTEXT)
 GO
 INSERT INTO babel_4489_trim_text VALUES (N'  abc🙂defghi🙂🙂    ', N'  abc🙂defghi🙂🙂    ')
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE TYPE dbo.babel_4489_trim_imageUDT FROM image;
 GO
@@ -103,8 +75,6 @@ CREATE TABLE babel_4489_trim_UDT(a dbo.babel_4489_trim_imageUDT, b dbo.babel_448
 GO
 INSERT INTO babel_4489_trim_UDT VALUES(CAST('abcdef' as dbo.babel_4489_trim_imageUDT), CAST('abcdef' as dbo.babel_4489_trim_varUDT))
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE VIEW babel_4489_trim_dep_view AS
     SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2
@@ -158,8 +128,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t1 VALUES ('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t1 TO master_dbo;
 GO
@@ -169,8 +137,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t2 VALUES ('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t2 TO master_dbo;
 GO
@@ -180,8 +146,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t3 VALUES ('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t3 TO master_dbo;
 GO
@@ -191,8 +155,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t4 VALUES ('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t4 TO master_dbo;
 GO
@@ -202,8 +164,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t5 VALUES ('  abcdefghi    ', 'abi ')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t5 TO master_dbo;
 GO
@@ -213,8 +173,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t6 VALUES (12345678, 12)
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t6 TO master_dbo;
 GO
@@ -224,8 +182,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t7 VALUES (12345678, 12)
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t7 TO master_dbo;
 GO
@@ -235,8 +191,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t8 VALUES (123456, 12)
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t8 TO master_dbo;
 GO
@@ -246,8 +200,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t9 VALUES ('\x656667686970'::bytea, '\x656970'::bytea)
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t9 TO master_dbo;
 GO
@@ -257,8 +209,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t10 VALUES ('12-21-16', '12-21-16')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t10 TO master_dbo;
 GO
@@ -268,8 +218,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t11 VALUES ('12-21-16', '12-21-16')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t11 TO master_dbo;
 GO
@@ -279,8 +227,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t12 VALUES (TRUE, FALSE)
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t12 TO master_dbo;
 GO
@@ -290,8 +236,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t13 VALUES (B'101', B'101')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t13 TO master_dbo;
 GO
@@ -301,8 +245,6 @@ GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t14 VALUES (B'101', B'101')
 GO
-~~ROW COUNT: 1~~
-
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t14 TO master_dbo;
 GO

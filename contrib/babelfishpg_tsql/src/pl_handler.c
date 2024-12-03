@@ -4937,7 +4937,6 @@ _PG_init(void)
 
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
-	init_special_function_list();
 	init_tsql_cursor_hash_tab(fcinfo);
 	RegisterXactCallback(pltsql_xact_cb, NULL);
 	RegisterSubXactCallback(pltsql_subxact_cb, NULL);

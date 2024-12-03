@@ -4,7 +4,7 @@ SELECT @custname,
     TRIM(@custname) as [TRIM]
     , LTRIM(@custname) as [LTRIM]
     , RTRIM(@custname) as [RTRIM]
-    , LEFT(@custname, 4) as [LEFT4]
+    , RIGHT(@custname, 4) as [RIGHT4]
     , RIGHT(@custname, 4) as [RIGHT4]
     , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
 ;
@@ -200,7 +200,54 @@ GO
 SELECT RIGHT(b, 3) FROM babel_4489_right_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t1
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t2
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t3
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t4
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t5
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t6
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t7
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t8
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t9
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t10
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t11
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t12
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t13
+GO
+
+SELECT RIGHT(a, 3) FROM dbo.babel_4489_right_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT RIGHT(@inputString, 5)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT RIGHT(@inputString, 3)
 GO
