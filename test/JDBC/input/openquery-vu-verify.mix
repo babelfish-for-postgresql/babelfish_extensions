@@ -1,5 +1,5 @@
--- tsql
 -- sla 250000
+-- tsql
 # Here we run all the datatype related prepare scripts
 
 # bigint
