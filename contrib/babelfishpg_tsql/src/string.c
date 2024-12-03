@@ -54,18 +54,18 @@ static Datum return_varchar_pointer(char *buf, int size);
  * and OpenSSL for the rest.
  * 
  * For varchar/nvarchar the input string is in UTF-8 encoding.
- * So for varchar we keep it as it is but for nvarchar we change the encodign to UTF-16
+ * So for varchar we keep it as it is but for nvarchar we change the encoding to UTF-16
  * 
  */
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
 	Oid         	input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
-	const char 	*algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-	bytea	   	*in = PG_GETARG_BYTEA_PP(1);
-	size_t	    	len = VARSIZE_ANY_EXHDR(in);
-	unsigned char 	*data = (unsigned char *) VARDATA_ANY(in);
-	bytea	    	*result;
+	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+	bytea	   *in = PG_GETARG_BYTEA_PP(1);
+	size_t		len = VARSIZE_ANY_EXHDR(in);
+	bytea	   *result;
+        unsigned char 	*data = (unsigned char *) VARDATA_ANY(in);
 	StringInfoData 	utf16_data;
 
 

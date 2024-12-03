@@ -55,7 +55,7 @@ static inline int varcharTruelen(VarChar *arg);
  * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
  *     or created over nvarchar or nchar.
  */
-bool
+static bool
 is_basetype_nchar_nvarchar(Oid typid)
 {
 	if (tsql_nvarchar_oid == InvalidOid)
@@ -615,6 +615,7 @@ tsql_varchar_input(const char *s, size_t len, int32 atttypmod)
 {
 	return varchar_input(s, len, atttypmod);
 }
+
 /*
  * Convert a C string to VARCHAR internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.

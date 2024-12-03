@@ -701,7 +701,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
+			   (errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Failed to convert from data type varchar to varbinary, %s",
 				errorData->message)));
 	}
@@ -815,6 +815,7 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
 	bytea	   *result;
+
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),

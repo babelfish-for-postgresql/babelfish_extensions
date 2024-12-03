@@ -1351,14 +1351,13 @@ static FuncCandidateList
 tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList candidates)
 {
 
-	FuncCandidateList			current_candidate, best_candidate;
-	Oid							sys_oid = get_namespace_oid("sys", false);
-	Oid 						*argtypes;
-	int							nargs_func = 0;
+	FuncCandidateList		current_candidate, best_candidate;
+	Oid				sys_oid = get_namespace_oid("sys", false);
+	Oid 				*argtypes;
+	int				nargs_func = 0;
 
 	/* Get the candidate with matching second argument type */
 	best_candidate = NULL;
-
 	for (current_candidate = candidates;
 		current_candidate != NULL;
 		current_candidate = current_candidate->next)
@@ -1373,11 +1372,9 @@ tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList c
 			best_candidate = current_candidate;
 		}
 	}
-
 	if (best_candidate != NULL)
 		best_candidate->next = NULL;
 	return best_candidate;
-
 }
 
 /*
@@ -1420,7 +1417,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
-	
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[1])
