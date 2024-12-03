@@ -1,14 +1,3 @@
-CREATE TABLE babelfish_migration_mode_table (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
-GO
-INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
-GO
-
--- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-
 -- check if correct schema is present in search path
 CREATE DATABASE ["BABEL_5111.db"]
 GO
@@ -137,16 +126,4 @@ DROP DATABASE ["BABEL_5111.db"]
 GO
 
 DROP DATABASE ["龙漫远; 龍漫遠.¢£€¥"]
-GO
-
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
--- Reset migration mode to default
-DECLARE @mig_mode VARCHAR(10)
-SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
-SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
-GO
-
-Drop Table IF EXISTS babelfish_migration_mode_table
 GO

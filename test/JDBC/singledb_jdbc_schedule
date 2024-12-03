@@ -3,3 +3,6 @@
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
 ignore#!#Test-sp_reset_connection
+ignore#!#test_search_path
+
+
