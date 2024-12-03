@@ -8,42 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-openquery-vu-prepare
-openquery-vu-verify
-openquery-vu-cleanup
-linked_servers-vu-prepare
-linked_servers-vu-verify
-linked_servers-vu-cleanup
-linked_srv_4229-vu-prepare
-linked_srv_4229-vu-verify
-linked_srv_4229-vu-cleanup
-babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2-vu-verify
-babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2-vu-cleanup
-babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2-vu-prepare
-babel_index_nulls_order-before-15-5-vu-prepare
-babel_index_nulls_order-before-15-5-vu-verify
-babel_index_nulls_order-before-15-5-vu-cleanup
-babel_index_nulls_order-vu-prepare
-babel_index_nulls_order-vu-verify
-babel_index_nulls_order-vu-cleanup
-BABEL-3291
-BABEL-3292
-BABEL-3293
-BABEL-3294
-BABEL-3295
-BABEL-3512
-BABEL-3513
-BABEL-3513_before_15_8_or_16_4-vu-prepare
-BABEL-3513_before_15_8_or_16_4-vu-verify
-BABEL-3513_before_15_8_or_16_4-vu-cleanup
-BABEL-3513-vu-prepare
-BABEL-3513-vu-verify
-BABEL-3513-vu-cleanup
-BABEL-3592
-BABEL-4294-vu-prepare
-BABEL-4294-vu-verify
-BABEL-4294-vu-cleanup
-BABEL-235
+all
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
