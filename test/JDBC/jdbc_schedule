@@ -500,6 +500,5 @@ ignore#!#pgr_zzz_clean_up
 # Ignoring some test temporarily to get clean tests
 ignore#!#BABEL-3292
 ignore#!#BABEL-3512
-ignore#!#babel_collection
 # getting timed out (TODO: BABEL-5353)
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
