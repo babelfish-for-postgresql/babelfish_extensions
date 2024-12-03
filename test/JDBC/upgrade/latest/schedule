@@ -254,7 +254,7 @@ nested_trigger_with_dml
 newid
 objectpropertyex
 openjson
-#openquery_upgrd_before_15_4
+openquery_upgrd_before_15_4
 orderby
 routines_definition
 rowcount
