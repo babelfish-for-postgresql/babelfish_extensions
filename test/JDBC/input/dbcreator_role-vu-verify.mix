@@ -1,12 +1,5 @@
+-- single_db_mode_expected
 -- tsql
--- dbcreator should not have membership in database guest role
-SELECT r.rolname AS parent_role, mr.rolname as member 
-FROM pg_auth_members m 
-JOIN pg_roles r ON (m.roleid = r.oid) 
-JOIN pg_roles mr ON (m.member = mr.oid) 
-where mr.rolname = 'dbcreator';
-go
-
 -- should be 0
 select is_srvrolemember('sysadmin', 'dbcreator')
 go
@@ -72,14 +65,6 @@ go
 SELECT owner AS database_owner FROM sys.babelfish_sysdatabases WHERE name = 'dbcreator_db';
 go
 
--- should not have membership in database guest role
-SELECT r.rolname AS parent_role, mr.rolname as member 
-FROM pg_auth_members m 
-JOIN pg_roles r ON (m.roleid = r.oid) 
-JOIN pg_roles mr ON (m.member = mr.oid) 
-where mr.rolname = 'dbcreator';
-go
-
 use dbcreator_db
 go
 
@@ -129,6 +114,12 @@ go
 create user u1 for login dbcreator_login1
 go
 
+use master
+go
+
+grant select on dbcreator_tb1 to guest
+go
+
 -- terminate-tsql-conn
 
 -- tsql user=dbcreator_login1 password=123
@@ -141,6 +132,13 @@ select current_user
 go
 
 use master
+go
+
+-- should not be able to select on table
+select current_user
+go
+
+select * from dbcreator_tb1
 go
 
 EXEC sp_renamedb 'dbcreator_db', 'dbcreator_db_1'
@@ -208,6 +206,15 @@ grant connect to guest
 go
 
 -- terminate-tsql-conn
+
+-- psql
+-- should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'dbcreator'::regrole;
+go
+
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'sysadmin'::regrole
+AND roleid::regrole::text ~ '^(master|msdb|tempdb|dbcreator)_' order by roleid::regrole;
+go
 
 -- tsql user=dbcreator_login1 password=123
 -- should be allowed
@@ -701,6 +708,14 @@ SET ROLE dbcreator;
 GO
 
 -- psql
+-- dbcreator should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'dbcreator'::regrole;
+go
+
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'sysadmin'::regrole
+AND roleid::regrole::text ~ '^(master|msdb|tempdb|dbcreator)_' order by roleid::regrole;
+go
+
 -- normal PG user
 CREATE USER dbcreator_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
 go
