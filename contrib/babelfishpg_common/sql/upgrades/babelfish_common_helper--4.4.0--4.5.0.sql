@@ -12,32 +12,20 @@ RETURNS sys.BBF_VARBINARY
 AS 'babelfishpg_common', 'nvarcharvarbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.NVARCHAR AS sys.BBF_VARBINARY)
-WITH FUNCTION sys.nvarcharvarbinary (sys.NVARCHAR, integer, boolean) AS ASSIGNMENT;
-
 CREATE OR REPLACE FUNCTION sys.varbinarysysnvarchar(sys.BBF_VARBINARY, integer, boolean)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_common', 'varbinarynvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE CAST (sys.BBF_VARBINARY AS sys.NVARCHAR)
-WITH FUNCTION sys.varbinarysysnvarchar (sys.BBF_VARBINARY, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.binarysysnvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_common', 'varbinarynvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.BBF_BINARY AS sys.NVARCHAR)
-WITH FUNCTION sys.binarysysnvarchar (sys.BBF_BINARY, integer, boolean) AS IMPLICIT;
-
 CREATE OR REPLACE FUNCTION sys.nvarcharbinary(sys.NVARCHAR, integer, boolean)
 RETURNS sys.BBF_BINARY
 AS 'babelfishpg_common', 'nvarcharbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE CAST (sys.NVARCHAR AS sys.BBF_BINARY)
-WITH FUNCTION sys.nvarcharbinary (sys.NVARCHAR, integer, boolean) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION  sys.smalldatetime_date_cmp(sys.SMALLDATETIME, date)
 RETURNS INT4
