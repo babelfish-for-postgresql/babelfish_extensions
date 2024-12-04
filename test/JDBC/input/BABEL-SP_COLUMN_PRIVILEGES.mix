@@ -1,5 +1,5 @@
--- sla 20000
--- sla_for_parallel_query_enforced 20000
+-- sla 40000
+-- sla_for_parallel_query_enforced 40000
 -- tsql
 CREATE DATABASE db1
 GO
