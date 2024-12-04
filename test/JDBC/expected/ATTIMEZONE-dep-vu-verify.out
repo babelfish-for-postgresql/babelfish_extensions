@@ -44,3 +44,83 @@ datetimeoffset
 
 ~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
 
+
+Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'eastern standard time';
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 -05:00
+~~END~~
+
+
+Select convert(datetime2,'9999-12-31 15:59:59.000 +00:00') AT TIME ZONE 'Central Europe Standard Time';
+GO
+~~START~~
+datetimeoffset
+9999-12-31 15:59:59.0000000 +01:00
+~~END~~
+
+
+Select convert(datetimeoffset,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'eastern standard time';
+GO
+~~START~~
+datetimeoffset
+2001-12-31 21:01:00.0000000 -05:00
+~~END~~
+
+
+Select convert(datetimeoffset,'9999-12-31 15:59:59.000 +00:00') AT TIME ZONE 'Central Europe Standard Time';
+GO
+~~START~~
+datetimeoffset
+9999-12-31 16:59:59.0000000 +01:00
+~~END~~
+
+
+select set_config('timezone', 'Asia/Kolkata', false);
+GO
+~~START~~
+text
+Asia/Kolkata
+~~END~~
+
+
+Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'eastern standard time';
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 -05:00
+~~END~~
+
+
+Select convert(datetime2,'9999-12-31 15:59:59.000 +00:00') AT TIME ZONE 'Central Europe Standard Time';
+GO
+~~START~~
+datetimeoffset
+9999-12-31 15:59:59.0000000 +01:00
+~~END~~
+
+
+Select convert(datetimeoffset,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'eastern standard time';
+GO
+~~START~~
+datetimeoffset
+2001-12-31 21:01:00.0000000 -05:00
+~~END~~
+
+
+Select convert(datetimeoffset,'9999-12-31 15:59:59.000 +00:00') AT TIME ZONE 'Central Europe Standard Time';
+GO
+~~START~~
+datetimeoffset
+9999-12-31 16:59:59.0000000 +01:00
+~~END~~
+
+
+select set_config('timezone', 'UTC', false);
+GO
+~~START~~
+text
+UTC
+~~END~~
+

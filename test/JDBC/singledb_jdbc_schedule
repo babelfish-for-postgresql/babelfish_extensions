@@ -8,5 +8,6 @@ ignore#!#test_db_collation-vu-cleanup
 ignore#!#BABEL-CROSS-DB
 ignore#!#BABEL-SYS-DATABASES
 ignore#!#Test-sp_reset_connection
+ignore#!#test_search_path
 
 
