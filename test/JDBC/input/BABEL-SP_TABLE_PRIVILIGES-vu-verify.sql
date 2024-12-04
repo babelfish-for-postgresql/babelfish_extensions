@@ -1,4 +1,3 @@
--- sla 40000
 use babel_sp_table_priviliges_vu_prepare_db1
 go
 

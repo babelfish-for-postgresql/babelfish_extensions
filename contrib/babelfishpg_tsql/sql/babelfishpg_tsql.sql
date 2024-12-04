@@ -1327,32 +1327,22 @@ LANGUAGE PLPGSQL;
 GRANT ALL on FUNCTION sys.babelfish_runtime_error TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
-WITH PreFilteredAuth AS MATERIALIZED(
-    SELECT
-        rolname,
-        orig_username
-    FROM sys.babelfish_authid_user_ext
-    WHERE orig_username NOT IN ('db_datareader', 'db_datawriter', 'db_owner')
-)
 SELECT
-    CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-    CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-    CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-    CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
-    CAST(gm1.orig_username AS sys.sysname) AS GRANTOR,
-    CAST(gm2.orig_username AS sys.sysname) AS GRANTEE,
-    CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
-    CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1
-    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema.column_privileges t5
-        ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
-    JOIN pg_attribute t6
-        ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
-    LEFT JOIN PreFilteredAuth gm1 ON gm1.rolname = t5.grantor::name
-    LEFT JOIN PreFilteredAuth gm2 ON gm2.rolname = t5.grantee::name
-WHERE gm2.orig_username IS NOT NULL;
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
+WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
