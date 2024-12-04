@@ -176,7 +176,7 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 	return code;
 }
 
-void
+static inline void
 AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 {
 	union
@@ -207,46 +207,50 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 	appendStringInfoChar(buf, temp16.half[1]);
 }
 
-void
-TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
+/*
+ * AddUTF8ToStringInfo - Add Unicode code point to a StringInfo in UTF-8
+ */
+static inline void
+AddUTF8ToStringInfo(int32_t code, StringInfo buf)
 {
-	const unsigned char *in = vin;
-	size_t		i;
-	int			consumed;
-	int32_t		code;
-
-	for (i = 0; i < len;)
-	{
-		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
-		AddUTF16ToStringInfo(code, out);
-		i += consumed;
-	}
-}
-
-void
-TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
-{
-	unsigned char *in = vin;
-	int			i;
-	int			consumed;
-	int32_t		code;
-
-	/* UTF16 data allways comes in 16-bit units */
-	if ((len & 0x0001) != 0)
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("invalid UTF16 byte sequence - "
-						"input data has odd number of bytes")));
+				 errmsg("invalid Unicode code point 0x%x", code)));
 
-	for (i = 0; i < len;)
+	/* Range U+0000 .. U+007F (7 bit) */
+	if (code <= 0x7F)
 	{
-		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
-		AddUTF8ToStringInfo(code, out);
-		i += consumed;
+		appendStringInfoChar(buf, code);
+		return;
 	}
+
+	/* Range U+0080 .. U+07FF (11 bit) */
+	if (code <= 0x7ff)
+	{
+		appendStringInfoChar(buf, 0xC0 | (code >> 6));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+0800 .. U+FFFF (16 bit) */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, 0xE0 | (code >> 12));
+		appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+10000 .. U+10FFFF (21 bit) */
+	appendStringInfoChar(buf, 0xF0 | (code >> 18));
+	appendStringInfoChar(buf, 0x80 | ((code >> 12) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | (code & 0x3F));
 }
 
-int32_t
+static inline int32_t
 GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
 {
 	uint16_t	code1;
@@ -304,47 +308,43 @@ GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
 	return result;
 }
 
-/*
- * AddUTF8ToStringInfo - Add Unicode code point to a StringInfo in UTF-8
- */
 void
-AddUTF8ToStringInfo(int32_t code, StringInfo buf)
+TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
 {
-	/* Check that this is a valid code point */
-	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
+		AddUTF16ToStringInfo(code, out);
+		i += consumed;
+	}
+}
+
+void
+TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
+{
+	unsigned char *in = vin;
+	int			i;
+	int			consumed;
+	int32_t		code;
+
+	/* UTF16 data allways comes in 16-bit units */
+	if ((len & 0x0001) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("invalid Unicode code point 0x%x", code)));
+				 errmsg("invalid UTF16 byte sequence - "
+						"input data has odd number of bytes")));
 
-	/* Range U+0000 .. U+007F (7 bit) */
-	if (code <= 0x7F)
+	for (i = 0; i < len;)
 	{
-		appendStringInfoChar(buf, code);
-		return;
+		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
+		AddUTF8ToStringInfo(code, out);
+		i += consumed;
 	}
-
-	/* Range U+0080 .. U+07FF (11 bit) */
-	if (code <= 0x7ff)
-	{
-		appendStringInfoChar(buf, 0xC0 | (code >> 6));
-		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
-		return;
-	}
-
-	/* Range U+0800 .. U+FFFF (16 bit) */
-	if (code <= 0xFFFF)
-	{
-		appendStringInfoChar(buf, 0xE0 | (code >> 12));
-		appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
-		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
-		return;
-	}
-
-	/* Range U+10000 .. U+10FFFF (21 bit) */
-	appendStringInfoChar(buf, 0xF0 | (code >> 18));
-	appendStringInfoChar(buf, 0x80 | ((code >> 12) & 0x3F));
-	appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
-	appendStringInfoChar(buf, 0x80 | (code & 0x3F));
 }
 
 
