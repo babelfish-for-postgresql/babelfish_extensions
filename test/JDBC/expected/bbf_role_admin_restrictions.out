@@ -118,7 +118,7 @@ SET SESSION AUTHORIZATION bbf_role_admin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "bbf_role_admin"
     Server SQLState: 42501)~~
 
 
@@ -208,7 +208,7 @@ SET SESSION AUTHORIZATION bbf_role_admin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "bbf_role_admin"
     Server SQLState: 42501)~~
 
 
