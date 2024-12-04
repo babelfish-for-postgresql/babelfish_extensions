@@ -1351,7 +1351,8 @@ FROM pg_catalog.pg_class t1
     JOIN pg_attribute t6
         ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
     LEFT JOIN PreFilteredAuth gm1 ON gm1.rolname = t5.grantor::name
-    LEFT JOIN PreFilteredAuth gm2 ON gm2.rolname = t5.grantee::name;
+    LEFT JOIN PreFilteredAuth gm2 ON gm2.rolname = t5.grantee::name
+WHERE gm2.orig_username IS NOT NULL;
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
