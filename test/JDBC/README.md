@@ -53,7 +53,7 @@ export databaseName = test_db
 ```
 
 ## Controlling which test cases should run
-By default all the tests will run. You can run one or more individual tests by specifying test information in the `test/JDBC/jdbc_schedule` file for multi-db run and `test/JDBC/singledb_jdbc_schedule` for single-db run.
+By default all the tests will run. You can run one or more individual tests by specifying test information in the `test/JDBC/jdbc_schedule` file
 
 ## Writing the test cases
 ### Using a plain SQL Batch
@@ -487,7 +487,7 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     1. By default expected output of a test should be added into `expected` folder.
     2. If the expected output is different for single-db migration mode compared to multi-db migration mode, one can add a different expected output specially for single-db migration mode in `expected/single_db/` folder. Additionally, one needs to add `-- single_db_mode_expected` flag in the corresponding input file.
     
-5. To exclude any test from running via the JDBC in single-db migration mode, you can add test-case name with prefix `ignore#!#` in `singledb_jdbc_schedule` file.
+5. To exclude some tests from running via the JDBC in single-db migration mode, you can add test-case name with prefix `ignore#!#` in `singledb_jdbc_schedule` file.
 
 6. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash

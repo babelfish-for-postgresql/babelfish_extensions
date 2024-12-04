@@ -36,8 +36,6 @@ outputErrorCode = true
 # PLEASE LOOK AT THE jdbc_schedule FILE
 scheduleFile = ./jdbc_schedule
 
-singledbScheduleFile = ./singledb_jdbc_schedule
-
 # WHETHER TEST MODE IS PARALLEL QUERY MODE ON
 isParallelQueryMode = false
 
