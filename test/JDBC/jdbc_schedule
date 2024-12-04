@@ -482,6 +482,10 @@ ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
 
+ignore#!#trim-before-15_11-or-16_7-vu-prepare
+ignore#!#trim-before-15_11-or-16_7-vu-verify
+ignore#!#trim-before-15_11-or-16_7-vu-cleanup
+
 # Assertion failure in pg-stat-statements BABEL-5391
 ignore#!#Test-sp_execute_postgresql
 ignore#!#pg_stat_statements_tsql
