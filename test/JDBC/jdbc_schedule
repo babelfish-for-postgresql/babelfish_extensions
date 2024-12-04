@@ -10,14 +10,18 @@
 
 all
 
+<<<<<<< HEAD
 ignore#!#BABEL-4279
+=======
+ignore#!#BABEL-1435
+ignore#!#BABEL-1446
+>>>>>>> upstream/BABEL_4_X_DEV
 ignore#!#TestSpatialPoint-vu-prepare
 ignore#!#TestSpatialPoint-vu-verify
 ignore#!#TestSpatialPoint-vu-cleanup
 ignore#!#babelfish_migration_mode-vu-prepare
 ignore#!#babelfish_migration_mode-vu-verify
 ignore#!#babelfish_migration_mode-vu-cleanup
-ignore#!#test_search_path
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -94,6 +98,9 @@ ignore#!#BABEL-2736-before-16_5-vu-cleanup
 ignore#!#BABEL-2736-before-15_3-vu-prepare
 ignore#!#BABEL-2736-before-15_3-vu-verify
 ignore#!#BABEL-2736-before-15_3-vu-cleanup
+ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-prepare
+ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-verify
+ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
