@@ -1364,7 +1364,7 @@ tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList c
 	{
 		/* we should only consider candidates for hashbytes function from sys schema */
 		if (get_func_namespace(current_candidate->oid) != sys_oid)
-			NULL;
+			return NULL;
 
 		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
 		if(input_typeids[1] == argtypes[1])
@@ -1398,7 +1398,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
 	/* Specific handling for hashbytes function based on second input argument via tsql_func_select_candidate_for_hashbytes() */
-	if ((proc_nsname == NULL || strcmp(proc_name, "sys") == 0) && strcmp(proc_name, "hashbytes") == 0)
+	if ((proc_nsname == NULL || strcmp(proc_nsname, "sys") == 0) && strcmp(proc_name, "hashbytes") == 0)
 	{
 		return tsql_func_select_candidate_for_hashbytes(input_typeids, candidates);
 	}
