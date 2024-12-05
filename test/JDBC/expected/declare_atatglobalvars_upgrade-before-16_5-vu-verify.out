@@ -1,0 +1,20 @@
+insert into t1_declare_atatglobalvars_upgrade values(4)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+
+exec p1_declare_atatglobalvars_upgrade
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+
+select dbo.f1_declare_atatglobalvars_upgrade() 
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+

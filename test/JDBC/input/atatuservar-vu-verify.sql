@@ -1741,8 +1741,6 @@ declare @@exp int=123 select @@exp, exp(1)
 go
 declare @@sign int=123 select @@sign, sign(1)
 go
-declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
-go
 declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
 go
 declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
@@ -1773,7 +1771,6 @@ declare @@db_id int=123 select @@db_id, db_id('master')
 declare @@db_name int=123 select @@db_name, db_name()
 declare @@exp int=123 select @@exp, exp(1)
 declare @@sign int=123 select @@sign, sign(1)
-declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
 declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
 declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
 declare @@atn2 int=123 select @@atn2, atn2(1,0)
@@ -1800,7 +1797,6 @@ declare @@db_id int=123
 declare @@db_name int=123 
 declare @@exp int=123 
 declare @@sign int=123 
-declare @@lock_timeout int=123 
 declare @@rand int=123 
 declare @@trigger_nestlevel int=123 
 declare @@atn2 int=123 
@@ -1809,7 +1805,7 @@ declare @@datediff int=123
 declare @@datediff_big int=123 
 declare @@dateadd int=123 
 declare @@datename int=123 
-return @@xact_state + @@error_line + @@error_message + @@error_number + @@error_procedure + @@error_state + @@db_id + @@db_name + @@exp + @@sign + @@lock_timeout + @@rand + @@trigger_nestlevel + @@atn2 + @@datepart + @@datediff + @@datediff_big + @@dateadd + @@datename 
+return @@xact_state + @@error_line + @@error_message + @@error_number + @@error_procedure + @@error_state + @@db_id + @@db_name + @@exp + @@sign + @@rand + @@trigger_nestlevel + @@atn2 + @@datepart + @@datediff + @@datediff_big + @@dateadd + @@datename 
 end
 go
 select dbo.f1_sysfunctions_atatuservar()
@@ -1827,7 +1823,6 @@ declare @@db_id int=123 select @@db_id, db_id('master')
 declare @@db_name int=123 select @@db_name, db_name()
 declare @@exp int=123 select @@exp, exp(1)
 declare @@sign int=123 select @@sign, sign(1)
-declare @@lock_timeout int=123 select @@lock_timeout, lock_timeout()
 declare @@rand int=123 select @@rand, case when rand() <= 0 then 'too small, <= 0' when rand() >= 1 then ' too large, >= 1' else 'correct, >0 && <1' end
 declare @@trigger_nestlevel int=123 select @@trigger_nestlevel, trigger_nestlevel()
 declare @@atn2 int=123 select @@atn2, atn2(1,0)

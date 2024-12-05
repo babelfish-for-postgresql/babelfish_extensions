@@ -1,4 +1,4 @@
--- sla_for_parallel_query_enforced 110000
+-- sla_for_parallel_query_enforced 120000
 -- create tables with most of the datatypes
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go

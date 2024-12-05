@@ -557,6 +557,7 @@ BABEL-5059_before_16_5
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+declare_atatglobalvars_upgrade-before-16_5
 BABEL-5186
 BABEL-2736-before-16_5
 smalldatetime_date_cmp

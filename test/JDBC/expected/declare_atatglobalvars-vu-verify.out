@@ -1,0 +1,479 @@
+declare @@cursor_rows int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@cursor_rows'.)~~
+
+declare @@datefirst int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@datefirst'.)~~
+
+declare @@DBTS int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@DBTS'.)~~
+
+declare @@error int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@error'.)~~
+
+declare @@pgerror int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@pgerror': this is a reserved variable name in Babelfish.)~~
+
+declare @@fetch_status int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@fetch_status'.)~~
+
+declare @@IDENTITY int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@IDENTITY'.)~~
+
+declare @@language varchar(100)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@language'.)~~
+
+declare @@LOCK_TIMEOUT int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@LOCK_TIMEOUT'.)~~
+
+declare @@max_connections int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_connections'.)~~
+
+declare @@max_precision int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+
+declare @@nestlevel int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@nestlevel'.)~~
+
+declare @@options int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@options'.)~~
+
+declare @@procid int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@procid'.)~~
+
+declare @@rowcount int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@rowcount'.)~~
+
+declare @@servername varchar(100)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@servername'.)~~
+
+declare @@servicename varchar(100)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@servicename'.)~~
+
+declare @@spid int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@spid'.)~~
+
+declare @@trancount int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@trancount'.)~~
+
+declare @@version varchar(100)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@version'.)~~
+
+declare @@microsoftversion int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@microsoftversion'.)~~
+
+declare @@connections int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@connections'.)~~
+
+declare @@cpu_busy int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@cpu_busy'.)~~
+
+declare @@idle int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@idle'.)~~
+
+declare @@io_busy int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@io_busy'.)~~
+
+declare @@langid int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@langid'.)~~
+
+declare @@packet_errors int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@packet_errors'.)~~
+
+declare @@pack_received int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@pack_received'.)~~
+
+declare @@pack_sent int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@pack_sent'.)~~
+
+declare @@remserver varchar(100)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@remserver'.)~~
+
+declare @@textsize int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@textsize'.)~~
+
+declare @@timeticks int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@timeticks'.)~~
+
+declare @@total_errors int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@total_errors'.)~~
+
+declare @@total_read int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@total_read'.)~~
+
+declare @@total_write int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@total_write'.)~~
+
+
+
+declare @@myvar int, @@spid int
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@spid'.)~~
+
+declare @@spid table(a int)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@spid'.)~~
+
+
+create procedure p1_declare_atatglobalvars
+as
+declare @@spid int=123
+select @@spid
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@spid'.)~~
+
+create procedure p1_declare_atatglobalvars
+as
+declare @@DATEFIRST int=123
+select @@datefirst
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@DATEFIRST'.)~~
+
+create procedure p1_declare_atatglobalvars
+as
+declare @@myvar int=123, @@nestlevel int=123
+select @@nestlevel
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@nestlevel'.)~~
+
+
+create procedure p1_declare_atatglobalvars
+@@identity int
+as
+return 0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@identity'.)~~
+
+
+create procedure p1_declare_atatglobalvars
+@@myparam int, @@options int = -1, @@myparam2 int
+as
+return 0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@options'.)~~
+
+
+create procedure p1_declare_atatglobalvars 
+@@dbts tt_declare_atatglobalvars readonly
+as
+return 0
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@dbts'.)~~
+
+
+create function f1_declare_atatglobalvars() 
+returns int 
+as 
+begin
+declare @@max_precision int
+return 0 
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+
+
+create function f1_declare_atatglobalvars() 
+returns int 
+as 
+begin
+declare @@myvar int=123, @@max_precision int
+return 0 
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@max_precision'.)~~
+
+
+create function f1_declare_atatglobalvars(@@fetch_status int) 
+returns int 
+as 
+begin 
+return 0 
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@fetch_status'.)~~
+
+
+create function f1_declare_atatglobalvars(@@myparam int, @@fetch_status int, @@myparam2 int) 
+returns int 
+as 
+begin 
+return 0 
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@fetch_status'.)~~
+
+
+create function f1_declare_atatglobalvars() 
+returns @@rowcount table(a int)
+as begin 
+return 
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@rowcount'.)~~
+
+
+create trigger tr1 on t1_declare_atatglobalvars for insert
+as
+begin
+declare @@procid int
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@procid'.)~~
+
+
+create trigger tr1 on t1_declare_atatglobalvars for insert
+as
+begin
+declare @@myvar int, @@procid int, @@myvar2 int
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near '@@procid'.)~~
+
+
+-- verify @@rowcount etc. still work orrectly (NB. this is just a brief test, other test cases already exist for these)
+select a from t1_declare_atatglobalvars order by a
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#varchar
+2#!#0#!#0#!#0#!#00000
+~~END~~
+
+
+create procedure p2_declare_atatglobalvars
+as
+select a from t1_declare_atatglobalvars order by a
+select @@rowcount as rc, @@nestlevel as nl, @@trancount as tc, @@error as err, @@pgerror as pgerr
+go
+exec p2_declare_atatglobalvars
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#varchar
+2#!#1#!#0#!#0#!#00000
+~~END~~
+
+begin tran
+exec p2_declare_atatglobalvars
+rollback
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int#!#varchar
+2#!#1#!#1#!#0#!#00000
+~~END~~
+
+
+-- non-zero @@PGERROR:
+select 1/0
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select @@error as err, @@pgerror as pgerr
+go
+~~START~~
+int#!#varchar
+8134#!#22012
+~~END~~
+
+
+create procedure p3_declare_atatglobalvars @@myparam int
+as
+select @@myparam
+go
+exec p3_declare_atatglobalvars @@max_precision
+go
+~~START~~
+int
+38
+~~END~~
+
+exec p3_declare_atatglobalvars @@myparam=@@max_precision
+go
+~~START~~
+int
+38
+~~END~~
+
+
+create function f2_declare_atatglobalvars(@@myparam int) 
+returns int 
+as 
+begin 
+return @@myparam
+end
+go
+select dbo.f2_declare_atatglobalvars(@@max_precision)
+go
+~~START~~
+int
+38
+~~END~~
+
+
+declare @@pgerror2 int=123 select @@pgerror2
+go
+~~START~~
+int
+123
+~~END~~
+
+declare @@spid_ int=123 select @@spid_
+go
+~~START~~
+int
+123
+~~END~~
+
