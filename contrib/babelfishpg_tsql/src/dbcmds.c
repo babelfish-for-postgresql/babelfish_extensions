@@ -1403,6 +1403,7 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 	initStringInfo(&query);
 	appendStringInfo(&query, "GRANT SELECT ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT UPDATE ON ALL SEQUENCES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT TRUNCATE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
 
@@ -1414,7 +1415,7 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	Assert(list_length(stmt_list) == 8);
+	Assert(list_length(stmt_list) == 9);
 
 	ScanKeyInit(&key,
 				Anum_namespace_ext_dbid,
@@ -1442,6 +1443,8 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 		/* Replace dummy elements in parsetree with real values */
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_datareader, NULL);
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);

@@ -184,6 +184,14 @@ int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_1.before_sq1; -- allowed
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
 insert into db_roles_schema_1.before_t1 values(1); -- allowed
 go
 ~~ROW COUNT: 1~~

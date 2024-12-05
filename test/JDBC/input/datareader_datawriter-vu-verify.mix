@@ -126,6 +126,9 @@ go
 select * from db_roles_schema_1.after_v2; -- allowed
 go
 
+SELECT NEXT VALUE FOR db_roles_schema_1.before_sq1; -- allowed
+go
+
 insert into db_roles_schema_1.before_t1 values(1); -- allowed
 go
 
