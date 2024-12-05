@@ -52,11 +52,6 @@ AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db_owner');
 GO
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-
 CREATE DATABASE db1;
 GO
 
