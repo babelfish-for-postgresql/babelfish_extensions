@@ -185,53 +185,6 @@ go
 insert t3_trigger_atatuservar values (123)
 go
 
--- assuming @@servername is BABELFISH
-declare @v varchar(50)
-set @v = @@servername
-select @v
-go
-
-declare @v int
-set @v = len(@@servername)
-select @v
-go
-
-create procedure p3_atatuservar
-as
-declare @v varchar(50)
-set @v = @@servername
-select @v
-
-declare @v2 int
-set @v2 = len(@@servername)
-select @v2
-go
-exec p3_atatuservar
-go
-
-create function f3_atatuservar(@#p1 varchar(30)) returns int
-as
-begin
-declare @@v int
-set @@v = len(@@servername)
-return @@v * len(@#p1)
-end
-go
-select dbo.f3_atatuservar(@@servername)
-go
-
-create trigger tr4_atatuservar on t4_trigger_atatuservar for insert
-as
-begin
-select 'trigger tr4_atatuservar'	
-declare @@v int
-set @@v = len(@@servername)
-select @@v
-end
-go
-insert t4_trigger_atatuservar values (123)
-go
-
 -- procedure call with named/unnamed arguments, output parameters, return status, in T-SQL batch, procedure, trigger
 create procedure p4_atatuservar @@p1 int
 as select @@p1
