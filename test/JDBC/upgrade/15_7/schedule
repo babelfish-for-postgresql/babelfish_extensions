@@ -152,6 +152,7 @@ babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
 check_for_inconsistent_metadata
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string

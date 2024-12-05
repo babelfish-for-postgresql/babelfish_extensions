@@ -87,14 +87,6 @@ int
 
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 CREATE DATABASE db1;
 GO
 
@@ -225,14 +217,6 @@ int
 
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 

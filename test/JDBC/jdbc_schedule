@@ -10,14 +10,9 @@
 
 all
 
-ignore#!#BABEL-1435
-ignore#!#BABEL-1446
 ignore#!#TestSpatialPoint-vu-prepare
 ignore#!#TestSpatialPoint-vu-verify
 ignore#!#TestSpatialPoint-vu-cleanup
-ignore#!#babelfish_migration_mode-vu-prepare
-ignore#!#babelfish_migration_mode-vu-verify
-ignore#!#babelfish_migration_mode-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 

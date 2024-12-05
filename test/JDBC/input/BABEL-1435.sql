@@ -67,24 +67,6 @@ GO
 DROP DATABASE db1;
 GO
 
--- Set current_user for testing db mode
-IF (SELECT 1 FROM pg_roles WHERE rolname='jdbc_user') = 1
-BEGIN
-	WITH SET_CTE
-	AS
-	(SELECT set_config('role', 'jdbc_user', false))
-	SELECT NULL
-	FROM SET_CTE
-END
-ELSE
-BEGIN
-	WITH SET_CTE
-	AS
-	(SELECT set_config('role', 'babeltestuser', false))
-	SELECT NULL
-	FROM SET_CTE
-END
-GO
 
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
@@ -186,24 +168,6 @@ GO
 DROP DATABASE db1;
 GO
 
--- Set current_user for testing db mode
-IF (SELECT 1 FROM pg_roles WHERE rolname='jdbc_user') = 1
-BEGIN
-	WITH SET_CTE
-	AS
-	(SELECT set_config('role', 'jdbc_user', false))
-	SELECT NULL
-	FROM SET_CTE
-END
-ELSE
-BEGIN
-	WITH SET_CTE
-	AS
-	(SELECT set_config('role', 'babeltestuser', false))
-	SELECT NULL
-	FROM SET_CTE
-END
-GO
 
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
