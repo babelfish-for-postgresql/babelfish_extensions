@@ -478,6 +478,9 @@ ignore#!#BABEL-5119_before_16_5-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
 # Assertion failure in pg-stat-statements BABEL-5391
 ignore#!#Test-sp_execute_postgresql
