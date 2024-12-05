@@ -986,24 +986,10 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Datum datum;
-		bool user_can_connect;
-		bool isnull;
-
-		datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_user_can_connect,
-							 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
-		Assert(!isnull);
-		user_can_connect = DatumGetInt32(datum);
-
-		/* db_accessadmin members should always have connect permissions */
-		if (user_can_connect == 1 ||
-			(has_privs_of_role(get_role_oid(login, false), get_db_accessadmin_oid(db_name, false))))
-		{
-			datum = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_rolname,
-								 RelationGetDescr(bbf_authid_user_ext_rel), &isnull);
-			Assert(!isnull);
-			user_name = pstrdup(DatumGetCString(datum));
-		}
+		Form_authid_user_ext userform;
+	
+		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+		user_name = pstrdup(NameStr(userform->rolname));
 	}
 
 	table_endscan(scan);
@@ -1116,12 +1102,11 @@ get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_o
 
 /* Checks if the user is enabled on a given database. */
 static bool
-user_has_dbaccess(const char *user)
+user_has_dbaccess(const char *user, const char *db_name)
 {
 	HeapTuple	tuple;
 	bool		has_access = false;
 	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
-
 	if (HeapTupleIsValid(tuple))
 	{
 		bool	isnull = true;
@@ -1129,7 +1114,7 @@ user_has_dbaccess(const char *user)
 		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
 		Assert(!isnull);
 		user_can_connect = DatumGetInt32(datum);
-		if (user_can_connect == 1)
+		if (user_can_connect == 1 || has_privs_of_role(get_role_oid(user, false), get_db_accessadmin_oid(db_name, false)))
 			has_access = true;
 		ReleaseSysCache(tuple);
 	}
@@ -1153,7 +1138,7 @@ get_user_for_database(const char *db_name)
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
-	if (user && !user_has_dbaccess(user) && !guest_has_dbaccess((char *) db_name))
+	if (user && !user_has_dbaccess(user, db_name) && !guest_has_dbaccess((char *) db_name))
 		user = NULL;
 
 	if (!user)
