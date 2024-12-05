@@ -1196,7 +1196,7 @@ SET SESSION AUTHORIZATION master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "master_db_securityadmin"
     Server SQLState: 42501)~~
 
 
@@ -1285,7 +1285,7 @@ SET SESSION AUTHORIZATION master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "master_db_securityadmin"
     Server SQLState: 42501)~~
 
 
