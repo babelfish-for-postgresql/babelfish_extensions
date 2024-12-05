@@ -4658,7 +4658,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123
+123.00
 ~~END~~
 
 
@@ -4691,7 +4691,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123
+123.00
 ~~END~~
 
 
@@ -4702,7 +4702,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123.00000000
+123.000
 ~~END~~
 
 
