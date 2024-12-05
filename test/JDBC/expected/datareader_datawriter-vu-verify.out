@@ -59,6 +59,9 @@ go
 create table db_roles_schema_2.after_created_by_u2_t1(a int);
 go
 
+create sequence db_roles_schema_2.after_created_by_u2_sq1 start with 1 increment by 1 ;
+go
+
 create view db_roles_schema_2.after_created_by_u2_v1 as select 1;
 go
 
@@ -72,10 +75,16 @@ go
 create table db_roles_schema_1.after_t1(a int);
 go
 
+create sequence db_roles_schema_1.after_sq1 start with 1 increment by 1 ;
+go
+
 create view db_roles_schema_1.after_v1 as select 2;
 go
 
 create table db_roles_schema_2.after_created_by_dbo_t1(a int);
+go
+
+create sequence db_roles_schema_2.after_created_by_dbo_sq1 start with 1 increment by 1 ;
 go
 
 create view db_roles_schema_2.after_created_by_dbo_v1 as select 2;
@@ -90,10 +99,16 @@ go
 create table db_roles_schema_1.after_t2(a int);
 go
 
+create sequence db_roles_schema_1.after_sq2 start with 1 increment by 1 ;
+go
+
 create view db_roles_schema_1.after_v2 as select 2;
 go
 
 create table db_roles_schema_2.after_created_by_dbo_t2(a int);
+go
+
+create sequence db_roles_schema_2.after_created_by_dbo_sq2 start with 1 increment by 1 ;
 go
 
 create view db_roles_schema_2.after_created_by_dbo_v2 as select 2;
@@ -107,6 +122,9 @@ use db_roles_db1;
 go
 
 create table db_roles_schema_2.after_created_by_u2_t2(a int);
+go
+
+create sequence db_roles_schema_2.after_created_by_u2_sq2 start with 1 increment by 1 ;
 go
 
 create view db_roles_schema_2.after_created_by_u2_v2 as select 1;
@@ -131,6 +149,22 @@ select * from db_roles_schema_1.after_t2; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_1.after_sq1; -- allowed
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_1.after_sq2; -- allowed
+go
+~~START~~
+bigint
+1
 ~~END~~
 
 
@@ -172,6 +206,14 @@ int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.before_created_by_dbo_sq1; -- allowed
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
 select * from db_roles_schema_2.before_created_by_dbo_v1; -- allowed
 go
 ~~START~~
@@ -199,6 +241,14 @@ select * from db_roles_schema_2.after_created_by_dbo_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_dbo_sq1; -- allowed
+go
+~~START~~
+bigint
+1
 ~~END~~
 
 
@@ -232,6 +282,14 @@ int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_dbo_sq2; -- allowed
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
 select * from db_roles_schema_2.after_created_by_dbo_v2; -- allowed
 go
 ~~START~~
@@ -259,6 +317,14 @@ select * from db_roles_schema_2.before_created_by_u2_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.before_created_by_u2_sq1; -- allowed
+go
+~~START~~
+bigint
+1
 ~~END~~
 
 
@@ -292,6 +358,14 @@ int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_u2_sq2; -- allowed
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
 select * from db_roles_schema_2.after_created_by_u2_v2; -- allowed
 go
 ~~START~~
@@ -319,6 +393,14 @@ select * from db_roles_schema_2.after_created_by_u2_t1; -- allowed
 go
 ~~START~~
 int
+~~END~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_u2_sq1; -- allowed
+go
+~~START~~
+bigint
+1
 ~~END~~
 
 
@@ -379,11 +461,38 @@ go
 ~~ERROR (Message: permission denied for table after_t2)~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_1.after_sq1;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_sq1)~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_1.after_sq2;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_sq2)~~
+
+
 select * from db_roles_schema_1.before_t1; -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table before_t1)~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_1.before_sq1;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence before_sq1)~~
 
 
 select * from db_roles_schema_1.after_v1;  -- not allowed
@@ -477,6 +586,15 @@ go
 ~~ERROR (Message: permission denied for table before_created_by_dbo_t1)~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.before_created_by_dbo_sq1;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence before_created_by_dbo_sq1)~~
+
+
 select * from db_roles_schema_2.before_created_by_dbo_v1; -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -510,6 +628,15 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table after_created_by_dbo_t1)~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_dbo_sq1;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_created_by_dbo_sq1)~~
 
 
 select * from db_roles_schema_2.after_created_by_dbo_v1; -- not allowed
@@ -547,6 +674,15 @@ go
 ~~ERROR (Message: permission denied for table after_created_by_dbo_t2)~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_dbo_sq2;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_created_by_dbo_sq2)~~
+
+
 select * from db_roles_schema_2.after_created_by_dbo_v2; -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -580,6 +716,15 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table before_created_by_u2_t1)~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.before_created_by_u2_sq1;  -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence before_created_by_u2_sq1)~~
 
 
 select * from db_roles_schema_2.before_created_by_u2_v1; -- not allowed
@@ -617,6 +762,15 @@ go
 ~~ERROR (Message: permission denied for table after_created_by_u2_t1)~~
 
 
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_u2_sq1; -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_created_by_u2_sq1)~~
+
+
 select * from db_roles_schema_2.after_created_by_u2_v1; -- not allowed
 go
 ~~ERROR (Code: 33557097)~~
@@ -650,6 +804,15 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table after_created_by_u2_t2)~~
+
+
+SELECT NEXT VALUE FOR db_roles_schema_2.after_created_by_u2_sq2; -- not allowed
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence after_created_by_u2_sq2)~~
 
 
 select * from db_roles_schema_2.after_created_by_u2_v2; -- not allowed
