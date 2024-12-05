@@ -437,6 +437,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
