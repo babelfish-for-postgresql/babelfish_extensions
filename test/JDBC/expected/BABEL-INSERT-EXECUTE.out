@@ -781,3 +781,20 @@ drop type user_defined_sch.test_tbl_type
 go
 drop schema user_defined_sch
 go
+
+-- BABEL-5306
+create table t_5306 (id int)
+GO
+
+create proc p_5306 (@output INT OUTPUT) as SET @output = 1;
+GO
+
+DECLARE @i int
+insert into t_5306 exec p_5306 @output = @i
+GO
+
+drop table t_5306
+GO
+
+drop procedure p_5306
+GO
