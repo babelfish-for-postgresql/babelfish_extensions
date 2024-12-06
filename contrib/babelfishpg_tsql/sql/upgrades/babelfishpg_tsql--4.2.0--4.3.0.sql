@@ -42,7 +42,18 @@ CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS 
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
 
-SELECT sys.babelfish_update_server_collation_name();
+DO
+LANGUAGE plpgsql
+$$
+BEGIN
+    -- Check if the GUC is empty
+    IF current_setting('babelfishpg_tsql.restored_server_collation_name', true) <> '' 
+        OR current_setting('babelfishpg_tsql.restored_server_collation_name', true) IS NOT NULL THEN
+        -- Call the function to update the collation
+        EXECUTE 'SELECT sys.babelfish_update_server_collation_name()';
+    END IF;
+END;
+$$;
 
 DROP FUNCTION sys.babelfish_update_server_collation_name();
 
