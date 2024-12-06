@@ -34,8 +34,6 @@ create table t2_trigger_atatuservar (a int)
 go
 create table t3_trigger_atatuservar (a int)
 go
-create table t4_trigger_atatuservar (a int)
-go
 create table t5_trigger_atatuservar (a int)
 go
 create table t6_trigger_atatuservar (a int)
