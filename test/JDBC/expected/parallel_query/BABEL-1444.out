@@ -66,7 +66,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -98,7 +98,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -135,7 +135,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -168,7 +168,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -200,7 +200,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -233,7 +233,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -271,7 +271,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -303,7 +303,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -340,7 +340,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+db1_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -373,7 +373,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -405,7 +405,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
@@ -438,7 +438,7 @@ SELECT current_setting('role');
 GO
 ~~START~~
 text
-none
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');

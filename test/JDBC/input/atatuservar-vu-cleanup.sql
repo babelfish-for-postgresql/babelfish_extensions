@@ -6,10 +6,6 @@ drop function f1_atatuservar
 go
 drop function f2_atatuservar
 go
-drop procedure p3_atatuservar
-go
-drop function f3_atatuservar
-go
 drop procedure p4_atatuservar
 go
 drop procedure p19_atatuservar
@@ -118,8 +114,6 @@ go
 drop table t2_trigger_atatuservar
 go
 drop table t3_trigger_atatuservar
-go
-drop table t4_trigger_atatuservar
 go
 drop table t5_trigger_atatuservar
 go

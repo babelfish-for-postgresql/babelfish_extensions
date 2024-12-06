@@ -436,6 +436,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
@@ -581,4 +582,4 @@ BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
-
+smalldatetime_date_cmp
