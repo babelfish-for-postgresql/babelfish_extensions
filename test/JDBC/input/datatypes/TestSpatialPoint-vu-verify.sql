@@ -1008,13 +1008,6 @@ GO
 SELECT STX.STX from STX ORDER BY STX.STX
 GO
 
-INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
-GO
-
--- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 CREATE DATABASE db1;
 GO
 
@@ -1079,15 +1072,6 @@ DROP DATABASE db1;
 GO
 
 DROP DATABASE db2;
-GO
-
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
--- Reset migration mode to default
-DECLARE @mig_mode VARCHAR(10)
-SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
-SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO
 
 SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry' ORDER BY name
