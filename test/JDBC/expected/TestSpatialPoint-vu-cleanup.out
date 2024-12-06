@@ -122,8 +122,6 @@ DROP FUNCTION IF EXISTS dbo.CalculateDistance
 
 DROP TABLE IF EXISTS YourTable2
 
-Drop Table IF EXISTS babelfish_migration_mode_table
-
 DROP TABLE IF EXISTS geometry_test
 
 DROP TYPE IF EXISTS dbo.GeospatialUDT;
