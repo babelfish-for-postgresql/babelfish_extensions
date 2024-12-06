@@ -2114,12 +2114,12 @@ static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
 	int32		max_typmods=0,
-				max_precision = 0,
-				max_scale = 0,
-				precision = 0,
-				scale = 0,
-				integralDigitCount = 0,
-				result_typmod = -1;
+			max_precision = 0,
+			max_scale = 0,
+			precision = 0,
+			scale = 0,
+			integralDigitCount = 0,
+			result_typmod = -1;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 

@@ -4658,7 +4658,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123
+123.00
 ~~END~~
 
 
@@ -4691,7 +4691,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123
+123.00
 ~~END~~
 
 
@@ -4702,7 +4702,7 @@ END AS RESULT
 GO
 ~~START~~
 numeric
-123.00000000
+123.000
 ~~END~~
 
 
@@ -13189,7 +13189,7 @@ SELECT * FROM BABEL_5341_V2;
 GO
 ~~START~~
 numeric
-6789.0000
+6789
 ~~END~~
 
 
