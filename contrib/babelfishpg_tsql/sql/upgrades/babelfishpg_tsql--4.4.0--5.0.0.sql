@@ -187,12 +187,35 @@ UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sys
 
 -- At this point, there will be only one database fixed role which is db_owner.
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
-UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
 CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_db_roles_during_upgrade';
-CALL sys.create_db_roles_during_upgrade();
+
+DO $$
+DECLARE
+    role_info record;
+BEGIN
+    WITH fixed_db_roles AS (
+        SELECT DISTINCT orig_username
+        FROM sys.babelfish_authid_user_ext
+        WHERE is_fixed_role = 1
+          AND orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 
+                                'db_datareader', 'db_datawriter', 'db_ddladmin')
+    )
+    SELECT 
+        string_agg(orig_username, ', ') AS existing_db_roles,
+        COUNT(*) AS role_count
+    INTO role_info
+    FROM fixed_db_roles;
+
+    IF role_info.role_count = 1 THEN
+        CALL sys.create_db_roles_during_upgrade();
+    ELSE
+        RAISE WARNING 'The following fixed database role(s) already exist(s): %', role_info.existing_db_roles;
+    END IF;
+END $$;
+
 DROP PROCEDURE sys.create_db_roles_during_upgrade();
 
 DO
@@ -206,7 +229,7 @@ BEGIN
     WHERE rolname IN ('securityadmin', 'dbcreator');
         
     IF existing_server_roles IS NOT NULL THEN
-            RAISE EXCEPTION 'The following role(s) already exist(s): %', existing_server_roles;   
+            RAISE WARNING 'The following fixed server role(s) already exist(s): %', existing_server_roles;   
     ELSE
         EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
         EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
