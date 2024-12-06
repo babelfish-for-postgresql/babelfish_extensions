@@ -51,6 +51,8 @@
 #define NCHAR_MAX_TYPMOD 4000
 #define BPCHAR_MAX_TYPMOD 8000
 
+#define TDS_MAX_NUM_PRECISION 38
+
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -2103,10 +2105,9 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 }
 
 /* 
- * When we must merge types together (i.e. UNION), if the target type
- * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
- * equal to that of the largest expression
- * 
+ * When we must merge types together (i.e. UNION, CASE), if the target 
+ * type is CHAR, NCHAR, BINARY, NUMERIC or DECIMAL make the typmod 
+ * (representing the length)  equal to that of the largest expression
  * If -1 is returned, engine will handle finding a common typmod as usual
  */
 static int32
@@ -2134,7 +2135,11 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			 !((common_type == NUMERICOID)))
 		return -1;
 
-	/* If resulting type is a length, need to be max of length types */
+	/* If resulting type is a length, need to be max of length types,
+	 * If the type is numeric or decimal then we calculate scale as 
+	 * max(s1, s2) and precision as max(s1, s2) + max(p1 - s1, p2 - s2)
+	 * where s1, s2 are the scale of branches and p1, p2 are the precision.
+	 */
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
@@ -2143,7 +2148,8 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
 		
 
-		if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
+		if (common_type == NUMERICOID ||
+			getBaseType(common_type) == NUMERICOID)
 		{
 			if(typmod == -1)
 				continue;
@@ -2157,10 +2163,10 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		 	* If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
 		 	* to TDS_MAX_NUM_PRECISION at the cost of scale.
 		 	*/
-			if (max_precision > 38)
+			if (max_precision > TDS_MAX_NUM_PRECISION)
 			{
-				max_scale = Max(0, max_scale - (max_precision - 38));
-				max_precision = 38;
+				max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
+				max_precision = TDS_MAX_NUM_PRECISION;
 			}
 			result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
 		}
