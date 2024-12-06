@@ -2527,7 +2527,7 @@ exec_database_roles_subcmds(const char *schema)
 	char		*schema_owner;
 	const char	*dbname = get_current_pltsql_db_name();
 	List		*stmt_list;
-	int 		expected_stmts = 4;
+	int 		expected_stmts = 5;
 	ListCell	*parsetree_item;
 	Node		*stmts;
 	int		i=0;
@@ -2550,6 +2550,7 @@ exec_database_roles_subcmds(const char *schema)
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
 	/* Grant privileges to db_datawriter */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT UPDATE ON SEQUENCES TO dummy; ");
 	/* Grant privileges to db_ddladmin */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
 	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
@@ -2564,6 +2565,8 @@ exec_database_roles_subcmds(const char *schema)
 	stmts = parsetree_nth_stmt(stmt_list, i++);
 	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datareader, NULL);
 
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
 	stmts = parsetree_nth_stmt(stmt_list, i++);
 	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
 
