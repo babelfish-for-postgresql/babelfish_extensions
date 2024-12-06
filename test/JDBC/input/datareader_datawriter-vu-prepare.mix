@@ -27,10 +27,16 @@ go
 create table db_roles_schema_1.before_t1(a int);
 go
 
+create sequence db_roles_schema_1.before_sq1 start with 1 increment by 1 ;
+go
+
 create view db_roles_schema_1.before_v1 as select 2;
 go
 
 create table db_roles_schema_2.before_created_by_dbo_t1(a int);
+go
+
+create sequence db_roles_schema_2.before_created_by_dbo_sq1 start with 1 increment by 1 ;
 go
 
 create view db_roles_schema_2.before_created_by_dbo_v1 as select 2;
@@ -44,6 +50,9 @@ use db_roles_db1;
 go
 
 create table db_roles_schema_2.before_created_by_u2_t1(a int);
+go
+
+create sequence db_roles_schema_2.before_created_by_u2_sq1 start with 1 increment by 1 ;
 go
 
 create view db_roles_schema_2.before_created_by_u2_v1 as select 2;
