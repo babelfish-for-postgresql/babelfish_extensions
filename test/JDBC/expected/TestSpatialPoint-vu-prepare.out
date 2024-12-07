@@ -525,8 +525,6 @@ INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 
 
 create function testspatial_tvf(@x int) returns table as return select location from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
-CREATE TABLE babelfish_migration_mode_table (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
-
 #Testing Implicit CASTs to and from Geography data type for supported Explicit CASTs
 #UnSupported CASTs to and from Geography data type
 CREATE TABLE GeogToVarbinary(p varbinary)
