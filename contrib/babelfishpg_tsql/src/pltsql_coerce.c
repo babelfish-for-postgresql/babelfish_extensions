@@ -499,25 +499,6 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	Oid			UDT_sourceBaseType;
 	Oid			UDT_targetBaseType;
 
-
-	/* Check if the UDT's base type is nvarchar or varbinary.
-	 * If so, use the immediate base type for further processing.
-	 */
-	UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
-	UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
-
-	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
-	{
-		typeIds[0] = UDT_sourceBaseType;
-		sourceTypeId = UDT_sourceBaseType;
-	}
-
-	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
-	{
-		typeIds[1] = UDT_targetBaseType;
-		targetTypeId = UDT_targetBaseType;
-	}
-
 	for (int i = 0; i < 2; i++)
 	{
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeIds[i]));
@@ -547,9 +528,34 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				ReleaseSysCache(tuple);
 				break;
 			}
+			if( i == 0 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
+			}
+
+			if(i == 1 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
+			}
+
 
 			ReleaseSysCache(tuple);
 		}
+	}
+
+	/* Check if the UDT's base type is nvarchar or varbinary.
+	 * If so, use the immediate base type for further processing.
+	 */
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
+	{
+		typeIds[0] = UDT_sourceBaseType;
+		sourceTypeId = UDT_sourceBaseType;
+	}
+
+	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
+	{
+		typeIds[1] = UDT_targetBaseType;
+		targetTypeId = UDT_targetBaseType;
 	}
 
 	/* We've found VARBINARY To NVARCHAR casting */
