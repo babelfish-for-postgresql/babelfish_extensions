@@ -496,8 +496,8 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
-	Oid			UDT_sourceBaseType;
-	Oid			UDT_targetBaseType;
+	Oid			UDT_sourceBaseType = InvalidOid;
+	Oid			UDT_targetBaseType = InvalidOid;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -1349,41 +1349,6 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
 }
 
 /*
- * Selects the best candidate function for HASHBYTES based on input types.
- * Focuses on matching the second argument type, particularly for NVARCHAR.
- * Returns a single best candidate from the sys schema, or NULL if none found.
- */
-static FuncCandidateList
-tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList candidates)
-{
-
-	FuncCandidateList		current_candidate, best_candidate;
-	Oid				sys_oid = get_namespace_oid("sys", false);
-	Oid 				*argtypes;
-	int				nargs_func = 0;
-
-	/* Get the candidate with matching second argument type */
-	best_candidate = NULL;
-	for (current_candidate = candidates;
-		current_candidate != NULL;
-		current_candidate = current_candidate->next)
-	{
-		/* we should only consider candidates for hashbytes function from sys schema */
-		if (get_func_namespace(current_candidate->oid) != sys_oid)
-			return NULL;
-
-		get_func_signature(current_candidate->oid,&argtypes, &nargs_func);
-		if(input_typeids[1] == argtypes[1])
-		{
-			best_candidate = current_candidate;
-		}
-	}
-	if (best_candidate != NULL)
-		best_candidate->next = NULL;
-	return best_candidate;
-}
-
-/*
  * tsql_func_select_candidate_for_special_func()
  *
  * For functions present in special function list, and try to find best candidate 
@@ -1402,12 +1367,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 	Oid							sys_oid = get_namespace_oid("sys", false);
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
-
-	/* Specific handling for hashbytes function based on second input argument via tsql_func_select_candidate_for_hashbytes() */
-	if ((proc_nsname == NULL || strcmp(proc_nsname, "sys") == 0) && strcmp(proc_name, "hashbytes") == 0)
-	{
-		return tsql_func_select_candidate_for_hashbytes(input_typeids, candidates);
-	}
 
 	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
 
