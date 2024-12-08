@@ -592,6 +592,30 @@ varchar
 ~~END~~
 
 
+SELECT * FROM babel_4489_trim_dep_view_7
+GO
+~~START~~
+varchar
+|abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_8
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_9
+GO
+~~START~~
+varbinary
+666768
+~~END~~
+
+
 -- different datatypes of inputString and charSet
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'

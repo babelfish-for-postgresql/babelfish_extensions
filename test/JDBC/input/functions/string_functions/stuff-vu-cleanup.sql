@@ -70,6 +70,9 @@ GO
 DROP VIEW babel_4838_stuff_dep_view_5
 GO
 
+DROP VIEW babel_4838_stuff_dep_view_6
+GO
+
 DROP TYPE dbo.babel_4838_stuff_varUDT
 GO
 

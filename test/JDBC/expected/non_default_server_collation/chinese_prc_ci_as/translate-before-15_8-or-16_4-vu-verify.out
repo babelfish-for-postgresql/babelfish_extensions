@@ -54,14 +54,14 @@ SELECT TRANSLATE('aceds', 'aces', 'scdwe', 'acsdes')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 SELECT TRANSLATE('aces', 'scdwe')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 -- input type char
@@ -2943,7 +2943,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters xml = CAST ('<body><fruit/></body>' AS xml), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
@@ -2951,7 +2951,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations xml = CAST ('<body><fruit/></body>' AS xml);
@@ -2959,7 +2959,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @characters VARCHAR(10) = '(1 2)', @translations VARCHAR(10) = '(4 5)';
@@ -2967,7 +2967,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters geometry = geometry::STGeomFromText('POINT (1 2)', 0), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
@@ -2975,7 +2975,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations geometry = geometry::STGeomFromText('POINT (1 2)', 0);
@@ -2983,7 +2983,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
@@ -2991,7 +2991,7 @@ SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @characters VARCHAR(10) = '(1 2)', @translations VARCHAR(10) = '(4 5)';
@@ -2999,7 +2999,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters geography = geography::STGeomFromText('POINT (1 2)', 4326), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
@@ -3007,7 +3007,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations geography = geography::STGeomFromText('POINT (1 2)', 4326);
@@ -3015,7 +3015,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
@@ -3023,7 +3023,7 @@ SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

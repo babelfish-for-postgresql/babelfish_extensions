@@ -897,7 +897,7 @@ SELECT STRING_AGG(col_money, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 SELECT STRING_AGG(col_bytea, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
@@ -925,21 +925,21 @@ SELECT STRING_AGG(col_boolean, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP 
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 SELECT STRING_AGG(col_bit, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 SELECT STRING_AGG(col_bit_varying, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 -- other different datatypes
@@ -1395,7 +1395,7 @@ SELECT STRING_AGG(col_xml, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id 
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @sep xml = CAST('-' as xml)
@@ -1403,7 +1403,7 @@ SELECT STRING_AGG(col_xml, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_id
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 
@@ -1411,7 +1411,7 @@ SELECT STRING_AGG(col_geometry, '-') FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @sep geometry = geometry::STGeomFromText('POINT (1 2)', 0);
@@ -1419,7 +1419,7 @@ SELECT STRING_AGG(col_geometry, @sep) FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 
@@ -1427,7 +1427,7 @@ SELECT STRING_AGG(col_geography, '-') FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @sep geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
@@ -1435,7 +1435,7 @@ SELECT STRING_AGG(col_geography, @sep) FROM babel_5156_string_agg_t1 GROUP BY gr
 GO
 ~~ERROR (Code: 206)~~
 
-~~ERROR (Message: The function sys.string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: The function string_agg is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 

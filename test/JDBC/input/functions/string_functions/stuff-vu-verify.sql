@@ -733,6 +733,9 @@ GO
 SELECT * FROM babel_4838_stuff_dep_view_5
 GO
 
+SELECT * FROM babel_4838_stuff_dep_view_6
+GO
+
 -- input type UDT
 -- in table babel_4838_stuff_UDT, col 'a' has basetype image and col 'b' has basetype varchar
 SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_UDT
