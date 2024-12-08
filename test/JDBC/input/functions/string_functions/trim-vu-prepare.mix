@@ -122,6 +122,14 @@ AS
 RETURN (SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2)
 GO
 
+CREATE VIEW babel_4489_trim_dep_view_7 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_text
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_8 AS
+    SELECT ('|' + TRIM(a FROM a) + '|') as result FROM babel_4489_trim_text
+GO
+
 -- psql
 CREATE TABLE master_dbo.babel_4489_trim_psql_t1(a CHAR(50), b CHAR(20))
 GO
@@ -199,6 +207,10 @@ CREATE TABLE master_dbo.babel_4489_trim_psql_t9(a BYTEA, b BYTEA)
 GO
 
 INSERT INTO master_dbo.babel_4489_trim_psql_t9 VALUES ('\x656667686970'::bytea, '\x656970'::bytea)
+GO
+
+CREATE VIEW master_dbo.babel_4489_trim_dep_view_9 AS
+    SELECT sys.TRIM(b, a) as result FROM master_dbo.babel_4489_trim_psql_t9
 GO
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t9 TO master_dbo;

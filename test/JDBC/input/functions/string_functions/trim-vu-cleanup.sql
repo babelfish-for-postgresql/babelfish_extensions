@@ -1,3 +1,6 @@
+DROP VIEW babel_4489_trim_dep_view_9
+GO
+
 DROP TABLE dbo.babel_4489_trim_psql_t1
 GO
 
@@ -68,6 +71,12 @@ DROP VIEW babel_4489_trim_dep_view_5
 GO
 
 DROP VIEW babel_4489_trim_dep_view_6
+GO
+
+DROP VIEW babel_4489_trim_dep_view_7
+GO
+
+DROP VIEW babel_4489_trim_dep_view_8
 GO
 
 DROP TABLE babel_4489_trim_UDT

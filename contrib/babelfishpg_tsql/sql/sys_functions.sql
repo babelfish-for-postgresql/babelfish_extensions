@@ -3198,14 +3198,6 @@ CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.substring(string PG_CATALOG.BIT, i INTEGER, j INTEGER)
-RETURNS PG_CATALOG.BIT
-AS 'bitsubstr' LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.substring(string BYTEA, i INTEGER, j INTEGER)
-RETURNS BYTEA
-AS 'bytea_substr' LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
@@ -4953,13 +4945,6 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(sys.NVARCHAR, sys.VARCHAR) (
 CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     SFUNC = string_agg_transfn,
     FINALFUNC = bbf_string_agg_finalfn_varchar,
-    STYPE = INTERNAL,
-    PARALLEL = SAFE
-);
-
-CREATE OR REPLACE AGGREGATE sys.string_agg(BYTEA, BYTEA) (
-    SFUNC = bytea_string_agg_transfn,
-    FINALFUNC = bytea_string_agg_finalfn,
     STYPE = INTERNAL,
     PARALLEL = SAFE
 );

@@ -27,6 +27,9 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
 end
 $$
 LANGUAGE plpgsql;
@@ -10656,39 +10659,9 @@ END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_ntext_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_ntext_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_nchar_deprecated_in_5_0_0'); 
 
 
 DO $$
@@ -10747,73 +10720,15 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION sys.substring(string PG_CATALOG.BIT, i INTEGER, j INTEGER)
-RETURNS PG_CATALOG.BIT
-AS 'bitsubstr' LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.substring(string BYTEA, i INTEGER, j INTEGER)
-RETURNS BYTEA
-AS 'bytea_substr' LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.substring(string sys.bbf_varbinary, i INTEGER, j INTEGER)
 RETURNS sys.VARBINARY
 AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_ntext_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_bpchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_varbinary_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_ntext_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_varbinary_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_any_deprecated_in_5_0_0'); 
 
 
 DO $$
@@ -10858,39 +10773,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_ntext_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_ntext_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_nchar_deprecated_in_5_0_0');
 
 
 DO $$
@@ -10935,39 +10820,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_ntext_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_ntext_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_nchar_deprecated_in_5_0_0');
 
 
 DO $$
@@ -11034,39 +10889,9 @@ END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_bpchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_nchar_deprecated_in_5_0_0');
 
 
 DO $$
@@ -11074,7 +10899,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LTRIM(ANYELEMENT) RENAME TO ltrim_any_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_any_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11086,7 +10910,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LTRIM(sys.BPCHAR) RENAME TO ltrim_bpchar_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_bpchar_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11098,7 +10921,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LTRIM(sys.NCHAR) RENAME TO ltrim_nchar_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_nchar_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11110,13 +10932,16 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LTRIM(NTEXT) RENAME TO ltrim_ntext_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_ntext_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
 END;
 $$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_ntext_deprecated_in_5_0_0');
 
 
 DO $$
@@ -11124,7 +10949,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RTRIM(ANYELEMENT) RENAME TO rtrim_any_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_any_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11136,7 +10960,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RTRIM(sys.BPCHAR) RENAME TO rtrim_bpchar_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_bpchar_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11148,7 +10971,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RTRIM(sys.NCHAR) RENAME TO rtrim_nchar_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_nchar_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11160,7 +10982,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RTRIM(NTEXT) RENAME TO rtrim_ntext_deprecated_in_5_0_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_ntext_deprecated_in_5_0_0');
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11168,13 +10989,17 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_ntext_deprecated_in_5_0_0');
+
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LEFT(ANYELEMENT, INTEGER) RENAME TO left_any_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_any_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11186,7 +11011,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LEFT(sys.BPCHAR, INTEGER) RENAME TO left_bpchar_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_bpchar_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11198,7 +11022,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LEFT(sys.NCHAR, INTEGER) RENAME TO left_nchar_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_nchar_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11210,7 +11033,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.LEFT(NTEXT, INTEGER) RENAME TO left_ntext_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_ntext_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11218,13 +11040,17 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_ntext_deprecated_in_5_0_0'); 
+
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RIGHT(ANYELEMENT, INTEGER) RENAME TO right_any_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_any_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11236,7 +11062,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RIGHT(sys.BPCHAR, INTEGER) RENAME TO right_bpchar_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_bpchar_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11248,7 +11073,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RIGHT(sys.NCHAR, INTEGER) RENAME TO right_nchar_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_nchar_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -11260,13 +11084,17 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.RIGHT(NTEXT, INTEGER) RENAME TO right_ntext_deprecated_in_5_0_0;
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_ntext_deprecated_in_5_0_0'); 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_ntext_deprecated_in_5_0_0'); 
 
 
 CREATE OR REPLACE FUNCTION sys.translate(string TEXT, characters TEXT, translations TEXT)
@@ -11458,51 +11286,14 @@ END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_any_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_nchar_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-	CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_ntext_deprecated_in_5_0_0'); 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_ntext_deprecated_in_5_0_0');
 
 
 CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     SFUNC = string_agg_transfn,
     FINALFUNC = bbf_string_agg_finalfn_varchar,
-    STYPE = INTERNAL,
-    PARALLEL = SAFE
-);
-
-CREATE OR REPLACE AGGREGATE sys.string_agg(BYTEA, BYTEA) (
-    SFUNC = bytea_string_agg_transfn,
-    FINALFUNC = bytea_string_agg_finalfn,
     STYPE = INTERNAL,
     PARALLEL = SAFE
 );

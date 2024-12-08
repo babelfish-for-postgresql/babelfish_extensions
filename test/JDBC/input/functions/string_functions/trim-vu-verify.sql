@@ -252,6 +252,15 @@ GO
 SELECT * FROM babel_4489_trim_dep_view_6
 GO
 
+SELECT * FROM babel_4489_trim_dep_view_7
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_8
+GO
+
+SELECT * FROM babel_4489_trim_dep_view_9
+GO
+
 -- different datatypes of inputString and charSet
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @charSet VARCHAR(20) = 'ab? '
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'

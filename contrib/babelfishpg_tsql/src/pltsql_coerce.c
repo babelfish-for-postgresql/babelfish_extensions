@@ -1007,12 +1007,12 @@ get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
  * For a given function details, validate whether it is in special function list
  */
 bool
-validate_special_function(char *func_nsname, char *func_name, List* fargs, int nargs, Oid *input_typeids, bool num_args_match)
+validate_special_function(char *func_nsname, char *func_name, int nargs, bool num_args_match)
 {
 	tsql_special_function_t    *special_func;
 
 	/* Sanity checks */
-	if (func_name == NULL || (nargs != 0 && input_typeids == NULL) || fargs == NIL)
+	if (func_name == NULL)
 		return false;
 
 	/* 
@@ -1070,7 +1070,7 @@ validate_special_function(char *func_nsname, char *func_name, List* fargs, int n
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate, best_candidate;
 	Oid 						expr_result_type;
@@ -1084,13 +1084,16 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
-	is_func_validated = validate_special_function(proc_nsname, proc_name, fargs, nargs, input_typeids, true);
+	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, true);
 
 	/* Return NULL if function is not a special function */
 	if (!is_func_validated)
 		return NULL;
 
-	new_input_typeids = (Oid *) palloc(nargs * sizeof(Oid));
+	/*
+	 * If input type ids are UDT then we should use its immediate base type to pick the correct definition.
+	 */
+	new_input_typeids = (Oid *) palloc0(nargs * sizeof(Oid));
 	for (int i = 0; i < nargs; i++)
 	{
 		new_input_typeids[i] = get_immediate_base_type_of_UDT_internal(input_typeids[i]);
@@ -1144,7 +1147,7 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1])
 			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[2])
 			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[2])
-			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1]))
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[2]))
 		{
 			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
 		}
@@ -1310,7 +1313,6 @@ tsql_func_select_candidate_for_special_func(List *names, List *fargs, int nargs,
 
 static FuncCandidateList
 tsql_func_select_candidate(List *names,
-						   List *fargs,
 						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
@@ -1331,7 +1333,7 @@ tsql_func_select_candidate(List *names,
 		if (babelfish_dump_restore)
 			return NULL;
 
-		return tsql_func_select_candidate_for_special_func(names, fargs, nargs, input_typeids, candidates);
+		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
 	}
 
 	if (unknowns_resolved)
