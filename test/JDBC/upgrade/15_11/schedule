@@ -427,6 +427,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility

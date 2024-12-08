@@ -13,9 +13,6 @@ all
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
 ignore#!#BABEL-4279
-ignore#!#TestSpatialPoint-vu-prepare
-ignore#!#TestSpatialPoint-vu-verify
-ignore#!#TestSpatialPoint-vu-cleanup
 ignore#!#babelfish_migration_mode-vu-prepare
 ignore#!#babelfish_migration_mode-vu-verify
 ignore#!#babelfish_migration_mode-vu-cleanup
@@ -487,6 +484,9 @@ ignore#!#BABEL-5119_before_16_5-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
 ignore#!#trim-before-15_11-or-16_7-vu-prepare
 ignore#!#trim-before-15_11-or-16_7-vu-verify

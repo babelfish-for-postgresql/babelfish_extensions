@@ -22,6 +22,33 @@ go
 use db_roles_db1
 go
 
+drop sequence db_roles_schema_1.before_sq1;
+go
+
+drop sequence db_roles_schema_1.after_sq1;
+go
+
+drop sequence db_roles_schema_1.after_sq2;
+go
+
+drop sequence db_roles_schema_2.before_created_by_dbo_sq1;
+go
+
+drop sequence db_roles_schema_2.after_created_by_dbo_sq1;
+go
+
+drop sequence db_roles_schema_2.after_created_by_dbo_sq2;
+go
+
+drop sequence db_roles_schema_2.before_created_by_u2_sq1;
+go
+
+drop sequence db_roles_schema_2.after_created_by_u2_sq1;
+go
+
+drop sequence db_roles_schema_2.after_created_by_u2_sq2;
+go
+
 drop table db_roles_schema_1.before_t1;
 go
 
