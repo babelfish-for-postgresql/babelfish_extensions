@@ -1129,7 +1129,8 @@ grant_guest_to_logins(StringInfoData *query)
 		const char *name = NameStr(*(DatumGetName(rolname)));
 		Oid			roleid = get_role_oid(name, false);
 
-		if (!role_is_sa(roleid))
+		/* sa and fixed server roles except sysadmin should not have membership in database guest roles */
+		if (!(role_is_sa(roleid) || ((get_sysadmin_oid() != roleid) && IS_BBF_FIXED_SERVER_ROLE(name))))
 		{
 			logins = lappend(logins, make_rolespec_node(name));
 		}
@@ -1403,17 +1404,19 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 	initStringInfo(&query);
 	appendStringInfo(&query, "GRANT SELECT ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT UPDATE ON ALL SEQUENCES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT TRUNCATE ON ALL TABLES IN SCHEMA dummy TO dummy; ");
 	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
 
 	/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT UPDATE ON SEQUENCES TO dummy; ");
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	Assert(list_length(stmt_list) == 7);
+	Assert(list_length(stmt_list) == 9);
 
 	ScanKeyInit(&key,
 				Anum_namespace_ext_dbid,
@@ -1444,12 +1447,16 @@ grant_perms_to_dbreader_dbwriter_ddladmin(const uint16 dbid,
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_GrantStmt(stmts, schema_name, NULL, db_datawriter, NULL);
+		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_ddladmin, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema_name, NULL, db_ddladmin, NULL);
 
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datareader, NULL);
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_AlterDefaultPrivilegesStmt(stmts, schema_name, schema_owner, dbo_user, db_datawriter, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
@@ -1614,7 +1621,7 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 
 /*
 * This function is only being used during upgrade to v4.4.0
-* to create database roles db_accessadmin for each database
+* to create database roles for each database
 */
 PG_FUNCTION_INFO_V1(create_db_roles_during_upgrade);
 Datum

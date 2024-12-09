@@ -239,13 +239,14 @@ Query Text: EXEC babel_3512_proc_4
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 3)
   Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
-  ->  HashAggregate
-        Group Key: babel_3512_t1.a1, babel_3512_t1.b1, babel_3512_t1.c1
-        ->  Append
-              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
-                    Index Cond: (b1 = 1)
-              ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
-                    Index Cond: (b2 = 1)
+  ->  Unique
+        ->  Sort
+              Sort Key: babel_3512_t1.a1, babel_3512_t1.b1, babel_3512_t1.c1
+              ->  Append
+                    ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                          Index Cond: (b1 = 1)
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 ~~START~~

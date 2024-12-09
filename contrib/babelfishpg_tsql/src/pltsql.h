@@ -2004,18 +2004,18 @@ extern bool insert_bulk_check_constraints;
 #define DB_DDLADMIN "db_ddladmin"
 
 #define IS_BBF_BUILT_IN_DB(dbname) \
-    (strcmp(dbname, "master") == 0 || \
-     strcmp(dbname, "tempdb") == 0 || \
-     strcmp(dbname, "msdb") == 0)
+    ((strlen(dbname) == 6 && strncmp(dbname, "master", 6) == 0)|| \
+     (strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)|| \
+     (strlen(dbname) == 4 && strncmp(dbname, "msdb", 4) == 0))
 
 #define IS_FIXED_DB_PRINCIPAL(rolname) \
-	(strcmp(rolname, DBO) == 0 || \
-	 strcmp(rolname, DB_OWNER) == 0 || \
-	 strcmp(rolname, DB_ACCESSADMIN) == 0 || \
-	 strcmp(rolname, DB_SECURITYADMIN) == 0 || \
-	 strcmp(rolname, DB_DATAREADER) == 0 || \
-	 strcmp(rolname, DB_DATAWRITER) == 0 || \
-	 strcmp(rolname, DB_DDLADMIN) == 0)
+	((strlen(rolname) == 3 && strncmp(rolname, DBO, 3) == 0) || \
+	 (strlen(rolname) == 8 && strncmp(rolname, DB_OWNER, 8) == 0) || \
+	 (strlen(rolname) == 14 && strncmp(rolname, DB_ACCESSADMIN, 14) == 0) || \
+	 (strlen(rolname) == 16 && strncmp(rolname, DB_SECURITYADMIN, 16) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAREADER, 13) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAWRITER, 13) == 0) || \
+	 (strlen(rolname) == 11 && strncmp(rolname, DB_DDLADMIN, 11) == 0))
 
 /**********************************************************************
  * Function declarations

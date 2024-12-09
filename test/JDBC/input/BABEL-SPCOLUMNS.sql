@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 100000
 USE master
 GO
 CREATE DATABASE mydb1

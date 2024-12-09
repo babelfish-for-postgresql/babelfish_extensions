@@ -436,6 +436,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
@@ -586,4 +587,4 @@ datareader_datawriter
 dbcreator_role
 db_securityadmin
 db_ddladmin
-
+smalldatetime_date_cmp

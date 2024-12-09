@@ -165,6 +165,12 @@ go
 create user u1 for login dbcreator_login1
 go
 
+use master
+go
+
+grant select on dbcreator_tb1 to guest
+go
+
 -- terminate-tsql-conn
 
 -- tsql user=dbcreator_login1 password=123
@@ -183,6 +189,22 @@ u1
 
 use master
 go
+
+-- should not be able to select on table
+select current_user
+go
+~~START~~
+varchar
+dbcreator_user1
+~~END~~
+
+
+select * from dbcreator_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table dbcreator_tb1)~~
+
 
 EXEC sp_renamedb 'dbcreator_db', 'dbcreator_db_1'
 GO
@@ -270,6 +292,31 @@ grant connect to guest
 go
 
 -- terminate-tsql-conn
+
+-- psql
+-- should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'dbcreator'::regrole;
+go
+~~START~~
+regrole#!#regrole
+~~END~~
+
+
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'sysadmin'::regrole
+AND roleid::regrole::text ~ '^(master|msdb|tempdb|dbcreator)_' order by roleid::regrole;
+go
+~~START~~
+regrole#!#regrole
+master_dbo#!#sysadmin
+master_guest#!#sysadmin
+tempdb_dbo#!#sysadmin
+tempdb_guest#!#sysadmin
+msdb_dbo#!#sysadmin
+msdb_guest#!#sysadmin
+dbcreator_db1_dbo#!#sysadmin
+dbcreator_db1_guest#!#sysadmin
+~~END~~
+
 
 -- tsql user=dbcreator_login1 password=123
 -- should be allowed
@@ -1186,6 +1233,30 @@ GO
 
 
 -- psql
+-- dbcreator should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'dbcreator'::regrole;
+go
+~~START~~
+regrole#!#regrole
+~~END~~
+
+
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'sysadmin'::regrole
+AND roleid::regrole::text ~ '^(master|msdb|tempdb|dbcreator)_' order by roleid::regrole;
+go
+~~START~~
+regrole#!#regrole
+master_dbo#!#sysadmin
+master_guest#!#sysadmin
+tempdb_dbo#!#sysadmin
+tempdb_guest#!#sysadmin
+msdb_dbo#!#sysadmin
+msdb_guest#!#sysadmin
+dbcreator_db1_dbo#!#sysadmin
+dbcreator_db1_guest#!#sysadmin
+~~END~~
+
+
 -- normal PG user
 CREATE USER dbcreator_restrictions_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' inherit;
 go
