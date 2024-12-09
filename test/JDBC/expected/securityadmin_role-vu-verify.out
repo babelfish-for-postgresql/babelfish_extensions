@@ -406,6 +406,14 @@ int
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
 
+-- securityadmin should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'securityadmin'::regrole;
+go
+~~START~~
+regrole#!#regrole
+~~END~~
+
+
 -- tsql
 -- Add localhost as linked server
 EXEC sp_addlinkedserver  @server = N'server_4229', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
@@ -460,6 +468,15 @@ create database securityadmin_db1
 go
 
 -- terminate-tsql-conn
+
+-- psql
+-- should not have membership in database guest role
+SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'securityadmin'::regrole;
+go
+~~START~~
+regrole#!#regrole
+~~END~~
+
 
 -- tsql user=securityadmin_login1 password=123
 -- it should be able to connect to the database
@@ -704,6 +721,12 @@ go
 create user no_securityadmin_user1 for login no_securityadmin_login1
 go
 
+use master
+go
+
+GRANT select on securityadmin_tb1 to guest
+go
+
 -- terminate-tsql-conn
 
 -- tsql user=securityadmin_login1 password=123
@@ -737,6 +760,14 @@ go
 varchar#!#nvarchar
 securityadmin_user1#!#master
 ~~END~~
+
+
+-- should not be able to select on table
+select * from securityadmin_tb1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table securityadmin_tb1)~~
 
 
 select suser_name()

@@ -313,7 +313,6 @@ tempdb_dbo#!#sysadmin
 tempdb_guest#!#sysadmin
 msdb_dbo#!#sysadmin
 msdb_guest#!#sysadmin
-dbcreator_db1_dbo#!#sysadmin
 dbcreator_db1_guest#!#sysadmin
 ~~END~~
 
@@ -1220,7 +1219,7 @@ SET SESSION AUTHORIZATION dbcreator;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "dbcreator"
     Server SQLState: 42501)~~
 
 
@@ -1252,7 +1251,6 @@ tempdb_dbo#!#sysadmin
 tempdb_guest#!#sysadmin
 msdb_dbo#!#sysadmin
 msdb_guest#!#sysadmin
-dbcreator_db1_dbo#!#sysadmin
 dbcreator_db1_guest#!#sysadmin
 ~~END~~
 
@@ -1365,7 +1363,7 @@ SET SESSION AUTHORIZATION dbcreator;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "dbcreator"
     Server SQLState: 42501)~~
 
 
