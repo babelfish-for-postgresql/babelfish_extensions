@@ -88,8 +88,6 @@ typedef struct collation_callbacks
 
 	void		(*set_db_collation) (Oid db_coll);
 
-	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);	
-	void		(*TsqlUTF16toUTF8StringInfo) (StringInfo out, void *vin, int len);
 } collation_callbacks;
 
 extern collation_callbacks *collation_callbacks_ptr;

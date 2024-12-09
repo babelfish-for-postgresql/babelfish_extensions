@@ -309,6 +309,8 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 	appendStringInfoChar(buf, temp16.half[1]);
 }
 
+collation_callbacks *collation_callbacks_ptr = NULL;
+
 /*
  * TdsUTF16toUTF8StringInfo - convert UTF16 data into UTF8 and
  * 								 add it to a StringInfo.
@@ -316,7 +318,24 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 void
 TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
 {
-	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(out, &vin, len);
+	unsigned char *in = vin;
+	int			i;
+	int			consumed;
+	int32_t		code;
+
+	/* UTF16 data allways comes in 16-bit units */
+	if ((len & 0x0001) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"input data has odd number of bytes")));
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
+		AddUTF8ToStringInfo(code, out);
+		i += consumed;
+	}
 }
 
 /*
@@ -326,7 +345,17 @@ TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
 void
 TdsUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
 {
-	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(out, &vin, len);
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
+		AddUTF16ToStringInfo(code, out);
+		i += consumed;
+	}
 }
 
 /*

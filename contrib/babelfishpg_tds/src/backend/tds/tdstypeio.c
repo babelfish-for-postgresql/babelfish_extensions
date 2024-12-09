@@ -336,7 +336,7 @@ getRecvFunc(int funcId)
 
 collation_callbacks *collation_callbacks_ptr = NULL;
 
-static void
+void
 init_collation_callbacks(void)
 {
 	collation_callbacks **callbacks_ptr;
