@@ -252,5 +252,5 @@ space
 binary-datatype-operators
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5059-before-14_7-or-15_2
-smalldatetime_date_cmp
+smalldatetime_date_cmp-before-15_5-16_1
 
