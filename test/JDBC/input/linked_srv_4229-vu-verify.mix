@@ -1,3 +1,4 @@
+-- tsql
 -- Call OPENQUERY() / four-part-object name from a database other than master
 USE tempdb
 CREATE TABLE t_tempdb_babel_4229 (a int)
