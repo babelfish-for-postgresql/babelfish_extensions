@@ -180,6 +180,7 @@ babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
@@ -466,5 +467,5 @@ cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5186
-smalldatetime_date_cmp
+smalldatetime_date_cmp-before-15_5-16_1
 

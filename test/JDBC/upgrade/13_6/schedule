@@ -106,6 +106,7 @@ babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -360,3 +361,4 @@ binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
 replace-before-15_8-or-16_4
 BABEL-CASE_EXPR-before-16_5-or-15_9
+smalldatetime_date_cmp-before-15_5-16_1
