@@ -6079,7 +6079,7 @@ remove_db_name_in_schema(const char *object_name)
 	db_name_len = strlen(cur_db_name);
 	prefix_len = db_name_len + 1;
 
-	if (strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+	if (schema_name != NULL && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 		// Return the part after the prefix
 		schema_name += prefix_len;
 	}
