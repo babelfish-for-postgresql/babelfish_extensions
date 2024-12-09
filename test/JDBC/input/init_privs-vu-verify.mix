@@ -1,9 +1,6 @@
 -- psql
 WITH object_info AS (
     SELECT
-        ip.objoid,
-        ip.classoid,
-        ip.objsubid,
         COALESCE(
             d.datname,
             n.nspname,
@@ -73,5 +70,6 @@ WITH object_info AS (
     LEFT JOIN pg_namespace nts ON ts.cfgnamespace = nts.oid
     WHERE ip.privtype = 'e'
 )
-SELECT * FROM object_info
+SELECT * FROM object_info WHERE schema_name != 'sys'
 ORDER BY object_type, schema_name NULLS FIRST, object_name;
+GO
