@@ -181,8 +181,9 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	/* Advance cmd counter to make the insert visible */
 	CommandCounterIncrement();
 
-	/* Grant membership to guests */
-	if (!role_is_sa(roleid))
+	/* Grant membership of guests */
+	/* sa and fixed server roles except sysadmin should not have membership in database guest roles */
+	if (!(role_is_sa(roleid) || ((get_sysadmin_oid() != roleid) && IS_BBF_FIXED_SERVER_ROLE(stmt->role))))
 		grant_guests_to_login(GetUserNameFromId(roleid, false));
 }
 
