@@ -75,3 +75,4 @@ WITH object_info AS (
 )
 SELECT * FROM object_info
 ORDER BY object_type, schema_name NULLS FIRST, object_name;
+GO
