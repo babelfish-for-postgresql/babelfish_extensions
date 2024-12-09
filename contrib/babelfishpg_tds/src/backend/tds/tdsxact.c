@@ -97,7 +97,7 @@ GetTxnName(const StringInfo message, TDSRequestTxnMgmt request, int offset)
 							len, TSQL_TXN_NAME_LIMIT)));
 
 		initStringInfo(&(request->txnName));
-		(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&(request->txnName),
+		TdsUTF16toUTF8StringInfo(&(request->txnName),
 								 message->data + offset,
 								 len);
 		if (!IsValidTxnName(request->txnName.data, request->txnName.len))

@@ -310,9 +310,29 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 }
 
 /*
+ * TdsUTF16toUTF8StringInfo - convert UTF16 data into UTF8 and
+ * 								 add it to a StringInfo.
+ */
+void
+TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
+{
+	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(out, &vin, len);
+}
+
+/*
+ * TdsUTF8toUTF16StringInfo - convert UTF8 data into UTF16 and
+ * 								 add it to a StringInfo.
+ */
+void
+TdsUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
+{
+	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(out, &vin, len);
+}
+
+/*
  * TdsUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
  * 							 16-bit units if we were to convert it into
- * 							 UTF16 with (collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)()
+ * 							 UTF16 with TdsUTF8toUTF16StringInfo()
  * 							 */
 int
 TdsUTF8LengthInUTF16(const void *vin, int len)

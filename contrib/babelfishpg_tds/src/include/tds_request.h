@@ -408,7 +408,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 									StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
 
 									initStringInfo(tempStringInfo);
-									(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(tempStringInfo, value, rowData->columnValues[i].len);
+									TdsUTF16toUTF8StringInfo(tempStringInfo, value, rowData->columnValues[i].len);
 									rowData->columnValues[i] = *tempStringInfo;
 								}
 							}
@@ -433,7 +433,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 								StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
 
 								initStringInfo(tempStringInfo);
-								(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(tempStringInfo, rowData->columnValues[i].data, rowData->columnValues[i].len);
+								TdsUTF16toUTF8StringInfo(tempStringInfo, rowData->columnValues[i].data, rowData->columnValues[i].len);
 								rowData->columnValues[i] = *tempStringInfo;
 							}
 							temp->isNull = false;
@@ -528,7 +528,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 
 			tempString = palloc0(len * 2);
 			memcpy(tempString, &messageData[*offset], len * 2);
-			(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(tempStringInfo, tempString, len * 2);
+			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
 
 			*offset += len * 2;
 			temp->len += len;

@@ -317,7 +317,7 @@ FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo 
 		char	   *partName = relMetaDataInfo->partName[numParts];
 
 		resetStringInfo(&tempBuf);
-		(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, partName, strlen(partName));
+		TdsUTF8toUTF16StringInfo(&tempBuf, partName, strlen(partName));
 
 		partNameLen = htoLE16((uint16_t) pg_mbstrlen(partName));
 		appendBinaryStringInfo(buf, (char *) &partNameLen, sizeof(partNameLen));
@@ -356,7 +356,7 @@ FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataIn
 		tableName++;			/* skip the first '.' */
 	TableNameLen += htoLE16((uint16_t) pg_mbstrlen(tableName));
 
-	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, tableName, strlen(tableName));
+	TdsUTF8toUTF16StringInfo(&tempBuf, tableName, strlen(tableName));
 	appendBinaryStringInfo(buf, (char *) &TableNameLen, sizeof(TableNameLen));
 	appendBinaryStringInfo(buf, tempBuf.data, tempBuf.len);
 
@@ -1432,7 +1432,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			db_name = pltsql_plugin_handler_ptr->get_cur_db_name();
 			temp8 = (uint8_t) pg_mbstrlen(db_name);
 			resetStringInfo(&tempBuf);
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, db_name,
+			TdsUTF8toUTF16StringInfo(&tempBuf, db_name,
 									strlen(db_name));
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
@@ -1440,7 +1440,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			/* Since Schema Name is always sys in Babelfish Server we can directly send it */
 			temp8 = (uint8_t) pg_mbstrlen("sys");
 			resetStringInfo(&tempBuf);
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, "sys",
+			TdsUTF8toUTF16StringInfo(&tempBuf, "sys",
 									strlen("sys"));
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
@@ -1448,7 +1448,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			/* Type name and Length */
 			temp8 = (uint8_t) pg_mbstrlen(col->typeName);
 			resetStringInfo(&tempBuf);
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, col->typeName,
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->typeName,
 									strlen(col->typeName));
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
@@ -1456,7 +1456,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			/* assembly qualified name */
 			temp16 = (uint16_t) pg_mbstrlen(col->assemblyName);
 			resetStringInfo(&tempBuf);
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, col->assemblyName,
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->assemblyName,
 									strlen(col->assemblyName));
 			TdsPutbytes(&temp16, sizeof(temp16));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
@@ -1488,7 +1488,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 				temp8 = 0;
 
 			resetStringInfo(&tempBuf);
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempBuf, col->colName.data,
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->colName.data,
 									 col->colName.len);
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
@@ -1636,7 +1636,7 @@ SendColInfoToken(int natts, bool sendRowStat)
 			Assert(col->baseColName != NULL);
 			temp8 = (uint8_t) pg_mbstrlen(col->baseColName);
 			appendBinaryStringInfo(&buf, (const char *) &temp8, sizeof(uint8));
-			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, col->baseColName, strlen(col->baseColName));
+			TdsUTF8toUTF16StringInfo(&buf, col->baseColName, strlen(col->baseColName));
 		}
 	}
 
@@ -2259,7 +2259,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 		StringInfoData tempName;
 
 		initStringInfo(&tempName);
-		(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&tempName, name->data, name->len);
+		TdsUTF8toUTF16StringInfo(&tempName, name->data, name->len);
 
 		temp8 = (uint8_t) pg_mbstrlen(name->data);
 		TdsPutbytes(&temp8, sizeof(temp8));
@@ -2512,9 +2512,9 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 	SendPendingDone(true);
 
 	if (new_val)
-		(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&newUtf16, new_val, strlen(new_val));
+		TdsUTF8toUTF16StringInfo(&newUtf16, new_val, strlen(new_val));
 	if (old_val)
-		(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&oldUtf16, old_val, strlen(old_val));
+		TdsUTF8toUTF16StringInfo(&oldUtf16, old_val, strlen(old_val));
 	totalLen = 1				/* envid */
 		+ 1						/* new len */
 		+ newUtf16.len
@@ -2669,9 +2669,9 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	initStringInfo(&serverNameUtf16);
 	initStringInfo(&procNameUtf16);
 
-	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&messageUtf16, message, messageLen);
-	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&serverNameUtf16, serverName, serverNameLen);
-	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&procNameUtf16, procName, procNameLen);
+	TdsUTF8toUTF16StringInfo(&messageUtf16, message, messageLen);
+	TdsUTF8toUTF16StringInfo(&serverNameUtf16, serverName, serverNameLen);
+	TdsUTF8toUTF16StringInfo(&procNameUtf16, procName, procNameLen);
 
 	messageLen_16 = messageUtf16.len / 2;
 
