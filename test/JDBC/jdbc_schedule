@@ -10,10 +10,6 @@
 
 all
 
-ignore#!#TestSpatialPoint-vu-prepare
-ignore#!#TestSpatialPoint-vu-verify
-ignore#!#TestSpatialPoint-vu-cleanup
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -89,9 +85,9 @@ ignore#!#BABEL-2736-before-16_5-vu-cleanup
 ignore#!#BABEL-2736-before-15_3-vu-prepare
 ignore#!#BABEL-2736-before-15_3-vu-verify
 ignore#!#BABEL-2736-before-15_3-vu-cleanup
-ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-prepare
-ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-verify
-ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-cleanup
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -477,4 +473,7 @@ ignore#!#BABEL-5119_before_16_5-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
