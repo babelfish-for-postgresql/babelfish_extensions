@@ -1813,7 +1813,7 @@ SELECT * FROM babel_4838_stuff_dep_view_6
 GO
 ~~START~~
 varchar
-abcabcdefghi??
+abcabc?defghi??efghi??
 ~~END~~
 
 

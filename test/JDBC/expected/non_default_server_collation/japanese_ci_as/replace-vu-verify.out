@@ -7,7 +7,7 @@ mohit
 ~~END~~
 
 
-select top 5 replace(type, 'U', 'R') from all_objects
+select top 5 replace(type, 'U', 'R') from sys.all_objects
 go
 ~~START~~
 varchar

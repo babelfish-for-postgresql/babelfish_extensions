@@ -113,7 +113,7 @@ CREATE VIEW babel_4838_stuff_dep_view_5 AS
 GO
 
 CREATE VIEW babel_4838_stuff_dep_view_6 AS
-    SELECT stuff(a, 4, 2, 'abcd') as result FROM babel_4838_stuff_text
+    SELECT stuff(a, 4, 2, a) as result FROM babel_4838_stuff_text
 GO
 
 CREATE FUNCTION babel_4838_stuff_itvf_func()
