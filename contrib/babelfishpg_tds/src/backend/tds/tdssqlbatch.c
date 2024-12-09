@@ -56,7 +56,7 @@ GetSQLBatchRequest(StringInfo message)
 
 	initStringInfo(&(request->query));
 
-	TdsUTF16toUTF8StringInfo(&(request->query),
+	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&(request->query),
 							 &(message->data[query_offset]),
 							 query_len);
 

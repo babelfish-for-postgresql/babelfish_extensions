@@ -403,7 +403,7 @@ TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 
 	initStringInfo(&tempBuf);
 	enlargeStringInfo(&tempBuf, buf->len);
-	TdsUTF16toUTF8StringInfo(&tempBuf, buf->data, buf->len);
+	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&tempBuf, buf->data, buf->len);
 	buf = &tempBuf;
 
 	nbytes = buf->len - buf->cursor;
@@ -1058,7 +1058,7 @@ TdsTypeNCharToDatum(StringInfo buf)
 	StringInfoData temp;
 
 	initStringInfo(&temp);
-	TdsUTF16toUTF8StringInfo(&temp, buf->data, buf->len);
+	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&temp, buf->data, buf->len);
 
 	result = tds_varchar_input(temp.data, temp.len, -1);
 	pfree(temp.data);
@@ -1792,7 +1792,7 @@ TdsReadUnicodeDataFromTokenCommon(const char *message, const ParameterToken toke
 
 	enlargeStringInfo(temp, buf->len);
 
-	TdsUTF16toUTF8StringInfo(temp, buf->data, buf->len);
+	(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(temp, buf->data, buf->len);
 
 	if ((token->type == TDS_TYPE_NVARCHAR || token->type == TDS_TYPE_VARCHAR) &&
 		(token->maxLen == 0xFFFF))
@@ -2734,7 +2734,7 @@ TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TDSInstrumentation(INSTR_TDS_DATATYPE_XML);
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, out, strlen(out));
 
 	rc = TdsSendPlpDataHelper(buf.data, buf.len);
 
@@ -2926,7 +2926,7 @@ TdsSendTypeNText(FmgrInfo *finfo, Datum value, void *vMetaData)
 	SendTextPtrInfo();
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, out, strlen(out));
 
 	/*
 	 * TODO: Enable below check: BABEL-298 This is a special case we are
@@ -2962,7 +2962,7 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, out, strlen(out));
 	maxlen = col->metaEntry.type2.maxSize;
 
 	if (maxlen != 0xffff)
@@ -3008,7 +3008,7 @@ TdsSendTypeNChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
-	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
+	(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, out, strlen(out));
 
 	/*
 	 * This is a special case we are making for TDS clients. TSQL treats
@@ -3487,7 +3487,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		 * Data is in UTF16 format.
 		 */
 		initStringInfo(&strbuf);
-		TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES);
+		(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&strbuf, &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES);
 		dataLen = strbuf.len;
 	}
 
@@ -3879,7 +3879,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
-			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
+			(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&strbuf, buf + VARHDRSZ, dataLen);
 			actualDataLen = strbuf.len;
 		}
 		else

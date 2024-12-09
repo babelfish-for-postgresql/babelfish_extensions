@@ -351,7 +351,7 @@ TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
 /*
  * TsqlUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
  * 							 16-bit units if we were to convert it into
- * 							 UTF16 with TdsUTF8toUTF16StringInfo()
+ * 							 UTF16 with TsqlUTF8LengthInUTF16
  */
 int
 TsqlUTF8LengthInUTF16(const void *vin, int len)

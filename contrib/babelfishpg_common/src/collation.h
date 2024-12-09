@@ -119,6 +119,9 @@ typedef struct collation_callbacks
 
 	void		(*set_db_collation) (Oid db_coll);
 
+	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);	
+	void		(*TsqlUTF16toUTF8StringInfo) (StringInfo out, void *vin, int len);
+
 } collation_callbacks;
 
 extern int	find_cs_as_collation(int collidx);

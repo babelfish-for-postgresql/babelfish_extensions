@@ -885,7 +885,7 @@ FetchLoginRequest(LoginRequest request)
 
 			}
 
-			TdsUTF16toUTF8StringInfo(&temp_utf8, buf.data, length);
+			(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&temp_utf8, buf.data, length);
 
 			switch (i)
 			{
@@ -2398,7 +2398,7 @@ TdsSendLoginAck(Port *port)
 		TdsPutbytes(&tdsVersion, sizeof(tdsVersion));
 		TdsPutbytes(&prognameLen, sizeof(temp8));
 
-		TdsUTF8toUTF16StringInfo(&buf, default_server_name, prognameLen);
+		(collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)(&buf, default_server_name, prognameLen);
 		TdsPutbytes(buf.data, buf.len);
 
 		srvVersionBytes[0] = makeVersionByte(0);

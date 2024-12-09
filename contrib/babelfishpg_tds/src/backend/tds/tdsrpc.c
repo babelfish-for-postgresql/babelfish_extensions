@@ -1386,7 +1386,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			 * FIXME: parameter name is in UTF-16 format.  Fix this
 			 * separately.
 			 */
-			TdsUTF16toUTF8StringInfo(&(temp->paramMeta.colName), &(message->data[offset]), 2 * len);
+			(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&(temp->paramMeta.colName), &(message->data[offset]), 2 * len);
 			offset += 2 * len;
 			len = 0;
 		}
@@ -1759,7 +1759,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					memcpy(&typenamelen, &message->data[offset], sizeof(typenamelen));
 					offset += sizeof(typenamelen);
 
-					TdsUTF16toUTF8StringInfo(&typeName, &(message->data[offset]), 2*typenamelen);
+					(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&typeName, &(message->data[offset]), 2*typenamelen);
 					offset += 2*typenamelen;
 
 					if (!(pg_strcasecmp(typeName.data, "geometry") == 0 || pg_strcasecmp(typeName.data, "geography") == 0))
@@ -2926,7 +2926,7 @@ GetRPCRequest(StringInfo message)
 	 */
 	if (len != 0xffff)
 	{
-		TdsUTF16toUTF8StringInfo(&request->name, &(message->data[offset]), 2 * len);
+		(collation_callbacks_ptr->TsqlUTF16toUTF8StringInfo)(&request->name, &(message->data[offset]), 2 * len);
 		offset += 2 * len;
 		request->spType = SP_CUSTOMTYPE;
 	}

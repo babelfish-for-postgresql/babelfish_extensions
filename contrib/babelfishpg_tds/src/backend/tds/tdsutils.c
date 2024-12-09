@@ -310,56 +310,9 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 }
 
 /*
- * TdsUTF16toUTF8StringInfo - convert UTF16 data into UTF8 and
- * 								 add it to a StringInfo.
- */
-void
-TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
-{
-	unsigned char *in = vin;
-	int			i;
-	int			consumed;
-	int32_t		code;
-
-	/* UTF16 data allways comes in 16-bit units */
-	if ((len & 0x0001) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("invalid UTF16 byte sequence - "
-						"input data has odd number of bytes")));
-
-	for (i = 0; i < len;)
-	{
-		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
-		AddUTF8ToStringInfo(code, out);
-		i += consumed;
-	}
-}
-
-/*
- * TdsUTF8toUTF16StringInfo - convert UTF8 data into UTF16 and
- * 								 add it to a StringInfo.
- */
-void
-TdsUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
-{
-	const unsigned char *in = vin;
-	size_t		i;
-	int			consumed;
-	int32_t		code;
-
-	for (i = 0; i < len;)
-	{
-		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
-		AddUTF16ToStringInfo(code, out);
-		i += consumed;
-	}
-}
-
-/*
  * TdsUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
  * 							 16-bit units if we were to convert it into
- * 							 UTF16 with TdsUTF8toUTF16StringInfo()
+ * 							 UTF16 with (collation_callbacks_ptr->TsqlUTF8toUTF16StringInfo)()
  * 							 */
 int
 TdsUTF8LengthInUTF16(const void *vin, int len)

@@ -320,10 +320,6 @@ extern void TDSLogDuration(char *query);
 
 /* Functions in backend/tds/tdsutils.c */
 extern int	TdsUTF8LengthInUTF16(const void *in, int len);
-extern void TdsUTF16toUTF8StringInfo(StringInfo out, void *in, int len);
-extern void TdsUTF8toUTF16StringInfo(StringInfo out,
-									 const void *in,
-									 size_t len);
 extern int32_t ProcessStreamHeaders(const StringInfo message);
 extern Node *TdsFindParam(ParseState *pstate, ColumnRef *cref);
 extern void TdsErrorContextCallback(void *arg);

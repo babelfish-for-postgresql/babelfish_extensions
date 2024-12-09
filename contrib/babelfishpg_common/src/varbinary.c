@@ -923,7 +923,7 @@ Datum
 varbinarynvarchar(PG_FUNCTION_ARGS)
 {
 	bytea	        *source = PG_GETARG_BYTEA_PP(0);
-	char	        *data = VARDATA_ANY(source);		/* Source data is UTF16 encoded */
+	char	        *data = VARDATA_ANY(source);
 	VarChar         *result;
 	char 	        *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
