@@ -6061,14 +6061,14 @@ static const char *
 remove_db_name_in_schema(const char *object_name)
 {
 	char	**splited_object_name;
-	char	*db_name = NULL;
 	char	*schema_name = NULL;
-	char	*table_name = NULL;
 
 	splited_object_name = split_object_name(object_name);
-	// db_name = !strcmp(splited_object_name[1], "")? NULL : splited_object_name[1];
-	schema_name = !strcmp(splited_object_name[2], "")? NULL : splited_object_name[2];
-	// table_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
+	for (int i = 0; i < 4; i++)
+	{
+		if (strcmp(splited_object_name[i], ""))
+			schema_name = splited_object_name[i];
+	}
 
 	const char * cur_db_name = get_cur_db_name();
 	size_t db_name_len = strlen(cur_db_name);
@@ -6078,7 +6078,6 @@ remove_db_name_in_schema(const char *object_name)
 		// Return the part after the prefix
 		schema_name += prefix_len;
 	}
-	
 	
 	return schema_name;
 }
