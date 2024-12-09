@@ -381,6 +381,7 @@ getdate-before-15_9-or-16_5
 concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
+init_privs
 binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
 cast-varchar-to-time
