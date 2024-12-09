@@ -213,7 +213,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
-static const char *remove_db_name_in_schema(const char *schema_name);
+static const char *remove_db_name_in_schema(char *schema_name);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -6058,10 +6058,13 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
  * 	@return - unmapped schema name char *
  */
 static const char *
-remove_db_name_in_schema(const char *object_name)
+remove_db_name_in_schema(char *object_name)
 {
 	char	**splited_object_name;
 	char	*schema_name = NULL;
+	const char *cur_db_name;
+    size_t db_name_len;
+    size_t prefix_len;
 
 	splited_object_name = split_object_name(object_name);
 	for (int i = 0; i < 4; i++)
@@ -6070,10 +6073,10 @@ remove_db_name_in_schema(const char *object_name)
 			schema_name = splited_object_name[i];
 	}
 
-	const char * cur_db_name = get_cur_db_name();
-	size_t db_name_len = strlen(cur_db_name);
+	cur_db_name = get_cur_db_name();
+	db_name_len = strlen(cur_db_name);
+	prefix_len = db_name_len + 1;
 	
-	size_t prefix_len = db_name_len + 1;
 	if (strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 		// Return the part after the prefix
 		schema_name += prefix_len;
