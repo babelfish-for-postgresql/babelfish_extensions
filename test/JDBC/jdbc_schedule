@@ -482,10 +482,6 @@ ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
-# Assertion failure in pg-stat-statements BABEL-5391
-ignore#!#Test-sp_execute_postgresql
-ignore#!#pg_stat_statements_tsql
-
 # Ignoring internal babel pg regression tests temporarily 
 ignore#!#pgr_000_test_setup
 ignore#!#pgr_delete
