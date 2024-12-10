@@ -313,7 +313,6 @@ tempdb_dbo#!#sysadmin
 tempdb_guest#!#sysadmin
 msdb_dbo#!#sysadmin
 msdb_guest#!#sysadmin
-dbcreator_db1_dbo#!#sysadmin
 dbcreator_db1_guest#!#sysadmin
 ~~END~~
 
@@ -1252,7 +1251,6 @@ tempdb_dbo#!#sysadmin
 tempdb_guest#!#sysadmin
 msdb_dbo#!#sysadmin
 msdb_guest#!#sysadmin
-dbcreator_db1_dbo#!#sysadmin
 dbcreator_db1_guest#!#sysadmin
 ~~END~~
 

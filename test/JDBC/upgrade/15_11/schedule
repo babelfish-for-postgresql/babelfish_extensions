@@ -554,4 +554,5 @@ BABEL-CASE_EXPR
 datareader_datawriter
 BABEL-5186
 BABEL-2736
+smalldatetime_date_cmp
 
