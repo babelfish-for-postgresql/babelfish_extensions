@@ -536,7 +536,6 @@ getdate-before-15_9-or-16_5
 concat-before-15_9-or-16_5
 concat_ws-before-15_9-or-16_5
 space
-init_privs
 replace-before-15_8-or-16_4
 binary-datatype-operators
 BABEL-5059_before_16_5
