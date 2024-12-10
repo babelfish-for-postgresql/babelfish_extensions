@@ -6066,6 +6066,7 @@ remove_db_name_in_schema(const char *object_name)
 	char *mutable_name;
     size_t db_name_len;
     size_t prefix_len;
+	size_t schema_name_len;
 
 	mutable_name = strdup(object_name);
 	splited_object_name = split_object_name(mutable_name);
@@ -6077,9 +6078,11 @@ remove_db_name_in_schema(const char *object_name)
 
 	cur_db_name = get_cur_db_name();
 	db_name_len = strlen(cur_db_name);
+	schema_name_len = strlen(schema_name);
 	prefix_len = db_name_len + 1;
 
-	if (schema_name != NULL && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+	// if schema name and db name are same, ignore
+	if (schema_name != NULL && schema_name_len != db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 		// Return the part after the prefix
 		schema_name += prefix_len;
 	}
