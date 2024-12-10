@@ -2,7 +2,7 @@
 DECLARE @custname NVARCHAR(50) = N'比尔·拉莫斯'
 SELECT @custname, 
     TRIM(@custname) as [TRIM]
-    , RTRIM(@custname) as [RTRIM]
+    , LTRIM(@custname) as [LTRIM]
     , RTRIM(@custname) as [RTRIM]
     , LEFT(@custname, 4) as [LEFT4]
     , RIGHT(@custname, 4) as [RIGHT4]

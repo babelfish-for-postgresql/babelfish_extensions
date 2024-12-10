@@ -4,7 +4,7 @@ SELECT @custname,
     TRIM(@custname) as [TRIM]
     , LTRIM(@custname) as [LTRIM]
     , RTRIM(@custname) as [RTRIM]
-    , RIGHT(@custname, 4) as [RIGHT4]
+    , LEFT(@custname, 4) as [LEFT4]
     , RIGHT(@custname, 4) as [RIGHT4]
     , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
 ;

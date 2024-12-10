@@ -1282,7 +1282,6 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		
 		/* Ignore following definitions as these are used when no other potential definition can be used. */
 		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
-			|| (current_candidate->args[0] == BITOID && rettype == BITOID)
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
 
@@ -1313,6 +1312,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 static FuncCandidateList
 tsql_func_select_candidate(List *names,
+						   List *fargs,
 						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,

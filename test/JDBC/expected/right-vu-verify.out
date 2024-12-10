@@ -4,14 +4,14 @@ SELECT @custname,
     TRIM(@custname) as [TRIM]
     , LTRIM(@custname) as [LTRIM]
     , RTRIM(@custname) as [RTRIM]
-    , RIGHT(@custname, 4) as [RIGHT4]
+    , LEFT(@custname, 4) as [LEFT4]
     , RIGHT(@custname, 4) as [RIGHT4]
     , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
 ;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#·拉莫斯#!#·拉莫斯#!#尔·拉莫
+比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉#!#·拉莫斯#!#尔·拉莫
 ~~END~~
 
 
