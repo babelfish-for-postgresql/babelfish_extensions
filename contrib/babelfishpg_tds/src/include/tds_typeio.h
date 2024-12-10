@@ -395,7 +395,6 @@ typedef struct TdsIoFunctionData *TdsIoFunctionInfo;
 /* Functions in tdstypeio.c */
 extern void TdsResetCache(void);
 extern void TdsLoadTypeFunctionCache(void);
-extern void init_collation_callbacks(void);
 extern TdsIoFunctionInfo TdsLookupTypeFunctionsByOid(Oid typeId, int32 *typmod);
 extern TdsIoFunctionInfo TdsLookupTypeFunctionsByTdsId(int32_t typeId,
 													   int32_t typeLen);

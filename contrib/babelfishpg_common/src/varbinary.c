@@ -718,7 +718,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	if (encodedByteLen > maxlen)
 		encodedByteLen = maxlen;
-	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	result = (bytea *) palloc0(encodedByteLen + VARHDRSZ);
 	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);
@@ -947,17 +947,14 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	while(len>0  && data[len-1] == '\0')
 		len -= 1;
 
-	/* Initialising the paddedData as data only */
-	paddedData = (char*)palloc(len + 1);
-	memcpy(paddedData, data, len);
 
-	/* Do the Padding if lenngth is odd */
+	/* Do the Padding if length is odd */
 	if(len % 2 != 0)
 	{
-		memset(paddedData + len, '\0', 1);
+		paddedData = (char*)palloc0(len + 1);
 		len = len + 1;
 	}
-
+	memcpy(paddedData, data, len);
 	if(!(maxlen < 0 || (len >> 1) <= maxlen))
 	{
 		len = maxlen << 1;
@@ -1062,7 +1059,7 @@ nvarcharbinary(PG_FUNCTION_ARGS)
 	len= buf.len;
 
 	/* If typmod is -1 (or invalid), use the actual length */
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod < 0)
 		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -1070,14 +1067,11 @@ nvarcharbinary(PG_FUNCTION_ARGS)
 	if (len > maxlen)
 		len = maxlen;
 
-	result = (bytea *) palloc(maxlen + VARHDRSZ);
+	result = (bytea *) palloc0(maxlen + VARHDRSZ);
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 
 	rp = VARDATA(result);
 	memcpy(rp, data, len);
-
-	/* NULL pad the rest of the space */
-	memset(rp + len, '\0', maxlen - len);
 	pfree(buf.data);
 	PG_RETURN_BYTEA_P(result);
 }

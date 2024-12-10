@@ -309,8 +309,6 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 	appendStringInfoChar(buf, temp16.half[1]);
 }
 
-collation_callbacks *collation_callbacks_ptr = NULL;
-
 /*
  * TdsUTF16toUTF8StringInfo - convert UTF16 data into UTF8 and
  * 								 add it to a StringInfo.

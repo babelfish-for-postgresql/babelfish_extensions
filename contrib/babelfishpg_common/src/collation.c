@@ -1629,8 +1629,6 @@ get_collation_callbacks(void)
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
 		collation_callbacks_var.translate_tsql_collation_to_bbf_collation = &translate_tsql_collation_to_bbf_collation;
 		collation_callbacks_var.set_db_collation = &set_db_collation;
-		collation_callbacks_var.TsqlUTF8toUTF16StringInfo = &TsqlUTF8toUTF16StringInfo;
-		collation_callbacks_var.TsqlUTF16toUTF8StringInfo = &TsqlUTF16toUTF8StringInfo;
 	}
 	return &collation_callbacks_var;
 }
