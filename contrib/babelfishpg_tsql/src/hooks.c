@@ -6078,7 +6078,7 @@ remove_db_name_in_schema(const char *object_name)
 
 	cur_db_name = get_cur_db_name();
 	db_name_len = strlen(cur_db_name);
-	schema_name_len = strlen(schema_name);
+	schema_name_len = schema_name ? strlen(schema_name) : 0;
 	prefix_len = db_name_len + 1;
 
 	// if schema name and db name are same, ignore
