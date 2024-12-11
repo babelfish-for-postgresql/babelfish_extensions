@@ -554,4 +554,4 @@ datareader_datawriter
 db_ddladmin
 BABEL-5186
 BABEL-2736
-
+smalldatetime_date_cmp
