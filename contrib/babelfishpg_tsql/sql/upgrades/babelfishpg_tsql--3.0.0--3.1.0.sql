@@ -31,6 +31,36 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
+LANGUAGE C
+AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
+
+DO
+LANGUAGE plpgsql
+$$
+BEGIN
+    -- Check if the GUC is empty
+    IF current_setting('babelfishpg_tsql.restored_server_collation_name', true) <> '' THEN
+        -- Call the function to update the collation
+        EXECUTE 'SELECT sys.babelfish_update_server_collation_name()';
+    END IF;
+END;
+$$;
+
+DROP FUNCTION sys.babelfish_update_server_collation_name();
+
+-- reset babelfishpg_tsql.restored_server_collation_name GUC
+do
+language plpgsql
+$$
+    declare
+        query text;
+    begin
+        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
+        execute query;
+    end;
+$$;
+
 -- Removes a member object from the extension. The object is not dropped, only disassociated from the extension.
 -- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 CREATE OR REPLACE PROCEDURE babelfish_remove_object_from_extension(obj_type varchar, qualified_obj_name varchar) AS

@@ -27,6 +27,10 @@ Unexpected drop found for function sys.babelfish_update_server_collation_name in
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--2.10.0--3.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--2.11.0--3.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--2.12.0--3.0.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.0.0--3.1.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.1.0--3.2.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.2.0--3.3.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.3.0--3.4.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.4.0--4.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.5.0--4.0.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--3.6.0--4.0.0.sql
@@ -39,6 +43,11 @@ Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collati
 Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.4.0--3.0.0.sql
 Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.5.0--3.0.0.sql
 Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.6.0--3.0.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.0.0--4.1.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.1.0--4.2.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.2.0--4.3.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.3.0--4.4.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_tsql--4.4.0--4.5.0.sql
 Unexpected drop found for function sys.pg_extension_config_remove in file babelfishpg_tsql--3.1.0--3.2.0.sql
 Unexpected drop found for operator sys.+ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
