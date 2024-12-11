@@ -19,7 +19,7 @@ GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT @point1.STDistance(@point2) AS Distance;
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6)) AS Distance;
 GO
 
 DECLARE @point geometry;
@@ -42,9 +42,9 @@ Go
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
-SELECT @point1.STDistance(@point2);
-SELECT @point1 . STDistance ( @point2 );
+SELECT CAST(STDistance(@point1, @point2) AS numeric(20, 6));
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6));
+SELECT CAST(@point1 . STDistance ( @point2 ) AS numeric(20, 6));
 Go
 
 DECLARE @point geometry;
@@ -312,15 +312,15 @@ UPDATE YourTable SET PointColumn = @referencePoint
 WHERE PointColumn.STX >= @referencePoint.STX;
 GO
 
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(PointColumn1.STDistance(@point1) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(@point1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -374,8 +374,8 @@ SELECT * FROM YourTable ORDER BY @referencePoint.STDistance(PointColumn);
 GO
 
 DECLARE @thresholdDistance float = 3.0;
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS DistanceBetweenPoints,
-CASE WHEN PointColumn1.STDistance(PointColumn2) <= @thresholdDistance THEN 'Close' ELSE 'Far'
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS DistanceBetweenPoints,
+CASE WHEN CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) <= @thresholdDistance THEN 'Close' ELSE 'Far'
 END AS Proximity
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
@@ -415,8 +415,8 @@ ORDER BY DistanceGroup;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance,
-PointColumn1.STDistance(@referencePoint) - LAG(PointColumn1.STDistance(PointColumn2)) OVER (ORDER BY ID) AS DistanceDifference 
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance,
+CAST(PointColumn1.STDistance(@referencePoint) AS numeric(20, 6)) - LAG(CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6))) OVER (ORDER BY ID) AS DistanceDifference 
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
@@ -490,7 +490,7 @@ JSON_QUERY('{"Distance":' + CAST(@referencePoint.STDistance(PointColumn) AS NVAR
 FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
+SELECT CAST([PointColumn1].STDistance([PointColumn2]) AS numeric(20, 6)) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -694,8 +694,8 @@ Go
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
-SELECT @point1.STDistance(@point2);
+SELECT CAST(STDistance(@point1, @point2) AS numeric(20, 6));
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6));
 Go
 
 DECLARE @point geography;
@@ -716,7 +716,7 @@ go
 SELECT
     SpatialData.ID,
     SPATIALPOINTGEOG_dt.location.Lat,
-    SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location)
+    CAST(SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location) AS numeric(20, 6))
 FROM
     SpatialData
 JOIN
@@ -964,7 +964,7 @@ SELECT
     GeomColumn.STX AS XCoordinate,
     GeomColumn.STY AS YCoordinate,
     PrimaryKey,
-    GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
+    CAST(GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS numeric(20, 6)) AS DistanceToFixedPoint
 FROM
     SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
@@ -975,7 +975,7 @@ SET @sql =
     N'GeomColumn.STX AS XCoordinate, ' +
     N'GeomColumn.STY AS YCoordinate, ' +
     N'PrimaryKey, ' +
-    N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
+    N'CAST(GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS numeric(20, 6)) AS DistanceToFixedPoint ' +
     N'FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX';
 
 -- Execute the dynamic SQL

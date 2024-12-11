@@ -52,7 +52,7 @@ INSERT INTO GeomTab (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)
 
 CREATE FUNCTION dbo.GetXCoordinate(@point geometry) RETURNS float AS BEGIN RETURN @point.STX; END; 
 
-CREATE PROCEDURE GetDistanceByXCoordinate @xCoordinate FLOAT AS BEGIN DECLARE @point geometry = geometry::Point(@xCoordinate, 0.0, 4326); SELECT @point.STY, YourTable.PointColumn.STDistance(@point) AS Distance FROM YourTable ORDER BY PointColumn.STX; END;
+CREATE PROCEDURE GetDistanceByXCoordinate @xCoordinate FLOAT AS BEGIN DECLARE @point geometry = geometry::Point(@xCoordinate, 0.0, 4326); SELECT @point.STY, CAST(YourTable.PointColumn.STDistance(@point) AS numeric(20, 6)) AS Distance FROM YourTable ORDER BY PointColumn.STX; END;
 
 CREATE TABLE TableA (ID INT PRIMARY KEY, PointA geometry); 
 CREATE TABLE TableB (ID INT PRIMARY KEY, PointB geometry);
@@ -75,13 +75,13 @@ CREATE TRIGGER trg_LogXCoordinateChange ON YourTable AFTER UPDATE AS BEGIN INSER
 CREATE TABLE YourTable2 ( ID INT PRIMARY KEY, PointColumn1 geometry, PointColumn2 geometry ); 
 INSERT INTO YourTable2 (ID, PointColumn1, PointColumn2) VALUES (1, geometry::Point(3.0, 4.0, 4326), geometry::Point(4.0, 5.0, 4326));
 
-CREATE FUNCTION dbo.CalculateDistance(@point1 geometry,@point2 geometry) RETURNS float AS BEGIN RETURN @point1.STDistance(@point2); END;
+CREATE FUNCTION dbo.CalculateDistance(@point1 geometry,@point2 geometry) RETURNS numeric(20, 6) AS BEGIN RETURN CAST(@point1.STDistance(@point2) AS numeric(20, 6)); END;
 
-CREATE PROCEDURE GetPointsWithinDistance @referencePoint geometry, @maxDistance float AS BEGIN SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @maxDistance ORDER BY PointColumn.STX; END;
+CREATE PROCEDURE GetPointsWithinDistance @referencePoint geometry, @maxDistance float AS BEGIN SELECT * FROM YourTable WHERE CAST(PointColumn.STDistance(@referencePoint) AS numeric(20, 6)) <= @maxDistance ORDER BY PointColumn.STX; END;
 
 CREATE TABLE DistanceChangeLog (PointID INT,OldDistance FLOAT,NewDistance FLOAT,ChangeDate DATETIME);
 
-CREATE TRIGGER trg_LogDistanceChange ON YourTable AFTER UPDATE AS BEGIN DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); INSERT INTO DistanceChangeLog (PointID, OldDistance, NewDistance, ChangeDate) SELECT i.ID, d.PointColumn.STDistance(@referencePoint), i.PointColumn.STDistance(@referencePoint), GETDATE() FROM inserted i JOIN deleted d ON i.ID = d.ID WHERE i.PointColumn.STDistance(@referencePoint) <> d.PointColumn.STDistance(@referencePoint) ORDER BY i.ID; END;
+CREATE TRIGGER trg_LogDistanceChange ON YourTable AFTER UPDATE AS BEGIN DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); INSERT INTO DistanceChangeLog (PointID, OldDistance, NewDistance, ChangeDate) SELECT i.ID, CAST(d.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)), CAST(i.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)), GETDATE() FROM inserted i JOIN deleted d ON i.ID = d.ID WHERE CAST(i.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)) <> CAST(d.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)) ORDER BY i.ID; END;
 
 #Tests for Geometry type Prepared Statements
 prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
@@ -268,7 +268,7 @@ CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified
 
 CREATE VIEW equal_geog AS SELECT p1.location AS point FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.Lat;
 
-CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
+CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, CAST(STDistance( p1.location, p2.location ) AS numeric(20, 6)) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
 
 CREATE TABLE SpatialData(ID INT PRIMARY KEY, SpatialLocation GEOGRAPHY);
 INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 4326)), (2, geography::Point(3, 4, 4326)), (3, geography::Point(5, 6, 4326)), (4, geography::Point(7, 8, 4326)), (5, geography::Point(9, 10, 4326));
