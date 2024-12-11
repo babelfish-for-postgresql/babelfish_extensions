@@ -932,6 +932,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int		encodedByteLen;
 	StringInfoData 	buf;
 	char 		*paddedData = (char*)palloc(len+1);
+	MemoryContext   ccxt = CurrentMemoryContext;
 
 	typmod = PG_GETARG_INT32(1);
 	maxlen = typmod - VARHDRSZ;
@@ -960,11 +961,33 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	{
 		len = maxlen << 1;
 	}
-	/* Converts UTF-16 to UTF-8 using TsqlUTF16toUTF8StringInfo */
-	initStringInfo(&buf);
-	TsqlUTF16toUTF8StringInfo(&buf,paddedData,len);
-	encoded_result = buf.data;
-	encodedByteLen= buf.len;
+
+	PG_TRY();
+	{
+		/* Converts UTF-16 to UTF-8 using TsqlUTF16toUTF8StringInfo */
+		initStringInfo(&buf);
+		TsqlUTF16toUTF8StringInfo(&buf,paddedData,len);
+		encoded_result = buf.data;
+		encodedByteLen= buf.len;
+	}
+
+
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varbinary to nvarchar, %s",
+				errorData->message)));
+	}
+	PG_END_TRY();
 
 	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
 	pfree(buf.data);

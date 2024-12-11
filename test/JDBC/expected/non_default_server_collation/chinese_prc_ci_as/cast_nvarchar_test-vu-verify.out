@@ -328,3 +328,9 @@ varbinary
 ~~END~~
 
 
+select cast(0x0006161 as nvarchar)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to nvarchar, invalid UTF16 byte sequence - code point 0 not supported)~~
+
