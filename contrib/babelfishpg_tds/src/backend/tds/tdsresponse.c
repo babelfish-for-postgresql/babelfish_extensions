@@ -442,8 +442,8 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		Plan 		*outerplan = (Plan *) lfirst(lc); // this is first part of union , in nect loop second part of union. here SUBQUERYSCAN correct order of elements and subplan that has left tree and right tree and hashcluase (join on condition). second time maybe its not SubqueryScan and thats why we dont enter that inside ??? -- second time only SEQSCAN tahts why 
 
 		/* if outerplan is SubqueryScan then use actual subplan */// here if we sty out then we are picking correct and its vatatno is 1 which is correct column actually inside the subquery
-		if (IsA(outerplan, SubqueryScan))
-			outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
+		// if (IsA(outerplan, SubqueryScan))
+		// 	outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
 
 		tle = get_tle_by_resno(outerplan->targetlist, attno); // here?
 
@@ -746,17 +746,25 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
 					}
-					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
-					{
-						/*
-						 * scale adjustment by delta is only applicable for
-						 * division and (multiplcation having no aggregate
-						 * operand)
-						 */
-						int			delta = precision - TDS_MAX_NUM_PRECISION;
+					// else if (precision - scale <= TDS_MAX_NUM_PRECISION)
+					// {
+					// 	/*
+					// 	 * scale adjustment by delta is only applicable for
+					// 	 * division and (multiplcation having no aggregate
+					// 	 * operand)
+					// 	 */
+					// 	int			delta = precision - TDS_MAX_NUM_PRECISION;
 
+					// 	precision = TDS_MAX_NUM_PRECISION;
+					// 	scale = Max(scale - delta, 0);
+					// }
+					else if (precision - scale > 32 && scale < 6)
+					{
 						precision = TDS_MAX_NUM_PRECISION;
-						scale = Max(scale - delta, 0);
+					}
+					else if (precision - scale < 32)
+					{
+						scale = Min(scale, 38 - (precision-scale));
 					}
 
 					/*
