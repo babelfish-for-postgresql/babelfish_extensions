@@ -441,11 +441,11 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		TargetEntry *tle;
 		Plan 		*outerplan = (Plan *) lfirst(lc); // this is first part of union , in nect loop second part of union. here SUBQUERYSCAN correct order of elements and subplan that has left tree and right tree and hashcluase (join on condition). second time maybe its not SubqueryScan and thats why we dont enter that inside ??? -- second time only SEQSCAN tahts why 
 
-		tle = get_tle_by_resno(outerplan->targetlist, attno); // here?
-
 		/* if outerplan is SubqueryScan then use actual subplan */// here if we sty out then we are picking correct and its vatatno is 1 which is correct column actually inside the subquery
-		// if (IsA(outerplan, SubqueryScan))
-		// 	outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
+		if (IsA(outerplan, SubqueryScan))
+			outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
+
+		tle = get_tle_by_resno(outerplan->targetlist, attno); // here?
 
 		if (IsA(tle->expr, Var))
 		{
