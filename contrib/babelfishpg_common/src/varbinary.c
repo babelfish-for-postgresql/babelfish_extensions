@@ -718,7 +718,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	if (encodedByteLen > maxlen)
 		encodedByteLen = maxlen;
-	result = (bytea *) palloc0(encodedByteLen + VARHDRSZ);
+	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
 	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);
@@ -931,7 +931,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int		maxlen = -1;
 	int		encodedByteLen;
 	StringInfoData 	buf;
-	char 		*paddedData = (char*)palloc0(len + 1);
+	char 		*paddedData = (char*)palloc(len+1);
 	MemoryContext   ccxt = CurrentMemoryContext;
 
 	typmod = PG_GETARG_INT32(1);
@@ -946,12 +946,18 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
     /* truncating NULL bytes from end */
 	while(len>0  && data[len-1] == '\0')
 		len -= 1;
+	/* Initialising the paddedData as data only */
+	/* Do the Padding if lenngth is odd */
 
-	/* Increase the length if length is odd */
 	if(len % 2 != 0)
-		len = len + 1;
+	{
+		paddedData = (char*)palloc0(len+1);
+		memcpy(paddedData, data, len);
+		len = len + 1;	
+	}
+	else
+		memcpy(paddedData, data, len);
 
-	memcpy(paddedData, data, len);
 	if(!(maxlen < 0 || (len >> 1) <= maxlen))
 	{
 		len = maxlen << 1;
