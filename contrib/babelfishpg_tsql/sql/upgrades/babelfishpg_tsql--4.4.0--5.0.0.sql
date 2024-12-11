@@ -681,24 +681,6 @@ LANGUAGE 'pltsql';
 
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
-SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
-CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
-CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
-	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
-WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
-
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
@@ -718,6 +700,7 @@ BEGIN
 		IF EXISTS ( 
 			SELECT * FROM sys.sp_column_privileges_view 
 			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 			)
 		BEGIN 
 			SELECT 
@@ -752,6 +735,7 @@ BEGIN
 				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
 				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+				AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 		END
 	END
@@ -771,41 +755,14 @@ BEGIN
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 END; 
 $$
 LANGUAGE 'pltsql';
-
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
--- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
-SELECT DISTINCT
-CAST(TABLE_QUALIFIER AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
-CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
-CAST(TABLE_NAME AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
-CAST(GRANTOR AS sys.sysname) AS GRANTOR,
-CAST(GRANTEE AS sys.sysname) AS GRANTEE,
-CAST(PRIVILEGE AS sys.sysname) COLLATE sys.database_default AS PRIVILEGE,
-CAST(IS_GRANTABLE AS sys.sysname) COLLATE sys.database_default AS IS_GRANTABLE
-FROM sys.sp_column_privileges_view
-UNION 
--- We need these set of joins only for the DELETE privilege
-SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
-CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
-CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
-WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
 	"@table_name" sys.nvarchar(384),
 	"@table_owner" sys.nvarchar(384) = '',
@@ -832,6 +789,7 @@ BEGIN
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) LIKE pg_catalog.lower(@table_owner))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	ELSE 
@@ -846,13 +804,13 @@ BEGIN
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) = pg_catalog.lower(@table_owner))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	
 END; 
 $$
 LANGUAGE 'pltsql';
-
 GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;
 
 -- sp_helpsrvrolemember

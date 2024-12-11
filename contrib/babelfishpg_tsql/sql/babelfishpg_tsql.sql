@@ -1340,9 +1340,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
-	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
-WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
@@ -1364,6 +1362,7 @@ BEGIN
 		IF EXISTS ( 
 			SELECT * FROM sys.sp_column_privileges_view 
 			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 			)
 		BEGIN 
 			SELECT 
@@ -1398,6 +1397,7 @@ BEGIN
 				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
 				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+				AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 		END
 	END
@@ -1417,6 +1417,7 @@ BEGIN
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 END; 
@@ -1450,8 +1451,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
-WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
+WHERE t4.privilege_type = 'DELETE';
 GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
@@ -1480,6 +1480,7 @@ BEGIN
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) LIKE pg_catalog.lower(@table_owner))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	ELSE 
@@ -1494,6 +1495,7 @@ BEGIN
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) = pg_catalog.lower(@table_owner))
+			AND GRANTEE NOT IN ('db_datawriter', 'db_datareader')
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
 	
