@@ -787,7 +787,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	 * If typmod is -1 (or invalid), use the actual length
 	 * Length should be checked after encoding into server encoding
 	 */
-	if (typmod < (int32) VARHDRSZ)
+	if (typmod == -1)
 		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -930,8 +930,8 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int32		typmod = -1;
 	int		maxlen = -1;
 	int		encodedByteLen;
-	char 		*paddedData;
 	StringInfoData 	buf;
+	char 		*paddedData = (char*)palloc0(len + 1);
 	MemoryContext   ccxt = CurrentMemoryContext;
 
 	typmod = PG_GETARG_INT32(1);
@@ -947,13 +947,10 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	while(len>0  && data[len-1] == '\0')
 		len -= 1;
 
-
-	/* Do the Padding if length is odd */
+	/* Increase the length if length is odd */
 	if(len % 2 != 0)
-	{
-		paddedData = (char*)palloc0(len + 1);
 		len = len + 1;
-	}
+
 	memcpy(paddedData, data, len);
 	if(!(maxlen < 0 || (len >> 1) <= maxlen))
 	{

@@ -72,8 +72,7 @@ typedef struct common_utility_plugin
 	Datum		(*translate_pg_type_to_tsql) (PG_FUNCTION_ARGS);
 	Oid		(*get_tsql_datatype_oid) (char *type_name);
 	void		(*TdsGetPGbaseType) (uint8 variantBaseType, int *pgBaseType, int tempLen,
-									 int *dataLen, int *variantHeaderLen);
-	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);							 
+									 int *dataLen, int *variantHeaderLen);						 
 	void		(*TdsSetMetaData) (bytea *result, int pgBaseType, int scale,
 								   int precision, int maxLen);
 	int			(*TdsPGbaseType) (bytea *vlena);
