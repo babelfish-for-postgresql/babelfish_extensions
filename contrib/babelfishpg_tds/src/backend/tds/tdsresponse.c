@@ -747,7 +747,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					else if (precision - scale > 32 && scale < 6)
 						precision = TDS_MAX_NUM_PRECISION;
 					else if (precision - scale < 32)
+					{
 						scale = Min(scale, TDS_MAX_NUM_PRECISION - (precision-scale));
+						precision = TDS_MAX_NUM_PRECISION;
+					}
 					/*
 					 * Control reaching here for only arithmetic overflow
 					 * cases
