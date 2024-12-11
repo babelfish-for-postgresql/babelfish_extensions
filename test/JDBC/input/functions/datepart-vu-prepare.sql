@@ -64,11 +64,6 @@ CREATE TABLE date_part_vu_prepare_TestResults (
     Year INT
 );
 
-CREATE TABLE date_part_vu_prepare_OriginalTimezone (
-    Timezone VARCHAR(50)
-);
-GO
-
 INSERT INTO date_part_vu_prepare_TestDates (TestDate) VALUES 
     ('2025-01-01 05:00:00'),
     ('2025-06-15 23:59:59'),

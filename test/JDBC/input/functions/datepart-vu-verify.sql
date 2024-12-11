@@ -213,11 +213,6 @@ GO
 
 
 -- Test Case for Date Part Functions Timezone Invariance
--- Store original timezone
-INSERT INTO date_part_vu_prepare_OriginalTimezone (Timezone)
-SELECT current_setting('timezone');
-GO
-
 DECLARE @current_timezone VARCHAR(50);
 DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
 
@@ -264,10 +259,5 @@ HAVING
 GO
 
 -- Reset Timezone
-DECLARE @original_timezone VARCHAR(50);
-SELECT @original_timezone = Timezone FROM date_part_vu_prepare_OriginalTimezone;
-EXEC('SELECT set_config(''timezone'', ''' + @original_timezone + ''', false)');
-
-SELECT current_setting('timezone') AS CurrentTimezone,
-       (SELECT Timezone FROM date_part_vu_prepare_OriginalTimezone) AS OriginalTimezone;
+SELECT set_config('timezone', 'UTC', false)
 GO
