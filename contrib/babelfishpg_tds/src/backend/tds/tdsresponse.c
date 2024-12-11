@@ -138,7 +138,6 @@ static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelati
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
 
@@ -536,7 +535,7 @@ is_numeric_datatype(Oid typid)
 }
 
 /* look for a typmod to return from a numeric expression */
-static int32
+int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	if (expr == NULL)
@@ -745,19 +744,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
 					}
-					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
-					{
-						/*
-						 * scale adjustment by delta is only applicable for
-						 * division and (multiplcation having no aggregate
-						 * operand)
-						 */
-						int			delta = precision - TDS_MAX_NUM_PRECISION;
-
+					else if (precision - scale > 32 && scale < 6)
 						precision = TDS_MAX_NUM_PRECISION;
-						scale = Max(scale - delta, 0);
-					}
-
+					else if (precision - scale < 32)
+						scale = Min(scale, TDS_MAX_NUM_PRECISION - (precision-scale));
 					/*
 					 * Control reaching here for only arithmetic overflow
 					 * cases
@@ -956,6 +946,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					return rlt->resulttypmod;
 				else
 					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+			}
+		case T_CoerceToDomain:
+			{
+				int32	typmod = -1;
+				Oid		type = ((const CoerceToDomain *) expr)->resulttype;
+				Oid 	immediate_base_type = getBaseType(type);
+				if (OidIsValid(immediate_base_type))
+				{
+					type = getBaseTypeAndTypmod(type, &typmod);
+					return typmod;
+				}
+				return ((const CoerceToDomain *) expr)->resulttypmod;
 			}
 			/* TODO handle more Expr types if needed */
 		default:

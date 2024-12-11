@@ -2151,6 +2151,18 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		if (common_type == NUMERICOID ||
 			getBaseType(common_type) == NUMERICOID)
 		{
+			/* If Udt then calculate typmod.*/
+			if (OidIsValid(immediate_base_type))
+			{
+				type = getBaseTypeAndTypmod(type, &typmod);
+			}
+			
+			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
+			{
+				Plan* temp = NULL;
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(temp, expr);
+			}
+			
 			if(typmod == -1)
 				continue;
 			
