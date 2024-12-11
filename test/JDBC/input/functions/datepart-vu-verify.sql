@@ -210,3 +210,64 @@ GO
 
 SELECT DATEPART(yy, '220101 14:30:00.97531086 +13:14')
 GO
+
+
+-- Test Case for Date Part Functions Timezone Invariance
+-- Store original timezone
+INSERT INTO date_part_vu_prepare_OriginalTimezone (Timezone)
+SELECT current_setting('timezone');
+GO
+
+DECLARE @current_timezone VARCHAR(50);
+DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
+
+OPEN timezone_cursor;
+FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Set the timezone
+    EXEC('SELECT set_config(''timezone'', ''' + @current_timezone + ''', false)');
+
+    -- Insert results for this timezone
+    INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, InputDate, Day, Month, Year)
+    SELECT 
+        'Test: ' + CONVERT(VARCHAR, d.TestDate, 120) + ' in ' + @current_timezone AS TestCase,
+        @current_timezone AS TimeZone,
+        d.TestDate AS InputDate,
+        DAY(d.TestDate) AS [Day],
+        MONTH(d.TestDate) AS [Month],
+        YEAR(d.TestDate) AS [Year]
+    FROM date_part_vu_prepare_TestDates d;
+
+    FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+END
+
+CLOSE timezone_cursor;
+DEALLOCATE timezone_cursor;
+GO
+
+SELECT * FROM date_part_vu_prepare_TestResults ORDER BY InputDate, TimeZone;
+GO
+
+SELECT 
+    InputDate,
+    COUNT(DISTINCT Day) AS UniqueDays,
+    COUNT(DISTINCT Month) AS UniqueMonths,
+    COUNT(DISTINCT Year) AS UniqueYears
+FROM date_part_vu_prepare_TestResults
+GROUP BY InputDate
+HAVING 
+    COUNT(DISTINCT Day) > 1 OR 
+    COUNT(DISTINCT Month) > 1 OR 
+    COUNT(DISTINCT Year) > 1;
+GO
+
+-- Reset Timezone
+DECLARE @original_timezone VARCHAR(50);
+SELECT @original_timezone = Timezone FROM date_part_vu_prepare_OriginalTimezone;
+EXEC('SELECT set_config(''timezone'', ''' + @original_timezone + ''', false)');
+
+SELECT current_setting('timezone') AS CurrentTimezone,
+       (SELECT Timezone FROM date_part_vu_prepare_OriginalTimezone) AS OriginalTimezone;
+GO

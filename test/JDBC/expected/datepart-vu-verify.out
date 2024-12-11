@@ -505,3 +505,161 @@ int
 2022
 ~~END~~
 
+
+
+-- Test Case for Date Part Functions Timezone Invariance
+-- Store original timezone
+INSERT INTO date_part_vu_prepare_OriginalTimezone (Timezone)
+SELECT current_setting('timezone');
+GO
+~~ROW COUNT: 1~~
+
+
+
+
+
+
+
+DECLARE @current_timezone VARCHAR(50);
+DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
+OPEN timezone_cursor;
+FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Set the timezone
+    EXEC('SELECT set_config(''timezone'', ''' + @current_timezone + ''', false)');
+    -- Insert results for this timezone
+    INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, InputDate, Day, Month, Year)
+    SELECT 
+        'Test: ' + CONVERT(VARCHAR, d.TestDate, 120) + ' in ' + @current_timezone AS TestCase,
+        @current_timezone AS TimeZone,
+        d.TestDate AS InputDate,
+        DAY(d.TestDate) AS [Day],
+        MONTH(d.TestDate) AS [Month],
+        YEAR(d.TestDate) AS [Year]
+    FROM date_part_vu_prepare_TestDates d;
+    FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+END
+CLOSE timezone_cursor;
+DEALLOCATE timezone_cursor;
+GO
+~~START~~
+text
+UTC
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+America/New_York
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+America/Phoenix
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+Europe/London
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+Asia/Tokyo
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+Australia/Sydney
+~~END~~
+
+~~ROW COUNT: 4~~
+
+~~START~~
+text
+Africa/Nairobi
+~~END~~
+
+~~ROW COUNT: 4~~
+
+
+SELECT * FROM date_part_vu_prepare_TestResults ORDER BY InputDate, TimeZone;
+GO
+~~START~~
+varchar#!#varchar#!#datetime#!#int#!#int#!#int
+Test: 2025-01-01 05:00:00 in Africa/Nairobi#!#Africa/Nairobi#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in America/New_York#!#America/New_York#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in America/Phoenix#!#America/Phoenix#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in Asia/Tokyo#!#Asia/Tokyo#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in Australia/Sydney#!#Australia/Sydney#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in Europe/London#!#Europe/London#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-01-01 05:00:00 in UTC#!#UTC#!#2025-01-01 05:00:00.0#!#1#!#1#!#2025
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in America/Phoenix#!#America/Phoenix#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in Australia/Sydney#!#Australia/Sydney#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#2025-06-15 23:59:59.0#!#15#!#6#!#2025
+Test: 2025-12-31 00:00:00 in Africa/Nairobi#!#Africa/Nairobi#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in America/New_York#!#America/New_York#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in America/Phoenix#!#America/Phoenix#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in Asia/Tokyo#!#Asia/Tokyo#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in Australia/Sydney#!#Australia/Sydney#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in Europe/London#!#Europe/London#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2025-12-31 00:00:00 in UTC#!#UTC#!#2025-12-31 00:00:00.0#!#31#!#12#!#2025
+Test: 2026-02-28 12:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in America/New_York#!#America/New_York#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in America/Phoenix#!#America/Phoenix#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in Australia/Sydney#!#Australia/Sydney#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in Europe/London#!#Europe/London#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+Test: 2026-02-28 12:30:45 in UTC#!#UTC#!#2026-02-28 12:30:45.0#!#28#!#2#!#2026
+~~END~~
+
+
+SELECT 
+    InputDate,
+    COUNT(DISTINCT Day) AS UniqueDays,
+    COUNT(DISTINCT Month) AS UniqueMonths,
+    COUNT(DISTINCT Year) AS UniqueYears
+FROM date_part_vu_prepare_TestResults
+GROUP BY InputDate
+HAVING 
+    COUNT(DISTINCT Day) > 1 OR 
+    COUNT(DISTINCT Month) > 1 OR 
+    COUNT(DISTINCT Year) > 1;
+GO
+~~START~~
+datetime#!#int#!#int#!#int
+~~END~~
+
+
+
+-- Reset Timezone
+DECLARE @original_timezone VARCHAR(50);
+SELECT @original_timezone = Timezone FROM date_part_vu_prepare_OriginalTimezone;
+EXEC('SELECT set_config(''timezone'', ''' + @original_timezone + ''', false)');
+SELECT current_setting('timezone') AS CurrentTimezone,
+       (SELECT Timezone FROM date_part_vu_prepare_OriginalTimezone) AS OriginalTimezone;
+GO
+~~START~~
+text
+UTC
+~~END~~
+
+~~START~~
+text#!#varchar
+UTC#!#UTC
+~~END~~
+

@@ -18,3 +18,9 @@ GO
 
 DROP PROCEDURE date_part_vu_prepare_sys_day_proc
 GO
+
+DROP TABLE date_part_vu_prepare_TestDates;
+DROP TABLE date_part_vu_prepare_TestTimezones;
+DROP TABLE date_part_vu_prepare_TestResults;
+DROP TABLE date_part_vu_prepare_OriginalTimezone;
+GO

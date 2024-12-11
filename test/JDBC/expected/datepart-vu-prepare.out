@@ -43,3 +43,48 @@ CREATE PROCEDURE date_part_vu_prepare_sys_day_proc @a datetime
 AS
 SELECT DAY(@a)
 GO
+
+
+
+
+-- Test Case for Date Part Functions Timezone Invariance
+CREATE TABLE date_part_vu_prepare_TestDates (
+    DateID INT IDENTITY(1,1) PRIMARY KEY,
+    TestDate DATETIME
+);
+CREATE TABLE date_part_vu_prepare_TestTimezones (
+    TimezoneID INT IDENTITY(1,1) PRIMARY KEY,
+    TimezoneName VARCHAR(50)
+);
+CREATE TABLE date_part_vu_prepare_TestResults (
+    TestCase VARCHAR(100),
+    TimeZone VARCHAR(50),
+    InputDate DATETIME,
+    Day INT,
+    Month INT,
+    Year INT
+);
+CREATE TABLE date_part_vu_prepare_OriginalTimezone (
+    Timezone VARCHAR(50)
+);
+GO
+
+
+INSERT INTO date_part_vu_prepare_TestDates (TestDate) VALUES 
+    ('2025-01-01 05:00:00'),
+    ('2025-06-15 23:59:59'),
+    ('2025-12-31 00:00:00'),
+    ('2026-02-28 12:30:45');
+INSERT INTO date_part_vu_prepare_TestTimezones (TimezoneName) VALUES 
+    ('UTC'),                  -- No DST
+    ('America/New_York'),     -- Has DST
+    ('America/Phoenix'),      -- No DST (most of Arizona doesn't observe DST)
+    ('Europe/London'),        -- Has DST
+    ('Asia/Tokyo'),           -- No DST
+    ('Australia/Sydney'),     -- Has DST
+    ('Africa/Nairobi');       -- No DST
+GO
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 7~~
+
