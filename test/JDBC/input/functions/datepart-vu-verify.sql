@@ -213,49 +213,105 @@ GO
 
 
 -- Test Case for Date Part Functions Timezone Invariance
-DECLARE @current_timezone VARCHAR(50);
-DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
+DECLARE @timezone VARCHAR(50);
+DECLARE @datepart VARCHAR(20);
+DECLARE @datatype VARCHAR(20);
+DECLARE @datecol VARCHAR(30);
+DECLARE @testdate DATETIME;
+DECLARE @sql NVARCHAR(MAX);
 
+-- Cursor for timezones
+DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
 OPEN timezone_cursor;
-FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+FETCH NEXT FROM timezone_cursor INTO @timezone;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
     -- Set the timezone
-    EXEC('SELECT set_config(''timezone'', ''' + @current_timezone + ''', false)');
+    EXEC('SELECT set_config(''timezone'', ''' + @timezone + ''', false)');
 
-    -- Insert results for this timezone
-    INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, InputDate, Day, Month, Year)
-    SELECT 
-        'Test: ' + CONVERT(VARCHAR, d.TestDate, 120) + ' in ' + @current_timezone AS TestCase,
-        @current_timezone AS TimeZone,
-        d.TestDate AS InputDate,
-        DAY(d.TestDate) AS [Day],
-        MONTH(d.TestDate) AS [Month],
-        YEAR(d.TestDate) AS [Year]
-    FROM date_part_vu_prepare_TestDates d;
+    -- Cursor for date parts
+    DECLARE datepart_cursor CURSOR FOR SELECT DatePartName FROM date_part_vu_prepare_DateParts;
+    OPEN datepart_cursor;
+    FETCH NEXT FROM datepart_cursor INTO @datepart;
 
-    FETCH NEXT FROM timezone_cursor INTO @current_timezone;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        -- Cursor for data types
+        DECLARE datatype_cursor CURSOR FOR 
+        SELECT 'DATETIME', 'TestDateTime' UNION ALL
+        SELECT 'DATETIMEOFFSET', 'TestDateTimeOffset' UNION ALL
+        SELECT 'DATETIME2', 'TestDateTime2' UNION ALL
+        SELECT 'SMALLDATETIME', 'TestSmallDateTime';
+        OPEN datatype_cursor;
+        FETCH NEXT FROM datatype_cursor INTO @datatype, @datecol;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            -- Cursor for test dates
+            DECLARE testdate_cursor CURSOR FOR SELECT TestDateTime FROM date_part_vu_prepare_TestDates;
+            OPEN testdate_cursor;
+            FETCH NEXT FROM testdate_cursor INTO @testdate;
+
+            WHILE @@FETCH_STATUS = 0
+            BEGIN
+                SET @sql = N'
+                INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, DataType, InputDate, DatePart, DatePartValue, DateName)
+                SELECT 
+                    ''Test: '' + CONVERT(VARCHAR, ' + @datecol + ', 120) + '' in ' + @timezone + ''' AS TestCase,
+                    ''' + @timezone + ''' AS TimeZone,
+                    ''' + @datatype + ''' AS DataType,
+                    CONVERT(VARCHAR, ' + @datecol + ', 120) AS InputDate,
+                    ''' + @datepart + ''' AS DatePart,
+                    DATEPART(' + @datepart + ', ' + @datecol + ') AS DatePartValue,
+                    DATENAME(' + @datepart + ', ' + @datecol + ') AS DateName
+                FROM date_part_vu_prepare_TestDates
+                WHERE TestDateTime = ''' + CONVERT(VARCHAR, @testdate, 120) + '''';
+
+                EXEC sp_executesql @sql;
+
+                FETCH NEXT FROM testdate_cursor INTO @testdate;
+            END
+
+            CLOSE testdate_cursor;
+            DEALLOCATE testdate_cursor;
+
+            FETCH NEXT FROM datatype_cursor INTO @datatype, @datecol;
+        END
+
+        CLOSE datatype_cursor;
+        DEALLOCATE datatype_cursor;
+
+        FETCH NEXT FROM datepart_cursor INTO @datepart;
+    END
+
+    CLOSE datepart_cursor;
+    DEALLOCATE datepart_cursor;
+
+    FETCH NEXT FROM timezone_cursor INTO @timezone;
 END
 
 CLOSE timezone_cursor;
 DEALLOCATE timezone_cursor;
 GO
 
-SELECT * FROM date_part_vu_prepare_TestResults ORDER BY InputDate, TimeZone;
+-- Analyze results
+SELECT * FROM date_part_vu_prepare_TestResults
+ORDER BY DataType, InputDate, TimeZone, DatePart;
 GO
 
+-- Check for any discrepancies
 SELECT 
+    DataType,
     InputDate,
-    COUNT(DISTINCT Day) AS UniqueDays,
-    COUNT(DISTINCT Month) AS UniqueMonths,
-    COUNT(DISTINCT Year) AS UniqueYears
+    DatePart,
+    COUNT(DISTINCT DatePartValue) AS UniqueDatePartValues,
+    COUNT(DISTINCT DateName) AS UniqueDateNames
 FROM date_part_vu_prepare_TestResults
-GROUP BY InputDate
+GROUP BY DataType, InputDate, DatePart
 HAVING 
-    COUNT(DISTINCT Day) > 1 OR 
-    COUNT(DISTINCT Month) > 1 OR 
-    COUNT(DISTINCT Year) > 1;
+    COUNT(DISTINCT DatePartValue) > 1 OR 
+    COUNT(DISTINCT DateName) > 1;
 GO
 
 -- Reset Timezone

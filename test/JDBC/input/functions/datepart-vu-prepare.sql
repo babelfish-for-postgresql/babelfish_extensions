@@ -45,37 +45,39 @@ SELECT DAY(@a)
 GO
 
 -- Test Case for Date Part Functions Timezone Invariance
+CREATE TABLE date_part_vu_prepare_DateParts (DatePartName VARCHAR(20));
+GO
 CREATE TABLE date_part_vu_prepare_TestDates (
-    DateID INT IDENTITY(1,1) PRIMARY KEY,
-    TestDate DATETIME
+    TestDateTime DATETIME,
+    TestDateTimeOffset DATETIMEOFFSET,
+    TestDateTime2 DATETIME2,
+    TestSmallDateTime SMALLDATETIME
 );
-
-CREATE TABLE date_part_vu_prepare_TestTimezones (
-    TimezoneID INT IDENTITY(1,1) PRIMARY KEY,
-    TimezoneName VARCHAR(50)
-);
-
+GO
+CREATE TABLE date_part_vu_prepare_TestTimezones (TimezoneName VARCHAR(50));
+GO
 CREATE TABLE date_part_vu_prepare_TestResults (
     TestCase VARCHAR(100),
     TimeZone VARCHAR(50),
-    InputDate DATETIME,
-    Day INT,
-    Month INT,
-    Year INT
+    DataType VARCHAR(20),
+    InputDate VARCHAR(50),
+    DatePart VARCHAR(20),
+    DatePartValue SQL_VARIANT,
+    DateName NVARCHAR(100)
 );
+GO
 
-INSERT INTO date_part_vu_prepare_TestDates (TestDate) VALUES 
-    ('2025-01-01 05:00:00'),
-    ('2025-06-15 23:59:59'),
-    ('2025-12-31 00:00:00'),
-    ('2026-02-28 12:30:45');
-
-INSERT INTO date_part_vu_prepare_TestTimezones (TimezoneName) VALUES 
-    ('UTC'),                  -- No DST
-    ('America/New_York'),     -- Has DST
-    ('America/Phoenix'),      -- No DST (most of Arizona doesn't observe DST)
-    ('Europe/London'),        -- Has DST
-    ('Asia/Tokyo'),           -- No DST
-    ('Australia/Sydney'),     -- Has DST
-    ('Africa/Nairobi');       -- No DST
+-- -- Populate tables
+INSERT INTO date_part_vu_prepare_DateParts (DatePartName) VALUES
+('year'), ('quarter'), ('month'), ('dayofyear'), ('day'), 
+('week'), ('weekday'), ('hour'), ('minute'), ('second'), 
+('millisecond'), ('microsecond'), ('nanosecond'),
+('tzoffset'), ('iso_week');
+GO
+INSERT INTO date_part_vu_prepare_TestDates VALUES 
+('2025-01-01 05:30:45', '2025-01-01 05:30:45 +00:00', '2025-01-01 05:30:45.1234567', '2025-01-01 05:31:00'),
+('2025-06-15 23:59:59', '2025-06-15 23:59:59 +00:00', '2025-06-15 23:59:59.9876543', '2025-06-15 23:59:00');
+GO
+INSERT INTO date_part_vu_prepare_TestTimezones (TimezoneName) VALUES
+('UTC'),('America/New_York'), ('Europe/London'), ('Asia/Tokyo'), ('Africa/Nairobi');
 GO
