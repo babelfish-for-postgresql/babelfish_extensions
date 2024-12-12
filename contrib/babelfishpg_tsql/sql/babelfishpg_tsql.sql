@@ -1326,7 +1326,7 @@ $$
 LANGUAGE PLPGSQL;
 GRANT ALL on FUNCTION sys.babelfish_runtime_error TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.sp_column_privileges_func()
+CREATE OR REPLACE FUNCTION sys.sp_column_privileges_internal()
 RETURNS TABLE (
     TABLE_QUALIFIER sys.sysname,
     TABLE_OWNER sys.sysname,
@@ -1366,7 +1366,7 @@ SELECT
     CAST(GRANTEE AS sys.sysname),
     CAST(PRIVILEGE AS sys.varchar(32)),
     CAST(IS_GRANTABLE AS sys.varchar(3))
-FROM sys.sp_column_privileges_func()
+FROM sys.sp_column_privileges_internal()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
@@ -1449,7 +1449,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.sp_table_privileges_func()
+CREATE OR REPLACE FUNCTION sys.sp_table_privileges_internal()
 RETURNS TABLE (
     TABLE_QUALIFIER sys.sysname,
     TABLE_OWNER sys.sysname,
@@ -1492,7 +1492,7 @@ FROM sys.sp_column_privileges_view
 UNION 
 -- We need these set of joins only for the DELETE privilege
 SELECT *
-FROM sys.sp_table_privileges_func()
+FROM sys.sp_table_privileges_internal()
 WHERE GRANTEE != 'db_datawriter';
 GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
 

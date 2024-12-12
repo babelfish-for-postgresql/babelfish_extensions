@@ -681,7 +681,7 @@ LANGUAGE 'pltsql';
 
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.sp_column_privileges_func()
+CREATE OR REPLACE FUNCTION sys.sp_column_privileges_internal()
 RETURNS TABLE (
     TABLE_QUALIFIER sys.sysname,
     TABLE_OWNER sys.sysname,
@@ -721,7 +721,7 @@ SELECT
     CAST(GRANTEE AS sys.sysname),
     CAST(PRIVILEGE AS sys.varchar(32)),
     CAST(IS_GRANTABLE AS sys.varchar(3))
-FROM sys.sp_column_privileges_func()
+FROM sys.sp_column_privileges_internal()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
@@ -803,7 +803,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.sp_table_privileges_func()
+CREATE OR REPLACE FUNCTION sys.sp_table_privileges_internal()
 RETURNS TABLE (
     TABLE_QUALIFIER sys.sysname,
     TABLE_OWNER sys.sysname,
@@ -846,7 +846,7 @@ FROM sys.sp_column_privileges_view
 UNION 
 -- We need these set of joins only for the DELETE privilege
 SELECT *
-FROM sys.sp_table_privileges_func()
+FROM sys.sp_table_privileges_internal()
 WHERE GRANTEE != 'db_datawriter';
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
