@@ -1515,7 +1515,6 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	Node           *stmt;
 	Oid            save_userid;
 	int            save_sec_context;
-	bool           save_creating_extension;
 	int            i = 0;
 	char           *db_owner;
 	char           *db_accessadmin;
@@ -1564,12 +1563,12 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, db_ddladmin, NULL);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	save_creating_extension = creating_extension;
 
 	PG_TRY();
 	{
 		ListCell 	*parsetree_item;
 
+		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "true", PGC_USERSET, PGC_S_SESSION);
 		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 		add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 		add_to_bbf_authid_user_ext(db_securityadmin, DB_SECURITYADMIN, dbname, NULL, NULL, true, false, false);
@@ -1578,7 +1577,6 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 		add_to_bbf_authid_user_ext(db_ddladmin, DB_DDLADMIN, dbname, NULL, NULL, true, false, false);
 
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		creating_extension = false;
 
 		foreach(parsetree_item, parsetree_list)
 		{
@@ -1606,7 +1604,7 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	}
 	PG_FINALLY();
 	{
-		creating_extension = save_creating_extension;
+		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "false", PGC_USERSET, PGC_S_SESSION);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		pfree(db_owner);
 		pfree(db_accessadmin);
