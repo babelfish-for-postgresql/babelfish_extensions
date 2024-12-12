@@ -1,0 +1,51 @@
+-- tsql
+create login init_privs_l1 with password = '12345678';
+go
+
+create user init_privs_u1 for login init_privs_l1;
+go
+
+-- As sysadmin user
+-- tsql
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', false);
+go
+
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
+go
+
+-- tsql user=init_privs_l1 password=12345678
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', false);
+go
+
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
+go
+
+-- superusers can change it outside of upgrade script
+-- psql
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', false);
+go
+
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
+go
+
+-- new session should reset the older value
+-- tsql
+select current_setting('babelfishpg_tsql.disable_storing_init_privs');
+go
+
+-- psql user=init_privs_l1 password=12345678
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', false);
+go
+
+select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
+go
+
+-- terminate-tsql-conn user=init_privs_l1 password=12345678
+-- terminate-psql-conn user=init_privs_l1 password=12345678
+
+-- tsql
+drop user init_privs_u1;
+go
+
+drop login init_privs_l1;
+go
