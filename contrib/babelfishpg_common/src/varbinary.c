@@ -795,7 +795,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	if (encodedByteLen > maxlen)
 		encodedByteLen = maxlen;
 
-	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	result = (bytea *) palloc0(encodedByteLen + VARHDRSZ);
 	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);

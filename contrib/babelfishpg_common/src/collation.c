@@ -20,7 +20,6 @@
 #include "encoding/encoding.h"
 #include "typecode.h"
 #include "sqlvariant.h"
-#include "varchar.h"
 
 #define NOT_FOUND -1
 
