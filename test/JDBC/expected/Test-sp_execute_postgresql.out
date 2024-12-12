@@ -198,7 +198,7 @@ void
 ~~END~~
 
 
-SELECT pg_stat_statements_reset();
+SELECT CASE pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
 void

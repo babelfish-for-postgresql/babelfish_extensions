@@ -16,16 +16,16 @@ t
 SELECT pg_sleep(1);
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -191,11 +191,11 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -217,11 +217,11 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -334,11 +334,11 @@ bit#!#text#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -392,11 +392,11 @@ int
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
