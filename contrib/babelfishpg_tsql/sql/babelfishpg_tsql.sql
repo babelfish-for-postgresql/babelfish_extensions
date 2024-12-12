@@ -1357,7 +1357,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
-SELECT *
+SELECT
+    CAST(TABLE_QUALIFIER AS sys.sysname),
+    CAST(TABLE_OWNER AS sys.sysname),
+    CAST(TABLE_NAME AS sys.sysname),
+    CAST(COLUMN_NAME AS sys.sysname),
+    CAST(GRANTOR AS sys.sysname),
+    CAST(GRANTEE AS sys.sysname),
+    CAST(PRIVILEGE AS sys.varchar(32)).
+    CAST(IS_GRANTABLE AS sys.varchar(3))
 FROM sys.sp_column_privileges_func()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
