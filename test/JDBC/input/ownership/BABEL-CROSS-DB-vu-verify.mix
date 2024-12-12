@@ -431,6 +431,114 @@ GO
 SELECT * FROM babel_cross_db_vu_prepare_t4;
 GO
 
+-- Cross-db testcases for statements in batch/block
+-- tsql
+USE master;
+GO
+
+-- Batches having system objects
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+-- Batches having user created objects
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+-- Batches having different types of DMLs
+BEGIN; INSERT INTO my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 VALUES (1); BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; INSERT INTO my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 VALUES (1); END; END;
+GO
+
+BEGIN; UPDATE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 SET a = 2; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; UPDATE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 SET a = 2; END; END;
+GO
+
+BEGIN; DELETE FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 WHERE a = 2; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; DELETE FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 WHERE a = 2; END; END;
+GO
+
+-- Batches with subqueries
+SELECT DISTINCT (SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 t2 WHERE t2.a = t1.a) FROM babel_cross_db_vu_prepare_master_t1 t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT (SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 t2 WHERE t2.a = t1.a) FROM babel_cross_db_vu_prepare_master_t1 t1;
+GO
+
+-- Batches with DDL and DML combination
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN CREATE TABLE babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM babel_cross_db_vu_verify_tempt; END; END;
+GO
+
+DROP TABLE babel_cross_db_vu_verify_tempt;
+GO
+
+BEGIN; CREATE TABLE babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM babel_cross_db_vu_verify_tempt; BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; END;
+GO
+
+DROP TABLE babel_cross_db_vu_verify_tempt;
+GO
+
 -- tsql
 USE master
 GO
