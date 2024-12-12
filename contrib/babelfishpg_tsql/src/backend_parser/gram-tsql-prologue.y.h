@@ -18,6 +18,11 @@
 #include "src/multidb.h"
 #include "src/tsql_for/tsql_for.h"
 
+// #include "nodes/nodes.h"
+// #include "nodes/parsenodes.h"
+// #include "nodes/value.h"
+// #include "parser/parse_node.h"
+
 #define MD5_HASH_LEN 32
 
 static void pgtsql_base_yyerror(YYLTYPE * yylloc, core_yyscan_t yyscanner, const char *msg);
@@ -56,6 +61,7 @@ static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func
 										List *tsql_createfunc_args, char *param_name, int table_loc, List *table_elts, 
 										char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner);
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
+static Node *tsql_unpivot_select_transformation(SelectStmt *stmt, List *unpivot_clause, Alias *alias);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
 static Node *TsqlOpenJSONWithMakeFuncCall(Node *jsonExpr, Node *path, List *cols, Alias *alias);

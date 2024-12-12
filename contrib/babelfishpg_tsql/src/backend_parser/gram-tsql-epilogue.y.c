@@ -2016,6 +2016,90 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	return (Node *)pivot_sl;
 }
 
+/* pivot select transformation*/
+static Node *
+tsql_unpivot_select_transformation(SelectStmt *stmt, List *unpivot_clause, Alias *alias)
+{
+    //elog(NOTICE, "Reached UNPIVOT transformation");
+    SelectStmt *result;
+    JoinExpr *join;
+    RangeVar *larg;
+    RangeSubselect *rarg;
+    SelectStmt *values_subquery;
+    List *values_list = NIL;
+    ColumnRef *measure_col;
+    ColumnRef *dim_col;
+    List *source_cols;
+    ListCell *lc;
+    ListCell *tlc;
+
+	lc=NULL;
+	tlc =NULL;
+    
+    /* 1. Create new nodes */
+    result = makeNode(SelectStmt);
+    join = makeNode(JoinExpr);
+    
+    /* Copy the target list structure */
+    result->targetList = copyObject(stmt->targetList);
+    
+    /* 2. Set up the CROSS JOIN LATERAL structure */
+    join->jointype = JOIN_INNER;
+    join->isNatural = false;
+    
+    /* 3. Set up left side of join (the source table) */
+    larg = copyObject((RangeVar *)linitial(stmt->fromClause));
+    if (larg->alias == NULL)
+    {
+        /* If no alias exists, create default 'c' alias */
+        larg->alias = makeAlias("c", NIL);
+    }
+    join->larg = (Node *)larg;
+    
+    /* 4. Set up right side (LATERAL subquery with VALUES) */
+    rarg = makeNode(RangeSubselect);
+    rarg->lateral = true;
+    values_subquery = makeNode(SelectStmt);
+    
+    /* 5. Process unpivot components */
+    measure_col = (ColumnRef *)linitial(unpivot_clause);
+    dim_col = (ColumnRef *)lsecond(unpivot_clause);
+    source_cols = (List *)lthird(unpivot_clause);
+
+	elog(DEBUG1, "Unused variables:");
+    elog(DEBUG1, "values_list: %p", values_list);
+    elog(DEBUG1, "values_subquery: %p", values_subquery);
+    elog(DEBUG1, "source_cols: %p", source_cols);
+    elog(DEBUG1, "lc: %p", lc);
+    elog(DEBUG1, "tlc: %p", tlc);
+    elog(DEBUG1, "measure_col: %p", measure_col);
+    elog(DEBUG1, "dim_col: %p", dim_col);
+    
+    /* 6. Create VALUES list */
+	foreach(lc, source_cols) {
+		ColumnRef *col = makeNode(ColumnRef);
+        List *value_row;
+        
+		/* Create column reference (c.qN) */
+		col->fields = list_make2(
+            makeString(larg->alias->aliasname),
+            makeString(strVal(lfirst(lc)))
+        );
+
+		/* Create row for VALUES: [c.qN] */
+        value_row = list_make1(col);
+        values_list = lappend(values_list, value_row);
+	}
+
+	/* Assign VALUES list to subquery */
+    values_subquery->valuesLists = values_list;
+    rarg->subquery = (Node *)values_subquery; //TODO: check if typcast needed or SelectStmt assignment works
+
+	//TODO remaining transformation logic
+
+    return (Node *)result;
+}
+
 /* 
  * Adjust index nulls order to match SQL Server behavior.
  * For ASC (or unspecified) index, default should be NULLS FIRST;
