@@ -1340,7 +1340,9 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
-	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
+WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
@@ -1448,7 +1450,8 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-WHERE t4.privilege_type = 'DELETE'; 
+	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
+WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
 GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
@@ -2138,7 +2141,7 @@ BEGIN
 	 			FROM sys.server_principals
 		 	 	WHERE 
 				pg_catalog.lower(name) = login COLLATE sys.database_default
-				AND type = 'S'));
+				AND type IN ('S', 'R')));
  	
  	IF NOT login_valid THEN
  		RETURN NULL;
@@ -2146,8 +2149,10 @@ BEGIN
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
 	
- 	ELSIF role = 'sysadmin' COLLATE sys.database_default THEN
-	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
+ 	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
+	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
+				OR ((login COLLATE sys.database_default NOT IN ('sysadmin', 'securityadmin', 'dbcreator'))
+					AND pg_has_role(login::TEXT, 'sysadmin'::TEXT, 'MEMBER')));
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
@@ -2156,11 +2161,8 @@ BEGIN
 	
     ELSIF role COLLATE sys.database_default IN (
             'serveradmin',
-            'securityadmin',
             'setupadmin',
-            'securityadmin',
             'processadmin',
-            'dbcreator',
             'diskadmin',
             'bulkadmin') THEN 
     	RETURN 0;
@@ -2206,7 +2208,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -2238,7 +2240,7 @@ BEGIN
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
-		AND Ext2.orig_username != 'db_owner'
+		AND Ext2.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY Role_name, Users_in_role;
 	END
@@ -2276,7 +2278,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
-		AND Ext1.orig_username != 'db_owner'
+		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
@@ -2409,8 +2411,8 @@ BEGIN
 					OR pg_catalog.lower(rolname) = pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)))
 					AND type = 'R')
 					OR pg_catalog.lower(PG_CATALOG.RTRIM(@srvrolename)) IN (
-					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
-					'dbcreator', 'diskadmin', 'bulkadmin')
+					'serveradmin', 'setupadmin', 'processadmin',
+					'diskadmin', 'bulkadmin')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
@@ -2436,14 +2438,20 @@ CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NUL
 $$
 BEGIN
 	-- Returns a list of the fixed database roles. 
-	-- Only fixed role present in babelfish is db_owner.
-	IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IS NULL OR pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) = 'db_owner'
+	IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IS NULL 
+		OR pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN ('db_owner', 'db_accessadmin', 'db_securityadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 	BEGIN
-		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
+		SELECT CAST(DbFixedRole as sys.SYSNAME) AS DbFixedRole, CAST(Description AS sys.nvarchar(70)) AS Description FROM (
+			VALUES ('db_owner', 'DB Owners'),
+			('db_accessadmin', 'DB Access Administrators'),
+			('db_securityadmin', 'DB Security Administrators'),
+			('db_datareader', 'DB Data Reader'),
+			('db_datawriter', 'DB Data Writer'),
+			('db_ddladmin', 'DB DDL Administrators')) x(DbFixedRole, Description)
+			WHERE LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = DbFixedRole;
 	END
 	ELSE IF pg_catalog.lower(PG_CATALOG.RTRIM(@rolename)) IN (
-			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
-			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+			'db_backupoperator', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
 		-- Return an empty result set instead of raising an error
 		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
@@ -2513,12 +2521,22 @@ CAST(
         ELSE 0
     END
 AS INT) AS sysadmin,
-CAST(0 AS INT) AS securityadmin,
+CAST(
+    CASE
+        WHEN is_srvrolemember('securityadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS securityadmin,
 CAST(0 AS INT) AS serveradmin,
 CAST(0 AS INT) AS setupadmin,
 CAST(0 AS INT) AS processadmin,
 CAST(0 AS INT) AS diskadmin,
-CAST(0 AS INT) AS dbcreator,
+CAST(
+    CASE
+        WHEN is_srvrolemember('dbcreator', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
 FROM sys.server_principals AS Base
 WHERE Base.type in ('S', 'U');
@@ -3086,6 +3104,22 @@ BEGIN
 					WHERE s1.name = @schemaname AND o1.name = @subname;
 					SELECT @count = COUNT(*) FROM #tempTable;
 
+					IF @count < 1
+						BEGIN
+							-- sys.objects does not show routines which current user cannot execute but
+							-- roles like db_ddladmin allow renaming a procedure even though they cannot
+							-- execute it, so search again in pg_proc if count is zero
+							DROP TABLE #tempTable;
+							SELECT CAST(CASE 
+											WHEN p.prokind = 'p' THEN 'P'
+											WHEN p.prokind = 'a' THEN 'AF'
+											WHEN format_type(p.prorettype, NULL) = 'trigger' THEN 'TR'
+											ELSE 'FN'
+										END as sys.bpchar(2)) AS type INTO #tempTable
+							FROM pg_proc p INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id
+							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = @subname;
+							SELECT @count = COUNT(*) FROM #tempTable;
+						END
 					IF @count > 1
 						BEGIN
 							THROW 33557097, N'There are multiple objects with the given @objname.', 1;

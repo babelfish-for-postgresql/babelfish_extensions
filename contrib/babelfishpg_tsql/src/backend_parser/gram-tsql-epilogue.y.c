@@ -2058,3 +2058,24 @@ tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 		}
 	}
 }
+
+static void
+check_server_role_and_throw_if_unsupported (const char *serverrole, int position, core_yyscan_t yyscanner)
+{
+	if (strcmp(serverrole, "serveradmin") == 0
+		|| strcmp(serverrole, "setupadmin") == 0
+		|| strcmp(serverrole, "processadmin") == 0
+		|| strcmp(serverrole, "diskadmin") == 0
+		|| strcmp(serverrole, "bulkadmin") == 0) 
+	{
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Fixed server role '%s' is currently not supported in Babelfish", serverrole),
+										parser_errposition(position)));
+	}
+	else if (!IS_BBF_FIXED_SERVER_ROLE(serverrole))
+	{
+		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
+							parser_errposition(position)));
+	}
+}

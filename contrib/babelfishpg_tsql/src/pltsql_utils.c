@@ -30,6 +30,7 @@
 
 #include "multidb.h"
 #include "session.h"
+#include "rolecmds.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -1140,7 +1141,7 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1
 	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
 
-	if (grantee && priv && stmt->action)
+	if (grantee && stmt->action)
 	{
 		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
 	}
@@ -2508,4 +2509,144 @@ get_owner_of_schema(const char *schema)
 	ReleaseSysCache(tup);
 
 	return result;
+}
+
+/*
+ * exec_database_roles_subcmds:
+ * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
+ */
+void
+exec_database_roles_subcmds(const char *schema)
+{
+	StringInfoData	query;
+	char		*db_datareader;
+	char		*db_datawriter;
+	char		*db_ddladmin;
+	char		*dbo_role;
+	char		*db_owner;
+	char		*schema_owner;
+	const char	*dbname = get_current_pltsql_db_name();
+	List		*stmt_list;
+	int 		expected_stmts = 5;
+	ListCell	*parsetree_item;
+	Node		*stmts;
+	int		i=0;
+	Oid save_userid;
+	int save_sec_context;
+
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+	db_ddladmin = get_db_ddladmin_role_name(dbname);
+	dbo_role = get_dbo_role_name(dbname);
+	db_owner = get_db_owner_name(dbname);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+
+	initStringInfo(&query);
+
+	/* Grant privileges to db_datareader */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	/* Grant privileges to db_datawriter */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT UPDATE ON SEQUENCES TO dummy; ");
+	/* Grant privileges to db_ddladmin */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datareader, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_ddladmin, NULL);
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmts, schema, NULL, db_ddladmin, NULL);
+
+	PG_TRY();
+	{
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		/* Run all subcommands */
+		foreach(parsetree_item, stmt_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						ALTER_DEFAULT_PRIVILEGES,
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
+		CommandCounterIncrement();
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		pfree(db_datareader);
+		pfree(db_datawriter);
+		pfree(db_ddladmin);
+		pfree(dbo_role);
+		pfree(db_owner);
+	}
+	PG_END_TRY();
+	pfree(query.data);
+}
+
+void
+throw_error_for_fixed_db_role(char *rolname, char *dbname)
+{
+	if (rolname != NULL &&
+		IS_FIXED_DB_PRINCIPAL(get_authid_user_ext_original_name(rolname, dbname, false)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+	}
+}
+
+void
+update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role)
+{
+	ReassignOwnedStmt *stmt = (ReassignOwnedStmt *) n;
+	RoleSpec   *old_rolespec = make_rolespec_node(old_role);
+	RoleSpec   *new_rolespec = make_rolespec_node(new_role);
+
+	if (!IsA(stmt, ReassignOwnedStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a ReassignOwnedStmt")));
+
+	stmt->roles = list_make1(old_rolespec);
+	stmt->newrole = new_rolespec;
+}
+
+void
+update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role)
+{
+	AccessPriv	*granted_rolespec = make_accesspriv_node(granted_role);
+	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
+
+	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec), NULL);
 }

@@ -22,6 +22,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
 #include "rolecmds.h"
@@ -3228,11 +3229,12 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or securityadmin, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner
+					&& !is_member_of_role(GetSessionUserId(), get_securityadmin_oid()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Grantor does not have GRANT permission.")));
@@ -3981,11 +3983,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
 
-		/* Special database roles should throw an error. */
-		if (strcmp(grantee_name, "db_owner") == 0)
-			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
-
 		if (!is_public && !OidIsValid(role_oid))
 		{
 			/* sys or information_schema roles should throw an error. */
@@ -4004,11 +4001,21 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
+		/* Special database roles should throw an error. */
+		if (IS_FIXED_DB_PRINCIPAL(grantee_name))
+			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+
 		/*
 		 * If the login is not the db owner or the login is not the member of
-		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+		 * sysadmin or login is not the schema owner,
+		 * or current_user is not member of db_securityadmin fixed role
+		 * then it doesn't have the permission to GRANT/REVOKE.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+			!login_is_db_owner &&
+			!object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), get_db_securityadmin_oid(dbname, false)))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
@@ -4314,7 +4321,8 @@ check_create_or_drop_permission_for_partition_specifier(const char *name, bool i
 	if (strncmp(login, get_owner_of_db(dbname), NAMEDATALEN) == 0)
 		login_is_db_owner = true;
 
-	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)))
+	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)) &&
+		!has_privs_of_role(GetUserId(), get_db_ddladmin_oid(dbname, false)))
 	{
 		if (is_create)
 			ereport(ERROR, 

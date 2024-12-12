@@ -46,3 +46,17 @@ CREATE TABLE master_dbo.tbl_creation_should_succeed (
           AND ((a)::text < ('11'::text || '￿'::text COLLATE sys.bbf_unicode_cp1_ci_as))))))
 );
 GO
+
+-- psql
+-- This is needed so that MVU passes
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'tbl_creation_should_succeed' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'GRANT ALL ON
+master_dbo.tbl_creation_should_succeed TO master_dbo';
+    END IF;
+END $$;
+GO
