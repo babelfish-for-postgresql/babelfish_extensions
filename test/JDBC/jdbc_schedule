@@ -12,11 +12,9 @@ all
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
-ignore#!#BABEL-4279
 ignore#!#babelfish_migration_mode-vu-prepare
 ignore#!#babelfish_migration_mode-vu-verify
 ignore#!#babelfish_migration_mode-vu-cleanup
-ignore#!#test_search_path
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -96,6 +94,9 @@ ignore#!#BABEL-2736-before-15_3-vu-cleanup
 ignore#!#restricted_procedures-vu-prepare
 ignore#!#restricted_procedures-vu-verify
 ignore#!#restricted_procedures-vu-cleanup
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -500,8 +501,5 @@ ignore#!#pgr_select_into
 ignore#!#pgr_select
 ignore#!#pgr_zzz_clean_up
 
-# Ignoring some test temporarily to get clean tests
-ignore#!#BABEL-3292
-ignore#!#BABEL-3512
 # getting timed out (TODO: BABEL-5353)
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
