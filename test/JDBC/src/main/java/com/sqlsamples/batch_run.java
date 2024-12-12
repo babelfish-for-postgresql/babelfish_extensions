@@ -213,7 +213,7 @@ public class batch_run {
                 } else if (strLine.startsWith("java_auth")) {
                     jdbcAuthentication.javaAuthentication(strLine, bw, logger);
 
-                } else if (strLine.startsWith("include") && !isSQLFile) {
+                } else if (strLine.startsWith("include") && (!isSQLFile || isCrossDialectFile)) {
                     String[] result = strLine.split("#!#");
                     String filePath = new File(result[1]).getAbsolutePath();
 
