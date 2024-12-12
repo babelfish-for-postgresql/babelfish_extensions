@@ -91,5 +91,5 @@ select in1 * in2 from testnumeric_vu_prepare_tab2;
 #resultant precision = 40 > 38, scale = 5, precision - scale = 35 <= 38; delta = precision - 38 = 2,  o/p scale = scale - delta = 3(scale adjustment), o/p precision = 38
 select in4 * in5 from testnumeric_vu_prepare_tab2;
 
-#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38;
 select in3 * in4 from testnumeric_vu_prepare_tab2;
