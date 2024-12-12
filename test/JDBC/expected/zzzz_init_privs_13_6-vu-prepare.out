@@ -73,3 +73,7 @@ WITH object_info AS (
 SELECT * FROM object_info WHERE schema_name NOT IN ('sys', 'information_schema_tsql')
 ORDER BY object_type, schema_name NULLS FIRST, object_name;
 GO
+~~START~~
+name#!#text#!#name
+~~END~~
+
