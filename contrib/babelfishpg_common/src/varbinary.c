@@ -718,6 +718,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	if (encodedByteLen > maxlen)
 		encodedByteLen = maxlen;
+
 	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
 	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
@@ -787,7 +788,7 @@ nvarcharvarbinary(PG_FUNCTION_ARGS)
 	 * If typmod is -1 (or invalid), use the actual length
 	 * Length should be checked after encoding into server encoding
 	 */
-	if (typmod < 0)
+	if (typmod < (int32) VARHDRSZ)
 		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
@@ -931,31 +932,26 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	int		maxlen = -1;
 	int		encodedByteLen;
 	StringInfoData 	buf;
-	char 		*paddedData = (char*)palloc(len+1);
+	char 		*paddedData = (char*)palloc0(len+1);
 	MemoryContext   ccxt = CurrentMemoryContext;
 
 	typmod = PG_GETARG_INT32(1);
 	maxlen = typmod - VARHDRSZ;
 
-    /*
-    * Converts UTF-16 to UTF-8, handling odd-length inputs by padding.
-    * Respects maxlen if specified, otherwise processes full input.
-    * Uses TsqlUTF16toUTF8StringInfo for conversion, with error handling via PG_TRY.
-    */
+	/*
+	 * Converts UTF-16 to UTF-8, handling odd-length inputs by padding.
+	 * Respects maxlen if specified, otherwise processes full input.
+	 * Uses TsqlUTF16toUTF8StringInfo for conversion, with error handling via PG_TRY.
+	 */
 
-    /* truncating NULL bytes from end */
+	/* truncating NULL bytes from end */
 	while(len>0  && data[len-1] == '\0')
 		len -= 1;
 
 	/* Do the Padding if lenngth is odd */
+	memcpy(paddedData, data, len);
 	if(len % 2 != 0)
-	{
-		paddedData = (char*)palloc0(len+1);
-		memcpy(paddedData, data, len);
 		len = len + 1;
-	}
-	else
-		memcpy(paddedData, data, len);
 
 	if(!(maxlen < 0 || (len >> 1) <= maxlen))
 	{
@@ -966,7 +962,7 @@ varbinarynvarchar(PG_FUNCTION_ARGS)
 	{
 		/* Converts UTF-16 to UTF-8 using TsqlUTF16toUTF8StringInfo */
 		initStringInfo(&buf);
-		TsqlUTF16toUTF8StringInfo(&buf,paddedData,len);
+		TsqlUTF16toUTF8StringInfo(&buf, paddedData, len);
 		encoded_result = buf.data;
 		encodedByteLen= buf.len;
 	}
@@ -1062,7 +1058,7 @@ nvarcharbinary(PG_FUNCTION_ARGS)
 	len= buf.len;
 
 	/* If typmod is -1 (or invalid), use the actual length */
-	if (typmod < 0)
+	if (typmod < (int32) VARHDRSZ)
 		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;

@@ -52,10 +52,6 @@ static Datum return_varchar_pointer(char *buf, int size);
  *
  * We use the Postgres implementations where available (for sha256 and md5),
  * and OpenSSL for the rest.
- * 
- * For varchar/nvarchar the input string is in UTF-8 encoding.
- * So for varchar we keep it as it is but for nvarchar we change the encoding to UTF-16
- * 
  */
 Datum
 hashbytes(PG_FUNCTION_ARGS)
@@ -63,8 +59,8 @@ hashbytes(PG_FUNCTION_ARGS)
 	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
 	bytea	   *in = PG_GETARG_BYTEA_PP(1);
 	size_t		len = VARSIZE_ANY_EXHDR(in);
-	bytea	   *result;
 	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
+	bytea	   *result;
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
