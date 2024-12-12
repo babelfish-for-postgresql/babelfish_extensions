@@ -4,6 +4,36 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -9492,6 +9522,714 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF start IS NULL OR expr IS NULL OR length IS NULL THEN
+        RETURN NULL;
+    END IF;
+    IF start <= 0 OR start > length(expr) OR length < 0 THEN
+        RETURN NULL;
+    END IF;
+    IF replace_expr IS NULL THEN
+        RETURN (SELECT overlay (expr placing '' from start for length));
+    END IF;
+    RETURN (SELECT overlay (expr placing replace_expr from start for length));
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.replicate(ANYELEMENT, INTEGER) RENAME TO replicate_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.replicate(NTEXT, INTEGER) RENAME TO replicate_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.replicate(sys.NCHAR, INTEGER) RENAME TO replicate_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.replicate(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.repeat(string, i);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_ntext_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replicate_nchar_deprecated_in_5_0_0'); 
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.substring(NTEXT, INTEGER, INTEGER) RENAME TO substring_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.substring(sys.BPCHAR, INTEGER, INTEGER) RENAME TO substring_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.substring(sys.NCHAR, INTEGER, INTEGER) RENAME TO substring_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.substring(sys.VARBINARY, INTEGER, INTEGER) RENAME TO substring_varbinary_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.substring(ANYELEMENT, INTEGER, INTEGER) RENAME TO substring_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.bbf_varbinary, i INTEGER, j INTEGER)
+RETURNS sys.VARBINARY
+AS 'babelfishpg_tsql', 'tsql_varbinary_substr' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_ntext_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_varbinary_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'substring_any_deprecated_in_5_0_0'); 
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.upper(ANYELEMENT) RENAME TO upper_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.upper(sys.NCHAR) RENAME TO upper_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.upper(NTEXT) RENAME TO upper_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.upper(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.upper($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_ntext_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'upper_nchar_deprecated_in_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.lower(ANYELEMENT) RENAME TO lower_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.lower(sys.NCHAR) RENAME TO lower_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.lower(NTEXT) RENAME TO lower_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    RETURN pg_catalog.lower($1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_ntext_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'lower_nchar_deprecated_in_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.TRIM(ANYELEMENT) RENAME TO trim_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.TRIM(sys.BPCHAR) RENAME TO trim_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.TRIM(sys.NCHAR) RENAME TO trim_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string TEXT)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(characters TEXT, string TEXT)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string, characters);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(characters BYTEA, string BYTEA)
+RETURNS BYTEA
+AS 
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.btrim(string, characters);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'trim_nchar_deprecated_in_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LTRIM(ANYELEMENT) RENAME TO ltrim_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LTRIM(sys.BPCHAR) RENAME TO ltrim_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LTRIM(sys.NCHAR) RENAME TO ltrim_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LTRIM(NTEXT) RENAME TO ltrim_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'ltrim_ntext_deprecated_in_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RTRIM(ANYELEMENT) RENAME TO rtrim_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RTRIM(sys.BPCHAR) RENAME TO rtrim_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RTRIM(sys.NCHAR) RENAME TO rtrim_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RTRIM(NTEXT) RENAME TO rtrim_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_bpchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rtrim_ntext_deprecated_in_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LEFT(ANYELEMENT, INTEGER) RENAME TO left_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LEFT(sys.BPCHAR, INTEGER) RENAME TO left_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LEFT(sys.NCHAR, INTEGER) RENAME TO left_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.LEFT(NTEXT, INTEGER) RENAME TO left_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'left_ntext_deprecated_in_5_0_0'); 
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RIGHT(ANYELEMENT, INTEGER) RENAME TO right_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RIGHT(sys.BPCHAR, INTEGER) RENAME TO right_bpchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RIGHT(sys.NCHAR, INTEGER) RENAME TO right_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.RIGHT(NTEXT, INTEGER) RENAME TO right_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_any_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_bpchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_nchar_deprecated_in_5_0_0'); 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'right_ntext_deprecated_in_5_0_0'); 
+
+
+CREATE OR REPLACE FUNCTION sys.translate(string TEXT, characters TEXT, translations TEXT)
+RETURNS sys.VARCHAR
+AS $$
+BEGIN
+    IF length(characters) != length(translations) THEN
+        RAISE EXCEPTION 'The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.';
+    END IF;
+
+    RETURN PG_CATALOG.TRANSLATE(string, characters, translations);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.concat(VARIADIC args sys.VARCHAR[] DEFAULT '{}')
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 1 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 1 to 100 arguments.';
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat(VARIADIC args sys.NVARCHAR[])
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 1 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 1 to 100 arguments.';
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat(VARIADIC args TEXT[])
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 1 OR arr_len > 100 THEN
+        RAISE EXCEPTION 'The concat function requires 1 to 100 arguments.';
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat_ws(seperator sys.VARCHAR DEFAULT '', VARIADIC args sys.VARCHAR[] DEFAULT '{}')
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len IS NULL OR arr_len < 1 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 2 to 100 arguments.';
+    END IF;
+
+    IF seperator IS NULL THEN
+        RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat_ws(seperator sys.NVARCHAR, VARIADIC args sys.NVARCHAR[])
+RETURNS sys.NVARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 1 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 2 to 100 arguments.';
+    END IF;
+
+    IF seperator IS NULL THEN
+        RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.concat_ws(seperator TEXT, VARIADIC args TEXT[])
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    arr_len INTEGER;
+BEGIN
+    arr_len := array_length(args, 1);
+
+    -- PG has limitation for max number of args = 100
+    IF arr_len < 1 OR arr_len > 99 THEN
+        RAISE EXCEPTION 'The concat_ws function requires 2 to 100 arguments.';
+    END IF;
+
+    IF seperator IS NULL THEN
+        RETURN (PG_CATALOG.ARRAY_TO_STRING(args, ''));
+    END IF;
+
+    RETURN (PG_CATALOG.ARRAY_TO_STRING(args, seperator));
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replace (input_string TEXT, pattern TEXT, replacement TEXT)
+RETURNS sys.VARCHAR AS
+$BODY$
+BEGIN
+   if PG_CATALOG.length(pattern) = 0 then
+       return input_string;
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig'::pg_catalog.TEXT);
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g'::pg_catalog.TEXT);
+   end if;
+END
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.reverse(ANYELEMENT) RENAME TO reverse_any_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.reverse(sys.NCHAR) RENAME TO reverse_nchar_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.reverse(NTEXT) RENAME TO reverse_ntext_deprecated_in_5_0_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.reverse(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN PG_CATALOG.reverse(string::sys.VARCHAR);
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_any_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_nchar_deprecated_in_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'reverse_ntext_deprecated_in_5_0_0');
+
+
+CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
+    SFUNC = string_agg_transfn,
+    FINALFUNC = bbf_string_agg_finalfn_varchar,
+    STYPE = INTERNAL,
+    PARALLEL = SAFE
+);
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
