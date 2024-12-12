@@ -16,12 +16,12 @@ t
 SELECT pg_sleep(1);
 go
 ~~START~~
-bool
-t
+void
+
 ~~END~~
 
 
-SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
 bool
@@ -191,7 +191,7 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
 bool
@@ -217,7 +217,7 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
 bool
@@ -334,7 +334,7 @@ bit#!#text#!#bigint#!#bigint
 
 
 -- psql
-SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
 bool
@@ -392,7 +392,7 @@ int
 
 
 -- psql
-SELECT CASE sys.pg_stat_statements_reset() WHEN NULL THEN FALSE ELSE TRUE END;
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
 bool
