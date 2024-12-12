@@ -1364,7 +1364,7 @@ SELECT
     CAST(COLUMN_NAME AS sys.sysname),
     CAST(GRANTOR AS sys.sysname),
     CAST(GRANTEE AS sys.sysname),
-    CAST(PRIVILEGE AS sys.varchar(32)).
+    CAST(PRIVILEGE AS sys.varchar(32)),
     CAST(IS_GRANTABLE AS sys.varchar(3))
 FROM sys.sp_column_privileges_func()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
