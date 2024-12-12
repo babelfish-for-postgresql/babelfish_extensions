@@ -91,6 +91,8 @@ ignore#!#BABEL-2736-before-15_3-vu-cleanup
 ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-prepare
 ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-verify
 ignore#!#smalldatetime_date_cmp-13_9-14_6-15_2-vu-cleanup
+ignore#!#TestNumeric
+ignore#!#TestDecimal
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare

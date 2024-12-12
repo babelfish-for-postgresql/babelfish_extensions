@@ -548,7 +548,7 @@ SELECT_INTO_TEST
 cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-5119_before_16_5
-BABEL-CASE_EXPR
+BABEL-CASE_EXPR-before-16_6
 BABEL-5186
 BABEL-2736
 smalldatetime_date_cmp
