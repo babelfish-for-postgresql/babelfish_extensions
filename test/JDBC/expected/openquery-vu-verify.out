@@ -1,6 +1,5 @@
-# Here we run all the datatype related prepare scripts
+-- tsql
 
-# bigint
 CREATE TABLE testBIGINT_dt (a BIGINT)
 prepst#!# INSERT INTO testBIGINT_dt(a) values(?) #!#BIGINT|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -63,7 +62,6 @@ INSERT INTO testBIGINT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# numeric
 CREATE TABLE numeric_table1(num numeric(5, 2));
 
 prepst#!#INSERT INTO numeric_table1(num) VALUES(?) #!#numeric|-|a|-|3|-|5|-|2
@@ -494,7 +492,6 @@ insert into testnumeric_vu_prepare_tab2 values (1879323.2222, 2383823.343, 4.548
 ~~ROW COUNT: 1~~
 
 
-# bit
 CREATE TABLE testBIT_dt (a BIT)
 prepst#!# INSERT INTO testBIT_dt(a) values(?) #!#BIT|-|a|-|false
 ~~ROW COUNT: 1~~
@@ -521,7 +518,6 @@ INSERT INTO testBIT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# smallint
 CREATE TABLE SMALLINT_dt (a SMALLINT)
 prepst#!# INSERT INTO SMALLINT_dt(a) values(?) #!#SMALLINT|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -584,7 +580,6 @@ INSERT INTO SMALLINT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# decimal
 CREATE TABLE testdecimal_table1(num decimal(5, 2));
 
 prepst#!#INSERT INTO testdecimal_table1(num) VALUES(?) #!#decimal|-|a|-|3|-|5|-|2
@@ -1003,7 +998,6 @@ insert into testdecimal_vu_prepare_tab2 values (1879323.2222, 2383823.343, 4.548
 ~~ROW COUNT: 1~~
 
 
-# smallmoney
 CREATE TABLE smallmoney_dt(a smallmoney);
 
 prepst#!#INSERT INTO smallmoney_dt(a) VALUES (?) #!#smallmoney|-|a|-|100.5
@@ -1070,7 +1064,6 @@ INSERT INTO smallmoney_dt(a) values(NULL);
 ~~ROW COUNT: 1~~
 
 
-# int
 CREATE TABLE INT_dt(a INT);
 prepst#!#INSERT INTO INT_dt(a) values(?) #!#INT|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -1136,7 +1129,6 @@ INSERT INTO INT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# tinyint
 CREATE TABLE TINYINT_dt (a TINYINT)
 prepst#!# INSERT INTO TINYINT_dt(a) values(?) #!#TINYINT|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -1203,7 +1195,6 @@ INSERT INTO TINYINT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# money
 CREATE TABLE money_dt(a money);
 
 prepst#!#INSERT INTO money_dt(a) VALUES (?) #!#money|-|a|-|10.05
@@ -1264,7 +1255,6 @@ INSERT INTO money_dt(a) values(NULL);
 ~~ROW COUNT: 1~~
 
 
-# float
 CREATE TABLE FLOAT_dt (a FLOAT)
 prepst#!# INSERT INTO FLOAT_dt(a) values(?) #!#FLOAT|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -1327,7 +1317,6 @@ INSERT INTO FLOAT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# real
 CREATE TABLE REAL_dt (a REAL)
 prepst#!# INSERT INTO REAL_dt(a) values(?) #!#REAL|-|a|-|0
 ~~ROW COUNT: 1~~
@@ -1390,7 +1379,6 @@ INSERT INTO REAL_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# date
 CREATE TABLE DATE_dt (a DATE)
 prepst#!# INSERT INTO DATE_dt(a) values(?) #!#DATE|-|a|-|2000-12-13
 ~~ROW COUNT: 1~~
@@ -1423,7 +1411,6 @@ INSERT INTO DATE_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# datetimeoffset
 -- Testing inserting into the table
 create table TestDatetimeoffset_vu_prepare_testing (df datetimeoffset);
 go
@@ -1498,7 +1485,6 @@ BEGIN
 END;
 go
 
-# datetime2
 Create table TestDatetime2_vu_prepare_t(a Datetime2(6)) 
 
 prepst#!# Insert into TestDatetime2_vu_prepare_t Values(?) #!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|0
@@ -1527,7 +1513,6 @@ prepst#!#exec#!#Datetime2|-|a|-|<NULL>
 ~~ROW COUNT: 1~~
 
 
-# smalldatetime
 CREATE TABLE SMALLDATETIME_dt (a SMALLDATETIME)
 prepst#!# INSERT INTO SMALLDATETIME_dt(a) values(?) #!#SMALLDATETIME|-|a|-|2000-12-13 12:58:23
 ~~ROW COUNT: 1~~
@@ -1622,7 +1607,6 @@ INSERT INTO SMALLDATETIME_dt(a) values(NULL);
 ~~ROW COUNT: 1~~
 
 
-# datetime
 CREATE TABLE TestDatetime_vu_prepare_dt (a DATETIME)
 prepst#!# INSERT INTO TestDatetime_vu_prepare_dt(a) values(?) #!#DATETIME|-|a|-|2000-12-13 12:58:23.123
 ~~ROW COUNT: 1~~
@@ -1721,7 +1705,6 @@ INSERT INTO TestDatetime_vu_prepare_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
 
-# time
 Create table TestTime1(a1 time(6)) 
 
 prepst#!# Insert into TestTime1 Values(?) #!#Time|-|a1|-|12:45:37.123|-|0
@@ -1911,7 +1894,6 @@ prepst#!#exec#!#Time|-|a7|-|<NULL>
 ~~ROW COUNT: 1~~
 
 
-# char and nchar
 CREATE TABLE testCHAR_dt (a CHAR(24), b NCHAR(24))
 prepst#!# INSERT INTO testCHAR_dt(a, b) values(?, ?) #!#CHAR|-|a|-|Dipesh#!#NCHAR|-|b|-|Dhameliya
 ~~ROW COUNT: 1~~
@@ -1946,7 +1928,6 @@ INSERT INTO testCHAR_dt(a,b) values(NULL,NULL)
 ~~ROW COUNT: 1~~
 
 
-# varchar and nvarchar
 CREATE TABLE VARCHAR_dt1 (a VARCHAR(20), b NVARCHAR(24))
 prepst#!# INSERT INTO VARCHAR_dt1(a, b) values(?, ?) #!#VARCHAR|-|a|-|Dipesh#!#NVARCHAR|-|b|-|Dhameliya
 ~~ROW COUNT: 1~~
@@ -2043,7 +2024,6 @@ insert into VARCHAR_dt4 (a,b,c,d,e,f,g,h,i) values (NULL,1,2,3,4,5,6,7,8);
 ~~ROW COUNT: 1~~
 
 
-# text and ntext
 CREATE TABLE TEXT_dt (a text, b ntext)
 #path to file should be with respect to root of test suite
 prepst#!# INSERT INTO TEXT_dt(a, b) values(?, ?) #!#TEXT|-|a|-|utils/sample.txt#!#NTEXT|-|b|-|utils/sample.txt
@@ -2065,7 +2045,6 @@ prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/devanagari.txt
 ~~ROW COUNT: 1~~
 
 
-# binary and varbinary
 CREATE TABLE testBINARY_dt1(a BINARY(8), b VARBINARY(10));
 #inserting random values
 INSERT INTO testBINARY_dt1(a, b) values (1234, 12345);
@@ -2100,7 +2079,6 @@ prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789
 ~~ROW COUNT: 1~~
 
 
-# image
 CREATE TABLE IMAGE_dt1(a IMAGE);
 #inserting random values
 INSERT INTO IMAGE_dt1(a) values (1234);
@@ -2149,7 +2127,6 @@ prepst#!#exec#!#image|-|a|-|utils/flower.jpg
 ~~ROW COUNT: 1~~
 
 
-# user defined data types
 CREATE TYPE udd_varchar from varchar(15);
 CREATE TYPE udd_nvarchar from nvarchar(15);
 CREATE TYPE udd_int from int;
@@ -2260,7 +2237,6 @@ prepst#!#INSERT INTO udd_dt2(a, b, c, e, f, g) VALUES (?, ?, ?, ?, ?, ?)#!#varch
 ~~ROW COUNT: 1~~
 
 
-# uniqueidentifier
 CREATE TABLE uniqueidentifier_dt (a uniqueidentifier);
 
 INSERT INTO uniqueidentifier_dt VALUES ('51f178a6-53c7-472c-9be1-1c08942342d7')
@@ -2339,8 +2315,34 @@ prepst#!#exec#!#uniqueidentifier|-|a|-|767392df-87d0-450d-9b24-85a86c02811dthisI
 ~~ROW COUNT: 1~~
 
 
-# Run SELECTs but using OPENQUERY now
+-- Here we run all the datatype related prepare scripts
+-- bigint
+-- numeric
+-- bit
+-- smallint
+-- decimal
+-- smallmoney
+-- int
+-- tinyint
+-- money
+-- float
+-- real
+-- date
+-- datetimeoffset
+-- datetime2
+-- smalldatetime
+-- datetime
+-- time
+-- char and nchar
+-- varchar and nvarchar
+-- text and ntext
+-- binary and varbinary
+-- image
+-- user defined data types
+-- uniqueidentifier
+-- Run SELECTs but using OPENQUERY now
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIGINT_dt');
+GO
 ~~START~~
 bigint
 0
@@ -2367,6 +2369,7 @@ bigint
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table1');
+GO
 ~~START~~
 numeric
 3.00
@@ -2382,7 +2385,9 @@ numeric
 -123.00
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table2');
+GO
 ~~START~~
 numeric
 3.000
@@ -2404,7 +2409,9 @@ numeric
 -2147483648.000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table3');
+GO
 ~~START~~
 numeric
 3.00000000000000000000
@@ -2420,8 +2427,10 @@ numeric
 -123.00000000000000000000
 2147483647.00000000000000000000
 ~~END~~
+
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table4');
+GO
 ~~START~~
 numeric
 3.00000000000000000000
@@ -2438,7 +2447,9 @@ numeric
 2147483647.00000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table5');
+GO
 ~~START~~
 numeric
 3.000000000000000000000
@@ -2455,7 +2466,9 @@ numeric
 2147483647.000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table6');
+GO
 ~~START~~
 numeric
 3.0000000000000000000000
@@ -2472,7 +2485,9 @@ numeric
 2147483647.0000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table7');
+GO
 ~~START~~
 numeric
 3.00000000000000000000000
@@ -2489,7 +2504,9 @@ numeric
 2147483647.00000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table8');
+GO
 ~~START~~
 numeric
 3.0000000000000000000000000
@@ -2507,7 +2524,9 @@ numeric
 -247483647.0000000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table9');
+GO
 ~~START~~
 numeric
 2147483647.0000000000000000000000000
@@ -2523,6 +2542,7 @@ numeric
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIT_dt');
+GO
 ~~START~~
 bit
 0
@@ -2535,6 +2555,7 @@ bit
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLINT_dt');
+GO
 ~~START~~
 smallint
 0
@@ -2561,6 +2582,7 @@ smallint
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table1');
+GO
 ~~START~~
 numeric
 3.00
@@ -2576,7 +2598,9 @@ numeric
 -123.00
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table2');
+GO
 ~~START~~
 numeric
 3.000
@@ -2598,7 +2622,9 @@ numeric
 -2147483648.000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table3');
+GO
 ~~START~~
 numeric
 3.00000000000000000000
@@ -2614,8 +2640,10 @@ numeric
 -123.00000000000000000000
 2147483647.00000000000000000000
 ~~END~~
+
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table4');
+GO
 ~~START~~
 numeric
 3.00000000000000000000
@@ -2632,7 +2660,9 @@ numeric
 2147483647.00000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table5');
+GO
 ~~START~~
 numeric
 3.000000000000000000000
@@ -2649,7 +2679,9 @@ numeric
 2147483647.000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table6');
+GO
 ~~START~~
 numeric
 3.0000000000000000000000
@@ -2666,7 +2698,9 @@ numeric
 2147483647.0000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table7');
+GO
 ~~START~~
 numeric
 3.00000000000000000000000
@@ -2683,7 +2717,9 @@ numeric
 2147483647.00000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table8');
+GO
 ~~START~~
 numeric
 3.0000000000000000000000000
@@ -2701,7 +2737,9 @@ numeric
 -247483647.0000000000000000000000000
 ~~END~~
 
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table9');
+GO
 ~~START~~
 numeric
 2147483647.0000000000000000000000000
@@ -2717,6 +2755,7 @@ numeric
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM smallmoney_dt');
+GO
 ~~START~~
 smallmoney
 100.5000
@@ -2744,6 +2783,7 @@ smallmoney
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM INT_dt');
+GO
 ~~START~~
 int
 0
@@ -2771,6 +2811,7 @@ int
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TINYINT_dt');
+GO
 ~~START~~
 tinyint
 0
@@ -2795,6 +2836,7 @@ tinyint
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM money_dt');
+GO
 ~~START~~
 money
 10.0500
@@ -2820,6 +2862,7 @@ money
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM FLOAT_dt');
+GO
 ~~START~~
 float
 0.0
@@ -2846,6 +2889,7 @@ float
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM REAL_dt');
+GO
 ~~START~~
 real
 0.0
@@ -2872,6 +2916,7 @@ real
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM DATE_dt');
+GO
 ~~START~~
 date
 2000-12-13
@@ -2888,6 +2933,7 @@ date
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetimeoffset_vu_prepare_testing');
+GO
 ~~START~~
 datetimeoffset
 1900-01-01 23:40:29.998000 +00:00
@@ -2902,6 +2948,7 @@ datetimeoffset
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetime2_vu_prepare_t');
+GO
 ~~START~~
 datetime2
 2016-10-23 12:45:37.123000
@@ -2916,6 +2963,7 @@ datetime2
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLDATETIME_dt');
+GO
 ~~START~~
 smalldatetime
 2000-12-13 12:58:00.0
@@ -2952,6 +3000,7 @@ smalldatetime
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TestDatetime_vu_prepare_dt');
+GO
 ~~START~~
 datetime
 2000-12-13 12:58:23.123
@@ -2990,6 +3039,7 @@ datetime
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime1');
+GO
 ~~START~~
 time
 12:45:37.000000
@@ -3003,6 +3053,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime2');
+GO
 ~~START~~
 time
 12:45:37.00000
@@ -3016,6 +3067,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime3');
+GO
 ~~START~~
 time
 12:45:37.0000
@@ -3029,6 +3081,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime4');
+GO
 ~~START~~
 time
 12:45:37.000
@@ -3042,6 +3095,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime5');
+GO
 ~~START~~
 time
 12:45:37.00
@@ -3055,6 +3109,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime6');
+GO
 ~~START~~
 time
 12:45:37.0
@@ -3068,6 +3123,7 @@ time
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime7');
+GO
 ~~START~~
 time
 12:45:37
@@ -3082,6 +3138,7 @@ time
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt1');
+GO
 ~~START~~
 binary#!#varbinary
 00000000000004D2#!#00003039
@@ -3089,18 +3146,21 @@ binary#!#varbinary
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt2');
+GO
 ~~START~~
 varbinary
 <NULL>
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt3');
+GO
 ~~START~~
 varbinary#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 <NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt4');
+GO
 ~~START~~
 binary#!#varbinary
 00000000000004D2#!#00003039
@@ -3111,6 +3171,7 @@ binary#!#varbinary
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt1');
+GO
 ~~START~~
 image
 000004D2
@@ -3123,12 +3184,14 @@ FFFFFFFF
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt2');
+GO
 ~~START~~
 image#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 <NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt3');
+GO
 ~~START~~
 image
 00003039
@@ -3139,6 +3202,7 @@ FFD8FFE000104A46494600010200000100010000FFDB004300080606070605080707070909080A0C
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testCHAR_dt');
+GO
 ~~START~~
 char#!#nchar
 Dipesh                  #!#Dhameliya               
@@ -3155,6 +3219,7 @@ Dipesh                  #!#Dhameliya
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt1');
+GO
 ~~START~~
 varchar#!#nvarchar
 Dipesh#!#Dhameliya
@@ -3178,6 +3243,7 @@ abcdefghijklmnopqrst#!#abcdefghijklmnopqrstuvwx
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt2');
+GO
 ~~START~~
 varchar#!#nvarchar
 hello#!#hello😃
@@ -3189,12 +3255,14 @@ hello#!#hello😃
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt3');
+GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 <NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt4');
+GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 <NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
@@ -3202,6 +3270,7 @@ varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TEXT_dt');
+GO
 ~~START~~
 text#!#ntext
 AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
@@ -3214,6 +3283,7 @@ AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjad
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
+GO
 ~~START~~
 varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
 Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
@@ -3221,6 +3291,7 @@ Orange#!#<NULL>#!#3#!#Whoops!                  #!#Happy😀             #!#1900-
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
+GO
 ~~START~~
 varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
 Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
@@ -3229,6 +3300,7 @@ Orange#!#<NULL>#!#5#!#Whoops!                  #!#Happy😀             #!#1900-
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM uniqueidentifier_dt');
+GO
 ~~START~~
 uniqueidentifier
 51F178A6-53C7-472C-9BE1-1C08942342D7
@@ -3258,11 +3330,8 @@ CE8AF10A-2709-43B0-9E4E-A02753929D17
 ~~END~~
 
 
-# Drop all tables
-# bigint
 DROP TABLE testBIGINT_dt;
 
-# numeric
 DROP TABLE numeric_table1;
 
 DROP TABLE numeric_table2;
@@ -3303,13 +3372,10 @@ drop table testnumeric_vu_prepare_tab1;
 
 drop table testnumeric_vu_prepare_tab2;
 
-# bit
 DROP TABLE testBIT_dt;
 
-# smallint
 DROP TABLE SMALLINT_dt;
 
-# decimal
 DROP TABLE testdecimal_table1;
 
 DROP TABLE testdecimal_table2;
@@ -3347,28 +3413,20 @@ drop table testdecimal_vu_prepare_tab1;
 
 drop table testdecimal_vu_prepare_tab2;
 
-# smallmoney
 DROP TABLE smallmoney_dt;
 
-# int
 DROP TABLE INT_dt;
 
-# tinyint
 DROP TABLE TINYINT_dt;
 
-# money
 DROP TABLE money_dt;
 
-# float
 DROP TABLE FLOAT_dt;
 
-# real
 DROP TABLE REAL_dt;
 
-# date
 DROP TABLE DATE_dt;
 
-# datetimeoffset
 -- Clean up
 drop table TestDatetimeoffset_vu_prepare_testing;
 go
@@ -3379,16 +3437,12 @@ go
 drop procedure TestDatetimeoffset_vu_prepare_cmp;
 go
 
-# datetime2
 Drop table TestDatetime2_vu_prepare_t
 
-# smalldatetime
 DROP TABLE SMALLDATETIME_dt;
 
-# datetime
 DROP TABLE TestDatetime_vu_prepare_dt;
 
-# time
 Drop table TestTime1
 Drop table TestTime2
 Drop table TestTime3
@@ -3397,30 +3451,24 @@ Drop table TestTime5
 Drop table TestTime6
 Drop table TestTime7
 
-# char and nchar
 DROP TABLE testCHAR_dt;
 
-# varchar and nvarchar
 DROP TABLE VARCHAR_dt1;
 DROP TABLE VARCHAR_dt2;
 DROP TABLE VARCHAR_dt3;
 DROP TABLE VARCHAR_dt4;
 
-# text and ntext
 DROP TABLE TEXT_dt;
 
-# binary and varbinary
 DROP TABLE testBINARY_dt1
 DROP TABLE testBINARY_dt2
 DROP TABLE testBINARY_dt3
 DROP TABLE testBINARY_dt4
 
-# image
 DROP TABLE IMAGE_dt1
 DROP TABLE IMAGE_dt2
 DROP TABLE IMAGE_dt3
 
-# user defined data types
 DROP TABLE udd_dt1;
 
 DROP TABLE udd_dt2;
@@ -3433,11 +3481,36 @@ DROP TYPE udd_nchar
 DROP TYPE udd_datetime
 DROP TYPE udd_numeric
 
-# uniqueidentifier
 DROP TABLE uniqueidentifier_dt;
 
-# Test OPENQUERY error handling
+-- Drop all tables
+-- bigint
+-- numeric
+-- bit
+-- smallint
+-- decimal
+-- smallmoney
+-- int
+-- tinyint
+-- money
+-- float
+-- real
+-- date
+-- datetimeoffset
+-- datetime2
+-- smalldatetime
+-- datetime
+-- time
+-- char and nchar
+-- varchar and nvarchar
+-- text and ntext
+-- binary and varbinary
+-- image
+-- user defined data types
+-- uniqueidentifier
+-- Test OPENQUERY error handling
 SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
+GO
 ~~START~~
 int
 ~~ERROR (Code: 33557097)~~
@@ -3445,63 +3518,71 @@ int
 ~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
-# Try executing a query that does not return a result set
+-- Try executing a query that does not return a result set
 SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Query passed to OPENQUERY did not return a result set)~~
 
 
-# try executing query where column alias does not exist
+-- try executing query where column alias does not exist
 SELECT * FROM OPENQUERY(bbf_server, 'select 1')
+GO
 ~~START~~
 int
 1
 ~~END~~
 
 
-# execute query that returns 2 result sets. We should only return the first
+-- execute query that returns 2 result sets. We should only return the first
 SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
+GO
 ~~START~~
 int
 123
 ~~END~~
 
 
-# Test view dependent on OPENQUERY
+-- Test view dependent on OPENQUERY
 SELECT * FROM openquery_vu_prepare__openquery_view
+GO
 ~~START~~
 int
 1
 ~~END~~
 
 
-# Test OPENQUERY with an unreachable server
+-- Test OPENQUERY with an unreachable server
 SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: TDS client library error: DB #: 20012, DB Msg: server name not found in configuration files, OS #: 0, OS Msg: Success, Level: 2)~~
 
 
-#Test OPENQUERY where argument has quotes
+-- Test OPENQUERY where argument has quotes
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')
+GO
 ~~START~~
 varchar
 Query having both 'single' and "double" quotes
 ~~END~~
 
 
-# Test query timeout behaviour in OPENQUERY
-# check the value of query timeout from sys.servers
+-- Test query timeout behaviour in OPENQUERY
+-- check the value of query timeout from sys.servers
 select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
 ~~START~~
 varchar#!#int
 bbf_server_1#!#1
 ~~END~~
 
 
-# execute a query which takes more time than the timeout set
+-- execute a query which takes more time than the timeout set
 SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+GO
 ~~START~~
 text
 ~~ERROR (Code: 33557097)~~
@@ -3509,32 +3590,36 @@ text
 ~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
 
 
-# Test connect timeout behaviour in OPENQUERY
-# check the value of connect timeout from sys.servers
+-- Test connect timeout behaviour in OPENQUERY
+-- check the value of connect timeout from sys.servers
 select name, connect_timeout from sys.servers where name = 'bbf_server_2'
+GO
 ~~START~~
 varchar#!#int
 bbf_server_2#!#1
 ~~END~~
 
 
-# Make openquery against a non-existing server
+-- Make openquery against a non-existing server
 SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: TDS client library error: DB #: 20009, DB Msg: Unable to connect: server is unavailable or does not exist (1.2.3.4), OS #: 110, OS Msg: Connection timed out, Level: 9)~~
 
 
-# Test procedure dependent on OPENQUERY
+-- Test procedure dependent on OPENQUERY
 EXEC openquery_vu_prepare__openquery_proc
+GO
 ~~START~~
 int
 2
 ~~END~~
 
 
-# Test function dependent on OPENQUERY
+-- Test function dependent on OPENQUERY
 SELECT openquery_vu_prepare__openquery_func()
+GO
 ~~START~~
 int
 1

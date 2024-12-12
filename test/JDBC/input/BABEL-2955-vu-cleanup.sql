@@ -12,6 +12,3 @@ go
 
 drop table babel_2955_vu_prepare_t2
 go
-
-SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
-go

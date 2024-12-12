@@ -210,7 +210,7 @@ runs:
             exit 1
           fi
         done
-        export isUpgradeTestMode=false
+        export isUpgradeTestMode=true
         export inputFilesPath=input
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-prepare/g" upgrade/$base_dir/schedule

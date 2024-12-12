@@ -44,7 +44,6 @@ BABEL-3121
 sys-events
 sys-suser_sid
 sys-trigger_events
-restricted_procedures
 BABEL-2688
 BABEL-328
 BABEL-3166-before-16_5-or-15_9

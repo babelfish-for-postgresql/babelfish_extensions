@@ -35,7 +35,6 @@ TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
-restricted_procedures
 TestXML
 sys-assembly_types
 sys-database_mirroring
