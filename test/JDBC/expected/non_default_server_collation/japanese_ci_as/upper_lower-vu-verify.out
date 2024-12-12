@@ -532,31 +532,39 @@ SELECT LOWER(@myid)
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of upper function.)~~
+~~START~~
+varchar
+6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
 
 
 DECLARE @myid xml = CAST ('<body/>' AS xml)
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
-~~START~~
-varchar
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of upper function.)~~
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function lower is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
-~~START~~
-varchar
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of upper function.)~~
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function lower is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @myid sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -622,9 +630,8 @@ Select UPPER(a), LOWER(a) from upper_lower_image
 GO
 ~~START~~
 varchar#!#varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
+~~END~~
 
 
 declare @string1 nvarchar(30) = N'比尔·拉';
@@ -846,7 +853,115 @@ select upper(@b)
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
+SCSDC
+~~END~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of upper function.)~~
+
+-- Arguments with pg datatypes
+SELECT upper(a) FROM dbo.upper_lower_psql_t1
+GO
+~~START~~
+varchar
+ROHIT
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t2
+GO
+~~START~~
+varchar#!#varchar
+ROHIT#!#rohit
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t3
+GO
+~~START~~
+varchar#!#varchar
+ROHIT#!#rohit
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t4
+GO
+~~START~~
+varchar#!#varchar
+ROHIT#!#rohit
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t5
+GO
+~~START~~
+varchar#!#varchar
+ROHIT#!#rohit
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t6
+GO
+~~START~~
+varchar#!#varchar
+12345678#!#12345678
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t7
+GO
+~~START~~
+varchar#!#varchar
+12345678#!#12345678
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t9
+GO
+~~START~~
+varchar#!#varchar
+\X526F686954#!#\x526f686954
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t10
+GO
+~~START~~
+varchar#!#varchar
+2016-12-21 00:00:00#!#2016-12-21 00:00:00
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t11
+GO
+~~START~~
+varchar#!#varchar
+2016-12-21#!#2016-12-21
+~~END~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t14
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
