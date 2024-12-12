@@ -86,7 +86,6 @@ WHERE sys.suser_name(usesysid) = 'babel_4390_user_l2' AND backend_type = 'client
 GO
 ~~START~~
 bool
-t
 ~~END~~
 
 
