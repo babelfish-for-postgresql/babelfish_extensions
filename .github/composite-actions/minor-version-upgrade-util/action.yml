@@ -56,10 +56,10 @@ runs:
         ulimit -c unlimited
         cd ~
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
@@ -69,8 +69,8 @@ runs:
       id: change-migration-mode
       if: always() && inputs.is_final_ver == 'true'
       run: |
-        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
       shell: bash
 
     - name: Run JDBC Verify Tests

@@ -81,8 +81,8 @@ jobs:
         id: re-install-extensions
         if: always() && steps.install-extensions.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="multi-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode="multi-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Python Tests
