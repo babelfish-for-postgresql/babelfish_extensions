@@ -5034,7 +5034,7 @@ Datum
 pltsql_call_handler(PG_FUNCTION_ARGS)
 {
 	bool		nonatomic;
-	PLtsql_function *func;
+	PLtsql_function *func = NULL;
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
@@ -5155,6 +5155,11 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+
+		/* If func is NULL then we have encountered a parser error. */
+		if (!func)
+			terminate_batch(true /* send_error */ , true /* compile_error */ , current_spi_stack_depth);
+
 	}
 	PG_END_TRY();
 
