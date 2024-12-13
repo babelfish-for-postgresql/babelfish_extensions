@@ -60,6 +60,18 @@ master_dbo.tbl_creation_should_succeed TO master_dbo';
 END $$;
 GO
 
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'babel_4489_trim_psql_t9' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'GRANT ALL ON
+master_dbo.babel_4489_trim_psql_t9 TO master_dbo';
+    END IF;
+END $$;
+GO
+
 -- tsql
 REVOKE SELECT, EXECUTE ON SCHEMA::dbo FROM babel_4768_u1
 GO
