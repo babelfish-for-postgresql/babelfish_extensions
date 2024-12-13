@@ -1257,7 +1257,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_disable_storing_init_privs,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, assign_disable_storing_init_privs, NULL);
 }

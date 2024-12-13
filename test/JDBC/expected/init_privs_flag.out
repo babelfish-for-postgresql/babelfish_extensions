@@ -13,7 +13,7 @@ go
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script)~~
+~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs")~~
 
 
 select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
@@ -22,7 +22,7 @@ go
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script)~~
+~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs")~~
 
 
 -- tsql user=init_privs_l1 password=12345678
@@ -32,7 +32,7 @@ go
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script)~~
+~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs")~~
 
 
 select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
@@ -41,7 +41,7 @@ go
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script)~~
+~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs")~~
 
 
 -- psql
@@ -77,16 +77,16 @@ select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', false);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs"
+    Server SQLState: 42501)~~
 
 
 select set_config('babelfishpg_tsql.disable_storing_init_privs', 'on', true);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: babelfishpg_tsql.disable_storing_init_privs can only be modified in upgrade script
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: permission denied to set parameter "babelfishpg_tsql.disable_storing_init_privs"
+    Server SQLState: 42501)~~
 
 
 -- terminate-tsql-conn user=init_privs_l1 password=12345678
