@@ -67,6 +67,7 @@ Collation sys.ukrainian_ci_as
 Collation sys.ukrainian_cs_as
 Collation sys.vietnamese_ci_ai
 Collation sys.vietnamese_ci_as
+Function information_schema_tsql.table_constraints_internal()
 Function sys."char"(integer)
 Function sys."decimal"(sys."nchar",integer,boolean)
 Function sys."isnull"(bigint,bigint)

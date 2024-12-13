@@ -491,16 +491,27 @@ CREATE VIEW information_schema_tsql.tables AS
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
-/*
- * TABLE_CONSTRAINTS view
- */
-
-CREATE VIEW information_schema_tsql.table_constraints AS
-    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-           CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+CREATE OR REPLACE FUNCTION information_schema_tsql.table_constraints_internal()
+RETURNS TABLE (
+    "CONSTRAINT_CATALOG" sys.nvarchar(128),
+    "CONSTRAINT_SCHEMA" sys.nvarchar(128),
+    "CONSTRAINT_NAME" sys.sysname,
+    "TABLE_CATALOG" sys.nvarchar(128),
+    "TABLE_SCHEMA" sys.nvarchar(128),
+    "TABLE_NAME" sys.sysname,
+    "CONSTRAINT_TYPE" sys.varchar(11),
+    "IS_DEFERRABLE" sys.varchar(2),
+    "INITIALLY_DEFERRED" sys.varchar(2)
+)
+AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
-           CAST(nr.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-           CAST(extr.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+           CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
@@ -510,21 +521,38 @@ CREATE VIEW information_schema_tsql.table_constraints AS
              AS sys.varchar(11)) COLLATE sys.database_default AS "CONSTRAINT_TYPE",
            CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
            CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
-
-    FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-         sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
-         pg_constraint c,
-         pg_class r
-
-    WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
-          AND c.conrelid = r.oid
-          AND c.contype NOT IN ('t', 'x')
+    FROM 
+        pg_constraint c
+        INNER JOIN pg_class r ON c.conrelid = r.oid
+        INNER JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+        INNER JOIN sys.babelfish_namespace_ext ext ON nsp.nspname = ext.nspname AND ext.dbid = sys.db_id()
+        , sys.db_name() AS db_name
+    WHERE 
+        c.contype IN ('c', 'f', 'p', 'u')
           AND r.relkind IN ('r', 'p')
-          AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		  AND  extc.dbid = sys.db_id();
+               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+/*
+ * TABLE_CONSTRAINTS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
+    SELECT 
+        CAST("CONSTRAINT_CATALOG" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_SCHEMA" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_NAME" AS sys.sysname),
+        CAST("TABLE_CATALOG" AS sys.nvarchar(128)),
+        CAST("TABLE_SCHEMA" AS sys.nvarchar(128)),
+        CAST("TABLE_NAME" AS sys.sysname),
+        CAST("CONSTRAINT_TYPE" AS sys.varchar(11)),
+        CAST("IS_DEFERRABLE" AS sys.varchar(2)),
+        CAST("INITIALLY_DEFERRED" AS sys.varchar(2))
+    FROM information_schema_tsql.table_constraints_internal();
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
@@ -817,10 +845,10 @@ GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
-		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
 		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
-		CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
@@ -828,14 +856,14 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	FROM
 		pg_constraint c 
 		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
-		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
-		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
+		JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nsp.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
-		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j
+		, sys.db_name() AS db_name
 	WHERE
 		pg_has_role(r.relowner, 'USAGE'::text) 
   		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
-		AND NOT pg_is_other_temp_schema(nc.oid)
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
