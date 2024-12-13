@@ -554,7 +554,11 @@ SELECT reverse(@inputString)
 GO
 ~~ERROR (Code: 206)~~
 
+~~ERROR (Message: The function reverse is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT reverse(@inputString)
 GO
 ~~ERROR (Code: 206)~~
 

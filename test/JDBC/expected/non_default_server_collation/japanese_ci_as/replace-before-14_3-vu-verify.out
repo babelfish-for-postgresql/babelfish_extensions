@@ -512,8 +512,8 @@ varchar
 SELECT replace(a, b, c) FROM babel_4836_replace_ntext
 GO
 ~~START~~
-varchar
-  abcjhi?ghi??    
+nvarchar
+  abcjhi🙂ghi🙂🙂    
 ~~END~~
 
 

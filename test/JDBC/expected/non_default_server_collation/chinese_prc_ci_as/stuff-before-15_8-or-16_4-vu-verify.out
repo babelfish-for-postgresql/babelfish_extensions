@@ -2221,8 +2221,6 @@ abcd
 DECLARE @inputString CHAR(25) = 'xyzd';
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
@@ -2230,8 +2228,6 @@ varchar
 DECLARE @inputString CHAR(25) = 'xyzd';
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
@@ -2239,8 +2235,6 @@ varchar
 DECLARE @inputString VARCHAR(25) = 'xyzd';
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
@@ -2248,8 +2242,6 @@ varchar
 DECLARE @inputString VARCHAR(25) = 'xyzd';
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
@@ -2290,8 +2282,6 @@ abcd
 DECLARE @inputString NCHAR(25) = N'xyzd';
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
@@ -2299,8 +2289,6 @@ varchar
 DECLARE @inputString NCHAR(25) = N'xyzd';
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
@@ -2308,8 +2296,6 @@ varchar
 DECLARE @inputString NVARCHAR(25) = N'xyzd';
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
@@ -2317,8 +2303,6 @@ varchar
 DECLARE @inputString NVARCHAR(25) = N'xyzd';
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
