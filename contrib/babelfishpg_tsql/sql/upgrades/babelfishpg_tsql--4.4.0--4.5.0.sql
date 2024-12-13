@@ -10067,10 +10067,10 @@ AS
 $$
 BEGIN
     RETURN QUERY
-    SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+    SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
-           CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+           CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
            CAST(
@@ -10086,6 +10086,7 @@ BEGIN
         INNER JOIN pg_class r ON c.conrelid = r.oid
         INNER JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
         INNER JOIN sys.babelfish_namespace_ext ext ON nsp.nspname = ext.nspname AND ext.dbid = sys.db_id()
+        , sys.db_name() AS db_name
     WHERE 
         c.contype IN ('c', 'f', 'p', 'u')
           AND r.relkind IN ('r', 'p')
@@ -10114,7 +10115,7 @@ GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
-		CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
 		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
 		CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
@@ -10128,7 +10129,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
 		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nsp.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
-		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j
+		, sys.db_name() AS db_name
 	WHERE
 		pg_has_role(r.relowner, 'USAGE'::text) 
   		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
