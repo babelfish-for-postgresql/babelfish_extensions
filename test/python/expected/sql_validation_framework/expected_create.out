@@ -1,6 +1,7 @@
 Could not find tests for function assemblyproperty
 Could not find tests for function bbf_string_agg_finalfn_nvarchar
 Could not find tests for function bbf_string_agg_finalfn_varchar
+Could not find tests for function information_schema_tsql.table_constraints_internal
 Could not find tests for function pltsql_call_handler
 Could not find tests for function pltsql_inline_handler
 Could not find tests for function pltsql_validator
@@ -96,6 +97,7 @@ Could not find upgrade tests for function assemblyproperty
 Could not find upgrade tests for function bbf_string_agg_finalfn_nvarchar
 Could not find upgrade tests for function bbf_string_agg_finalfn_varchar
 Could not find upgrade tests for function connectionproperty
+Could not find upgrade tests for function information_schema_tsql.table_constraints_internal
 Could not find upgrade tests for function pltsql_call_handler
 Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
