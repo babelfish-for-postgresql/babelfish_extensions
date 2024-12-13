@@ -854,7 +854,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
 		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
-		CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
