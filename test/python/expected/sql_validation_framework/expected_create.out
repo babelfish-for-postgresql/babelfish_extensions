@@ -36,6 +36,7 @@ Could not find tests for function sys.patindex_ai_collations
 Could not find tests for function sys.pltsql_assign_var
 Could not find tests for function sys.remove_accents_internal_using_cache
 Could not find tests for function sys.role_id
+Could not find tests for function sys.sp_column_privileges_internal
 Could not find tests for function sys.sp_columns_managed_internal
 Could not find tests for function sys.sp_datatype_info_helper
 Could not find tests for function sys.sp_describe_first_result_set_internal
@@ -45,6 +46,7 @@ Could not find tests for function sys.sp_releaseapplock_function
 Could not find tests for function sys.sp_special_columns_length_helper
 Could not find tests for function sys.sp_special_columns_precision_helper
 Could not find tests for function sys.sp_special_columns_scale_helper
+Could not find tests for function sys.sp_table_privileges_internal
 Could not find tests for function sys.suser_id_internal
 Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.systypes_precision_helper
@@ -142,6 +144,7 @@ Could not find upgrade tests for function sys.pltsql_assign_var
 Could not find upgrade tests for function sys.remove_accents_internal_using_cache
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.servername
+Could not find upgrade tests for function sys.sp_column_privileges_internal
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
 Could not find upgrade tests for function sys.sp_describe_first_result_set_internal
@@ -151,6 +154,7 @@ Could not find upgrade tests for function sys.sp_releaseapplock_function
 Could not find upgrade tests for function sys.sp_special_columns_length_helper
 Could not find upgrade tests for function sys.sp_special_columns_precision_helper
 Could not find upgrade tests for function sys.sp_special_columns_scale_helper
+Could not find upgrade tests for function sys.sp_table_privileges_internal
 Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.systypes_precision_helper
