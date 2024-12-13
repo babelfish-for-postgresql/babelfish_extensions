@@ -168,18 +168,17 @@ AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
 
 CALL sys.babelfish_revoke_guest_from_mapped_logins();
 
+CREATE OR REPLACE PROCEDURE sys.revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal';
+
 /*
  * Do this so that whenever we run grant statements during create logical database
  * bbf_role_admin is never picked as the grantor
  */
-DO $$
-BEGIN
-    SET babelfishpg_tsql.disable_storing_init_privs = TRUE;
-    EXECUTE format('REVOKE GRANT OPTION FOR CREATE ON DATABASE %s FROM bbf_role_admin; ', CURRENT_DATABASE());
-    RESET babelfishpg_tsql.disable_storing_init_privs;
-END;
-$$ LANGUAGE plpgsql;
+CALL sys.revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal();
 
+DROP PROCEDURE sys.revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal;
 
 CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",

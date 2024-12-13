@@ -29,6 +29,7 @@
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
+#include "commands/proclang.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -187,7 +188,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
-static bool check_store_init_privs_flag(void);
+static bool check_store_init_privs_flag(Oid objoid, Oid classoid, int objsubid);
 
 /*****************************************
  * 			Replication Hooks
@@ -5858,12 +5859,74 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 }
 
 static bool
-check_store_init_privs_flag(void)
+check_store_init_privs_flag(Oid objoid, Oid classoid, int objsubid)
 {
 	if (!(creating_extension &&
 		OidIsValid(CurrentExtensionObject) &&
 		CurrentExtensionObject == get_extension_oid("babelfishpg_tsql", true)))
 		return false;
+
+	/*
+	 * If flag is disabled verify that initial privileges are not being stored for the
+	 * object not created during CREATE extension. If it is neccessary to store the
+	 * initial privileges then update the logic to have an exception for such cases. 
+	 */
+	if (!pltsql_disable_storing_init_privs)
+	{
+		ObjectAddress	address;
+		Oid				nspoid = InvalidOid;
+		ObjectType		objtype;
+		bool			disallowed_init_privs = false;
+
+		ObjectAddressSet(address, classoid, objoid);
+		objtype = get_object_type(classoid, objoid);
+		if (objtype == OBJECT_SCHEMA)
+		{
+			nspoid = objoid;
+		}
+		else
+		{
+			nspoid = get_object_namespace(&address);
+		}
+		if (OidIsValid(nspoid))
+		{
+			char *nspname = get_namespace_name(nspoid);
+			if (nspname && !is_shared_schema(nspname))
+			{
+				disallowed_init_privs = true;
+			}
+		}
+		else
+		{
+			/* Non-schema contained object */
+			switch(objtype)
+			{
+				case OBJECT_LANGUAGE:
+					if (objoid == get_language_oid("pltsql", false))
+					{
+						break;
+					}
+					else
+					{
+						disallowed_init_privs = true;
+						break;
+					}
+				default:
+					disallowed_init_privs = true;
+			}
+
+		}
+		if(disallowed_init_privs)
+		{
+			ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Babelfish upgrade script shouldn't be storing initial "
+								"privileges added via GRANT/REVOKE statements. "
+								"Please disable storing by enabling "
+								"babelfishpg_tsql.disable_storing_init_privs GUC. %s", getObjectDescription(&address, true))));
+			//elog(LOG, "LOL : %s", getObjectDescription(&address, true));
+		}
+	}
 
 	return pltsql_disable_storing_init_privs;
 }

@@ -66,8 +66,6 @@ $$;
 
 DROP PROCEDURE sys.grant_create_on_db_to_bbf_role_admin_internal();
 
-
-
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
 CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,

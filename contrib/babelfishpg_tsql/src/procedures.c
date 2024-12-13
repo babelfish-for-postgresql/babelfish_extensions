@@ -83,6 +83,7 @@ PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
 PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 PG_FUNCTION_INFO_V1(grant_create_on_db_to_bbf_role_admin_internal);
+PG_FUNCTION_INFO_V1(revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -4350,3 +4351,66 @@ grant_create_on_db_to_bbf_role_admin_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+/*
+ * This function is only being used during upgrade from v4.4.0 to v5.0.0
+ * to revoke GRANT OPTION for CREATE privilege on physical database from bbf_role_admin
+ */
+Datum
+revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal(PG_FUNCTION_ARGS)
+{
+	StringInfoData    query;
+	List              *parsetree_list;
+	int               pltsql_save_nestlevel;
+	int               save_nestlevel;
+	PlannedStmt      *wrapper;
+	Node*             stmt;			
+
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"revoke_grant_opt_on_create_on_db_from_bbf_role_admin_internal()")));
+
+	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	save_nestlevel = NewGUCNestLevel();
+
+	PG_TRY();
+	{
+		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "true", PGC_SUSET, PGC_S_SESSION);
+		initStringInfo(&query);
+		appendStringInfo(&query, "REVOKE GRANT OPTION FOR CREATE ON DATABASE dummy FROM bbf_role_admin;");
+
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+		stmt = parsetree_nth_stmt(parsetree_list, 0);
+		update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, NULL, NULL);
+
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = (Node *) stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					INTERNAL_GRANT_STATEMENT,
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+
+	}
+	PG_FINALLY();
+	{
+		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "false", PGC_SUSET, PGC_S_SESSION);
+		pltsql_revert_guc(pltsql_save_nestlevel);
+	}
+	PG_END_TRY();
+
+	pfree(query.data);
+	AtEOXact_GUC(false, save_nestlevel);
+
+	PG_RETURN_INT32(0);
+}
