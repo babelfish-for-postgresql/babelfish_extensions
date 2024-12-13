@@ -570,13 +570,13 @@ CREATE SCHEMA babel_5136_s1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
+~~ERROR (Message: permission denied for database babelfish_db)~~
 
 CREATE SCHEMA babel_5136_s1 AUTHORIZATION babel_5136_u1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
+~~ERROR (Message: permission denied for database babelfish_db)~~
 
 -- Should not be able to drop a database
 DROP DATABASE babel_5136

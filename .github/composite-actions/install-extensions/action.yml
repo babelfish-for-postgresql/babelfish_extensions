@@ -67,7 +67,7 @@ runs:
         fi
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/$DATADIR/ -l logfile start
         cd ~/work/babelfish_extensions/babelfish_extensions/
-        sudo ~/${{inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -p ${{inputs.psql_port}} -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v tsql_port=${{inputs.tsql_port}} -v parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/create_extension.sql
+        sudo ~/${{inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -p ${{inputs.psql_port}} -v user="jdbc_user" -v db="babelfish_db" -v migration_mode=${{inputs.migration_mode}} -v tsql_port=${{inputs.tsql_port}} -v parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/create_extension.sql
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/$DATADIR/ -l logfile restart
         sqlcmd -S localhost,${{inputs.tsql_port}} -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       shell: bash
