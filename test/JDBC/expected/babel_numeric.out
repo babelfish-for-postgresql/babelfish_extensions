@@ -212,7 +212,7 @@ numeric
 ~~END~~
 
 
-create table babel_5086_t1 (a numeric(18,2), b numeric(7,2), c numeric(18,2), d numeric(7,2));
+create table babel_5086_t1 (a decimal(18,2), b decimal(7,2), c decimal_18_2, d decimal_7_2);
 go
 
 insert into babel_5086_t1 values (1.23, 1.23, 1.23, 1.23);

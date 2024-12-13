@@ -744,12 +744,17 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
 					}
-					else if (precision - scale > 32 && scale < 6)
-						precision = TDS_MAX_NUM_PRECISION;
-					else if (precision - scale < 32)
+					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
 					{
-						scale = Min(scale, TDS_MAX_NUM_PRECISION - (precision-scale));
+						/*
+						 * scale adjustment by delta is only applicable for
+						 * division and (multiplcation having no aggregate
+						 * operand)
+						 */
+						int			delta = precision - TDS_MAX_NUM_PRECISION;
+
 						precision = TDS_MAX_NUM_PRECISION;
+						scale = Max(scale - delta, 0);
 					}
 					/*
 					 * Control reaching here for only arithmetic overflow
