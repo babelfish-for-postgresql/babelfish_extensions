@@ -1,0 +1,25 @@
+-- tsql
+USE master
+GO
+DROP DATABASE IF EXISTS babel_5136
+GO
+DROP LOGIN babel_5136_l1
+GO
+DROP LOGIN babel_5136_l2
+GO
+DROP LOGIN babel_5136_l3
+GO
+DROP LOGIN babel_5136_db_accessadmin_l1
+GO
+DROP USER babel_5136_u1
+GO
+DROP USER babel_5136_user_master
+GO
+DROP ROLE babel_5136_r1
+GO
+DROP TABLE babel_5136_t1
+GO
+DROP PROC babel_5136_p1
+GO
+DROP FUNCTION f1
+GO

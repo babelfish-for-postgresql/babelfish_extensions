@@ -32,7 +32,6 @@ BABEL-1756
 BABEL-1756-dep
 BABEL-1963
 BABEL-1994-CHAR
-restricted_procedures
 BABEL-1994-VARCHAR
 BABEL-2086
 BABEL-2170
@@ -123,7 +122,6 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
-BABEL_SCHEMATA
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_FKEYS
 BABEL-SP_FKEYS-dep
@@ -397,8 +395,11 @@ space
 binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
 cast-varchar-to-time
+db_accessadmin
+db_securityadmin
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
 

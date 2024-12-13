@@ -215,6 +215,8 @@ Function sys.bbf_binary_varbinary_cmp(sys.bbf_binary,sys.bbf_varbinary)
 Function sys.bbf_get_context_info()
 Function sys.bbf_get_current_physical_schema_name(text)
 Function sys.bbf_get_immediate_base_type_of_udt(oid)
+Function sys.bbf_is_member_of_role_nosuper(oid,oid)
+Function sys.bbf_is_role_member(name,name)
 Function sys.bbf_is_shared_schema(text)
 Function sys.bbf_string_agg_finalfn_nvarchar(internal)
 Function sys.bbf_string_agg_finalfn_varchar(internal)
@@ -967,7 +969,6 @@ View sys.change_tracking_tables
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
-View sys.database_role_members
 View sys.dm_hadr_cluster
 View sys.dm_hadr_database_replica_states
 View sys.dm_os_host_info

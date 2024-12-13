@@ -34,6 +34,7 @@
 #include "common/logging.h"
 #include "executor/execExpr.h"
 #include "funcapi.h"
+#include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -164,6 +165,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ParamListInfo params, QueryCompletion *qc);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
+static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId, AclMode privileges, Oid *grantorId, AclMode *grantOptions);
 
 /*****************************************
  * 			Executor Hooks
@@ -197,6 +199,8 @@ static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
 static bool is_partitioned_table_reloptions_allowed(Datum reloptions);
+static Oid pltsql_get_object_owner(Oid namespaceId, Oid ownerId);
+static bool is_bbf_db_ddladmin_operation(Oid namespaceId);
 
 /*****************************************
  * 			Planner Hook
@@ -287,6 +291,7 @@ static pltsql_strpos_non_determinstic_hook_type prev_pltsql_strpos_non_determins
 static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determinstic_hook = NULL;
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
+static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -499,8 +504,15 @@ InstallExtendedHooks(void)
 
 	prev_ExecFuncProc_AclCheck_hook  = ExecFuncProc_AclCheck_hook;
 	ExecFuncProc_AclCheck_hook = pltsql_ExecFuncProc_AclCheck;
+
+	prev_bbf_execute_grantstmt_as_dbsecadmin_hook = bbf_execute_grantstmt_as_dbsecadmin_hook;
+	bbf_execute_grantstmt_as_dbsecadmin_hook = handle_grantstmt_for_dbsecadmin;
 	
 	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
+
+	pltsql_get_object_owner_hook = pltsql_get_object_owner;
+
+	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
 }
 
 void
@@ -569,6 +581,7 @@ UninstallExtendedHooks(void)
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
+	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -2961,13 +2974,19 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 		drop_bbf_roles(access, classId, objectId, subId, arg);
 
 	if (access == OAT_POST_CREATE && classId == ProcedureRelationId)
+	{
 		revoke_func_permission_from_public(objectId);
+		exec_internal_grant_on_function(objectId);
+	}
+
+	if (access == OAT_POST_CREATE)
+		change_object_owner_if_db_owner();
 }
 
 static void
 revoke_func_permission_from_public(Oid objectId)
 {
-	const char *query;
+	char	   *query;
 	List	   *res;
 	GrantStmt  *revoke;
 	PlannedStmt *wrapper;
@@ -2975,7 +2994,11 @@ revoke_func_permission_from_public(Oid objectId)
 	Oid			phy_sch_oid;
 	const char *phy_sch_name;
 	const char *arg_list;
-	char		kind;
+	char        kind;
+	Oid         save_userid;
+	int         save_sec_context;
+	HeapTuple   proc_tuple;
+	Form_pg_proc procedureStruct;
 
 	/* TSQL specific behavior */
 	if (sql_dialect != SQL_DIALECT_TSQL)
@@ -2984,11 +3007,18 @@ revoke_func_permission_from_public(Oid objectId)
 	/* Advance command counter so new tuple can be seen by validator */
 	CommandCounterIncrement();
 
+	proc_tuple = SearchSysCache1(PROCOID,
+								ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proc_tuple))
+		elog(ERROR, "cache lookup failed for function %u", objectId);
+
+	procedureStruct = (Form_pg_proc) GETSTRUCT(proc_tuple);
+
 	/* get properties */
-	obj_name = get_func_name(objectId);
-	phy_sch_oid = get_func_namespace(objectId);
+	obj_name = NameStr(procedureStruct->proname);
+	phy_sch_oid = procedureStruct->pronamespace;
 	phy_sch_name = get_namespace_name(phy_sch_oid);
-	kind = get_func_prokind(objectId);
+	kind = procedureStruct->prokind;
 	arg_list = gen_func_arg_list(objectId);
 
 	/* prepare subcommand */
@@ -3014,14 +3044,33 @@ revoke_func_permission_from_public(Oid objectId)
 	wrapper->stmt_location = 0;
 	wrapper->stmt_len = 0;
 
-	ProcessUtility(wrapper,
-				   query,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		/*
+		 * babelfish routines could be transferred to schema owner during creation so
+		 * current user may not have grant privilege on this routine when we reach here
+		 */
+		SetUserIdAndSecContext(procedureStruct->proowner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+		ProcessUtility(wrapper,
+					INTERNAL_REVOKE_ALL_ON_ROUTINE,
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
+
+	pfree(query);
+	ReleaseSysCache(proc_tuple);
 
 	/* Command Counter will be increased by validator */
 }
@@ -3207,7 +3256,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 		return;
 
 	/* Skip if it is for sysdatabases while creating logical database */
-	if (strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
+	if (strcmp(CREATE_LOGICAL_DATABASE, queryString) == 0)
 		return;
 
 	/* Fetch the object details from Relation */
@@ -5635,4 +5684,183 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
         identity = getObjectIdentity(address,true); 
     }
     return identity;
+}
+
+/*
+ * Allows execution of GRANT/REVOKE statement if current_user is member of db_securityadmin
+ * given that GRANT/REVOKE is being executed on current database's object. It is being
+ * ensured that schema of given object(in GRANT/REVOKE statement) belongs to current database.  
+ */
+static void
+handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
+								AclMode privileges, Oid *grantorId, AclMode *grantOptions)
+{
+	ObjectAddress	address;
+	Oid				classid = InvalidOid;
+	Oid				schema_oid = InvalidOid;
+
+	/*
+	 * Return if any of following condition is true
+	 * 1. Not a TDS client
+	 * 2. Not a TSQL dialect
+	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
+	 *    This means already the best grantor has been selected using select_best_grantor().
+	 */
+	if (!MyProcPort->is_tds_conn ||
+		sql_dialect != SQL_DIALECT_TSQL ||
+		*grantorId == ownerId ||
+		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
+		return;
+
+	switch(objType)
+	{
+		case OBJECT_TABLE:
+		case OBJECT_COLUMN:
+		case OBJECT_VIEW:
+			classid = RelationRelationId;
+			break;
+		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+			classid = ProcedureRelationId;
+			break;
+		case OBJECT_SCHEMA:
+			classid = NamespaceRelationId;
+			break;
+		default:
+			break;
+	}
+
+	if (!OidIsValid(classid))
+		return;
+
+	if (classid == NamespaceRelationId)
+	{
+		schema_oid = objId;
+	}
+	else
+	{
+		ObjectAddressSet(address, classid, objId);
+		schema_oid = get_object_namespace(&address);
+	}
+
+	if (OidIsValid(schema_oid))
+	{
+		/*
+		 * Don't allow if object's schema is not from current database OR
+		 * it is a shared schema.
+		 */
+		if (!is_schema_from_db(schema_oid, get_cur_db_id()))
+		{
+			return;
+		}
+		else
+		{
+			/*
+			 * Check if current user is member of db_securityadmin role.
+			 * If so, then grant/revoke the requested privileges by overriding
+			 * grantId with ownerId.
+			 */
+			if (is_member_of_role(GetUserId(),
+								  get_db_securityadmin_oid(get_current_pltsql_db_name(), false)))
+			{
+				*grantorId = ownerId;
+				*grantOptions = ACL_GRANT_OPTION_FOR(privileges);
+				return;
+			}
+		}
+	}
+	return;
+}
+
+
+/*
+ * Objects are always owned by current user in postgres but in babelfish
+ * schema contained objects should be owned by the schema owner by default
+ * Use this hook to pick schema owner as object owner during object creation
+ * We currently only do this if current user is member of db_ddladmin or db_owner
+ */
+static Oid
+pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
+{
+	HeapTuple          tuple;
+	Form_pg_namespace  nsptup;
+	const char         *logical_schema_name;
+
+	Assert(OidIsValid(namespaceId));
+
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return ownerId;
+
+	if (!OidIsValid(ownerId))
+		ownerId = GetUserId();
+
+	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
+	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
+
+	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
+
+	if (logical_schema_name)
+	{
+		Oid		nsp_owner;
+		char	*db_name = get_cur_db_name();
+		char	*dbo_name = get_dbo_role_name(db_name);
+		Oid		dbo_oid = get_role_oid(dbo_name, false);
+		/*
+		 * babelfish issue special handing for dbo schema since it is
+		 * owned by db_owner but the correct owner should have been dbo
+		 */
+		if (strcmp(logical_schema_name, "dbo") == 0)
+			nsp_owner = dbo_oid;
+		else
+			nsp_owner = nsptup->nspowner;
+
+		if (ownerId != nsp_owner)
+		{
+			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
+			Oid 	db_owner = get_db_owner_oid(db_name, false);
+			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
+
+			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
+			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
+				(has_privs_of_role(GetUserId(), db_owner) ||
+				has_privs_of_role(GetUserId(), db_ddladmin)))
+				ownerId = nsp_owner;
+		}
+
+		pfree(db_name);
+		pfree(dbo_name);
+	}
+	ReleaseSysCache(tuple);
+
+	return ownerId;
+}
+
+/*
+ * Check if the given namespace is inside the current active logical
+ * database and if the current user is a member of db_ddladmin fixed
+ * database role of the current active logical database
+ */
+static bool
+is_bbf_db_ddladmin_operation(Oid namespaceId)
+{
+	char 	*nspname;
+	Oid 	schema_db_id;
+	Oid 	db_ddladmin;
+
+	Assert(OidIsValid(namespaceId));
+
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return false;
+
+	nspname = get_namespace_name(namespaceId);
+	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
+	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
+
+	pfree(nspname);
+
+	if (OidIsValid(schema_db_id) && schema_db_id == get_cur_db_id() &&
+		has_privs_of_role(GetUserId(), db_ddladmin))
+		return true;
+
+	return false;
 }
