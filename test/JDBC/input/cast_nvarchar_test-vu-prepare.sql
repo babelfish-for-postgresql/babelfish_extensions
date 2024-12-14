@@ -33,12 +33,25 @@ BEGIN
 END
 GO
 
+-- Function to cast BINARY to NVARCHAR
+CREATE FUNCTION dbo.CastbinaryToNVarchar
+(
+    @Input BINARY
+)
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN CAST(@Input AS NVARCHAR(MAX));
+END
+GO
+
 -- View that demonstrates both casts
 CREATE VIEW dbo.CastDemoView
 AS
 SELECT 
     dbo.CastNVarcharToVarbinary(N'Hello, World!') AS NVarcharToVarbinary,
-    dbo.CastVarbinaryToNVarchar(0x48656C6C6F2C20576F726C6421) AS VarbinaryToNVarchar
+    dbo.CastVarbinaryToNVarchar(0x48656C6C6F2C20576F726C6421) AS VarbinaryToNVarchar,
+    dbo.CastbinaryToNVarchar(0x48656C6C6F2C20576F726C6421) AS binaryToNVarchar
 GO
 
 -- to do in hashbytes PR

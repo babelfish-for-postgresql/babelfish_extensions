@@ -161,7 +161,8 @@ GO
 -- Test CastDemoView
 DECLARE @ViewResult TABLE (
     NVarcharToVarbinary VARBINARY(MAX),
-    VarbinaryToNVarchar NVARCHAR(MAX)
+    VarbinaryToNVarchar NVARCHAR(MAX),
+    binaryToNVarchar NVARCHAR(MAX)
 );
 
 INSERT INTO @ViewResult

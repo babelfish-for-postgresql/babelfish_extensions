@@ -11,6 +11,8 @@ DROP FUNCTION IF EXISTS dbo.CastNVarcharToVarbinary;
 GO
 DROP FUNCTION IF EXISTS dbo.CastVarbinaryToNVarchar;
 GO
+DROP FUNCTION IF EXISTS dbo.CastbinaryToNVarchar;
+GO
 -- to do in hashbytes PR
 -- DROP FUNCTION IF EXISTS dbo.HashMultipleTypes;
 -- GO
