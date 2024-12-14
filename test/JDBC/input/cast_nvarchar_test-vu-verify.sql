@@ -158,6 +158,14 @@ SET @StringResult = dbo.CastVarbinaryToNVarchar(@TestBinary);
 select cast (@StringResult as nvarchar)
 GO
 
+-- Test CastbinaryToNVarchar function
+
+DECLARE @TestBinary BINARY = 0x54657374537472696E67; -- 'Test String' in ASCII
+DECLARE @StringResult NVARCHAR(MAX);
+SET @StringResult = dbo.CastbinaryToNVarchar(@TestBinary);
+select cast (@StringResult as nvarchar)
+GO
+
 -- Test CastDemoView
 DECLARE @ViewResult TABLE (
     NVarcharToVarbinary VARBINARY(MAX),
