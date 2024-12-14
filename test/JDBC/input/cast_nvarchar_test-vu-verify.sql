@@ -177,6 +177,8 @@ INSERT INTO @ViewResult
 SELECT * FROM dbo.CastDemoView;
 go
 
+SELECT * FROM dbo.CastDemoView1;
+GO
 -- TEST CASE 21: Assigned Casting
 DECLARE @NVarcharValue NVARCHAR(100) = N'Hello, World!';
 DECLARE @AssignedVarbinary VARBINARY(100);

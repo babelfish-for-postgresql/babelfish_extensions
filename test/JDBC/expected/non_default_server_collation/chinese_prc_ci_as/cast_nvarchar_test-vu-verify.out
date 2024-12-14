@@ -252,6 +252,13 @@ go
 ~~ROW COUNT: 1~~
 
 
+SELECT * FROM dbo.CastDemoView1;
+GO
+~~START~~
+varbinary#!#nvarchar#!#nvarchar#!#binary
+7400650073007400200073007400720069006E006700#!#效汬Ɐ圠牯摬!#!#效汬Ɐ圠牯摬!#!#740065007300740020007300740072
+~~END~~
+
 -- TEST CASE 21: Assigned Casting
 DECLARE @NVarcharValue NVARCHAR(100) = N'Hello, World!';
 DECLARE @AssignedVarbinary VARBINARY(100);

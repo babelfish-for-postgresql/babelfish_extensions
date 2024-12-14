@@ -54,6 +54,21 @@ SELECT
     dbo.CastbinaryToNVarchar(0x48656C6C6F2C20576F726C6421) AS binaryToNVarchar
 GO
 
+create table casttable(nvarchar_data nvarchar(max), varbinary_data varbinary(max), binary_data binary(15), nvarchar_binary_data nvarchar(max));
+GO
+insert into casttable(nvarchar_data, varbinary_data, binary_data, nvarchar_binary_data) values (N'test string', 0x48656C6C6F2C20576F726C6421, 0x48656C6C6F2C20576F726C6421, N'test string')
+GO
+
+CREATE VIEW dbo.CastDemoView1
+AS
+SELECT
+    CAST(nvarchar_data AS VARBINARY(MAX)),
+    CAST(varbinary_data AS NVARCHAR(MAX)),
+    CAST(binary_data AS NVARCHAR(MAX)),
+    CAST(nvarchar_binary_data AS BINARY(15))
+FROM casttable
+GO
+
 -- to do in hashbytes PR
 -- -- Function  hashbytes different input types
 -- CREATE FUNCTION dbo.HashMultipleTypes
