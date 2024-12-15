@@ -510,10 +510,6 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	StringInfo		tempStringInfo = palloc(sizeof(StringInfoData));
 	uint32_t		collation;
 
-	char			*tvp_type_name = NULL;
-	char 			*tvp_type_schema_name = NULL;
-	char 			*target_arg_name;
-
 	/* Database-Name.Schema-Name.TableType-Name */
 	for (; i < 3; i++)
 	{
@@ -548,13 +544,14 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 		}
 		else if (i == 2)
 		{
-			target_arg_name = temp->paramMeta.colName.data;
+			char			*tvp_type_name;
+			char 			*tvp_type_schema_name;
 			/*
 			 * Fetch the TVP typeName and schemaName from catalog search
-			 * based on object name.
+			 * based on object name and argument name.
 			 */
 			pltsql_plugin_handler_ptr->get_tvp_typename_typeschemaname(proc_name,
-																	target_arg_name,
+																	temp->paramMeta.colName.data,
 																	&tvp_type_name,
 																	&tvp_type_schema_name);
 			temp->len += strlen(tvp_type_schema_name);
