@@ -2,8 +2,8 @@ SELECT * FROM database_principals_dep_vu_prepare_view
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#bit#!#int#!#varchar#!#bit
-database_principals_dep_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
-database_principals_dep_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
+database_principals_dep_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
+database_principals_dep_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
 ~~END~~
 
 
@@ -11,8 +11,8 @@ EXEC database_principals_dep_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#bit#!#int#!#varchar#!#bit
-database_principals_dep_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
-database_principals_dep_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#1#!#-1#!#English#!#1
+database_principals_dep_vu_prepare_user1#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
+database_principals_dep_vu_prepare_user2#!#S#!#SQL_USER#!#dbo#!#0#!#-1#!#English#!#1
 ~~END~~
 
 
