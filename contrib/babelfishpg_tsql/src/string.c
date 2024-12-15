@@ -56,11 +56,29 @@ static Datum return_varchar_pointer(char *buf, int size);
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
-	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-	bytea	   *in = PG_GETARG_BYTEA_PP(1);
-	size_t		len = VARSIZE_ANY_EXHDR(in);
-	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
-	bytea	   *result;
+    Oid            input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
+    const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+    bytea       *in = PG_GETARG_BYTEA_PP(1);
+    size_t        len = VARSIZE_ANY_EXHDR(in);
+    bytea       *result;
+    unsigned char     *data = (unsigned char *) VARDATA_ANY(in);
+    StringInfoData     utf16_data;
+
+
+    /*
+     * If the input_type is nvarchar then we convert it to UTF-16 encoding
+     */
+    if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
+    {
+        unsigned char     *temp_data;
+        initStringInfo(&utf16_data);
+        (common_utility_plugin_ptr->TsqlUTF8toUTF16StringInfo)(&utf16_data, data, len);
+        len = utf16_data.len;
+        temp_data = (unsigned char *)palloc(len);
+        memcpy(temp_data,utf16_data.data,len);
+        data = temp_data;
+        pfree(utf16_data.data);
+    }
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
