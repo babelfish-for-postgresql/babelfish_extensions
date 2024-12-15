@@ -209,10 +209,6 @@ GO
 INSERT INTO master_dbo.babel_4489_trim_psql_t9 VALUES ('\x656667686970'::bytea, '\x656970'::bytea)
 GO
 
-CREATE VIEW master_dbo.babel_4489_trim_dep_view_9 AS
-    SELECT sys.TRIM(b, a) as result FROM master_dbo.babel_4489_trim_psql_t9
-GO
-
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t9 TO master_dbo;
 GO
 
@@ -259,4 +255,9 @@ INSERT INTO master_dbo.babel_4489_trim_psql_t14 VALUES (B'101', B'101')
 GO
 
 GRANT SELECT ON master_dbo.babel_4489_trim_psql_t14 TO master_dbo;
+GO
+
+-- tsql
+CREATE VIEW babel_4489_trim_dep_view_9 AS
+    SELECT TRIM(b FROM a) as result FROM dbo.babel_4489_trim_psql_t9
 GO
