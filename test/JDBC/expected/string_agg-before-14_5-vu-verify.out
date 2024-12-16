@@ -5,7 +5,7 @@ GO
 ~~START~~
 varchar
 abc                 ?defghi             ??                  
-??·?                ??                  
+比尔·拉                莫斯                  
 <NULL>
 Rohit               Bhagat              
 ~~END~~
@@ -16,7 +16,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -28,7 +28,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -40,7 +40,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -52,7 +52,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -64,7 +64,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -76,7 +76,7 @@ GO
 ~~START~~
 varchar
 abc                 ?    ?defghi             ?    ??                  
-??·?                ?    ??                  
+比尔·拉                ?    莫斯                  
 <NULL>
 Rohit               ?    Bhagat              
 ~~END~~
@@ -88,7 +88,7 @@ GO
 ~~START~~
 varchar
 abc                 ??defghi             ???                  
-??·?                ???                  
+比尔·拉                ?莫斯                  
 <NULL>
 Rohit               ?Bhagat              
 ~~END~~
@@ -100,7 +100,7 @@ GO
 ~~START~~
 varchar
 abc                 ?    ?defghi             ?    ??                  
-??·?                ?    ??                  
+比尔·拉                ?    莫斯                  
 <NULL>
 Rohit               ?    Bhagat              
 ~~END~~
@@ -112,7 +112,7 @@ GO
 ~~START~~
 varchar
 abc                 ??defghi             ???                  
-??·?                ???                  
+比尔·拉                ?莫斯                  
 <NULL>
 Rohit               ?Bhagat              
 ~~END~~
@@ -123,10 +123,10 @@ SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 varchar
-abc                 ?    ?defghi             ?    ??                  
-??·?                ?    ??                  
+abc                 尸   ?defghi             尸   ??                  
+比尔·拉                尸   莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               尸   Bhagat              
 ~~END~~
 
 
@@ -135,10 +135,10 @@ SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 varchar
-abc                 ??defghi             ???                  
-??·?                ???                  
+abc                 尸?defghi             尸??                  
+比尔·拉                尸莫斯                  
 <NULL>
-Rohit               ?Bhagat              
+Rohit               尸Bhagat              
 ~~END~~
 
 
@@ -147,10 +147,10 @@ SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 varchar
-abc                 ?    ?defghi             ?    ??                  
-??·?                ?    ??                  
+abc                 尸   ?defghi             尸   ??                  
+比尔·拉                尸   莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               尸   Bhagat              
 ~~END~~
 
 
@@ -159,10 +159,10 @@ SELECT STRING_AGG(col_char, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 varchar
-abc                 ??defghi             ???                  
-??·?                ???                  
+abc                 尸?defghi             尸??                  
+比尔·拉                尸莫斯                  
 <NULL>
-Rohit               ?Bhagat              
+Rohit               尸Bhagat              
 ~~END~~
 
 
@@ -172,7 +172,7 @@ GO
 ~~START~~
 varchar
 abc?defghi??
-??·???
+比尔·拉莫斯
 <NULL>
 RohitBhagat
 ~~END~~
@@ -183,7 +183,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -195,7 +195,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -207,7 +207,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -219,7 +219,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -231,7 +231,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -243,7 +243,7 @@ GO
 ~~START~~
 varchar
 abc?    ?defghi?    ??
-??·??    ??
+比尔·拉?    莫斯
 <NULL>
 Rohit?    Bhagat
 ~~END~~
@@ -255,7 +255,7 @@ GO
 ~~START~~
 varchar
 abc??defghi???
-??·????
+比尔·拉?莫斯
 <NULL>
 Rohit?Bhagat
 ~~END~~
@@ -267,7 +267,7 @@ GO
 ~~START~~
 varchar
 abc?    ?defghi?    ??
-??·??    ??
+比尔·拉?    莫斯
 <NULL>
 Rohit?    Bhagat
 ~~END~~
@@ -279,7 +279,7 @@ GO
 ~~START~~
 varchar
 abc??defghi???
-??·????
+比尔·拉?莫斯
 <NULL>
 Rohit?Bhagat
 ~~END~~
@@ -290,10 +290,10 @@ SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~START~~
 varchar
-abc?    ?defghi?    ??
-??·??    ??
+abc尸   ?defghi尸   ??
+比尔·拉尸   莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit尸   Bhagat
 ~~END~~
 
 
@@ -302,10 +302,10 @@ SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~START~~
 varchar
-abc??defghi???
-??·????
+abc尸?defghi尸??
+比尔·拉尸莫斯
 <NULL>
-Rohit?Bhagat
+Rohit尸Bhagat
 ~~END~~
 
 
@@ -314,10 +314,10 @@ SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~START~~
 varchar
-abc?    ?defghi?    ??
-??·??    ??
+abc尸   ?defghi尸   ??
+比尔·拉尸   莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit尸   Bhagat
 ~~END~~
 
 
@@ -326,10 +326,10 @@ SELECT STRING_AGG(col_varchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~START~~
 varchar
-abc??defghi???
-??·????
+abc尸?defghi尸??
+比尔·拉尸莫斯
 <NULL>
-Rohit?Bhagat
+Rohit尸Bhagat
 ~~END~~
 
 
@@ -511,10 +511,10 @@ SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-abc                 ?    🙂defghi             ?    🙂🙂                  
-比尔·拉                ?    莫斯                  
+abc                 尸   🙂defghi             尸   🙂🙂                  
+比尔·拉                尸   莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               尸   Bhagat              
 ~~END~~
 
 
@@ -535,10 +535,10 @@ SELECT STRING_AGG(col_nchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-abc                 ?    🙂defghi             ?    🙂🙂                  
-比尔·拉                ?    莫斯                  
+abc                 尸   🙂defghi             尸   🙂🙂                  
+比尔·拉                尸   莫斯                  
 <NULL>
-Rohit               ?    Bhagat              
+Rohit               尸   Bhagat              
 ~~END~~
 
 
@@ -678,10 +678,10 @@ SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-abc?    🙂defghi?    🙂🙂
-比尔·拉?    莫斯
+abc尸   🙂defghi尸   🙂🙂
+比尔·拉尸   莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit尸   Bhagat
 ~~END~~
 
 
@@ -702,10 +702,10 @@ SELECT STRING_AGG(col_nvarchar, @sep) FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-abc?    🙂defghi?    🙂🙂
-比尔·拉?    莫斯
+abc尸   🙂defghi尸   🙂🙂
+比尔·拉尸   莫斯
 <NULL>
-Rohit?    Bhagat
+Rohit尸   Bhagat
 ~~END~~
 
 
@@ -727,7 +727,7 @@ GO
 ~~START~~
 text
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -738,7 +738,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -757,7 +757,7 @@ GO
 ~~START~~
 text
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -768,7 +768,7 @@ GO
 ~~START~~
 text
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -798,7 +798,7 @@ GO
 ~~START~~
 text
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -826,7 +826,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -836,11 +836,10 @@ SELECT STRING_AGG(col_imageUDT, '-') FROM babel_5156_string_agg_t1 GROUP BY grou
 GO
 ~~START~~
 nvarchar
-abc-ðŸ™‚defghi-ðŸ™‚ðŸ™‚
-æ¯”å°”Â·æ‹‰-èŽ«æ–¯
-<NULL>
-Rohit-Bhagat
-~~END~~
+abc-馃檪defghi-馃檪馃檪
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "GBK": 0x89)~~
 
 
 -- other different datatypes
@@ -1135,10 +1134,10 @@ SELECT STRING_AGG(col_binary, '-') FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1147,10 +1146,10 @@ SELECT STRING_AGG(col_binary, @sep) FROM babel_5156_string_agg_t1 GROUP BY group
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1159,10 +1158,10 @@ SELECT STRING_AGG(col_varbinary, '-') FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1171,10 +1170,10 @@ SELECT STRING_AGG(col_varbinary, @sep) FROM babel_5156_string_agg_t1 GROUP BY gr
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1228,11 +1227,10 @@ SELECT STRING_AGG(col_image, '-') FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 nvarchar
-abc-ðŸ™‚defghi-ðŸ™‚ðŸ™‚
-æ¯”å°”Â·æ‹‰-èŽ«æ–¯
-<NULL>
-Rohit-Bhagat
-~~END~~
+abc-馃檪defghi-馃檪馃檪
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "GBK": 0x89)~~
 
 
 DECLARE @sep image = CAST('-' as image)
@@ -1249,7 +1247,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -1273,7 +1271,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -1285,7 +1283,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
@@ -1351,7 +1349,7 @@ GO
 ~~START~~
 varchar
 abc                 -?defghi             -??                  
-??·?                -??                  
+比尔·拉                -莫斯                  
 <NULL>
 Rohit               -Bhagat              
 ~~END~~
@@ -1373,7 +1371,7 @@ GO
 ~~START~~
 varchar
 abc-?defghi-??
-??·?-??
+比尔·拉-莫斯
 <NULL>
 Rohit-Bhagat
 ~~END~~
