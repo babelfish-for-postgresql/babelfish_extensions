@@ -5875,7 +5875,7 @@ allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
 
 	/*
 	 * Check if it is create/upgrade script of babelfishpg_tsql extension
-	 * Otherwise return false -- Do not Disallow.
+	 * Otherwise return true -- Allow storing.
 	 */
 	if (!(creating_extension &&
 		OidIsValid(CurrentExtensionObject) &&
@@ -5883,10 +5883,17 @@ allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
 		return true;
 
 	/* 
-	 * Category A : Check if it is objects created during CREATE extension and
-	 * store initial privs for them.
-	 * system, information_schema_tsql objects and pltsql language are the examples
-	 * of it.
+	 * There are 3 category of handling
+	 * 1. SAVE_INIT_PRIVS    : Check if it is objects created during CREATE extension and
+	 *                         store initial privs for them. system, information_schema_tsql
+	 *                         objects and pltsql language are the examples of it.
+	 * 
+	 * 2. DISCARD_INIT_PRIVS : If it is schema contained object within system created
+	 *                         TSQL schema like master, msdb or tempdb OR user created schema,
+	 *                         Do not store initial privileges for them.
+	 * 
+	 * 3. ERROR_INIT_PRIVS   : The default case when above 2 conditions doesn't match then error
+	 *                         out. To avoid error please classify it between above 2 condtions. 
 	 */
 	ObjectAddressSet(address, classoid, objoid);
 	objtype = get_object_type(classoid, objoid);
@@ -5958,11 +5965,9 @@ allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Babelfish upgrade script shouldn't be storing initial "
-							"privileges added via GRANT/REVOKE statements. "
-							"Please disable storing by enabling "
-							"babelfishpg_tsql.disable_storing_init_privs GUC. "
-							"Current statement is adding initial privileges for %s",
+					 errmsg("Adding initial privileges for given object %s is "
+					 		"blocked in Babelfish upgrade script. "
+							"Please enable or disable storing initial privileges for them.",
 							getObjectDescription(&address, true))));
 			return true;
 	}
