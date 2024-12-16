@@ -582,6 +582,7 @@ dbcreator_role
 declare_atatglobalvars_upgrade-before-16_5
 BABEL-5186
 BABEL-2736-before-16_5
+cast_nvarchar_test_before_16_5
 securityadmin_role
 datareader_datawriter
 smalldatetime_date_cmp
