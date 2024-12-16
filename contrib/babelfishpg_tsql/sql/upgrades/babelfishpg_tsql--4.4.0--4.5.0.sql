@@ -54,6 +54,8 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varchar_deprecated_4_5_0');
+
 DO $$
 DECLARE
     exception_message text;
@@ -66,6 +68,8 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varbinary_deprecated_4_5_0');
 
 CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.VARCHAR) RETURNS sys.bbf_varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
