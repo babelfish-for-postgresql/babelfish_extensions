@@ -1044,23 +1044,48 @@ WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sp_column_privileges_internal()
+RETURNS TABLE (
+    TABLE_QUALIFIER sys.sysname,
+    TABLE_OWNER sys.sysname,
+    TABLE_NAME sys.sysname,
+    COLUMN_NAME sys.sysname,
+    GRANTOR sys.sysname,
+    GRANTEE sys.sysname,
+    PRIVILEGE sys.varchar(32),
+    IS_GRANTABLE sys.varchar(3)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+        CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+        CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+        CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+        CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+    FROM pg_catalog.pg_class t1 
+        JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+        JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+        JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+        JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
-CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
-CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
-	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t5.grantee
-WHERE ext.orig_username NOT IN ('db_datawriter', 'db_datareader');
+    CAST(TABLE_QUALIFIER AS sys.sysname),
+    CAST(TABLE_OWNER AS sys.sysname),
+    CAST(TABLE_NAME AS sys.sysname),
+    CAST(COLUMN_NAME AS sys.sysname),
+    CAST(GRANTOR AS sys.sysname),
+    CAST(GRANTEE AS sys.sysname),
+    CAST(PRIVILEGE AS sys.varchar(32)),
+    CAST(IS_GRANTABLE AS sys.varchar(3))
+FROM sys.sp_column_privileges_internal()
+WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
@@ -1142,6 +1167,34 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sp_table_privileges_internal()
+RETURNS TABLE (
+    TABLE_QUALIFIER sys.sysname,
+    TABLE_OWNER sys.sysname,
+    TABLE_NAME sys.sysname,
+    GRANTOR sys.sysname,
+    GRANTEE sys.sysname,
+    PRIVILEGE sys.sysname,
+    IS_GRANTABLE sys.sysname
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+        CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+        CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
+        CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
+        CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
+    FROM pg_catalog.pg_class t1 
+        JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+        JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+        JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
+    WHERE t4.privilege_type = 'DELETE';
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
@@ -1156,20 +1209,9 @@ FROM sys.sp_column_privileges_view
 
 UNION 
 -- We need these set of joins only for the DELETE privilege
-SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
-CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
-CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-	JOIN sys.babelfish_authid_user_ext ext ON ext.rolname = t4.grantee
-WHERE t4.privilege_type = 'DELETE' AND ext.orig_username != 'db_datawriter';
+SELECT *
+FROM sys.sp_table_privileges_internal()
+WHERE GRANTEE != 'db_datawriter';
 GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
@@ -11383,6 +11425,93 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     STYPE = INTERNAL,
     PARALLEL = SAFE
 );
+
+
+CREATE OR REPLACE FUNCTION information_schema_tsql.table_constraints_internal()
+RETURNS TABLE (
+    "CONSTRAINT_CATALOG" sys.nvarchar(128),
+    "CONSTRAINT_SCHEMA" sys.nvarchar(128),
+    "CONSTRAINT_NAME" sys.sysname,
+    "TABLE_CATALOG" sys.nvarchar(128),
+    "TABLE_SCHEMA" sys.nvarchar(128),
+    "TABLE_NAME" sys.sysname,
+    "CONSTRAINT_TYPE" sys.varchar(11),
+    "IS_DEFERRABLE" sys.varchar(2),
+    "INITIALLY_DEFERRED" sys.varchar(2)
+)
+AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+           CAST(
+             CASE c.contype WHEN 'c' THEN 'CHECK'
+                            WHEN 'f' THEN 'FOREIGN KEY'
+                            WHEN 'p' THEN 'PRIMARY KEY'
+                            WHEN 'u' THEN 'UNIQUE' END
+             AS sys.varchar(11)) COLLATE sys.database_default AS "CONSTRAINT_TYPE",
+           CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
+           CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
+    FROM 
+        pg_constraint c
+        INNER JOIN pg_class r ON c.conrelid = r.oid
+        INNER JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+        INNER JOIN sys.babelfish_namespace_ext ext ON nsp.nspname = ext.nspname AND ext.dbid = sys.db_id()
+        , sys.db_name() AS db_name
+    WHERE 
+        c.contype IN ('c', 'f', 'p', 'u')
+          AND r.relkind IN ('r', 'p')
+          AND relispartition = false
+          AND (pg_has_role(r.relowner, 'USAGE')
+               OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
+    SELECT 
+        CAST("CONSTRAINT_CATALOG" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_SCHEMA" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_NAME" AS sys.sysname),
+        CAST("TABLE_CATALOG" AS sys.nvarchar(128)),
+        CAST("TABLE_SCHEMA" AS sys.nvarchar(128)),
+        CAST("TABLE_NAME" AS sys.sysname),
+        CAST("CONSTRAINT_TYPE" AS sys.varchar(11)),
+        CAST("IS_DEFERRABLE" AS sys.varchar(2)),
+        CAST("INITIALLY_DEFERRED" AS sys.varchar(2))
+    FROM information_schema_tsql.table_constraints_internal();
+
+GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
+	SELECT
+		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(ord AS int) AS "ORDINAL_POSITION"	
+	FROM
+		pg_constraint c 
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p') AND r.relispartition = false
+		JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nsp.nspname AND ext.dbid = sys.db_id()
+		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j
+		, sys.db_name() AS db_name
+	WHERE
+		pg_has_role(r.relowner, 'USAGE'::text) 
+  		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
+	;
+GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
