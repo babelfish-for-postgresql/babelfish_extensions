@@ -2685,7 +2685,7 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 		for (int j = 0; j < 4; j++)
 			pfree(splited_object_name[j]);
 	}
-	if (server_name == NULL)
+	else
 		pfree(splited_object_name[0]);
 
 	pfree(splited_object_name);
