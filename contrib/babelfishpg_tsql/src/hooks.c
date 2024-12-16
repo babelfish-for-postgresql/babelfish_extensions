@@ -5902,7 +5902,8 @@ check_store_init_privs_flag(Oid objoid, Oid classoid, int objsubid)
 			switch(objtype)
 			{
 				case OBJECT_LANGUAGE:
-					if (objoid == get_language_oid("pltsql", false))
+					if (OidIsValid(objoid) &&
+						objoid == get_language_oid("pltsql", true))
 					{
 						break;
 					}
@@ -5918,13 +5919,20 @@ check_store_init_privs_flag(Oid objoid, Oid classoid, int objsubid)
 		}
 		if(disallowed_init_privs)
 		{
+			/*
+			 * NOTE: Following error message mentions that upgrade script shouldn't
+			 * be storing initial privileges BUT it is not the rigid ristriction.
+			 * If it is required to add initial privileges for some objects like objects created
+			 * during CREATE extension then please add an exception for them in above logic.
+			 */
 			ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Babelfish upgrade script shouldn't be storing initial "
-								"privileges added via GRANT/REVOKE statements. "
-								"Please disable storing by enabling "
-								"babelfishpg_tsql.disable_storing_init_privs GUC. %s", getObjectDescription(&address, true))));
-			//elog(LOG, "LOL : %s", getObjectDescription(&address, true));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Babelfish upgrade script shouldn't be storing initial "
+							"privileges added via GRANT/REVOKE statements. "
+							"Please disable storing by enabling "
+							"babelfishpg_tsql.disable_storing_init_privs GUC. "
+							"Current statement is adding initial privileges for %s",
+							getObjectDescription(&address, true))));
 		}
 	}
 
