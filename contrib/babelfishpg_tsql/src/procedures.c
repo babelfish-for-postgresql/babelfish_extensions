@@ -51,9 +51,7 @@
 #include "catalog.h"
 #include "extendedproperty.h"
 #include "multidb.h"
-#include "pltsql.h"
 #include "session.h"
-#include "pltsql.h"
 #include "rolecmds.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
@@ -3386,38 +3384,24 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		char	   *full_function_name = NULL;
 		char	   *logical_schema_name = NULL;
 		char	   *physical_schema_name = NULL;
-		char	  **splited_object_name;
+		char	   *server_name;
+		char	   *object_name;
+		char	   *database_name;
 
-		/* get physical schema name */
-		splited_object_name = split_object_name(function_name);
+		/*
+		* Split the function name, downcase and truncate if needed
+		* and return the server_name, db_name, schema_name and object_name.
+		*/
+		downcase_truncate_split_object_name(function_name, &server_name, &database_name, &logical_schema_name, &object_name);
 
-		if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], ""))
+		if (strcmp(server_name, "") || strcmp(database_name, ""))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("function \"%s\" is not a valid two part name", function_name)));
 
 		pfree(function_name);
-		logical_schema_name = splited_object_name[2];
-		function_name = splited_object_name[3];
 
-		/* downcase identifier */
-		if (pltsql_case_insensitive_identifiers)
-		{
-			logical_schema_name = downcase_identifier(logical_schema_name, strlen(logical_schema_name), false, false);
-			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
-			for (int j = 0; j < 4; j++)
-				pfree(splited_object_name[j]);
-		}
-		else
-		{
-			pfree(splited_object_name[0]);
-			pfree(splited_object_name[1]);
-		}
-		pfree(splited_object_name);
-
-		/* truncate identifiers if needed */
-		truncate_tsql_identifier(logical_schema_name);
-		truncate_tsql_identifier(function_name);
+		function_name = object_name;
 
 		if (!strcmp(function_name, ""))
 			ereport(ERROR,

@@ -6147,7 +6147,7 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 	char *physical_sch_name;
 	char *db_name;
 	char *schema_name;
-	char **splited_object_name;
+	char *object_name;
 	Oid obj_schema_oid = InvalidOid;
 
 	if (*proc_name == NULL)
@@ -6155,30 +6155,12 @@ get_proc_namespace_oid(char **proc_name, char *curr_db)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("procedure name cannot be NULL")));
 
-	/* Resolve the three part name. */
-	splited_object_name = split_object_name(*proc_name);
-	db_name = splited_object_name[1];
-	schema_name = splited_object_name[2];
-	*proc_name = splited_object_name[3];
-
-	/* Downcase identifier if needed. */
-	if (pltsql_case_insensitive_identifiers)
-	{
-		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
-		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
-		*proc_name = downcase_identifier(*proc_name, strlen(*proc_name), false, false);
-		for (int j = 0; j < 4; j++)
-			pfree(splited_object_name[j]);
-	}
-	else
-		pfree(splited_object_name[0]);
-
-	pfree(splited_object_name);
-
-	/* Truncate identifiers if needed. */
-	truncate_tsql_identifier(db_name);
-	truncate_tsql_identifier(schema_name);
-	truncate_tsql_identifier(*proc_name);
+	/*
+	 * Split the proc name, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(*proc_name, NULL, &db_name, &schema_name, &object_name);
+	*proc_name = object_name;
 
 	if (!strcmp(db_name, ""))
 		db_name = curr_db;
