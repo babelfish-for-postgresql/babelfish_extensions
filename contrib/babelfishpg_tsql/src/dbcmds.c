@@ -1568,7 +1568,6 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	{
 		ListCell 	*parsetree_item;
 
-		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "true", PGC_SUSET, PGC_S_SESSION);
 		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 		add_to_bbf_authid_user_ext(db_accessadmin, DB_ACCESSADMIN, dbname, NULL, NULL, true, true, false);
 		add_to_bbf_authid_user_ext(db_securityadmin, DB_SECURITYADMIN, dbname, NULL, NULL, true, false, false);
@@ -1604,7 +1603,6 @@ create_db_roles_in_database(const char *dbname, List *parsetree_list)
 	}
 	PG_FINALLY();
 	{
-		SetConfigOption("babelfishpg_tsql.disable_storing_init_privs", "false", PGC_SUSET, PGC_S_SESSION);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		pfree(db_owner);
 		pfree(db_accessadmin);
@@ -1700,3 +1698,4 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
