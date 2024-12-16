@@ -1,3 +1,4 @@
+-- tsql
 CREATE TABLE babel_4836_replace_t1(a NCHAR(50), b NCHAR(20), c NCHAR(20))
 GO
 INSERT INTO babel_4836_replace_t1 VALUES(N'  abc🙂defghi🙂🙂    ', N'🙂de', N'x🙂y')
@@ -99,4 +100,131 @@ CREATE FUNCTION babel_4836_replace_itvf_func()
 RETURNS TABLE
 AS
 RETURN (SELECT replace(a, b, c) as result FROM babel_4836_replace_t2)
+GO
+
+-- psql
+CREATE TABLE master_dbo.babel_4836_replace_psql_t1(a CHAR(50), b CHAR(20), c CHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t1 VALUES ('abcdefghi', 'def', 'pqr')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t1 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t2(a BPCHAR(50), b BPCHAR(20), c BPCHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t2 VALUES ('abcdefghi', 'def', 'pqr')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t2 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t3(a CHARACTER(50), b CHARACTER(20), c CHARACTER(20))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t3 VALUES ('abcdefghi', 'def', 'pqr')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t3 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t4(a VARCHAR(50), b VARCHAR(20), c VARCHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t4 VALUES ('abcdefghi', 'def', 'pqr')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t4 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t5(a character varying(50), b character varying(20), c character varying(20))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t5 VALUES ('abcdefghi', 'def', 'pqr')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t5 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t6(a INTEGER, b INTEGER, c INTEGER)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t6 VALUES (12345678, 34, 99)
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t6 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t7(a BIGINT, b BIGINT, c BIGINT)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t7 VALUES (12345678, 34, 99)
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t7 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t8(a MONEY, b MONEY, c MONEY)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t8 VALUES (123456, 34, 99)
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t8 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t9(a BYTEA, b BYTEA, c BYTEA)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t9 VALUES ('\x656667686970'::bytea, '\x6768'::bytea, '\x7172'::bytea)
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t9 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t10(a TIMESTAMP, b TIMESTAMP, c TIMESTAMP)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t10 VALUES ('12-21-16', '12-21-16', '14-22-12')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t10 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t11(a DATE, b DATE, c DATE)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t11 VALUES ('12-21-16', '12-21-16', '14-22-12')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t11 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t12(a BOOLEAN, b BOOLEAN, c BOOLEAN)
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t12 VALUES (TRUE, FALSE, TRUE)
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t12 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t13(a BIT(3), b BIT(3), c BIT(3))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t13 VALUES (B'101', B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t13 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4836_replace_psql_t14(a BIT VARYING(3), b BIT VARYING(3), c BIT VARYING(3))
+GO
+
+INSERT INTO master_dbo.babel_4836_replace_psql_t14 VALUES (B'101', B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_4836_replace_psql_t14 TO master_dbo;
 GO

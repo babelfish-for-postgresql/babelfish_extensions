@@ -39,8 +39,6 @@ CREATE TABLE babel_5156_string_agg_t1(
     col_xml xml,
     col_varUDT dbo.babel_5156_string_agg_varUDT,
     col_imageUDT dbo.babel_5156_string_agg_imageUDT,
-    col_geometry geometry,
-    col_geography geography,
     group_id int 
 )
 GO
@@ -78,8 +76,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><apple/></body>' AS xml),
     CAST(N'abc' AS dbo.babel_5156_string_agg_varUDT),
     CAST(N'abc' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     1
 ),
 (
@@ -114,8 +110,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><banana/></body>' AS xml),
     CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_varUDT),
     CAST(N'🙂defghi' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     1
 ),
 (
@@ -150,8 +144,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><chikoo/></body>' AS xml),
     CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_varUDT),
     CAST(N'🙂🙂' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     1
 ),
 (
@@ -186,8 +178,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><dragonfruit/></body>' AS xml),
     CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_varUDT),
     CAST(N'比尔·拉' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     2
 ),
 (
@@ -222,8 +212,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><mango/></body>' AS xml),
     CAST(N'莫斯' AS dbo.babel_5156_string_agg_varUDT),
     CAST(N'莫斯' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     2
 ),
 (
@@ -258,8 +246,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
     CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     3
 ),
 (
@@ -294,8 +280,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
     CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     3
 ),
 (
@@ -330,8 +314,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><papaya/></body>' AS xml),
     CAST('Rohit' AS dbo.babel_5156_string_agg_varUDT),
     CAST('Rohit' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     4
 ),
 (
@@ -366,8 +348,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     NULL,
     CAST(NULL AS dbo.babel_5156_string_agg_varUDT),
     CAST(NULL AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     4
 ),
 (
@@ -402,8 +382,6 @@ INSERT INTO babel_5156_string_agg_t1 VALUES(
     CAST ('<body><orange/></body>' AS xml),
     CAST('Bhagat' AS dbo.babel_5156_string_agg_varUDT),
     CAST('Bhagat' AS dbo.babel_5156_string_agg_imageUDT),
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326),
     4
 )
 GO

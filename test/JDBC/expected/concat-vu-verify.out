@@ -1,9 +1,10 @@
 -- different no. of arguments
 select CONCAT('a')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+~~START~~
+varchar
+a
+~~END~~
 
 select 1  select concat('a') select 2
 GO
@@ -12,9 +13,15 @@ int
 1
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+a
+~~END~~
 
-~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+~~START~~
+int
+2
+~~END~~
 
 select concat()
 GO
@@ -22,13 +29,14 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+~~ERROR (Message: The concat function requires 1 to 100 arguments.)~~
 
 select concat(CAST('12' AS sql_variant))
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+~~START~~
+text
+12
+~~END~~
 
 SELECT CONCAT( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' );
 GO
@@ -48,9 +56,10 @@ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,-_!@#$%^&*()[]{}
 -- NULL
 SELECT CONCAT(NULL)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+~~END~~
 
 
 SELECT CONCAT(NULL, NULL)
@@ -111,16 +120,18 @@ scd123
 
 SELECT CONCAT('scd', CAST(NULL AS sql_variant), '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+scd123
+~~END~~
 
 
 SELECT CONCAT('scd', CAST(NULL AS geometry), '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+scd123
+~~END~~
 
 
 -- tests with different datatypes
@@ -425,12 +436,126 @@ ab🙂🙂def比尔hijklmnopqrstuvwxyzABCDEFGHIJKLM晥OPQRST🙂🙂VWXYZ0123456
 ~~END~~
 
 
--- any invalid datatype
+-- Arguments with pg datatypes
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t1
+GO
+~~START~~
+text
+  abcdefghi                                         abcdefghi                                       
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t2
+GO
+~~START~~
+text
+  abcdefghi                                         abcdefghi                                       
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t3
+GO
+~~START~~
+text
+  abcdefghi                                         abcdefghi                                       
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t4
+GO
+~~START~~
+varchar
+  abcdefghi      abcdefghi    
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t5
+GO
+~~START~~
+varchar
+  abcdefghi      abcdefghi    
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t6
+GO
+~~START~~
+varchar
+1234567812345678
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t7
+GO
+~~START~~
+varchar
+1234567812345678
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t8
+GO
+~~START~~
+text
+$123,456.00$123,456.00
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t9
+GO
+~~START~~
+text
+\x656667686970\x656667686970
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t10
+GO
+~~START~~
+text
+2016-12-21 00:00:002016-12-21 00:00:00
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t11
+GO
+~~START~~
+varchar
+2016-12-212016-12-21
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t12
+GO
+~~START~~
+text
+tt
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t13
+GO
+~~START~~
+text
+101101
+~~END~~
+
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t14
+GO
+~~START~~
+text
+101101
+~~END~~
+
+
+-- other datatypes
 SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', geometry::Point(1,2,4326), 'i', geography::Point(1,2,4326), 'k', 'l', CAST('m' AS text), CAST('SD' as sql_variant), 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', Cast('<head></head>' as xml), 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+ab??def??0101000020E6100000000000000000F03F0000000000000040i0101000020E6100000000000000000F03F0000000000000040klmSDopqrstu<head></head>wxyzABCDEFGHIJKLM0x6566OPQRST??VWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcde0x6667
+~~END~~
 
 
 SELECT CONCAT(col_char, col_varchar) from babel_3409_concat_t1 ORDER BY id
@@ -858,6 +983,74 @@ AgrawalAgrawal
 ~~END~~
 
 
+SELECT CONCAT(col_text, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcabc
+?defghi?defghi
+????
+??·???·?
+????
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT( col_text, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcabc
+?defghi?defghi
+????
+??·???·?
+????
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_ntext, col_ntext) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT( col_ntext, col_ntext) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
 SELECT CONCAT(col_varchar, col_ntext) from babel_3409_concat_t1 ORDER BY id
 GO
 ~~START~~
@@ -877,16 +1070,36 @@ AgrawalAgrawal
 
 SELECT CONCAT(col_varchar, col_sql_variant) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+abcabc
+?defghi?defghi
+????
+??·???·?
+????
 
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT(col_varchar, col_xml) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+abc<body><apple/></body>
+?defghi<body><banana/></body>
+??<body><chikoo/></body>
+??·?<body><dragonfruit/></body>
+??<body><mango/></body>
 
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+
+Anikait<body><papaya/></body>
+
+Agrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT(col_varchar, col_varUDT) from babel_3409_concat_t1 ORDER BY id
@@ -925,16 +1138,36 @@ Agrawalrs
 
 SELECT CONCAT(col_varchar, col_geometry) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+abc0101000000000000000000F03F0000000000000040
+?defghi0101000000000000000000F03F0000000000000040
+??0101000000000000000000F03F0000000000000040
+??·?0101000000000000000000F03F0000000000000040
+??0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+Anikait0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+Agrawal0101000000000000000000F03F0000000000000040
+~~END~~
 
 
 SELECT CONCAT(col_varchar, col_geography) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geography to varchar is not allowed.)~~
+~~START~~
+text
+abc0101000020E610000017D9CEF753D347407593180456965EC0
+?defghi0101000020E610000017D9CEF753D347407593180456965EC0
+??0101000020E610000017D9CEF753D347407593180456965EC0
+??·?0101000020E610000017D9CEF753D347407593180456965EC0
+??0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+Anikait0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+Agrawal0101000020E610000017D9CEF753D347407593180456965EC0
+~~END~~
 
 
 SELECT CONCAT(col_char, col_nvarchar) from babel_3409_concat_t1 ORDER BY id
@@ -1381,16 +1614,36 @@ AgrawalAgrawal
 
 SELECT CONCAT(col_nvarchar, col_sql_variant) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+abcabc
+?defghi?defghi
+????
+??·???·?
+????
 
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT(col_nvarchar, col_xml) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+abc<body><apple/></body>
+?defghi<body><banana/></body>
+??<body><chikoo/></body>
+??·?<body><dragonfruit/></body>
+??<body><mango/></body>
 
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+
+Anikait<body><papaya/></body>
+
+Agrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT(col_nvarchar, col_varUDT) from babel_3409_concat_t1 ORDER BY id
@@ -1429,16 +1682,36 @@ Agrawalrs
 
 SELECT CONCAT(col_nvarchar, col_geometry) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+abc0101000000000000000000F03F0000000000000040
+?defghi0101000000000000000000F03F0000000000000040
+??0101000000000000000000F03F0000000000000040
+??·?0101000000000000000000F03F0000000000000040
+??0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+Anikait0101000000000000000000F03F0000000000000040
+0101000000000000000000F03F0000000000000040
+Agrawal0101000000000000000000F03F0000000000000040
+~~END~~
 
 
 SELECT CONCAT(col_nvarchar, col_geography) from babel_3409_concat_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geography to varchar is not allowed.)~~
+~~START~~
+text
+abc0101000020E610000017D9CEF753D347407593180456965EC0
+?defghi0101000020E610000017D9CEF753D347407593180456965EC0
+??0101000020E610000017D9CEF753D347407593180456965EC0
+??·?0101000020E610000017D9CEF753D347407593180456965EC0
+??0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+Anikait0101000020E610000017D9CEF753D347407593180456965EC0
+0101000020E610000017D9CEF753D347407593180456965EC0
+Agrawal0101000020E610000017D9CEF753D347407593180456965EC0
+~~END~~
 
 
 -- with table column of type varchar with collation chinese_prc_ci_as

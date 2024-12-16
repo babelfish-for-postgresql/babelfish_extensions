@@ -124,14 +124,14 @@ SELECT substring('abc', 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+~~ERROR (Message: "a" is not a valid binary digit)~~
 
 
 SELECT substring('abc', 1, 1, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+~~ERROR (Message: The substring function requires 2 to 3 arguments)~~
 
 
 -- edge case values for second parameter

@@ -156,7 +156,54 @@ GO
 SELECT LTRIM(b) FROM babel_4489_ltrim_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t1
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t2
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t3
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t4
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t5
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t6
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t7
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t8
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t9
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t10
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t11
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t12
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t13
+GO
+
+SELECT LTRIM(a) FROM dbo.babel_4489_ltrim_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT LTRIM(@inputString)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT LTRIM(@inputString)
 GO

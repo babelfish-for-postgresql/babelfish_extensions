@@ -388,9 +388,9 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
-string_agg-before-15_9-or-16_5
+string_agg-before-15_5-or-14_10
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2

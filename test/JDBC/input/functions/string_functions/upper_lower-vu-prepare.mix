@@ -1,3 +1,4 @@
+-- tsql
 CREATE TABLE upper_lower_dt (a VARCHAR(20), b NVARCHAR(24), c CHAR(20), d NCHAR(24))
 GO
 INSERT INTO upper_lower_dt(a,b,c,d) values(N'Anikait ', N'Agrawal ', N'Anikait ', N'Agrawal ')
@@ -123,4 +124,131 @@ CREATE VIEW dep_view_lower1 AS (
 GO
 
 CREATE TYPE dbo.MyUDT FROM image;
+GO
+
+-- psql
+CREATE TABLE master_dbo.upper_lower_psql_t1(a CHAR(50))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t1 VALUES ('RohiT')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t1 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t2(a BPCHAR(50))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t2 VALUES ('RohiT')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t2 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t3(a CHARACTER(50))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t3 VALUES ('RohiT')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t3 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t4(a VARCHAR(50))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t4 VALUES ('RohiT')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t4 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t5(a character varying(50))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t5 VALUES ('RohiT')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t5 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t6(a INTEGER)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t6 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t6 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t7(a BIGINT)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t7 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t7 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t8(a MONEY)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t8 VALUES (123456)
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t8 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t9(a BYTEA)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t9 VALUES ('\x526f686954'::bytea)
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t9 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t10(a TIMESTAMP)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t10 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t10 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t11(a DATE)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t11 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t11 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t12(a BOOLEAN)
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t12 VALUES (TRUE)
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t12 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t13(a BIT(3), b BIT(3))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t13 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t13 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.upper_lower_psql_t14(a BIT VARYING(3), b BIT VARYING(3))
+GO
+
+INSERT INTO master_dbo.upper_lower_psql_t14 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.upper_lower_psql_t14 TO master_dbo;
 GO

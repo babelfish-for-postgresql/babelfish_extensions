@@ -531,7 +531,7 @@ BABEL-4707
 BABEL_4817
 upper_lower
 BABEL-4641-before-16_5-or-15_9
-trim
+trim-before-15_11-or-16_7
 ltrim
 rtrim
 left

@@ -53,14 +53,14 @@ SELECT replace('aceds', 'aces', 'scdwe', 'acsdes')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.replace function requires 3 arguments)~~
+~~ERROR (Message: The replace function requires 3 arguments)~~
 
 
 SELECT replace('aces', 'scdwe')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.replace function requires 3 arguments)~~
+~~ERROR (Message: The replace function requires 3 arguments)~~
 
 
 -- input type char

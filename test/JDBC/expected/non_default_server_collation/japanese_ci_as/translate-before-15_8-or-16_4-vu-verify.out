@@ -54,14 +54,14 @@ SELECT TRANSLATE('aceds', 'aces', 'scdwe', 'acsdes')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 SELECT TRANSLATE('aces', 'scdwe')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 -- input type char

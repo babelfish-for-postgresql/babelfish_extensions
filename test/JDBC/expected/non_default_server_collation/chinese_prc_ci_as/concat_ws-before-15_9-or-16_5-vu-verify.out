@@ -5,7 +5,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 2 to 100 arguments.)~~
 
 select 1  select CONCAT_WS('a') select 2
 GO
@@ -18,13 +18,14 @@ int
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 2 to 100 arguments.)~~
 
 select CONCAT_WS('-', 'a')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~START~~
+varchar
+a
+~~END~~
 
 select 1  select CONCAT_WS('-', 'a') select 2
 GO
@@ -33,9 +34,15 @@ int
 1
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+a
+~~END~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~START~~
+int
+2
+~~END~~
 
 select CONCAT_WS()
 GO
@@ -43,25 +50,27 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 2 to 100 arguments.)~~
 
 select CONCAT_WS(CAST('12' AS sql_variant))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 2 to 100 arguments.)~~
 
 select CONCAT_WS(CAST('-' AS sql_variant), 12)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~START~~
+text
+12
+~~END~~
 
 select CONCAT_WS(CAST('-' AS sql_variant), CAST('12' AS sql_variant))
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~START~~
+text
+12
+~~END~~
 
 SELECT CONCAT_WS(' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y' );
 GO
@@ -85,14 +94,15 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~ERROR (Message: The concat_ws function requires 2 to 100 arguments.)~~
 
 
 SELECT CONCAT_WS(NULL, NULL)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: The concat_ws function requires 3 to 100 arguments.)~~
+~~END~~
 
 
 SELECT CONCAT_WS(NULL, NULL, NULL)
@@ -177,9 +187,10 @@ c???
 
 SELECT CONCAT_WS(CAST(NULL AS varbinary), 'scd', '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of concat_ws function.)~~
+~~START~~
+varchar
+scd123
+~~END~~
 
 
 SELECT CONCAT_WS('-', CAST(NULL AS varbinary), '123')
@@ -192,30 +203,33 @@ varchar
 
 SELECT CONCAT_WS('-', CAST(NULL AS sql_variant), '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+123
+~~END~~
 
 
 SELECT CONCAT_WS(CAST(NULL AS sql_variant), 'scd', '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of concat_ws function.)~~
+~~START~~
+text
+<NULL>
+~~END~~
 
 
 SELECT CONCAT_WS('-', CAST(NULL AS geometry), '123')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+123
+~~END~~
 
 
 SELECT CONCAT_WS(CAST(NULL AS geometry), 'scd', '123')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of concat_ws function.)~~
+~~ERROR (Message: The concat_ws function requires 2 arguments)~~
 
 
 -- tests with different datatypes
@@ -805,16 +819,17 @@ a-b-🙂🙂-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-
 -- any invalid datatype
 SELECT CONCAT_WS('-', 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', geometry::Point(1,2,4326), 'i', geography::Point(1,2,4326), 'k', 'l', CAST('m' AS text), CAST('SD' as sql_variant), 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', Cast('<head></head>' as xml), 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', CAST(0x6667 AS varbinary))
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+~~START~~
+text
+a-b-??-d-e-f-比尔-0101000020E6100000000000000000F03F0000000000000040-i-0101000020E6100000000000000000F03F0000000000000040-k-l-m-SD-o-p-q-r-s-t-u-<head></head>-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-0x6566-O-P-Q-R-S-T-??-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-0x6667
+~~END~~
 
 
 SELECT CONCAT_WS(geometry::Point(1,2,0), 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', geometry::Point(1,2,4326), 'i', geography::Point(1,2,4326), 'k', 'l', CAST('m' AS text), CAST('SD' as sql_variant), 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', Cast('<head></head>' as xml), 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', CAST(0x6667 AS varbinary))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of concat_ws function.)~~
+~~ERROR (Message: The concat_ws function requires 2 arguments)~~
 
 
 SELECT CONCAT_WS(col_varchar, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
@@ -1635,30 +1650,70 @@ AgrawalAgrawalAgrawal
 
 SELECT CONCAT_WS(col_varchar, col_varchar, col_sql_variant) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
+<NULL>
+<NULL>
+AnikaitAnikaitAnikait
+<NULL>
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_nvarchar, col_varchar, col_sql_variant) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
+<NULL>
+<NULL>
+AnikaitAnikaitAnikait
+<NULL>
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_varchar, col_varchar, col_xml) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+~~START~~
+text
+abcabc<body><apple/></body>
+?defghi?defghi<body><banana/></body>
+????<body><chikoo/></body>
+比尔·拉比尔·拉<body><dragonfruit/></body>
+莫斯莫斯<body><mango/></body>
+<NULL>
+<NULL>
+AnikaitAnikait<body><papaya/></body>
+<NULL>
+AgrawalAgrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT_WS(col_nvarchar, col_varchar, col_xml) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+~~START~~
+text
+abcabc<body><apple/></body>
+?defghi?defghi<body><banana/></body>
+????<body><chikoo/></body>
+比尔·拉比尔·拉<body><dragonfruit/></body>
+莫斯莫斯<body><mango/></body>
+<NULL>
+<NULL>
+AnikaitAnikait<body><papaya/></body>
+<NULL>
+AgrawalAgrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT_WS(col_varchar, col_varchar, col_varUDT) from babel_3409_concat_ws_t1 ORDER BY id
@@ -2547,30 +2602,70 @@ AgrawalAgrawalAgrawal
 
 SELECT CONCAT_WS(col_varchar, col_nvarchar, col_sql_variant) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
+<NULL>
+<NULL>
+AnikaitAnikaitAnikait
+<NULL>
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_sql_variant) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+~~START~~
+text
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
+<NULL>
+<NULL>
+AnikaitAnikaitAnikait
+<NULL>
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_varchar, col_nvarchar, col_xml) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+~~START~~
+text
+abcabc<body><apple/></body>
+?defghi?defghi<body><banana/></body>
+????<body><chikoo/></body>
+比尔·拉比尔·拉<body><dragonfruit/></body>
+莫斯莫斯<body><mango/></body>
+<NULL>
+<NULL>
+AnikaitAnikait<body><papaya/></body>
+<NULL>
+AgrawalAgrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_xml) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+~~START~~
+text
+abcabc<body><apple/></body>
+?defghi?defghi<body><banana/></body>
+????<body><chikoo/></body>
+比尔·拉比尔·拉<body><dragonfruit/></body>
+莫斯莫斯<body><mango/></body>
+<NULL>
+<NULL>
+AnikaitAnikait<body><papaya/></body>
+<NULL>
+AgrawalAgrawal<body><orange/></body>
+~~END~~
 
 
 SELECT CONCAT_WS(col_varchar, col_nvarchar, col_varUDT) from babel_3409_concat_ws_t1 ORDER BY id
@@ -2661,142 +2756,342 @@ AgrawalAgrawal             Agrawal
 -- invalid seperator datatype
 SELECT CONCAT_WS(col_int, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type integer is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_bigint, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_smallint, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_tinyint, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_numeric, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_float, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12.1abc
+?defghi13.1?defghi
+??14.1??
+比尔·拉15.1比尔·拉
+莫斯16.1莫斯
 
-~~ERROR (Message: Argument data type double precision is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17.1Anikait
+
+Agrawal18.1Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_real, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12.1abc
+?defghi13.1?defghi
+??14.1??
+比尔·拉15.1比尔·拉
+莫斯16.1莫斯
 
-~~ERROR (Message: Argument data type real is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17.1Anikait
+
+Agrawal18.1Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_bit, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc1abc
+?defghi0?defghi
+??1??
+比尔·拉0比尔·拉
+莫斯1莫斯
 
-~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of concat_ws function.)~~
+
+Anikait0Anikait
+
+Agrawal0Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_decimal, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12abc
+?defghi13?defghi
+??14??
+比尔·拉15比尔·拉
+莫斯16莫斯
 
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17Anikait
+
+Agrawal18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_smallmoney, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12.0000abc
+?defghi13.0000?defghi
+??14.0000??
+比尔·拉15.0000比尔·拉
+莫斯16.0000莫斯
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17.0000Anikait
+
+Agrawal18.0000Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_money, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12.0000abc
+?defghi13.0000?defghi
+??14.0000??
+比尔·拉15.0000比尔·拉
+莫斯16.0000莫斯
 
-~~ERROR (Message: Argument data type money is invalid for argument 1 of concat_ws function.)~~
+
+Anikait17.0000Anikait
+
+Agrawal18.0000Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_datetime, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc2000-12-12 12:43:10abc
+?defghi2000-12-13 12:43:10?defghi
+??2000-12-14 12:43:10??
+比尔·拉2000-12-15 12:43:10比尔·拉
+莫斯2000-12-16 12:43:10莫斯
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of concat_ws function.)~~
+
+Anikait2000-12-17 12:43:10Anikait
+
+Agrawal2000-12-18 12:43:10Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_datetime2, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc2000-12-12 12:43:10abc
+?defghi2000-12-13 12:43:10?defghi
+??2000-12-14 12:43:10??
+比尔·拉2000-12-15 12:43:10比尔·拉
+莫斯2000-12-16 12:43:10莫斯
 
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of concat_ws function.)~~
+
+Anikait2000-12-17 12:43:10Anikait
+
+Agrawal2000-12-18 12:43:10Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_binary, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abcababc
+?defghicd?defghi
+??ef??
+比尔·拉gh比尔·拉
+莫斯ip莫斯
 
-~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of concat_ws function.)~~
+
+AnikaitqrAnikait
+
+AgrawalrsAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_varbinary, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abcababc
+?defghicd?defghi
+??ef??
+比尔·拉gh比尔·拉
+莫斯ip莫斯
 
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of concat_ws function.)~~
+
+AnikaitqrAnikait
+
+AgrawalrsAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_date, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc2000-12-12abc
+?defghi2000-12-13?defghi
+??2000-12-14??
+比尔·拉2000-12-15比尔·拉
+莫斯2000-12-16莫斯
 
-~~ERROR (Message: Argument data type date is invalid for argument 1 of concat_ws function.)~~
+
+Anikait2000-12-17Anikait
+
+Agrawal2000-12-18Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_time, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc12:43:10abc
+?defghi12:43:10?defghi
+??12:43:10??
+比尔·拉12:43:10比尔·拉
+莫斯12:43:10莫斯
 
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of concat_ws function.)~~
+
+Anikait12:43:10Anikait
+
+Agrawal12:43:10Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_datetimeoffset, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc2000-12-12 12:43:10.1234 +10:00abc
+?defghi2000-12-13 12:43:10.1234 +10:00?defghi
+??2000-12-14 12:43:10.1234 +10:00??
+比尔·拉2000-12-15 12:43:10.1234 +10:00比尔·拉
+莫斯2000-12-16 12:43:10.1234 +10:00莫斯
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of concat_ws function.)~~
+
+Anikait2000-12-17 12:43:10.1234 +10:00Anikait
+
+Agrawal2000-12-18 12:43:10.1234 +10:00Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_smalldatetime, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc2000-12-12 12:43:00abc
+?defghi2000-12-13 12:43:00?defghi
+??2000-12-14 12:43:00??
+比尔·拉2000-12-15 12:43:00比尔·拉
+莫斯2000-12-16 12:43:00莫斯
 
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of concat_ws function.)~~
+
+Anikait2000-12-17 12:43:00Anikait
+
+Agrawal2000-12-18 12:43:00Agrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_image, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of concat_ws function.)~~
+
+AnikaitAnikaitAnikait
+
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_text, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
@@ -2835,16 +3130,26 @@ AgrawalAgrawalAgrawal
 
 SELECT CONCAT_WS(col_sql_variant, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of concat_ws function.)~~
+~~START~~
+text
+abcabcabc
+?defghi?defghi?defghi
+??????
+比尔·拉比尔·拉比尔·拉
+莫斯莫斯莫斯
+<NULL>
+<NULL>
+AnikaitAnikaitAnikait
+<NULL>
+AgrawalAgrawalAgrawal
+~~END~~
 
 
 SELECT CONCAT_WS(col_xml, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of concat_ws function.)~~
+~~ERROR (Message: The concat_ws function requires 2 arguments)~~
 
 
 SELECT CONCAT_WS(col_varUDT, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
@@ -2866,9 +3171,19 @@ AgrawalAgrawalAgrawal
 
 SELECT CONCAT_WS(col_imageUDT, col_varchar, col_varchar) from babel_3409_concat_ws_t1 ORDER BY id
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abcababc
+?defghicd?defghi
+??ef??
+比尔·拉gh比尔·拉
+莫斯ip莫斯
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of concat_ws function.)~~
+
+AnikaitqrAnikait
+
+AgrawalrsAgrawal
+~~END~~
 
 
 -- with table column of type varchar with collation chinese_prc_ci_as

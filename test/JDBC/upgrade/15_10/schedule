@@ -523,7 +523,7 @@ babel_4328_datetimeoffset
 BABEL-3401
 babel_726
 upper_lower
-trim
+trim-before-15_11-or-16_7
 ltrim
 rtrim
 left

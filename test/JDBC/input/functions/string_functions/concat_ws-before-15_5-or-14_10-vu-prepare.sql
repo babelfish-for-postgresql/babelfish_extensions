@@ -38,9 +38,7 @@ CREATE TABLE babel_3409_concat_ws_t1(
     col_sql_variant sql_variant,
     col_xml xml,
     col_varUDT dbo.babel_3409_concat_ws_varUDT,
-    col_imageUDT dbo.babel_3409_concat_ws_imageUDT,
-    col_geometry geometry,
-    col_geography geography
+    col_imageUDT dbo.babel_3409_concat_ws_imageUDT
 )
 GO
 
@@ -76,9 +74,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'abc' AS SQL_VARIANT),
     CAST ('<body><apple/></body>' AS xml),
     'abc',
-    0x6162,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x6162
 ),
 (
     2,
@@ -111,9 +107,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'🙂defghi' AS SQL_VARIANT),
     CAST ('<body><banana/></body>' AS xml),
     '🙂defghi',
-    0x6364,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x6364
 ),
 (
     3,
@@ -146,9 +140,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'🙂🙂' AS SQL_VARIANT),
     CAST ('<body><chikoo/></body>' AS xml),
     '🙂🙂',
-    0x6566,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x6566
 ),
 (
     4,
@@ -181,9 +173,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'比尔·拉' AS SQL_VARIANT),
     CAST ('<body><dragonfruit/></body>' AS xml),
     '比尔·拉',
-    0x6768,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x6768
 ),
 (
     5,
@@ -216,9 +206,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'莫斯' AS SQL_VARIANT),
     CAST ('<body><mango/></body>' AS xml),
     '莫斯',
-    0x6970,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x6970
 ),
 (
     6,
@@ -251,9 +239,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    NULL,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    NULL
 ),
 (
     7,
@@ -286,9 +272,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    NULL,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    NULL
 ),
 (
     8,
@@ -321,9 +305,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'Anikait' AS SQL_VARIANT),
     CAST ('<body><papaya/></body>' AS xml),
     'Anikait',
-    0x7172,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x7172
 ),
 (
     9,
@@ -356,9 +338,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     NULL,
     NULL,
     NULL,
-    NULL,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    NULL
 ),
 (
     10,
@@ -391,9 +371,7 @@ INSERT INTO babel_3409_concat_ws_t1 VALUES(
     CAST(N'Agrawal' AS SQL_VARIANT),
     CAST ('<body><orange/></body>' AS xml),
     'Agrawal',
-    0x7273,
-    geometry::STGeomFromText('POINT (1 2)', 0),
-    geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)
+    0x7273
 )
 GO
 
@@ -439,11 +417,11 @@ INSERT INTO babel_3409_concat_ws_t2 VALUES
 GO
 
 CREATE VIEW babel_3409_concat_ws_dep_view1 AS
-    SELECT CONCAT_WS('-', col_varchar, col_char, col_varbinary, col_text) AS concatenated_column FROM babel_3409_concat_ws_t1
+    SELECT CONCAT_WS('-', col_varchar, col_int, col_varbinary, col_text) AS concatenated_column FROM babel_3409_concat_ws_t1
 GO
 
 CREATE PROCEDURE babel_3409_concat_ws_dep_proc1 AS
-    SELECT CONCAT_WS('-', col_varchar, col_char, col_varbinary, col_text) FROM babel_3409_concat_ws_t1 ORDER BY id
+    SELECT CONCAT_WS('-', col_varchar, col_int, col_varbinary, col_text) FROM babel_3409_concat_ws_t1 ORDER BY id
 GO
 
 CREATE FUNCTION babel_3409_concat_ws_dep_func1()

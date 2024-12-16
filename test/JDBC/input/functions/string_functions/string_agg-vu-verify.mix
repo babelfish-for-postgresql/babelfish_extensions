@@ -283,6 +283,49 @@ GO
 SELECT STRING_AGG(col_imageUDT, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO
 
+-- Arguments with pg datatypes
+SELECT STRING_AGG(col_char, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_bpchar, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_character, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_varchar, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_char_varying, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_int, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_bigint, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_money, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_bytea, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_timestamp, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_date, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_boolean, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_bit, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
+SELECT STRING_AGG(col_bit_varying, '-') FROM dbo.babel_5186_string_agg_psql_t GROUP BY group_id ORDER BY group_id
+GO
+
 -- other different datatypes
 SELECT STRING_AGG(col_int, '-') FROM babel_5156_string_agg_t1 GROUP BY group_id ORDER BY group_id
 GO

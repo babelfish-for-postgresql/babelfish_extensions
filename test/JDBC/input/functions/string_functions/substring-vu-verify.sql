@@ -1,3 +1,10 @@
+-- client tests
+select substring(cast('rohit' as pg_catalog.char(5)), 1, 3)
+go
+
+select top 5 substring(type, 1, 1) from sys.all_objects
+go
+
 -- NULL
 SELECT substring(NULL, 2, 1)
 GO
@@ -384,7 +391,54 @@ GO
 SELECT substring(b, 4, 2) FROM babel_3658_substring_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t1
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t2
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t3
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t4
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t5
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t6
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t7
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t8
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t9
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t10
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t11
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t12
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t13
+GO
+
+SELECT substring(a, 3, 2) FROM dbo.babel_3658_substring_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂'
+SELECT substring(@inputString, 3, 5)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT substring(@inputString, 4, 1)
 GO
