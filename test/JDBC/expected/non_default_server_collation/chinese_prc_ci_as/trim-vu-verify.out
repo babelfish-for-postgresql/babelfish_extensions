@@ -15,6 +15,47 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 ~~END~~
 
 
+-- customer case
+select trim(cast('rohit' as pg_catalog.char(5)))
+go
+~~START~~
+varchar
+rohit
+~~END~~
+
+
+select trim('it' from cast('rohit' as pg_catalog.char(5)))
+go
+~~START~~
+varchar
+roh
+~~END~~
+
+
+select top 5 trim(type) from sys.all_objects
+go
+~~START~~
+varchar
+U
+U
+U
+U
+U
+~~END~~
+
+
+select top 5 trim(' ' from type) from sys.all_objects
+go
+~~START~~
+varchar
+U
+U
+U
+U
+U
+~~END~~
+
+
 -- NULL
 SELECT TRIM(NULL)
 GO
@@ -539,9 +580,8 @@ SELECT * FROM babel_4489_trim_dep_view_5
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of Trim function.)~~
+|abcd|
+~~END~~
 
 
 SELECT * FROM babel_4489_trim_dep_view_6
@@ -549,6 +589,30 @@ GO
 ~~START~~
 varchar
 |cdefgh|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_7
+GO
+~~START~~
+varchar
+|abc?defghi??|
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_8
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT * FROM babel_4489_trim_dep_view_9
+GO
+~~START~~
+varbinary
+666768
 ~~END~~
 
 
@@ -970,17 +1034,19 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = N'  ABCDEF    ', @charSet BINARY(4) = 0x414243
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "binary" is invalid for argument 1 of Trim function.)~~
+~~START~~
+nvarchar
+|  ABCDEF    |
+~~END~~
 
 
 DECLARE @inputString VARBINARY(50) = 0x41424344, @charSet VARBINARY(2) = 0x4144
 SELECT '|' + TRIM(@charSet FROM @inputString) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of Trim function.)~~
+~~START~~
+varchar
+|BC|
+~~END~~
 
 
 -- input type UDT
@@ -989,9 +1055,8 @@ SELECT TRIM(a) FROM babel_4489_trim_UDT
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
+abcdef
+~~END~~
 
 
 SELECT TRIM(b) FROM babel_4489_trim_UDT
@@ -1005,9 +1070,10 @@ abcdef
 DECLARE @charSet VARCHAR(10) = 'ab'
 SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_UDT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+cdef
+~~END~~
 
 
 DECLARE @charSet VARCHAR(10) = 'ab'
@@ -1019,231 +1085,682 @@ cdef
 ~~END~~
 
 
--- other different datatypes, all of these should be blocked
-DECLARE @inputString date = '2016-12-21'
-SELECT TRIM('12' FROM @inputString)
+-- Arguments with pg datatypes
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t1
+GO
+~~START~~
+varchar
+abcdefghi
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t1
+GO
+~~START~~
+varchar
+  abcdefgh
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t2
+GO
+~~START~~
+varchar
+abcdefghi
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t2
+GO
+~~START~~
+varchar
+  abcdefgh
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t3
+GO
+~~START~~
+varchar
+abcdefghi
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t3
+GO
+~~START~~
+varchar
+  abcdefgh
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t4
+GO
+~~START~~
+varchar
+abcdefghi
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t4
+GO
+~~START~~
+varchar
+cdefgh
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t5
+GO
+~~START~~
+varchar
+abcdefghi
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t5
+GO
+~~START~~
+varchar
+cdefgh
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t6
+GO
+~~START~~
+varchar
+12345678
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t6
+GO
+~~START~~
+varchar
+345678
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t7
+GO
+~~START~~
+varchar
+12345678
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t7
+GO
+~~START~~
+varchar
+345678
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t9
+GO
+~~START~~
+varchar
+\x656667686970
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t9
+GO
+~~START~~
+varbinary
+666768
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t10
+GO
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t10
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t11
+GO
+~~START~~
+varchar
+2016-12-21
+~~END~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t11
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(a) FROM dbo.babel_4489_trim_psql_t14
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t15
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
+~~ERROR (Message: relation "master_dbo.babel_4489_trim_psql_t15" does not exist)~~
+
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+abc?defghi??
+~~END~~
+
+
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    ', @charSet sysname = N'ab😎 '
+SELECT TRIM(@charSet FROM @inputString)
+GO
+~~START~~
+varchar
+c?defghi??
+~~END~~
+
+
+DECLARE @inputString date = '2016-12-21'
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+2016-12-21
+~~END~~
+
+
+DECLARE @inputString date = '2016-12-21'
+SELECT TRIM('12' FROM @inputString)
+GO
+~~START~~
+varchar
+016-12-
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21', @charSet VARCHAR(10) = '12';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+016-12-
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21'
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type date is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
 
 
 DECLARE @date date = '12-21-16';  
 DECLARE @inputString datetime = @date, @charSet VARCHAR(10) = '12';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+016-12-21 00:00:00
+~~END~~
 
 
 DECLARE @date date = '12-21-16';  
 DECLARE @inputString datetime = @date;
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10', @charSet VARCHAR(10) = '12';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+955-12-13 12:43:00
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237', @charSet VARCHAR(10) = '10';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+2:10:05.1237
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @charSet VARCHAR(10) = '23';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237', @charSet VARCHAR(10) = '23';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+123456
+~~END~~
 
 
 DECLARE @inputString decimal = 123456, @charSet decimal = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+3456
+~~END~~
 
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString numeric = 12345.12;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12345
+~~END~~
 
 
 DECLARE @inputString numeric = 12345.12, @charSet numeric = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+345
+~~END~~
 
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString float = 12345.1;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
 
 
 DECLARE @inputString float = 12345.1, @charSet float = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+345.
+~~END~~
 
-~~ERROR (Message: Argument data type double precision is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString real = 12345.1;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12345.1
+~~END~~
 
 
 DECLARE @inputString real = 12345.1, @charSet real = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+345.
+~~END~~
 
-~~ERROR (Message: Argument data type real is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString bigint = 12345678;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12345678
+~~END~~
 
 
 DECLARE @inputString bigint = 12345678, @charSet bigint = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+345678
+~~END~~
 
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString int = 12345678;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12345678
+~~END~~
 
 
 DECLARE @inputString int = 12345678, @charSet int = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+345678
+~~END~~
 
-~~ERROR (Message: Argument data type integer is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString smallint = 12356;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12356
+~~END~~
 
 
 DECLARE @inputString smallint = 12356, @charSet smallint = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+356
+~~END~~
 
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString tinyint = 235;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+235
+~~END~~
 
 
 DECLARE @inputString tinyint = 235, @charSet tinyint = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+35
+~~END~~
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString money = 12356;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12356.0000
+~~END~~
 
 
 DECLARE @inputString money = 12356, @charSet money = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+356
+~~END~~
 
-~~ERROR (Message: Argument data type money is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString smallmoney = 12356;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+12356.0000
+~~END~~
 
 
 DECLARE @inputString smallmoney = 12356, @charSet smallmoney = 12;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+356
+~~END~~
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of Trim function.)~~
+
+DECLARE @inputString bit = 1;
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+1
+~~END~~
 
 
 DECLARE @inputString bit = 1, @charSet bit = 1;
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+9619FF-8B86-D011-B42D-00C04FC964
+~~END~~
 
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 2 of Trim function.)~~
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+SELECT TRIM(a) FROM babel_4489_trim_image;
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 SELECT TRIM(a FROM a) FROM babel_4489_trim_image;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type image is invalid for argument 1 of Trim function.)~~
+~~END~~
 
 
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@charSet FROM a) from babel_4489_trim_image;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+9619FF-8B86-D011-B42D-00C04FC964
+~~END~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 2 of Trim function.)~~
+
+SELECT TRIM(a) FROM babel_4489_trim_text
+GO
+~~START~~
+varchar
+abc?defghi??
+~~END~~
+
+
+SELECT TRIM(b) FROM babel_4489_trim_text
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂
+~~END~~
 
 
 SELECT TRIM(a FROM b) FROM babel_4489_trim_text
@@ -1256,7 +1773,7 @@ nvarchar
 SELECT TRIM(b FROM a) FROM babel_4489_trim_text
 GO
 ~~START~~
-nvarchar
+varchar
 
 ~~END~~
 
@@ -1265,8 +1782,8 @@ DECLARE @charSet VARCHAR(20) = 'ab? '
 SELECT TRIM(@charSet FROM a) FROM babel_4489_trim_text
 GO
 ~~START~~
-nvarchar
-c🙂defghi🙂🙂
+varchar
+c?defghi??
 ~~END~~
 
 
@@ -1280,59 +1797,101 @@ c🙂defghi🙂🙂
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT TRIM(@inputString)
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 2 of Trim function.)~~
+~~START~~
+varchar
+9619FF-8B86-D011-B42D-00C04FC964
+~~END~~
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 DECLARE @charSet VARCHAR(10) = '6F';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
 
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of Trim function.)~~
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT TRIM(@inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 DECLARE @charSet xml = CAST ('<fruit/>' AS xml);
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of Trim function.)~~
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT TRIM(@inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 2 of Trim function.)~~
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of Trim function.)~~
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT TRIM(@inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
 SELECT TRIM(@charSet FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 2 of Trim function.)~~
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @charSet VARCHAR(10) = '2';
 SELECT TRIM(@inputString FROM @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of Trim function.)~~
+~~ERROR (Message: The function sys.trim is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT TRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -1346,12 +1905,30 @@ varchar
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT TRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+<body><fruit/></body>
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 DECLARE @charSet xml = CAST ('<fruit/>' AS xml);
 SELECT TRIM(CAST(@charSet AS VARCHAR) FROM CAST(@inputString AS VARCHAR(50)))
 GO
 ~~START~~
 varchar
 body><fruit/></body
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT TRIM(CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+POINT(1 2)
 ~~END~~
 
 

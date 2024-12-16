@@ -82,7 +82,6 @@ Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
 Could not find tests for table sys.spt_datatype_info_table
 Could not find tests for table sys.versions
-Could not find tests for type sys.bpchar
 Could not find tests for view babelfish_has_perms_by_name_permissions
 Could not find tests for view information_schema_tsql.columns_internal
 Could not find tests for view sys.all_sql_modules_internal
@@ -203,7 +202,6 @@ Could not find upgrade tests for table sys.babelfish_syslanguages
 Could not find upgrade tests for table sys.service_settings
 Could not find upgrade tests for table sys.spt_datatype_info_table
 Could not find upgrade tests for table sys.versions
-Could not find upgrade tests for type sys.bpchar
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view information_schema_tsql.columns_internal
 Could not find upgrade tests for view sys.all_sql_modules_internal
