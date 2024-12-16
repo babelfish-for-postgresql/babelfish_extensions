@@ -919,6 +919,249 @@ int
 ~~END~~
 
 
+-- system objects refferred via sys schema
+-- for sys.databases
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- for sys.sysdatabases
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
 -- Batches having user created objects
 BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
 GO
@@ -1157,6 +1400,29 @@ int
 
 
 DROP TABLE babel_cross_db_vu_verify_tempt;
+GO
+
+-- temp table creation
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN CREATE TABLE #babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM #babel_cross_db_vu_verify_tempt; END; END;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+
+SELECT DISTINCT 1 FROM #babel_cross_db_vu_verify_tempt;
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE #babel_cross_db_vu_verify_tempt;
 GO
 
 -- tsql
