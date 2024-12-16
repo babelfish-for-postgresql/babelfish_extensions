@@ -66,6 +66,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.VARCHAR AS sys.BBF_BINARY)
 WITH FUNCTION sys.varcharbinary (sys.VARCHAR, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.nvarcharbinary(sys.NVARCHAR, integer, boolean)
+RETURNS sys.BBF_BINARY
+AS 'babelfishpg_common', 'nvarcharbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.varcharbinary(pg_catalog.VARCHAR, integer, boolean)
 RETURNS sys.BBF_BINARY
 AS 'babelfishpg_common', 'varcharbinary'
@@ -98,6 +103,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_BINARY AS sys.VARCHAR)
 WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.binarysysnvarchar(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_common', 'varbinarynvarchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.binaryvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR

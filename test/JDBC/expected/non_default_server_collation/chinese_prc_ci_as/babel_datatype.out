@@ -2044,7 +2044,7 @@ select cast(cast('a' AS nvarchar(10)) as varbinary(2));
 GO
 ~~START~~
 varbinary
-61
+6100
 ~~END~~
 
 select cast(cast(cast('a' AS nvarchar(10)) as varbinary(2)) as nvarchar(2));
@@ -2058,28 +2058,28 @@ select cast(cast('ab' AS nvarchar(10)) as varbinary(2));
 GO
 ~~START~~
 varbinary
-6162
+6100
 ~~END~~
 
 select cast(cast(cast('ab' AS nvarchar(10)) as varbinary(2)) as nvarchar(2));
 GO
 ~~START~~
 nvarchar
-ab
+a
 ~~END~~
 
 select cast(cast('abc' AS nvarchar(10)) as varbinary(2));
 GO
 ~~START~~
 varbinary
-6162
+6100
 ~~END~~
 
 select cast(cast(cast('abc' AS nvarchar(10)) as varbinary(2)) as nvarchar(2));
 GO
 ~~START~~
 nvarchar
-ab
+a
 ~~END~~
 
 
@@ -2211,28 +2211,28 @@ select cast(cast('ab' AS nvarchar(10)) as binary(2));
 GO
 ~~START~~
 binary
-6162
+6100
 ~~END~~
 
 select cast(cast(cast('ab' AS nvarchar(10)) as binary(2)) as nvarchar(2));
 GO
 ~~START~~
 nvarchar
-ab
+a
 ~~END~~
 
 select cast(cast('abc' AS nvarchar(10)) as binary(2));
 GO
 ~~START~~
 binary
-6162
+6100
 ~~END~~
 
 select cast(cast(cast('abc' AS nvarchar(10)) as binary(2)) as nvarchar(2));
 GO
 ~~START~~
 nvarchar
-ab
+a
 ~~END~~
 
 

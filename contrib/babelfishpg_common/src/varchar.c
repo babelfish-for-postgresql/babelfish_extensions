@@ -176,6 +176,178 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 	return code;
 }
 
+static inline void
+AddUTF16ToStringInfo(int32_t code, StringInfo buf)
+{
+	union
+	{
+		uint16_t	value;
+		uint8_t		half[2];
+	}			temp16;
+
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid Unicode code point 0x%x", code)));
+
+	/* Handle single 16-bit code point */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, code & 0xFF);
+		appendStringInfoChar(buf, (code >> 8) & 0xFF);
+		return;
+	}
+
+	temp16.value = 0xD800 + (((code - 0x010000) >> 10) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+	temp16.value = 0xDC00 + ((code - 0x010000) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+}
+
+/*
+ * AddUTF8ToStringInfo - Add Unicode code point to a StringInfo in UTF-8
+ */
+static inline void
+AddUTF8ToStringInfo(int32_t code, StringInfo buf)
+{
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid Unicode code point 0x%x", code)));
+
+	/* Range U+0000 .. U+007F (7 bit) */
+	if (code <= 0x7F)
+	{
+		appendStringInfoChar(buf, code);
+		return;
+	}
+
+	/* Range U+0080 .. U+07FF (11 bit) */
+	if (code <= 0x7ff)
+	{
+		appendStringInfoChar(buf, 0xC0 | (code >> 6));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+0800 .. U+FFFF (16 bit) */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, 0xE0 | (code >> 12));
+		appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+10000 .. U+10FFFF (21 bit) */
+	appendStringInfoChar(buf, 0xF0 | (code >> 18));
+	appendStringInfoChar(buf, 0x80 | ((code >> 12) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+}
+
+static inline int32_t
+GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
+{
+	uint16_t	code1;
+	uint16_t	code2;
+	int32_t		result;
+
+	/* Get the first 16 bits */
+	code1 = in[1] << 8 | in[0];
+	if (code1 < 0xD800 || code1 >= 0xE000)
+	{
+		/*
+		 * This is a single 16 bit code point, which is equal to code1.
+		 * PostgreSQL does not support NUL bytes in character data as it
+		 * internally needs the ability to convert any datum to a NUL
+		 * terminated C-string without explicit length information.
+		 */
+		if (code1 == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("invalid UTF16 byte sequence - "
+							"code point 0 not supported")));
+		if (consumed)
+			*consumed = 2;
+		return (int32_t) code1;
+	}
+
+	/* This is a surrogate pair - check that it is the high part */
+	if (code1 >= 0xDC00)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"high part is (0x%02x, 0x%02x)", in[0], in[1])));
+
+	/* Check that there is a second surrogate half */
+	if (len < 4)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"only 2 bytes (0x%02x, 0x%02x)", in[0], in[1])));
+
+	/* Get the second 16 bits (low part) */
+	code2 = in[3] << 8 | in[2];
+	if (code2 < 0xDC00 || code2 > 0xE000)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"low part is (0x%02x, 0x%02x)", in[2], in[3])));
+
+	/* Valid surrogate pair, convert to code point */
+	result = ((code1 & 0x03FF) << 10 | (code2 & 0x03FF)) + 0x10000;
+
+	/* Valid 32 bit surrogate code point */
+	if (consumed)
+		*consumed = 4;
+	return result;
+}
+
+void
+TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
+{
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
+		AddUTF16ToStringInfo(code, out);
+		i += consumed;
+	}
+}
+
+void
+TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
+{
+	unsigned char *in = vin;
+	int			i;
+	int			consumed;
+	int32_t		code;
+
+	/* UTF16 data allways comes in 16-bit units */
+	if ((len & 0x0001) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"input data has odd number of bytes")));
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
+		AddUTF8ToStringInfo(code, out);
+		i += consumed;
+	}
+}
+
+
 /*
  * TsqlUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
  * 							 16-bit units if we were to convert it into

@@ -87,16 +87,14 @@ go
 
 insert into babel_1206_t3 values (0xaaa);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "GBK": 0xaa)~~
+~~ROW COUNT: 1~~
 
 --should throw an error because of duplicate index key
 insert into babel_1206_t3 values (0xaaa);
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "GBK": 0xaa)~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_1206_t3_i3")~~
 
 
 drop table babel_1265_t1;
