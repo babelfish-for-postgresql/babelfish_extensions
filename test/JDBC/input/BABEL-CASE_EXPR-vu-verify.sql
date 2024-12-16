@@ -8289,3 +8289,13 @@ UNION ALL
 SELECT CAST(NULL AS NUMERIC(38,2))
 ORDER BY value;
 GO
+
+-- Test Case 92: customer query
+DECLARE @test_int int = 1;
+SELECT a.integer_one, a.integer_two, 
+ratio = a.integer_one / CONVERT(DECIMAL, a.integer_two),
+ratio_case_one = CASE WHEN a.integer_two = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END,
+ratio_case_two = CASE WHEN 1 = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END,
+ratio_case_three = CASE WHEN @test_int = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END
+FROM BABEL_5341_T2 a;
+GO

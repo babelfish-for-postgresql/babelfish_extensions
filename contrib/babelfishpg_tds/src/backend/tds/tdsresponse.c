@@ -957,15 +957,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			}
 		case T_CoerceToDomain:
 			{
-				int32	typmod = -1;
-				Oid		type = ((const CoerceToDomain *) expr)->resulttype;
-				Oid 	immediate_base_type = getBaseType(type);
-				if (OidIsValid(immediate_base_type))
-				{
-					type = getBaseTypeAndTypmod(type, &typmod);
-					return typmod;
-				}
-				return ((const CoerceToDomain *) expr)->resulttypmod;
+				CoerceToDomain *rlt = (CoerceToDomain *) expr;
+
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
+				else
+					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
 			}
 			/* TODO handle more Expr types if needed */
 		default:
