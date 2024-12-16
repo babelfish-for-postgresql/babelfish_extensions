@@ -1,3 +1,24 @@
+-- client tests
+select replace(cast('rohit' as pg_catalog.char(5)), 'r', 'm')
+go
+~~START~~
+varchar
+mohit
+~~END~~
+
+
+select top 5 replace(type, 'U', 'R') from sys.all_objects
+go
+~~START~~
+varchar
+R
+R
+R
+R
+R
+~~END~~
+
+
 declare @string1 nvarchar(30) = N'比尔·拉',@string2 nvarchar(30) = N'斯', @pat nvarchar(10) = N'尔'
 select REPLACE(@string1, @pat, @string2)
 GO
@@ -53,14 +74,14 @@ SELECT replace('aceds', 'aces', 'scdwe', 'acsdes')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.replace function requires 3 arguments)~~
+~~ERROR (Message: The replace function requires 3 arguments)~~
 
 
 SELECT replace('aces', 'scdwe')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.replace function requires 3 arguments)~~
+~~ERROR (Message: The replace function requires 3 arguments)~~
 
 
 -- input type char
@@ -512,8 +533,8 @@ varchar
 SELECT replace(a, b, c) FROM babel_4836_replace_ntext
 GO
 ~~START~~
-varchar
-  abcjhi?ghi??    
+nvarchar
+  abcjhi🙂ghi🙂🙂    
 ~~END~~
 
 
@@ -2156,9 +2177,10 @@ ABCD
 -- in table babel_4836_replace_image_UDT_t, col 'a', 'b' and 'c' has basetype image
 SELECT replace(a, b, c) FROM babel_4836_replace_image_UDT_t
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+aghdef
+~~END~~
 
 
 -- in table babel_4836_replace_var_UDT_t, col 'a', 'b' and 'c' has basetype varchar
@@ -2170,657 +2192,852 @@ gh
 ~~END~~
 
 
--- other different datatypes, all of these should be blocked
+-- Arguments with pg datatypes
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t1
+GO
+~~START~~
+varchar
+abcpqrghi
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t2
+GO
+~~START~~
+varchar
+abcpqrghi
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t3
+GO
+~~START~~
+varchar
+abcpqrghi
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t4
+GO
+~~START~~
+varchar
+abcpqrghi
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t5
+GO
+~~START~~
+varchar
+abcpqrghi
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t6
+GO
+~~START~~
+varchar
+12995678
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t7
+GO
+~~START~~
+varchar
+12995678
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t9
+GO
+~~START~~
+varchar
+\x656667686970
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t10
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t11
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t14
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT replace(@inputString, 'de', 'pq')
+GO
+~~START~~
+varchar
+  abc?pqfghi??    
+~~END~~
+
+
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂', @pattern sysname = N'🙂de', @replacement sysname = N'x🙂y'
+SELECT replace(@inputString, @pattern, @replacement)
+GO
+~~START~~
+varchar
+abcx?yfghi??
+~~END~~
+
+
 DECLARE @inputString date = '2016-12-21'
 SELECT replace(@inputString, '12', '06');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+2016-06-21
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21', @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+2016-06-21
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @pattern date = '2016-12-21', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+06
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @pattern VARCHAR(20) = '2016-12-21', @replacement date = '2016-12-21';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+2016-12-21
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21'
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+2016-12-21
+~~END~~
 
 
 DECLARE @date date = '12-21-16';
 DECLARE @inputString datetime = @date, @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+2016-06-21 00:00:00
+~~END~~
 
 
 DECLARE @date date = '12-21-16';
 DECLARE @inputString datetime = @date;
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @date date = '2016-12-21', @replacement VARCHAR(10) = '06';
 DECLARE @pattern datetime = @date;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+2016-12-21
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @pattern VARCHAR(20) = '2016-12-21', @date date = '2016-12-21';
 DECLARE @replacement datetime = @date;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10', @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1955-06-13 06:43:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '2016-12-21 12:43:10', @pattern smalldatetime = '2016-12-21 12:43:10', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+2016-12-21 12:43:10
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '2016-12-21 12:43:10', @pattern VARCHAR(30) = '2016-12-21 12:43:10', @replacement smalldatetime = '2016-12-21 12:43:10';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+2016-12-21 12:43:00
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237', @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+06:10:05.0637
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '12:10:05.1237', @pattern time(4) = '12:10:05.1237', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+06
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '12:10:05.1237', @pattern VARCHAR(30) = '12:10:05.1237', @replacement time(4) = '12:10:05.1237';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237';
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 06:45:37.0634 +10:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @pattern datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:0
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @pattern VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @replacement datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237', @pattern VARCHAR(10) = '12', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 06:45:37.0637
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1237', @pattern datetime2(4) = '1968-10-23 12:45:37.1237', @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+06
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1237', @pattern VARCHAR(50) = '1968-10-23 12:45:37.1237', @replacement datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString decimal = 123456, @pattern decimal = 12, @replacement decimal = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+63456
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern decimal = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement decimal = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString numeric = 12345.12, @pattern numeric = 12, @replacement numeric = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6345
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern numeric = 12.12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type numeric is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement numeric = 12.12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type numeric is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString float = 12345.1, @pattern float = 12, @replacement float = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type double precision is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6345.1
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern float = 12.1, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type double precision is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement float = 12.1;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type double precision is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12.1
+~~END~~
 
 
 DECLARE @inputString real = 12345.1, @pattern real = 12, @replacement real = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type real is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6345.1
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern real = 12.1, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type real is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement real = 12.1;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type real is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12.1
+~~END~~
 
 
 DECLARE @inputString bigint = 12345678, @pattern bigint = 12, @replacement bigint = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6345678
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern bigint = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type bigint is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement bigint = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type bigint is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString int = 12345678, @pattern int = 12, @replacement int = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type integer is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6345678
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern int = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type integer is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement int = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type integer is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString smallint = 12356, @pattern smallint = 12, @replacement smallint = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6356
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern smallint = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallint is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement smallint = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallint is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString tinyint = 235, @pattern tinyint = 12, @replacement tinyint = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+235
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern tinyint = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type tinyint is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement tinyint = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type tinyint is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12
+~~END~~
 
 
 DECLARE @inputString money = 12356, @pattern money = 12, @replacement money = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type money is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+12356.0000
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern money = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type money is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement money = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type money is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12.0000
+~~END~~
 
 
 DECLARE @inputString smallmoney = 12356, @pattern smallmoney = 12, @replacement smallmoney = 06;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+12356.0000
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern smallmoney = 12, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement smallmoney = 12;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+12.0000
+~~END~~
 
 
 DECLARE @inputString bit = 1, @pattern bit = 1, @replacement bit = 0;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+0
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern bit = 1, @replacement VARCHAR(10) = '06';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "bit" is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+06234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '1234', @replacement bit = 0;
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "bit" is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+0
+~~END~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 DECLARE @pattern VARCHAR(10) = '6F', @replacement VARCHAR(10) = '5A';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+5A9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER), @replacement VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @replacement UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 SELECT replace(a, a, a) FROM babel_4836_replace_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 SELECT replace('a', a, 'a') FROM babel_4836_replace_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+a
+~~END~~
 
 
 SELECT replace('a', 'a', a) FROM babel_4836_replace_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @pattern VARCHAR(10) = '6F', @replacement VARCHAR(10) = '5A';
 SELECT replace(a, @pattern, @replacement) from babel_4836_replace_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+5A9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 DECLARE @pattern VARCHAR(10) = '6F', @replacement VARCHAR(10) = '5A';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+5A9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant), @replacement VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 2 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @replacement sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 3 of replace function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of replace function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 DECLARE @pattern xml = CAST ('<fruit/>' AS xml), @replacement xml = CAST ('<vegetables/>' AS xml);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern xml = CAST ('<body><fruit/></body>' AS xml), @replacement VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 2 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @replacement xml = CAST ('<body><fruit/></body>' AS xml);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 3 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @pattern VARCHAR(10) = '(1 2)', @replacement VARCHAR(10) = '(4 5)';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern geometry = geometry::STGeomFromText('POINT (1 2)', 0), @replacement VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 2 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @replacement geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 3 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @pattern VARCHAR(10) = '(1 2)', @replacement VARCHAR(10) = '(4 5)';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern geography = geography::STGeomFromText('POINT (1 2)', 4326), @replacement VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 2 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @pattern VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @replacement geography = geography::STGeomFromText('POINT (1 2)', 4326);
 SELECT replace(@inputString, @pattern, @replacement)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 3 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT replace(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of replace function.)~~
+~~ERROR (Message: The function replace is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

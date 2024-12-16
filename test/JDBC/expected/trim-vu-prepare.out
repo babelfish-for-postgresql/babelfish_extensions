@@ -1,3 +1,4 @@
+-- tsql
 CREATE TABLE babel_4489_trim_t1(a NCHAR(50), b NCHAR(20))
 GO
 INSERT INTO babel_4489_trim_t1 VALUES(N'  abc🙂defghi🙂🙂    ', N'ab🙂 ')
@@ -149,4 +150,172 @@ CREATE FUNCTION babel_4489_trim_itvf_func()
 RETURNS TABLE
 AS
 RETURN (SELECT ('|' + TRIM(b FROM a) + '|') as result FROM babel_4489_trim_t2)
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_7 AS
+    SELECT ('|' + TRIM(a) + '|') as result FROM babel_4489_trim_text
+GO
+
+CREATE VIEW babel_4489_trim_dep_view_8 AS
+    SELECT ('|' + TRIM(a FROM a) + '|') as result FROM babel_4489_trim_text
+GO
+
+-- psql
+CREATE TABLE master_dbo.babel_4489_trim_psql_t1(a CHAR(50), b CHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t1 VALUES ('  abcdefghi    ', 'abi ')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t1 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t2(a BPCHAR(50), b BPCHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t2 VALUES ('  abcdefghi    ', 'abi ')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t2 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t3(a CHARACTER(50), b CHARACTER(20))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t3 VALUES ('  abcdefghi    ', 'abi ')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t3 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t4(a VARCHAR(50), b VARCHAR(20))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t4 VALUES ('  abcdefghi    ', 'abi ')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t4 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t5(a character varying(50), b character varying(20))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t5 VALUES ('  abcdefghi    ', 'abi ')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t5 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t6(a INTEGER, b INTEGER)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t6 VALUES (12345678, 12)
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t6 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t7(a BIGINT, b BIGINT)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t7 VALUES (12345678, 12)
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t7 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t8(a MONEY, b MONEY)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t8 VALUES (123456, 12)
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t8 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t9(a BYTEA, b BYTEA)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t9 VALUES ('\x656667686970'::bytea, '\x656970'::bytea)
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t9 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t10(a TIMESTAMP, b TIMESTAMP)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t10 VALUES ('12-21-16', '12-21-16')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t10 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t11(a DATE, b DATE)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t11 VALUES ('12-21-16', '12-21-16')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t11 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t12(a BOOLEAN, b BOOLEAN)
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t12 VALUES (TRUE, FALSE)
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t12 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t13(a BIT(3), b BIT(3))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t13 VALUES (B'101', B'101')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t13 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4489_trim_psql_t14(a BIT VARYING(3), b BIT VARYING(3))
+GO
+
+INSERT INTO master_dbo.babel_4489_trim_psql_t14 VALUES (B'101', B'101')
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON master_dbo.babel_4489_trim_psql_t14 TO master_dbo;
+GO
+
+-- tsql
+CREATE VIEW babel_4489_trim_dep_view_9 AS
+    SELECT TRIM(b FROM a) as result FROM dbo.babel_4489_trim_psql_t9
 GO

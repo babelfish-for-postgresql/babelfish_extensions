@@ -54,14 +54,14 @@ SELECT TRANSLATE('aceds', 'aces', 'scdwe', 'acsdes')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 SELECT TRANSLATE('aces', 'scdwe')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.translate function requires 3 arguments)~~
+~~ERROR (Message: The translate function requires 3 arguments)~~
 
 
 -- input type char
@@ -622,7 +622,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = 'ab?', @translations NCHAR(20) = 'x🙂y'
@@ -630,15 +630,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = 'ab?', @translations NVARCHAR(20) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = 'ab?', @translations VARCHAR(40) = 'x🙂y'
@@ -663,15 +664,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
@@ -679,7 +681,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
@@ -687,7 +689,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
@@ -711,15 +713,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -727,7 +730,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -735,7 +738,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂y'
@@ -760,15 +763,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
@@ -776,7 +780,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
@@ -784,7 +788,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = N'ab?', @translations CHAR(40) = N'x🙂y'
@@ -808,7 +812,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @translations VARCHAR(40) = 'x🙂y'
@@ -823,9 +827,10 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NVARCHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @translations CHAR(40) = 'x🙂y'
@@ -833,7 +838,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NCHAR(40) = 'x🙂y'
@@ -841,7 +846,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(40) = 'ab?'
@@ -856,9 +861,10 @@ varchar
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(40) = 'ab?'
 SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(40) = 'ab?'
@@ -866,7 +872,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(40) = 'ab?'
@@ -874,7 +880,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(20) = 'x🙂y'
@@ -988,15 +994,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NCHAR(20) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NVARCHAR(20) = 'x🙂y'
@@ -1004,7 +1011,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
@@ -1028,15 +1035,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
@@ -1044,7 +1052,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
@@ -1052,7 +1060,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
@@ -1076,15 +1084,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1092,7 +1101,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1100,7 +1109,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂y'
@@ -1125,7 +1134,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1133,7 +1142,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1141,15 +1150,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂y'
@@ -1174,7 +1184,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations VARCHAR(40) = 'x🙂y'
@@ -1189,9 +1199,10 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NVARCHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations CHAR(40) = 'x🙂y'
@@ -1199,7 +1210,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NCHAR(40) = 'x🙂y'
@@ -1207,7 +1218,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(40) = 'ab?'
@@ -1222,9 +1233,10 @@ varchar
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(40) = 'ab?'
 SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+varchar
+|  x?c?defghi??    |
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(40) = 'ab?'
@@ -1232,7 +1244,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(40) = 'ab?'
@@ -1240,7 +1252,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(20) = 'x🙂y'
@@ -1346,15 +1358,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NCHAR(20) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NVARCHAR(20) = 'x🙂y'
@@ -1362,7 +1375,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
@@ -1386,15 +1399,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x?cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
@@ -1402,7 +1416,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
@@ -1410,7 +1424,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
@@ -1434,15 +1448,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1450,7 +1465,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1458,7 +1473,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂y'
@@ -1483,7 +1498,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1491,7 +1506,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1499,15 +1514,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂y'
@@ -1532,7 +1548,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations VARCHAR(40) = 'x🙂y'
@@ -1547,9 +1563,10 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NVARCHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations CHAR(40) = 'x🙂y'
@@ -1557,7 +1574,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NCHAR(40) = 'x🙂y'
@@ -1565,7 +1582,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(40) = 'ab?'
@@ -1580,9 +1597,10 @@ nvarchar
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(40) = 'ab?'
 SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂cydefghiyy                                    |
+~~END~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(40) = 'ab?'
@@ -1590,7 +1608,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(40) = 'ab?'
@@ -1598,7 +1616,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(20) = 'x🙂y'
@@ -1703,15 +1721,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NCHAR(20) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x?c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations NVARCHAR(20) = 'x🙂y'
@@ -1719,7 +1738,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(20) = 'ab?', @translations CHAR(40) = 'x🙂y'
@@ -1743,15 +1762,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x?c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
@@ -1759,7 +1779,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
@@ -1767,7 +1787,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(20) = N'ab?', @translations NCHAR(40) = N'x🙂y'
@@ -1791,15 +1811,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations VARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1807,7 +1828,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1815,7 +1836,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(20) = N'ab?', @translations NVARCHAR(40) = N'x🙂y'
@@ -1840,7 +1861,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NCHAR(20) = N'x🙂y'
@@ -1848,7 +1869,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations CHAR(20) = N'x🙂y'
@@ -1856,15 +1877,16 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations NVARCHAR(20) = N'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(20) = N'ab?', @translations VARCHAR(40) = N'x🙂y'
@@ -1889,7 +1911,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations VARCHAR(40) = 'x🙂y'
@@ -1904,9 +1926,10 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NVARCHAR(40) = 'x🙂y'
 SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations CHAR(40) = 'x🙂y'
@@ -1914,7 +1937,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @translations NCHAR(40) = 'x🙂y'
@@ -1922,7 +1945,7 @@ SELECT '|' + TRANSLATE(@inputString, 'ab?', @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters VARCHAR(40) = 'ab?'
@@ -1937,9 +1960,10 @@ nvarchar
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NVARCHAR(40) = 'ab?'
 SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+|  x🙂c🙂defghi🙂🙂    |
+~~END~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters CHAR(40) = 'ab?'
@@ -1947,7 +1971,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = '  abc🙂defghi🙂🙂    ', @characters NCHAR(40) = 'ab?'
@@ -1955,7 +1979,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, 'x🙂y') + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString NVARCHAR(50) = N'  ABCDEF    ', @characters BINARY(4) = 0x414243, @translations NCHAR(20) = N'尔·比?'
@@ -1963,7 +1987,7 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "binary" is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARBINARY(50) = 0x41424344, @characters NCHAR(20) = N'尔·比?', @translations VARBINARY(2) = 0x4144
@@ -1971,16 +1995,17 @@ SELECT '|' + TRANSLATE(@inputString, @characters, @translations) + '|'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type varbinary is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 -- input type UDT
 -- in table babel_4837_translate_UDT, col 'a' has basetype image and col 'b' and 'c' have basetype varchar
 SELECT TRANSLATE(a, b, c) FROM babel_4837_translate_UDT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+abcdef
+~~END~~
 
 
 SELECT TRANSLATE(b, b, c) FROM babel_4837_translate_UDT
@@ -1995,117 +2020,135 @@ abcdef
 DECLARE @inputString date = '2016-12-21'
 SELECT TRANSLATE(@inputString, '12', '06');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6006-06-60
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21', @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6006-06-60
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @characters date = '2016-12-21', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type date is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @characters VARCHAR(20) = '2016-12-21', @translations date = '2016-12-21';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+2016-12-21
+~~END~~
 
 
 DECLARE @inputString date = '2016-12-21'
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+2016-12-21
+~~END~~
 
 
 DECLARE @date date = '12-21-16';
 DECLARE @inputString datetime = @date, @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6006-06-60 00:00:00
+~~END~~
 
 
 DECLARE @date date = '12-21-16';
 DECLARE @inputString datetime = @date;
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+2016-12-21 00:00:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @date date = '2016-12-21', @translations VARCHAR(10) = '06';
 DECLARE @characters datetime = @date;
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(20) = '2016-12-21', @characters VARCHAR(20) = '2016-12-21', @date date = '2016-12-21';
 DECLARE @translations datetime = @date;
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10', @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+0955-06-03 06:43:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '2016-12-21 12:43:10', @characters smalldatetime = '2016-12-21 12:43:10', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(30) = '2016-12-21 12:43:10', @characters VARCHAR(30) = '2016-12-21 12:43:10', @translations smalldatetime = '2016-12-21 12:43:10';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+2016-12-21 12:43:10
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+1955-12-13 12:43:00
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237', @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+06:00:05.0637
+~~END~~
 
 
 DECLARE @inputString VARCHAR(30) = '12:10:05.1237', @characters time(4) = '12:10:05.1237', @translations VARCHAR(10) = '06';
@@ -2113,31 +2156,34 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(30) = '12:10:05.1237', @characters VARCHAR(30) = '12:10:05.1237', @translations time(4) = '12:10:05.1237';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237';
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time without time zone is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+12:10:05.1237
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+0968-00-63 06:45:37.0634 +00:00
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @characters datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0', @translations VARCHAR(10) = '06';
@@ -2145,7 +2191,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @characters VARCHAR(50) = '1968-10-23 12:45:37.1234 +10:0', @translations datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
@@ -2153,47 +2199,53 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1234 +10:00
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237', @characters VARCHAR(10) = '12', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+0968-00-63 06:45:37.0637
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1237', @characters datetime2(4) = '1968-10-23 12:45:37.1237', @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1968-10-23 12:45:37.1237', @characters VARCHAR(50) = '1968-10-23 12:45:37.1237', @translations datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+1968-10-23 12:45:37.1237
+~~END~~
 
 
 DECLARE @inputString decimal = 123456, @characters decimal = 12, @translations decimal = 06;
@@ -2201,15 +2253,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters decimal = 12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations decimal = 12;
@@ -2217,7 +2270,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "decimal" is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString numeric = 12345.12, @characters numeric = 12, @translations numeric = 06;
@@ -2225,15 +2278,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters numeric = 12.12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type numeric is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations numeric = 12.12;
@@ -2241,7 +2295,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type numeric is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString float = 12345.1, @characters float = 12, @translations float = 06;
@@ -2249,7 +2303,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type double precision is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters float = 12.1, @translations VARCHAR(10) = '06';
@@ -2257,15 +2311,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type double precision is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations float = 12.1;
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type double precision is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+12.1
+~~END~~
 
 
 DECLARE @inputString real = 12345.1, @characters real = 12, @translations real = 06;
@@ -2273,7 +2328,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type real is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters real = 12.1, @translations VARCHAR(10) = '06';
@@ -2281,15 +2336,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type real is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations real = 12.1;
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type real is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+12.1
+~~END~~
 
 
 DECLARE @inputString bigint = 12345678, @characters bigint = 12, @translations bigint = 06;
@@ -2297,15 +2353,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters bigint = 12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type bigint is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations bigint = 12;
@@ -2313,7 +2370,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type bigint is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString int = 12345678, @characters int = 12, @translations int = 06;
@@ -2321,15 +2378,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type integer is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters int = 12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type integer is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations int = 12;
@@ -2337,7 +2395,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type integer is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString smallint = 12356, @characters smallint = 12, @translations smallint = 06;
@@ -2345,15 +2403,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters smallint = 12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallint is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations smallint = 12;
@@ -2361,7 +2420,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallint is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString tinyint = 235, @characters tinyint = 12, @translations tinyint = 06;
@@ -2369,15 +2428,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters tinyint = 12, @translations VARCHAR(10) = '06';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type tinyint is invalid for argument 2 of translate function.)~~
+~~START~~
+varchar
+0634
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations tinyint = 12;
@@ -2385,7 +2445,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString money = 12356, @characters money = 12, @translations money = 06;
@@ -2393,7 +2453,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type money is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters money = 12, @translations VARCHAR(10) = '06';
@@ -2401,7 +2461,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type money is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations money = 12;
@@ -2409,7 +2469,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type money is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString smallmoney = 12356, @characters smallmoney = 12, @translations smallmoney = 06;
@@ -2417,7 +2477,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters smallmoney = 12, @translations VARCHAR(10) = '06';
@@ -2425,7 +2485,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations smallmoney = 12;
@@ -2433,15 +2493,16 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString bit = 1, @characters bit = 1, @translations bit = 0;
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type "bit" is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+0
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters bit = 1, @translations VARCHAR(10) = '06';
@@ -2449,7 +2510,7 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "bit" is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '1234', @translations bit = 0;
@@ -2457,16 +2518,17 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type "bit" is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 DECLARE @characters VARCHAR(10) = '6F', @translations VARCHAR(10) = '5A';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+5A9519AA-8B85-D011-B42D-00C04AC954AA
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
@@ -2474,52 +2536,60 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString UNIQUEIDENTIFIER = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS UNIQUEIDENTIFIER)
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 SELECT TRANSLATE(a, a, a) FROM babel_4837_translate_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 SELECT TRANSLATE('a', a, 'a') FROM babel_4837_translate_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 SELECT TRANSLATE('a', 'a', a) FROM babel_4837_translate_image;
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type image is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @characters VARCHAR(10) = '6F', @translations VARCHAR(10) = '5A';
 SELECT TRANSLATE(a, @characters, @translations) from babel_4837_translate_image;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+5A9519AA-8B85-D011-B42D-00C04AC954AA
+~~END~~
 
 
 SELECT TRANSLATE(a, b, c) FROM babel_4837_translate_text
@@ -2531,33 +2601,42 @@ varchar
 
 SELECT TRANSLATE('qw', a, 'cd') FROM babel_4837_translate_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 SELECT TRANSLATE('qw', 'ab', a) FROM babel_4837_translate_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 SELECT TRANSLATE(b, a, c) FROM babel_4837_translate_text
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~START~~
+nvarchar
+  sbc🙂defjhi🙂🙂    
+~~END~~
 
 SELECT TRANSLATE('qw', c, 'cd') FROM babel_4837_translate_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 SELECT TRANSLATE('qw', 'ab', b) FROM babel_4837_translate_text
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must have same argument data type.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @characters VARCHAR(20) = 'ab?', @translations VARCHAR(10) = 'x?y';
@@ -2582,9 +2661,10 @@ DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' 
 DECLARE @characters VARCHAR(10) = '6F', @translations VARCHAR(10) = '5A';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+5A9519AA-8B85-D011-B42D-00C04AC954AA
+~~END~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
@@ -2592,112 +2672,114 @@ SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The second and third arguments of the TRANSLATE built-in function must contain an equal number of characters.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 3 of translate function.)~~
+~~START~~
+varchar
+1234
+~~END~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of translate function.)~~
+~~START~~
+varchar
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 DECLARE @characters xml = CAST ('<fruit/>' AS xml), @translations xml = CAST ('<vegetables/>' AS xml);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters xml = CAST ('<body><fruit/></body>' AS xml), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations xml = CAST ('<body><fruit/></body>' AS xml);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @characters VARCHAR(10) = '(1 2)', @translations VARCHAR(10) = '(4 5)';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters geometry = geometry::STGeomFromText('POINT (1 2)', 0), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326), @characters VARCHAR(10) = '(1 2)', @translations VARCHAR(10) = '(4 5)';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters geography = geography::STGeomFromText('POINT (1 2)', 4326), @translations VARCHAR(10) = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 2 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString VARCHAR(50) = '1234', @characters VARCHAR(50) = '6F9619FF-8B86-D011-B42D-00C04FC964FF', @translations geography = geography::STGeomFromText('POINT (1 2)', 4326);
 SELECT TRANSLATE(@inputString, @characters, @translations)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 3 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT TRANSLATE(@inputString, @inputString, @inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of translate function.)~~
+~~ERROR (Message: The function translate is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

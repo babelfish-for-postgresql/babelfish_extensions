@@ -250,7 +250,7 @@ replicate-before-15_8-or-16_4
 reverse-before-15_8-or-16_4
 string_agg-before-14_5
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-CASE_EXPR-before-16_5-or-15_9

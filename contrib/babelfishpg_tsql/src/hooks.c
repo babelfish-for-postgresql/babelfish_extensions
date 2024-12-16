@@ -2400,7 +2400,7 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 			 * Check whether function is an special function or not, and 
 			 * report appropriate error if applicable 
 			 */
-			validate_special_function(schemaname, funcname, fargs, nargs, input_typeids, found);
+			validate_special_function(schemaname, funcname, nargs, found);
 		}
 		
 		/*

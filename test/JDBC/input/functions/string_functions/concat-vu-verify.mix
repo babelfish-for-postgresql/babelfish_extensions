@@ -181,7 +181,50 @@ GO
 SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', 'h', 'i', 'j', 'k', 'l', CAST('m' AS text), 'n', 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
 GO
 
--- any invalid datatype
+-- Arguments with pg datatypes
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t1
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t2
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t3
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t4
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t5
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t6
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t7
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t8
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t9
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t10
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t11
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t12
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t13
+GO
+
+SELECT CONCAT(a, a) FROM dbo.babel_3409_concat_psql_t14
+GO
+
+-- other datatypes
 SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', geometry::Point(1,2,4326), 'i', geography::Point(1,2,4326), 'k', 'l', CAST('m' AS text), CAST('SD' as sql_variant), 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', Cast('<head></head>' as xml), 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
 GO
 
@@ -258,6 +301,18 @@ SELECT CONCAT(col_varchar, col_image) from babel_3409_concat_t1 ORDER BY id
 GO
 
 SELECT CONCAT(col_varchar, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+
+SELECT CONCAT(col_text, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+
+SELECT CONCAT( col_text, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+
+SELECT CONCAT(col_ntext, col_ntext) from babel_3409_concat_t1 ORDER BY id
+GO
+
+SELECT CONCAT( col_ntext, col_ntext) from babel_3409_concat_t1 ORDER BY id
 GO
 
 SELECT CONCAT(col_varchar, col_ntext) from babel_3409_concat_t1 ORDER BY id

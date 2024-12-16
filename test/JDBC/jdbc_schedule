@@ -397,6 +397,9 @@ ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
 ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_5-or-14_10-vu-prepare
+ignore#!#string_agg-before-15_5-or-14_10-vu-verify
+ignore#!#string_agg-before-15_5-or-14_10-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
@@ -412,3 +415,9 @@ ignore#!#concat-before-15_9-or-16_5-vu-cleanup
 ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
 ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
 ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
+ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
+ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
+ignore#!#trim-before-15_11-or-16_7-vu-prepare
+ignore#!#trim-before-15_11-or-16_7-vu-verify
+ignore#!#trim-before-15_11-or-16_7-vu-cleanup
