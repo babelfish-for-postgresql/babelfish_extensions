@@ -58,9 +58,9 @@ hashbytes(PG_FUNCTION_ARGS)
 {
     Oid            input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
     const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-    bytea       *in = PG_GETARG_BYTEA_PP(1);
-    size_t        len = VARSIZE_ANY_EXHDR(in);
-    bytea       *result;
+    bytea	   *in = PG_GETARG_BYTEA_PP(1);
+    size_t		len = VARSIZE_ANY_EXHDR(in);
+    bytea	   *result;
     unsigned char     *data = (unsigned char *) VARDATA_ANY(in);
     StringInfoData     utf16_data;
 
