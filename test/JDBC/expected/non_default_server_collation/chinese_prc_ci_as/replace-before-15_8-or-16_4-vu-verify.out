@@ -2139,7 +2139,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-尔·比              DEF
+ABCDEF
 ~~END~~
 
 
@@ -2148,7 +2148,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 nvarchar
-ABCD
+䉁䑃
 ~~END~~
 
 

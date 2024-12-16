@@ -70,6 +70,7 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
+static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -130,11 +131,13 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "varbinarysysnvarchar", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "binaryrowversion", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nvarchar", "binarysysnvarchar", 'i', 'f'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
 /*  rowversion */
 	{PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
@@ -230,6 +233,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
@@ -462,6 +467,18 @@ static tsql_cast_info_entry_t *tsql_cast_info_entries = NULL;
 static HTAB *ht_tsql_cast_info = NULL;
 bool		inited_ht_tsql_cast_info = false;
 
+/* Returns true if the oid belongs to binary, bbf_binary, varbinary, bbf_varbinary datatype */
+static bool
+is_tsql_binary_family_datatype(Oid oid)
+{
+	if((*common_utility_plugin_ptr->is_tsql_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(oid)
+	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(oid))
+	{
+		return true;
+	}
+	return false;
+}
+
 static CoercionPathType
 tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -475,8 +492,12 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isSqlVariantCast = false;
 	bool		isInt8Type = false;
 	bool		isInt8ToMoney = false;
+	bool		isVarbinaryToNvarchar = false;
+	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
+	Oid			UDT_sourceBaseType = InvalidOid;
+	Oid			UDT_targetBaseType = InvalidOid;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -507,22 +528,61 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				ReleaseSysCache(tuple);
 				break;
 			}
+			if( i == 0 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
+			}
+
+			if(i == 1 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
+			}
+
+
 			ReleaseSysCache(tuple);
 		}
 	}
 
+	/* Check if the UDT's base type is nvarchar or varbinary.
+	 * If so, use the immediate base type for further processing.
+	 */
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
+	{
+		typeIds[0] = UDT_sourceBaseType;
+		sourceTypeId = UDT_sourceBaseType;
+	}
+
+	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
+	{
+		typeIds[1] = UDT_targetBaseType;
+		targetTypeId = UDT_targetBaseType;
+	}
+
+	/* We've found VARBINARY To NVARCHAR casting */
+	if (is_tsql_binary_family_datatype(typeIds[0]) && (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
+		isVarbinaryToNvarchar = true;
+
+	/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
+	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
+		isNvarchartoVarbinary = true;
+
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
-		if (OidIsValid(sourceTypeId))
+		/*
+		 * if we are casting from NVARCHAR TO VARBINARY, don't look for base type of
+		 * source so that it can call the cast function which matches with the
+		 * exact types
+		 */
+		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*
-		 * if we are casting from INT8 to MONEY, don't look for base type of
+		 * if we are casting from INT8 to MONEY or VARBINARY To NVARCHAR, don't look for base type of
 		 * target so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(targetTypeId) && !isInt8ToMoney)
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney && !isVarbinaryToNvarchar)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 

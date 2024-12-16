@@ -588,6 +588,7 @@ BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
+cast_nvarchar_test
 smalldatetime_date_cmp
 datareader_datawriter
 db_owner
