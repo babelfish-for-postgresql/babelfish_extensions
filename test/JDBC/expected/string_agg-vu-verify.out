@@ -1234,10 +1234,10 @@ SELECT STRING_AGG(col_binary, '-') FROM babel_5156_string_agg_t1 GROUP BY group_
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1246,10 +1246,10 @@ SELECT STRING_AGG(col_binary, @sep) FROM babel_5156_string_agg_t1 GROUP BY group
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1258,10 +1258,10 @@ SELECT STRING_AGG(col_varbinary, '-') FROM babel_5156_string_agg_t1 GROUP BY gro
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
@@ -1270,10 +1270,10 @@ SELECT STRING_AGG(col_varbinary, @sep) FROM babel_5156_string_agg_t1 GROUP BY gr
 GO
 ~~START~~
 nvarchar
-ab-cd-ef
-gh-ip
+扡-摣-晥
+桧-灩
 <NULL>
-qr-rs
+牱-獲
 ~~END~~
 
 
