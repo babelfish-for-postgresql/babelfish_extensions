@@ -45,7 +45,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.hashbytes(IN alg VARCHAR, IN data VARCHAR) RENAME TO hashbytes_varchar_deprecated_4_5_0;
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data pg_catalog.VARCHAR) RENAME TO hashbytes_varchar_deprecated_4_5_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -60,7 +60,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.hashbytes(IN alg VARCHAR, IN data sys.bbf_varbinary) RENAME TO hashbytes_varbinary_deprecated_4_5_0;
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data sys.bbf_varbinary) RENAME TO hashbytes_varbinary_deprecated_4_5_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
