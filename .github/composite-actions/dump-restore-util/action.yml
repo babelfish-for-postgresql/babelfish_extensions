@@ -85,14 +85,14 @@ runs:
           echo "Starting to dump whole Babelfish physical database"
           if [[ '${{ inputs.type }}' == 'full' ]];then
             # Perform the complete dump
-            $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --no-role-passwords -f pg_dump_globals.sql > ~/upgrade/error.log
-            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --file="pg_dump.archive" --dbname=jdbc_testdb > ~/upgrade/error.log
+            $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database babelfish_db --username jdbc_user --roles-only --quote-all-identifiers --no-role-passwords -f pg_dump_globals.sql > ~/upgrade/error.log
+            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --file="pg_dump.archive" --dbname=babelfish_db > ~/upgrade/error.log
           else
             # First perform the schema-only dump and then perform the data-only dump to produce a complete dump
-            $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --no-role-passwords -f pg_dump_globals_so.sql > ~/upgrade/error.log
-            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --file="pg_dump_so.archive" --dbname=jdbc_testdb > ~/upgrade/error.log
+            $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database babelfish_db --username jdbc_user --roles-only --quote-all-identifiers --schema-only --no-role-passwords -f pg_dump_globals_so.sql > ~/upgrade/error.log
+            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --file="pg_dump_so.archive" --dbname=babelfish_db > ~/upgrade/error.log
 
-            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --file="pg_dump_do.archive" --dbname=jdbc_testdb > ~/upgrade/error.log
+            $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --file="pg_dump_do.archive" --dbname=babelfish_db > ~/upgrade/error.log
           fi
         else
           echo "Starting to dump all the Babelfish logical databases"
@@ -102,28 +102,28 @@ runs:
                 pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member \
                 FROM sys.babelfish_authid_login_ext \
                 WHERE rolname NOT IN ('jdbc_user', 'sysadmin', 'bbf_role_admin', 'test@ABC');"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
 
           # Get the list of Babelfish user and login mapping in a file
           query="SELECT u.orig_username, l.orig_loginname, database_name \
                 FROM sys.babelfish_authid_user_ext u INNER JOIN sys.babelfish_authid_login_ext l \
                 ON u.login_name = l.rolname WHERE u.login_name != '' ORDER BY orig_username;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/users_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/users_file.txt
 
           # Get the list of domain mappings in a file
           query="SELECT netbios_domain_name, fq_domain_name FROM sys.babelfish_domain_mapping;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/domains_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/domains_file.txt
 
           # Get the list of all foreign servers in a file
           query="SELECT fs.srvname, fs.srvoptions, um.umoptions, so.query_timeout, so.connect_timeout \
                 FROM pg_foreign_server fs \
                 INNER JOIN sys.babelfish_server_options so ON fs.srvname = so.servername \
                 LEFT JOIN pg_user_mappings um ON fs.srvname = um.srvname;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/servers_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/servers_file.txt
 
           # Get the list of all the Babelfish logical datababses in a file
           query="SELECT name FROM sys.babelfish_sysdatabases ORDER BY name DESC;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/databases_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/databases_file.txt
 
           # Loop through the list of all the Babelfish logical database and dump them one by one.
           while IFS= read -r db; do
@@ -131,19 +131,19 @@ runs:
             db_trimmed="$(echo "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             if [[ '${{ inputs.type }}' == 'full' ]];then
               # Perform the complete dump
-              $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed".sql > ~/upgrade/error.log
-              $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed".archive --dbname=jdbc_testdb > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database babelfish_db --username jdbc_user --roles-only --quote-all-identifiers --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed".sql > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed".archive --dbname=babelfish_db > ~/upgrade/error.log
             else
               # First perform the schema-only dump and then perform the data-only dump to produce a complete dump
-              $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed"_so.sql > ~/upgrade/error.log
-             $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_so.archive --dbname=jdbc_testdb > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_dumpall -h localhost --database babelfish_db --username jdbc_user --roles-only --quote-all-identifiers --schema-only --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed"_so.sql > ~/upgrade/error.log
+             $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_so.archive --dbname=babelfish_db > ~/upgrade/error.log
 
-              $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_do.archive --dbname=babelfish_db > ~/upgrade/error.log
             fi
           done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
 
           # Also dump the objects in PUBLIC schema.
-          $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --schema=public --schema-only --file=pg_dump_public.sql --dbname=jdbc_testdb > ~/upgrade/error_public_schema.log
+          $DUMP_RESTORE_UTILS_PATH/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --schema=public --schema-only --file=pg_dump_public.sql --dbname=babelfish_db > ~/upgrade/error_public_schema.log
         fi
 
         # Stop old server and start the new.
@@ -153,29 +153,29 @@ runs:
         echo 'Database dump complete.'
 
         # Create and initialise Babelfish extensions in the new server to perform restore.
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v tsql_port="1433" -f .github/scripts/create_extension.sql
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode=${{inputs.migration_mode}} -v tsql_port="1433" -f .github/scripts/create_extension.sql
 
         if [[ ${{ inputs.database_level }} == false ]];then
           echo "Starting to restore whole Babelfish physical database"
           if [[ '${{ inputs.type }}' == 'full' ]];then
             echo 'Restoring from pg_dumpall'
-            sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals.sql > ~/upgrade/error.log
+            sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals.sql > ~/upgrade/error.log
             echo 'Restoring from pg_dump'
             if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump.archive > ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump.archive > ~/upgrade/error.log
             else
-              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump.archive > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump.archive > ~/upgrade/error.log
             fi
           else
             echo 'Restoring from pg_dumpall'
-            sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_so.sql > ~/upgrade/error.log
+            sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_so.sql > ~/upgrade/error.log
             echo 'Restoring from pg_dump'
             if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_so.archive > ~/upgrade/error.log
-              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_do.archive > ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_so.archive > ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_do.archive > ~/upgrade/error.log
             else
-              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_so.archive > ~/upgrade/error.log
-              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_do.archive > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_so.archive > ~/upgrade/error.log
+              $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_do.archive > ~/upgrade/error.log
             fi
           fi
         else
@@ -186,29 +186,29 @@ runs:
             db_trimmed="$(echo -e "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             echo "Restoring $db_trimmed"
             if [[ '${{ inputs.type }}' == 'full' ]];then
-              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed".sql > ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed".sql > ~/upgrade/error.log
               if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed".archive > ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed".archive > ~/upgrade/error.log
               else
-                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed".archive > ~/upgrade/error.log
+                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed".archive > ~/upgrade/error.log
               fi
             else
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed"_so.sql > ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed"_so.sql > ~/upgrade/error.log
               if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive > ~/upgrade/error.log
-                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive > ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive > ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive > ~/upgrade/error.log
               else
-                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive > ~/upgrade/error.log
-                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive > ~/upgrade/error.log
+                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive > ~/upgrade/error.log
+                $DUMP_RESTORE_UTILS_PATH/pg_restore -h localhost -d babelfish_db -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive > ~/upgrade/error.log
               fi
             fi
           done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
 
           # Create rds_ad role
-          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE ROLE rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION;"
+          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE ROLE rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION;"
 
           # Create tds_fdw extension
-          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION IF NOT EXISTS tds_fdw;"
+          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION IF NOT EXISTS tds_fdw;"
 
           # Re-create windows login [abc\test]
           # This is the only special role which needs to created before re-creating
@@ -319,7 +319,7 @@ runs:
           done < <(tail -n +3 ~/upgrade/servers_file.txt | head -n -2)
 
           # Restore the objects in PUBLIC schema.
-          sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d jdbc_testdb -U jdbc_user -f ~/upgrade/dump/pg_dump_public.sql &> ~/upgrade/error_public_schema.log
+          sudo PGPASSWORD=12345678 $DUMP_RESTORE_UTILS_PATH/psql -h localhost -d babelfish_db -U jdbc_user -f ~/upgrade/dump/pg_dump_public.sql &> ~/upgrade/error_public_schema.log
         fi
         echo 'Database restore complete.'
         rm -rf ~/upgrade/dump
