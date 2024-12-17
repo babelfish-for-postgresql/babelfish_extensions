@@ -106,12 +106,12 @@ jobs:
           sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         shell: bash
 
+      - uses: actions/checkout@v2
+
       - name: Install extensions
         id: install-extensions-older
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-        
-      - uses: actions/checkout@v2
 
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
