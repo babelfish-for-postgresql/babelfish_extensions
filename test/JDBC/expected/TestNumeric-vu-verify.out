@@ -456,7 +456,7 @@ numeric
 ~~END~~
 
 
-#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38;
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
 select in3 * in4 from testnumeric_vu_prepare_tab2;
 ~~ERROR (Code: 33557097)~~
 
