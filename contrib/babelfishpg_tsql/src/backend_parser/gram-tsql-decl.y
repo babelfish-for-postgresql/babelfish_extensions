@@ -100,7 +100,7 @@
 
 %type <node> tsql_contains_search_condition
 %type <node> tsql_pivot_expr
-%type <node> tsql_unpivot_expr
+%type <node> tsql_unpivot_clause
 
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION
 	TSQL_CALLER TSQL_CHOOSE TSQL_CLUSTERED TSQL_COLUMNSTORE TSQL_CONVERT
@@ -135,4 +135,4 @@
  */
 %token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren
 
-%left TSQL_CROSS TSQL_OUTER
+%left TSQL_CROSS TSQL_OUTER TSQL_UNPIVOT

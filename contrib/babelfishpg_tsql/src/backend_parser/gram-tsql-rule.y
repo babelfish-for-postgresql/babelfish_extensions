@@ -1613,32 +1613,7 @@ simple_select:
 					n->windowClause = $11;
 					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
 				}
-			| SELECT opt_all_clause opt_target_list
-			into_clause from_clause tsql_unpivot_expr alias_clause where_clause
-			group_clause having_clause window_clause 
-				{
-					SelectStmt *n = makeNode(SelectStmt);
-					n->targetList = $3;
-					n->intoClause = $4;
-					n->fromClause = $5;
-					n->whereClause = $8;
-					n->groupClause = ($9)->list;
-					n->groupDistinct = ($9)->distinct;
-					n->havingClause = $10;
-					n->windowClause = $11;
-					n->isPivot = false;
-					$$ = tsql_unpivot_select_transformation(n, (List *)$6, $7);
-				}
 			| tsql_values_clause							{ $$ = $1; }
-			;
-
-tsql_unpivot_expr: 
-				TSQL_UNPIVOT '(' columnref FOR columnref IN_P '(' columnList ')' ')'
-				{
-					List *ret;
-					ret = list_make3((Node *)$3, (Node *)$5, (Node *)$8);
-					$$ = (Node *)ret;
-				}
 			;
 
 tsql_pivot_expr: TSQL_PIVOT '(' func_name '(' columnref ')' FOR columnref IN_P '(' columnList ')' ')'
@@ -1804,6 +1779,11 @@ table_ref:	relation_expr tsql_table_hint_expr
 					 */
 					$$ = (Node *) $1;
 				}
+			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
+				{
+					List *unpivot_info = list_make3($1, $3, $4);
+                    $$ = tsql_unpivot_debug_transformation(unpivot_info);
+				}
 		;
 
 openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
@@ -1923,6 +1903,13 @@ joined_table:
 					$$ = n;
 				}
 		;
+
+tsql_unpivot_clause:
+            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+                {
+					$$ = (Node *)list_make3($2, $4, $7);
+                }
+            ;
 
 func_expr_common_subexpr:
 			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
