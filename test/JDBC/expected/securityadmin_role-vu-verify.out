@@ -801,7 +801,7 @@ create schema perm_denied_scm
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
+~~ERROR (Message: permission denied for database babelfish_db)~~
 
 
 create view perm_denied_v1 as select 1;

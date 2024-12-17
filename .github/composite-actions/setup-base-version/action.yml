@@ -143,16 +143,16 @@ runs:
         fi
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "DROP DATABASE IF EXISTS babelfish_db;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "CREATE DATABASE babelfish_db OWNER jdbc_user;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "set allow_system_table_mods = on;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER USER jdbc_user CREATEDB;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
@@ -160,8 +160,8 @@ runs:
       id: change-migration-mode
       if: ${{ inputs.migration_mode == 'multi-db' }} && always()
       run: |
-        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
       shell: bash
 
     - if: ${{ inputs.extension_branch != 'latest' && inputs.dump_restore == 'true' }}
@@ -182,6 +182,7 @@ runs:
         cd test/JDBC/
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
+        export physicalDatabaseName=babelfish_db
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           export serverCollationName=${{ inputs.server_collation_name }}
         fi
@@ -245,7 +246,7 @@ runs:
         provider="PostgreSQL Unicode" \
         fileGenerator_URL=localhost \
         fileGenerator_port=5432 \
-        fileGenerator_databaseName=jdbc_testdb \
+        fileGenerator_databaseName=babelfish_db \
         fileGenerator_user=jdbc_user \
         fileGenerator_password=12345678 \
         LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \

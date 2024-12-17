@@ -110,7 +110,7 @@ if [ ! $TARGET_WS ]; then
 fi
 echo "Target Workspace: $TARGET_WS"
 
-TEST_DB="jdbc_testdb"
+TEST_DB="babelfish_db"
 
 cd $TARGET_WS
 if [ ! -d "./postgresql_modified_for_babelfish" ]; then
@@ -198,10 +198,10 @@ pg_dump() {
 
     if [[ ! $2 ]];then
         $1/postgres/bin/pg_dumpall --username jdbc_user --roles-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
-        $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+        $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=babelfish_db 2>>error.log
     else
         $1/postgres/bin/pg_dumpall --username jdbc_user --roles-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
-        $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+        $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=babelfish_db 2>>error.log
     fi
     stop $1
 }
@@ -213,15 +213,15 @@ restore() {
     rm -f error.log
     echo "Restoring from pg_dumpall"
     $2/postgres/bin/psql -d postgres -U $USER -f $1/postgres/pg_dump_globals.sql 2>error.log
-    $2/postgres/bin/psql -d postgres -U $USER -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
+    $2/postgres/bin/psql -d postgres -U $USER -c "CREATE DATABASE babelfish_db OWNER jdbc_user;"
 
     echo "Restoring from pg_dump"
     if [[ ! $3 ]];then
         $2/postgres/bin/psql -d postgres -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
-        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+        $2/postgres/bin/psql -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';"
+        $2/postgres/bin/psql -d babelfish_db -U jdbc_user -c "SELECT pg_reload_conf();"
     else
-        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+        $2/postgres/bin/psql -d babelfish_db -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
     fi
 }
 
@@ -391,7 +391,7 @@ elif [ "$1" == "pg_upgrade" ]; then
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
     bin/psql -d $TEST_DB -U $USER -c \
-        "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';"
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
     exit 0

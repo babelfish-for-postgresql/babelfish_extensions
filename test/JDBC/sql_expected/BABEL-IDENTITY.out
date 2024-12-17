@@ -162,7 +162,7 @@ SET IDENTITY_INSERT dbo.test_table2 ON;
 go
 ~~ERROR (Code: 8107)~~
 
-~~ERROR (Message: IDENTITY_INSERT is already ON for table 'jdbc_testdb.master_dbo.test_table1')~~
+~~ERROR (Message: IDENTITY_INSERT is already ON for table 'babelfish_db.master_dbo.test_table1')~~
 
 SET IDENTITY_INSERT dbo.test_table1 OFF;
 go

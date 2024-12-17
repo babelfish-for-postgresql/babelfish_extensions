@@ -124,7 +124,7 @@ jobs:
           } > pg_hba.conf
           ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -c -D ~/${{env.OLD_INSTALL_DIR}}/data -l ~/${{env.OLD_INSTALL_DIR}}/data/logfile restart
           cd ~/work/babelfish_extensions/babelfish_extensions/
-          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="multi-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode="multi-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
         shell: bash
 

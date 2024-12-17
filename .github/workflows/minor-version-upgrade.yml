@@ -106,12 +106,12 @@ jobs:
           sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         shell: bash
 
+      - uses: actions/checkout@v2
+
       - name: Install extensions
         id: install-extensions-older
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-        
-      - uses: actions/checkout@v2
 
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
@@ -139,12 +139,12 @@ jobs:
           ulimit -c unlimited
           cd ~
           ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run JDBC Tests

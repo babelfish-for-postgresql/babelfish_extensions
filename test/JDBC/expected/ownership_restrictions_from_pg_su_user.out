@@ -1,7 +1,7 @@
 -- tsql
 -- This test file checks the changes which are ignored in the tod run
 -- As tod will not be able to create an SUPERUSER
--- and testing on jdbc_testdb(where bbf is initialized) is not possible
+-- and testing on babelfish_db(where bbf is initialized) is not possible
 CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
 GO
 
@@ -22,7 +22,7 @@ GO
 -- If tsql login connected through psql Alter ROLE of an bbf created logins/user/roles for password,
 -- connection limit and valid until should be working fine
 -- and the rest of alter role operations should throw an error.
-ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE ALL IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -30,7 +30,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -38,7 +38,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE CURRENT_ROLE IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -46,7 +46,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE CURRENT_USER IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -54,7 +54,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE SESSION_USER IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -62,7 +62,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -74,7 +74,7 @@ GO
 -- For plain psql user Alter ROLE of an bbf created logins/user/roles for password,
 -- connection limit and valid until should be working fine
 -- and the rest of alter role operations should throw an error.
-ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE ALL IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -82,7 +82,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -90,7 +90,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE CURRENT_ROLE IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -98,7 +98,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE CURRENT_USER IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -106,7 +106,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE SESSION_USER IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -114,7 +114,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE babelfish_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
 

@@ -37,14 +37,14 @@ runs:
         echo 'Updating babelfish extensions...'
         cd ~/work/babelfish_extensions/babelfish_extensions/
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE;"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_tsql UPDATE;"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE;"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION babelfishpg_tsql UPDATE;"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
         echo 'Reset bbf database settings...'
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.pg_new_dir }}/data/postgresql.conf
           ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data/ -l ~/${{ inputs.pg_new_dir }}/data/logfile restart
