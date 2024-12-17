@@ -964,6 +964,27 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				else
 					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
 			}
+		case T_SubLink:
+			{
+				const SubLink *sublink = (const SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get type for untransformed sublink");
+					tent = linitial_node(TargetEntry, qtree->targetList);
+					Assert(!tent->resjunk);
+					return resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr);
+					/* note we don't need to care if it's an array */
+				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
+				return -1;
+			}
 			/* TODO handle more Expr types if needed */
 		default:
 			return -1;
