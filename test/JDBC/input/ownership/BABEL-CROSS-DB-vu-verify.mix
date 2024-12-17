@@ -467,6 +467,18 @@ SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
 SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
 GO
 
+-- batch inside transaction
+BEGIN TRAN;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+COMMIT;
+GO
+
 -- system objects refferred via sys schema
 -- for sys.databases
 BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
@@ -610,6 +622,75 @@ SELECT DISTINCT 1 FROM #babel_cross_db_vu_verify_tempt;
 GO
 
 DROP TABLE #babel_cross_db_vu_verify_tempt;
+GO
+
+-- Batches for testing default_database and default_schema setting
+-- tsql
+USE master;
+GO
+
+CREATE LOGIN babel_cross_db_vu_verify_lgn1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_cross_db_vu_verify_master_user_with_def_sch FOR login babel_cross_db_vu_verify_lgn1 WITH default_schema = babel_cross_db_vu_prepare_s1;
+GO
+
+GRANT SELECT ON babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 TO babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE USER babel_cross_db_vu_verify_db1_user_with_def_sch FOR LOGIN babel_cross_db_vu_verify_lgn1 WITH default_schema = babel_cross_db_vu_prepare_s2;
+GO
+
+GRANT SELECT ON babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 TO babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+-- tsql user=babel_cross_db_vu_verify_lgn1 password=12345678
+USE master;
+GO
+
+-- TODO: Fix BABEL-5050
+SELECT * FROM babel_cross_db_vu_prepare_t1; SELECT * FROM my_babel_cross_db_vu_prepare_db1..babel_cross_db_vu_prepare_t2;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_t1; SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+-- TODO: Fix BABEL-5050
+SELECT * FROM babel_cross_db_vu_prepare_t2; SELECT * FROM master..babel_cross_db_vu_prepare_t1;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_t2; SELECT * FROM master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+-- terminate-tsql-conn user=babel_cross_db_vu_verify_lgn1 password=12345678
+
+-- cleanup for "Batches for testing default_database and default_schema setting"
+-- tsql
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+REVOKE SELECT ON babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 FROM babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+DROP USER babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+USE master;
+GO
+
+REVOKE SELECT ON babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 FROM babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+DROP USER babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+DROP LOGIN babel_cross_db_vu_verify_lgn1;
 GO
 
 -- tsql
