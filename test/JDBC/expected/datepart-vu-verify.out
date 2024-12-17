@@ -505,3 +505,1948 @@ int
 2022
 ~~END~~
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Test Case for Date Part Functions Timezone Invariance
+DECLARE @timezone VARCHAR(50);
+DECLARE @datepart VARCHAR(20);
+DECLARE @datatype VARCHAR(20);
+DECLARE @datecol VARCHAR(30);
+DECLARE @testdate DATETIME;
+DECLARE @sql NVARCHAR(MAX);
+-- Cursor for timezones
+DECLARE timezone_cursor CURSOR FOR SELECT TimezoneName FROM date_part_vu_prepare_TestTimezones;
+OPEN timezone_cursor;
+FETCH NEXT FROM timezone_cursor INTO @timezone;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Set the timezone
+    EXEC('SELECT set_config(''timezone'', ''' + @timezone + ''', false)');
+    -- Cursor for date parts
+    DECLARE datepart_cursor CURSOR FOR SELECT DatePartName FROM date_part_vu_prepare_DateParts;
+    OPEN datepart_cursor;
+    FETCH NEXT FROM datepart_cursor INTO @datepart;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        -- Cursor for data types
+        DECLARE datatype_cursor CURSOR FOR 
+        SELECT 'DATETIME', 'TestDateTime' UNION ALL
+        SELECT 'DATETIMEOFFSET', 'TestDateTimeOffset' UNION ALL
+        SELECT 'DATETIME2', 'TestDateTime2' UNION ALL
+        SELECT 'SMALLDATETIME', 'TestSmallDateTime';
+        OPEN datatype_cursor;
+        FETCH NEXT FROM datatype_cursor INTO @datatype, @datecol;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            -- Cursor for test dates
+            DECLARE testdate_cursor CURSOR FOR SELECT TestDateTime FROM date_part_vu_prepare_TestDates;
+            OPEN testdate_cursor;
+            FETCH NEXT FROM testdate_cursor INTO @testdate;
+            WHILE @@FETCH_STATUS = 0
+            BEGIN
+                SET @sql = N'
+                INSERT INTO date_part_vu_prepare_TestResults (TestCase, TimeZone, DataType, InputDate, DatePart, DatePartValue, DateName)
+                SELECT 
+                    ''Test: '' + CONVERT(VARCHAR, ' + @datecol + ', 120) + '' in ' + @timezone + ''' AS TestCase,
+                    ''' + @timezone + ''' AS TimeZone,
+                    ''' + @datatype + ''' AS DataType,
+                    CONVERT(VARCHAR, ' + @datecol + ', 120) AS InputDate,
+                    ''' + @datepart + ''' AS DatePart,
+                    DATEPART(' + @datepart + ', ' + @datecol + ') AS DatePartValue,
+                    DATENAME(' + @datepart + ', ' + @datecol + ') AS DateName
+                FROM date_part_vu_prepare_TestDates
+                WHERE TestDateTime = ''' + CONVERT(VARCHAR, @testdate, 120) + '''';
+                EXEC sp_executesql @sql;
+                FETCH NEXT FROM testdate_cursor INTO @testdate;
+            END
+            CLOSE testdate_cursor;
+            DEALLOCATE testdate_cursor;
+            FETCH NEXT FROM datatype_cursor INTO @datatype, @datecol;
+        END
+        CLOSE datatype_cursor;
+        DEALLOCATE datatype_cursor;
+        FETCH NEXT FROM datepart_cursor INTO @datepart;
+    END
+    CLOSE datepart_cursor;
+    DEALLOCATE datepart_cursor;
+    FETCH NEXT FROM timezone_cursor INTO @timezone;
+END
+CLOSE timezone_cursor;
+DEALLOCATE timezone_cursor;
+GO
+~~START~~
+text
+UTC
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+America/New_York
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Europe/London
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Asia/Tokyo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Africa/Nairobi
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Analyze results
+SELECT * FROM date_part_vu_prepare_TestResults
+ORDER BY DataType, InputDate, TimeZone, DatePart;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#sql_variant#!#nvarchar
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-01-01 05:30:45#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 in America/New_York#!#America/New_York#!#DATETIME#!#2025-01-01 05:30:45#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-01-01 05:30:45#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 in Europe/London#!#Europe/London#!#DATETIME#!#2025-01-01 05:30:45#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 in UTC#!#UTC#!#DATETIME#!#2025-01-01 05:30:45#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME#!#2025-06-15 23:59:59#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 in America/New_York#!#America/New_York#!#DATETIME#!#2025-06-15 23:59:59#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME#!#2025-06-15 23:59:59#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 in Europe/London#!#Europe/London#!#DATETIME#!#2025-06-15 23:59:59#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 in UTC#!#UTC#!#DATETIME#!#2025-06-15 23:59:59#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#microsecond#!#123457#!#123457
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#millisecond#!#123#!#123
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#nanosecond#!#123457000#!#123457000
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45.123457 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#microsecond#!#123457#!#123457
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#millisecond#!#123#!#123
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#nanosecond#!#123457000#!#123457000
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45.123457 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#microsecond#!#123457#!#123457
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#millisecond#!#123#!#123
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#nanosecond#!#123457000#!#123457000
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45.123457 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#microsecond#!#123457#!#123457
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#millisecond#!#123#!#123
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#nanosecond#!#123457000#!#123457000
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45.123457 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#microsecond#!#123457#!#123457
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#millisecond#!#123#!#123
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#nanosecond#!#123457000#!#123457000
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45.123457 in UTC#!#UTC#!#DATETIME2#!#2025-01-01 05:30:45.123457#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#microsecond#!#987654#!#987654
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#millisecond#!#987#!#987
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#nanosecond#!#987654000#!#987654000
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59.987654 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#microsecond#!#987654#!#987654
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#millisecond#!#987#!#987
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#nanosecond#!#987654000#!#987654000
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59.987654 in America/New_York#!#America/New_York#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#microsecond#!#987654#!#987654
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#millisecond#!#987#!#987
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#nanosecond#!#987654000#!#987654000
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59.987654 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#microsecond#!#987654#!#987654
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#millisecond#!#987#!#987
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#nanosecond#!#987654000#!#987654000
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59.987654 in Europe/London#!#Europe/London#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#microsecond#!#987654#!#987654
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#millisecond#!#987#!#987
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#nanosecond#!#987654000#!#987654000
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59.987654 in UTC#!#UTC#!#DATETIME2#!#2025-06-15 23:59:59.987654#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#day#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#minute#!#30#!#30
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#month#!#1#!#January
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#second#!#45#!#45
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#week#!#1#!#1
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:30:45 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-01-01 05:30:45 +00:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 +00:00 in Africa/Nairobi#!#Africa/Nairobi#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 +00:00 in America/New_York#!#America/New_York#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 +00:00 in Asia/Tokyo#!#Asia/Tokyo#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 +00:00 in Europe/London#!#Europe/London#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#second#!#59#!#59
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:59 +00:00 in UTC#!#UTC#!#DATETIMEOFFSET#!#2025-06-15 23:59:59 +00:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#day#!#1#!#1
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#minute#!#31#!#31
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#month#!#1#!#January
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#second#!#0#!#0
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:31:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#day#!#1#!#1
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#minute#!#31#!#31
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#month#!#1#!#January
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#second#!#0#!#0
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#week#!#1#!#1
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:31:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#day#!#1#!#1
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#minute#!#31#!#31
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#month#!#1#!#January
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#second#!#0#!#0
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:31:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#day#!#1#!#1
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#minute#!#31#!#31
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#month#!#1#!#January
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#second#!#0#!#0
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#week#!#1#!#1
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:31:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#year#!#2025#!#2025
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#day#!#1#!#1
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#dayofyear#!#1#!#1
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#hour#!#5#!#5
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#iso_week#!#1#!#1
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#microsecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#millisecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#minute#!#31#!#31
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#month#!#1#!#January
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#nanosecond#!#0#!#0
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#quarter#!#1#!#1
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#second#!#0#!#0
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#tzoffset#!#0#!#0
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#week#!#1#!#1
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#weekday#!#4#!#Wednesday
+Test: 2025-01-01 05:31:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-01-01 05:31:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#second#!#0#!#0
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:00 in Africa/Nairobi#!#Africa/Nairobi#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#second#!#0#!#0
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:00 in America/New_York#!#America/New_York#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#second#!#0#!#0
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:00 in Asia/Tokyo#!#Asia/Tokyo#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#second#!#0#!#0
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:00 in Europe/London#!#Europe/London#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#year#!#2025#!#2025
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#day#!#15#!#15
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#dayofyear#!#166#!#166
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#hour#!#23#!#23
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#iso_week#!#24#!#24
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#microsecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#millisecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#minute#!#59#!#59
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#month#!#6#!#June
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#nanosecond#!#0#!#0
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#quarter#!#2#!#2
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#second#!#0#!#0
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#tzoffset#!#0#!#0
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#week#!#25#!#25
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#weekday#!#1#!#Sunday
+Test: 2025-06-15 23:59:00 in UTC#!#UTC#!#SMALLDATETIME#!#2025-06-15 23:59:00#!#year#!#2025#!#2025
+~~END~~
+
+
+-- Check for any discrepancies
+SELECT 
+    DataType,
+    InputDate,
+    DatePart,
+    COUNT(DISTINCT DatePartValue) AS UniqueDatePartValues,
+    COUNT(DISTINCT DateName) AS UniqueDateNames
+FROM date_part_vu_prepare_TestResults
+GROUP BY DataType, InputDate, DatePart
+HAVING 
+    COUNT(DISTINCT DatePartValue) > 1 OR 
+    COUNT(DISTINCT DateName) > 1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int#!#int
+~~END~~
+
+
+-- Reset Timezone
+SELECT set_config('timezone', 'UTC', false)
+GO
+~~START~~
+text
+UTC
+~~END~~
+

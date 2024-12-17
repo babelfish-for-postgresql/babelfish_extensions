@@ -373,7 +373,6 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	Timestamp	tsql_first_day, first_day;
 	struct pg_tm tt1, *tm = &tt1;
 	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
-	int 		tz1;
 
 	/*
 	 * This block is used when the second argument in datepart is not a 
@@ -396,7 +395,7 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	}
 		
 	/* Gets the date time related fields back from timestamp into struct tm pointer */
-	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec1, NULL, NULL) != 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
