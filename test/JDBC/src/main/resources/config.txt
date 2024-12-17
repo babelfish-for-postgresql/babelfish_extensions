@@ -3,7 +3,7 @@ URL = localhost
 tsql_port = 1433
 psql_port = 5432
 databaseName = master
-physicalDatabaseName = jdbc_testdb
+physicalDatabaseName = babelfish_db
 user = jdbc_user
 password = 12345678
 

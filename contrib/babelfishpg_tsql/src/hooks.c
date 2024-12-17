@@ -28,6 +28,8 @@
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
+#include "commands/extension.h"
+#include "commands/proclang.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -89,6 +91,13 @@ extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
+
+typedef enum PltsqlInitPrivsOptions
+{
+	SAVE_INIT_PRIVS,
+	DISCARD_INIT_PRIVS,
+	ERROR_INIT_PRIVS
+} PltsqlInitPrivsOptions;
 
 /*****************************************
  * 			Catalog Hooks
@@ -186,6 +195,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 
 /*****************************************
  * 			Replication Hooks
@@ -513,6 +523,8 @@ InstallExtendedHooks(void)
 	pltsql_get_object_owner_hook = pltsql_get_object_owner;
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
+
+	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
 }
 
 void
@@ -588,6 +600,7 @@ UninstallExtendedHooks(void)
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
+	pltsql_allow_storing_init_privs_hook = NULL;
 }
 
 /*****************************************
@@ -5850,4 +5863,112 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 		return true;
 
 	return false;
+}
+
+static bool
+allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
+{
+	ObjectAddress			address;
+	Oid						nspoid = InvalidOid;
+	ObjectType				objtype;
+	PltsqlInitPrivsOptions	init_privs_opt = ERROR_INIT_PRIVS;
+
+	/*
+	 * Check if it is create/upgrade script of babelfishpg_tsql extension
+	 * Otherwise return true -- Allow storing.
+	 */
+	if (!(creating_extension &&
+		OidIsValid(CurrentExtensionObject) &&
+		CurrentExtensionObject == get_extension_oid("babelfishpg_tsql", true)))
+		return true;
+
+	/* 
+	 * There are 3 category of handling
+	 * 1. SAVE_INIT_PRIVS    : Check if it is objects created during CREATE extension and
+	 *                         store initial privs for them. system, information_schema_tsql
+	 *                         objects and pltsql language are the examples of it.
+	 * 
+	 * 2. DISCARD_INIT_PRIVS : If it is schema contained object within system created
+	 *                         TSQL schema like master, msdb or tempdb OR user created schema,
+	 *                         Do not store initial privileges for them.
+	 * 
+	 * 3. ERROR_INIT_PRIVS   : The default case when above 2 conditions doesn't match then error
+	 *                         out. To avoid error please classify it between above 2 condtions. 
+	 */
+	ObjectAddressSet(address, classoid, objoid);
+	objtype = get_object_type(classoid, objoid);
+	if (objtype == OBJECT_SCHEMA)
+	{
+		nspoid = objoid;
+	}
+	else
+	{
+		nspoid = get_object_namespace(&address);
+	}
+	if (OidIsValid(nspoid)) /* Schema contained objects */
+	{
+		char *nspname = get_namespace_name(nspoid);
+		if (nspname && is_shared_schema(nspname))
+		{
+			init_privs_opt = SAVE_INIT_PRIVS;
+		}
+		else if (nspname && get_logical_schema_name(nspname, true))
+		{
+			init_privs_opt = DISCARD_INIT_PRIVS;
+		}
+	}
+	else /* Non-schema contained object */
+	{
+		switch (objtype)
+		{
+			case OBJECT_LANGUAGE:
+				if (OidIsValid(objoid) &&
+					objoid == get_language_oid("pltsql", true))
+				{
+					init_privs_opt = SAVE_INIT_PRIVS;
+					break;
+				}
+				else
+				{
+					break;
+				}
+			case OBJECT_DATABASE:
+				if (OidIsValid(objoid) &&
+					objoid == MyDatabaseId)
+				{
+					init_privs_opt = DISCARD_INIT_PRIVS;
+					break;
+				}
+				else
+				{
+					break;
+				}
+			default:
+				break;
+		}
+	}
+
+	switch (init_privs_opt)
+	{
+		case SAVE_INIT_PRIVS:
+			return true;
+			break;
+		case DISCARD_INIT_PRIVS:
+			return false;
+			break;
+		case ERROR_INIT_PRIVS:
+			/*
+			 * NOTE: Following error message mentions that upgrade script shouldn't
+			 * be storing initial privileges BUT it is not the rigid ristriction.
+			 * If it is required to add initial privileges for some objects like objects created
+			 * during CREATE extension then please add an exception for them in above logic.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Initial privileges for given object %s can not be "
+							"added during Babelfish upgrade.",
+							getObjectDescription(&address, true))));
+			return true;
+	}
+	return true;
 }
