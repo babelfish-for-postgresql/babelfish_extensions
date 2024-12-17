@@ -931,7 +931,11 @@ transform_likenode(Node *node)
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 
-		get_remove_accents_internal_oid();
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			!((coll_info_of_inputcollid.collateflags == 0x000c) /* CS_AS  */
+			 || (coll_info_of_inputcollid.collateflags == 0x000d)) /* CI_AS  */)
+			get_remove_accents_internal_oid();
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
