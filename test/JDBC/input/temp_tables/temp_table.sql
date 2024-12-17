@@ -1,3 +1,6 @@
+USE master
+GO
+
 -- BABEL-4912 test ALTER TABLE for temp tables
 CREATE TABLE #t1 (a INT IDENTITY PRIMARY KEY NOT NULL, b INT)
 GO
@@ -189,7 +192,7 @@ GO
 CREATE TABLE #t1 (a INT DEFAULT dbo.temp_table_func1(6))
 GO
 
-CREATE TABLE #t1 (a INT DEFAULT jdbc_testdb.dbo.temp_table_func1(7))
+CREATE TABLE #t1 (a INT DEFAULT master.dbo.temp_table_func1(7))
 GO
 
 -- also block adding columns via ALTER TABLE
