@@ -901,6 +901,8 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 {
 	int			collidx_of_cs_as;
 
+	const char *babelfish_restore = GetConfigOption("babelfishpg_tsql.restore_tsql_tabletype", true, false);
+
 	tsql_get_database_or_server_collation_oid_internal(true);
 
 	if (!OidIsValid(database_or_server_collation_oid))
@@ -928,6 +930,12 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	}
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	
+
+	if ((babelfish_restore &&
+		 strncmp(babelfish_restore, "on", 2) == 0))
+		return node;
 
 	return transform_likenode_for_AI(node, op);	
 }
