@@ -59,6 +59,7 @@ Oid			database_or_server_collation_oid = InvalidOid;
 
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
+extern bool restore_tsql_tabletype;
 static Oid remove_accents_internal_oid;
 static UTransliterator *cached_transliterator = NULL;
 
@@ -967,7 +968,7 @@ transform_likenode(Node *node)
 			}
 		}
 
-		if ((*collation_callbacks_ptr->has_like_node) (node) && babelfish_dump_restore && (coll_info_of_inputcollid.collateflags == 0x000e))
+		if ((*collation_callbacks_ptr->has_like_node) (node) && restore_tsql_tabletype && (coll_info_of_inputcollid.collateflags == 0x000e))
 			return node;
 
 		if (OidIsValid(like_entry.like_oid) &&
