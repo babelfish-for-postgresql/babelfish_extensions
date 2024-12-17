@@ -794,6 +794,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 				}
 				return new_node;
 			}
+		case T_FuncExpr:
 		case T_Var:
 		case T_Param:
 		case T_CaseExpr:
@@ -829,30 +830,6 @@ convert_node_to_funcexpr_for_like(Node *node)
 								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
 				}
 				new_node = expression_tree_mutator(new_node, pgtsql_expression_tree_mutator, NULL);
-				newFuncExpr->args = list_make1(new_node);
-				break;
-			}
-		case T_FuncExpr:
-			{
-				const Oid funcargtypes[1] = {TEXTOID};
-				Oid func_oid = ((FuncExpr*)node)->funcid;
-				Oid remove_accents_internal_cached_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_cache")), -1, funcargtypes, true);
-				Oid remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
-
-				if (func_oid == remove_accents_internal_cached_oid || func_oid == remove_accents_internal_oid)
-					return node;
-
-				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
-													TEXTOID, -1,
-													COERCION_EXPLICIT,
-													COERCE_EXPLICIT_CAST,
-													exprLocation(node));
-				if (unlikely(new_node == NULL))
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
-				}
 				newFuncExpr->args = list_make1(new_node);
 				break;
 			}
@@ -954,7 +931,11 @@ transform_likenode(Node *node)
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 
-		get_remove_accents_internal_oid();
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			!((coll_info_of_inputcollid.collateflags == 0x000c) /* CS_AS  */
+			 || (coll_info_of_inputcollid.collateflags == 0x000d)) /* CI_AS  */)
+			get_remove_accents_internal_oid();
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
