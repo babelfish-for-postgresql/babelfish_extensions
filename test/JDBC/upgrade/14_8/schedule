@@ -37,7 +37,6 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
-restricted_procedures
 BABEL-2170
 BABEL-2203
 BABEL-2208
@@ -60,7 +59,6 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010-before-15_6
 BABEL-3116
-BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -149,7 +147,6 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
-BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -451,15 +448,19 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
-string_agg-before-15_9-or-16_5
+string_agg-before-15_5-or-14_10
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059_before_16_5
 cast-varchar-to-time
+db_accessadmin
+db_ddladmin
+db_securityadmin
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
 

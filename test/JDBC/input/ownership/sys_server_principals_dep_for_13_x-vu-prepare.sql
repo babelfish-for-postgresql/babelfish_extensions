@@ -28,3 +28,7 @@ RETURN (SELECT COUNT(*) FROM sys.server_principals WHERE name LIKE '%sys_server_
 END
 GO
 
+SELECT name, is_fixed_role FROM sys.server_principals
+WHERE name IN ('sysadmin', 'jdbc_user')
+ORDER BY name
+GO

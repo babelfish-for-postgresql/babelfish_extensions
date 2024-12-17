@@ -1,0 +1,43 @@
+-- tsql
+USE master
+GO
+DROP DATABASE IF EXISTS babel_5135_db1;
+GO
+DROP ROLE babel_5135_r1;
+GO
+DROP LOGIN babel_5135_l2
+GO
+DROP USER babel_5135_dbsecadmin_u1
+GO
+DROP LOGIN babel_5135_dbsecadmin_l1
+GO
+DROP ROLE babel_5135_dbsecadmin_r1
+GO
+DROP TABLE babel_5135_schema1.babel_5135_t1;
+GO
+DROP VIEW babel_5135_schema1.babel_5135_v1;
+GO
+DROP PROCEDURE babel_5135_schema1.babel_5135_p1;
+GO
+DROP FUNCTION babel_5135_schema1.babel_5135_f1();
+GO
+DROP FUNCTION babel_5135_schema1.babel_5135_tvf1();
+GO
+DROP PROCEDURE babel_5135_roleop_proc1;
+GO
+DROP PROCEDURE babel_5135_roleop_proc2;
+GO
+DROP PROCEDURE babel_5135_roleop_proc3;
+GO
+DROP PROCEDURE babel_5135_schemaop_proc1;
+GO
+DROP PROCEDURE babel_5135_grantop_proc1, babel_5135_revokeop_proc1;
+GO
+DROP SCHEMA babel_5135_schema1;
+GO
+DROP USER babel_5135_u1;
+GO
+DROP LOGIN babel_5135_l1;
+GO
+DROP VIEW babel_5135_show_role_mem;
+GO

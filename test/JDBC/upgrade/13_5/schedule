@@ -22,7 +22,6 @@ BABEL-1466
 BABEL-1475
 BABEL-1493
 BABEL-1510
-restricted_procedures
 BABEL-1625
 BABEL-1683
 BABEL-1715
@@ -299,7 +298,7 @@ stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 string_agg-before-14_5
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
