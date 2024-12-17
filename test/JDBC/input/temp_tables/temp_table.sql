@@ -185,6 +185,13 @@ GO
 CREATE TABLE #t1 (a INT DEFAULT temp_table_func1(5))
 GO
 
+-- two and three part names should not work either
+CREATE TABLE #t1 (a INT DEFAULT dbo.temp_table_func1(6))
+GO
+
+CREATE TABLE #t1 (a INT DEFAULT jdbc_testdb.dbo.temp_table_func1(7))
+GO
+
 -- also block adding columns via ALTER TABLE
 CREATE TABLE #t1 (a INT)
 GO
@@ -246,6 +253,13 @@ GO
 
 DROP TABLE #t1
 GO
+
+-- Aggregate functions should not work
+create table #t1(a int, b int default any_value(a))
+go
+
+create table #t1(a int, b int default any_value(1))
+go
 
 -- also validate that the restrictions work for ALTER TABLE ADD CONSTRAINT
 CREATE TABLE #t1 (a INT)
