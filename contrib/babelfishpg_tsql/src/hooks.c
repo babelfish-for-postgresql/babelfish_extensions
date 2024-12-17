@@ -5965,9 +5965,8 @@ allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Adding initial privileges for given object %s is "
-					 		"blocked in Babelfish upgrade script. "
-							"Please enable or disable storing initial privileges for them.",
+					 errmsg("Initial privileges for given object %s can not be "
+							"added during Babelfish upgrade.",
 							getObjectDescription(&address, true))));
 			return true;
 	}
