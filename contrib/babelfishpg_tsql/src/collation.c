@@ -751,12 +751,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node)
+convert_node_to_funcexpr_for_like(Node *node, OpExpr *op)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
+	newFuncExpr->inputcollid = op->inputcollid;
 
 	if (node == NULL)
 		return node;
@@ -852,14 +853,14 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node		*rightop = (Node *) lsecond(op->args);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop),
+												convert_node_to_funcexpr_for_like(leftop, op),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop),
+												convert_node_to_funcexpr_for_like(rightop, op),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
