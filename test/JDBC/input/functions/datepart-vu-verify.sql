@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 50000
 SELECT DATEPART(dd, '07-18-2022')
 GO
 
