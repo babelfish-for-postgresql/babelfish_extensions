@@ -573,20 +573,12 @@ createOpenJsonWithColDef(char *elemName, TypeName *elemType)
 TypeName *
 setCharTypmodForOpenjson(TypeName *t)
 {
-	int			curTMod = getElemTypMod(t);
 	List	   *tmods = (List *) t->typmods;
 
 	if (tmods == NULL)
 	{
 		/* Default value when no typmod is provided is 1 */
 		t->typmods = list_make1(makeIntConst(1, -1));
-		return t;
-	}
-	else if (curTMod == TSQLMaxTypmod)
-	{
-		/* TSQLMaxTypmod is represented as -8000 so we need to change to */
-		/* the actual max value of 4000 */
-		t->typmods = list_make1(makeIntConst(4000, -1));
 		return t;
 	}
 	else
