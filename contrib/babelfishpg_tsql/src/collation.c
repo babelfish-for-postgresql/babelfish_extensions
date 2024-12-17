@@ -931,11 +931,7 @@ transform_likenode(Node *node)
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 
-		if (OidIsValid(like_entry.like_oid) &&
-			OidIsValid(coll_info_of_inputcollid.oid) &&
-			!((coll_info_of_inputcollid.collateflags == 0x000c) /* CS_AS  */
-			 || (coll_info_of_inputcollid.collateflags == 0x000d)) /* CI_AS  */)
-			get_remove_accents_internal_oid();
+		get_remove_accents_internal_oid();
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where
@@ -970,6 +966,9 @@ transform_likenode(Node *node)
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
 		}
+
+		if ((*collation_callbacks_ptr->has_like_node) (node) && babelfish_dump_restore && (coll_info_of_inputcollid.collateflags == 0x000e))
+			return node;
 
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
