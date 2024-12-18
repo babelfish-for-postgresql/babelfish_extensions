@@ -124,7 +124,7 @@ TdsDestroy(DestReceiver *self)
 }
 
 static int
-TdsSSLHandshake(struct Port *port)
+TdsDirectSSLHandshake(struct Port *port)
 {
 	/* Always return STATUS_OK for TDS connections */
 	return STATUS_OK;
