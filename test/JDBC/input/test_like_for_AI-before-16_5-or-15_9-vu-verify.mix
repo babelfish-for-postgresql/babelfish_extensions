@@ -1703,6 +1703,12 @@ GO
 
 -- CASE 21: COLUMN LEVEL CONSTRAINT
 
+-- psql
+\d master_dbo.test_like_for_AI_prepare_employee_CS_AI;
+GO
+
+-- tsql
+
 -- Test the constraint
 -- This insert will succeed
 INSERT INTO test_like_for_AI_prepare_employee_CS_AI (id, name) VALUES (1, 'Adam');
