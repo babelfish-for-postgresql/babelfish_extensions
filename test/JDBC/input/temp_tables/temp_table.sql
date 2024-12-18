@@ -1,3 +1,6 @@
+USE master
+GO
+
 -- BABEL-4912 test ALTER TABLE for temp tables
 CREATE TABLE #t1 (a INT IDENTITY PRIMARY KEY NOT NULL, b INT)
 GO
@@ -162,4 +165,132 @@ SELECT * FROM #t1
 GO
 
 DROP TABLE #t1
+GO
+
+-- BABEL-4868 disallow the usage of user-defined functions in temp table column defaults (to prevent orphaned catalog entries)
+CREATE FUNCTION temp_table_func1(@a INT) RETURNS INT AS BEGIN RETURN 1 END
+GO
+
+-- normal tables should be ok
+CREATE TABLE temp_table_t1(a INT DEFAULT temp_table_func1(5))
+GO
+
+INSERT INTO temp_table_t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM temp_table_t1
+GO
+
+DROP TABLE temp_table_t1
+GO
+
+-- temp tables should not work
+CREATE TABLE #t1 (a INT DEFAULT temp_table_func1(5))
+GO
+
+-- two and three part names should not work either
+CREATE TABLE #t1 (a INT DEFAULT dbo.temp_table_func1(6))
+GO
+
+CREATE TABLE #t1 (a INT DEFAULT master.dbo.temp_table_func1(7))
+GO
+
+-- also block adding columns via ALTER TABLE
+CREATE TABLE #t1 (a INT)
+GO
+
+ALTER TABLE #t1 ADD b INT DEFAULT temp_table_func1(5)
+GO
+
+DROP TABLE #t1
+GO
+
+-- same with table variables
+DECLARE @tv TABLE (a INT DEFAULT temp_table_func1(5))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+
+-- system functions such as ISJSON() should work
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+ALTER TABLE #t1 ADD b INT DEFAULT ISJSON('b')
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT, DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
+DECLARE @tv TABLE (a INT DEFAULT ISJSON('a'))
+INSERT INTO @tv VALUES (DEFAULT)
+SELECT * FROM @tv
+GO
+
+-- disallow "sys"-qualified function calls
+CREATE TABLE #t1 (a INT DEFAULT SYS.ISJSON('a'))
+GO
+
+-- disallow user-defined overrides for system functions
+CREATE FUNCTION ISJSON(@json TEXT) RETURNS INT AS BEGIN RETURN 10 END
+GO
+
+-- cannot use schema-qualified name
+CREATE TABLE #t1 (a INT DEFAULT dbo.ISJSON('a'))
+GO
+
+-- should work, default to using the system function
+CREATE TABLE #t1 (a INT DEFAULT ISJSON('a'))
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
+-- Aggregate functions should not work
+create table #t1(a int, b int default any_value(a))
+go
+
+create table #t1(a int, b int default any_value(1))
+go
+
+-- also validate that the restrictions work for ALTER TABLE ADD CONSTRAINT
+CREATE TABLE #t1 (a INT)
+GO
+
+-- user-defined functions should not work
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT temp_table_func1(5) FOR a
+GO
+
+-- nor should system function overrides
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT dbo.ISJSON('a') FOR a
+GO
+
+-- but system functions should still work
+ALTER TABLE #t1 ADD CONSTRAINT myconstraint DEFAULT ISJSON('a') FOR a
+GO
+
+INSERT INTO #t1 VALUES (DEFAULT)
+GO
+
+SELECT * FROM #t1
+GO
+
+DROP TABLE #t1
+GO
+
+DROP FUNCTION dbo.ISJSON
+GO
+
+DROP FUNCTION temp_table_func1
 GO
