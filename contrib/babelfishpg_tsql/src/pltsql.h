@@ -1800,6 +1800,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_reset_tds_connection_flag) ();
 
 	bool		(*get_reset_tds_connection_flag) ();
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;

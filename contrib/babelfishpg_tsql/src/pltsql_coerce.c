@@ -2113,27 +2113,27 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
-    int32       max_typmods=0,
-                max_precision = 0,
-                max_scale = 0,
-                precision = 0,
-                scale = 0,
-                integralDigitCount = 0,
-                result_typmod = -1;
-    ListCell    *lc;
-    common_utility_plugin *utilptr = common_utility_plugin_ptr;
+	int32		max_typmods=0,
+			max_precision = 0,
+			max_scale = 0,
+			precision = 0,
+			scale = 0,
+			integralDigitCount = 0,
+			result_typmod = -1;
+	ListCell	*lc;
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
-    if (sql_dialect != SQL_DIALECT_TSQL)
-        return -1;
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return -1;
 
-    if (!is_tsql_char_type_with_len(common_type, false) &&
-        !utilptr->is_tsql_binary_datatype(common_type) &&
-        !utilptr->is_tsql_sys_binary_datatype(common_type) &&
-        !utilptr->is_tsql_varbinary_datatype(common_type) &&
-        !utilptr->is_tsql_sys_varbinary_datatype(common_type) &&
-        !utilptr->is_tsql_decimal_datatype(common_type) &&
-        !((common_type == NUMERICOID)))
-        return -1;
+	if (!is_tsql_char_type_with_len(common_type, false) &&
+			 !utilptr->is_tsql_binary_datatype(common_type) &&
+			 !utilptr->is_tsql_sys_binary_datatype(common_type) &&
+			 !utilptr->is_tsql_varbinary_datatype(common_type) &&
+			 !utilptr->is_tsql_sys_varbinary_datatype(common_type) &&
+			 !utilptr->is_tsql_decimal_datatype(common_type) &&
+			 !((common_type == NUMERICOID)))
+		return -1;
 
 	/* If resulting type is a length, need to be max of length types,
 	 * If the type is numeric or decimal then we calculate scale as 
@@ -2151,6 +2151,18 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		if (common_type == NUMERICOID ||
 			getBaseType(common_type) == NUMERICOID)
 		{
+			/* If Udt then calculate typmod.*/
+			if (OidIsValid(immediate_base_type))
+			{
+				type = getBaseTypeAndTypmod(type, &typmod);
+			}
+			
+			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
+			{
+				Plan* temp = NULL;
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(temp, expr);
+			}
+			
 			if(typmod == -1)
 				continue;
 			

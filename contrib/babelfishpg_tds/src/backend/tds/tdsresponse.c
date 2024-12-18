@@ -138,7 +138,6 @@ static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelati
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
 
@@ -446,7 +445,6 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		// 	outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
 
 		tle = get_tle_by_resno(outerplan->targetlist, attno); // here?
-
 		if (IsA(tle->expr, Var))
 		{
  			Var *var = (Var *)tle->expr;
@@ -537,7 +535,7 @@ is_numeric_datatype(Oid typid)
 }
 
 /* look for a typmod to return from a numeric expression */
-static int32
+int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	if (expr == NULL)
@@ -578,7 +576,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Var		   *var = (Var *) expr;
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (var->varno == OUTER_VAR)
+				if (plan && var->varno == OUTER_VAR)
 				{
 					Assert(plan);
 					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
@@ -746,26 +744,26 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
 					}
-					// else if (precision - scale <= TDS_MAX_NUM_PRECISION)
-					// {
-					// 	/*
-					// 	 * scale adjustment by delta is only applicable for
-					// 	 * division and (multiplcation having no aggregate
-					// 	 * operand)
-					// 	 */
-					// 	int			delta = precision - TDS_MAX_NUM_PRECISION;
+					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
+					{
+						/*
+						 * scale adjustment by delta is only applicable for
+						 * division and (multiplcation having no aggregate
+						 * operand)
+						 */
+						int			delta = precision - TDS_MAX_NUM_PRECISION;
 
-					// 	precision = TDS_MAX_NUM_PRECISION;
-					// 	scale = Max(scale - delta, 0);
-					// }
-					else if (precision - scale > 32 && scale < 6)
-					{
 						precision = TDS_MAX_NUM_PRECISION;
+						scale = Max(scale - delta, 0);
 					}
-					else if (precision - scale < 32)
-					{
-						scale = Min(scale, 38 - (precision-scale));
-					}
+					// else if (precision - scale > 32 && scale < 6)
+					// {
+					// 	precision = TDS_MAX_NUM_PRECISION;
+					// }
+					// else if (precision - scale < 32)
+					// {
+					// 	scale = Min(scale, 38 - (precision-scale));
+					// }
 
 					/*
 					 * Control reaching here for only arithmetic overflow
@@ -965,6 +963,36 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					return rlt->resulttypmod;
 				else
 					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+			}
+		case T_CoerceToDomain:
+			{
+				CoerceToDomain *rlt = (CoerceToDomain *) expr;
+
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
+				else
+					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+			}
+		case T_SubLink:
+			{
+				const SubLink *sublink = (const SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get type for untransformed sublink");
+					tent = linitial_node(TargetEntry, qtree->targetList);
+					Assert(!tent->resjunk);
+					return resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr);
+					/* note we don't need to care if it's an array */
+				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
+				return -1;
 			}
 			/* TODO handle more Expr types if needed */
 		default:
