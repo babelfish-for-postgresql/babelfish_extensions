@@ -1918,7 +1918,10 @@ public:
 
 		// record whether stmt is cross-db
 		if (is_cross_db)
+		{
 			stmt->is_cross_db = true;
+			is_cross_db = false;
+		}
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
 		// record if a function call
