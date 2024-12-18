@@ -186,3 +186,31 @@ GO
 -- psql
 DROP PROCEDURE pg_interop_proc_sp_exec
 GO
+
+-- tsql
+CREATE TABLE babel_5446 (Test INT NULL)
+GO
+INSERT INTO babel_5446 SELECT ISNUMERIC('test') AS my_isnumeric
+GO
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+INSERT INTO babel_5446 SELECT ISNUMERIC('test') AS my_isnumeric
+SELECT @@trancount
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
+DROP TABLE babel_5446
+GO
