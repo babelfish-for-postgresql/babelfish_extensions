@@ -576,11 +576,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Var		   *var = (Var *) expr;
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				// if (plan && var->varno == OUTER_VAR)
-				// {
-				// 	Assert(plan);
-				// 	return (resolve_numeric_typmod_outer_var(plan, var->varattno));
-				// }
+				if (plan && var->varno == OUTER_VAR)
+				{
+					Assert(plan);
+					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+				}
 				return var->vartypmod;
 			}
 		case T_OpExpr:
