@@ -2396,6 +2396,7 @@ get_owner_of_schema(const char *schema)
 
 	return result;
 }
+
 /*
  * downcase_truncate_split_object_name:
  * Resolve the four part object name. Downcase and truncate identifier if needed.
