@@ -261,3 +261,46 @@ GO
 declare @b dbo.MyUDT = CAST('scsdc' AS dbo.MyUDT)
 select upper(@b)
 GO
+
+-- Arguments with pg datatypes
+SELECT upper(a) FROM dbo.upper_lower_psql_t1
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t2
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t3
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t4
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t5
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t6
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t7
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t8
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t9
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t10
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t11
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t12
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t13
+GO
+
+SELECT upper(a), lower(a) FROM dbo.upper_lower_psql_t14
+GO

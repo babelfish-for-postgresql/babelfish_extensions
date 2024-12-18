@@ -156,7 +156,54 @@ GO
 SELECT RTRIM(b) FROM babel_4489_rtrim_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t1
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t2
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t3
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t4
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t5
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t6
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t7
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t8
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t9
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t10
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t11
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t12
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t13
+GO
+
+SELECT RTRIM(a) FROM dbo.babel_4489_rtrim_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT RTRIM(@inputString)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT RTRIM(@inputString)
 GO

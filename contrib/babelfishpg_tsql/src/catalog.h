@@ -91,6 +91,7 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 
 extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
+extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
 extern bool guest_has_dbaccess(const char *db_name);
@@ -146,13 +147,15 @@ extern Oid	get_authid_login_ext_idx_oid(void);
 extern Oid	bbf_authid_user_ext_oid;
 extern Oid	bbf_authid_user_ext_idx_oid;
 
-extern bool is_user(Oid role_oid);
-extern bool is_role(Oid role_oid);
+#define BBF_ROLE 1
+#define BBF_USER 2
+const  int	get_db_principal_kind(Oid role_oid, const char *db_name);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
+extern char *get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
-extern List *get_authid_user_ext_db_users(const char *db_name);
+extern List *get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
@@ -313,6 +316,9 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantor 8
 
 #define PUBLIC_ROLE_NAME "public"
+#define BABELFISH_SECURITYADMIN "securityadmin"
+#define BABELFISH_SYSADMIN "sysadmin"
+#define BABELFISH_DBCREATOR "dbcreator"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 #define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
 #define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
@@ -321,6 +327,26 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
 #define NUMBER_OF_PERMISSIONS 6
+
+/* check if rolename is sysadmin */
+#define IS_ROLENAME_SYSADMIN(rolname) \
+	(strlen(rolname) == 8 && \
+	strncmp(rolname, BABELFISH_SYSADMIN, 8) == 0)
+
+/* check if rolename is securityadmin */
+#define IS_ROLENAME_SECURITYADMIN(rolname) \
+	(strlen(rolname) == 13 && \
+	strncmp(rolname, BABELFISH_SECURITYADMIN, 13) == 0)
+
+/* check if rolename is dbcreator */
+#define IS_ROLENAME_DBCREATOR(rolname) \
+	(strlen(rolname) == 9 && \
+	strncmp(rolname, BABELFISH_DBCREATOR, 9) == 0)
+
+#define IS_BBF_FIXED_SERVER_ROLE(rolename) \
+	(IS_ROLENAME_SYSADMIN(rolename) || \
+	IS_ROLENAME_SECURITYADMIN(rolename) || \
+	IS_ROLENAME_DBCREATOR(rolename))
 
 extern int permissions[];
 
@@ -349,7 +375,7 @@ extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const ch
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant, const char *func_args);
 extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
-extern void exec_internal_grant_on_function(const char *logicalschema, const char *object_name, const char *object_type);
+extern void exec_internal_grant_on_function(Oid objectId);
 
 /*****************************************
  *			DOMAIN MAPPING
@@ -554,5 +580,7 @@ typedef struct Rule
 
 	RelData    *tbldata;		/* extra catalog info */
 } Rule;
+
+extern void get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name);
 
 #endif

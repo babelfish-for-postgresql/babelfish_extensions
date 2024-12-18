@@ -214,7 +214,54 @@ GO
 SELECT LEFT(b, 3) FROM babel_4489_left_UDT
 GO
 
--- other different datatypes, datatypes that are not implicitly coercible to varchar/nvarchar should throw error
+-- Arguments with pg datatypes
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t1
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t2
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t3
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t4
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t5
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t6
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t7
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t8
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t9
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t10
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t11
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t12
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t13
+GO
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT LEFT(@inputString, 5)
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT LEFT(@inputString, 3)
 GO

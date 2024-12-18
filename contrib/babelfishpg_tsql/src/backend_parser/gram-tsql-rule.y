@@ -3127,12 +3127,9 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
 			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
+
 			ap->priv_name = $4;
 			n->is_grant = true;
 			n->granted_roles = list_make1(ap);
@@ -3145,11 +3142,8 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
+			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = false;

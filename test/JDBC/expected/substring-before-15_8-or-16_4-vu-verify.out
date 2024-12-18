@@ -8,9 +8,10 @@ GO
 
 SELECT substring(CAST(NULL AS int), 2, 1)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 SELECT substring(CAST(NULL AS varbinary), 2, 1)
@@ -23,9 +24,10 @@ varbinary
 
 SELECT substring(CAST(NULL AS decimal), 2, 1)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 SELECT substring('abc', NULL, 1)
@@ -38,9 +40,10 @@ varchar
 
 SELECT substring('abc', CAST(NULL AS text), 1)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 2 of substring function.)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 SELECT substring('abc', CAST(NULL AS varchar), 1)
@@ -69,9 +72,10 @@ varchar
 
 SELECT substring('abc', 2, CAST(NULL AS text))
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type text is invalid for argument 3 of substring function.)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 SELECT substring('abc', 2, CAST(NULL AS varchar))
@@ -124,14 +128,14 @@ SELECT substring('abc', 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+~~ERROR (Message: "a" is not a valid binary digit)~~
 
 
 SELECT substring('abc', 1, 1, 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The sys.substring function requires 3 arguments)~~
+~~ERROR (Message: The substring function requires 2 to 3 arguments)~~
 
 
 -- edge case values for second parameter
@@ -823,10 +827,9 @@ DECLARE @inputString date = '2016-12-21';
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type date is invalid for argument 1 of substring function.)~~
+varchar
+6
+~~END~~
 
 
 DECLARE @date date = '12-21-16';  
@@ -834,170 +837,153 @@ DECLARE @inputString datetime = @date;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime is invalid for argument 1 of substring function.)~~
+varchar
+6
+~~END~~
 
 
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smalldatetime is invalid for argument 1 of substring function.)~~
+varchar
+5
+~~END~~
 
 
 DECLARE @inputString time(4) = '12:10:05.1237';
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type time is invalid for argument 1 of substring function.)~~
+varchar
+1
+~~END~~
 
 
 DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetimeoffset is invalid for argument 1 of substring function.)~~
+varchar
+8
+~~END~~
 
 
 DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type datetime2 is invalid for argument 1 of substring function.)~~
+varchar
+8
+~~END~~
 
 
 DECLARE @inputString decimal = 123456;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type decimal is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString numeric = 12345.12;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type numeric is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString float = 12345.1;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type float is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString real = 12345.1;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type real is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString bigint = 12345678;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type bigint is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString int = 12345678;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type int is invalid for argument 1 of substring function.)~~
+varchar
+4
+~~END~~
 
 
 DECLARE @inputString smallint = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallint is invalid for argument 1 of substring function.)~~
+varchar
+5
+~~END~~
 
 
 DECLARE @inputString tinyint = 235;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
+varchar
 
-~~ERROR (Message: Argument data type tinyint is invalid for argument 1 of substring function.)~~
+~~END~~
 
 
 DECLARE @inputString money = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type money is invalid for argument 1 of substring function.)~~
+varchar
+5
+~~END~~
 
 
 DECLARE @inputString smallmoney = 12356;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type smallmoney is invalid for argument 1 of substring function.)~~
+varchar
+5
+~~END~~
 
 
 DECLARE @inputString bit = 1;
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
+varchar
 
-~~ERROR (Message: Argument data type bit is invalid for argument 1 of substring function.)~~
+~~END~~
 
 
 DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type uniqueidentifier is invalid for argument 1 of substring function.)~~
+varchar
+6
+~~END~~
 
 
 SELECT substring(a, 4, 2) from babel_3658_substring_image;
@@ -1117,40 +1103,33 @@ DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' 
 SELECT substring(@inputString, 4, 1)
 GO
 ~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of substring function.)~~
+varchar
+6
+~~END~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: The function substring is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: The function substring is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT substring(@inputString, 4, 1)
 GO
-~~START~~
-varbinary
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of substring function.)~~
+~~ERROR (Message: The function substring is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

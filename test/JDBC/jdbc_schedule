@@ -88,6 +88,9 @@ ignore#!#BABEL-2736-before-15_3-vu-cleanup
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
+ignore#!#restricted_procedures-vu-prepare
+ignore#!#restricted_procedures-vu-verify
+ignore#!#restricted_procedures-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -413,6 +416,9 @@ ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
 ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_5-or-14_10-vu-prepare
+ignore#!#string_agg-before-15_5-or-14_10-vu-verify
+ignore#!#string_agg-before-15_5-or-14_10-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
@@ -431,6 +437,9 @@ ignore#!#concat-before-15_9-or-16_5-vu-cleanup
 ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
 ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
 ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
+ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
+ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
 ignore#!#xml_exist-before-16_5-vu-prepare
 ignore#!#xml_exist-before-16_5-vu-verify
 ignore#!#xml_exist-before-16_5-vu-cleanup
@@ -473,7 +482,13 @@ ignore#!#BABEL-5119_before_16_5-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
+ignore#!#cast_nvarchar_test_before_16_5-vu-prepare
+ignore#!#cast_nvarchar_test_before_16_5-vu-verify
+ignore#!#cast_nvarchar_test_before_16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
+ignore#!#trim-before-15_11-or-16_7-vu-prepare
+ignore#!#trim-before-15_11-or-16_7-vu-verify
+ignore#!#trim-before-15_11-or-16_7-vu-cleanup
