@@ -1,3 +1,4 @@
+-- sla 120000
 -- sla_for_parallel_query_enforced 200000
 
 create table dbmeta_tab1(col1 int primary key, col2 nvarchar(max) not null)
