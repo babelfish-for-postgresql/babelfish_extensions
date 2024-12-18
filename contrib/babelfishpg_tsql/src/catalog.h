@@ -581,4 +581,6 @@ typedef struct Rule
 	RelData    *tbldata;		/* extra catalog info */
 } Rule;
 
+extern void get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name);
+
 #endif

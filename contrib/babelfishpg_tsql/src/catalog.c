@@ -14,6 +14,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "commands/schemacmds.h"
 #include "commands/user.h"
@@ -6134,4 +6135,155 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
 	PG_RETURN_INT32(0);
+}
+
+/*
+ * get_proc_namespace_oid:
+ * Find namespace oid of a procedure based on proc name.
+ */
+static Oid
+get_proc_namespace_oid(char **proc_name, char *curr_db)
+{
+	char *physical_sch_name;
+	char *db_name;
+	char *schema_name;
+	char *object_name;
+	Oid obj_schema_oid = InvalidOid;
+
+	if (*proc_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("procedure name cannot be NULL")));
+
+	/*
+	 * Split the proc name, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(*proc_name, NULL, &db_name, &schema_name, &object_name);
+	*proc_name = object_name;
+
+	if (!strcmp(db_name, ""))
+		db_name = curr_db;
+
+	if (!strcmp(schema_name, ""))
+	{
+		/* Find the default schema for current user. */
+		char *user = get_user_for_database(db_name);
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, (const char *) user);
+	}
+
+	/* Get physical schema name from logical schema name. */
+	physical_sch_name = get_physical_schema_name(db_name, schema_name);
+	/* Get namespace oid from physical schema name. */
+	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_sch_name);
+
+	return obj_schema_oid;
+}
+
+/*
+ * get_proargtypes_oid:
+ * Given a procedure name, namespace, user ID, and target argument name
+ * return the OID of the argument's type in the procedure.
+ *
+ * Returns InvalidOid if no matching procedure argument is found.
+ */
+static Oid
+get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
+{
+	HeapTuple    tuple;
+	CatCList   *catlist;
+	Oid matched_type = InvalidOid;
+
+	/* Downcase and truncate identifier if needed. */
+	targeted_arg_name = downcase_truncate_identifier(targeted_arg_name, strlen(targeted_arg_name), true);
+
+	/* First search in pg_proc by name. */
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
+
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+		/* Then consider only procs in specified namespace. */
+		if (procform->pronamespace == pronamespace &&
+			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+		{
+			/* Get the list of proargames and corresponding proargtypes oids. */
+			char **proargnames = fetch_func_input_arg_names(tuple);
+			Oid *proargtypes = procform->proargtypes.values;
+
+			/* Find the typeoid corresponding to target TVP argument. */
+			for (int j = 0; j < procform->pronargs; j++)
+			{
+				if (strcmp(proargnames[j], targeted_arg_name) == 0)
+				{
+					matched_type = proargtypes[j];
+					break;
+				}
+			}
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	if (matched_type == InvalidOid)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
+						proname, targeted_arg_name)));
+	}
+	return matched_type;
+}
+
+/*
+ * get_tvp_typename_typeschemaname:
+ * Retrieves the type name and schema name of a Table-Valued Parameter (TVP)
+ * for a given stored procedure and argument name.
+ */
+void
+get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name)
+{
+	bool			xactStarted = IsTransactionOrTransactionBlock();
+	Oid 			tvp_proargtype = InvalidOid;
+	Oid 			user_id = InvalidOid;
+	Oid 			obj_schema_oid = InvalidOid;
+	HeapTuple		tuple;
+	char 			*typnamespace;
+	char 			*curr_db;
+	MemoryContext 	oldContext;
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	user_id = GetUserId();
+	curr_db = get_cur_db_name();
+
+	/* Get procedure namespaceid. */
+	obj_schema_oid = get_proc_namespace_oid(&proc_name, curr_db);
+
+	/* Fetch proargtype value of our targeted variable. */
+	tvp_proargtype = get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
+
+	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
+	/* Check if user have right permission on object. */
+	if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+		*tvp_type_name = NameStr(pg_type->typname);
+		typnamespace = get_namespace_name(pg_type->typnamespace);
+
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		*tvp_type_schema_name = pstrdup((char *) get_logical_schema_name(typnamespace, true));
+		MemoryContextSwitchTo(oldContext);
+		ReleaseSysCache(tuple);
+	}
+
+	if(!xactStarted)
+		CommitTransactionCommand();
 }
