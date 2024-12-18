@@ -1170,7 +1170,10 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 	values[2] = datumCopy(datum, false, -1);
 	datum = heap_getattr(tuple, Anum_bbf_extended_properties_value,
 						 RelationGetDescr(relation), &isnull);
-	values[3] = datumCopy(datum, false, -1);
+	if (!isnull)
+		values[3] = datumCopy(datum, false, -1);
+	else
+		nulls[3] = true;
 
 	return true;
 }
