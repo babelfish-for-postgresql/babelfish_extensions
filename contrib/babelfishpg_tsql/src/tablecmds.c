@@ -130,7 +130,7 @@ lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 		return;
 
 	/* We only want to execute this function for the DROP TABLE case */
-	if (classId != RelationRelationId || access != OAT_DROP)
+	if (classId != RelationRelationId || access != OAT_DROP || subId != 0)
 		return;
 
 	/*

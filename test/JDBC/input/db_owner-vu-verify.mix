@@ -135,16 +135,6 @@ go
 alter procedure dbo.dbowner__p0 as select 20
 go
 
--- BABEL-5417: Trigger gets dropped if we drop a column in table
-create trigger dbo.dbowner__trg0
-on dbo.dbowner__t0
-after insert
-as
-begin
-    select 'New row inserted'
-end
-go
-
 -- Member of db_owner role should be allowed to rename objects
 exec sp_rename 'dbo.dbowner__t0.x', 'x_renamed', 'column'
 go
