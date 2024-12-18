@@ -338,9 +338,8 @@ SELECT reverse(a) FROM babel_4839_reverse_UDT
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of reverse function.)~~
+fedcba
+~~END~~
 
 
 SELECT reverse(b) FROM babel_4839_reverse_UDT
@@ -519,9 +518,8 @@ SELECT reverse(a) from babel_4839_reverse_image;
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type image is invalid for argument 1 of reverse function.)~~
+FF469CF40C00-D24B-110D-68B8-FF9169F6
+~~END~~
 
 
 -- input datatype text
@@ -545,33 +543,34 @@ nvarchar
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
 SELECT reverse(@inputString)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type sql_variant is invalid for argument 1 of reverse function.)~~
+~~START~~
+varchar
+FF469CF40C00-D24B-110D-68B8-FF9169F6
+~~END~~
 
 
 DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
 SELECT reverse(@inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type xml is invalid for argument 1 of reverse function.)~~
+~~ERROR (Message: The function reverse is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT reverse(@inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geometry is invalid for argument 1 of reverse function.)~~
+~~ERROR (Message: The function reverse is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT reverse(@inputString)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: Argument data type geography is invalid for argument 1 of reverse function.)~~
+~~ERROR (Message: The function reverse is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)

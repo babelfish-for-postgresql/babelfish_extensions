@@ -4,7 +4,7 @@ SELECT @a = COUNT(*) FROM sys.objects
 SELECT (CASE WHEN @a >= 0 THEN 'true' ELSE 'false' END) AS result
 go
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

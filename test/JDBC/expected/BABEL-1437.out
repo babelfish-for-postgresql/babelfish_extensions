@@ -116,17 +116,17 @@ SELECT (case when db_name(db_id()) = 'babel_1437_db' then 'true' else 'false' en
 SELECT (case when db_id('babel_1437_db') = db_id() then 'true' else 'false' end) result;
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

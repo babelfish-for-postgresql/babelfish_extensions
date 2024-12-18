@@ -870,6 +870,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	else
 		estate->schema_name = NULL;
 
+	/*
+	 * We need to disable the explain gucs incase of sp_reset_connection
+	 * execution otherwise we will get explain output for it which is
+	 * not intended.
+	 */
+	if (strcmp(stmt->proc_name, "sp_reset_connection") == 0)
+	{
+		pltsql_explain_only = false;
+		pltsql_explain_analyze = false;
+	}
+
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
 	{
@@ -1472,21 +1483,21 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	LOCAL_FCINFO(fcinfo, 1);
 
+	/*
+	 * First we evaluate the string expression. Its result is the
+	 * querystring we have to execute.
+	 */
+	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
+	if (isnull)
+	{
+		/* No op in case of null */
+		return PLTSQL_RC_OK;
+	}
+	save_nestlevel = pltsql_new_guc_nest_level();
+	scope_level = pltsql_new_scope_identity_nest_level();
+
 	PG_TRY();
 	{
-		/*
-		 * First we evaluate the string expression. Its result is the
-		 * querystring we have to execute.
-		 */
-		query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
-		if (isnull)
-		{
-			/* No op in case of null */
-			return PLTSQL_RC_OK;
-		}
-		save_nestlevel = pltsql_new_guc_nest_level();
-		scope_level = pltsql_new_scope_identity_nest_level();
-
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1511,12 +1522,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	PG_FINALLY();
 	{
 		/* Restore past settings */
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
+
 		cur_db_name = get_cur_db_name();
 		if (strcmp(cur_db_name, old_db_name) != 0)
 			set_session_properties(old_db_name);
-
-		pltsql_revert_guc(save_nestlevel);
-		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_END_TRY();
 
@@ -2879,14 +2890,19 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 			top_es_entry = top_es_entry->next;
 	}
 
-	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
-	/* send env change token to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
-		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
-	/* send message to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
-
+	/*
+	 * In case of reset-connection we do not need to send the environment change token.
+	 */
+	if (!((*pltsql_protocol_plugin_ptr) && (*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag()))
+	{
+		snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+		/* send env change token to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
+			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
+		/* send message to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -3170,31 +3186,29 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	struct	dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
 	Relation	rel;
 	TupleDesc	tupdesc;
-	char	*db_name = NULL;
-	char	*max_identity_value_str = NULL;
-	char	*query = NULL;
-	char	*attname;
-	char	*token;
+	char		*db_name = NULL;
+	char		*max_identity_value_str = NULL;
+	char		*query = NULL;
+	char		*attname;
+	char		*token;
 	const char	*schema_name;
-	const char	*nsp_name;
+	char		*nsp_name;
 	const char	*user;
-	const char	*guest_role_name;
-	const char	*dbo_role_name;
 	const char	*login;
-	int64	max_identity_value = 0;
-	int64	cur_identity_value = 0;
-	int	attnum;
-	int	rc = 0;
-	int64	reseed_value = 0;
-	Oid	nsp_oid;
-	Oid 	table_oid;
-	Oid	seqid = InvalidOid;
-	Oid	current_user_id = GetUserId();
-	volatile bool cur_value_is_null = true;
-	bool	login_is_db_owner;
+	int64		max_identity_value = 0;
+	int64		cur_identity_value = 0;
+	int		attnum;
+	int		rc = 0;
+	int64		reseed_value = 0;
+	Oid		nsp_oid;
+	Oid		table_oid;
+	Oid		seqid = InvalidOid;
+	Oid		current_user_id = GetUserId();
+	volatile bool	cur_value_is_null = true;
+	bool		login_is_db_owner;
 	StringInfoData msg;
-	bool	is_float_value;
-	bool    is_cross_db = false;
+	bool		is_float_value;
+	bool		is_cross_db = false;
 
 
 	if(dbcc_stmt.new_reseed_value)
@@ -3268,8 +3282,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		 * If schema_name is not provided, find default schema for current user
 		 * and get physical schema name
 		 */
-		guest_role_name = get_guest_role_name(db_name);
-		dbo_role_name = get_dbo_role_name(db_name);
+		char		*guest_role_name = get_guest_role_name(db_name);
+		char		*dbo_role_name = get_dbo_role_name(db_name);
 		
 		/* user will never be null here as cross-db calls are already handled */
 		Assert(user != NULL);
@@ -3287,6 +3301,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			nsp_name = get_physical_schema_name(db_name, schema_name);
 		}
+
+		pfree(guest_role_name);
+		pfree(dbo_role_name);
 	}
 	pfree(db_name);
 
@@ -3342,6 +3359,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			errmsg("'%s.%s' does not contain an identity column.",
 				nsp_name, dbcc_stmt.table_name)));
 	}
+	
+	pfree(nsp_name);
 
 	PG_TRY();
 	{
@@ -3718,7 +3737,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		Oid	role_oid;
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
-			rolname	= get_physical_user_name(dbname, grantee_name);
+			rolname	= get_physical_user_name(dbname, grantee_name, true);
 		else
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
@@ -3759,7 +3778,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 		{
 			if (stmt->privileges & permissions[i])
-				exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, permissions[i]);
+				exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, permissions[i], false);
 		}
 
 		if (stmt->is_grant)
@@ -3851,10 +3870,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	}
 
 	/* Revoke dbo role from the previous owner */
-	grant_revoke_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+	grant_revoke_role_to_login(get_owner_of_db(stmt->db_name), get_dbo_role_name(stmt->db_name), false);
 
 	/* Grant dbo role to the new owner */
-	grant_revoke_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+	grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), true);
 	update_db_owner(stmt->new_owner_name, stmt->db_name);
 
 	return PLTSQL_RC_OK;

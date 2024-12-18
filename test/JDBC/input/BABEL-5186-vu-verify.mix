@@ -1,0 +1,2534 @@
+-- tsql
+-- Error: relation \"%s\" does not exist
+-- Client Test
+BEGIN TRY
+		select * from asdfasdfasdf;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+
+BEGIN TRY
+		EXEC('select * from asdfasdfasdf;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Simple batch with try catch
+BEGIN TRY
+    SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+BEGIN TRY
+    EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Simple batch with transaction inside try-catch
+BEGIN TRY
+    BEGIN TRAN
+        SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Simple batch with try-catch inside transaction
+BEGIN TRAN
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRAN
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Simple procedure inside try-catch
+BEGIN TRY
+    SELECT xact_state();
+    EXEC babel_5186_try_catch_relation_err_proc1;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT xact_state();
+    EXEC('EXEC babel_5186_try_catch_relation_err_proc1;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Transaction inside try-catch but not inside procedure
+BEGIN TRY
+    BEGIN TRAN
+        EXEC babel_5186_try_catch_relation_err_proc1;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('EXEC babel_5186_try_catch_relation_err_proc1;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Transaction inside procedure but not inside try-catch
+BEGIN TRY
+    SELECT xact_state();
+    EXEC babel_5186_try_catch_relation_err_proc2;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    SELECT xact_state();
+    EXEC('EXEC babel_5186_try_catch_relation_err_proc2;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Transaction inside try-catch and inside procedure
+BEGIN TRY
+    BEGIN TRAN
+        EXEC babel_5186_try_catch_relation_err_proc2;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('EXEC babel_5186_try_catch_relation_err_proc2;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: column \"%s\" does not exist
+-- Client Test
+BEGIN TRY
+		select name123 from sys.database_principals;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+BEGIN TRY
+		EXEC('select name123 from sys.database_principals;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+-- Error: column \"%s\" does not exist
+-- Simple batch with try catch
+BEGIN TRY
+    SELECT non_existent_column FROM babel_5186_try_catch_table;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+BEGIN TRY
+    EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+-- Error: column \"%s\" does not exist
+-- Simple batch with transaction inside try-catch
+BEGIN TRY
+    BEGIN TRAN
+        SELECT non_existent_column FROM babel_5186_try_catch_table;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: column \"%s\" does not exist
+-- Simple procedure inside try-catch
+BEGIN TRY
+    SELECT xact_state();
+    EXEC babel_5186_try_catch_column_err_proc1;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+BEGIN TRY
+    SELECT xact_state();
+    EXEC('EXEC babel_5186_try_catch_column_err_proc1;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+-- Error: column \"%s\" does not exist
+-- Transaction inside try-catch but not inside procedure
+BEGIN TRY
+    BEGIN TRAN
+        EXEC babel_5186_try_catch_column_err_proc1;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('EXEC babel_5186_try_catch_column_err_proc1;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: column \"%s\" does not exist
+-- Transaction inside procedure but not inside try-catch
+BEGIN TRY
+    SELECT xact_state();
+    EXEC babel_5186_try_catch_column_err_proc2;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    SELECT xact_state();
+    EXEC('EXEC babel_5186_try_catch_column_err_proc2;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: column \"%s\" does not exist
+-- Transaction inside try-catch and inside procedure
+BEGIN TRY
+    BEGIN TRAN
+        EXEC babel_5186_try_catch_column_err_proc2;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('EXEC babel_5186_try_catch_column_err_proc2;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Other Miscellanous testing
+-- Simple batch
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+INSERT INTO babel_5186_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_try_catch_table;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+INSERT INTO babel_5186_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple batch with transaction
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_try_catch_table;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple batch with nested transaction
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+COMMIT TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+COMMIT TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_try_catch_table;
+COMMIT TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT ON;
+INSERT INTO babel_5186_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+COMMIT TRAN;
+INSERT INTO babel_5186_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple procedure with transaction
+EXEC babel_5186_errProc1_1;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc1_2
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc1_3
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc1_4
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Nested procedure
+EXEC babel_5186_errProc2_11;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc2_21
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc2_31
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc2_41
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Nest procedure with transaction
+EXEC babel_5186_errProc3_11;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc3_21
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc3_31
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+EXEC babel_5186_errProc3_41
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+
+-- XACT_ABORT OFF
+-- Miscellanous testing
+-- Simple batch
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_1_try_catch_table;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_1_try_catch_table;');
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Simple batch with transaction
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_1_try_catch_table;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_1_try_catch_table;');
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Simple batch with nested transaction
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT * FROM non_existent_table;
+COMMIT TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT * FROM non_existent_table;');
+COMMIT TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+SELECT non_existent_column FROM babel_5186_1_try_catch_table;
+COMMIT TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+BEGIN TRAN;
+SET XACT_ABORT OFF;
+INSERT INTO babel_5186_1_table_errTable VALUES (1);
+BEGIN TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (2);
+EXEC('SELECT non_existent_column FROM babel_5186_1_try_catch_table;');
+COMMIT TRAN;
+INSERT INTO babel_5186_1_table_errTable VALUES (3);
+COMMIT TRAN;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Simple procedure with transaction
+EXEC babel_5186_1_errProc1_1;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc1_2
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc1_3
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc1_4
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Nested procedure
+EXEC babel_5186_1_errProc2_11;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc2_21
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc2_31
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc2_41
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Nest procedure with transaction
+EXEC babel_5186_1_errProc3_11;
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc3_21
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc3_31
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+EXEC babel_5186_1_errProc3_41
+GO
+
+SELECT * FROM babel_5186_1_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_1_table_errTable
+GO
+
+-- Error: relation \"%s\" does not exist
+-- batch -> proc (with try/catch) -> proc (without try catch and throws error) 
+INSERT INTO babel_5186_table_errTable VALUES(1)
+EXEC babel_5186_try_catch_relation_err_proc3;
+INSERT INTO babel_5186_table_errTable VALUES(2)
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Error: column \"%s\" does not exist
+-- batch -> proc (with try/catch) -> proc (without try catch and throws error) 
+INSERT INTO babel_5186_table_errTable VALUES(1)
+EXEC babel_5186_try_catch_column_err_proc3;
+INSERT INTO babel_5186_table_errTable VALUES(2)
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Error: relation \"%s\" does not exist
+-- proc (without try/catch) -> proc (with try/catch) -> proc (without try catch and throws error)
+EXEC babel_5186_try_catch_relation_err_proc4;
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: column \"%s\" does not exist
+-- proc (without try/catch) -> proc (with try/catch) -> proc (without try catch and throws error)
+EXEC babel_5186_try_catch_column_err_proc4;
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig1 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig1
+GO
+
+UPDATE babel_5186_table_relation_errTrig1 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig1
+GO
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig1
+GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_relation_errTrig2 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig2
+GO
+
+UPDATE babel_5186_table_relation_errTrig2 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig2
+GO
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_relation_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+
+BEGIN TRY
+	UPDATE babel_5186_table_relation_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_relation_errTrig3
+GO
+
+TRUNCATE TABLE babel_5186_table_relation_errTrig3
+GO
+
+
+-- Error: column \"%s\" does not exist
+-- Triggers with try catch block on same level as trigger body statements
+INSERT INTO babel_5186_table_column_errTrig1 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig1
+GO
+
+UPDATE babel_5186_table_column_errTrig1 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig1
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig1
+GO
+
+-- Triggers with try catch block on lower level than trigger body statements
+INSERT INTO babel_5186_table_column_errTrig2 VALUES(4);
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+
+UPDATE babel_5186_table_column_errTrig2 SET a = 5 WHERE a = 1;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig2
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig2
+GO
+
+-- Triggers with try catch block on higher level than trigger body statements
+BEGIN TRY
+	INSERT INTO babel_5186_table_column_errTrig3 VALUES(4);
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+
+BEGIN TRY
+	UPDATE babel_5186_table_column_errTrig3 SET a = 5 WHERE a = 1;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_column_errTrig3
+GO
+
+TRUNCATE TABLE babel_5186_table_column_errTrig3
+GO
+
+-- Error: relation \"%s\" does not exist (In an active transaction)
+-- ROLLBACK in Catch block  (error thrown from same level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRAN;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- COMMIT in Catch block (error thrown from same level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	COMMIT TRAN;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- DMLs in Catch block (error thrown from same level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	INSERT INTO babel_5186_table_errTable VALUES(2);
+	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Table access in Catch block (error thrown from same level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT * FROM babel_5186_table_errTable;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple query in Catch block (error thrown from same level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT 'Inside Catch Block';
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- ROLLBACK in Catch block  (error thrown from lower level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRAN;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- COMMIT in Catch block (error thrown from lower level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	COMMIT TRAN;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- DMLs in Catch block (error thrown from lower level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	INSERT INTO babel_5186_table_errTable VALUES(2);
+	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Table access in Catch block (error thrown from lower level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT * FROM babel_5186_table_errTable;
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple query in Catch block (error thrown from lower level of execution)
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT 'Inside Catch Block';
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Error: relation \"%s\" does not exist (Without an active transaction)
+-- ROLLBACK in Catch block  (error thrown from same level of execution)
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRAN;
+END CATCH;
+GO
+
+-- COMMIT in Catch block (error thrown from same level of execution)
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	COMMIT TRAN;
+END CATCH;
+GO
+
+-- DMLs in Catch block (error thrown from same level of execution)
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	INSERT INTO babel_5186_table_errTable VALUES(2);
+	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Table access in Catch block (error thrown from same level of execution)
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT * FROM babel_5186_table_errTable;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple query in Catch block (error thrown from same level of execution)
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT 'Inside Catch Block';
+END CATCH;
+GO
+
+-- ROLLBACK in Catch block  (error thrown from lower level of execution)
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRAN;
+END CATCH;
+GO
+
+-- COMMIT in Catch block (error thrown from lower level of execution)
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	COMMIT TRAN;
+END CATCH;
+GO
+
+-- DMLs in Catch block (error thrown from lower level of execution)
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	INSERT INTO babel_5186_table_errTable VALUES(2);
+	UPDATE babel_5186_table_errTable SET a = 3 WHERE a = 1;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Table access in Catch block (error thrown from lower level of execution)
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT * FROM babel_5186_table_errTable;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Simple query in Catch block (error thrown from lower level of execution)
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+
+	SELECT 'Inside Catch Block';
+END CATCH;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- nested try catch blocks
+BEGIN TRY
+	BEGIN TRY
+		SELECT * FROM non_existent_table;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		EXEC('SELECT * FROM non_existent_table;');
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		BEGIN TRY
+			SELECT * FROM non_existent_table;
+		END TRY
+		BEGIN CATCH
+			SELECT 'third try/catch CATCH block';
+		END CATCH;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		BEGIN TRY
+			EXEC('SELECT * FROM non_existent_table;');
+		END TRY
+		BEGIN CATCH
+			SELECT 'third try/catch CATCH block';
+		END CATCH;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+-- Error: column \"%s\" does not exist
+-- nested try catch blocks
+BEGIN TRY
+	BEGIN TRY
+		SELECT non_existent_column FROM babel_5186_try_catch_table;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		BEGIN TRY
+			SELECT non_existent_column FROM babel_5186_try_catch_table;
+		END TRY
+		BEGIN CATCH
+			SELECT 'third try/catch CATCH block';
+		END CATCH;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+BEGIN TRY
+	BEGIN TRY
+		BEGIN TRY
+			EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;');
+		END TRY
+		BEGIN CATCH
+			SELECT 'third try/catch CATCH block';
+		END CATCH;
+	END TRY
+	BEGIN CATCH
+		SELECT 'second try/catch CATCH block';
+	END CATCH;
+END TRY
+BEGIN CATCH
+	SELECT 'first try/catch CATCH block';
+END CATCH;
+GO
+
+-- Error: relation \"%s\" does not exist
+-- Simple batch with try-catch inside transaction and rollback to save point when goes to catch
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+SAVE TRANSACTION savepoint1
+GO
+
+BEGIN TRY
+	SELECT * FROM non_existent_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRANSACTION savepoint1;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Statement inside dynamic SQL
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+SAVE TRANSACTION savepoint2
+GO
+
+BEGIN TRY
+	EXEC('SELECT * FROM non_existent_table;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRANSACTION savepoint2;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+
+-- Error: column \"%s\" does not exist
+-- Simple batch with try-catch inside transaction and rollback to save point when goes to catch
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1103)
+GO
+
+SAVE TRANSACTION savepoint3
+GO
+
+BEGIN TRY
+	SELECT non_existent_column FROM babel_5186_try_catch_table;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRANSACTION savepoint3;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Statement inside dynamic SQL
+BEGIN TRAN
+GO
+
+INSERT INTO babel_5186_table_errTable VALUES(1)
+GO
+
+SAVE TRANSACTION savepoint4
+GO
+
+BEGIN TRY
+	EXEC('SELECT non_existent_column FROM babel_5186_try_catch_table;')
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+	ROLLBACK TRANSACTION savepoint4;
+END CATCH;
+GO
+
+SELECT * FROM babel_5186_table_errTable
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN
+GO
+
+TRUNCATE TABLE babel_5186_table_errTable
+GO
+
+-- Other Unmapped errors which will behave the old way
+-- Error: Cannot find the database '%s', because it does not exist or you do not have permission.
+-- Simple batch with try catch
+BEGIN TRY
+    ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+BEGIN TRY
+    EXEC('ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH
+GO
+
+-- Error: Cannot find the database '%s', because it does not exist or you do not have permission.
+-- Simple batch with transaction inside try-catch
+BEGIN TRY
+    BEGIN TRAN
+        ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRY
+    BEGIN TRAN
+        EXEC('ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;');
+END TRY
+BEGIN CATCH
+		SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+					+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+					+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+					+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+					+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+					+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- Error: Cannot find the database '%s', because it does not exist or you do not have permission.
+-- Simple batch with try-catch inside transaction
+BEGIN TRAN
+GO
+
+BEGIN TRY
+	ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+BEGIN TRAN
+GO
+
+BEGIN TRY
+	EXEC('ALTER AUTHORIZATION ON DATABASE::nosuchdb_db TO nosuchlogin;');
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+SELECT @@trancount
+GO
+
+IF @@trancount > 0 ROLLBACK TRAN;
+GO
+
+-- psql
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_relation_err_pg_proc()
+AS $$
+BEGIN
+	SELECT * FROM non_existent_table;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_column_err_pg_proc()
+AS $$
+BEGIN
+	SELECT * FROM non_existent_table;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+-- Error: relation \"%s\" does not exist
+-- plpgsql procedure inside try-catch
+BEGIN TRY
+    EXEC dbo.babel_5186_relation_err_pg_proc;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO
+
+BEGIN TRY
+    EXEC dbo.babel_5186_column_err_pg_proc;
+END TRY
+BEGIN CATCH
+	SELECT 'Severity_' + cast(ERROR_SEVERITY() as nvarchar(500))
+				+ ' Error State_'+ cast(ERROR_STATE() as nvarchar(500))
+				+ ' Xact State_'+ cast(XACT_STATE() as nvarchar(500))
+				+ ' Error number_'+ cast(ERROR_NUMBER() as nvarchar(500))
+				+ ' Error Line number_'+ cast(ERROR_LINE() as nvarchar(500))
+				+ ' Error message_'+ cast(ERROR_MESSAGE() as nvarchar(500));
+END CATCH;
+GO

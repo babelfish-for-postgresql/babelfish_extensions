@@ -14,6 +14,7 @@
 #include "dbcmds.h"
 #include "multidb.h"
 #include "session.h"
+#include "pl_explain.h"
 #include "pltsql.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
@@ -160,11 +161,11 @@ set_cur_user_db_and_path(const char *db_name)
 static void
 set_search_path_for_user_schema(const char *db_name, const char *user)
 {
-	const char *path;
-	const char *buffer = "%s, \"$user\", sys, pg_catalog";
-	const char *physical_schema;
-	const char *dbo_role_name = get_dbo_role_name(db_name);
-	const char *guest_role_name = get_guest_role_name(db_name);
+	const char	*path;
+	const char	*buffer = "%s, \"$user\", sys, pg_catalog";
+	char		*physical_schema;
+	char		*dbo_role_name = get_dbo_role_name(db_name);
+	char		*guest_role_name = get_guest_role_name(db_name);
 
 	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
 	{
@@ -191,6 +192,10 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 					path,
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
+	
+	pfree(dbo_role_name);
+	pfree(guest_role_name);
+	pfree(physical_schema);
 }
 
 /*
@@ -201,7 +206,9 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
-	set_session_properties(get_cur_db_name());
+	reset_cached_cursor();
+	pltsql_explain_only = false;
+	pltsql_explain_analyze = false;
 }
 
 void

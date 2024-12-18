@@ -224,7 +224,7 @@ int
 SELECT CASE WHEN 'a' = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
 go
 ~~START~~
-text
+varchar
 case-insensitive
 ~~END~~
 
@@ -234,7 +234,7 @@ SELECT @str = 'a';
 SELECT CASE WHEN @str = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
 go
 ~~START~~
-text
+varchar
 case-insensitive
 ~~END~~
 

@@ -435,8 +435,24 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	tuple = systable_getnext(scan);
 
 	if (HeapTupleIsValid(tuple))
+	{
+		bool  is_null;
+
+		Datum datum = heap_getattr(tuple,
+								   Anum_bbf_authid_user_ext_login_name,
+								   RelationGetDescr(bbf_authid_user_ext_rel),
+								   &is_null);
+		if (!is_null)
+		{
+			char *login = NameStr(*DatumGetName(datum));
+
+			/* Grant guest user to login if it's mapped user is being dropped. */
+			if (strlen(login) > 0)
+				grant_revoke_role_to_login(login, get_guest_role_name(get_cur_db_name()), true);
+		}
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
+	}
 
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
@@ -514,13 +530,16 @@ grant_guests_to_login(const char *login)
 												 &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		const char *guest_name = NULL;
+		char	   *guest_name = NULL;
 
 		if (guest_role_exists_for_db(db_name))
 			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
+		{
 			guests = lappend(guests, make_accesspriv_node(guest_name));
+			pfree(guest_name);
+		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
@@ -571,19 +590,18 @@ grant_guests_to_login(const char *login)
 }
 
 /* 
- * Grant/revoke dbo role from the login.
+ * Grant/revoke given role from the login.
+ * If grantor is provided then only GRANT/REVOKE specific to it will be affected.
  * The 'is_grant' flag determines if the action is grant/revoke.
  */
 void
-grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
+grant_revoke_role_to_login(const char* login, const char *role_name, bool is_grant)
 {
 	StringInfoData query;
 	List	   *parsetree_list;
-	List	   *dbo = NIL;
+	List	   *rolelist = NIL;
 	Node	   *stmt;
 	PlannedStmt *wrapper;
-
-	const char *dbo_role_name = get_dbo_role_name(db_name);
 
 	/*
 	 * If login i.e old_owner/new_owner is master user 
@@ -595,7 +613,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 	
 	initStringInfo(&query);
 
-	dbo = lappend(dbo, make_accesspriv_node(dbo_role_name));
+	rolelist = lappend(rolelist, make_accesspriv_node(role_name));
 
 	if (is_grant)
 	{
@@ -618,7 +636,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 
 	/* Update the dummy statement with real values */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	update_GrantRoleStmt(stmt, dbo, list_make1(make_rolespec_node(login)));
+	update_GrantRoleStmt(stmt, rolelist, list_make1(make_rolespec_node(login)));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -631,7 +649,7 @@ grant_revoke_dbo_to_login(const char* login, const char* db_name, bool is_grant)
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				   "(ALTER DATABASE OWNER )",
+				   "GRANT/REVOKE ROLE TO LOGIN",
 				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
@@ -785,7 +803,7 @@ user_name(PG_FUNCTION_ARGS)
 
 	datum = heap_getattr(tuple,
 						 Anum_bbf_authid_user_ext_orig_username,
-						 bbf_authid_user_ext_rel->rd_att,
+						 RelationGetDescr(bbf_authid_user_ext_rel),
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
 
@@ -813,7 +831,7 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-        user_name = get_physical_user_name(db_name, user_input);
+        user_name = get_physical_user_name(db_name, user_input, true);
 
         if (!user_name)
             PG_RETURN_NULL();
@@ -830,6 +848,7 @@ user_id(PG_FUNCTION_ARGS)
     }
 
     auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
+    pfree(user_name);
 
     if (!HeapTupleIsValid(auth_tuple))
 	    PG_RETURN_NULL();
@@ -1269,8 +1288,14 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 
 	if (has_login)
 	{
+		char *db_name = get_cur_db_name();
+
 		verify_login_for_bbf_authid_user_ext(login);
 		login_name_str = login->rolename;
+		/* Revoke guest user from login as login now has a mapped user in current database. */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(db_name), false);
+
+		pfree(db_name);
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
@@ -1307,10 +1332,10 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	while (HeapTupleIsValid(tuple))
 	{
 		Datum		db_name_datum;
-		const char *db_name;
-		const char *dbo_role;
-		const char *db_owner_role;
-		const char *guest;
+		const char	*db_name;
+		char 		*dbo_role;
+		char 		*db_owner_role;
+		char 		*guest;
 
 		db_name_datum = heap_getattr(tuple,
 									 Anum_sysdatabases_name,
@@ -1327,9 +1352,13 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		{
 			dbo_list = lappend(dbo_list, make_rolespec_node(dbo_role));
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
+			pfree(dbo_role);
 		}
 		if (db_owner_role)
+		{
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
+			pfree(db_owner_role);
+		}
 		if (guest)
 		{
 			/*
@@ -1340,6 +1369,8 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
+				
+			pfree(guest);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
@@ -1419,6 +1450,57 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+PG_FUNCTION_INFO_V1(revoke_guest_from_mapped_logins);
+Datum
+revoke_guest_from_mapped_logins(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_authid_user_ext_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"add_existing_users_to_catalog()")));
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(), AccessShareLock);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum datum = heap_getattr(tuple,
+								   Anum_bbf_authid_user_ext_login_name,
+								   RelationGetDescr(bbf_authid_user_ext_rel),
+								   &is_null);
+		if (!is_null)
+		{
+			char *login = NameStr(*DatumGetName(datum));
+
+			/* Revoke guest user from login as login already has a mapped database user. */
+			if (strlen(login) > 0)
+			{
+				Datum name = heap_getattr(tuple,
+									Anum_bbf_authid_user_ext_database_name,
+									RelationGetDescr(bbf_authid_user_ext_rel),
+									&is_null);
+
+				char *db_name = TextDatumGetCString(name);
+				grant_revoke_role_to_login(login, get_guest_role_name(db_name), false);
+				pfree(db_name);
+			}
+		}
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
 void
 alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 {
@@ -1440,6 +1522,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	char	   *new_user_name = NULL;
 	char	   *physical_name = NULL;
 	char	   *login_name_str = NULL;
+	char	   *old_login_name = NULL;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1507,7 +1590,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* update user name */
 	if (new_user_name)
 	{
-		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name);
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name, true);
 		namestrcpy(&physical_name_namedata, physical_name);
 
 		new_record_user_ext[USER_EXT_ROLNAME] = NameGetDatum(&physical_name_namedata);
@@ -1535,8 +1618,16 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 	if (login_name_str)
 	{
-		namestrcpy(&login_name_str_namedata, login_name_str);
+		bool is_null;
+		Datum old_login = heap_getattr(tuple,
+									   Anum_bbf_authid_user_ext_login_name,
+									   bbf_authid_user_ext_dsc,
+									   &is_null);
+		/* Fetch the login name which was previously mapped to this user. */
+		if (!is_null)
+			old_login_name = pstrdup(NameStr(*DatumGetName(old_login)));
 
+		namestrcpy(&login_name_str_namedata, login_name_str);
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(&login_name_str_namedata);
 		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
 	}
@@ -1556,6 +1647,20 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	heap_freetuple(new_tuple);
 
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	if (login_name_str)
+	{
+		if (old_login_name && strlen(old_login_name) > 0)
+		{
+			/* First revoke this user from old login as the user is being mapped to a new login. */
+			grant_revoke_role_to_login(old_login_name, stmt->role->rolename, false);
+			/* Now grant guest user to old login as it's mapped user is being removed. */
+			grant_revoke_role_to_login(old_login_name, get_guest_role_name(get_cur_db_name()), true);
+		}
+
+		/* Revoke guest user from new login as login now has a mapped user in current database. */
+		grant_revoke_role_to_login(login_name_str, get_guest_role_name(get_cur_db_name()), false);
+	}
 
 	if (new_user_name)
 	{
@@ -1600,6 +1705,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 					   NULL);
 
 		pfree(query.data);
+		pfree(physical_name);
 	}
 }
 
@@ -1842,9 +1948,10 @@ role_id(PG_FUNCTION_ARGS)
 	if (!get_cur_db_name())
 		PG_RETURN_NULL();
 
-	role_name = get_physical_user_name(get_cur_db_name(), user_input);
+	role_name = get_physical_user_name(get_cur_db_name(), user_input, true);
 
 	result = get_role_oid(role_name, true);
+	pfree(role_name);
 
 	if (result == InvalidOid)
 		PG_RETURN_NULL();
@@ -1864,14 +1971,14 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid			cur_user_oid = GetUserId();
 	Oid			db_owner_oid;
 	Oid			dbo_role_oid;
-	char	   *role;
-	char	   *dc_role;
-	char	   *dc_principal = NULL;
-	char	   *physical_role_name;
-	char	   *physical_principal_name;
-	char	   *cur_db_name;
-	const char *db_owner_name;
-	const char *dbo_role_name;
+	char			*role;
+	char			*dc_role;
+	char			*dc_principal = NULL;
+	char			*physical_role_name;
+	char			*physical_principal_name;
+	char			*cur_db_name;
+	char			*db_owner_name;
+	char			*dbo_role_name;
 	int			idx;
 
 	if (PG_ARGISNULL(0))
@@ -1883,8 +1990,9 @@ is_rolemember(PG_FUNCTION_ARGS)
 	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
 		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
-	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role);
+	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role, true);
 	role_oid = get_role_oid(physical_role_name, true);
+	pfree(physical_role_name);
 
 	/* If principal name is NULL, take current user instead */
 	if (PG_ARGISNULL(1))
@@ -1898,8 +2006,9 @@ is_rolemember(PG_FUNCTION_ARGS)
 		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
 			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal);
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal, true);
 		principal_oid = get_role_oid(physical_principal_name, true);
+		pfree(physical_principal_name);
 	}
 
 	/* Return 1 if given role is PUBLIC */
@@ -1936,6 +2045,10 @@ is_rolemember(PG_FUNCTION_ARGS)
 	dbo_role_name = get_dbo_role_name(cur_db_name);
 	db_owner_oid = get_role_oid(db_owner_name, false);
 	dbo_role_oid = get_role_oid(dbo_role_name, false);
+	
+	pfree(db_owner_name);
+	pfree(dbo_role_name);
+
 	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
 		PG_RETURN_INT32(0);
 	else if (is_member_of_role_nosuper(principal_oid, role_oid))
@@ -1990,7 +2103,7 @@ has_user_in_db(const char *login, char **db_name)
 	{
 
 		Datum		name = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_database_name,
-										bbf_authid_user_ext_rel->rd_att, &is_null);
+										RelationGetDescr(bbf_authid_user_ext_rel), &is_null);
 
 		*db_name = pstrdup(TextDatumGetCString(name));
 
@@ -2342,12 +2455,12 @@ babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 				 errmsg("Current login %s does not have permission to remove domain mapping entry",
 						GetUserNameFromId(GetSessionUserId(), true))));
 
-	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), AccessExclusiveLock);
 
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_domain_mapping_rel);
 
-	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	table_close(bbf_domain_mapping_rel, AccessExclusiveLock);
 	return (Datum) 0;
 }
 

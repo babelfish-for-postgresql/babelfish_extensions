@@ -52,6 +52,8 @@ namespace BabelfishDotnetFramework
                 }
                 allFiles = tempList;
             }
+            allFiles = allFiles.OrderBy(file => file.DirectoryName)
+                   .ThenBy(file => file.Name);
             Task<bool>[] tasksInParallel = new Task<bool>[allFiles.Count()];
             bool [] result = new bool[allFiles.Count()];
             int i = 0;

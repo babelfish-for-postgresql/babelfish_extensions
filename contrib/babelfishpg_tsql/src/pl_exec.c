@@ -1036,9 +1036,10 @@ pltsql_exec_trigger(PLtsql_function *func,
 	PLtsql_rec *rec_new,
 			   *rec_old;
 	HeapTuple	rettup;
+	bool     	support_tsql_trans = pltsql_support_tsql_transactions();
 
 	/* Check if this trigger is called as part of any of postgres' function, procedure or trigger. */
-	if (!pltsql_support_tsql_transactions())
+	if (!support_tsql_trans)
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1050,7 +1051,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 	 */
 	pltsql_estate_setup(&estate, func, NULL, NULL);
 
-	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers)
+	if (support_tsql_trans && !pltsql_disable_txn_in_triggers)
 		estate.atomic = false;
 
 	estate.trigdata = trigdata;
@@ -1173,7 +1174,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		 * TSQL triggers terminate if there is no transaction active at the
 		 * end
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 					 errmsg("The transaction ended in the trigger. The batch has been aborted.")));
@@ -1181,7 +1182,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		/*
 		 * If an error was encountered when executing trigger.
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 					 errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
@@ -4621,6 +4622,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		fmtonly_enabled = true;
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
+	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
 	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
@@ -4633,8 +4635,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 						  (estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
 						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
-	if (stmt->original_query)
-		original_query_string = stmt->original_query;
+	original_query_string = stmt->original_query ? stmt->original_query : NULL;
 
 	if (stmt->is_cross_db)
 	{
@@ -4668,14 +4669,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
-			if (stmt->is_cross_db)
-			{
-				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_session_properties(cur_dbname);
-			}
 			if (reset_session_properties)
 			{
 				set_session_properties(cur_dbname);
+			}
+			else if (stmt->is_cross_db)
+			{
+				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+					set_session_properties(cur_dbname);
 			}
 			return ret;
 		}
@@ -4799,7 +4800,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/* Open nesting level in engine */
 			BeginCompositeTriggers(CurrentMemoryContext);
 			/* TSQL commands must run inside an explicit transaction */
-			if (!pltsql_disable_batch_auto_commit && pltsql_support_tsql_transactions() &&
+			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
 				stmt->txn_data == NULL && !IsTransactionBlockActive())
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
@@ -4825,7 +4826,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 										  portal, expr, cmd, paramLI);
 		else if (stmt->need_to_push_result)
 			rc = execute_plan_and_push_result(estate, expr, paramLI);
-		else if (stmt->txn_data != NULL && !pltsql_support_tsql_transactions())
+		else if (stmt->txn_data != NULL && !support_tsql_trans)
 		{
 			elog(DEBUG2, "TSQL TXN Execute transaction command with PG semantics");
 			rc = execute_txn_command(estate, stmt);
@@ -5058,7 +5059,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
-			pltsql_support_tsql_transactions() &&
+			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
 			!ro_func && !estate->insert_exec)
 		{
@@ -5070,8 +5071,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				restore_session_properties();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
+		original_query_string = NULL;
+
 		if (need_path_reset)
 			(void) set_config_option("search_path", old_search_path,
 									 PGC_USERSET, PGC_S_SESSION,
@@ -5080,28 +5083,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			set_session_properties(cur_dbname);
 		}
-		if (stmt->is_cross_db)
+		else if (stmt->is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 				set_session_properties(cur_dbname);
 		}
-		PG_RE_THROW();
+
+		pfree(cur_dbname);
 	}
 	PG_END_TRY();
-
-	if (need_path_reset)
-		(void) set_config_option("search_path", old_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-	if (reset_session_properties)
-	{
-		set_session_properties(cur_dbname);
-	}
-	if (stmt->is_cross_db)
-	{
-		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-			set_session_properties(cur_dbname);
-	}
 
 	return PLTSQL_RC_OK;
 }
@@ -10227,7 +10217,7 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	char	   *cur_dbname = get_cur_db_name();
 	char	   *new_search_path;
 	char	   *physical_schema;
-	const char *dbo_schema;
+	char	   *dbo_schema = NULL;
 
 	top_es_entry = exec_state_call_stack->next;
 
@@ -10291,7 +10281,10 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 				(void) set_config_option("search_path", new_search_path,
 										 PGC_USERSET, PGC_S_SESSION,
 										 GUC_ACTION_SAVE, true, 0, false);
+										 
 				pfree(new_search_path);
+				pfree(dbo_schema);
+					
 				return true;
 			}
 			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
@@ -10343,6 +10336,8 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 											 PGC_USERSET, PGC_S_SESSION,
 											 GUC_ACTION_SAVE, true, 0, false);
 					pfree(new_search_path);
+					pfree(dbo_schema);
+					
 					return true;
 				}
 			}
@@ -10374,10 +10369,13 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
 		pfree(new_search_path);
+		pfree(dbo_schema);
+			
 		return true;
 	}
 	
 	pfree(cur_dbname);
+	
 	return false;
 }
 

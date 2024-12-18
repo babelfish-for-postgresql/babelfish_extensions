@@ -158,6 +158,7 @@ extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name
 extern bool guest_role_exists_for_db(const char *dbname);
 extern void update_db_owner(const char *new_owner_name, const char *db_name);
 extern Oid get_login_for_user(Oid user_id, const char *physical_schema_name);
+extern bool user_exists_for_db(const char *db_name, const char *user_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

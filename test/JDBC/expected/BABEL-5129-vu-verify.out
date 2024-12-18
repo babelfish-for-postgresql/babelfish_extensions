@@ -1,0 +1,217 @@
+
+-- Tests for ISNUMERIC function with varchar and nvarchar variables
+SELECT * FROM babel_5129
+GO
+~~START~~
+int#!#numeric#!#money#!#varchar#!#nvarchar
+45000#!#12345.12000#!#237891.2200#!#12.3420000000#!#12.3420000000
+~~END~~
+
+-- Test int
+SELECT ISNUMERIC(int_type)
+FROM babel_5129
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test numeric
+SELECT ISNUMERIC(numeric_type)
+FROM babel_5129
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test money
+SELECT ISNUMERIC(money_type)
+FROM babel_5129
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test varchar
+SELECT ISNUMERIC(varchar_type)
+FROM babel_5129
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test nvarchar
+SELECT ISNUMERIC(nvarchar_type)
+FROM babel_5129
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test numeric variable
+DECLARE @a numeric(24,6);
+SELECT @a = 12.3420000000;
+SELECT ISNUMERIC(@a), LEN(@a), DATALENGTH(@a)
+GO
+~~START~~
+int#!#int#!#int
+1#!#9#!#6
+~~END~~
+
+
+-- Test varchar variable
+DECLARE @v varchar(20);
+SELECT @v = '12.3420000000';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+1#!#13#!#13
+~~END~~
+
+
+-- Test nvarchar variable
+DECLARE @nv nvarchar(10);
+SELECT @nv = '12.3420000000';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+1#!#10#!#10
+~~END~~
+
+
+-- Test NULL varchar variable
+DECLARE @v varchar(20);
+SELECT @v = NULL;
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+0#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test NULL nvarchar variable
+DECLARE @nv nvarchar(10);
+SELECT @nv = null;
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+0#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test empty varchar variable
+DECLARE @v varchar(20);
+SELECT @v = '';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+0#!#0#!#0
+~~END~~
+
+
+-- Test empty nvarchar variable
+DECLARE @nv nvarchar(10);
+SELECT @nv = '';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+0#!#0#!#0
+~~END~~
+
+
+-- Test varchar with number argument that exceeds range of bigint.
+DECLARE @v varchar(20);
+SELECT @v = '9223372036854775807';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+1#!#19#!#19
+~~END~~
+
+
+DECLARE @v varchar(20);
+SELECT @v = '-9223372036854775808';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+1#!#20#!#20
+~~END~~
+
+
+-- Test nvarchar with number argument that exceeds range of bigint.
+DECLARE @nv nvarchar(20);
+SELECT @nv = '9223372036854775807';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+1#!#19#!#19
+~~END~~
+
+
+DECLARE @nv nvarchar(20);
+SELECT @nv = '-9223372036854775808';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+1#!#20#!#20
+~~END~~
+
+
+-- Test varchar with lengthy numeric value
+DECLARE @v varchar;
+SELECT @v = '12345678901234567890123456789012345';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- Test nvarchar with lengthy numeric value
+DECLARE @nv nvarchar;
+SELECT @nv = '12345678901234567890123456789012345';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- Test varchar variable with invalid numeric
+DECLARE @v varchar(20);
+SELECT @v = '12.34.20000000';
+SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
+GO
+~~START~~
+int#!#int#!#int
+0#!#14#!#14
+~~END~~
+
+
+-- Test nvarchar variable with invalid numeric
+DECLARE @nv nvarchar(10);
+SELECT @nv = '12.34.20000000';
+SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
+GO
+~~START~~
+int#!#int#!#int
+0#!#10#!#10
+~~END~~
+

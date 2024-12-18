@@ -289,6 +289,14 @@ t
 ~~END~~
 
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 drop login no_priv_login1
@@ -302,6 +310,15 @@ go
 ~~START~~
 bool
 t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
 ~~END~~
 
 
@@ -359,6 +376,15 @@ WHERE sys.suser_name(usesysid) = 'restrict_user_l1' AND backend_type = 'client b
 go
 ~~START~~
 bool
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
 ~~END~~
 
 

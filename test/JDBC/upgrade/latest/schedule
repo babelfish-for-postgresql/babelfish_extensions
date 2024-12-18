@@ -151,7 +151,6 @@ babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
 check_for_inconsistent_metadata
-babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -556,6 +555,8 @@ replicate
 reverse
 string_agg
 getdate
+concat
+concat_ws
 sys_sequences
 sys_partition_functions
 sys_partition_schemes
@@ -564,4 +565,10 @@ binary-datatype-operators
 cast-varchar-to-time
 SELECT_INTO_TEST
 BABEL-5119
+BABEL-5129
+BABEL-CASE_EXPR
+charindex_replace_patindex
+BABEL-5186
+BABEL-2736
+smalldatetime_date_cmp
 

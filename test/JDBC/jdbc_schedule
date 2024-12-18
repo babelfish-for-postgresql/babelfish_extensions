@@ -10,6 +10,12 @@
 
 all
 
+ignore#!#BABEL-1435
+ignore#!#BABEL-1446
+ignore#!#babelfish_migration_mode-vu-prepare
+ignore#!#babelfish_migration_mode-vu-verify
+ignore#!#babelfish_migration_mode-vu-cleanup
+
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -42,8 +48,50 @@ ignore#!#sys-table_types-before-dep-vu-cleanup
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-prepare
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-verify
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-cleanup
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-prepare
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-verify
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-prepare
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-verify
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-cleanup
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-cleanup
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-prepare
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-verify
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-cleanup
+ignore#!#host_id-before-16_5-or-15_9-vu-prepare
+ignore#!#host_id-before-16_5-or-15_9-vu-verify
+ignore#!#host_id-before-16_5-or-15_9-vu-cleanup
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-prepare
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-verify
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-cleanup
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-prepare
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-verify
+ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-2736-before-16_5-vu-prepare
+ignore#!#BABEL-2736-before-16_5-vu-verify
+ignore#!#BABEL-2736-before-16_5-vu-cleanup
+ignore#!#BABEL-2736-before-15_3-vu-prepare
+ignore#!#BABEL-2736-before-15_3-vu-verify
+ignore#!#BABEL-2736-before-15_3-vu-cleanup
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -349,6 +397,9 @@ ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
 ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_5-or-14_10-vu-prepare
+ignore#!#string_agg-before-15_5-or-14_10-vu-verify
+ignore#!#string_agg-before-15_5-or-14_10-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
@@ -358,3 +409,15 @@ ignore#!#getdate-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-prepare
 ignore#!#string_agg-before-14_5-vu-verify
 ignore#!#string_agg-before-14_5-vu-cleanup
+ignore#!#concat-before-15_9-or-16_5-vu-prepare
+ignore#!#concat-before-15_9-or-16_5-vu-verify
+ignore#!#concat-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
+ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
+ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
+ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
+ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
+ignore#!#trim-before-15_11-or-16_7-vu-prepare
+ignore#!#trim-before-15_11-or-16_7-vu-verify
+ignore#!#trim-before-15_11-or-16_7-vu-cleanup

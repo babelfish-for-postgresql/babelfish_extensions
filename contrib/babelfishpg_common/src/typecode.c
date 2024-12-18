@@ -285,6 +285,7 @@ Oid			tsql_datetime2_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
+Oid			tsql_sysname_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -314,6 +315,14 @@ resolve_pg_type_to_tsql(Oid oid)
 			return type_infos[entry->persist_id].tsql_typname;
 	}
 	return NULL;
+}
+
+bool
+is_tsql_sysname_datatype(Oid oid)
+{
+	if (tsql_sysname_oid == InvalidOid)
+		tsql_sysname_oid = lookup_tsql_datatype_oid("sysname");
+	return tsql_sysname_oid == oid;
 }
 
 bool

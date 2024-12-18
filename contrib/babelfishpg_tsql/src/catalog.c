@@ -897,10 +897,10 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
 	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
+	ScanKeyData key[2];
 
 	if (!db_name || !login)
 		return NULL;
@@ -910,20 +910,16 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_login_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	ScanKeyInit(&key[0],
+			Anum_bbf_authid_user_ext_login_name,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			NameGetDatum(login_name));
+	ScanKeyInit(&key[1],
+			Anum_bbf_authid_user_ext_database_name,
+			BTEqualStrategyNumber, F_TEXTEQ,
+			CStringGetTextDatum(db_name));
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -1028,6 +1024,28 @@ get_authid_user_ext_db_users(const char *db_name)
 	return db_users_list;
 }
 
+/* Checks if the user is enabled on a given database. */
+static bool
+user_has_dbaccess(const char *user)
+{
+	HeapTuple	tuple;
+	bool		has_access = false;
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isnull = true;
+		int	user_can_connect = 0;
+		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+		if (user_can_connect == 1)
+			has_access = true;
+		ReleaseSysCache(tuple);
+	}
+	return has_access;
+}
+
 /*
  * Checks if there exists any user for respective database and login,
  * if there is not any then use dbo or guest user.
@@ -1044,6 +1062,9 @@ get_user_for_database(const char *db_name)
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
+
+	if (user && !user_has_dbaccess(user) && !guest_has_dbaccess((char *) db_name))
+		user = NULL;
 
 	if (!user)
 	{
@@ -1280,10 +1301,10 @@ void
 clean_up_bbf_server_def()
 {
 	/* Fetch the relation */
-	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), AccessExclusiveLock);
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_servers_def_rel);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	table_close(bbf_servers_def_rel, AccessExclusiveLock);
 }
 
 /*****************************************
@@ -2498,7 +2519,7 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	char		*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	HeapTuple	tuple;
 
@@ -2509,6 +2530,8 @@ guest_role_exists_for_db(const char *dbname)
 		role_exists = true;
 		ReleaseSysCache(tuple);
 	}
+
+	pfree(guest_role);
 
 	return role_exists;
 }
@@ -2566,7 +2589,7 @@ get_login_for_user(Oid user_id, const char *physical_schema_name)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;
@@ -2647,6 +2670,7 @@ create_guest_role_for_db(const char *dbname)
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
+	pfree(guest);
 }
 
 /*
@@ -3937,3 +3961,150 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	table_endscan(tblscan);	
 	table_close(sysdatabases_rel, RowExclusiveLock);	
 }
+
+/* 
+ * This is a temporary procedure which is called during upgrade to alter
+ * default privileges on all the schemas where the schema owner is not dbo/db_owner.
+ */
+static void
+alter_default_privilege_for_db(char *dbname)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[2];
+	int16		dbid = get_db_id(dbname);
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									AccessShareLock);
+	dsc = RelationGetDescr(bbf_schema_rel);
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_schema_perms_object_type,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(OBJ_SCHEMA));
+
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 2, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		bool		isnull;
+		const char	*schema_name;
+		const char	*grantee;
+		int			current_permission;
+		char		*schema_owner;
+		char		*physical_schema;
+		const char	*dbo_user;
+		const char	*db_owner;
+		int			i;
+
+		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
+		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
+		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
+
+		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
+		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
+		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
+		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
+
+		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
+		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
+		{
+			/* For each permission, grant alter default privileges explicitly. */
+			for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+			{
+				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
+				{
+					char	*alter_query = NULL;
+					char	*grant_query = NULL;
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					exec_utility_cmd_helper(alter_query);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					exec_utility_cmd_helper(grant_query);
+					pfree(alter_query);
+					pfree(grant_query);
+				}
+			}
+		}
+		pfree(physical_schema);
+		pfree(schema_owner);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+	
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, AccessShareLock);
+}
+
+
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_schema);
+Datum
+alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
+{
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+												 db_rel->rd_att, &is_null);
+		char *db_name = TextDatumGetCString(db_name_datum);
+
+		alter_default_privilege_for_db(db_name);
+		pfree(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
+/*
+ * Returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ * false otherwise.
+ */
+bool
+user_exists_for_db(const char *db_name, const char *user_name)
+{
+	HeapTuple		tuple_cache;
+	NameData		rolname;
+	bool			user_exists = false;
+
+	namestrcpy(&rolname, user_name);
+
+	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+
+	if (HeapTupleIsValid(tuple_cache))
+	{
+		bool isnull;
+		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
+												 Anum_bbf_authid_user_ext_database_name, &isnull));
+
+		Assert(!isnull);
+
+		if (strcmp(db_name_from_cache, db_name) == 0)
+			user_exists = true;
+		
+		pfree(db_name_from_cache);
+		ReleaseSysCache(tuple_cache);
+	}
+
+	return user_exists;
+}
+

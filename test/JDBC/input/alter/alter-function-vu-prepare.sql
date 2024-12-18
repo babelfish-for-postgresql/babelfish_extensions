@@ -1,7 +1,7 @@
 CREATE TABLE alter_func_users ([Id] int, [firstname] varchar(50), [lastname] varchar(50), [email] varchar(50));
 CREATE TABLE alter_func_orders ([Id] int, [userid] int, [productid] int, [quantity] int, [orderdate] Date);
 
-INSERT INTO alter_func_users VALUES (1, 'j', 'o', 'testemail'), (1, 'e', 'l', 'testemail2');
+INSERT INTO alter_func_users VALUES (1, 'j', 'o', 'testemail'), (2, 'e', 'l', 'testemail2');
 INSERT INTO alter_func_orders VALUES (1, 1, 1, 5, '2023-06-25'), (2, 1, 1, 6, '2023-06-25');
 GO
 
@@ -38,4 +38,7 @@ create function alter_func_f5() returns @result TABLE([Id] int) as begin insert 
 go
 
 create function alter_func_f6(@p1 int, @p2 int=123, @p3 int) returns int as begin return @p1 + @p2 + @p3 end
+go
+
+create schema alter_func_prep_schema1
 go

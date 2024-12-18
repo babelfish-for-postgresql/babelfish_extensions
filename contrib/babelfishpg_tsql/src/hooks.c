@@ -2391,24 +2391,24 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 	{
 		const char *arg_str = (max_nargs < 2) ? "argument" : "arguments";
 
+		if (!proc_call)
+		{
+			/* deconstruct the names list */
+			DeconstructQualifiedName(names, &schemaname, &funcname);
+
+			/* 
+			 * Check whether function is an special function or not, and 
+			 * report appropriate error if applicable 
+			 */
+			validate_special_function(schemaname, funcname, nargs, found);
+		}
+		
 		/*
 		 * Found the proc/func having the same number of arguments. possibly
 		 * data-type mistmatch.
 		 */
 		if (found)
 		{
-			if (!proc_call)
-			{
-				/* deconstruct the names list */
-				DeconstructQualifiedName(names, &schemaname, &funcname);
-
-				/* 
-				 * Check whether function is an special function or not, and 
-				 * report appropriate error if applicable 
-				 */
-				validate_special_function(schemaname, funcname, fargs, nargs, input_typeids);
-			}
-
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
@@ -2881,7 +2881,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		temp_col_list = NIL;
 
-		if (att->attnum > 0)
+		/*
+		 * We must skip the generated or identity columns while inserting.
+		 * Note that in case of IDENTITY_INSERT Explicit col-name must be specified
+		 * so stmt->col will be NOT NULL.
+		 */
+		if (att->attnum > 0
+			&& !(att->attgenerated || att->attidentity == ATTRIBUTE_IDENTITY_ALWAYS))
 		{
 			/*
  			* Do a deep copy of attname because tuple is a pointer 
@@ -4671,8 +4677,8 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 	HeapTuple 	 	tuple;
 	char 			*func_schema_name = NULL,
 					*new_search_path = NULL;
-	const char  	*func_dbo_schema,
-					*cur_dbname = get_cur_db_name();
+	char  			*func_dbo_schema;
+	const char		*cur_dbname = get_cur_db_name();
 	
 	tuple = SearchSysCache1(NAMESPACEOID,
 						ObjectIdGetDatum(proc_nsp_oid));
@@ -4688,7 +4694,10 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 										quote_identifier(func_dbo_schema));
 		
 		ReleaseSysCache(tuple);
+		
+		pfree(func_dbo_schema);
 	}
+
 	return new_search_path;
 }
 

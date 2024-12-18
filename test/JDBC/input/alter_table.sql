@@ -44,3 +44,24 @@ GO
 
 drop table trans2
 GO
+
+--------------------------- BABEL-5417 ---------------------------
+------- DROP COLUMN SHOULD NOT DROP TRIGGERS ON THE TABLE --------
+CREATE TABLE babel_5417(a int, b int);
+GO
+CREATE TRIGGER babel_5417_trg
+ON babel_5417
+AFTER INSERT AS SELECT 1
+GO
+SELECT tgname FROM pg_trigger WHERE tgname LIKE 'babel_5417%';
+GO
+ALTER TABLE babel_5417 DROP COLUMN a
+GO
+SELECT tgname FROM pg_trigger WHERE tgname LIKE 'babel_5417%';
+GO
+DROP TABLE babel_5417
+GO
+SELECT tgname FROM pg_trigger WHERE tgname LIKE 'babel_5417%';
+GO
+------------------------------------------------------------------
+------------------------------------------------------------------

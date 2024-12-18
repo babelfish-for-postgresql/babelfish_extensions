@@ -1757,6 +1757,8 @@ typedef struct PLtsql_protocol_plugin
 
 	void		(*set_reset_tds_connection_flag) ();
 
+	bool		(*get_reset_tds_connection_flag) ();
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2003,6 +2005,7 @@ extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
+extern Oid get_owner_of_schema(const char *schema);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -2065,7 +2068,7 @@ extern char *get_fulltext_index_name(Oid relid, const char *table_name);
 extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 extern bool is_unique_index(Oid relid, const char *index_name);
-extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
+extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2108,6 +2111,7 @@ extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
+extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv);
 extern AccessPriv *make_accesspriv_node(const char *priv_name);
 extern RoleSpec   *make_rolespec_node(const char *rolename);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
@@ -2132,6 +2136,7 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 
 typedef struct
 {
@@ -2171,6 +2176,7 @@ int			execute_sp_cursorfetch(int cursor_handle, int *fetchtype, int *rownum, int
 int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
+void		reset_cached_cursor(void);
 
 /*
  * Functions in string.c
@@ -2217,7 +2223,6 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids);
-extern void init_special_function_list(void);
+extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
 
 #endif							/* PLTSQL_H */

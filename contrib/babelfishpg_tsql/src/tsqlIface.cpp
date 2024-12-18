@@ -936,7 +936,7 @@ public:
 						}
 					}
 				}
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING() || id->keyword()->STRING_AGG())
+				if (id->keyword()->TRIM())
 				{
 					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
@@ -1789,22 +1789,6 @@ public:
 		// record if the SQL object is schema qualified
 		if (is_schema_specified)
 			stmt->is_schema_specified = true;
-
-		if (is_cross_db)
-		{
-			if (ctx->select_statement_standalone() &&
-				ctx->select_statement_standalone()->select_statement() &&
-				ctx->select_statement_standalone()->select_statement()->query_expression() &&
-				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification() &&
-				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->INTO() &&
-				ctx->select_statement_standalone()->select_statement()->query_expression()->query_specification()->table_name())
-			{
-				throw PGErrorWrapperException(ERROR,
-						ERRCODE_FEATURE_NOT_SUPPORTED,
-						"cross-db 'SELECT INTO' statement is not supported in Babelfish. As a workaround, consider running CREATE TABLE and INSERT-SELECT statements.",
-						getLineAndPos(ctx->select_statement_standalone()));
-			}
-		}
 
 		if (is_compiling_create_function())
 		{

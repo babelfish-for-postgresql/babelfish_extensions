@@ -16,7 +16,7 @@ SELECT
 FROM babelfish_helpdb();
 go
 ~~START~~
-text
+varchar
 correct
 correct
 correct

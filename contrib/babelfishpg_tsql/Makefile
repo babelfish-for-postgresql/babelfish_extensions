@@ -148,7 +148,7 @@ $(EXTENSION).control: $(EXTENSION).control.in
 		> $@
 
 sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
-	cpp $< | sed 's/^# /-- /g' > $@
+	cpp -Werror $< | sed 's/^# /-- /g' > $@
 
 sql/%.sql: sql/upgrades/%.sql
 	cp $< $@

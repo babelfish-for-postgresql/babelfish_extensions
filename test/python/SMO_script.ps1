@@ -35,7 +35,7 @@ if($script_flag -eq $var_one)
     $Objects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
     {
-        if (-not $CurrentObject.IsSystemObject )
+        if ($CurrentObject.schema -ne $schm -and -not $CurrentObject.IsSystemObject )
         {
             $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
             $Scripter.Options.DriAll = $True;

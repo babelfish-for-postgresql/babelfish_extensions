@@ -1,0 +1,675 @@
+-- tsql
+-- test table, trigger, procedure, function
+SELECT * FROM babel_object_id_t1_view
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT * FROM babel_object_id_proc1_view
+GO
+~~START~~
+varchar
+babel_object_id_proc1
+~~END~~
+
+
+SELECT * FROM babel_object_id_func1_view
+GO
+~~START~~
+varchar
+babel_object_id_func1
+~~END~~
+
+
+SELECT * FROM babel_object_id_v1_view
+GO
+~~START~~
+varchar
+babel_object_id_v1
+~~END~~
+
+
+SELECT * FROM babel_object_id_trg_view
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+-- We can also specify object_type as parameter
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_t1', 'U'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_proc1', 'P'))
+GO
+~~START~~
+varchar
+babel_object_id_proc1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_func1', 'FN'))
+GO
+~~START~~
+varchar
+babel_object_id_func1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_v1', 'V'))
+GO
+~~START~~
+varchar
+babel_object_id_v1
+~~END~~
+
+
+-- traling spaces in object type param should pass within allowed length 
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_t1', 'U '))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+-- should fail, as object type length is more than 2
+SELECT OBJECT_ID('babel_object_id_t1', 'U  ')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- traling spaces
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_t1    '))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+-- case insensitive
+SELECT OBJECT_NAME(OBJECT_ID('Babel_Object_ID_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+
+-- Negative scenarios
+SELECT OBJECT_ID('input_longer_than_4000_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1')
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: input value is too long for object name)~~
+
+
+SELECT OBJECT_ID('babel_object_id_t1', '')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('', '')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- leading spaces should fail
+SELECT (CASE WHEN OBJECT_NAME(OBJECT_ID('   babel_object_id_t1')) = 'babel_object_id_t1' THEN 'true' ELSE 'false' END) result;
+GO
+~~START~~
+varchar
+false
+~~END~~
+
+
+-- testing different scenarios of 3-part name 
+SELECT OBJECT_NAME(OBJECT_ID('dbo.babel_object_id_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('..babel_object_id_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master.dbo.babel_object_id_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('[master]."dbo".[babel_object_id_t1]'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('"master".[dbo]."babel_object_id_t1"'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+-- schema and object name containing spaces and dots
+SELECT OBJECT_NAME(OBJECT_ID('[babel_object_id_t2 .with .dot_an_spaces]'));
+GO
+~~START~~
+varchar
+babel_object_id_t2 .with .dot_an_spaces
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master.."babel_object_id_t2 .with .dot_an_spaces"'));
+GO
+~~START~~
+varchar
+babel_object_id_t2 .with .dot_an_spaces
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('[babel_object_id_schema .with .dot_and_spaces]."babel_object_id_t3 .with .dot_and_spaces"'));
+GO
+~~START~~
+varchar
+babel_object_id_t3 .with .dot_and_spaces
+~~END~~
+
+
+-- To test temp object
+CREATE TABLE #babel_object_id_temp_t1 (a int);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_id_temp_t1'))
+GO
+~~START~~
+varchar
+#babel_object_id_temp_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('tempdb..#babel_object_id_temp_t1'))
+GO
+~~START~~
+varchar
+#babel_object_id_temp_t1
+~~END~~
+
+
+-- Test temp objects not in ENR
+CREATE TABLE #babel_object_id_temp_t2(a babel_object_id_type);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_id_temp_t2'))
+GO
+~~START~~
+varchar
+#babel_object_id_temp_t2
+~~END~~
+
+
+-- We can also specify object_type as parameter
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_id_temp_t1', 'U'))
+GO
+~~START~~
+varchar
+#babel_object_id_temp_t1
+~~END~~
+
+ 
+DROP TABLE #babel_object_id_temp_t1;
+go
+
+-- reset the login password
+ALTER LOGIN babel_object_id_login1 WITH PASSWORD = '12345678';
+GO
+
+-- tsql      user=babel_object_id_login1 password=12345678
+-- test dependency of user's permission on object
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_master_user1
+~~END~~
+
+
+-- by default user will not access to any objects
+-- following should return NULL
+SELECT OBJECT_ID('babel_object_id_t1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('babel_object_id_proc1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('babel_object_id_func1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('babel_object_id_v1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('babel_object_id_trg')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+-- Grant permission to user
+GRANT SELECT ON babel_object_id_t1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_proc1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_func1 TO babel_object_id_master_user1;
+GO
+
+GRANT SELECT ON babel_object_id_v1 TO babel_object_id_master_user1;
+GO
+
+-- tsql      user=babel_object_id_login1 password=12345678
+-- Note: for triggers and constraint it will check permission of table it belongs
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_master_user1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_proc1'))
+GO
+~~START~~
+varchar
+babel_object_id_proc1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_func1'))
+GO
+~~START~~
+varchar
+babel_object_id_func1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_v1'))
+GO
+~~START~~
+varchar
+babel_object_id_v1
+~~END~~
+
+
+SELECT (CASE WHEN OBJECT_ID('babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
+GO
+~~START~~
+varchar
+true
+~~END~~
+
+
+
+-- tsql
+-- Revoke permission from user
+REVOKE SELECT ON babel_object_id_t1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_id_proc1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_id_func1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_id_v1 FROM babel_object_id_master_user1;
+GO
+
+
+-- tsql  user=babel_object_id_login1 password=12345678
+-- test cross database lookup
+USE babel_object_id_db;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_user2
+~~END~~
+
+
+-- following should return NULL, as user in master corresponding to current login still don't have permission
+SELECT OBJECT_ID('master..babel_object_id_t1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_proc1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_func1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_v1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_trg')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+-- grant permission for access
+USE master
+GO
+
+GRANT SELECT ON babel_object_id_t1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_proc1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_func1 TO babel_object_id_master_user1;
+GO
+
+GRANT SELECT ON babel_object_id_v1 TO babel_object_id_master_user1;
+GO
+
+-- tsql    user=babel_object_id_login1 password=12345678
+USE babel_object_id_db;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_user2
+~~END~~
+
+
+-- Now we can access, to verify name using object_name we have to provide db_id for cross-db lookup 
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_t1'), DB_ID('master'))
+GO
+~~START~~
+varchar
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_proc1'), DB_ID('master'))
+GO
+~~START~~
+varchar
+babel_object_id_proc1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_func1'), DB_ID('master'))
+GO
+~~START~~
+varchar
+babel_object_id_func1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_v1'), DB_ID('master'))
+GO
+~~START~~
+varchar
+babel_object_id_v1
+~~END~~
+
+
+SELECT (CASE WHEN OBJECT_ID('master..babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
+GO
+~~START~~
+varchar
+true
+~~END~~
+
+
+-- tsql
+USE master
+GO
+
+REVOKE SELECT ON babel_object_id_t1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_id_proc1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_id_func1 FROM babel_object_id_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_id_v1 FROM babel_object_id_master_user1;
+GO
+
+-- tsql    user=babel_object_id_login1 password=12345678
+-- test if it is looking in user's default schema, in case no schema name is specified
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema2.babel_object_id_db_t2'))
+GO
+~~START~~
+varchar
+babel_object_id_db_t2
+~~END~~
+
+
+-- should fail 
+SELECT OBJECT_ID('babel_object_id_db_t2')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql 
+-- now change the default schema
+USE babel_object_id_db;
+GO
+
+ALTER USER babel_object_id_user2 WITH DEFAULT_SCHEMA = babel_object_id_schema2;
+GO
+
+-- tsql    user=babel_object_id_login1 password=12345678
+-- now it will search in default schema
+USE babel_object_id_db;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_user2
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db_t2'))
+GO
+~~START~~
+varchar
+babel_object_id_db_t2
+~~END~~
+
+
+-- tsql
+-- to test that it is looking in guest schema by default for guest user
+USE babel_object_id_db
+GO
+
+CREATE TABLE dbo.babel_object_id_table_in_dbo_schema (a int);
+GO
+
+grant connect to guest
+GO
+
+-- reset the login password
+ALTER LOGIN babel_object_id_login2 WITH PASSWORD = '12345678';
+GO
+
+-- tsql      user=babel_object_id_login2 password=12345678
+USE babel_object_id_db
+GO
+
+-- guest user
+SELECT current_user;
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+CREATE TABLE babel_object_id_table_in_guest_schema (a int);
+GO
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_table_in_guest_schema'))
+GO
+~~START~~
+varchar
+babel_object_id_table_in_guest_schema
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('guest.babel_object_id_table_in_guest_schema'))
+GO
+~~START~~
+varchar
+babel_object_id_table_in_guest_schema
+~~END~~
+
+
+-- should return null
+SELECT OBJECT_NAME(OBJECT_ID('dbo.babel_object_id_table_in_dbo_schema'))
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- cleanup guest schema
+DROP TABLE babel_object_id_table_in_guest_schema
+GO
+
+-- tsql
+USE babel_object_id_db;
+GO
+
+DROP TABLE dbo.babel_object_id_table_in_dbo_schema;
+GO
