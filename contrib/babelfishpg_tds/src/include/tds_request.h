@@ -24,6 +24,7 @@
 #include "src/include/tds_typeio.h"
 #include "src/collation.h"
 
+
 /* Different TDS request types returned by GetTDSRequest() */
 typedef enum TDSRequestType
 {
@@ -498,16 +499,16 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 }
 
 static inline void
-SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset)
+SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset, char *proc_name)
 {
-	uint8_t		len;
-	uint16		colCount;
-	uint16		isTvpNull;
-	char	   *tempString;
-	int			i = 0;
-	char	   *messageData = message->data;
-	StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
-	uint32_t	collation;
+	uint8_t			len;
+	uint16			colCount;
+	uint16			isTvpNull;
+	char			*tempString;
+	int				i = 0;
+	char	   		*messageData = message->data;
+	StringInfo		tempStringInfo = palloc(sizeof(StringInfoData));
+	uint32_t		collation;
 
 	/* Database-Name.Schema-Name.TableType-Name */
 	for (; i < 3; i++)
@@ -536,21 +537,34 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			if (i == 1)
 				temp->tvpInfo->tvpTypeSchemaName = tempStringInfo->data;
 			else
+			{
 				temp->tvpInfo->tvpTypeName = tempStringInfo->data;
-
+				temp->tvpInfo->tableName = tempStringInfo->data;
+			}
 		}
 		else if (i == 2)
 		{
-			/* Throw error if TabelType-Name is not provided */
-			ereport(ERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							"Table-valued parameter %d, to a parameterized string has no table type defined.",
-							temp->paramOrdinal + 1)));
+			char			*tvp_type_name;
+			char 			*tvp_type_schema_name;
+			/*
+			 * Fetch the TVP typeName and schemaName from catalog search
+			 * based on object name and argument name.
+			 */
+			pltsql_plugin_handler_ptr->get_tvp_typename_typeschemaname(proc_name,
+																	temp->paramMeta.colName.data,
+																	&tvp_type_name,
+																	&tvp_type_schema_name);
+			temp->len += strlen(tvp_type_schema_name);
+			temp->tvpInfo->tvpTypeSchemaName = pstrdup(tvp_type_schema_name);
+
+			pfree(tvp_type_schema_name);
+
+			temp->len += strlen(tvp_type_name);
+			temp->tvpInfo->tvpTypeName = tvp_type_name;
+			temp->tvpInfo->tableName = tvp_type_name;
 		}
 	}
 
-	temp->tvpInfo->tableName = tempStringInfo->data;
 	i = 0;
 
 	memcpy(&isTvpNull, &messageData[*offset], sizeof(uint16));
