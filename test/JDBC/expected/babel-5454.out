@@ -7,6 +7,10 @@ GO
 INSERT INTO Currency VALUES ('USD', 'US', 2.1), ('EUR', 'EU', 1.1);
 INSERT INTO Exchange VALUES ('USD', 1.00, 5.12345678), ('EUR', 0.12, 1.12345678);
 GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
 
 -- The query that demonstrates the issue, works without my chnage
 SELECT e.Name AS description, e.Rate + e.Value AS sum_num 
@@ -20,6 +24,14 @@ FROM
     FROM Currency
 ) AS e;
 GO
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+EU#!#1.24345678
+US#!#3.10000000
+EU#!#2.10000000
+~~END~~
+
 
 
 CREATE TABLE Currency2(CurrencyCode nvarchar(3) NOT NULL, CurrencyName nvarchar(2) NULL, curr_num decimal (2,1));
@@ -30,85 +42,324 @@ GO
 
 INSERT INTO Currency2 (CurrencyCode, CurrencyName,curr_num) VALUES ('USD', 'US',2.1), ('EUR', 'Eu',1.1), ('GBP', 'Br',3.1), ('JPY', 'Ja',4.1), ('CAD', 'Ca',5.1);
 GO
+~~ROW COUNT: 5~~
+
 
 INSERT INTO ExchangeRate2 (ToCurrencyCode, ExchangeRate, Hello) VALUES ('EUR', 0.12, 1.12345678), ('GBP', 23.87, 2.12345678), ('JPY', 110.50, 3.12345678), ('CAD', 1.25, 4.12345678), ('USD', 1.00 , 5.12345678);
 GO
+~~ROW COUNT: 5~~
+
+
 
 -- should  notb work withoit my changes
 -- SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 -- GO
-
 -- 1.1 THIS QUERY DOES WORK when union with decimal, so not an issue of position? - 5,2 and 9,8 , went to NUMERIC_SUB_OID, final 12,8
 SELECT cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 GO
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#4.20000000
+Eu#!#2.20000000
+Br#!#6.20000000
+Ja#!#8.20000000
+Ca#!#10.20000000
+~~END~~
+
 
 SELECT 1,cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 GO
+~~START~~
+int#!#nvarchar#!#numeric
+1#!#US#!#6.12345678
+1#!#Eu#!#1.24345678
+1#!#Br#!#25.99345678
+1#!#Ja#!#113.62345678
+1#!#Ca#!#5.37345678
+1#!#US#!#4.20000000
+1#!#Eu#!#2.20000000
+1#!#Br#!#6.20000000
+1#!#Ja#!#8.20000000
+1#!#Ca#!#10.20000000
+~~END~~
+
+
+
+
 
 -- inner query -> works without my change
 SELECT ExchangeRate + hello ex,CurrencyName cr1, CurrencyName FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName FROM currency2 ;
-
 -- inner query -> works without my change
 SELECT ExchangeRate + hello ex,CurrencyName cr1, CurrencyName FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName FROM currency2 ;
-
-
 -- works oder of hello and ex - doing this
 SELECT cr1 description, ex+ Hello sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
 -- SELECT cr1 description, ex+ Hello sum_num  FROM (SELECT Hello,CurrencyName cr1 (this is var why?), CurrencyName (this is const why??) ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 GO
+~~START~~
+numeric#!#nvarchar#!#nvarchar
+6.12345678#!#US#!#US
+1.24345678#!#Eu#!#Eu
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
+5.37345678#!#Ca#!#Ca
+2.10000000#!#US#!#US
+1.10000000#!#Eu#!#Eu
+3.10000000#!#Br#!#Br
+4.10000000#!#Ja#!#Ja
+5.10000000#!#Ca#!#Ca
+~~END~~
+
+~~START~~
+numeric#!#nvarchar#!#nvarchar
+6.12345678#!#US#!#US
+1.24345678#!#Eu#!#Eu
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
+5.37345678#!#Ca#!#Ca
+1.00000000#!#US#!#US
+1.00000000#!#Eu#!#Eu
+1.00000000#!#Br#!#Br
+1.00000000#!#Ja#!#Ja
+1.00000000#!#Ca#!#Ca
+~~END~~
+
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
 
 -- works 
 SELECT cr1 description, ex+ Hello sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a where cr1 = 'US';
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+US#!#3.10000000
+~~END~~
+
 
 SELECT cr1 description, ex+ Hello sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
 -- from second union
 SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "curr_num" does not exist)~~
+
 
 
 -- 2 works without my fix, correct answer also, 5,2 and 9.8 -> final 12,8
 SELECT cr1 description, ex + Hello sum_numeric   FROM (SELECT CurrencyName cr1,ExchangeRate ex, Hello,CurrencyName FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT CurrencyName as cr,1 AS aw,curr_num as aw1, CurrencyName FROM currency2) a;
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
 -- 3 works without my fix, correct answer also ,so not an issue of position -- for this we got 5,2 and 9,8 , went to NUMERIC_SUB_OID, final 12,8 as expected by tsql also
 -- but here also we have numeric and decimal in union result
 -- T_RelabelType and T_Var
 SELECT cr1 description, ex + Hello sum_numeric   FROM (SELECT Hello,CurrencyName cr1,CurrencyName,CurrencyName cr2,ExchangeRate ex   FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,CurrencyName cr3,curr_num as aw1 FROM currency2) a;
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
 
 -- 5 alias issue ??? -- SEEEE THISSS , does not work before my fix, numeric and decimal -- works after fix
 -- in union select 1
 SELECT description d1, ex2+h2 test1 from (SELECT CurrencyName description, ex ex2, h1 h2  FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello h1 FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a)
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
 
 -- 6 this works - union decimal and decimal
 SELECT description d1, ex2+h2 test1 from (SELECT CurrencyName description, ex ex2, h1 h2  FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello h1 FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a)
 go
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#4.20000000
+Eu#!#2.20000000
+Br#!#6.20000000
+Ja#!#8.20000000
+Ca#!#10.20000000
+~~END~~
+
+
+
 -- does not work, in union select 1 and 1, after my fix works
 -- SELECT description d1, ex2+h2 test1 from (SELECT CurrencyName description, ex ex2, h1 h2  FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello h1 FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,1 as aw1 FROM currency2) a)
 -- go
-
-
 -- from second union, we choose colname based on first query only in union all. so our approach will work in all cases.
 SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex,curr_num FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1, curr_num FROM currency2);
 go
+~~START~~
+nvarchar#!#numeric
+US#!#4.2
+Eu#!#2.2
+Br#!#6.2
+Ja#!#8.2
+Ca#!#10.2
+US#!#4.2
+Eu#!#2.2
+Br#!#6.2
+Ja#!#8.2
+Ca#!#10.2
+~~END~~
+
 SELECT cr1 description, curr_num+ 5.2 sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex,curr_num FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1, curr_num FROM currency2);
 go
+~~START~~
+nvarchar#!#numeric
+US#!#7.3
+Eu#!#6.3
+Br#!#8.3
+Ja#!#9.3
+Ca#!#10.3
+US#!#7.3
+Eu#!#6.3
+Br#!#8.3
+Ja#!#9.3
+Ca#!#10.3
+~~END~~
+
 -- works 
 select description, sum_num + sum_num from (SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex,curr_num FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1, curr_num FROM currency2))
 go
+~~START~~
+nvarchar#!#numeric
+US#!#8.4
+Eu#!#4.4
+Br#!#12.4
+Ja#!#16.4
+Ca#!#20.4
+US#!#8.4
+Eu#!#4.4
+Br#!#12.4
+Ja#!#16.4
+Ca#!#20.4
+~~END~~
+
 -- works
 select sum_num+sum_num from (SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a)
 go
+~~START~~
+numeric
+12.24691356
+2.48691356
+51.98691356
+227.24691356
+10.74691356
+6.20000000
+4.20000000
+8.20000000
+10.20000000
+12.20000000
+~~END~~
+
 
 
 Select result+result as sum_result from (select case 1 when 1 then cast(1.12343 as decimal(5,2)) end as result Union all select Hello from ExchangeRate2) as derived_table
 go
+~~START~~
+numeric
+2.24000000
+2.24691356
+4.24691356
+6.24691356
+8.24691356
+10.24691356
+~~END~~
+
 
 -- multiple union all
 select ex5 + ex5 ex_result from (select ToCurrencyCode, exchangerate ex5 from ExchangeRate2 union all (SELECT cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a)) 
 go
+~~START~~
+numeric
+0.24000000
+47.74000000
+221.00000000
+2.50000000
+2.00000000
+12.24691356
+2.48691356
+51.98691356
+227.24691356
+10.74691356
+8.40000000
+4.40000000
+12.40000000
+16.40000000
+20.40000000
+~~END~~
+
 
 
 -- Setup: Create a UDT and additional test tables
@@ -128,6 +379,8 @@ INSERT INTO TestTypes VALUES
 (100, 100.5, 10, 100.12345, 100.1234),
 (200, 200.5, 20, 200.12345, 200.1234);
 GO
+~~ROW COUNT: 2~~
+
 
 -- Test Case 1: Multiple UNION ALLs with different combinations
 SELECT 
@@ -145,6 +398,16 @@ SELECT
     CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
 FROM TestTypes;
 GO
+~~START~~
+float#!#float
+10.0#!#200.24685
+200.5#!#400.24685
+100.12345#!#200.5
+200.12345#!#400.5
+10.0#!#200.24685
+20.0#!#400.24685
+~~END~~
+
 -- Test Case 2: Nested queries with decimal and numeric operations
 SELECT outer_result + inner_result AS final_result
 FROM (
@@ -157,6 +420,11 @@ FROM (
         ) AS inner_result
 ) AS nested_query;
 GO
+~~START~~
+float
+550.74685
+~~END~~
+
 -- Test Case 3: Decimal + Numeric with different scales and precisions
 SELECT 
     CAST(12345.6789 AS decimal(10,4)) + NumericCol AS dec_num_sum,
@@ -168,6 +436,14 @@ SELECT
     CAST(9876.54321 AS numeric(12,8)) * UDTCol
 FROM TestTypes;
 GO
+~~START~~
+numeric#!#numeric
+12445.80235000#!#1236091.9640602050000000
+12545.80235000#!#2470659.8540602050000000
+9976.66661000#!#988873.0864321140000000
+10076.66661000#!#1976527.4074321140000000
+~~END~~
+
 -- Test Case 4: UDT operations
 SELECT 
     UDTCol + IntCol AS udt_int_sum,
@@ -175,6 +451,12 @@ SELECT
     UDTCol / NULLIF(SmallIntCol, 0) AS udt_smallint_div
 FROM TestTypes;
 GO
+~~START~~
+numeric#!#float#!#numeric
+200.12340000#!#10062.4017#!#10.01234000
+400.12340000#!#40124.7417#!#10.00617000
+~~END~~
+
 -- Test Case 5: Mixed type operations with CAST
 SELECT 
     CAST(IntCol AS decimal(10,2)) + FloatCol AS int_float_sum,
@@ -188,6 +470,14 @@ SELECT
     CAST(1000 AS numeric(10,4)) / NULLIF(CAST(3 AS int), 0)
 FROM TestTypes;
 GO
+~~START~~
+float#!#float#!#float
+200.5#!#1001.2345#!#1.001234
+400.5#!#4002.469#!#1.000617
+69.12#!#250.0#!#333.3333333333333
+69.12#!#250.0#!#333.3333333333333
+~~END~~
+
 -- Test Case 6: All possible operations
 SELECT 
     IntCol + FloatCol AS addition,
@@ -198,6 +488,12 @@ SELECT
     IntCol % 3 AS modulo
 FROM TestTypes;
 GO
+~~START~~
+float#!#numeric#!#float#!#float#!#float#!#int
+200.5#!#0.00005#!#1005.0#!#1.0012345#!#10100.25#!#1
+400.5#!#0.00005#!#4010.0#!#1.00061725#!#40200.25#!#2
+~~END~~
+
 -- Test Case 7: UNION with different scales and precisions
 SELECT CAST(IntCol AS decimal(10,2)) AS result
 FROM TestTypes
@@ -211,6 +507,18 @@ UNION
 SELECT UDTCol
 FROM TestTypes;
 GO
+~~START~~
+numeric
+200.50000
+100.12340
+200.00000
+200.12340
+200.12345
+100.00000
+100.50000
+100.12345
+~~END~~
+
 
 DROP TABLE TestTypes;
 GO
