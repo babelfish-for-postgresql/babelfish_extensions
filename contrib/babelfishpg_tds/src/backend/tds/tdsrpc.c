@@ -1587,7 +1587,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					 * Sets the col metadata and also the corresponding row
 					 * data.
 					 */
-					SetColMetadataForTvp(temp, message, &offset);
+					SetColMetadataForTvp(temp, message, &offset, request->name.data);
 				}
 				break;
 			case TDS_TYPE_BINARY:

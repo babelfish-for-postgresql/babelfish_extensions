@@ -32,3 +32,115 @@
 1#!#1#!#1#!#1#!#True#!#hi        #!#hi        #!#hi#!#hi#!#4949#!#494900000000#!#10/10/2022 00:00:00#!#10/10/2022 10:10:10#!#143.5000#!#ce8af10a-2709-43b0-9e4e-a02753929d17#!#12.11#!#13.11#!#1.330#!#45.122#!#10:10:10#!#10/10/2022 10:10:10
 #Q#drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
 #Q#drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create table t(a int)
+#Q#create type t1 as table (a int)
+#Q#create procedure proc1 @t2 as t1 readonly as begin set nocount on; insert into t (a) select a from @t2 end
+#Q#proc1
+#Q#Select * from t
+#D#int
+5
+#Q#create table tab1(a int)
+#Q#create schema test_tvp1
+#Q#create type test_tvp1.t1 as table (a int)
+#Q#create procedure proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into tab1 (a) select a from @t2 end
+#Q#proc2
+#Q#Select * from tab1
+#D#int
+5
+#Q#create table t2(a int)
+#Q#create procedure test_tvp1.proc1 @t2 test_tvp1.t1 readonly as begin set nocount on; insert into t2 (a) select a from @t2 end
+#Q#test_tvp1.proc1
+#Q#Select * from t2
+#D#int
+5
+#Q#create table t3(a int)
+#Q#create schema test_tvp2
+#Q#create procedure test_tvp2.proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into t3 (a) select a from @t2 end
+#Q#test_tvp2.proc2
+#Q#Select * from t3
+#D#int
+5
+#Q#create table t4(a int)
+#Q#create procedure test_tvp2.proc3 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as t1 READONLY AS BEGIN insert into t4 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#test_tvp2.proc3
+#Q#Select * from t4
+#D#int
+5
+#Q#create table t5(a int)
+#Q#create type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+#Q#create procedure test_tvp2.proc4 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t5 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#test_tvp2.proc4
+#Q#Select * from t5
+#D#int
+5
+#Q#create table t6(a int)
+#Q#create schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t6 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5
+#Q#Select * from t6
+#D#int
+5
+#Q#create table t7(a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t7 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#Select * from t7
+#D#int
+5
+#Q#create table t10(a int)
+#Q#create type tvp_type as table (a int)
+#Q#create procedure proc7 @random int, @t2 tvp_type READONLY AS BEGIN insert into t10 select * from @t2 END
+#Q#proc7
+#Q#Select * from t10
+#D#int
+5
+#Q#drop procedure proc1
+#Q#drop procedure proc2
+#Q#drop procedure test_tvp1.proc1
+#Q#drop procedure test_tvp2.proc2
+#Q#drop procedure test_tvp2.proc3
+#Q#drop procedure test_tvp2.proc4
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#drop procedure proc7
+#Q#drop table t
+#Q#drop table tab1
+#Q#drop table t2
+#Q#drop table t3
+#Q#drop table t4
+#Q#drop table t5
+#Q#drop table t6
+#Q#drop table t7
+#Q#drop table t10
+#Q#drop type t1
+#Q#drop type test_tvp1.t1
+#Q#drop type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+#Q#drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+#Q#drop type tvp_type
+#Q#drop schema test_tvp1
+#Q#drop schema test_tvp2
+#Q#drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create database db1
+#Q#Use db1
+#Q#create table t8(a int)
+#Q#create schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#create type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t8 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#Select * from t8
+#D#int
+5
+#Q#create table t9(a int)
+#Q#create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t9 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+#Q#db1.this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new
+#Q#Select * from t9
+#D#int
+5
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new
+#Q#drop table db1.dbo.t8
+#Q#drop table db1.dbo.t9
+#Q#drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+#Q#drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+#Q#use master
+#Q#drop database db1
