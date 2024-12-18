@@ -139,3 +139,18 @@ BEGIN
     );
 END;
 GO
+
+CREATE TABLE BABEL_5341_T2
+(
+    [integer_one] INT,
+    [integer_two] INT
+);
+GO
+INSERT INTO BABEL_5341_T2
+(
+    [integer_one],
+    [integer_two]
+)
+VALUES
+(1, 3);
+GO

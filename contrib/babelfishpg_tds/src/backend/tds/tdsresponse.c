@@ -438,16 +438,16 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 	foreach(lc, planlist)
 	{
 		TargetEntry *tle;
-		Plan 		*outerplan = (Plan *) lfirst(lc); // this is first part of union , in nect loop second part of union. here SUBQUERYSCAN correct order of elements and subplan that has left tree and right tree and hashcluase (join on condition). second time maybe its not SubqueryScan and thats why we dont enter that inside ??? -- second time only SEQSCAN tahts why 
+		Plan 		*outerplan = (Plan *) lfirst(lc);
 
-		/* if outerplan is SubqueryScan then use actual subplan */// here if we sty out then we are picking correct and its vatatno is 1 which is correct column actually inside the subquery
+		/* if outerplan is SubqueryScan then use actual subplan */
 		// if (IsA(outerplan, SubqueryScan))
-		// 	outerplan = ((SubqueryScan *)outerplan)->subplan; // this is inner query. first part of union.
+		// 	outerplan = ((SubqueryScan *)outerplan)->subplan;
 
-		tle = get_tle_by_resno(outerplan->targetlist, attno); // here?
+		tle = get_tle_by_resno(outerplan->targetlist, attno);
 		if (IsA(tle->expr, Var))
 		{
- 			Var *var = (Var *)tle->expr;
+			Var *var = (Var *)tle->expr;
 			if (var->varno == OUTER_VAR)
 			{
 				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
@@ -463,7 +463,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		}
 		if (typmod == -1)
 			continue;
-		scale = (typmod - VARHDRSZ) & 0xffff; // scale 2
+		scale = (typmod - VARHDRSZ) & 0xffff;
 		precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 		integralDigitCount = Max(precision - scale, max_precision - max_scale);
 		max_scale = Max(max_scale, scale);
@@ -510,7 +510,7 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 		Var *var = (Var *)tle->expr;
 		if (var->varno == OUTER_VAR)
 		{
-			return resolve_numeric_typmod_outer_var(outerplan, var->varattno); // left tree has appoend thats why in nect call we see append
+			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
 		}
 	}
 	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
@@ -611,8 +611,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1); // 3,2
-					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2); // send varattnosyn from here ? // 9,8
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
+					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2);
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
@@ -756,15 +756,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = Max(scale - delta, 0);
 					}
-					// else if (precision - scale > 32 && scale < 6)
-					// {
-					// 	precision = TDS_MAX_NUM_PRECISION;
-					// }
-					// else if (precision - scale < 32)
-					// {
-					// 	scale = Min(scale, 38 - (precision-scale));
-					// }
-
 					/*
 					 * Control reaching here for only arithmetic overflow
 					 * cases
@@ -1806,8 +1797,6 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		/*
 		 * Get the IO function info from our type cache
 		 */
-		if (atttypmod == TSQLMaxTypmod)
-			atttypmod = -1;
 		finfo = TdsLookupTypeFunctionsByOid(atttypid, &atttypmod);
 		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */
 #if 0

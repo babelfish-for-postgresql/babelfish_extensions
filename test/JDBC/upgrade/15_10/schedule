@@ -549,7 +549,7 @@ BABEL-5119_before_16_5
 dbcreator_role
 db_accessadmin
 db_securityadmin
-BABEL-CASE_EXPR
+BABEL-CASE_EXPR-before-16_6
 datareader_datawriter
 db_ddladmin
 BABEL-5186
