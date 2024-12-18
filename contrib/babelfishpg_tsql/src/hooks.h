@@ -33,6 +33,7 @@ extern Oid  get_tsql_trigger_oid(List *object,
                                  bool object_from_input);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
                     QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc, ObjectAddress *address);
+extern char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 extern char *update_delete_target_alias;
 extern bool sp_describe_first_result_set_inprogress;
