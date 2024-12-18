@@ -135,10 +135,10 @@ text
 Query Text: SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss
 Aggregate
   ->  Unique
-        ->  Sort
-              Sort Key: tenk1.two, tenk1.four
-              ->  Gather
-                    Workers Planned: 4
+        ->  Gather Merge
+              Workers Planned: 4
+              ->  Sort
+                    Sort Key: tenk1.two, tenk1.four
                     ->  HashAggregate
                           Group Key: tenk1.two, tenk1.four
                           ->  Parallel Seq Scan on tenk1
@@ -159,10 +159,10 @@ Query Text: SELECT count(*) FROM
   (SELECT DISTINCT two, four, two FROM tenk1) ss
 Aggregate
   ->  Unique
-        ->  Sort
-              Sort Key: tenk1.two, tenk1.four
-              ->  Gather
-                    Workers Planned: 4
+        ->  Gather Merge
+              Workers Planned: 4
+              ->  Sort
+                    Sort Key: tenk1.two, tenk1.four
                     ->  HashAggregate
                           Group Key: tenk1.two, tenk1.four
                           ->  Parallel Seq Scan on tenk1
@@ -404,10 +404,10 @@ GO
 text
 Query Text: SELECT DISTINCT four FROM tenk1
 Unique
-  ->  Sort
-        Sort Key: four
-        ->  Gather
-              Workers Planned: 2
+  ->  Gather Merge
+        Workers Planned: 2
+        ->  Sort
+              Sort Key: four
               ->  HashAggregate
                     Group Key: four
                     ->  Parallel Seq Scan on tenk1
