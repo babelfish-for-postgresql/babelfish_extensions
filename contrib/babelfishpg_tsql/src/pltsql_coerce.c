@@ -416,6 +416,7 @@ tsql_special_function_t tsql_special_function_list[] =
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
 	{"sys", "trim", "Trim", false, 1},
+	{"sys", "hashbytes", "hashbytes", false, 2},
 	{"sys", "trim", "Trim", false, 2},
 	{"sys", "ltrim", "ltrim", false, 1},
 	{"sys", "rtrim", "rtrim", false, 1},
@@ -1124,41 +1125,6 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, bool nu
 }
 
 /*
- * Selects the best candidate function for HASHBYTES based on input types.
- * Focuses on matching the second argument type, particularly for NVARCHAR.
- * Returns a single best candidate from the sys schema, or NULL if none found.
- */
-static FuncCandidateList
-tsql_func_select_candidate_for_hashbytes(Oid *input_typeids, FuncCandidateList candidates)
-{
-
-        FuncCandidateList		current_candidate, best_candidate;
-        Oid				sys_oid = get_namespace_oid("sys", false);
-        Oid				*argtypes;
-        int				nargs_func = 0;
-
-        /* Get the candidate with matching second argument type */
-        best_candidate = NULL;
-        for (current_candidate = candidates;
-        current_candidate != NULL;
-        current_candidate = current_candidate->next)
-        {
-        /* we should only consider candidates for hashbytes function from sys schema */
-        if (get_func_namespace(current_candidate->oid) != sys_oid)
-            return NULL;
-
-        get_func_signature(current_candidate->oid, &argtypes, &nargs_func);
-        if(input_typeids[1] == argtypes[1])
-        {
-            best_candidate = current_candidate;
-        }
-        }
-        if (best_candidate != NULL)
-            best_candidate->next = NULL;
-        return best_candidate;
-}
-
-/*
  * tsql_func_select_candidate_for_special_func()
  *
  * For functions present in special function list, and try to find best candidate 
@@ -1168,7 +1134,7 @@ static FuncCandidateList
 tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_result_type;
+	Oid 						expr_result_type, expr_arg_type;
 	char					   *proc_nsname;
 	char					   *proc_name;
 	bool						is_func_validated;
@@ -1176,14 +1142,11 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	Oid							rettype;
 	Oid							sys_oid = get_namespace_oid("sys", false);
 	Oid						   *new_input_typeids;
+	Oid						   *argtypes;
+	int						    nargs_func;
+	Oid							second_arg_type;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
-
-	/* Specific handling for hashbytes function based on second input argument via tsql_func_select_candidate_for_hashbytes() */
-	if ((proc_nsname == NULL || strcmp(proc_nsname, "sys") == 0) && strcmp(proc_name, "hashbytes") == 0)
-	{
-		return tsql_func_select_candidate_for_hashbytes(input_typeids, candidates);
-	} 
 
 	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, true);
 
@@ -1212,6 +1175,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
+	expr_arg_type = InvalidOid;
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0 && nargs == 2)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
@@ -1360,12 +1324,31 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(new_input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(new_input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(new_input_typeids[1])
+				|| new_input_typeids[1] == UNKNOWNOID)
+		{
+			expr_arg_type = get_sys_varcharoid();
+		}
+		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+		else if(is_tsql_binary_family_datatype(new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bbf_varbinary");
+		}
+	}
 
 	/* free new_input_typeids, as they are no longer needed */
 	if (new_input_typeids)
 		pfree(new_input_typeids);
 
-	if (!OidIsValid(expr_result_type))
+	if (!OidIsValid(expr_result_type) && !OidIsValid(expr_arg_type))
 		return NULL;
 
 	/* Get the candidate with matching return type */
@@ -1380,13 +1363,16 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			continue;
 
 		rettype = get_func_rettype(current_candidate->oid);
+		get_func_signature(current_candidate->oid, &argtypes, &nargs_func);
+		second_arg_type = argtypes[1];
 		
 		/* Ignore following definitions as these are used when no other potential definition can be used. */
 		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
 
-		if (expr_result_type == rettype)
+		if ((OidIsValid(expr_result_type) && expr_result_type == rettype)
+			|| (OidIsValid(expr_arg_type) && expr_arg_type == second_arg_type))
 		{
 			best_candidate = current_candidate;
 			ncandidates++;
@@ -1401,9 +1387,15 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	/* multiple suitable candidates with same return type should not exist in sys schema.  */
 	else if (ncandidates > 1)
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+		if(OidIsValid(expr_result_type))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+
+		else if(OidIsValid(expr_arg_type))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("multiple definitions of function %s.%s with second arg type %s found.", proc_nsname, proc_name, format_type_be(expr_arg_type))));
 	}
 
 	if (best_candidate != NULL)
