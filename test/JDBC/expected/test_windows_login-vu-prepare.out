@@ -1,5 +1,4 @@
 -- psql
--- TODO: BABEL-5349
 do 
 $$ begin 
     if not exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
