@@ -751,7 +751,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node, OpExpr *op)
+convert_node_to_funcexpr_for_like(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
@@ -852,14 +852,14 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node		*rightop = (Node *) lsecond(op->args);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop, op),
+												convert_node_to_funcexpr_for_like(leftop),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop, op),
+												convert_node_to_funcexpr_for_like(rightop),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
@@ -942,35 +942,26 @@ transform_likenode(Node *node)
 		 * by a user. So, it is safe to go ahead with replacing the ci_as
 		 * collation with a corresponding cs_as one if an ILIKE node is found
 		 * during dump and restore.
+		 * For CS_AI collation, we keep the LIKE operator but convert it to
+		 * CS_AS by adding a call to remove_accents_internal*. During restore,
+		 * it will take the same code path and will try to add a new call to
+		 * remove_accents_internal* on top of current node. So, we take care
+		 * of that case here.
 		 */
 		init_and_check_collation_callbacks();
-		if ((*collation_callbacks_ptr->has_ilike_node) (node) && babelfish_dump_restore)
+		if (((*collation_callbacks_ptr->has_ilike_node) (node) || (*collation_callbacks_ptr->has_like_node) (node)) && babelfish_dump_restore)
 		{
 			int			collidx_of_cs_as;
 
-			if (coll_info_of_inputcollid.oid != InvalidOid)
-			{
-				collidx_of_cs_as =
-					tsql_find_cs_as_collation_internal(
-													   tsql_find_collation_internal(coll_info_of_inputcollid.collname));
-				if (NOT_FOUND == collidx_of_cs_as)
-				{
-					op->inputcollid = DEFAULT_COLLATION_OID;
-					return node;
-				}
-				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-			}
-			else
-			{
-				/* If a collation is not specified, use the default one */
-				op->inputcollid = DEFAULT_COLLATION_OID;
-			}
-		}
-
-		if ((*collation_callbacks_ptr->has_like_node) (node) && babelfish_dump_restore && (coll_info_of_inputcollid.collateflags == 0x000e))
-		{
-			int			collidx_of_cs_as;
-			coll_info_of_inputcollid.collateflags = 0x000c;
+			/* 
+			 * We only need to update the collateflags for CS_AI to CS_AS
+			 * No need to check whether ilike or like is present as
+			 * ilike comes only for CI collations. 
+			 * So, we know for sure that if this is CS_AI, only LIKE node 
+			 * will be present, hence we can update.
+			 */
+			if (coll_info_of_inputcollid.collateflags == 0x000e)
+				coll_info_of_inputcollid.collateflags = 0x000c;
 
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
