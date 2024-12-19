@@ -5872,185 +5872,6 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 }
 
 /*
- * Allows execution of GRANT/REVOKE statement if current_user is member of db_securityadmin
- * given that GRANT/REVOKE is being executed on current database's object. It is being
- * ensured that schema of given object(in GRANT/REVOKE statement) belongs to current database.  
- */
-static void
-handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
-								AclMode privileges, Oid *grantorId, AclMode *grantOptions)
-{
-	ObjectAddress	address;
-	Oid				classid = InvalidOid;
-	Oid				schema_oid = InvalidOid;
-
-	/*
-	 * Return if any of following condition is true
-	 * 1. Not a TDS client
-	 * 2. Not a TSQL dialect
-	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
-	 *    This means already the best grantor has been selected using select_best_grantor().
-	 */
-	if (!MyProcPort->is_tds_conn ||
-		sql_dialect != SQL_DIALECT_TSQL ||
-		*grantorId == ownerId ||
-		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
-		return;
-
-	switch(objType)
-	{
-		case OBJECT_TABLE:
-		case OBJECT_COLUMN:
-		case OBJECT_VIEW:
-			classid = RelationRelationId;
-			break;
-		case OBJECT_FUNCTION:
-		case OBJECT_PROCEDURE:
-			classid = ProcedureRelationId;
-			break;
-		case OBJECT_SCHEMA:
-			classid = NamespaceRelationId;
-			break;
-		default:
-			break;
-	}
-
-	if (!OidIsValid(classid))
-		return;
-
-	if (classid == NamespaceRelationId)
-	{
-		schema_oid = objId;
-	}
-	else
-	{
-		ObjectAddressSet(address, classid, objId);
-		schema_oid = get_object_namespace(&address);
-	}
-
-	if (OidIsValid(schema_oid))
-	{
-		/*
-		 * Don't allow if object's schema is not from current database OR
-		 * it is a shared schema.
-		 */
-		if (!is_schema_from_db(schema_oid, get_cur_db_id()))
-		{
-			return;
-		}
-		else
-		{
-			/*
-			 * Check if current user is member of db_securityadmin role.
-			 * If so, then grant/revoke the requested privileges by overriding
-			 * grantId with ownerId.
-			 */
-			if (is_member_of_role(GetUserId(),
-								  get_db_securityadmin_oid(get_current_pltsql_db_name(), false)))
-			{
-				*grantorId = ownerId;
-				*grantOptions = ACL_GRANT_OPTION_FOR(privileges);
-				return;
-			}
-		}
-	}
-	return;
-}
-
-
-/*
- * Objects are always owned by current user in postgres but in babelfish
- * schema contained objects should be owned by the schema owner by default
- * Use this hook to pick schema owner as object owner during object creation
- * We currently only do this if current user is member of db_ddladmin or db_owner
- */
-static Oid
-pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
-{
-	HeapTuple          tuple;
-	Form_pg_namespace  nsptup;
-	const char         *logical_schema_name;
-
-	Assert(OidIsValid(namespaceId));
-
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
-		return ownerId;
-
-	if (!OidIsValid(ownerId))
-		ownerId = GetUserId();
-
-	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
-	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
-
-	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
-
-	if (logical_schema_name)
-	{
-		Oid		nsp_owner;
-		char	*db_name = get_cur_db_name();
-		char	*dbo_name = get_dbo_role_name(db_name);
-		Oid		dbo_oid = get_role_oid(dbo_name, false);
-		/*
-		 * babelfish issue special handing for dbo schema since it is
-		 * owned by db_owner but the correct owner should have been dbo
-		 */
-		if (strcmp(logical_schema_name, "dbo") == 0)
-			nsp_owner = dbo_oid;
-		else
-			nsp_owner = nsptup->nspowner;
-
-		if (ownerId != nsp_owner)
-		{
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-			Oid 	db_owner = get_db_owner_oid(db_name, false);
-			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
-
-			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
-			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
-				(has_privs_of_role(GetUserId(), db_owner) ||
-				has_privs_of_role(GetUserId(), db_ddladmin)))
-				ownerId = nsp_owner;
-		}
-
-		pfree(db_name);
-		pfree(dbo_name);
-	}
-	ReleaseSysCache(tuple);
-
-	return ownerId;
-}
-
-/*
- * Check if the given namespace is inside the current active logical
- * database and if the current user is a member of db_ddladmin fixed
- * database role of the current active logical database
- */
-static bool
-is_bbf_db_ddladmin_operation(Oid namespaceId)
-{
-	char 	*nspname;
-	Oid 	schema_db_id;
-	Oid 	db_ddladmin;
-
-	Assert(OidIsValid(namespaceId));
-
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
-		return false;
-
-	nspname = get_namespace_name(namespaceId);
-	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
-	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
-
-	pfree(nspname);
-
-	if (OidIsValid(schema_db_id) && schema_db_id == get_cur_db_id() &&
-		has_privs_of_role(GetUserId(), db_ddladmin))
-		return true;
-
-	return false;
-}
-
-/*
  * remove_db_name_in_schema - remove the db name and underscore at the beginning
  * 	of the given string. It is used to unmap schema name in error messages.
  *
@@ -6060,13 +5881,13 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 static const char *
 remove_db_name_in_schema(const char *object_name)
 {
-	const char *cur_db_name;
-	char	**splited_object_name;
-	char	*schema_name = NULL;
-	char *mutable_name;
-    size_t db_name_len;
-    size_t prefix_len;
-	size_t schema_name_len;
+	const char	*cur_db_name;
+	char		**splited_object_name;
+	char		*schema_name = NULL;
+	char		*mutable_name;
+    size_t 		db_name_len;
+    size_t 		prefix_len;
+	size_t 		schema_name_len;
 
 	mutable_name = strdup(object_name);
 	splited_object_name = split_object_name(mutable_name);
@@ -6084,7 +5905,6 @@ remove_db_name_in_schema(const char *object_name)
 	prefix_len = db_name_len + 1;
 
 	if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
-		// Return the part after the prefix
 		object_name += prefix_len;
 	}
 	
