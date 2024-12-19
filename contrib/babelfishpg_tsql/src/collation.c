@@ -495,7 +495,7 @@ get_remove_accents_internal_oid()
 	}
 #endif
 	elog(LOG, "Using ICU function to remove accents");
-	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, false);
+	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
 /*
