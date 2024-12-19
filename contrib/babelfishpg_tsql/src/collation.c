@@ -757,7 +757,6 @@ convert_node_to_funcexpr_for_like(Node *node, OpExpr *op)
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
-	newFuncExpr->inputcollid = op->inputcollid;
 
 	if (node == NULL)
 		return node;
@@ -969,7 +968,28 @@ transform_likenode(Node *node)
 		}
 
 		if ((*collation_callbacks_ptr->has_like_node) (node) && babelfish_dump_restore && (coll_info_of_inputcollid.collateflags == 0x000e))
-			return node;
+		{
+			int			collidx_of_cs_as;
+			coll_info_of_inputcollid.collateflags = 0x000c;
+
+			if (coll_info_of_inputcollid.oid != InvalidOid)
+			{
+				collidx_of_cs_as =
+					tsql_find_cs_as_collation_internal(
+													   tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+				if (NOT_FOUND == collidx_of_cs_as)
+				{
+					op->inputcollid = DEFAULT_COLLATION_OID;
+					return node;
+				}
+				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+			}
+			else
+			{
+				/* If a collation is not specified, use the default one */
+				op->inputcollid = DEFAULT_COLLATION_OID;
+			}
+		}
 
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
