@@ -953,16 +953,6 @@ transform_likenode(Node *node)
 		{
 			int			collidx_of_cs_as;
 
-			/* 
-			 * We only need to update the collateflags for CS_AI to CS_AS
-			 * No need to check whether ilike or like is present as
-			 * ilike comes only for CI collations. 
-			 * So, we know for sure that if this is CS_AI, only LIKE node 
-			 * will be present, hence we can update.
-			 */
-			if (coll_info_of_inputcollid.collateflags == 0x000e)
-				coll_info_of_inputcollid.collateflags = 0x000c;
-
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
 				collidx_of_cs_as =
