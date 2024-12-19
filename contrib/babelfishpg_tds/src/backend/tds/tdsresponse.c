@@ -1769,6 +1769,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		/*
 		 * Get the IO function info from our type cache
 		 */
+		if (atttypmod == TSQLMaxTypmod)
+			atttypmod = -1;
 		finfo = TdsLookupTypeFunctionsByOid(atttypid, &atttypmod);
 		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */
 #if 0

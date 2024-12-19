@@ -11,7 +11,7 @@ go
 SELECT pg_sleep(1);
 go
 
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql
@@ -103,7 +103,7 @@ SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid
 go
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql
@@ -115,7 +115,7 @@ SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid
 go
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql
@@ -175,7 +175,7 @@ SELECT toplevel, query, rows, plans from pg_stat_statements where queryid != 0 a
 go
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql
@@ -194,7 +194,7 @@ SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%GROUP BY%ROLLUP%';
 go
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql

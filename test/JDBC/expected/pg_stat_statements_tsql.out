@@ -21,11 +21,11 @@ void
 ~~END~~
 
 
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -181,7 +181,7 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 1#!#INSERT INTO pgss_transaction values($1)#!#1#!#1#!#0
 1#!#INSERT INTO pgss_transaction values($1),($2),($3),($4)#!#1#!#4#!#0
 1#!#ROLLBACK TRANSACTION insertstmt#!#1#!#0#!#0
-1#!#SAVE TRANSACTION insertstmt#!#1#!#0#!#0
+1#!#SAVE TRANSACTION $1#!#1#!#0#!#0
 1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#3#!#3#!#0
 1#!#SELECT $1 AS "int"#!#2#!#2#!#0
 1#!#SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != $1 ORDER BY query COLLATE "C"#!#1#!#0#!#0
@@ -191,11 +191,11 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -217,11 +217,11 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -334,11 +334,11 @@ bit#!#text#!#bigint#!#bigint
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 
@@ -392,11 +392,11 @@ int
 
 
 -- psql
-SELECT sys.pg_stat_statements_reset();
+SELECT CASE WHEN sys.pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 

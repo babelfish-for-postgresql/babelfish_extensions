@@ -1,3 +1,6 @@
+DROP TABLE dbo.babel_5186_string_agg_psql_t
+GO
+
 DROP FUNCTION babel_5156_string_agg_dep_func1
 GO
 

@@ -198,11 +198,11 @@ void
 ~~END~~
 
 
-SELECT pg_stat_statements_reset();
+SELECT CASE WHEN pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 ~~START~~
-void
-
+bool
+t
 ~~END~~
 
 

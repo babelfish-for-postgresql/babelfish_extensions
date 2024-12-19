@@ -132,6 +132,7 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
@@ -386,6 +387,7 @@ case_insensitive_collation-before-16_5-or-15_9
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID-before-16_5-or-15_9
+BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
@@ -451,9 +453,9 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
-string_agg-before-15_9-or-16_5
+string_agg-before-15_5-or-14_10
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059_before_16_5

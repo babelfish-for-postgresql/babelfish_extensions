@@ -12,11 +12,9 @@ all
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
-ignore#!#BABEL-4279
 ignore#!#babelfish_migration_mode-vu-prepare
 ignore#!#babelfish_migration_mode-vu-verify
 ignore#!#babelfish_migration_mode-vu-cleanup
-ignore#!#test_search_path
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -421,6 +419,9 @@ ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
 ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
 ignore#!#alter-procedure-15_8-or-16_4-vu-verify
 ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_5-or-14_10-vu-prepare
+ignore#!#string_agg-before-15_5-or-14_10-vu-verify
+ignore#!#string_agg-before-15_5-or-14_10-vu-cleanup
 ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
 ignore#!#string_agg-before-15_9-or-16_5-vu-verify
 ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
@@ -439,6 +440,9 @@ ignore#!#concat-before-15_9-or-16_5-vu-cleanup
 ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
 ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
 ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
+ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
+ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
 ignore#!#xml_exist-before-16_5-vu-prepare
 ignore#!#xml_exist-before-16_5-vu-verify
 ignore#!#xml_exist-before-16_5-vu-cleanup
@@ -485,20 +489,10 @@ ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
-# Assertion failure in pg-stat-statements BABEL-5391
-ignore#!#Test-sp_execute_postgresql
-ignore#!#pg_stat_statements_tsql
-
-# Ignoring internal babel pg regression tests temporarily 
-ignore#!#pgr_000_test_setup
-ignore#!#pgr_delete
-ignore#!#pgr_select_distinct_on
-ignore#!#pgr_select_distinct
-ignore#!#pgr_select_having
-ignore#!#pgr_select_implicit
-ignore#!#pgr_select_into
-ignore#!#pgr_select
-ignore#!#pgr_zzz_clean_up
+ignore#!#trim-before-15_11-or-16_7-vu-prepare
+ignore#!#trim-before-15_11-or-16_7-vu-verify
+ignore#!#trim-before-15_11-or-16_7-vu-cleanup
 
 # getting timed out (TODO: BABEL-5353)
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
+

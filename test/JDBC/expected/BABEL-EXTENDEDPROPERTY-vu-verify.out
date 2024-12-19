@@ -72,6 +72,25 @@ TYPE#!#babel_extended_property_v3_type#!#type property1#!#type property1 before
 ~~END~~
 
 
+-- BABEL-5087
+EXEC sp_addextendedproperty
+    @name = N'MS_Description',
+    @level0type = N'SCHEMA',
+    @level0name = N'babel_extended_property_v3_schema',
+    @level1type = N'table',
+    @level1name = N'babel_extended_property_v3_table';
+GO
+
+SELECT  * FROM fn_listextendedproperty(NULL, 'SCHEMA', N'babel_extended_property_v3_schema', 'TABLE', N'babel_extended_property_v3_table', NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#sql_variant
+TABLE#!#babel_extended_property_v3_table#!#MS_Description#!#<NULL>
+TABLE#!#babel_extended_property_v3_table#!#table property1#!#table property1 value
+TABLE#!#babel_extended_property_v3_table#!#table property2#!#table property2 value
+~~END~~
+
+
 -- list all extended properties
 SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties ORDER BY class, class_desc, name, value;
 GO
@@ -81,6 +100,7 @@ tinyint#!#nvarchar#!#int#!#int#!#varchar#!#sql_variant
 1#!#OBJECT_OR_COLUMN#!#1#!#1#!#column property1#!#column property1 value
 1#!#OBJECT_OR_COLUMN#!#1#!#1#!#COLUMN PROPERTY2 "{\)#!#COLUMN PROPERTY2 VALUE "{\)   
 1#!#OBJECT_OR_COLUMN#!#1#!#0#!#function property1#!#function property1 value
+1#!#OBJECT_OR_COLUMN#!#1#!#0#!#MS_Description#!#<NULL>
 1#!#OBJECT_OR_COLUMN#!#1#!#0#!#procedure property1#!#procedure property1 value
 1#!#OBJECT_OR_COLUMN#!#1#!#0#!#sequence property1#!#sequence property1 value
 1#!#OBJECT_OR_COLUMN#!#1#!#0#!#table property1#!#table property1 value

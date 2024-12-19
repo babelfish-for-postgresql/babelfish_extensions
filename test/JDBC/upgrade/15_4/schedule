@@ -62,6 +62,7 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010-before-15_6
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -160,6 +161,7 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
+BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -490,10 +492,10 @@ babel_4328_datetimeoffset-before-16_3
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
-string_agg-before-15_9-or-16_5
+string_agg-before-15_5-or-14_10
 getdate-before-15_9-or-16_5
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059_before_16_5
