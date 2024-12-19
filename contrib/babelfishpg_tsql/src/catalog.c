@@ -20,6 +20,7 @@
 #include "parser/scansup.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/formatting.h"
 #include "utils/lsyscache.h"
