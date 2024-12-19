@@ -431,6 +431,498 @@ GO
 SELECT * FROM babel_cross_db_vu_prepare_t4;
 GO
 
+-- Cross-db testcases for statements in batch/block
+-- tsql
+USE master;
+GO
+
+-- Batches having system objects
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+-- batch inside transaction
+BEGIN TRAN;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases;
+GO
+
+COMMIT;
+GO
+
+-- system objects refferred via sys schema
+-- for sys.databases
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.databases;
+GO
+
+-- for sys.sysdatabases
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+GO
+
+-- Batches having user created objects
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; BEGIN SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1; END;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+-- Batches having different types of DMLs
+BEGIN; INSERT INTO my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 VALUES (1); BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; INSERT INTO my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 VALUES (1); END; END;
+GO
+
+BEGIN; UPDATE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 SET a = 2; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; UPDATE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 SET a = 2; END; END;
+GO
+
+BEGIN; DELETE FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 WHERE a = 2; BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; END; END;
+GO
+
+BEGIN; SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1; BEGIN; DELETE FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 WHERE a = 2; END; END;
+GO
+
+-- Batches with subqueries
+SELECT DISTINCT (SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 t2 WHERE t2.a = t1.a) FROM babel_cross_db_vu_prepare_master_t1 t1;
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT DISTINCT 1 FROM babel_cross_db_vu_prepare_master_t1;
+SELECT DISTINCT (SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 t2 WHERE t2.a = t1.a) FROM babel_cross_db_vu_prepare_master_t1 t1;
+GO
+
+-- Batches with DDL and DML combination
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN CREATE TABLE babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM babel_cross_db_vu_verify_tempt; END; END;
+GO
+
+DROP TABLE babel_cross_db_vu_verify_tempt;
+GO
+
+BEGIN; CREATE TABLE babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM babel_cross_db_vu_verify_tempt; BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; END; END;
+GO
+
+DROP TABLE babel_cross_db_vu_verify_tempt;
+GO
+
+-- temp table creation
+BEGIN; SELECT DISTINCT 1 FROM my_babel_cross_db_vu_prepare_db1.dbo.sysdatabases; BEGIN CREATE TABLE #babel_cross_db_vu_verify_tempt(a int); SELECT DISTINCT 1 FROM #babel_cross_db_vu_verify_tempt; END; END;
+GO
+
+SELECT DISTINCT 1 FROM #babel_cross_db_vu_verify_tempt;
+GO
+
+DROP TABLE #babel_cross_db_vu_verify_tempt;
+GO
+
+-- [TESTCASE GROUP START] Batches with proc execution and DMLs
+USE master;
+GO
+
+EXEC babel_cross_db_vu_prepare_master_p1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
+GO
+
+EXEC my_babel_cross_db_vu_prepare_db1.dbo.my_babel_cross_db_vu_prepare_db1_p1
+SELECT * FROM babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+EXEC my_babel_cross_db_vu_prepare_db1_p1
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
+GO
+
+EXEC master.dbo.babel_cross_db_vu_prepare_master_p1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
+GO
+
+-- [TESTCASE GROUP END] Batches with proc execution and DMLs
+
+-- [TESTCASE GROUP START] Cross-db SELECT INTO
+-- TODO: related to BABEL-4934 - Cross-db SELECT INTO statement is not currently supported correctly
+USE master;
+GO
+
+-- New table gets created in my_babel_cross_db_vu_prepare_db1.dbo schema
+SELECT 1 INTO new_table1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+GO
+
+SELECT * FROM new_table1;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+DROP TABLE new_table1;
+GO
+
+USE master;
+GO
+
+SELECT 1 INTO new_table2 FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+SELECT * FROM new_table2;
+GO
+
+DROP TABLE new_table2;
+GO
+
+-- [TESTCASE GROUP END] Cross-db SELECT INTO
+
+-- [TESTCASE GROUP START] INSERT/UPDATE/SELECT INTO statements
+-- Prepare: Populate some rows in test tables
+-- CAUTION: Here we are dropping all the rows and then again inserting some rows for ease of validation
+USE master;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_master_t1;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_master_t2;
+GO
+
+DELETE FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+DELETE FROM dbo.my_babel_cross_db_vu_prepare_db1_t2;
+GO
+
+DELETE FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+USE master;
+GO
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_master_t1 (a) VALUES (1), (2), (3), (5);
+GO
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_master_t2 (b) VALUES (10), (20), (30), (50);
+GO
+
+INSERT INTO babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 (name) VALUES ('Alice'), ('Bob'), ('Charlie'), ('Same');
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t1 (a) VALUES (5), (7), (8), (9);
+GO
+
+INSERT INTO dbo.my_babel_cross_db_vu_prepare_db1_t2 (a) VALUES (50), (70), (80), (90);
+GO
+
+INSERT INTO babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 (name) VALUES ('David'), ('Eva'), ('Frank'), ('Same');
+GO
+
+USE master;
+GO
+
+-- INSERT INTO - Insert data from master database table into my_babel_cross_db_vu_prepare_db1 database table
+BEGIN TRAN;
+GO
+
+INSERT INTO my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 (a)
+SELECT a 
+FROM master.dbo.babel_cross_db_vu_prepare_master_t1;
+GO
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
+GO
+
+ROLLBACK;
+GO
+
+-- UPDATE - Update data in my_babel_cross_db_vu_prepare_db1 database table based on data from master database table
+BEGIN TRAN;
+GO
+
+UPDATE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1
+SET a = m.a * 2
+FROM master.dbo.babel_cross_db_vu_prepare_master_t1 m
+WHERE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1.a = m.a;
+GO
+
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
+GO
+
+ROLLBACK;
+GO
+
+-- CROSSDB INSERT WITH JOIN - Insert data into my_babel_cross_db_vu_prepare_db1 table using data from both databases
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+BEGIN TRAN;
+GO
+
+INSERT INTO dbo.my_babel_cross_db_vu_prepare_db1_t2 (a)
+SELECT t1.a
+FROM master.dbo.babel_cross_db_vu_prepare_master_t1 t1
+JOIN dbo.babel_cross_db_vu_prepare_db1_t1 t2 ON t1.a = t2.a;
+GO
+
+SELECT * FROM dbo.my_babel_cross_db_vu_prepare_db1_t2 ORDER BY a;
+GO
+
+ROLLBACK;
+GO
+
+-- CROSSDB UPDATE USING SUBQUERY - Update data in master database table using a subquery from my_babel_cross_db_vu_prepare_db1 database
+USE master;
+GO
+
+BEGIN TRAN;
+GO
+
+UPDATE dbo.babel_cross_db_vu_prepare_master_t2
+SET b = (SELECT MAX(a) FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1)
+WHERE b IS NULL;
+GO
+
+ROLLBACK;
+GO
+
+-- CROSSDB INSERT INTO TABLE IN CUSTOM SCHEMA - Insert data from master database into a table in a custom schema in my_babel_cross_db_vu_prepare_db1 database
+BEGIN TRAN;
+GO
+
+INSERT INTO my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 (name)
+SELECT name
+FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+ROLLBACK;
+GO
+
+-- CROSSDB UPDATE USING VIEW - Update data in my_babel_cross_db_vu_prepare_db1 database using a view from master database
+BEGIN TRAN;
+GO
+
+UPDATE t
+SET t.name = v.t1_name
+FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 t
+JOIN babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_v1 v ON t.id = v.id;
+GO
+
+ROLLBACK;
+GO
+
+-- cleanup populated data
+USE master;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_master_t1;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_master_t2;
+GO
+
+DELETE FROM babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+DELETE FROM dbo.babel_cross_db_vu_prepare_db1_t1;
+GO
+
+DELETE FROM dbo.my_babel_cross_db_vu_prepare_db1_t2;
+GO
+
+DELETE FROM babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+-- [TESTCASE GROUP END] INSERT/UPDATE/SELECT INTO statements
+
+-- [TESTCASE GROUP START] Batches for testing default_database and default_schema setting
+-- tsql
+USE master;
+GO
+
+CREATE LOGIN babel_cross_db_vu_verify_lgn1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_cross_db_vu_verify_master_user_with_def_sch FOR login babel_cross_db_vu_verify_lgn1 WITH default_schema = babel_cross_db_vu_prepare_s1;
+GO
+
+GRANT SELECT ON babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 TO babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE USER babel_cross_db_vu_verify_db1_user_with_def_sch FOR LOGIN babel_cross_db_vu_verify_lgn1 WITH default_schema = babel_cross_db_vu_prepare_s2;
+GO
+
+GRANT SELECT ON babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 TO babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+-- tsql user=babel_cross_db_vu_verify_lgn1 password=12345678
+USE master;
+GO
+
+-- TODO: Fix BABEL-5050
+SELECT * FROM babel_cross_db_vu_prepare_t1; SELECT * FROM my_babel_cross_db_vu_prepare_db1..babel_cross_db_vu_prepare_t2;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_t1; SELECT * FROM my_babel_cross_db_vu_prepare_db1.babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+-- TODO: Fix BABEL-5050
+SELECT * FROM babel_cross_db_vu_prepare_t2; SELECT * FROM master..babel_cross_db_vu_prepare_t1;
+GO
+
+SELECT * FROM babel_cross_db_vu_prepare_t2; SELECT * FROM master.babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1;
+GO
+
+-- terminate-tsql-conn user=babel_cross_db_vu_verify_lgn1 password=12345678
+
+-- cleanup for "Batches for testing default_database and default_schema setting"
+-- tsql
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+REVOKE SELECT ON babel_cross_db_vu_prepare_s2.babel_cross_db_vu_prepare_t2 FROM babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+DROP USER babel_cross_db_vu_verify_db1_user_with_def_sch;
+GO
+
+USE master;
+GO
+
+REVOKE SELECT ON babel_cross_db_vu_prepare_s1.babel_cross_db_vu_prepare_t1 FROM babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+DROP USER babel_cross_db_vu_verify_master_user_with_def_sch;
+GO
+
+DROP LOGIN babel_cross_db_vu_verify_lgn1;
+GO
+
+-- [TESTCASE GROUP END] Batches for testing default_database and default_schema setting
+
 -- tsql
 USE master
 GO
