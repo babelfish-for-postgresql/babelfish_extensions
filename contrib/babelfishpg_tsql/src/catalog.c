@@ -19,6 +19,7 @@
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
@@ -4186,7 +4187,7 @@ get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted
 
 		/* Then consider only procs in specified namespace. */
 		if (procform->pronamespace == pronamespace &&
-			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
 			/* Get the list of proargames and corresponding proargtypes oids. */
 			char **proargnames = fetch_func_input_arg_names(tuple);
@@ -4245,7 +4246,7 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
 	/* Check if user have right permission on object. */
-	if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+	if (HeapTupleIsValid(tuple) && pg_type_aclcheck(tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
 	{
 		Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
 		*tvp_type_name = NameStr(pg_type->typname);
