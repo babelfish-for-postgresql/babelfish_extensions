@@ -629,22 +629,22 @@ USE master;
 GO
 
 EXEC babel_cross_db_vu_prepare_master_p1
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 
 EXEC my_babel_cross_db_vu_prepare_db1.dbo.my_babel_cross_db_vu_prepare_db1_p1
-SELECT * FROM babel_cross_db_vu_prepare_master_t1
+SELECT * FROM babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
 GO
 
 USE my_babel_cross_db_vu_prepare_db1;
 GO
 
 EXEC my_babel_cross_db_vu_prepare_db1_p1
-SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
 GO
 
 EXEC master.dbo.babel_cross_db_vu_prepare_master_p1
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 
 -- [TESTCASE GROUP END] Batches with proc execution and DMLs
@@ -744,7 +744,7 @@ SELECT a
 FROM master.dbo.babel_cross_db_vu_prepare_master_t1;
 GO
 
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 
 ROLLBACK;
@@ -760,7 +760,7 @@ FROM master.dbo.babel_cross_db_vu_prepare_master_t1 m
 WHERE my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1.a = m.a;
 GO
 
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 
 ROLLBACK;
@@ -779,7 +779,7 @@ FROM master.dbo.babel_cross_db_vu_prepare_master_t1 t1
 JOIN dbo.babel_cross_db_vu_prepare_db1_t1 t2 ON t1.a = t2.a;
 GO
 
-SELECT * FROM dbo.my_babel_cross_db_vu_prepare_db1_t2;
+SELECT * FROM dbo.my_babel_cross_db_vu_prepare_db1_t2 ORDER BY a;
 GO
 
 ROLLBACK;

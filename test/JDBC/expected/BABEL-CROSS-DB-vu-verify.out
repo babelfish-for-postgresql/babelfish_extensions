@@ -1457,7 +1457,7 @@ USE master;
 GO
 
 EXEC babel_cross_db_vu_prepare_master_p1
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 ~~START~~
 int
@@ -1474,7 +1474,7 @@ int
 
 
 EXEC my_babel_cross_db_vu_prepare_db1.dbo.my_babel_cross_db_vu_prepare_db1_p1
-SELECT * FROM babel_cross_db_vu_prepare_master_t1
+SELECT * FROM babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
 GO
 ~~START~~
 int
@@ -1495,7 +1495,7 @@ USE my_babel_cross_db_vu_prepare_db1;
 GO
 
 EXEC my_babel_cross_db_vu_prepare_db1_p1
-SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id, a
 GO
 ~~START~~
 int
@@ -1513,7 +1513,7 @@ int#!#int
 
 
 EXEC master.dbo.babel_cross_db_vu_prepare_master_p1
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 ~~START~~
 int
@@ -1658,18 +1658,18 @@ GO
 ~~ROW COUNT: 4~~
 
 
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 ~~START~~
 int
-5
-7
-8
-9
 1
 2
 3
 5
+5
+7
+8
+9
 ~~END~~
 
 
@@ -1688,7 +1688,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1;
+SELECT * FROM my_babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
 GO
 ~~START~~
 int
@@ -1717,15 +1717,15 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM dbo.my_babel_cross_db_vu_prepare_db1_t2;
+SELECT * FROM dbo.my_babel_cross_db_vu_prepare_db1_t2 ORDER BY a;
 GO
 ~~START~~
 int
+5
 50
 70
 80
 90
-5
 ~~END~~
 
 
