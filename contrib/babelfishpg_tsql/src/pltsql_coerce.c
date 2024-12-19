@@ -54,6 +54,7 @@
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
+extern is_tsql_base_datatype_hook_type is_tsql_base_datatype_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
@@ -844,6 +845,15 @@ tsql_has_higher_precedence(Oid typeId1, Oid typeId2)
 	type2_precedence = tsql_get_type_precedence(typeId2);
 
 	return type1_precedence < type2_precedence;
+}
+
+/*
+ * Returns if given data type is a base type in T-SQL.
+ */
+static bool
+is_tsql_base_datatype(Oid typeId)
+{
+	return tsql_get_type_precedence(typeId) != -1;
 }
 
 static bool
@@ -2135,6 +2145,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
+	is_tsql_base_datatype_hook = is_tsql_base_datatype;
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
