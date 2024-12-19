@@ -280,14 +280,14 @@ GO
 ~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
-ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.version = "test";
 GO
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION  Server SQLState: 01000)~~
 
 
-ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.version = "default";
 GO
 
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";

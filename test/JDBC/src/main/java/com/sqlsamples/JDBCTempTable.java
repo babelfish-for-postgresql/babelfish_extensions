@@ -179,7 +179,7 @@ public class JDBCTempTable {
          * the OID buffer.
          */
         Statement alter_guc = psql.createStatement();
-        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 0");
+        alter_guc.execute("ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 0");
 
         if (check_oids_equal_helper(num_connections)) {
             bw.write("OID check failed! Oids were equal after disabling guc.");
@@ -189,7 +189,7 @@ public class JDBCTempTable {
         /*
          * TEST: Ensure that we can create up to (and no more) than the oid buffer size.
          */
-        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 3");
+        alter_guc.execute("ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 3");
 
         /* We need a new connection here to pick up the updated guc. */
         Connection c2 = DriverManager.getConnection(connectionString);
@@ -237,7 +237,7 @@ public class JDBCTempTable {
         c2.close();
 
         /* Restore GUC after tests. */
-        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 65536");
+        alter_guc.execute("ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 65536");
         psql.close();
         c.close();
     }

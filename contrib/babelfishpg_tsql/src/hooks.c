@@ -108,7 +108,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
 Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
 static Node *transform_like_in_add_constraint(Node *node);
-static char** fetch_func_input_arg_names(HeapTuple func_tuple);
+char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -4219,7 +4219,7 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
  * @param func_tuple or proc_tuple
  * @return char** list of input arg names
  */
-static char** fetch_func_input_arg_names(HeapTuple func_tuple)
+char** fetch_func_input_arg_names(HeapTuple func_tuple)
 {
 	Datum proargnames;
 	Datum		proargmodes;
