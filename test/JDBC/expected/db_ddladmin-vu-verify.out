@@ -134,13 +134,13 @@ CREATE SCHEMA babel_5116_sch1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
+~~ERROR (Message: permission denied for database babelfish_db)~~
 
 CREATE SCHEMA babel_5116_sch1 AUTHORIZATION babel_5116_r1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for database jdbc_testdb)~~
+~~ERROR (Message: permission denied for database babelfish_db)~~
 
 
 CREATE PARTITION FUNCTION babel_5116_pf1 (datetime)

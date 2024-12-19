@@ -20,6 +20,7 @@ Create table tvp_table(a int, b smallint, c bigint, d tinyint, e bit, f char(10)
 create type this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
 create procedure tvp_proc @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong READONLY AS BEGIN insert into tvp_table select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
 storedproc#!#prep#!#tvp_proc#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|../../../utils/tvp-dotnet.csv
+
 Select * from tvp_table
 drop procedure tvp_proc
 drop table tvp_table
@@ -31,3 +32,117 @@ create type this_schema_name_is_also_very_looooooooooooooooooooooooooooooooooooo
 prepst#!#Select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-|../../../utils/tvp-dotnet.csv
 drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong
 drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+
+#test tvp without passing tvpTypeName
+create table t(a int)
+create type t1 as table (a int)
+create procedure proc1 @t2 as t1 readonly as begin set nocount on; insert into t (a) select a from @t2 end
+storedproc#!#prep#!#proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t
+
+# test with schema for type and without passing tvpTypeName
+create table tab1(a int)
+create schema test_tvp1
+create type test_tvp1.t1 as table (a int)
+create procedure proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into tab1 (a) select a from @t2 end
+storedproc#!#prep#!#proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from tab1
+
+# test with schema for proc and type in same schema and without passing tvpTypeName
+create table t2(a int)
+create procedure test_tvp1.proc1 @t2 test_tvp1.t1 readonly as begin set nocount on; insert into t2 (a) select a from @t2 end
+storedproc#!#prep#!#test_tvp1.proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t2
+
+# test with schema for proc and type in different schema and without passing tvpTypeName
+create table t3(a int)
+create schema test_tvp2
+create procedure test_tvp2.proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into t3 (a) select a from @t2 end
+storedproc#!#prep#!#test_tvp2.proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t3
+
+# executing stored proc without passing tvp value for huge parameter name and without passing tvpTypeName
+create table t4(a int)
+create procedure test_tvp2.proc3 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as t1 READONLY AS BEGIN insert into t4 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#test_tvp2.proc3#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t4
+
+# when parameter and type both are very long, and both are part of schema other than dbo and without passing tvpTypeName
+create table t5(a int)
+create type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+create procedure test_tvp2.proc4 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t5 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#test_tvp2.proc4#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t5
+
+# when parameter and type both are very long, and both are part of a very long schema other than dbo and without passing tvpTypeName
+create table t6(a int)
+create schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+create type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t6 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t6
+
+# when parameter, type, schema and procedure name are very long and without passing tvpTypeName
+create table t7(a int)
+create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t7 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t7
+
+# procedure having multiple args, without passing tvp tvpTypeName
+create table t10(a int)
+create type tvp_type as table (a int)
+create procedure proc7 @random int, @t2 tvp_type READONLY AS BEGIN insert into t10 select * from @t2 END
+storedproc#!#prep#!#proc7#!#int|-|random|-|20|-|input#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t10
+
+drop procedure proc1
+drop procedure proc2
+drop procedure test_tvp1.proc1
+drop procedure test_tvp2.proc2
+drop procedure test_tvp2.proc3
+drop procedure test_tvp2.proc4
+drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.proc5
+drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+drop procedure proc7
+drop table t
+drop table tab1
+drop table t2
+drop table t3
+drop table t4
+drop table t5
+drop table t6
+drop table t7
+drop table t10
+drop type t1
+drop type test_tvp1.t1
+drop type test_tvp2.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+drop type tvp_type
+drop schema test_tvp1
+drop schema test_tvp2
+drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+
+# creating a db and creating objects in it and executing the proc without db specification
+create database db1
+Use db1
+create table t8(a int)
+create schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+create type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 as table (a int)
+create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t8 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t8
+
+# creating a db and creating objects in it and executing the proc with db specification
+create table t9(a int)
+create procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5 READONLY AS BEGIN insert into t9 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
+storedproc#!#prep#!#db1.this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new#!#tvp|-|this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong|-| |-|../../../utils/tvp-test-dotnet.csv
+Select * from t9
+
+drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+drop procedure this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_proc_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong_new
+drop table db1.dbo.t8
+drop table db1.dbo.t9
+drop type this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong.this_tvp_type_name_is_very_loooooooooooooooooooooooooooooooooooooooooong5
+drop schema this_schema_name_is_also_very_loooooooooooooooooooooooooooooooooooooooooong
+use master
+drop database db1
