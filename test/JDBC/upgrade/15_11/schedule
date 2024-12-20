@@ -554,4 +554,6 @@ datareader_datawriter
 BABEL-5186
 BABEL-2736
 smalldatetime_date_cmp
+cast_nvarchar_test_before_16_5
+
 

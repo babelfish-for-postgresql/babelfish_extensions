@@ -523,7 +523,7 @@ babel_4328_datetimeoffset
 BABEL-3401
 babel_726
 upper_lower
-trim
+trim-before-15_11-or-16_7
 ltrim
 rtrim
 left
@@ -555,3 +555,5 @@ db_ddladmin
 BABEL-5186
 BABEL-2736
 smalldatetime_date_cmp
+cast_nvarchar_test_before_16_5
+

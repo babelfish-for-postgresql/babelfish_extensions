@@ -373,7 +373,6 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	Timestamp	tsql_first_day, first_day;
 	struct pg_tm tt1, *tm = &tt1;
 	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
-	int 		tz1;
 
 	/*
 	 * This block is used when the second argument in datepart is not a 
@@ -396,7 +395,7 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	}
 		
 	/* Gets the date time related fields back from timestamp into struct tm pointer */
-	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec1, NULL, NULL) != 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -2134,7 +2133,6 @@ object_id(PG_FUNCTION_ARGS)
 	char	   *physical_schema_name;
 	char	   *input;
 	char	   *object_type = NULL;
-	char	  **splited_object_name;
 	Oid			schema_oid;
 	Oid			user_id = GetUserId();
 	Oid result = InvalidOid;
@@ -2174,31 +2172,13 @@ object_id(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				 errmsg("input value is too long for object name")));
 
-	/* resolve the three part name */
-	splited_object_name = split_object_name(input);
-	db_name = splited_object_name[1];
-	schema_name = splited_object_name[2];
-	object_name = splited_object_name[3];
-
-	/* downcase identifier if needed */
-	if (pltsql_case_insensitive_identifiers)
-	{
-		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
-		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
-		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-		for (int j = 0; j < 4; j++)
-			pfree(splited_object_name[j]);
-	}
-	else
-		pfree(splited_object_name[0]);
+	/*
+	 * Split the input string, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
 
 	pfree(input);
-	pfree(splited_object_name);
-
-	/* truncate identifiers if needed */
-	truncate_tsql_identifier(db_name);
-	truncate_tsql_identifier(schema_name);
-	truncate_tsql_identifier(object_name);
 
 	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
@@ -2616,7 +2596,6 @@ type_id(PG_FUNCTION_ARGS)
                *object_name;
     char       *physical_schema_name;
     char       *input;
-    char       **splitted_object_name;
     Oid        schema_oid = InvalidOid;
     Oid        user_id = GetUserId();
     Oid        result = InvalidOid;
@@ -2641,40 +2620,20 @@ type_id(PG_FUNCTION_ARGS)
                 (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
                  errmsg("input value is too long for object name")));
 
-    /* resolve the two part name */
-    splitted_object_name = split_object_name(input);
+	/*
+	 * Split the input string, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+
+    pfree(input);
+
     /* If three part name(db_name also included in input) then return null */
-    if(pg_mbstrlen(splitted_object_name[1]) != 0)
+    if(pg_mbstrlen(db_name) != 0)
     {
-        pfree(input);
-        for (int j = 0; j < 4; j++)
-            pfree(splitted_object_name[j]);
-        pfree(splitted_object_name);
         PG_RETURN_NULL();
     }
     db_name = get_cur_db_name();
-    schema_name = splitted_object_name[2];
-    object_name = splitted_object_name[3];
-
-    /* downcase identifier if needed */
-    if (pltsql_case_insensitive_identifiers)
-    {
-        db_name = downcase_identifier(db_name, strlen(db_name), false, false);
-        schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
-        object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-        for (int k = 0; k < 4; k++)
-            pfree(splitted_object_name[k]);
-    }
-    else
-        pfree(splitted_object_name[0]);
-
-    pfree(input);
-    pfree(splitted_object_name);
-
-    /* truncate identifiers if needed */
-    truncate_tsql_identifier(db_name);
-    truncate_tsql_identifier(schema_name);
-    truncate_tsql_identifier(object_name);
 
     if (!strcmp(schema_name, ""))
     {

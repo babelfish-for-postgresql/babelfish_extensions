@@ -31,6 +31,7 @@
 #include "multidb.h"
 #include "session.h"
 #include "rolecmds.h"
+#include "parser/scansup.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -2649,4 +2650,58 @@ update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grante
 	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
 
 	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec), NULL);
+}
+
+/*
+ * downcase_truncate_split_object_name:
+ * Resolve the four part object name. Downcase and truncate identifier if needed.
+ * Specify NULL for any of the server_name, db_name, schema_name, object_name if
+ * we don't need to resolve them.
+ */
+void
+downcase_truncate_split_object_name(char *four_part_object_name, char **server_name,
+									char **db_name, char **schema_name, char **object_name)
+{
+	char **splited_object_name;
+	char *temp_server_name;
+	char *temp_db_name;
+	char *temp_schema_name;
+	char *temp_object_name;
+
+	/* Resolve the four part name. */
+	splited_object_name = split_object_name(four_part_object_name);
+	temp_server_name = splited_object_name[0];
+	temp_db_name = splited_object_name[1];
+	temp_schema_name = splited_object_name[2];
+	temp_object_name = splited_object_name[3];
+
+	/* Downcase identifier if needed. */
+	if (pltsql_case_insensitive_identifiers)
+	{
+		temp_server_name = downcase_identifier(temp_server_name, strlen(temp_server_name), false, false);
+		temp_db_name = downcase_identifier(temp_db_name, strlen(temp_db_name), false, false);
+		temp_schema_name = downcase_identifier(temp_schema_name, strlen(temp_schema_name), false, false);
+		temp_object_name = downcase_identifier(temp_object_name, strlen(temp_object_name), false, false);
+		for (int j = 0; j < 4; j++)
+			pfree(splited_object_name[j]);
+	}
+	else
+		pfree(splited_object_name[0]);
+
+	pfree(splited_object_name);
+
+	/* Truncate identifiers if needed. */
+	truncate_tsql_identifier(temp_server_name);
+	truncate_tsql_identifier(temp_db_name);
+	truncate_tsql_identifier(temp_schema_name);
+	truncate_tsql_identifier(temp_object_name);
+
+	if (server_name != NULL)
+		*server_name = temp_server_name;
+	if (db_name != NULL)
+		*db_name = temp_db_name;
+	if (schema_name != NULL)
+		*schema_name = temp_schema_name;
+	if (object_name != NULL)
+		*object_name = temp_object_name;
 }

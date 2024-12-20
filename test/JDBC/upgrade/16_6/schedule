@@ -494,7 +494,6 @@ set_tran_isolvl
 with_recompile
 alter_proc_recompile
 catalogs_dbo_sys_schema-upgrade
-unary_plus_op_string
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -533,7 +532,7 @@ BABEL-4707
 BABEL_4817
 upper_lower
 BABEL-4641
-trim
+trim-before-15_11-or-16_7
 ltrim
 rtrim
 left
@@ -579,6 +578,7 @@ BABEL-CASE_EXPR-before-16_6
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
+cast_nvarchar_test_before_16_5
 smalldatetime_date_cmp
 securityadmin_role
 db_accessadmin

@@ -59,6 +59,6 @@ runs:
           PSQL_BABEL_DB_PORT=5432 \
           PSQL_BABEL_DB_USER=jdbc_user \
           PSQL_BABEL_DB_PASSWORD=12345678 \
-          PSQL_BABEL_DB_NAME=jdbc_testdb \
+          PSQL_BABEL_DB_NAME=babelfish_db \
           ./build/main
       shell: bash
