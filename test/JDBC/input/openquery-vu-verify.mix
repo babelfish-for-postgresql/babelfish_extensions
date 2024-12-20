@@ -1,268 +1,353 @@
 -- sla 250000
-# Here we run all the datatype related prepare scripts
+-- tsql
+-- Here we run all the datatype related prepare scripts
 
-# bigint
+-- bigint
 include#!#input/datatypes/TestBigInt-vu-prepare.txt
 
-# numeric
+-- numeric
 include#!#input/datatypes/TestNumeric-vu-prepare.txt
 
-# bit
+-- bit
 include#!#input/datatypes/TestBIT-vu-prepare.txt
 
-# smallint
+-- smallint
 include#!#input/datatypes/TestSmallInt-vu-prepare.txt
 
-# decimal
+-- decimal
 include#!#input/datatypes/TestDecimal-vu-prepare.txt
 
-# smallmoney
+-- smallmoney
 include#!#input/datatypes/TestSmallMoney-vu-prepare.txt
 
-# int
+-- int
 include#!#input/datatypes/TestInt-vu-prepare.txt
 
-# tinyint
+-- tinyint
 include#!#input/datatypes/TestTinyInt-vu-prepare.txt
 
-# money
+-- money
 include#!#input/datatypes/TestMoney-vu-prepare.txt
 
-# float
+-- float
 include#!#input/datatypes/TestFloat-vu-prepare.txt
 
-# real
+-- real
 include#!#input/datatypes/TestReal-vu-prepare.txt
 
-# date
+-- date
 include#!#input/datatypes/TestDate-vu-prepare.txt
 
-# datetimeoffset
+-- datetimeoffset
 include#!#input/datatypes/TestDatetimeoffset-vu-prepare.sql
 
-# datetime2
+-- datetime2
 include#!#input/datatypes/TestDatetime2-vu-prepare.txt
 
-# smalldatetime
+-- smalldatetime
 include#!#input/datatypes/TestSmallDatetime-vu-prepare.txt
 
-# datetime
+-- datetime
 include#!#input/datatypes/TestDatetime-vu-prepare.txt
 
-# time
+-- time
 include#!#input/datatypes/TestTime-vu-prepare.txt
 
-# char and nchar
+-- char and nchar
 include#!#input/datatypes/TestChar-vu-prepare.txt
 
-# varchar and nvarchar
+-- varchar and nvarchar
 include#!#input/datatypes/TestVarChar-vu-prepare.txt
 
-# text and ntext
+-- text and ntext
 include#!#input/datatypes/TestText-vu-prepare.txt
 
-# binary and varbinary
+-- binary and varbinary
 include#!#input/datatypes/TestBinary-vu-prepare.txt
 
-# image
+-- image
 include#!#input/datatypes/TestImage-vu-prepare.txt
 
-# user defined data types
+-- user defined data types
 include#!#input/datatypes/TestUDD-vu-prepare.txt
 
-# uniqueidentifier
+-- uniqueidentifier
 include#!#input/datatypes/TestUniqueIdentifier-vu-prepare.txt
 
-# Run SELECTs but using OPENQUERY now
+-- Run SELECTs but using OPENQUERY now
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIGINT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table1');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table2');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table3');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table4');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table5');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table6');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table7');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table8');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table9');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLINT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table1');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table2');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table3');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table4');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table5');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table6');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table7');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table8');
+GO
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table9');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM smallmoney_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM INT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TINYINT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM money_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM FLOAT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM REAL_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM DATE_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetimeoffset_vu_prepare_testing');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetime2_vu_prepare_t');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLDATETIME_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TestDatetime_vu_prepare_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime1');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime2');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime3');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime4');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime5');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime6');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime7');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt1');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt2');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt3');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt4');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt1');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt2');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt3');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testCHAR_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt1');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt2');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt3');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt4');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TEXT_dt');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
+GO
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
+GO
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM uniqueidentifier_dt');
+GO
 
-# Drop all tables
-# bigint
+-- Drop all tables
+-- bigint
 include#!#input/datatypes/TestBigInt-vu-cleanup.txt
 
-# numeric
+-- numeric
 include#!#input/datatypes/TestNumeric-vu-cleanup.txt
 
-# bit
+-- bit
 include#!#input/datatypes/TestBIT-vu-cleanup.txt
 
-# smallint
+-- smallint
 include#!#input/datatypes/TestSmallInt-vu-cleanup.txt
 
-# decimal
+-- decimal
 include#!#input/datatypes/TestDecimal-vu-cleanup.txt
 
-# smallmoney
+-- smallmoney
 include#!#input/datatypes/TestSmallMoney-vu-cleanup.txt
 
-# int
+-- int
 include#!#input/datatypes/TestInt-vu-cleanup.txt
 
-# tinyint
+-- tinyint
 include#!#input/datatypes/TestTinyInt-vu-cleanup.txt
 
-# money
+-- money
 include#!#input/datatypes/TestMoney-vu-cleanup.txt
 
-# float
+-- float
 include#!#input/datatypes/TestFloat-vu-cleanup.txt
 
-# real
+-- real
 include#!#input/datatypes/TestReal-vu-cleanup.txt
 
-# date
+-- date
 include#!#input/datatypes/TestDate-vu-cleanup.txt
 
-# datetimeoffset
+-- datetimeoffset
 include#!#input/datatypes/TestDatetimeoffset-vu-cleanup.sql
 
-# datetime2
+-- datetime2
 include#!#input/datatypes/TestDatetime2-vu-cleanup.txt
 
-# smalldatetime
+-- smalldatetime
 include#!#input/datatypes/TestSmallDatetime-vu-cleanup.txt
 
-# datetime
+-- datetime
 include#!#input/datatypes/TestDatetime-vu-cleanup.txt
 
-# time
+-- time
 include#!#input/datatypes/TestTime-vu-cleanup.txt
 
-# char and nchar
+-- char and nchar
 include#!#input/datatypes/TestChar-vu-cleanup.txt
 
-# varchar and nvarchar
+-- varchar and nvarchar
 include#!#input/datatypes/TestVarChar-vu-cleanup.txt
 
-# text and ntext
+-- text and ntext
 include#!#input/datatypes/TestText-vu-cleanup.txt
 
-# binary and varbinary
+-- binary and varbinary
 include#!#input/datatypes/TestBinary-vu-cleanup.txt
 
-# image
+-- image
 include#!#input/datatypes/TestImage-vu-cleanup.txt
 
-# user defined data types
+-- user defined data types
 include#!#input/datatypes/TestUDD-vu-cleanup.txt
 
-# uniqueidentifier
+-- uniqueidentifier
 include#!#input/datatypes/TestUniqueIdentifier-vu-cleanup.txt
 
-# Test OPENQUERY error handling
+-- Test OPENQUERY error handling
 SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
+GO
 
-# Try executing a query that does not return a result set
+-- Try executing a query that does not return a result set
 SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
+GO
 
-# try executing query where column alias does not exist
+-- try executing query where column alias does not exist
 SELECT * FROM OPENQUERY(bbf_server, 'select 1')
+GO
 
-# execute query that returns 2 result sets. We should only return the first
+-- execute query that returns 2 result sets. We should only return the first
 SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
+GO
 
-# Test view dependent on OPENQUERY
+-- Test view dependent on OPENQUERY
 SELECT * FROM openquery_vu_prepare__openquery_view
+GO
 
-# Test OPENQUERY with an unreachable server
+-- Test OPENQUERY with an unreachable server
 SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
+GO
 
-#Test OPENQUERY where argument has quotes
+-- Test OPENQUERY where argument has quotes
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')
+GO
 
-# Test query timeout behaviour in OPENQUERY
-# check the value of query timeout from sys.servers
+-- Test query timeout behaviour in OPENQUERY
+-- check the value of query timeout from sys.servers
 select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
 
-# execute a query which takes more time than the timeout set
+-- execute a query which takes more time than the timeout set
 SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+GO
 
-# Test connect timeout behaviour in OPENQUERY
-# check the value of connect timeout from sys.servers
+-- Test connect timeout behaviour in OPENQUERY
+-- check the value of connect timeout from sys.servers
 select name, connect_timeout from sys.servers where name = 'bbf_server_2'
+GO
 
-# Make openquery against a non-existing server
+-- Make openquery against a non-existing server
 SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
+GO
 
-# Test procedure dependent on OPENQUERY
+-- Test procedure dependent on OPENQUERY
 EXEC openquery_vu_prepare__openquery_proc
+GO
 
-# Test function dependent on OPENQUERY
+-- Test function dependent on OPENQUERY
 SELECT openquery_vu_prepare__openquery_func()
+GO

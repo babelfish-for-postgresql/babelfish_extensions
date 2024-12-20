@@ -41,7 +41,6 @@ sys-database_mirroring
 sys-databases
 sys-numbered_procedures
 BABEL-3121
-restricted_procedures
 sys-events
 sys-suser_sid
 sys-trigger_events
