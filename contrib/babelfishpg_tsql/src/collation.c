@@ -960,8 +960,8 @@ transform_likenode(Node *node)
 			 * So, we know for sure that if this is CS_AI, only LIKE node 
 			 * will be present, hence we can update.
 			 */
-			if (coll_info_of_inputcollid.collateflags == 0x000e)
-				coll_info_of_inputcollid.collateflags = 0x000c;
+			if (coll_info_of_inputcollid.collateflags == 0x000e) /* CS_AI */
+				coll_info_of_inputcollid.collateflags = 0x000c; /* CS_AS */
 
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
