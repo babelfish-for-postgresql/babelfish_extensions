@@ -949,7 +949,7 @@ transform_likenode(Node *node)
 		 * of that case here.
 		 */
 		init_and_check_collation_callbacks();
-		if (((*collation_callbacks_ptr->has_ilike_node) (node) || (*collation_callbacks_ptr->has_like_node) (node)) && babelfish_dump_restore)
+		if (babelfish_dump_restore && ((*collation_callbacks_ptr->has_ilike_node) (node) || (*collation_callbacks_ptr->has_like_node) (node)))
 		{
 			int			collidx_of_cs_as;
 
