@@ -497,6 +497,9 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
 	else
 		outerplan = outerPlan(plan);
+	// outerplan = outerPlan(plan);
+	// tle = get_tle_by_resno(outerplan->targetlist, attno);
+	// return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 
 	/* if outerplan is SubqueryScan then use actual subplan */
 	if (IsA(outerplan, SubqueryScan))
@@ -576,10 +579,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Var		   *var = (Var *) expr;
 				Plan		*outerplan = NULL;
 				TargetEntry	*tle;
-				if (plan && IsA(plan, Gather))
+				if (plan)
+				outerplan = outerPlan(plan);
+
+				if (plan && outerplan && (IsA(outerplan, Gather) || IsA(plan, Gather)))
 				{
 					Assert(plan);
-					outerplan = outerPlan(plan);
+					Assert(outerplan);
 					tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
 					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
@@ -907,6 +913,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				int32		typmod;
 				uint8_t		precision,
 							scale;
+				// Plan		*outerplan = NULL;
+				// TargetEntry	*tle;
+				// if (plan && IsA(plan, Gather))
+				// {
+				// 	Assert(plan);
+				// 	outerplan = outerPlan(plan);
 
 				Assert(aggref->args != NIL);
 
