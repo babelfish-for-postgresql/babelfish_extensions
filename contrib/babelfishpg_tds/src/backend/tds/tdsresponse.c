@@ -574,13 +574,26 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_Var:
 			{
 				Var		   *var = (Var *) expr;
-
-				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (plan && var->varno == OUTER_VAR)
+				Plan		*outerplan = NULL;
+				TargetEntry	*tle;
+				if (plan && IsA(plan, Gather))
 				{
 					Assert(plan);
-					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+					outerplan = outerPlan(plan);
+					tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+					resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
+
+				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
+				// if (plan && var->varno == OUTER_VAR)
+				// {
+				// 	Assert(plan);
+				// 	return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+				// } // if gather node then 
+				// outerplan = outerPlan(plan);
+				// Assert(outerplan);
+				// tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+				// return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				return var->vartypmod;
 			}
 		case T_OpExpr:
@@ -1782,9 +1795,9 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 	{
 		Oid			serverCollationOid;
 		TdsIoFunctionInfo finfo;
-		Form_pg_attribute att = TupleDescAttr(typeinfo, attno);
+		Form_pg_attribute att = TupleDescAttr(typeinfo, attno); // able to extract from var
 		Oid			atttypid = att->atttypid;
-		int32		atttypmod = att->atttypmod;
+		int32		atttypmod = att->atttypmod; // -1
 		TdsColumnMetaData *col = &colMetaData[attno];
 		uint32_t	tdsVersion = GetClientTDSVersion();
 		TargetEntry *tle = NULL;
