@@ -581,7 +581,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					Assert(plan);
 					outerplan = outerPlan(plan);
 					tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
-					resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
