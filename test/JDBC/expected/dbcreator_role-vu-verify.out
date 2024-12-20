@@ -565,6 +565,77 @@ go
 create role dummy_role
 go
 
+-- Do not allow predefined server roles to be members of each other
+Alter server role sysadmin add member securityadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'securityadmin')~~
+
+
+Alter server role sysadmin add member dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
+
+
+Alter server role securityadmin add member dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
+
+
+Alter server role securityadmin add member securityadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'securityadmin')~~
+
+
+Alter server role dbcreator add member securityadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'securityadmin')~~
+
+
+Alter server role dbcreator add member dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
+
+
+Alter server role dbcreator add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
+Alter server role securityadmin add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
+Alter server role dbcreator add member dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
+
+
+Alter server role sysadmin add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
 -- terminate-tsql-conn
 
 -- tsql user=dbcreator_login1 password=123

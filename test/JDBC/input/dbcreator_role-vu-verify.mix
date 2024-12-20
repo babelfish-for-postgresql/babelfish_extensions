@@ -398,6 +398,37 @@ go
 create role dummy_role
 go
 
+-- Do not allow predefined server roles to be members of each other
+Alter server role sysadmin add member securityadmin
+go
+
+Alter server role sysadmin add member dbcreator
+go
+
+Alter server role securityadmin add member dbcreator
+go
+
+Alter server role securityadmin add member securityadmin
+go
+
+Alter server role dbcreator add member securityadmin
+go
+
+Alter server role dbcreator add member dbcreator
+go
+
+Alter server role dbcreator add member sysadmin
+go
+
+Alter server role securityadmin add member sysadmin
+go
+
+Alter server role dbcreator add member dbcreator
+go
+
+Alter server role sysadmin add member sysadmin
+go
+
 -- terminate-tsql-conn
 
 -- tsql user=dbcreator_login1 password=123
