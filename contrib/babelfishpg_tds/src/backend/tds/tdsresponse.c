@@ -69,6 +69,17 @@
 #define NUMERIC_MOD_OID2 1729
 #define NUMERIC_UPLUS_OID 1915
 #define NUMERIC_UMINUS_OID 1771
+#define INT4_NUMERIC 1740
+#define INT8_NUMERIC 1781
+#define INT2_NUMERIC 1782
+#define FLOAT4_NUMERIC 1742
+#define FLOAT8_NUMERIC 1743
+#define INT48 481
+#define INT84 480
+#define INT28 754
+#define INT82 714
+#define I2TOI4 313
+#define I4TOI2 314
 
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
@@ -516,6 +527,40 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 }
 
+static bool
+is_convertable_to_numeric(Oid func_oid)
+{
+	HeapTuple	procTup;
+	Datum		prosrcdatum;
+	char	   *proc_source;
+	bool		isnull;
+
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_oid));
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "cache lookup failed for function %u", func_oid);
+
+	prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
+								  Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+	proc_source = DatumGetCString(prosrcdatum);
+
+	if (func_oid == INT4_NUMERIC ||
+		func_oid == INT8_NUMERIC ||
+		func_oid == INT2_NUMERIC ||
+		func_oid == FLOAT4_NUMERIC ||
+		func_oid == FLOAT8_NUMERIC ||
+		func_oid == INT48 ||
+		func_oid == INT84 ||
+		func_oid == INT28 ||
+		func_oid == INT82 ||
+		func_oid == I2TOI4 ||
+		func_oid == I4TOI2 ||
+		strncmp(proc_source, "fixeddecimal_numeric", 20) ||
+		strncmp(proc_source, "numeric_fixeddecimal", 20))
+		return true;
+	return false;
+}
 /*
  * is_numeric_datatype - returns bool if given datatype is numeric or decimal.
  */
@@ -559,14 +604,22 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			{
 				Const	   *con = (Const *) expr;
 				Numeric		num;
-
-				if (!is_numeric_datatype(con->consttype) || con->constisnull)
+				int64		val;
+				
+				if ((!(con->consttype == INT4OID) && !is_numeric_datatype(con->consttype)) ||
+					con->constisnull)
 				{
 					/* typmod is undefined */
 					return -1;
 				}
 				else
 				{
+					if (!plan && con->consttype == INT4OID)
+					{
+						val = con->constvalue;
+						num = int64_to_numeric(val);
+						return numeric_get_typmod(num);
+					}
 					num = (Numeric) con->constvalue;
 					return numeric_get_typmod(num);
 				}
@@ -768,7 +821,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				FuncExpr   *func = (FuncExpr *) expr;
 				Oid			func_oid = InvalidOid;
 				int			rettypmod = -1;
-
+				Node	   *arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
 					return rettypmod;
@@ -784,6 +837,20 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
 																					  func->args == NIL ? 0 : func->args->length,
 																					  func->funcresulttype);
+
+				/*
+				 * !plan means we are not invoking resolve_numeric_typmod_from_exp
+				 * from tds side. Here we make resursive call so as to calculate 
+				 * typmod from other base nodes in parse tree.
+				 */
+				if (!plan &&
+					rettypmod == -1 &&
+					is_convertable_to_numeric(func_oid) &&
+					list_length(func->args) == 1)
+				{
+					arg = linitial(func->args);
+					return resolve_numeric_typmod_from_exp(plan, arg);
+				}
 				return rettypmod;
 			}
 		case T_NullIfExpr:
