@@ -62,6 +62,8 @@ static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func
 										char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner);
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
 static Node *tsql_unpivot_debug_transformation(List *components);
+static void tsql_handle_unpivot_select(SelectStmt *stmt);
+static void tsql_add_measure_not_null(SelectStmt *stmt, char *unpivot_alias, char *measure_col);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
 static Node *TsqlOpenJSONWithMakeFuncCall(Node *jsonExpr, Node *path, List *cols, Alias *alias);

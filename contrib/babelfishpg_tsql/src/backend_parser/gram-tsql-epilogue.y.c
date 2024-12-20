@@ -2040,6 +2040,12 @@ tsql_unpivot_debug_transformation(List *components)
     List *values_list = NIL;
     ListCell *lc;
     RangeVar *larg;
+	char *source_alias;
+	List *result_info;
+    //List *unpivot_cols;
+	char *measure_colname;
+    char *dim_colname;
+
 
     /* Extract components */
     table_ref = (Node *)linitial(components);
@@ -2056,6 +2062,14 @@ tsql_unpivot_debug_transformation(List *components)
     elog(DEBUG1, "unpivot_info: %s", nodeToString(unpivot_info));
     elog(DEBUG1, "alias: %s", nodeToString(alias));
 
+	/* Create list of unpivot column info */
+    // unpivot_cols = list_make2(
+    //     makeString(strVal(llast(((ColumnRef *)measure_col)->fields))),  /* measure column */
+    //     makeString(strVal(llast(((ColumnRef *)dim_col)->fields)))       /* dimension column */
+    // );
+	measure_colname = strVal(llast(((ColumnRef *)measure_col)->fields));
+    dim_colname = strVal(llast(((ColumnRef *)dim_col)->fields));
+
     /* Create basic nodes */
     n = makeNode(JoinExpr);
     rarg = makeNode(RangeSubselect);
@@ -2070,7 +2084,35 @@ tsql_unpivot_debug_transformation(List *components)
 			/* TODO: need logic to generate unique alias */
             larg->alias = makeAlias("c", NIL);
         }
+		source_alias = larg->alias->aliasname;
+
     }
+	else if (IsA(table_ref, RangeSubselect))
+    {
+        RangeSubselect *rsq = (RangeSubselect *)table_ref;
+        source_alias = rsq->alias ? rsq->alias->aliasname : "c";
+    }
+    else if (IsA(table_ref, JoinExpr))
+    {
+        /* For JOIN, we need to ensure the last joined table has an alias */
+        JoinExpr *join = (JoinExpr *)table_ref;
+        Node *last_table = join->rarg;
+        
+        if (IsA(last_table, RangeVar))
+        {
+            RangeVar *rv = (RangeVar *)last_table;
+            if (rv->alias == NULL)
+                rv->alias = makeAlias("c", NIL);
+            source_alias = rv->alias->aliasname;
+        }
+        else if (IsA(last_table, RangeSubselect))
+        {
+            RangeSubselect *rsq = (RangeSubselect *)last_table;
+            source_alias = rsq->alias ? rsq->alias->aliasname : "c";
+        }
+    }
+	/* TODO: else case or error throw UNSUPPORTED needed here? 
+	Depends on what is actually supported for TSQL unpivot */
     n->larg = table_ref;
 
     /* Build VALUES list from source columns */
@@ -2083,7 +2125,7 @@ tsql_unpivot_debug_transformation(List *components)
         /* Create ColumnRef with source table's alias */
         col_ref = makeNode(ColumnRef);
         col_ref->fields = list_make2(
-            makeString(larg->alias->aliasname),     /* source table alias */
+            makeString(source_alias),     /* source table alias */
             makeString(strVal(col_name)) /* column name */
         );
         
@@ -2099,11 +2141,12 @@ tsql_unpivot_debug_transformation(List *components)
     n->jointype = JOIN_INNER;
     n->isNatural = false;
     rarg->lateral = true;
-    values_subquery->valuesLists = list_make1(values_list);
+    values_subquery->valuesLists = values_list;
     rarg->subquery = (Node *)values_subquery;
 
     /* Handle alias for VALUES clause */
-	/* TODO: can remove check or add error: UNPIVOT table alias cannot be NULL */
+	/* TODO: can remove check or add error: UNPIVOT table alias cannot be NULL 
+	throw error in parser rule body if alias is NULL */
     if (alias != NULL)
     {
         rarg->alias = alias;
@@ -2111,10 +2154,9 @@ tsql_unpivot_debug_transformation(List *components)
 		/* TODO: alias->colnames wont exist in the alias object of UNPIVOT stmt so can remove check*/
         if (rarg->alias->colnames == NIL)
         {
-			/* why llast and not just the first element? */
             rarg->alias->colnames = list_make2(
-                makeString(strVal(llast(((ColumnRef *)measure_col)->fields))),
-                makeString(strVal(llast(((ColumnRef *)dim_col)->fields)))
+				makeString(measure_colname),
+            	makeString(dim_colname)
             );
         }
     }
@@ -2124,8 +2166,8 @@ tsql_unpivot_debug_transformation(List *components)
         rarg->alias = makeAlias(
             "unpvt",
             list_make2(
-                makeString(strVal(llast(((ColumnRef *)measure_col)->fields))),
-                makeString(strVal(llast(((ColumnRef *)dim_col)->fields)))
+				makeString(measure_colname),
+            	makeString(dim_colname)
             )
         );
     }
@@ -2136,7 +2178,102 @@ tsql_unpivot_debug_transformation(List *components)
 
     elog(DEBUG1, "Final transformed node: %s", nodeToString((Node *)n));
 
-    return (Node *)n;
+	/* Create result info list */
+    // result_info = list_make3(
+    //     list_make1(makeString("UNPIVOT")),
+    //     list_make2(
+    //         list_make2(rarg->alias->aliasname, unpivot_cols),  /* unpivot alias and its columns */
+    //         list_make2(larg->alias->aliasname, NIL)            /* source table alias */
+    //     ),
+    //     list_make1(n)  /* transformed node */
+    // );
+	/* Create result info list */
+    result_info = list_make5(
+        makeString("UNPIVOT"),
+        makeString(rarg->alias->aliasname),
+        makeString(dim_colname),
+        makeString(measure_colname),
+        makeString(source_alias)
+    );
+    
+    /* Append the transformed node */
+	elog(DEBUG1, "Final transformed node: %s", NameListToString(result_info));
+
+    //result_info = lappend(result_info, n);
+
+    return (Node *) n;
+}
+
+static void
+tsql_handle_unpivot_select(SelectStmt *stmt)
+{
+    List *from_clause = stmt->fromClause;
+
+    if (from_clause != NULL && IsA(from_clause, List) && 
+        list_length(from_clause) > 0 && IsA(linitial(from_clause), List))
+    {
+        List *from_info = (List *)linitial(from_clause);
+        
+        /* Check if this is an UNPIVOT info list (should have 6 elements) */
+        if (list_length(from_info) == 6 && 
+            IsA(linitial(from_info), String) &&
+            strcmp(strVal(linitial(from_info)), "UNPIVOT") == 0)
+        {
+            char *unpivot_alias;
+            char *measure_col;
+            Node *transformed_node;
+
+            /* Extract information */
+            unpivot_alias = strVal(list_nth(from_info, 1));
+            measure_col = strVal(list_nth(from_info, 3));
+            transformed_node = list_nth(from_info, 5);
+
+            /* Add IS NOT NULL condition */
+            tsql_add_measure_not_null(stmt, unpivot_alias, measure_col);
+
+            /* Replace from_clause with transformed node */
+            stmt->fromClause = list_make1(transformed_node);
+        }
+    }
+}
+
+static void
+tsql_add_measure_not_null(SelectStmt *stmt, char *unpivot_alias, char *measure_col)
+{
+    NullTest *null_test;
+    ColumnRef *measure_ref;
+    Node *new_where_clause;
+
+    /* Create the measure column reference */
+    measure_ref = makeNode(ColumnRef);
+ 	measure_ref->fields = list_make2(
+        makeString(unpivot_alias),
+        makeString(measure_col)
+    );    
+	measure_ref->location = -1;
+
+    /* Create IS NOT NULL test */
+    null_test = makeNode(NullTest);
+    null_test->arg = (Expr *)measure_ref;
+    null_test->nulltesttype = IS_NOT_NULL;
+    null_test->argisrow = false;
+    null_test->location = -1;
+
+    /* Create new where clause */
+    if (stmt->whereClause)
+    {
+        BoolExpr *bool_expr = makeNode(BoolExpr);
+        bool_expr->boolop = AND_EXPR;
+        bool_expr->args = list_make2(stmt->whereClause, null_test);
+        bool_expr->location = -1;
+        new_where_clause = (Node *)bool_expr;
+    }
+    else
+    {
+        new_where_clause = (Node *)null_test;
+    }
+
+    stmt->whereClause = new_where_clause;
 }
 
 /* 
