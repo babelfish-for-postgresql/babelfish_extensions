@@ -953,16 +953,6 @@ transform_likenode(Node *node)
 		{
 			int			collidx_of_cs_as;
 
-			/* 
-			 * We only need to update the collateflags for CS_AI to CS_AS
-			 * No need to check whether ilike or like is present as
-			 * ilike comes only for CI collations. 
-			 * So, we know for sure that if this is CS_AI, only LIKE node 
-			 * will be present, hence we can update.
-			 */
-			if (coll_info_of_inputcollid.collateflags == 0x000e) /* CS_AI */
-				coll_info_of_inputcollid.collateflags = 0x000c; /* CS_AS */
-
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
 				collidx_of_cs_as =
@@ -980,6 +970,13 @@ transform_likenode(Node *node)
 				/* If a collation is not specified, use the default one */
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
+
+			/*
+			 * If this has a like node, then it is CS collation
+			 * So we can return from here directly
+			 */
+			if ((*collation_callbacks_ptr->has_like_node) (node))
+				return node;
 		}
 
 		if (OidIsValid(like_entry.like_oid) &&
