@@ -382,6 +382,7 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ex
 WHERE Ext.type = 'R'
 AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
 GRANT SELECT ON sys.login_token TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
 RETURNS INTEGER AS
 $$
@@ -402,6 +403,9 @@ BEGIN
     
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
+
+    ELSEIF role = login THEN
+		RETURN 0;
 	
  	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
 	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
