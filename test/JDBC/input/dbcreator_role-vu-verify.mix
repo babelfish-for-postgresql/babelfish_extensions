@@ -13,6 +13,16 @@ go
 select is_srvrolemember('dbcreator', 'securityadmin')
 go
 
+select is_srvrolemember('dbcreator','dbcreator')
+go
+
+select is_srvrolemember('sysadmin','sysadmin')
+go
+
+-- should return NULL for invalid login
+select is_srvrolemember('l1', 'l1')
+go
+
 alter login dbcreator_login1 with password='123'
 go
 
