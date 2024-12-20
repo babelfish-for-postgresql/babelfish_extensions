@@ -5881,33 +5881,37 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 static const char *
 remove_db_name_in_schema(const char *object_name)
 {
-	const char	*cur_db_name;
+	char		*cur_db_name;
 	char		**splited_object_name;
 	char		*schema_name = NULL;
 	char		*mutable_name;
-    size_t 		db_name_len;
-    size_t 		prefix_len;
-	size_t 		schema_name_len;
+    size_t		db_name_len;
+    size_t		prefix_len;
+	size_t		schema_name_len;
 
-	mutable_name = strdup(object_name);
+	mutable_name = pstrdup(object_name);
 	splited_object_name = split_object_name(mutable_name);
-	for (int i = 0; i < 4; i++)
+
+	// If there are more than two parts, then it’s a cross-db object name (db.schema.object) so we don’t need to deal with it
+	if (strlen(splited_object_name[1]) == 0)
 	{
-		if (strcmp(splited_object_name[i], "")) {
-			schema_name = splited_object_name[i];
-			break;
-		}
-	}
+		schema_name = strlen(splited_object_name[2]) == 0 ? splited_object_name[3] : splited_object_name[2];
+		cur_db_name = get_cur_db_name();
+		db_name_len = strlen(cur_db_name);
+		schema_name_len = strlen(schema_name);
+		prefix_len = db_name_len + 1;
 
-	cur_db_name = get_cur_db_name();
-	db_name_len = strlen(cur_db_name);
-	schema_name_len = schema_name ? strlen(schema_name) : 0;
-	prefix_len = db_name_len + 1;
-
-	if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
-		object_name += prefix_len;
-	}
+		if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+			// Return the part after the prefix
+			object_name += prefix_len;
+		}	
+		pfree(cur_db_name);
+	} 
 	
-	free(mutable_name);
+	pfree(mutable_name);
+	for (int k = 0; k < 4; k++)
+        pfree(splited_object_name[k]);
+	pfree(splited_object_name);
+
 	return object_name;
 }
