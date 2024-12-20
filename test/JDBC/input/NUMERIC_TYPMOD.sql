@@ -223,10 +223,10 @@ GO
 -- T_Var (Variable reference)
 DECLARE @num1 NUMERIC(10,4) = 1234.5678;
 DECLARE @dec1 DECIMAL(12,2) = 9876.54;
-
 SELECT @num1 AS result
 UNION ALL
-SELECT @dec1;
+SELECT @dec1
+ORDER BY result;
 GO
 
 -- T_Const (Constant value)
@@ -234,32 +234,37 @@ SELECT CAST(1234.5678 AS NUMERIC(10,4)) AS result
 UNION ALL
 SELECT CAST(9876.54 AS DECIMAL(12,2))
 UNION ALL
-SELECT CAST(0 AS DECIMAL(9,4));
+SELECT CAST(0 AS DECIMAL(9,4))
+ORDER BY result;
 GO
 
 -- T_SubscriptingRef (Array or json subscripting)
 DECLARE @jsonVar NVARCHAR(MAX) = N'{"a": 123.45, "b": 678.90}';
 SELECT CAST(JSON_VALUE(@jsonVar, '$.a') AS NUMERIC(10,2)) AS result
 UNION ALL
-SELECT CAST(JSON_VALUE(@jsonVar, '$.b') AS DECIMAL(10,2));
+SELECT CAST(JSON_VALUE(@jsonVar, '$.b') AS DECIMAL(10,2))
+ORDER BY result;
 GO
 
 -- T_NullIfExpr (NULLIF expression)
 SELECT NULLIF(CAST(1234.56 AS NUMERIC(10,2)), CAST(1234.56 AS DECIMAL(12,2))) AS result
 UNION ALL
-SELECT CAST(9999.99 AS DECIMAL(10,2));
+SELECT CAST(9999.99 AS DECIMAL(10,2))
+ORDER BY result;
 GO
 
 -- T_SubLink (Subquery expressions)
 SELECT (SELECT AVG(CAST(1234.56 AS NUMERIC(10,2)))) AS result
 UNION ALL
-SELECT CAST(9876.54 AS DECIMAL(12,2));
+SELECT CAST(9876.54 AS DECIMAL(12,2))
+ORDER BY result;
 GO
 
 -- T_SubPlan (Subplan expression)
 SELECT (SELECT TOP 1 CAST(1234.56 AS NUMERIC(10,2)) WHERE 1=1) AS result
 UNION ALL
-SELECT CAST(9876.54 AS DECIMAL(12,2));
+SELECT CAST(9876.54 AS DECIMAL(12,2))
+ORDER BY result;
 GO
 
 -- T_AlternativeSubPlan (Alternative subplan)
@@ -267,7 +272,8 @@ SELECT CAST(1234.56 AS NUMERIC(10,2)) AS result WHERE 1=1
 UNION ALL
 SELECT CAST(9876.54 AS DECIMAL(12,2)) WHERE 1=1
 UNION ALL
-SELECT CAST(0 AS DECIMAL(12,2));
+SELECT CAST(0 AS DECIMAL(12,2))
+ORDER BY result;
 GO
 
 -- T_FieldSelect (Field selection)
@@ -277,7 +283,8 @@ SELECT t.num_col AS result
 FROM @myTable t
 UNION ALL
 SELECT t.dec_col
-FROM @myTable t;
+FROM @myTable t
+ORDER BY result;
 GO
 
 
@@ -285,24 +292,26 @@ GO
 -- T_RelabelType (Relabel Type)
 SELECT CAST(CAST(1234.56 AS NUMERIC(10,2)) AS DECIMAL(12,2)) AS result
 UNION ALL
-SELECT CAST(9876.54 AS NUMERIC(10,2));
+SELECT CAST(9876.54 AS NUMERIC(10,2))
+ORDER BY result;
 GO
 
 -- T_ArrayCoerceExpr (Array Coerce Expression)
 DECLARE @myArray TABLE (val NUMERIC(10,2));
 INSERT INTO @myArray VALUES (1234.56), (7890.12), (5678.90);
-
 SELECT CAST(val AS DECIMAL(12,2)) AS result
 FROM @myArray
 UNION ALL
 SELECT val
-FROM @myArray;
+FROM @myArray
+ORDER BY result;
 GO
 
 -- T_CollateExpr (Collate Expression)
 SELECT CAST(1234.56 AS NUMERIC(10,2)) COLLATE Latin1_General_CI_AS AS result
 UNION ALL
-SELECT CAST(9876.54 AS DECIMAL(12,2));
+SELECT CAST(9876.54 AS DECIMAL(12,2))
+ORDER BY result;
 GO
 
 -- T_CaseExpr (Nested CASE expression)
@@ -311,7 +320,8 @@ SELECT CASE
     ELSE CAST(1234.56 AS NUMERIC(10,2))
 END AS result
 UNION ALL
-SELECT CAST(5678.90 AS DECIMAL(10,2));
+SELECT CAST(5678.90 AS DECIMAL(10,2))
+ORDER BY result;
 GO
 
 -- T_CaseTestExpr (CASE test expression)
@@ -321,7 +331,8 @@ SELECT CAST(999999.999 AS NUMERIC(9,3))
 UNION ALL
 SELECT CAST(9999999.99 AS DECIMAL(9,2))
 UNION ALL
-SELECT CAST(0 AS DECIMAL(9,4));
+SELECT CAST(0 AS DECIMAL(9,4))
+ORDER BY result;
 GO
 
 -- T_ArrayExpr (Array constructor)
@@ -334,7 +345,8 @@ GO
 -- T_CoalesceExpr (COALESCE expression)
 SELECT COALESCE(CAST(NULL AS NUMERIC(10,2)), CAST(1234.56 AS DECIMAL(12,2)), CAST(7890.12 AS NUMERIC(10,2))) AS result
 UNION ALL
-SELECT CAST(1111.11 AS NUMERIC(10,2));
+SELECT CAST(1111.11 AS NUMERIC(10,2))
+ORDER BY result;
 GO
 
 -- T_MinMaxExpr (GREATEST and LEAST expressions)
@@ -344,14 +356,16 @@ SELECT CASE
     ELSE CAST(7890.12 AS DECIMAL(12,2))
 END AS result
 UNION ALL
-SELECT CAST(0 AS DECIMAL(12,2));
+SELECT CAST(0 AS DECIMAL(12,2))
+ORDER BY result;
 GO
 
 -- T_JsonValueExpr (JSON Value Expression)
 DECLARE @json NVARCHAR(MAX) = N'{"value": 1234.56}';
 SELECT CAST(JSON_VALUE(@json, '$.value') AS DECIMAL(10,2)) AS result
 UNION ALL
-SELECT CAST(1111.11 AS NUMERIC(10,2));
+SELECT CAST(1111.11 AS NUMERIC(10,2))
+ORDER BY result;
 GO
 
 -- T_JsonConstructorExpr (JSON Constructor Expression)
@@ -372,7 +386,8 @@ VALUES (1, CAST(1234.56 AS NUMERIC(10,2)));
 
 SELECT value AS result FROM dbo.MyDomainTable
 UNION ALL
-SELECT CAST(9999.99 AS DECIMAL(10,2));
+SELECT CAST(9999.99 AS DECIMAL(10,2))
+ORDER BY result;
 GO
 
 DROP TABLE dbo.MyDomainTable;
@@ -381,7 +396,8 @@ GO
 -- T_CoerceToDomainValue (Coerce to Domain Value)
 SELECT CAST(1234.56 AS NUMERIC(10,2)) AS result
 UNION ALL
-SELECT CAST(9999.99 AS DECIMAL(10,2));
+SELECT CAST(9999.99 AS DECIMAL(10,2))
+ORDER BY result;
 GO
 
 -- T_SetToDefault (Set to Default)
@@ -398,7 +414,8 @@ SELECT num_col AS result
 FROM dbo.DefaultTable
 UNION ALL
 SELECT dec_col
-FROM dbo.DefaultTable;
+FROM dbo.DefaultTable
+ORDER BY result;
 GO
 
 DROP TABLE dbo.DefaultTable;
@@ -412,7 +429,8 @@ SELECT num_val AS result
 FROM cte
 UNION ALL
 SELECT dec_val
-FROM cte;
+FROM cte
+ORDER BY result;
 GO
 
 -- Test Case 1: Basic T_SubPlan in CASE
@@ -1124,6 +1142,7 @@ RETURN
     SELECT @param1 AS result
     UNION ALL
     SELECT @param2
+    ORDER BY result
 );
 GO
 
@@ -1145,6 +1164,7 @@ RETURN
     SELECT @param1 AS result
     UNION ALL
     SELECT @param2
+    ORDER BY result
 );
 GO
 
