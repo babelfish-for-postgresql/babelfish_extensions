@@ -608,6 +608,34 @@ go
 ~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
 
 
+Alter server role dbcreator add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
+Alter server role securityadmin add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
+Alter server role dbcreator add member dbcreator
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbcreator')~~
+
+
+Alter server role sysadmin add member sysadmin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'sysadmin')~~
+
+
 -- terminate-tsql-conn
 
 -- tsql user=dbcreator_login1 password=123

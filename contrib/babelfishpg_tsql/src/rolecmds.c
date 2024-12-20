@@ -1946,7 +1946,7 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
 
-	/* Forbidden the use of fixed server principals as grantee*/
+	/* Restrict adding fixed server roles as member*/
 	if (IS_BBF_FIXED_SERVER_ROLE(grantee_name))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
