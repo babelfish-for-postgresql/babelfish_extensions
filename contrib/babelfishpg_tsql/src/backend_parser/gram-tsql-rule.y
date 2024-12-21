@@ -1520,10 +1520,6 @@ simple_select:
 					n->havingClause = $9;
 					n->windowClause = $10;
 					n->isPivot = false;
-				
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-				
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
@@ -1549,10 +1545,6 @@ simple_select:
 					n->havingClause = $9;
 					n->windowClause = $10;
 					n->isPivot = false;
-
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-
 					$$ = (Node *)n;
 				}
 			| SELECT opt_all_clause tsql_top_clause opt_target_list
@@ -1573,10 +1565,6 @@ simple_select:
 					n->groupDistinct = ($10)->distinct;
 					n->havingClause = $11;
 					n->windowClause = $12;
-
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-
 					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
@@ -1597,10 +1585,6 @@ simple_select:
 					n->groupDistinct = ($10)->distinct;
 					n->havingClause = $11;
 					n->windowClause = $12;
-
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-
 					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}	
 			| SELECT opt_all_clause opt_target_list
@@ -1614,10 +1598,6 @@ simple_select:
 					n->groupDistinct = ($9)->distinct;
 					n->havingClause = $10;
 					n->windowClause = $11;
-
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-					
 					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
 				}
 			| SELECT distinct_clause target_list
@@ -1631,10 +1611,6 @@ simple_select:
 					n->groupDistinct = ($9)->distinct;
 					n->havingClause = $10;
 					n->windowClause = $11;
-
-					/* Handle UNPIVOT if present */
-					tsql_handle_unpivot_select(n);
-
 					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
 				}
 			| tsql_values_clause							{ $$ = $1; }

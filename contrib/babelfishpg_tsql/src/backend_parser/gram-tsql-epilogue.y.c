@@ -2190,90 +2190,18 @@ tsql_unpivot_debug_transformation(List *components)
 	/* Create result info list */
     result_info = list_make5(
         makeString("UNPIVOT"),
-        makeString(rarg->alias->aliasname),
-        makeString(dim_colname),
-        makeString(measure_colname),
-        makeString(source_alias)
+        makeString(rarg->alias->aliasname),	/* unpivot alias and its columns: */
+        makeString(dim_colname),			/* dimension column */
+        makeString(measure_colname),		/* measure column */
+        makeString(source_alias)			/* source table/query alias */
     );
     
     /* Append the transformed node */
 	elog(DEBUG1, "Final transformed node: %s", NameListToString(result_info));
 
-    //result_info = lappend(result_info, n);
+    result_info = lappend(result_info, n);
 
-    return (Node *) n;
-}
-
-static void
-tsql_handle_unpivot_select(SelectStmt *stmt)
-{
-    List *from_clause = stmt->fromClause;
-
-    if (from_clause != NULL && IsA(from_clause, List) && 
-        list_length(from_clause) > 0 && IsA(linitial(from_clause), List))
-    {
-        List *from_info = (List *)linitial(from_clause);
-        
-        /* Check if this is an UNPIVOT info list (should have 6 elements) */
-        if (list_length(from_info) == 6 && 
-            IsA(linitial(from_info), String) &&
-            strcmp(strVal(linitial(from_info)), "UNPIVOT") == 0)
-        {
-            char *unpivot_alias;
-            char *measure_col;
-            Node *transformed_node;
-
-            /* Extract information */
-            unpivot_alias = strVal(list_nth(from_info, 1));
-            measure_col = strVal(list_nth(from_info, 3));
-            transformed_node = list_nth(from_info, 5);
-
-            /* Add IS NOT NULL condition */
-            tsql_add_measure_not_null(stmt, unpivot_alias, measure_col);
-
-            /* Replace from_clause with transformed node */
-            stmt->fromClause = list_make1(transformed_node);
-        }
-    }
-}
-
-static void
-tsql_add_measure_not_null(SelectStmt *stmt, char *unpivot_alias, char *measure_col)
-{
-    NullTest *null_test;
-    ColumnRef *measure_ref;
-    Node *new_where_clause;
-
-    /* Create the measure column reference */
-    measure_ref = makeNode(ColumnRef);
- 	measure_ref->fields = list_make2(
-        makeString(unpivot_alias),
-        makeString(measure_col)
-    );    
-	measure_ref->location = -1;
-
-    /* Create IS NOT NULL test */
-    null_test = makeNode(NullTest);
-    null_test->arg = (Expr *)measure_ref;
-    null_test->nulltesttype = IS_NOT_NULL;
-    null_test->argisrow = false;
-    null_test->location = -1;
-
-    /* Create new where clause */
-    if (stmt->whereClause)
-    {
-        BoolExpr *bool_expr = makeNode(BoolExpr);
-        bool_expr->boolop = AND_EXPR;
-        bool_expr->args = list_make2(stmt->whereClause, null_test);
-        bool_expr->location = -1;
-        new_where_clause = (Node *)bool_expr;
-    }
-    else
-    {
-        new_where_clause = (Node *)null_test;
-    }
-
-    stmt->whereClause = new_where_clause;
+    return (Node *) result_info;
 }
 
 /* 
