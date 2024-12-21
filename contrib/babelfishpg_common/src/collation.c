@@ -1326,6 +1326,24 @@ has_ilike_node(Node *expr)
 	return false;
 }
 
+bool
+has_like_node(Node *expr)
+{
+	OpExpr	   *op;
+
+	Assert(IsA(expr, OpExpr));
+
+	op = (OpExpr *) expr;
+	for (int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
+	{
+		if (strcmp(get_opname(op->opno), like_ilike_table[i].like_op_name) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 Datum
 is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
@@ -1625,6 +1643,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
+		collation_callbacks_var.has_like_node = &has_like_node;
 		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
 		collation_callbacks_var.translate_tsql_collation_to_bbf_collation = &translate_tsql_collation_to_bbf_collation;
 		collation_callbacks_var.set_db_collation = &set_db_collation;

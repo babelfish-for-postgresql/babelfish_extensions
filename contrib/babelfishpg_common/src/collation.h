@@ -113,6 +113,8 @@ typedef struct collation_callbacks
 
 	bool		(*has_ilike_node) (Node *expr);
 
+	bool		(*has_like_node) (Node *expr);
+
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
 	const char *(*translate_tsql_collation_to_bbf_collation) (const char *collname);
@@ -147,6 +149,7 @@ extern const char *translate_bbf_collation_to_tsql_collation(const char *collnam
 extern const char *translate_tsql_collation_to_bbf_collation(const char *collname);
 Oid			get_oid_from_collidx(int collidx);
 extern bool has_ilike_node(Node *expr);
+extern bool has_like_node(Node *expr);
 extern Oid	babelfish_define_type_default_collation(Oid typeNamespace);
 extern void	set_db_collation(Oid db_coll);
 
