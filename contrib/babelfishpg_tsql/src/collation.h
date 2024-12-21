@@ -82,6 +82,8 @@ typedef struct collation_callbacks
 
 	bool		(*has_ilike_node) (Node *expr);
 
+	bool		(*has_like_node) (Node *expr);
+
 	const char *(*translate_bbf_collation_to_tsql_collation) (const char *collname);
 
 	const char *(*translate_tsql_collation_to_bbf_collation) (const char *collname);
