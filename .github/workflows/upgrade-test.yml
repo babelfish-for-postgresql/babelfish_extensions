@@ -16,7 +16,7 @@ jobs:
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
           UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), server_collation_name: itm['babelfishpg_tsql_server_collation_name'] ? itm['babelfishpg_tsql_server_collation_name'] : \"default\", title: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\") + (itm['babelfishpg_tsql_server_collation_name'] ? (\" with server-collation - \" + itm['babelfishpg_tsql_server_collation_name'] + \" \") : \"\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
-          echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
+          echo "upgrade-path-list=$UPGRADE_PATH_LIST" >> $GITHUB_OUTPUT
 
   run-version-upgrade-test:
     needs: generate-version-upgrade-tests
@@ -38,24 +38,24 @@ jobs:
         id: read-base-and-final-version
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
-          echo "::set-output name=base-version::$(
+          echo "base-version=$(
             yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
-          )" && 
-          echo "::set-output name=final-version::$(
+          )" >> $GITHUB_OUTPUT &&
+          echo "final-version=$(
             yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
-          )"
+          )" >> $GITHUB_OUTPUT
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
         if: always() && steps.read-base-and-final-version.outcome == 'success'
         run: >
-          echo "::set-output name=base-engine-branch::$(
+          echo "base-engine-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
-          echo "::set-output name=base-extension-branch::$(
+          )" >> $GITHUB_OUTPUT &&
+          echo "base-extension-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
-          echo "::set-output name=base-dir::$(echo psql$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
+          )" >> $GITHUB_OUTPUT &&
+          echo "base-dir=$(echo psql$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))" >> $GITHUB_OUTPUT
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
