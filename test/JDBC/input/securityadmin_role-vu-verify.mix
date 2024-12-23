@@ -5,6 +5,9 @@ go
 select is_srvrolemember('securityadmin', 'sysadmin')
 go
 
+select is_srvrolemember('securityadmin','securityadmin')
+go
+
 alter login securityadmin_login1 with password='123'
 go
 
