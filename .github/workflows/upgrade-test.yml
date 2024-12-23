@@ -54,7 +54,7 @@ jobs:
           )" >> $GITHUB_OUTPUT &&
           echo "base-extension-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
+          )" >> $GITHUB_OUTPUT &&
           echo "base-dir=$(echo postgres$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))" >> $GITHUB_OUTPUT
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
