@@ -5892,7 +5892,7 @@ remove_db_name_in_schema(const char *object_name)
 	mutable_name = pstrdup(object_name);
 	splited_object_name = split_object_name(mutable_name);
 
-	// If there are more than two parts, then it’s a cross-db object name (db.schema.object) so we don’t need to deal with it
+	/* If there are more than two parts, then it’s a cross-db object name (db.schema.object) so we don’t need to deal with it */
 	if (strlen(splited_object_name[1]) == 0)
 	{
 		schema_name = strlen(splited_object_name[2]) == 0 ? splited_object_name[3] : splited_object_name[2];
@@ -5902,7 +5902,7 @@ remove_db_name_in_schema(const char *object_name)
 		prefix_len = db_name_len + 1;
 
 		if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
-			// Return the part after the prefix
+			/* Return the part after the prefix */
 			object_name += prefix_len;
 		}	
 		pfree(cur_db_name);
