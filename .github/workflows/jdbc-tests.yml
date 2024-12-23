@@ -39,7 +39,7 @@ jobs:
         timeout-minutes: 60
         run: |
           cd test/JDBC/
-          mvn test
+          mvn -B -ntp test
 
       - name: Cleanup babelfish database
         id: cleanup
