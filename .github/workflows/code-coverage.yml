@@ -147,7 +147,7 @@ jobs:
 
       - name: Download CSV report from previous run
         if: (github.event_name == 'schedule')
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           name: csv_${{github.ref_name}}
           path: contrib/

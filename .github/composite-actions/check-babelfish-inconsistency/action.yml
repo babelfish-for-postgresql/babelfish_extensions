@@ -12,7 +12,7 @@ runs:
         FROM pg_proc
         WHERE proname = 'check_for_inconsistent_metadata';" | grep -o 'exists\|not_exists')
 
-        echo "::set-output name=function_exists::$function_exists"
+        echo "function_exists=$function_exists" >> $GITHUB_OUTPUT
         echo "Check Babelfish metadata inconsistency function exists: $function_exists"
         
         # If the function exists, run the metadata inconsistency check
