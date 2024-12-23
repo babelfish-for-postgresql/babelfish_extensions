@@ -1,8 +1,8 @@
-CREATE TABLE myschema.t(a int)
+CREATE TABLE schema_2961.t(a int)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "myschema" does not exist)~~
+~~ERROR (Message: schema "schema_2961" does not exist)~~
 
 
 EXEC dbo.myproc
@@ -68,11 +68,11 @@ GO
 USE TestDB2961
 GO
 
-CREATE TABLE myschema.t(a int)
+CREATE TABLE schema_2961.t(a int)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "myschema" does not exist)~~
+~~ERROR (Message: schema "schema_2961" does not exist)~~
 
 
 EXEC dbo.myproc

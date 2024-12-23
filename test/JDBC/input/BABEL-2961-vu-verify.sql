@@ -1,4 +1,4 @@
-CREATE TABLE myschema.t(a int)
+CREATE TABLE schema_2961.t(a int)
 GO
 
 EXEC dbo.myproc
@@ -34,7 +34,7 @@ GO
 USE TestDB2961
 GO
 
-CREATE TABLE myschema.t(a int)
+CREATE TABLE schema_2961.t(a int)
 GO
 
 EXEC dbo.myproc
