@@ -5886,7 +5886,7 @@ remove_db_name_in_schema(const char *object_name)
 	char		*schema_name = NULL;
 	char		*mutable_name;
     size_t		db_name_len;
-    size_t		prefix_len;
+    size_t		prefix_len = 0;
 	size_t		schema_name_len;
 
 	mutable_name = pstrdup(object_name);
@@ -5899,12 +5899,11 @@ remove_db_name_in_schema(const char *object_name)
 		cur_db_name = get_cur_db_name();
 		db_name_len = strlen(cur_db_name);
 		schema_name_len = strlen(schema_name);
-		prefix_len = db_name_len + 1;
 
 		if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 			/* Return the part after the prefix */
-			object_name += prefix_len;
-		}	
+			prefix_len = db_name_len + 1;
+		} 
 		pfree(cur_db_name);
 	} 
 	
@@ -5913,5 +5912,5 @@ remove_db_name_in_schema(const char *object_name)
         pfree(splited_object_name[k]);
 	pfree(splited_object_name);
 
-	return object_name;
+	return (const char *)pstrdup(object_name + prefix_len);
 }
