@@ -2015,7 +2015,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			precision = 0,
 			scale = 0,
 			integralDigitCount = 0,
-			result_typmod = -1;
+			numeric_result_typmod = -1;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
@@ -2031,10 +2031,11 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			 !((common_type == NUMERICOID)))
 		return -1;
 
-	/* If resulting type is a length, need to be max of length types,
+	/* 
+	 * If resulting type is a length, need to be max of length types,
 	 * If the type is numeric or decimal then we calculate scale as 
 	 * max(s1, s2) and precision as max(s1, s2) + max(p1 - s1, p2 - s2)
-	 * where s1, s2 are the scale of branches and p1, p2 are the precision.
+	 * where s1, s2 are the scale of branches b1 & b2 and p1, p2 are the precision.
 	 */
 	foreach(lc, exprs)
 	{
@@ -2047,19 +2048,14 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		if (common_type == NUMERICOID ||
 			getBaseType(common_type) == NUMERICOID)
 		{
-			/* If Udt then calculate typmod.*/
+			/* If UDT then calculate typmod.*/
 			if (OidIsValid(immediate_base_type))
-			{
 				type = getBaseTypeAndTypmod(type, &typmod);
-			}
 			
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
-			{
-				Plan* temp = NULL;
-				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(temp, expr);
-			}
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
 			
-			if(typmod == -1)
+			if (typmod == -1)
 				continue;
 			
 			scale = (typmod - VARHDRSZ) & 0xffff;
@@ -2068,15 +2064,15 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			max_scale = Max(max_scale, scale);
 			max_precision = integralDigitCount + max_scale;
 			/*
-		 	* If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
-		 	* to TDS_MAX_NUM_PRECISION at the cost of scale.
-		 	*/
+		 	 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 	 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 	 */
 			if (max_precision > TDS_MAX_NUM_PRECISION)
 			{
 				max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
 				max_precision = TDS_MAX_NUM_PRECISION;
 			}
-			result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+			numeric_result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
 		}
 		else
 		{
@@ -2121,7 +2117,8 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			if (is_tsql_str_const(expr))
 				typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
-			/* This conditon is for the datatype with MAX typmod.
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
 			 * -1 will only be returned if common_type is a datatype
 			 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
 			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
@@ -2145,11 +2142,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	}
 
 	if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
-	{
-		if (result_typmod == -1)
-			return -1;
-		return result_typmod;
-	}
+		return numeric_result_typmod;
 		
 	return max_typmods;
 

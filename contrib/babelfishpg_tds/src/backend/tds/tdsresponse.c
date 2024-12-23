@@ -69,6 +69,8 @@
 #define NUMERIC_MOD_OID2 1729
 #define NUMERIC_UPLUS_OID 1915
 #define NUMERIC_UMINUS_OID 1771
+
+/* These OIDs for numeric type casts and conversions used in is_numeric_cast */
 #define INT4_NUMERIC 1740
 #define INT8_NUMERIC 1781
 #define INT2_NUMERIC 1782
@@ -143,6 +145,12 @@ static Oid sys_vector_oid = InvalidOid;
 static Oid sys_sparsevec_oid = InvalidOid;
 static Oid sys_halfvec_oid = InvalidOid;
 static Oid decimal_oid = InvalidOid;
+static Oid tsql_fixeddecimal_numeric_oid = InvalidOid;
+static Oid tsql_numeric_fixeddecimal_oid = InvalidOid;
+static Oid tsql_bit_numeric_oid = InvalidOid;
+static Oid tsql_int4_bit_oid = InvalidOid;
+static Oid tsql_trunc_numeric_to_int2_oid = InvalidOid;
+static Oid tsql_trunc_numeric_to_int8_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -151,6 +159,12 @@ static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
+static bool is_tsql_fixeddecimal_numeric(Oid oid);
+static bool is_tsql_numeric_fixeddecimal(Oid oid);
+static bool is_tsql_bit_numeric(Oid oid);
+static bool is_tsql_int4_bit(Oid oid);
+static bool is_tsql_trunc_numeric_to_int2(Oid oid);
+static bool is_tsql_trunc_numeric_to_int8(Oid oid);
 
 static inline void
 SendPendingDone(bool more)
@@ -527,24 +541,87 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 }
 
-static bool
-is_convertable_to_numeric(Oid func_oid)
+static bool is_tsql_bit_numeric(Oid oid)
 {
-	HeapTuple	procTup;
-	Datum		prosrcdatum;
-	char	   *proc_source;
-	bool		isnull;
+	if (tsql_bit_numeric_oid == InvalidOid)
+	{
+		Oid			nspoid;
+		Oid			typoid;
+		Oid 		funcargtypes[1];
 
-	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_oid));
-	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "cache lookup failed for function %u", func_oid);
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return InvalidOid;
 
-	prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
-								  Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
-	proc_source = DatumGetCString(prosrcdatum);
+		typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("bit"), ObjectIdGetDatum(nspoid));
 
+		funcargtypes[0] = typoid;
+		tsql_bit_numeric_oid = LookupFuncName(list_make2(makeString("sys"), makeString("bit2numeric")), 1, funcargtypes, true);
+	}
+	return tsql_bit_numeric_oid == oid;
+}
+
+static bool is_tsql_fixeddecimal_numeric(Oid oid)
+{
+	if (tsql_fixeddecimal_numeric_oid == InvalidOid)
+	{
+		Oid			nspoid;
+		Oid			typoid;
+		Oid 		funcargtypes[1];
+
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return InvalidOid;
+
+		typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("fixeddecimal"), ObjectIdGetDatum(nspoid));
+
+		funcargtypes[0] = typoid;
+		tsql_fixeddecimal_numeric_oid = LookupFuncName(list_make2(makeString("sys"), makeString("fixeddecimal_numeric")), 1, funcargtypes, true);
+	}
+	return tsql_fixeddecimal_numeric_oid == oid;
+}
+
+static bool is_tsql_numeric_fixeddecimal(Oid oid)
+{
+	Oid funcargtypes[1] = {NUMERICOID};
+	if (tsql_numeric_fixeddecimal_oid == InvalidOid)
+		tsql_numeric_fixeddecimal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("numeric_fixeddecimal")), -1, funcargtypes, true);
+	return tsql_numeric_fixeddecimal_oid == oid;
+}
+
+static bool is_tsql_int4_bit(Oid oid)
+{
+	Oid funcargtypes[1] = {INT4OID};
+	if (tsql_int4_bit_oid == InvalidOid)
+		tsql_int4_bit_oid = LookupFuncName(list_make2(makeString("sys"), makeString("int4bit")), -1, funcargtypes, true);
+	return tsql_int4_bit_oid == oid;
+}
+
+static bool is_tsql_trunc_numeric_to_int2(Oid oid)
+{
+	Oid funcargtypes[1] = {NUMERICOID};
+	if (tsql_trunc_numeric_to_int2_oid == InvalidOid)
+		tsql_trunc_numeric_to_int2_oid = LookupFuncName(list_make2(makeString("sys"), makeString("_trunc_numeric_to_int2")), -1, funcargtypes, true);
+	return tsql_trunc_numeric_to_int2_oid == oid;
+}
+
+static bool is_tsql_trunc_numeric_to_int8(Oid oid)
+{
+	Oid funcargtypes[1] = {NUMERICOID};
+	if (tsql_trunc_numeric_to_int8_oid == InvalidOid)
+		tsql_trunc_numeric_to_int8_oid = LookupFuncName(list_make2(makeString("sys"), makeString("_trunc_numeric_to_int8")), -1, funcargtypes, true);
+	return tsql_trunc_numeric_to_int8_oid == oid;
+}
+
+/*
+ * is_numeric_cast checks if the given datatype can be cast to NUMERIC.
+ * This information is used when processing T_FuncExpr nodes to determine
+ * if resolve_numeric_typmod_from_exp should be called recursively.
+ * This ensures proper typmod resolution for nested numeric conversions.
+ */
+bool
+is_numeric_cast(Oid func_oid)
+{
 	if (func_oid == INT4_NUMERIC ||
 		func_oid == INT8_NUMERIC ||
 		func_oid == INT2_NUMERIC ||
@@ -556,11 +633,16 @@ is_convertable_to_numeric(Oid func_oid)
 		func_oid == INT82 ||
 		func_oid == I2TOI4 ||
 		func_oid == I4TOI2 ||
-		strncmp(proc_source, "fixeddecimal_numeric", 20) ||
-		strncmp(proc_source, "numeric_fixeddecimal", 20))
+		is_tsql_bit_numeric(func_oid) ||
+		is_tsql_int4_bit(func_oid) ||
+		is_tsql_fixeddecimal_numeric(func_oid) ||
+		is_tsql_numeric_fixeddecimal(func_oid) ||
+		is_tsql_trunc_numeric_to_int2(func_oid) ||
+		is_tsql_trunc_numeric_to_int8(func_oid))
 		return true;
 	return false;
 }
+
 /*
  * is_numeric_datatype - returns bool if given datatype is numeric or decimal.
  */
@@ -614,6 +696,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				}
 				else
 				{
+					/*
+					 * This function calculates the typmod for INT4
+					 * constants when called from the babelfishpg_tsql 
+					 * extension (referred to as non-plan context). It 
+					 * converts the INT4 value to NUMERIC and then determines 
+					 * the appropriate typmod. This process ensures correct 
+					 * numeric precision handling in Babelfish TSQL operations.
+					 */
 					if (!plan && con->consttype == INT4OID)
 					{
 						val = con->constvalue;
@@ -845,8 +935,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				 */
 				if (!plan &&
 					rettypmod == -1 &&
-					is_convertable_to_numeric(func_oid) &&
-					list_length(func->args) == 1)
+					list_length(func->args) == 1 &&
+					is_numeric_cast(func_oid))
 				{
 					arg = linitial(func->args);
 					return resolve_numeric_typmod_from_exp(plan, arg);
@@ -1024,6 +1114,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			}
 		case T_CoerceToDomain:
 			{
+				/* Copied from exprTypmod. */
 				CoerceToDomain *rlt = (CoerceToDomain *) expr;
 
 				if (rlt->resulttypmod != -1)
@@ -1033,6 +1124,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			}
 		case T_SubLink:
 			{
+				/* Copied from exprTypmod. */
 				const SubLink *sublink = (const SubLink *) expr;
 
 				if (sublink->subLinkType == EXPR_SUBLINK ||
