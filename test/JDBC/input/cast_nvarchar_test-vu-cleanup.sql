@@ -22,4 +22,11 @@ DROP PROCEDURE IF EXISTS dbo.PrintHashResults;
 GO
 DROP VIEW IF EXISTS dbo.HashDemoView;
 GO
+drop view if exists hasheddataview;
+GO
+drop view if exists hasheddataview1;
+GO
+drop table IF EXISTS hashbytes_table;
+GO
+
 

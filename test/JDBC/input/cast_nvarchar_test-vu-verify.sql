@@ -127,15 +127,65 @@ GO
 select cast(N'test string' as user_defined_varbinary)
 GO
 
--- Test Case 19: User defined hashbytes function
-create function dbo.hashbytes(@data sys.varchar)returns sys.varchar AS BEGIN    return "dummy hashbytes";END
+--Test 19: Hashbytes testing for user defined hashbytes
+
+CREATE FUNCTION dbo.hashbytes
+(
+    @algorithm VARCHAR(50),
+    @input NVARCHAR(MAX)
+)
+RETURNS VARCHAR(8000)
+AS
+BEGIN
+    RETURN cast('hello' as varchar);
+END
 GO
-SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
+
+-- Create a table for sample data
+CREATE TABLE hashbytes_table
+(
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Data NVARCHAR(100)
+);
 GO
-select hashbytes('abc')
+
+INSERT INTO hashbytes_table (Data)
+VALUES (N'Test1'), (N'Test2'), (N'Test3'), (N'Test4'), (N'Test5');
 GO
-drop function dbo.hashbytes
+
+-- Create a view
+CREATE VIEW dbo.HashedDataView
+AS
+SELECT 
+    ID,
+    Data,
+    hashbytes('SHA2_256', Data) AS HashedData
+FROM hashbytes_table;
 GO
+SELECT * FROM dbo.HashedDataView;
+GO
+-- Create a view
+CREATE VIEW dbo.HashedDataView1
+AS
+SELECT 
+    ID,
+    Data,
+    dbo.hashbytes('SHA2_256', Data) AS HashedData
+FROM hashbytes_table;
+GO
+
+SELECT * FROM dbo.HashedDataView1;
+GO
+drop view if exists hasheddataview;
+GO
+drop view if exists hasheddataview1;
+GO
+drop function dbo.hashbytes(
+    @algorithm VARCHAR(50),
+    @input NVARCHAR(MAX)
+);
+go
+
 
 -- Test 20: Calling the function, procedure, views from prepare scripts
 
@@ -221,3 +271,9 @@ GO
 
 select cast(0x0006161 as nvarchar)
 GO
+-- TEST CASE: HAshbytes test with char, nchar
+select hashbytes('sha1',cast('abc' as char))
+go
+select hashbytes('sha1',cast(N'abc' as binary))
+go
+
