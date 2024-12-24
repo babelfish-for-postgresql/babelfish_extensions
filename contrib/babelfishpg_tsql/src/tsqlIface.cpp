@@ -1857,6 +1857,7 @@ public:
             graft(makeSQL(ctx), peekContainer());
         }
 
+		is_cross_db = false;
 		// prepare rewriting
 		clear_rewritten_query_fragment();
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
@@ -1917,7 +1918,10 @@ public:
 
 		// record whether stmt is cross-db
 		if (is_cross_db)
+		{
 			stmt->is_cross_db = true;
+			is_cross_db = false;
+		}
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
 		// record if a function call
