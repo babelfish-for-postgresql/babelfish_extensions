@@ -1,11 +1,11 @@
 name: Minor Version Upgrade Tests for empty database
-on: []
+on: [push, pull_request]
 
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_4_0_STABLE__PG_16_1
-      EXTENSION_VER_FROM: BABEL_4_0_STABLE
+      ENGINE_VER_FROM: BABEL_5_0_STABLE__PG_17_2
+      EXTENSION_VER_FROM: BABEL_5_0_STABLE
       INSTALL_DIR: psql
 
     name: Build and test
@@ -29,8 +29,6 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres-older.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
-        with:
-          version: 4.9.3
 
       - uses: actions/checkout@v2
         with:
@@ -117,11 +115,6 @@ jobs:
         id: build-modified-postgres-newer
         if: always() && steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-      
-      - name: Compile new ANTLR
-        id: compile-new-antlr
-        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
 
       - name: Set env variables and build extensions
         id: build-extensions-newer
