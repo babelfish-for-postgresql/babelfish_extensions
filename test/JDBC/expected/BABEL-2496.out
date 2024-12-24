@@ -8,7 +8,7 @@ drop schema non_exist_schema;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_non_exist_schema" does not exist)~~
+~~ERROR (Message: schema "non_exist_schema" does not exist)~~
 
 
 
@@ -20,7 +20,7 @@ drop schema s2496;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_s2496" does not exist)~~
+~~ERROR (Message: schema "s2496" does not exist)~~
 
 
 drop schema if exists s2496;
@@ -30,5 +30,5 @@ drop schema s2496;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_s2496" does not exist)~~
+~~ERROR (Message: schema "s2496" does not exist)~~
 

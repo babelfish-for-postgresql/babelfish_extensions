@@ -103,7 +103,7 @@ CREATE TABLE [Dummy].[Babel4433Table5](
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_dummy" does not exist)~~
+~~ERROR (Message: schema "dummy" does not exist)~~
 
 
 
