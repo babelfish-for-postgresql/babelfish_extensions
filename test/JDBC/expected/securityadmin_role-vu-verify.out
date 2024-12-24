@@ -15,6 +15,14 @@ int
 ~~END~~
 
 
+select is_srvrolemember('securityadmin','securityadmin')
+go
+~~START~~
+int
+0
+~~END~~
+
+
 alter login securityadmin_login1 with password='123'
 go
 

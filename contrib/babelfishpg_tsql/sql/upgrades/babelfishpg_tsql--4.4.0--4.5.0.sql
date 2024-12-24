@@ -1736,6 +1736,9 @@ BEGIN
     
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
+
+    ELSEIF role = login THEN
+		RETURN 0;
 	
  	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
 	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
