@@ -270,6 +270,7 @@ GO
 
 
 
+
 INSERT INTO babelfish_migration_mode_catalog_status2 
 SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
 GO
