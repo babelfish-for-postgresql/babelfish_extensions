@@ -1403,15 +1403,11 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	/* multiple suitable candidates with same return type should not exist in sys schema.  */
 	else if (ncandidates > 1)
 	{
-		if(OidIsValid(expr_result_type))
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
 
-		else if(OidIsValid(expr_arg_type))
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("multiple definitions of function %s.%s with second arg type %s found.", proc_nsname, proc_name, format_type_be(expr_arg_type))));
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+
 	}
 
 	if (best_candidate != NULL)
