@@ -591,6 +591,5 @@ datareader_datawriter
 dbcreator_role
 db_securityadmin
 db_ddladmin
-cast_nvarchar_test
 smalldatetime_date_cmp
 db_owner
