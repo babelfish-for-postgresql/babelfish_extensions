@@ -213,7 +213,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
-static const char *remove_db_name_in_schema(const char *schema_name);
+static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -5875,11 +5875,12 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
  * remove_db_name_in_schema - remove the db name and underscore at the beginning
  * 	of the given string. It is used to unmap schema name in error messages.
  *
- * 	@param schema_name - char *
+ * 	@param object_name - char *
+ *  @param object_type - char *, can be 'sch' or 'func'
  * 	@return - unmapped schema name char *
  */
 static const char *
-remove_db_name_in_schema(const char *object_name)
+remove_db_name_in_schema(const char *object_name, const char *object_type)
 {
 	char		*cur_db_name;
 	char		**splited_object_name;
@@ -5892,15 +5893,24 @@ remove_db_name_in_schema(const char *object_name)
 	mutable_name = pstrdup(object_name);
 	splited_object_name = split_object_name(mutable_name);
 
-	/* If there are more than two parts, then it’s a cross-db object name (db.schema.object) so we don’t need to deal with it */
-	if (strlen(splited_object_name[1]) == 0)
+	if (strcmp(object_type, "sch") == 0) {
+		/* If input is 'sch_name' format, consider when there is only one part in splited_object_name */
+		/* If there are two parts or more, then it’s a cross-db object name (db.sch_name) so we don’t need to deal with it */
+		if (strlen(splited_object_name[2]) == 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[3];
+	} else if (strcmp(object_type, "func") == 0) {
+		/* If input is 'func_name' format, consider when there is two parts in splited_object_name, like db1_sch.db1_func */
+		if (strlen(splited_object_name[2]) > 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[2];
+	}
+
+	if (schema_name)
 	{
-		schema_name = strlen(splited_object_name[2]) == 0 ? splited_object_name[3] : splited_object_name[2];
 		cur_db_name = get_cur_db_name();
 		db_name_len = strlen(cur_db_name);
 		schema_name_len = strlen(schema_name);
 
-		if (schema_name != NULL && schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+		if (schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
 			/* Return the part after the prefix */
 			prefix_len = db_name_len + 1;
 		} 
