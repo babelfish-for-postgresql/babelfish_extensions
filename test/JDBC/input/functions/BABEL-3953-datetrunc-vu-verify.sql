@@ -168,6 +168,9 @@ Select * from dtrunc
 Select datetrunc(second, a) from dtrunc
 GO
 
+DROP TABLE IF EXISTS dtrunc
+GO
+
 SET DATEFIRST 1
 SELECT DATETRUNC(ISO_WEEK, CAST('2020-09-13 21:32:32.23' as datetime2)) 
 SELECT DATETRUNC(WEEK, CAST('2020-09-13 21:32:32.23' as datetime2))

@@ -254,3 +254,5 @@ drop table computed_column_t1;
 GO
 drop table computed_column_t2;
 GO
+drop table computed_column_error;
+GO
