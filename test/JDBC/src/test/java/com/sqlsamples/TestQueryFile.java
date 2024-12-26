@@ -276,6 +276,7 @@ public class TestQueryFile {
         if (connection_bbl == null)
             return;
         try{
+            System.out.println(" EXECUTING sys.sp_reset_connection AFTER EACH FILE.");
             connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
         }
         catch (Exception e) {
