@@ -10,8 +10,6 @@
 
 all
 
-ignore#!#BABEL-1435
-ignore#!#BABEL-1446
 ignore#!#BABEL-4279
 ignore#!#babelfish_migration_mode-vu-prepare
 ignore#!#babelfish_migration_mode-vu-verify
