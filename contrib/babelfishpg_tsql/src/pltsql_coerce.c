@@ -1143,18 +1143,19 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, bool nu
 static FuncCandidateList
 tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
-	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_result_type, expr_arg_type;
-	char					   *proc_nsname;
-	char					   *proc_name;
-	bool						is_func_validated;
-	int							ncandidates;
-	Oid							rettype;
-	Oid							sys_oid = get_namespace_oid("sys", false);
-	Oid						   *new_input_typeids;
-	Oid						   *argtypes;
-	int						    nargs_func;
-	Oid							second_arg_type = InvalidOid;
+	FuncCandidateList	current_candidate, best_candidate;
+	Oid 			expr_result_type;
+	char			*proc_nsname;
+	char			*proc_name;
+	bool			is_func_validated;
+	int			ncandidates;
+	Oid			rettype;
+	Oid			sys_oid = get_namespace_oid("sys", false);
+	Oid			*new_input_typeids;
+	Oid			*argtypes;
+	int			nargs_func;
+	Oid			second_arg_type = InvalidOid;
+        Oid                     expr_arg_type;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
@@ -1404,11 +1405,9 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	/* multiple suitable candidates with same return type should not exist in sys schema.  */
 	else if (ncandidates > 1)
 	{
-
 		ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
-
 	}
 
 	if (best_candidate != NULL)
