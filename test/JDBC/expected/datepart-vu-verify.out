@@ -69,7 +69,7 @@ GO
 tinyint
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
+~~ERROR (Message: function dbo.isoweek("varchar") does not exist)~~
 
 
 EXECUTE date_part_vu_prepare_proc '07-18-2022'

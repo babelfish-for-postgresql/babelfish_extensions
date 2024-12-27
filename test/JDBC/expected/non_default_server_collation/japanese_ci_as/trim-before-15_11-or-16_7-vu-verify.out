@@ -1276,7 +1276,7 @@ SELECT TRIM(b FROM a) FROM dbo.babel_4489_trim_psql_t15
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_dbo.babel_4489_trim_psql_t15" does not exist)~~
+~~ERROR (Message: relation "dbo.babel_4489_trim_psql_t15" does not exist)~~
 
 
 -- other different datatypes

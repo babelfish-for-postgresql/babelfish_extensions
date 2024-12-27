@@ -555,7 +555,7 @@ SELECT dbo.WOSQL_BuildRevenueDetailOLUQuery()
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function master_dbo.wosql_buildrevenuedetailoluquery() does not exist)~~
+~~ERROR (Message: function dbo.wosql_buildrevenuedetailoluquery() does not exist)~~
 
 
 SET BABELFISH_SHOWPLAN_ALL OFF;

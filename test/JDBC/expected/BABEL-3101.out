@@ -63,7 +63,7 @@ GO
 tinyint
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
+~~ERROR (Message: function dbo.isoweek("varchar") does not exist)~~
 
 
 CREATE FUNCTION table_3101_2()

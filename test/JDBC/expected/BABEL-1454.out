@@ -208,7 +208,7 @@ GRANT ALL ON db1.dummy_schema TO PUBLIC;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_db1" does not exist)~~
+~~ERROR (Message: schema "db1" does not exist)~~
 
 
 GRANT ALL ON babel1454.dummy_type TO PUBLIC;
@@ -247,7 +247,7 @@ DROP SCHEMA dummy_schema;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy_schema" does not exist)~~
+~~ERROR (Message: schema "dummy_schema" does not exist)~~
 
 
 -- Trigger
@@ -376,14 +376,14 @@ EXEC dummy.foo
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy" does not exist)~~
+~~ERROR (Message: schema "dummy" does not exist)~~
 
 
 EXEC db1.dummy.foo
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy" does not exist)~~
+~~ERROR (Message: schema "dummy" does not exist)~~
 
 
 --- Cleanup
