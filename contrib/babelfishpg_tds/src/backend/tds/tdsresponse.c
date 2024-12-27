@@ -441,8 +441,8 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		Plan 		*outerplan = (Plan *) lfirst(lc);
 
 		/* if outerplan is SubqueryScan then use actual subplan */
-		// if (IsA(outerplan, SubqueryScan))
-		// 	outerplan = ((SubqueryScan *)outerplan)->subplan;
+		if (IsA(outerplan, SubqueryScan))
+			outerplan = ((SubqueryScan *)outerplan)->subplan;
 
 		tle = get_tle_by_resno(outerplan->targetlist, attno);
 		if (IsA(tle->expr, Var))

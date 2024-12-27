@@ -34,9 +34,35 @@ GO
 INSERT INTO ExchangeRate2 (ToCurrencyCode, ExchangeRate, Hello) VALUES ('EUR', 0.12, 1.12345678), ('GBP', 23.87, 2.12345678), ('JPY', 110.50, 3.12345678), ('CAD', 1.25, 4.12345678), ('USD', 1.00 , 5.12345678);
 GO
 
+-- formatted 
+SELECT 
+    cr1 AS description,
+    ex + Hello AS sum_num
+FROM (
+    SELECT 
+        ExchangeRate AS ex,
+        CurrencyName AS cr1,
+        CurrencyName,
+        Hello
+    FROM currency2
+    INNER JOIN ExchangeRate2
+        ON ToCurrencyCode = CurrencyCode
+
+    UNION ALL
+
+    SELECT
+        1 AS aw,
+        CurrencyName AS cr,
+        CurrencyName,
+        curr_num AS aw1
+    FROM currency2
+) a;
+GO
+
 -- should  notb work withoit my changes
--- SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
--- GO
+SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+GO
+
 
 -- 1.1 THIS QUERY DOES WORK when union with decimal, so not an issue of position? - 5,2 and 9,8 , went to NUMERIC_SUB_OID, final 12,8
 SELECT cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
@@ -224,3 +250,81 @@ DROP TABLE Exchange;
 GO
 DROP TYPE TestUDT;
 GO
+
+
+CREATE TABLE testdecimal_vu_prepare_tab21 (id INT IDENTITY(1,1) PRIMARY KEY,in4 DECIMAL(10,2),in5 DECIMAL(10,2));
+
+CREATE TABLE tab2 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(10,2));
+
+INSERT INTO testdecimal_vu_prepare_tab21 (in4, in5) VALUES (10.50, 2.00), (25.75, 4.00), (100.00, 0.50), (7.25, 3.00), (50.00, 1.50);
+go
+
+INSERT INTO tab2 (a) VALUES (30.00), (45.50), (75.25), (12.75), (60.00);
+
+select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab2 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab21)
+go
+
+-- getting 
+-- result2                                  a           
+-- ---------------------------------------- ------------
+--                              25.00000000        10.50
+--                              59.50000000        25.75
+--                             201.00000000       100.00
+--                              20.50000000         7.25
+--                             103.00000000        50.00
+--                              60.00000000        30.00
+--                              91.00000000        45.50
+--                             150.50000000        75.25
+--                              25.50000000        12.75
+--                             120.00000000        60.00
+
+-- expected 
+-- result2        a           
+-- -------------- ------------
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+
+-- with my change and without parallel query 
+-- result2        a           
+-- -------------- ------------
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+
+-- with return -> with my changes 9n parallel 
+-- 2> go
+-- result2        a           
+-- -------------- ------------
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+
+
+CREATE TABLE testdecimal_vu_prepare_tab2 (id INT IDENTITY(1,1) PRIMARY KEY, in4 DECIMAL(20,6), in5 DECIMAL(20,6));
+CREATE TABLE tab2 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(20,6));
+INSERT INTO testdecimal_vu_prepare_tab2 (in4, in5) VALUES (99999999999999.111111, 11111111111111.999999);
+INSERT INTO tab2 (a) VALUES (99999999999999.111111);
+-- correct 
+select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab2 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab2)
