@@ -56,25 +56,24 @@ static Datum return_varchar_pointer(char *buf, int size);
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
-	Oid	input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
-    const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-    bytea	   *in = PG_GETARG_BYTEA_PP(1);
-    size_t		len = VARSIZE_ANY_EXHDR(in);
-	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
-    bytea	   *result;
-    StringInfoData	utf16_data;
+        Oid	        input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
+        const char      *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+        bytea	        *in = PG_GETARG_BYTEA_PP(1);
+        size_t		len = VARSIZE_ANY_EXHDR(in);
+        const uint8     *data = (unsigned char *) VARDATA_ANY(in);
+        bytea	        *result;
+        StringInfoData	utf16_data;
 
-
-    /*
-     * If the input_type is nvarchar then we convert it to UTF-16 encoding
-     */
+        /*
+         * If the input_type is nvarchar then we convert it to UTF-16 encoding
+         */
 	initStringInfo(&utf16_data);
-    if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
-    {
-        (common_utility_plugin_ptr->TsqlUTF8toUTF16StringInfo)(&utf16_data, data, len);
-        len = utf16_data.len;
-		data = (const uint8 *)utf16_data.data;
-    }
+        if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
+        {
+                (common_utility_plugin_ptr->TsqlUTF8toUTF16StringInfo)(&utf16_data, data, len);
+                len = utf16_data.len;
+        	data = (const uint8 *)utf16_data.data;
+        }
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
