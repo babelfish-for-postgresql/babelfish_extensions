@@ -52,7 +52,6 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
-
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -2043,7 +2042,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		int32 typmod = exprTypmod(expr);
 		Oid   type = exprType(expr);
 		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
-		
 
 		if (common_type == NUMERICOID ||
 			getBaseType(common_type) == NUMERICOID)
@@ -2138,15 +2136,12 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			else
 				max_typmods = Max(max_typmods, typmod);
 		}
-		
 	}
 
 	if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
 		return numeric_result_typmod;
 		
 	return max_typmods;
-
-	
 }
 
 /* 

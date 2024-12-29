@@ -207,7 +207,6 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_reset_tds_connection_flag = &GetResetTDSConnectionFlag;
 	pltsql_plugin_handler_ptr->get_numeric_typmod_from_exp = &resolve_numeric_typmod_from_exp;
 
-
 	invalidate_stat_table_hook = invalidate_stat_table;
 	guc_newval_hook = TdsSetGucStatVariable;
 
