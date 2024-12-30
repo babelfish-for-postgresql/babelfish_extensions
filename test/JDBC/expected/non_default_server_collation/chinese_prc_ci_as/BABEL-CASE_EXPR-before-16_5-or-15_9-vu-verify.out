@@ -14551,7 +14551,7 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v1#!#RESULT#!#numeric#!#10#!#2
+babel_5341_v1#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
 
@@ -14571,7 +14571,7 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v2#!#RESULT#!#numeric#!#14#!#4
+babel_5341_v2#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
 
@@ -14591,7 +14591,7 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v3#!#RESULT#!#numeric#!#20#!#0
+babel_5341_v3#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
 
@@ -14611,7 +14611,7 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v4#!#RESULT#!#numeric#!#10#!#4
+babel_5341_v4#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
 
@@ -14631,7 +14631,7 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v5#!#RESULT#!#numeric#!#10#!#2
+babel_5341_v5#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
 
@@ -14651,6 +14651,6 @@ WHERE
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
-babel_5341_v6#!#RESULT#!#numeric#!#10#!#2
+babel_5341_v6#!#RESULT#!#numeric#!#38#!#38
 ~~END~~
 
