@@ -13,4 +13,3 @@ ignore#!#db_owner-vu-verify
 ignore#!#db_owner-vu-cleanup
 ignore#!#test_search_path
 
-
