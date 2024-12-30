@@ -8299,3 +8299,94 @@ ratio_case_two = CASE WHEN 1 = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL,
 ratio_case_three = CASE WHEN @test_int = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END
 FROM BABEL_5341_T2 a;
 GO
+
+-- Test Case 93: to get scale and precision of views from system metadata
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V1'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V2'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V3'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V4'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V5'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V6'
+    AND c.[name] = 'RESULT';
+GO

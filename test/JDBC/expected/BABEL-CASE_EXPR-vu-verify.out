@@ -14533,3 +14533,124 @@ int#!#int#!#numeric#!#numeric#!#numeric#!#numeric
 1#!#3#!#0.3333333333333333333#!#0.3333333333333333333#!#0.3333333333333333333#!#0.3333333333333333333
 ~~END~~
 
+
+-- Test Case 93: to get scale and precision of views from system metadata
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V1'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v1#!#RESULT#!#numeric#!#10#!#2
+~~END~~
+
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V2'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v2#!#RESULT#!#numeric#!#14#!#4
+~~END~~
+
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V3'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v3#!#RESULT#!#numeric#!#20#!#0
+~~END~~
+
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V4'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v4#!#RESULT#!#numeric#!#10#!#4
+~~END~~
+
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V5'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v5#!#RESULT#!#numeric#!#10#!#2
+~~END~~
+
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V6'
+    AND c.[name] = 'RESULT';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#tinyint
+babel_5341_v6#!#RESULT#!#numeric#!#10#!#2
+~~END~~
+
