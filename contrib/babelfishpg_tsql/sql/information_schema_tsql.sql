@@ -538,7 +538,7 @@ BEGIN
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 /*
  * TABLE_CONSTRAINTS view

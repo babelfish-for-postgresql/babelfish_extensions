@@ -11475,7 +11475,7 @@ BEGIN
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT 
