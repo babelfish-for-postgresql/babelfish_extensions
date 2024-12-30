@@ -482,7 +482,6 @@ datetimeoffset-timezone
 # BABEL-4046 - TODO JIRA -  BABEL-5397
 host_id
 drop_index
-linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
