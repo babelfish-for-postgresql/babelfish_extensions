@@ -1,5 +1,9 @@
 -- sla_for_parallel_query_enforced 2000000
 -- create tables with most of the datatypes
+
+SELECT set_config('enable_bitmapscan', 0, false);
+GO
+
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
 
@@ -526,4 +530,7 @@ DROP TABLE [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongS
 GO
 
 DROP SCHEMA [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema]
+GO
+
+SELECT set_config('enable_bitmapscan', 1, false);
 GO
