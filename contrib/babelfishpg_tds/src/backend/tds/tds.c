@@ -449,6 +449,15 @@ tds_stats_shmem_shutdown(int code, Datum arg)
 	if (TdsStatusArray == NULL)
 		return;
 
+	PGSTAT_BEGIN_WRITE_ACTIVITY(MyTdsStatusEntry);
+
+	MyTdsStatusEntry->st_procpid = 0;	/* mark invalid */
+
+	PGSTAT_END_WRITE_ACTIVITY(MyTdsStatusEntry);
+
+	/* so that functions can check if backend_status.c is up via MyBEEntry */
+	MyTdsStatusEntry = NULL;
+
 	return;
 }
 
