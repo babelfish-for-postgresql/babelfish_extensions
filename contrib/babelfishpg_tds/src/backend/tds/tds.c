@@ -455,7 +455,6 @@ tds_stats_shmem_shutdown(int code, Datum arg)
 
 	PGSTAT_END_WRITE_ACTIVITY(MyTdsStatusEntry);
 
-	/* so that functions can check if backend_status.c is up via MyBEEntry */
 	MyTdsStatusEntry = NULL;
 
 	return;
