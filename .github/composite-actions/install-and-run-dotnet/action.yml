@@ -24,9 +24,9 @@ runs:
       sudo dpkg -i packages-microsoft-prod.deb
       rm packages-microsoft-prod.deb
       sudo apt-get install -y apt-transport-https
-      sudo apt-get install -y dotnet-sdk-5.0
+      sudo apt-get install -y dotnet-sdk-8.0
       sudo apt-get install -y apt-transport-https
-      sudo apt-get install -y aspnetcore-runtime-5.0
+      sudo apt-get install -y aspnetcore-runtime-8.0
     shell: bash
           
   - name: Run Dotnet Tests
