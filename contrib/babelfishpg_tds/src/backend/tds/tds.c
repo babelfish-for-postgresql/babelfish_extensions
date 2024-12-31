@@ -143,7 +143,7 @@ typedef struct LocalTdsStatus
 } LocalTdsStatus;
 
 static TdsStatus *TdsStatusArray = NULL;
-static TdsStatus *MyTdsStatusEntry;
+static TdsStatus *MyTdsStatusEntry = NULL;
 static LocalTdsStatus *localTdsStatusTable = NULL;
 
 uint32_t	MyTdsClientVersion = 0;
@@ -434,8 +434,16 @@ tds_stats_shmem_shutdown(int code, Datum arg)
 		return;
 
 	/* Safety check ... shouldn't get here unless shmem is set up. */
-	if (TdsStatusArray == NULL)
+	if (TdsStatusArray == NULL || MyTdsStatusEntry == NULL)
 		return;
+
+	PGSTAT_BEGIN_WRITE_ACTIVITY(MyTdsStatusEntry);
+
+	MyTdsStatusEntry->st_procpid = 0;	/* mark invalid */
+
+	PGSTAT_END_WRITE_ACTIVITY(MyTdsStatusEntry);
+
+	MyTdsStatusEntry = NULL;
 
 	return;
 }
