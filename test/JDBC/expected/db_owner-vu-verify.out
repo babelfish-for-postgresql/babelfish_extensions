@@ -70,6 +70,28 @@ go
 alter login dbowner__temp with password = '123'
 go
 
+-- Testing for name clash
+create login dbowner__main_db_dbowner__u1_obj with password = '123'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_obj" as there already exists a Babelfish internal role with the same name)~~
+
+use dbowner__main_db
+go
+create login dbowner__nameclash with password = '123'
+go
+create user dbowner__u1_obj for login dbowner__nameclash
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_obj" as there already exists a Babelfish internal role with the same name)~~
+
+drop login dbowner__nameclash
+go
+use master
+go
+
 -- Adding/Dropping non-existent user to db_owner should throw error
 alter role db_owner add member a_very_invalid_username
 go
@@ -279,6 +301,8 @@ go
 create schema dbowner__s3 authorization dbowner__u1
 go
 create schema dbowner__sch_u2 authorization dbowner__u2
+go
+create schema dbowner__sch_db_owner authorization db_owner
 go
 create type dbowner__s3.dbowner__typ3 from int
 go
@@ -650,11 +674,32 @@ use dbowner__main_db
 go
 alter role db_owner drop member dbowner__u1
 go
+alter role db_owner drop member dbowner__u1 -- adding again should not throw error
+go
 grant select on schema::dbowner__s0 to dbowner__u2
 go
 alter role db_owner add member dbowner__u1
 go
+alter role db_owner add member dbowner__u1 -- dropping again should not throw error
+go
 grant execute on schema::dbowner__s0 to dbowner__u2
+go
+
+-- Check sp_helpuser
+CREATE TABLE #db_owner_roles(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
+go
+INSERT INTO #db_owner_roles EXEC sp_helpuser 'dbowner__u1';
+go
+~~ROW COUNT: 1~~
+
+SELECT userName, roleName FROM #db_owner_roles;
+go
+~~START~~
+varchar#!#varchar
+dbowner__u1#!#db_owner
+~~END~~
+
+DROP TABLE #db_owner_roles;
 go
 
 -- tsql user=dbowner__l2 password=123
@@ -787,7 +832,24 @@ use dbowner__main_db
 go
 exec sp_droprolemember 'db_owner', 'dbowner__u1'
 go
+exec sp_droprolemember 'db_owner', 'dbowner__u1' -- dropping again should not throw error
+go
+
+-- Check name clash scenario
+create role dbowner__u1_obj
+go
 exec sp_addrolemember 'db_owner', 'dbowner__u1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Internal role "dbowner__main_db_dbowner__u1_obj" could not be created because a role already exists with the same name)~~
+
+drop role dbowner__u1_obj
+go
+
+exec sp_addrolemember 'db_owner', 'dbowner__u1' -- adding again should not throw error
+go
+exec sp_addrolemember 'db_owner', 'dbowner__u1' -- adding again should not throw error
 go
 alter user dbowner__u1 with login = dbowner__l1
 go
@@ -1054,7 +1116,7 @@ dbowner__main_db_dbowner__s3#!#dbowner__v3#!#view#!#dbowner__main_db_dbowner__u1
 ~~END~~
 
 
--- Schemas owner should be dbowner__main_db_dbowner__u1_obj except for dbowner__main_db_dbowner__sch_u2
+-- Schemas owner should be dbowner__main_db_dbowner__u1_obj except for dbowner__main_db_dbowner__sch_u2 and dbowner__main_db_dbowner__sch_db_owner
 SELECT
     r.rolname AS schema_owner,
     ns.nspname
@@ -1065,13 +1127,14 @@ JOIN
 ON
     ns.nspowner = r.oid
 WHERE
-    ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u2')
+    ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u2', 'dbowner__main_db_dbowner__sch_db_owner')
 ORDER BY ns.nspname;
 GO
 ~~START~~
 name#!#name
 dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s1
 dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s3
+dbowner__main_db_db_owner#!#dbowner__main_db_dbowner__sch_db_owner
 dbowner__main_db_dbowner__u2#!#dbowner__main_db_dbowner__sch_u2
 ~~END~~
 
@@ -1609,13 +1672,14 @@ JOIN
 ON
     ns.nspowner = r.oid
 WHERE
-    ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u1', 'dbowner__main_db_dbowner__sch_u2')
+    ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u1', 'dbowner__main_db_dbowner__sch_u2', 'dbowner__main_db_dbowner__sch_db_owner')
 ORDER BY ns.nspname;
 GO
 ~~START~~
 name#!#name
 dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s1
 dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s3
+dbowner__main_db_db_owner#!#dbowner__main_db_dbowner__sch_db_owner
 dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__sch_u1
 dbowner__main_db_dbowner__u2#!#dbowner__main_db_dbowner__sch_u2
 ~~END~~
@@ -1758,6 +1822,8 @@ go
 drop schema dbowner__sch_u1
 go
 drop schema dbowner__sch_u2
+go
+drop schema dbowner__sch_db_owner
 go
 drop user dbowner__u2
 go

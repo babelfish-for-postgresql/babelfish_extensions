@@ -2835,7 +2835,7 @@ static List
 *gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData	query;
-	List		*stmt_list;
+	List		*stmt_list = NIL;
 	Node		*stmt;
 	int		expected_stmts = 7;
 	int		i = 0;
@@ -2847,9 +2847,20 @@ static List
 	ScanKeyData	skey;
 	Relation	rel;
 
+	/* If role is already member of db_owner role, do nothing */
+	if (is_member_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+		return stmt_list;
+
 	initStringInfo(&query);
 
 	truncate_tsql_identifier(rolname_obj);
+
+	/* Throw relevant error if there will be a name clash */
+	if (get_role_oid(rolname_obj, true) != InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("Internal role \"%s\" could not be created because a "
+						"role already exists with the same name", rolname_obj)));
 
 	appendStringInfoString(&query, "CREATE ROLE dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
@@ -2935,7 +2946,7 @@ static List
 *gen_alter_dbowner_drop_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData query;
-	List		*stmt_list;
+	List		*stmt_list = NIL;
 	Node		*stmt;
 	int			expected_stmts = 7;
 	int			i = 0;
@@ -2946,6 +2957,10 @@ static List
 	SysScanDesc sscan;
 	ScanKeyData skey;
 	Relation	rel;
+
+	/* If role is already not a member of db_owner role, do nothing */
+	if (!is_member_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+		return stmt_list;
 
 	initStringInfo(&query);
 
@@ -3093,6 +3108,7 @@ void
 change_object_owner_if_db_owner()
 {
 	Oid		dbo_id = InvalidOid;
+	Oid		db_owner_id = InvalidOid;
 	StringInfoData	query;
 	char		*rolname = NULL;
 	char 		*obj_rolname = NULL;
@@ -3108,9 +3124,11 @@ change_object_owner_if_db_owner()
 
 	cur_db_name = get_cur_db_name();
 	dbo_id = get_dbo_oid(cur_db_name, true);
+	db_owner_id = get_db_owner_oid(cur_db_name, true);
 
-	/* Don't change object owner if current user is dbo */
-	if (role_oid == dbo_id || dbo_id == InvalidOid)
+	/* Don't change object owner if database principal is dbo or db_owner */
+	if (role_oid == dbo_id || dbo_id == InvalidOid ||
+		role_oid == db_owner_id || db_owner_id == InvalidOid)
 		return;
 
 	rolname = GetUserNameFromId(role_oid, true);
@@ -3121,46 +3139,58 @@ change_object_owner_if_db_owner()
 	if (!user_exists_for_db(cur_db_name, rolname))
 		return;
 
-	if (!is_member_of_role(role_oid, get_db_owner_oid(cur_db_name, false)))
+	if (!is_member_of_role(role_oid, db_owner_id))
 		return;
 
 	obj_rolname = get_obj_role(rolname);
 
-	initStringInfo(&query);
-	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
+	if (get_role_oid(obj_rolname, true) == InvalidOid)
+	{
+		/*
+		 * Instead of failing the ownership reassignment in the
+		 * unlikely event that a user that is member of db_owner
+		 * role does not have corresponding "_obj" role, we will
+		 * silently skip the ownership reassignment
+		 */
+	}
+	else
+	{
+		initStringInfo(&query);
+		appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
 
-	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("Expected 1 statement but got %d statements after parsing",
-						list_length(parsetree_list))));
+		if (list_length(parsetree_list) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Expected 1 statement but got %d statements after parsing",
+							list_length(parsetree_list))));
 
-	/* Update the dummy statement with real values */
-	n = parsetree_nth_stmt(parsetree_list, 0);
-	update_ReassignOwnedStmt(n, rolname, obj_rolname);
+		/* Update the dummy statement with real values */
+		n = parsetree_nth_stmt(parsetree_list, 0);
+		update_ReassignOwnedStmt(n, rolname, obj_rolname);
 
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = n;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 0;
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = n;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
 
-	/* do this step */
-	ProcessUtility(wrapper,
-					"(REASSIGN OWNED )",
-					false,
-					PROCESS_UTILITY_SUBCOMMAND,
-					NULL,
-					NULL,
-					None_Receiver,
-					NULL);
+		/* do this step */
+		ProcessUtility(wrapper,
+						"(REASSIGN OWNED )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
 
-	CommandCounterIncrement();
+		CommandCounterIncrement();
 
-	pfree(query.data);
+		pfree(query.data);
+	}
 
 	if (obj_rolname)
 		pfree(obj_rolname);
