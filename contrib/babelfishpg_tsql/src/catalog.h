@@ -28,6 +28,7 @@ extern bool IsPLtsqlExtendedCatalog(Oid relationId);
 extern bool IsPltsqlToastRelationHook(Relation relation);
 extern bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup);
 extern void pltsql_drop_relation_refcnt_hook(Relation relation);
+extern bool has_bbf_role_direct_membership_with_admin_true(Oid role);
 
 /*****************************************
  *			SYS schema

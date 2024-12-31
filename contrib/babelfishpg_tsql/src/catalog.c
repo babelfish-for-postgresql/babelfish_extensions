@@ -9,6 +9,7 @@
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
@@ -6286,4 +6287,37 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 
 	if(!xactStarted)
 		CommitTransactionCommand();
+}
+
+/*
+ * Returns true if given role has direct member bbf_role_admin 
+ * whose admin_option is true, else returns false.
+ */
+bool
+has_bbf_role_direct_membership_with_admin_true(Oid role)
+{
+	CatCList   *memlist;
+
+	/* 
+	 * Find all existing tuples for given role
+	 * whose member is bbf_role_admin
+	 */
+	memlist = SearchSysCacheList2(AUTHMEMROLEMEM,
+									ObjectIdGetDatum(role),
+									ObjectIdGetDatum(get_bbf_role_admin_oid()));
+	for (int i = 0; i < memlist->n_members; i++)
+	{
+		HeapTuple	tup = &memlist->members[i]->tuple;
+		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+	
+		/* Return true if admin_option is true */
+		if (form->admin_option)
+		{
+			ReleaseSysCacheList(memlist);
+			return true;
+		}
+	}
+
+	ReleaseSysCacheList(memlist);
+	return false;
 }
