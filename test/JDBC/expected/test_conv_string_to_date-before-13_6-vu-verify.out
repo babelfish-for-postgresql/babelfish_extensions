@@ -3516,6 +3516,8 @@ GO
 DECLARE @TM_ICLO TIME = '17:24:07.1766670'
 SELECT CONVERT(DATE, @TM_ICLO)
 GO
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Explicit conversion from data type time without time zone to date is not allowed.)~~
