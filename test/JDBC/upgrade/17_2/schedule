@@ -591,4 +591,5 @@ BABEL-2736
 datareader_datawriter
 db_owner
 smalldatetime_date_cmp
+test_conv_money_to_varchar
 

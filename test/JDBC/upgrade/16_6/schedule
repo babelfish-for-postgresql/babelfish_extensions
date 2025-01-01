@@ -588,3 +588,4 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
+test_conv_money_to_varchar

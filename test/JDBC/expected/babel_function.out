@@ -188,7 +188,7 @@ select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 0);
 GO
 ~~START~~
 varchar
- 4936.56  
+4936.56   
 ~~END~~
 
 select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 1);
@@ -202,7 +202,7 @@ select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 2);
 GO
 ~~START~~
 varchar
- 4936.5600
+4936.5600 
 ~~END~~
 
 
@@ -311,7 +311,7 @@ select TRY_CONVERT(varchar(10), CAST(4936.56 AS MONEY), 0);
 GO
 ~~START~~
 varchar
- 4936.56  
+4936.56   
 ~~END~~
 
 

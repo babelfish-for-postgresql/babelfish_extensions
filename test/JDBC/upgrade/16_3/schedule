@@ -572,4 +572,5 @@ securityadmin_role
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp
+test_conv_money_to_varchar
 

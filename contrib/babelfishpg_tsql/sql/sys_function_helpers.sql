@@ -9849,9 +9849,9 @@ BEGIN
 		END IF;
 	WHEN 'sys.money'::regtype THEN
 		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
@@ -9939,7 +9939,7 @@ LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
-														IN p_moneyval PG_CATALOG.MONEY,
+														IN p_moneyval NUMERIC,
 														IN p_style NUMERIC DEFAULT 0)
 RETURNS TEXT
 AS
@@ -9966,17 +9966,17 @@ BEGIN
 		v_integral_digits := v_digits;
 	END IF;
 	IF (v_style = 0) THEN
-		v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D99';
-		v_result := to_char(v_moneyval, v_format);
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSIF (v_style = 1) THEN
-		IF (v_moneysign::SMALLINT = 1) THEN
-			v_result := substring(p_moneyval::TEXT, 2);
+		IF (v_moneysign::SMALLINT = -1) THEN
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 1, 1) || substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 3);
 		ELSE
-			v_result := substring(p_moneyval::TEXT, 1, 1) || substring(p_moneyval::TEXT, 3);
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
 		END IF;
 	ELSIF (v_style = 2) THEN
-		v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D9999';
-		v_result := to_char(v_moneyval, v_format);
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
 		RAISE invalid_parameter_value;
 	END IF;
