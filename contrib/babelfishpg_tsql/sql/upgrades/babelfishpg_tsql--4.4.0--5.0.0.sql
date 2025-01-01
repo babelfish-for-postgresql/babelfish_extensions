@@ -227,7 +227,7 @@ BEGIN
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 /*
  * TABLE_CONSTRAINTS view
@@ -382,6 +382,7 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ex
 WHERE Ext.type = 'R'
 AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
 GRANT SELECT ON sys.login_token TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
 RETURNS INTEGER AS
 $$
@@ -402,6 +403,9 @@ BEGIN
     
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
+
+    ELSEIF role = login THEN
+		RETURN 0;
 	
  	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
 	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
@@ -11426,6 +11430,54 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
     STYPE = INTERNAL,
     PARALLEL = SAFE
 );
+
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT)
+RETURNS INTEGER
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+DECLARE
+    extra_bytes CONSTANT INTEGER := 4;
+    return_value INTEGER;
+BEGIN
+	return_value:=
+        CASE pg_catalog.LOWER(property_name)
+            WHEN 'charmaxlen' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes
+                    ELSE NULL
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'allowsnull' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attnotnull THEN 0
+                    ELSE 1
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'iscomputed' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attgenerated != '' THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            WHEN 'columnid' COLLATE sys.database_default THEN
+                (SELECT a.attnum FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'ordinal' COLLATE sys.database_default THEN
+                (SELECT b.count FROM (SELECT attname, row_number() OVER (ORDER BY a.attnum) AS count FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
+            WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN char_length(a.attidentity) > 0 THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            ELSE
+                NULL
+        END;
+    RETURN return_value::INTEGER;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
