@@ -567,4 +567,13 @@ BABEL-2736-before-16_5
 securityadmin_role
 datareader_datawriter
 smalldatetime_date_cmp
+test_conv_string_to_date
+test_conv_string_to_datetime
+test_conv_string_to_datetime2
+test_conv_string_to_datetimeoffset
+test_conv_string_to_smalldatetime
+test_conv_string_to_time
+BABEL-3401
+babel_726
+BABEL-5031
 
