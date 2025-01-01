@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient.Server;
 using Serilog;
 using Serilog.Core;
 using Xunit;
+using System.Collections.Specialized;
 
 namespace BabelfishDotnetFramework
 {
@@ -220,6 +221,16 @@ namespace BabelfishDotnetFramework
 			finally
 			{
 				rdr?.Close();
+			}
+		}
+		public void ResultSetWriter(StringCollection sc, string fileName)
+		{
+			using var file =
+				new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, fileName + ".out"), true);
+			foreach (string script in sc)
+			{
+				file.WriteLine(script);
+				file.WriteLine("GO");
 			}
 		}
 
