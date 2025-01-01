@@ -532,7 +532,7 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 
 static bool is_tsql_bit_numeric(Oid oid)
 {
-	if (tsql_bit_numeric_oid == InvalidOid)
+	if (!OidIsValid(tsql_bit_numeric_oid))
 	{
 		Oid			typoid;
 		Oid 		funcargtypes[1];
@@ -547,7 +547,7 @@ static bool is_tsql_bit_numeric(Oid oid)
 
 static bool is_tsql_fixeddecimal_numeric(Oid oid)
 {
-	if (tsql_fixeddecimal_numeric_oid == InvalidOid)
+	if (!OidIsValid(tsql_fixeddecimal_numeric_oid))
 	{
 		Oid			typoid;
 		Oid 		funcargtypes[1];
@@ -563,7 +563,7 @@ static bool is_tsql_fixeddecimal_numeric(Oid oid)
 static bool is_tsql_numeric_fixeddecimal(Oid oid)
 {
 	Oid funcargtypes[1] = {NUMERICOID};
-	if (tsql_numeric_fixeddecimal_oid == InvalidOid)
+	if (!OidIsValid(tsql_numeric_fixeddecimal_oid))
 		tsql_numeric_fixeddecimal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("numeric_fixeddecimal")), -1, funcargtypes, false);
 	return tsql_numeric_fixeddecimal_oid == oid;
 }
@@ -571,7 +571,7 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid)
 static bool is_tsql_int4_bit(Oid oid)
 {
 	Oid funcargtypes[1] = {INT4OID};
-	if (tsql_int4_bit_oid == InvalidOid)
+	if (!OidIsValid(tsql_int4_bit_oid))
 		tsql_int4_bit_oid = LookupFuncName(list_make2(makeString("sys"), makeString("int4bit")), -1, funcargtypes, false);
 	return tsql_int4_bit_oid == oid;
 }
@@ -579,7 +579,7 @@ static bool is_tsql_int4_bit(Oid oid)
 static bool is_tsql_trunc_numeric_to_int2(Oid oid)
 {
 	Oid funcargtypes[1] = {NUMERICOID};
-	if (tsql_trunc_numeric_to_int2_oid == InvalidOid)
+	if (!OidIsValid(tsql_trunc_numeric_to_int2_oid))
 		tsql_trunc_numeric_to_int2_oid = LookupFuncName(list_make2(makeString("sys"), makeString("_trunc_numeric_to_int2")), -1, funcargtypes, false);
 	return tsql_trunc_numeric_to_int2_oid == oid;
 }
@@ -587,7 +587,7 @@ static bool is_tsql_trunc_numeric_to_int2(Oid oid)
 static bool is_tsql_trunc_numeric_to_int8(Oid oid)
 {
 	Oid funcargtypes[1] = {NUMERICOID};
-	if (tsql_trunc_numeric_to_int8_oid == InvalidOid)
+	if (!OidIsValid(tsql_trunc_numeric_to_int8_oid))
 		tsql_trunc_numeric_to_int8_oid = LookupFuncName(list_make2(makeString("sys"), makeString("_trunc_numeric_to_int8")), -1, funcargtypes, false);
 	return tsql_trunc_numeric_to_int8_oid == oid;
 }
@@ -912,7 +912,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 																					  func->funcresulttype);
 
 				/*
-				 * 1) plan == NULL means we are invoking this function from babelfishtsql_extension.
+				 * If the following conditions are met then we will recursively find typmod from arg.
+				 * 1) plan == NULL means we are invoking this function from babelfishpg_tsql extension.
 				 * 2) rettypmod == -1 means unable to find typmod till now.
 				 * 3) check if only one args and then is that castable to numeric.
 				 */
