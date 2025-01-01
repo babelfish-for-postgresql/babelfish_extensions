@@ -1614,7 +1614,7 @@ DECLARE
     W3C_XML_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '-', DAYMM_REGEXP, '-', DAYMM_REGEXP, '(', '(\-|\+)', '\s*(\d{2})\s*', '\:', '\s*(\d{2})\s*', '|', 'Z', ')','$');
     W3C_XML_Z_REGEXP CONSTANT VARCHAR COLLATE "C" := pg_catalog.concat('^', FULLYEAR_REGEXP, '-', DAYMM_REGEXP, '-', DAYMM_REGEXP, 'Z','$');
 BEGIN
-    v_datetimestring := pg_catalog.upper(pg_catalog.trim(p_datetimestring));
+    v_datetimestring := pg_catalog.upper(pg_catalog.btrim(p_datetimestring));
     -- datetimestring validation and conversion will be done in babelfish_conv_string_to_datetime2 function and a timestamp will be returned 
     v_resdatetime := sys.babelfish_conv_string_to_datetime2(p_datatype, p_datetimestring, p_style);
 
