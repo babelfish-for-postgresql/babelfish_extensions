@@ -6290,7 +6290,7 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 }
 
 /*
- * Returns true if given role has direct member bbf_role_admin 
+ * Returns true if given role has direct membership of bbf_role_admin 
  * whose admin_option is true, else returns false.
  */
 bool
