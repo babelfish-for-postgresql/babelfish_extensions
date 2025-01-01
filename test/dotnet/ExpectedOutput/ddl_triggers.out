@@ -1,0 +1,135 @@
+#Q#DROP TRIGGER IF EXISTS babel_1654_vu_prepare_trig_t
+
+#Q#
+DROP TRIGGER IF EXISTS babel_1654_vu_prepare_updEmployeeDatas
+
+#Q#
+DROP TABLE IF EXISTS babel_1654_vu_prepare_employeeData
+
+#Q#
+DROP TABLE IF EXISTS babel_1654_vu_prepare_t 
+
+#Q#
+DROP TABLE IF EXISTS sys_computed_columns_vu_prepare_t1
+
+#Q#
+
+CREATE TABLE babel_1654_vu_prepare_employeeData( ID INT IDENTITY (1,1) PRIMARY KEY,Emp_First_name VARCHAR (50),Emp_Last_name VARCHAR (50),Emp_Salary INT,
+a varchar (50), b varchar(50), c varchar(50), d varchar(50), e varchar(50), f varchar(50))
+
+#Q#
+create table babel_1654_vu_prepare_t ( ID INT IDENTITY (1,1) PRIMARY KEY , a varchar(50), b varchar(50))
+
+#Q#
+CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
+	select COLUMNS_UPDATED();
+
+#Q#
+CREATE TRIGGER babel_1654_vu_prepare_updEmployeeDatas ON babel_1654_vu_prepare_employeeData  AFTER UPDATE,INSERT AS   
+	select COLUMNS_UPDATED();
+	update babel_1654_vu_prepare_t set a = 'sss' , b = 'sss' where id = 1;
+	select COLUMNS_UPDATED();
+
+#Q#
+CREATE TABLE sys_computed_columns_vu_prepare_t1 ( 
+  scc_first_number smallint,
+  scc_second_number money,
+  scc_multiplied AS scc_first_number * scc_second_number
+)
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_1654_vu_prepare_employeedata](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[emp_first_name] [varchar](50) NULL,
+	[emp_last_name] [varchar](50) NULL,
+	[emp_salary] [int] NULL,
+	[a] [varchar](50) NULL,
+	[b] [varchar](50) NULL,
+	[c] [varchar](50) NULL,
+	[d] [varchar](50) NULL,
+	[e] [varchar](50) NULL,
+	[f] [varchar](50) NULL,
+ CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ADD  CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS OFF
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+
+CREATE TRIGGER [dbo].[babel_1654_vu_prepare_updemployeedatas] ON [dbo].[babel_1654_vu_prepare_employeedata]  AFTER UPDATE,INSERT AS   
+	select COLUMNS_UPDATED();
+	update babel_1654_vu_prepare_t set a = 'sss' , b = 'sss' where id = 1;
+	select COLUMNS_UPDATED();
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ENABLE TRIGGER [babel_1654_vu_prepare_updemployeedatas]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_1654_vu_prepare_t](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[a] [varchar](50) NULL,
+	[b] [varchar](50) NULL,
+ CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS OFF
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+
+CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
+	select COLUMNS_UPDATED();
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[sys_computed_columns_vu_prepare_t1](
+	[scc_first_number] [smallint] NULL,
+	[scc_second_number] [money] NULL,
+	[scc_multiplied]  AS (scc_first_number * scc_second_number) PERSISTED
+) ON [PRIMARY]
+
+GO
+#Q#DROP TRIGGER IF EXISTS babel_1654_vu_prepare_trig_t
+
+#Q#
+DROP TRIGGER IF EXISTS babel_1654_vu_prepare_updEmployeeDatas
+
+#Q#
+DROP TABLE IF EXISTS babel_1654_vu_prepare_employeeData
+
+#Q#
+DROP TABLE IF EXISTS babel_1654_vu_prepare_t 
+
+#Q#
+DROP TABLE IF EXISTS sys_computed_columns_vu_prepare_t1
+
