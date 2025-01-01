@@ -304,7 +304,7 @@ static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determi
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
-static has_bbf_role_direct_membership_with_admin_true_hook_type prev_has_bbf_role_direct_membership_with_admin_true_hook = NULL;
+static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -524,8 +524,8 @@ InstallExtendedHooks(void)
 	prev_bbf_execute_grantstmt_as_dbsecadmin_hook = bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = handle_grantstmt_for_dbsecadmin;
 
-	prev_has_bbf_role_direct_membership_with_admin_true_hook = has_bbf_role_direct_membership_with_admin_true_hook;
-	has_bbf_role_direct_membership_with_admin_true_hook = has_bbf_role_direct_membership_with_admin_true;
+	prev_bbf_check_member_has_direct_priv_to_grant_role_hook = bbf_check_member_has_direct_priv_to_grant_role_hook;
+	bbf_check_member_has_direct_priv_to_grant_role_hook = bbf_check_member_has_direct_priv_to_grant_role;
 	
 	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
 
@@ -604,7 +604,7 @@ UninstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
-	has_bbf_role_direct_membership_with_admin_true_hook = prev_has_bbf_role_direct_membership_with_admin_true_hook;
+	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 
 
 	bbf_InitializeParallelDSM_hook = NULL;
