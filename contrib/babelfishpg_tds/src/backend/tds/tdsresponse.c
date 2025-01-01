@@ -913,7 +913,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 
 				/*
 				 * If the following conditions are met then we will recursively find typmod from arg.
-				 * 1) plan == NULL means we are invoking this function from babelfishpg_tsql extension.
+				 * 1) plan == NULL means we are invoking this function during parsing phase.
 				 * 2) rettypmod == -1 means unable to find typmod till now.
 				 * 3) check if only one args and then is that castable to numeric.
 				 */
