@@ -306,6 +306,7 @@ tsql_openjson_with_internal(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		prev_sql_dialect = sql_dialect;
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		PG_TRY();
 		{
 			Jsonb	   *sub_jb;
@@ -317,7 +318,6 @@ tsql_openjson_with_internal(PG_FUNCTION_ARGS)
 			 * processing
 			 */
 			sql_dialect = SQL_DIALECT_TSQL;
-			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 			/*
 			 * Get information about return type. Used to build return message
@@ -377,9 +377,10 @@ tsql_openjson_with_internal(PG_FUNCTION_ARGS)
 		PG_FINALLY();
 		{
 			sql_dialect = prev_sql_dialect;
-			MemoryContextSwitchTo(oldcontext);
 		}
 		PG_END_TRY();
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
