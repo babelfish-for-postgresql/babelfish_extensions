@@ -139,3 +139,18 @@ SELECT *
 FROM OPENJSON(@json)
   WITH ( id INT 'strict $.id', firstName NVARCHAR(50) '$.info.name', lastName NVARCHAR(50) '$.info.surname', age INT, dateOfBirth DATETIME2 '$.dob' );
 go
+
+-- BABEL-5020
+CREATE PROC babel_5020_p
+AS
+SELECT * INTO babel_5020_t FROM openjson(N'{"a":1}', 'strict $.a') with (a nvarchar(20))
+GO
+
+EXEC babel_5020_p
+GO
+
+DROP PROC babel_5020_p
+GO
+
+DROP TABLE IF EXISTS babel_5020_t
+GO
