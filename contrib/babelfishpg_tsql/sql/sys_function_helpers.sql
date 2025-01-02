@@ -2619,10 +2619,16 @@ BEGIN
     END IF;
 
     IF (NOT v_is_cached) THEN
-        PERFORM set_config(format('sys.lang_metadata_json.%s',
-                                  v_lang_spec_culture),
-                           v_lang_data_jsonb::TEXT,
-                           FALSE);
+        BEGIN
+            PERFORM set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE);
+        EXCEPTION
+            WHEN invalid_transaction_state THEN
+            -- This exception will only occur when we are trying to set config in parallel mode
+            -- we can ignore this error as we cannot store this config during a parallel operation
+        END;
     END IF;
 
     RETURN v_lang_data_jsonb;
