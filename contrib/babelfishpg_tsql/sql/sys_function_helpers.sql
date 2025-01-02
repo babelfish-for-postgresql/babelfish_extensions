@@ -9953,8 +9953,6 @@ DECLARE
 	v_digits SMALLINT;
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
-	v_res_length SMALLINT;
-	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 	v_result TEXT;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
@@ -9974,18 +9972,14 @@ BEGIN
 		ELSE
 			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
 		END IF;
-	ELSIF (v_style = 2) THEN
+	ELSIF (v_style = 2 OR v_style = 126) THEN
 		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
 		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
 		RAISE invalid_parameter_value;
 	END IF;
-	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
-	IF v_res_length IS NULL THEN
-		RETURN v_result;
-	ELSE
-		RETURN rpad(v_result, v_res_length, ' ');
-	END IF;
+
+	RETURN v_result;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
 		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
