@@ -141,6 +141,7 @@ ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_dbsecadmin_u1;
 GO
 
 -- CASE 3.2.c - It should be able to ALTER the membership of database role which is member of db_owner
+-- Currently it is not supported to add database role to db_owner
 ALTER ROLE db_owner ADD MEMBER babel_5135_r1;
 GO
 
