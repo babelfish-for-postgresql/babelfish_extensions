@@ -802,46 +802,21 @@ BEGIN
  	
 	IF (COALESCE(@table_owner, '') = '')
 	BEGIN
-		
-		IF EXISTS ( 
-			SELECT * FROM sys.sp_column_privileges_view 
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
-			)
-		BEGIN 
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
-		ELSE
-		BEGIN
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
+        SELECT
+        TABLE_QUALIFIER,
+        TABLE_OWNER,
+        TABLE_NAME,
+        COLUMN_NAME,
+        GRANTOR,
+        GRANTEE,
+        PRIVILEGE,
+        IS_GRANTABLE
+        FROM sys.sp_column_privileges_view
+        WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+            AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+            AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+            AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+        ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 	ELSE
 	BEGIN
