@@ -2051,16 +2051,21 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 		return;
 
 	/*
+	 * Members of db_securityadmin role can ALTER ANY ROLE
+	 */
+	if (get_db_principal_kind(granted, db_name) == BBF_ROLE &&
+		has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false)))
+	{
+		return;
+	}
+
+	/*
 	 * Disallow ALTER ROLE if
 	 * 1. Current login doesn't have permission on the granted role
 	 * OR
-	 * 2. Granted role is not a fixed db role or current user is a member of db_securityadmin
-	 * OR
-	 * 3. The current user is trying to add/drop itself from the granted role
+	 * 2. The current user is trying to add/drop itself from the granted role
 	 */
-	if ((!has_privs_of_role(GetSessionUserId(), granted) &&
-		 !(get_db_principal_kind(granted, db_name) == BBF_ROLE &&
-		   has_privs_of_role(GetUserId(), get_db_securityadmin_oid(get_current_pltsql_db_name(), false)))) ||
+	if (!has_privs_of_role(GetSessionUserId(), granted) ||
 		grantee == GetUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

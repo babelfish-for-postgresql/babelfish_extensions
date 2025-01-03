@@ -129,7 +129,9 @@ GO
 -- tsql
 -- CASE 3 - Able to manage database roles
 	-- CASE 3.1 - CREATE/ALTER/DROP ROLE
-	-- CASE 3.2 - ADD/DROP the membership of user-defined database roles should be allowed
+	-- CASE 3.2.a - ADD/DROP the membership of user-defined database roles should be allowed
+	-- CASE 3.2.b - ADD/DROP the membership of user-defined database roles to/from current_user
+	-- CASE 3.2.c - It should be able to ALTER the membership of database role which is member of db_owner
 	-- CASE 3.3 - ADD/DROP the membership of system-defined database roles should be blocked
 	-- CASE 3.4 - CREATE/ALTER/DROP USER should not be Allowed
 -- role created by another user, to test alter/drop on it
@@ -157,12 +159,49 @@ GO
 EXEC babel_5135_roleop_proc1;
 GO
 
--- CASE 3.2 - ADD/DROP the membership of user-defined database roles
+-- CASE 3.2.a - ADD/DROP the membership of user-defined database roles
 ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1;
 GO
 
 ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_u1;
 GO
+
+-- CASE 3.2.b - ADD/DROP the membership of user-defined database roles to/from current_user
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_5135_dbsecadmin_u1
+~~END~~
+
+
+ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+-- CASE 3.2.c - It should be able to ALTER the membership of database role which is member of db_owner
+-- Currently it is not supported to add database role to db_owner
+ALTER ROLE db_owner ADD MEMBER babel_5135_r1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding database roles to db_owner is not currently supported in Babelfish)~~
+
+
+ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE db_owner DROP MEMBER babel_5135_r1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Dropping database roles from db_owner is not currently supported in Babelfish)~~
+
 
 -- alter role add member inside procedure
 -- execution should be succeeded with no error
@@ -187,6 +226,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot alter the role 'db_owner', because it does not exist or you do not have permission.)~~
+
+
+ALTER ROLE babel_5135_r1 DROP MEMBER dbo;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
+
+
+ALTER ROLE babel_5135_r1 ADD MEMBER dbo;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
 
 
 -- CASE 3.4 -- CREATE/ALTER/DROP USER should fail
@@ -345,6 +398,13 @@ GO
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
 
 
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
+
+
 -- tsql user=babel_5135_l1 password=12345678
 SELECT current_user;
 GO
@@ -390,6 +450,15 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
 
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -453,6 +522,15 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
+
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
 
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -517,6 +595,14 @@ int#!#int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 -- Testing revokes inside procedure
 EXEC babel_5135_revokeop_proc1;
@@ -568,6 +654,14 @@ GO
 
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
 
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
 
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -631,6 +725,15 @@ int#!#int
 ~~END~~
 
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
+
+
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 REVOKE SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 FROM babel_5135_u1;
 GO
@@ -682,6 +785,15 @@ GO
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
 
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
+
+
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 -- CASE 5.2 - Validate members of db_securityadmin can not actually access given objects 
 SELECT current_user;
@@ -730,6 +842,15 @@ GO
 ~~ERROR (Message: permission denied for function babel_5135_tvf1)~~
 
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence babel_5135_seq1)~~
+
+
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 -- CASE 5.3 - Validate that after GRANT/REVOKE, objectowner/dbo can execute REVOKE/GRANT respectively
 -- execute GRANT via db_securityadmin member and REVOKE it with object owner
@@ -746,6 +867,9 @@ GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
 GO
 
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
 GO
 
 -- tsql
@@ -778,6 +902,9 @@ GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
 GO
 
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
 GO
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
