@@ -122,7 +122,9 @@ GO
 
 -- CASE 3 - Able to manage database roles
 	-- CASE 3.1 - CREATE/ALTER/DROP ROLE
-	-- CASE 3.2 - ADD/DROP the membership of user-defined database roles should be allowed
+	-- CASE 3.2.a - ADD/DROP the membership of user-defined database roles should be allowed
+	-- CASE 3.2.b - ADD/DROP the membership of user-defined database roles to/from current_user
+	-- CASE 3.2.c - It should be able to ALTER the membership of database role which is member of db_owner
 	-- CASE 3.3 - ADD/DROP the membership of system-defined database roles should be blocked
 	-- CASE 3.4 - CREATE/ALTER/DROP USER should not be Allowed
 -- role created by another user, to test alter/drop on it
@@ -151,11 +153,35 @@ GO
 EXEC babel_5135_roleop_proc1;
 GO
 
--- CASE 3.2 - ADD/DROP the membership of user-defined database roles
+-- CASE 3.2.a - ADD/DROP the membership of user-defined database roles
 ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1;
 GO
 
 ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_u1;
+GO
+
+-- CASE 3.2.b - ADD/DROP the membership of user-defined database roles to/from current_user
+SELECT current_user;
+GO
+
+ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+-- CASE 3.2.c - It should be able to ALTER the membership of database role which is member of db_owner
+-- Currently it is not supported to add database role to db_owner
+ALTER ROLE db_owner ADD MEMBER babel_5135_r1;
+GO
+
+ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER babel_5135_dbsecadmin_u1;
+GO
+
+ALTER ROLE db_owner DROP MEMBER babel_5135_r1;
 GO
 
 -- alter role add member inside procedure
@@ -173,6 +199,12 @@ ALTER ROLE db_accessadmin ADD MEMBER babel_5135_u1;
 GO
 
 ALTER ROLE db_owner ADD MEMBER babel_5135_u1;
+GO
+
+ALTER ROLE babel_5135_r1 DROP MEMBER dbo;
+GO
+
+ALTER ROLE babel_5135_r1 ADD MEMBER dbo;
 GO
 
 -- CASE 3.4 -- CREATE/ALTER/DROP USER should fail
@@ -266,6 +298,9 @@ GO
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
 GO
 
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
+GO
+
 -- tsql user=babel_5135_l1 password=12345678
 SELECT current_user;
 GO
@@ -286,6 +321,9 @@ SELECT babel_5135_schema1.babel_5135_f1();
 GO
 
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
 GO
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -326,6 +364,9 @@ GO
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
 GO
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+
 -- Testing GRANT inside procedure
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 EXEC babel_5135_grantop_proc1;
@@ -351,6 +392,9 @@ SELECT babel_5135_schema1.babel_5135_f1();
 GO
 
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
 GO
 
 -- Testing revokes inside procedure
@@ -380,6 +424,8 @@ GO
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
 GO
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON SCHEMA::babel_5135_schema1 TO babel_5135_u1;
@@ -405,6 +451,9 @@ SELECT babel_5135_schema1.babel_5135_f1();
 GO
 
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
+GO
+
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
 GO
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -433,6 +482,9 @@ GO
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
 GO
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+
 -- CASE 5.2 - Validate members of db_securityadmin can not actually access given objects 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
 SELECT current_user;
@@ -456,6 +508,9 @@ GO
 SELECT * FROM babel_5135_schema1.babel_5135_tvf1();
 GO
 
+SELECT NEXT VALUE FOR babel_5135_schema1.babel_5135_seq1;
+GO
+
 -- CASE 5.3 - Validate that after GRANT/REVOKE, objectowner/dbo can execute REVOKE/GRANT respectively
 -- execute GRANT via db_securityadmin member and REVOKE it with object owner
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
@@ -472,6 +527,9 @@ GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
 GO
 
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
 GO
 
 -- tsql
@@ -504,6 +562,9 @@ GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
 GO
 
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GO
+
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
 GO
 
 -- tsql user=babel_5135_dbsecadmin_l1 password=12345678
