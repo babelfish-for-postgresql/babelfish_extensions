@@ -1354,7 +1354,7 @@ BEGIN
         JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
         JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
@@ -1450,7 +1450,7 @@ BEGIN
         JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
     WHERE t4.privilege_type = 'DELETE';
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
