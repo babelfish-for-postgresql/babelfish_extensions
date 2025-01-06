@@ -217,7 +217,18 @@ AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+CAST(
+  CASE Ext.orig_username
+    WHEN 'dbo' THEN 1
+    WHEN 'guest' THEN 2
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16390
+    ELSE Base.oid
+  END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -248,7 +259,12 @@ WHERE Ext.database_name = DB_NAME()
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
+CAST(
+  CASE name
+    WHEN 'public' THEN 0
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
 CAST(type AS CHAR(1)) as type,
 CAST(
   CASE
