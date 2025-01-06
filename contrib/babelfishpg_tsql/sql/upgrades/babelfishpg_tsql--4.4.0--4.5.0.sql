@@ -11556,6 +11556,123 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_try_conv_money_to_string(TEXT, PG_CATALOG.MONEY, NUMERIC) RENAME TO babelfish_try_conv_money_to_string_deprecated_in_4_5_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
+														IN p_moneyval NUMERIC,
+														IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+	v_format VARCHAR COLLATE "C";
+	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
+	v_moneysign NUMERIC(19,4) := sign(v_moneyval);
+	v_moneyabs NUMERIC(19,4) := abs(v_moneyval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_result TEXT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+	v_digits := length(v_moneyabs::TEXT);
+	v_decimal_digits := scale(v_moneyabs);
+	IF (v_decimal_digits > 0) THEN
+		v_integral_digits := v_digits - v_decimal_digits - 1;
+	ELSE
+		v_integral_digits := v_digits;
+	END IF;
+	IF (v_style = 0) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+	ELSIF (v_style = 1) THEN
+		IF (v_moneysign::SMALLINT = -1) THEN
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 1, 1) || substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 3);
+		ELSE
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
+		END IF;
+	ELSIF (v_style = 2 OR v_style = 126) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+	ELSE
+		RAISE invalid_parameter_value;
+	END IF;
+
+	RETURN v_result;
+EXCEPTION
+	WHEN invalid_parameter_value THEN
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
+					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+					HINT := 'Change "style" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_4_5_0'); 
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

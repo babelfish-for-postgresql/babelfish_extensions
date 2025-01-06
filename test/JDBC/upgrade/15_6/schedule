@@ -557,3 +557,5 @@ cast_nvarchar_test_before_16_5
 smalldatetime_date_cmp
 securityadmin_role
 datareader_datawriter
+test_conv_money_to_varchar
+
