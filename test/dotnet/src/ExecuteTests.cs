@@ -28,6 +28,7 @@ namespace BabelfishDotnetFramework
         [Fact]
         public void Test()
         {
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal", true);
             BatchRun batchRun = new BatchRun();
             DirectoryInfo dir = new DirectoryInfo(ConfigSetup.QueryFolder);
             IEnumerable<FileInfo> allFiles;

@@ -213,6 +213,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
+static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -240,6 +241,7 @@ static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_c
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
+static remove_db_name_in_schema_hook_type prev_remove_db_name_in_schema_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
@@ -341,6 +343,9 @@ InstallExtendedHooks(void)
 
 	prev_get_trigger_object_address_hook = get_trigger_object_address_hook;
 	get_trigger_object_address_hook = get_trigger_object_address;
+
+	prev_remove_db_name_in_schema_hook = remove_db_name_in_schema_hook;
+	remove_db_name_in_schema_hook = remove_db_name_in_schema;
 
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
@@ -531,6 +536,7 @@ UninstallExtendedHooks(void)
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
+	remove_db_name_in_schema_hook = prev_remove_db_name_in_schema_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
@@ -5863,4 +5869,58 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 		return true;
 
 	return false;
+}
+
+/*
+ * remove_db_name_in_schema - remove the db name and underscore at the beginning
+ * 	of the given string. It is used to unmap schema name in error messages.
+ *
+ * 	@param object_name - char *
+ *  @param object_type - char *, can be 'sch' or 'func'
+ * 	@return - unmapped schema name char *
+ */
+static const char *
+remove_db_name_in_schema(const char *object_name, const char *object_type)
+{
+	char		*cur_db_name;
+	char		**splited_object_name;
+	char		*schema_name = NULL;
+	char		*mutable_name;
+    size_t		db_name_len;
+    size_t		prefix_len = 0;
+	size_t		schema_name_len;
+
+	mutable_name = pstrdup(object_name);
+	splited_object_name = split_object_name(mutable_name);
+
+	if (strcmp(object_type, "sch") == 0) {
+		/* If input is 'sch_name' format, consider when there is only one part in splited_object_name */
+		/* If there are two parts or more, then it’s a cross-db object name (db.sch_name) so we don’t need to deal with it */
+		if (strlen(splited_object_name[2]) == 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[3];
+	} else if (strcmp(object_type, "func") == 0) {
+		/* If input is 'func_name' format, consider when there is two parts in splited_object_name, like db1_sch.db1_func */
+		if (strlen(splited_object_name[2]) > 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[2];
+	}
+
+	if (schema_name)
+	{
+		cur_db_name = get_cur_db_name();
+		db_name_len = strlen(cur_db_name);
+		schema_name_len = strlen(schema_name);
+
+		if (schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+			/* Return the part after the prefix */
+			prefix_len = db_name_len + 1;
+		} 
+		pfree(cur_db_name);
+	} 
+	
+	pfree(mutable_name);
+	for (int k = 0; k < 4; k++)
+        pfree(splited_object_name[k]);
+	pfree(splited_object_name);
+
+	return (const char *)pstrdup(object_name + prefix_len);
 }

@@ -346,7 +346,7 @@ DBCC CHECKIDENT('fake_schema.babel_3201_t1', NORESEED);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_fake_schema" does not exist)~~
+~~ERROR (Message: schema "fake_schema" does not exist)~~
 
 
 -- Table undefined
