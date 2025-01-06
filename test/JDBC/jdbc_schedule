@@ -490,6 +490,10 @@ ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 
+ignore#!#test_windows_login_before-17_2-vu-prepare
+ignore#!#test_windows_login_before-17_2-vu-verify
+ignore#!#test_windows_login_before-17_2-vu-cleanup
+
 ignore#!#trim-before-15_11-or-16_7-vu-prepare
 ignore#!#trim-before-15_11-or-16_7-vu-verify
 ignore#!#trim-before-15_11-or-16_7-vu-cleanup
