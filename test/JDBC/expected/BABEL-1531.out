@@ -2,21 +2,21 @@ SELECT CONVERT(varchar(50), CAST($23.12 AS money), 0);
 GO
 ~~START~~
 varchar
- 23.12                                            
+23.12
 ~~END~~
 
 SELECT CONVERT(varchar(50), CAST($23.12 AS money), 2);
 GO
 ~~START~~
 varchar
- 23.1200                                          
+23.1200
 ~~END~~
 
 SELECT CONVERT(varchar(50), CAST($23.12 as money));
 GO
 ~~START~~
 varchar
- 23.12                                            
+23.12
 ~~END~~
 
 SELECT CONVERT(float, CAST($23.12 as money));
@@ -53,6 +53,6 @@ SELECT CONVERT(varchar(50), @mon);
 GO
 ~~START~~
 varchar
- 23.12                                            
+23.12
 ~~END~~
 
