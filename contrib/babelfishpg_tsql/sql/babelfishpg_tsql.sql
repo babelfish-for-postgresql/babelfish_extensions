@@ -1354,7 +1354,7 @@ BEGIN
         JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
         JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
@@ -1370,6 +1370,7 @@ FROM sys.sp_column_privileges_internal()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
+-- TODO: BABEL-5523
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
@@ -1385,46 +1386,21 @@ BEGIN
  	
 	IF (COALESCE(@table_owner, '') = '')
 	BEGIN
-		
-		IF EXISTS ( 
-			SELECT * FROM sys.sp_column_privileges_view 
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
-			)
-		BEGIN 
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
-		ELSE
-		BEGIN
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		COLUMN_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE
+		FROM sys.sp_column_privileges_view
+		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 	ELSE
 	BEGIN
@@ -1475,7 +1451,7 @@ BEGIN
         JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
     WHERE t4.privilege_type = 'DELETE';
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
