@@ -1345,7 +1345,8 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_arg_type = get_sys_varcharoid();
 		}
 		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
-				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1]))
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1]))
 		{
 			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
 		}
@@ -1362,7 +1363,10 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	if (!OidIsValid(expr_result_type) && !OidIsValid(expr_arg_type))
 		return NULL;
 
-	/* Get the candidate with matching return type */
+	/* 
+	 * Get the candidate with matching return type or 
+	 * second argument type(specifically for hashbytes function) 
+	 */
 	ncandidates = 0;
 	best_candidate = NULL;
 	for (current_candidate = candidates;
@@ -1385,7 +1389,8 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
-		/* find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+		/*
+         * find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
 		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
 		 * of return type 
 		 */
