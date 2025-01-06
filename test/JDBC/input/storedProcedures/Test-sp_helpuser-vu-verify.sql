@@ -1,6 +1,3 @@
-select * from sys.babelfish_authid_user_ext
-GO
-
 -- verify
 EXEC Test_sp_helpuser_vu_prepare_check_helpuser 'dbo';
 GO
