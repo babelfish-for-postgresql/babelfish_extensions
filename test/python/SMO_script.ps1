@@ -63,7 +63,7 @@ if($script_flag -eq $var_one)
     # Scripting standard database objects.
     foreach ($CurrentObject in $Objects)
     {
-        if ($CurrentObject.schema -ne $schm -and -not $CurrentObject.IsSystemObject )
+        if (-not $CurrentObject.IsSystemObject )
         {
             $Scripter.Script($CurrentObject);
             Write-Output "GO`n" 

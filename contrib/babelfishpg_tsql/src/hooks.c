@@ -28,8 +28,6 @@
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
-#include "commands/extension.h"
-#include "commands/proclang.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -92,13 +90,6 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
-typedef enum PltsqlInitPrivsOptions
-{
-	SAVE_INIT_PRIVS,
-	DISCARD_INIT_PRIVS,
-	ERROR_INIT_PRIVS
-} PltsqlInitPrivsOptions;
-
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
@@ -117,7 +108,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
 Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
 static Node *transform_like_in_add_constraint(Node *node);
-char** fetch_func_input_arg_names(HeapTuple func_tuple);
+static char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -195,7 +186,6 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
-static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 
 /*****************************************
  * 			Replication Hooks
@@ -528,8 +518,6 @@ InstallExtendedHooks(void)
 	pltsql_get_object_owner_hook = pltsql_get_object_owner;
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
-
-	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
 }
 
 void
@@ -606,7 +594,6 @@ UninstallExtendedHooks(void)
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
-	pltsql_allow_storing_init_privs_hook = NULL;
 }
 
 /*****************************************
@@ -4238,7 +4225,7 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
  * @param func_tuple or proc_tuple
  * @return char** list of input arg names
  */
-char** fetch_func_input_arg_names(HeapTuple func_tuple)
+static char** fetch_func_input_arg_names(HeapTuple func_tuple)
 {
 	Datum proargnames;
 	Datum		proargmodes;
@@ -5871,6 +5858,7 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	return false;
 }
+<<<<<<< Updated upstream
 
 static bool
 allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
@@ -6033,3 +6021,5 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 
 	return (const char *)pstrdup(object_name + prefix_len);
 }
+=======
+>>>>>>> Stashed changes

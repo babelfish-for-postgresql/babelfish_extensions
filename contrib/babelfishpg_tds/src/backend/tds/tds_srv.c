@@ -87,8 +87,7 @@ static ProtocolExtensionConfig pe_config = {
 	TdsShutdown,
 	TdsDestroy,
 	pe_process_command,
-	pe_report_param_status,
-	TdsDirectSSLHandshake
+	pe_report_param_status
 };
 
 /*
