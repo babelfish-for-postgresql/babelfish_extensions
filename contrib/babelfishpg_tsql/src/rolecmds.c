@@ -2821,7 +2821,7 @@ get_obj_role(const char *rolname)
 	initStringInfo(&rolname_obj);
 
 	appendStringInfoString(&rolname_obj, rolname);
-	appendStringInfoString(&rolname_obj, "_obj");
+	appendStringInfoString(&rolname_obj, "_bbfobj");
 
 	truncate_tsql_identifier(rolname_obj.data);
 
@@ -3149,7 +3149,7 @@ change_object_owner_if_db_owner()
 		/*
 		 * Instead of failing the ownership reassignment in the
 		 * unlikely event that a user that is member of db_owner
-		 * role does not have corresponding "_obj" role, we will
+		 * role does not have corresponding "_bbfobj" role, we will
 		 * silently skip the ownership reassignment
 		 */
 	}
@@ -3201,7 +3201,7 @@ PG_FUNCTION_INFO_V1(bbf_is_role_member);
 /*
  * The bbf_is_role_memeber function will check if a user (u1) is member of a role (r1):
  * - If role is not a member of db_owner, we will check if u1 is member of r1 role
- * - If role is a member of db_owner, we will check if u1 is member of r1_obj role
+ * - If role is a member of db_owner, we will check if u1 is member of r1_bbfobj role
  */
 Datum
 bbf_is_role_member(PG_FUNCTION_ARGS)
@@ -3237,7 +3237,7 @@ bbf_is_role_member(PG_FUNCTION_ARGS)
 /*
  * This helper function will first check if user is member of
  * db_owner role. If it is, then we will attempt drop the linked
- * "_obj" role. If it is not, this function will do nothing.
+ * "_bbfobj" role. If it is not, this function will do nothing.
  */
 static void
 drop_db_owner_related_roles(Oid roleid, const char* rolname)

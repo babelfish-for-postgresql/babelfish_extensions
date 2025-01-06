@@ -4,7 +4,7 @@ SELECT r.rolname AS parent_role
 FROM pg_auth_members m
 JOIN pg_roles r ON (m.roleid = r.oid)
 JOIN pg_roles mr ON (m.member = mr.oid)
-WHERE mr.rolname = 'dbowner__main_db_dbowner__u1_obj'
+WHERE mr.rolname = 'dbowner__main_db_dbowner__u1_bbfobj'
 ORDER BY r.rolname;
 go
 ~~START~~
@@ -23,7 +23,7 @@ go
 name
 dbowner__main_db_db_owner
 dbowner__main_db_dbo
-dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__u1_bbfobj
 ~~END~~
 
 
@@ -43,7 +43,7 @@ dbowner__main_db_db_ddladmin
 dbowner__main_db_db_securityadmin
 dbowner__main_db_dbowner__r1
 dbowner__main_db_dbowner__r2
-dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__u1_bbfobj
 dbowner__main_db_dbowner__u2
 dbowner__main_db_guest
 ~~END~~
@@ -71,21 +71,21 @@ alter login dbowner__temp with password = '123'
 go
 
 -- Testing for name clash
-create login dbowner__main_db_dbowner__u1_obj with password = '123'
+create login dbowner__main_db_dbowner__u1_bbfobj with password = '123'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_obj" as there already exists a Babelfish internal role with the same name)~~
+~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_bbfobj" as there already exists a Babelfish internal role with the same name)~~
 
 use dbowner__main_db
 go
 create login dbowner__nameclash with password = '123'
 go
-create user dbowner__u1_obj for login dbowner__nameclash
+create user dbowner__u1_bbfobj for login dbowner__nameclash
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_obj" as there already exists a Babelfish internal role with the same name)~~
+~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_bbfobj" as there already exists a Babelfish internal role with the same name)~~
 
 drop login dbowner__nameclash
 go
@@ -445,7 +445,7 @@ exec sp_rename 'dbowner__s3.dbowner__seq3', 'dbowner__seq3_renamed', 'object'
 go
 
 -- psql
--- Procedure/function owners should be dbowner__main_db_dbowner__u1_obj
+-- Procedure/function owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT proname,
        proowner::regrole
 FROM pg_proc
@@ -455,15 +455,15 @@ ORDER BY proname;
 GO
 ~~START~~
 name#!#regrole
-dbowner__f1_renamed#!#dbowner__main_db_dbowner__u1_obj
-dbowner__f3_renamed#!#dbowner__main_db_dbowner__u1_obj
-dbowner__p1_renamed#!#dbowner__main_db_dbowner__u1_obj
-dbowner__p3_renamed#!#dbowner__main_db_dbowner__u1_obj
-dbowner__trg1_renamed#!#dbowner__main_db_dbowner__u1_obj
+dbowner__f1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__f3_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__p1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__p3_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__trg1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
 ~~END~~
 
 
--- Table owners should be dbowner__main_db_dbowner__u1_obj
+-- Table owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT
     n.nspname AS schema,
     c.relname AS table,
@@ -485,14 +485,14 @@ ORDER BY n.nspname, c.relkind, c.relname;
 GO
 ~~START~~
 name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s1#!#dbowner__seq1_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__t1_renamed#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__v1_renamed#!#view#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__seq3_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__t3_renamed#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__v3_renamed#!#view#!#dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__s1#!#dbowner__seq1_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__t1_renamed#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__v1_renamed#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__seq3_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__t3_renamed#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__v3_renamed#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
 ~~END~~
 
 
@@ -836,15 +836,15 @@ exec sp_droprolemember 'db_owner', 'dbowner__u1' -- dropping again should not th
 go
 
 -- Check name clash scenario
-create role dbowner__u1_obj
+create role dbowner__u1_bbfobj
 go
 exec sp_addrolemember 'db_owner', 'dbowner__u1'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Internal role "dbowner__main_db_dbowner__u1_obj" could not be created because a role already exists with the same name)~~
+~~ERROR (Message: Internal role "dbowner__main_db_dbowner__u1_bbfobj" could not be created because a role already exists with the same name)~~
 
-drop role dbowner__u1_obj
+drop role dbowner__u1_bbfobj
 go
 
 exec sp_addrolemember 'db_owner', 'dbowner__u1' -- adding again should not throw error
@@ -1065,7 +1065,7 @@ sys
 
 
 -- psql
--- Procedure/function owners should be dbowner__main_db_dbowner__u1_obj
+-- Procedure/function owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT proname,
        proowner::regrole
 FROM pg_proc
@@ -1075,15 +1075,15 @@ ORDER BY proname;
 GO
 ~~START~~
 name#!#regrole
-dbowner__f1#!#dbowner__main_db_dbowner__u1_obj
-dbowner__f3#!#dbowner__main_db_dbowner__u1_obj
-dbowner__p1#!#dbowner__main_db_dbowner__u1_obj
-dbowner__p3#!#dbowner__main_db_dbowner__u1_obj
-dbowner__trg1#!#dbowner__main_db_dbowner__u1_obj
+dbowner__f1#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__f3#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__p1#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__p3#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__trg1#!#dbowner__main_db_dbowner__u1_bbfobj
 ~~END~~
 
 
--- Table owners should be dbowner__main_db_dbowner__u1_obj
+-- Table owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT
     n.nspname AS schema,
     c.relname AS table,
@@ -1105,18 +1105,18 @@ ORDER BY n.nspname, c.relkind, c.relname;
 GO
 ~~START~~
 name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s1#!#dbowner__seq1#!#sequence#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s1#!#dbowner__v1#!#view#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__seq3#!#sequence#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1_obj
-dbowner__main_db_dbowner__s3#!#dbowner__v3#!#view#!#dbowner__main_db_dbowner__u1_obj
+dbowner__main_db_dbowner__s1#!#dbowner__seq1#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s1#!#dbowner__v1#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__seq3#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
+dbowner__main_db_dbowner__s3#!#dbowner__v3#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
 ~~END~~
 
 
--- Schemas owner should be dbowner__main_db_dbowner__u1_obj except for dbowner__main_db_dbowner__sch_u2 and dbowner__main_db_dbowner__sch_db_owner
+-- Schemas owner should be dbowner__main_db_dbowner__u1_bbfobj except for dbowner__main_db_dbowner__sch_u2 and dbowner__main_db_dbowner__sch_db_owner
 SELECT
     r.rolname AS schema_owner,
     ns.nspname
@@ -1132,8 +1132,8 @@ ORDER BY ns.nspname;
 GO
 ~~START~~
 name#!#name
-dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s1
-dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__s3
+dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__s1
+dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__s3
 dbowner__main_db_db_owner#!#dbowner__main_db_dbowner__sch_db_owner
 dbowner__main_db_dbowner__u2#!#dbowner__main_db_dbowner__sch_u2
 ~~END~~
@@ -1294,7 +1294,7 @@ int
 create schema dbowner__sch_u1 authorization dbowner__u1
 go
 
--- Schema owners should be dbowner__main_db_dbowner__u1_obj
+-- Schema owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT
     r.rolname AS schema_owner,
     ns.nspname
@@ -1310,7 +1310,7 @@ ORDER BY ns.nspname;
 GO
 ~~START~~
 varchar#!#varchar
-dbowner__main_db_dbowner__u1_obj#!#dbowner__main_db_dbowner__sch_u1
+dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__sch_u1
 ~~END~~
 
 
@@ -1342,7 +1342,7 @@ go
 
 -- psql
 -- Before anything, let's check if internal role linking/delinking got reverted as expected
-SELECT rolname FROM pg_roles WHERE rolname = 'dbowner__main_db_dbowner__u1_obj'; -- "_obj" role should not exist
+SELECT rolname FROM pg_roles WHERE rolname = 'dbowner__main_db_dbowner__u1_bbfobj'; -- "_bbfobj" role should not exist
 go
 ~~START~~
 name
@@ -1939,7 +1939,7 @@ void
 
 
 -- psql
--- Check if dropping user, also drops the linked "_obj" role
+-- Check if dropping user, also drops the linked "_bbfobj" role
 select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
 go
 ~~START~~
@@ -1952,9 +1952,9 @@ dbowner__test_db_db_owner
 dbowner__test_db_db_securityadmin
 dbowner__test_db_dbo
 dbowner__test_db_dbowner__test_db_dbowner__u1
-dbowner__test_db_dbowner__test_db_dbowner__u1_obj
+dbowner__test_db_dbowner__test_db_dbowner__u1_bbfobj
 dbowner__test_db_dbowner__test_db_dbowner__u2
-dbowner__test_db_dbowner__test_db_dbowner__u2_obj
+dbowner__test_db_dbowner__test_db_dbowner__u2_bbfobj
 dbowner__test_db_guest
 ~~END~~
 

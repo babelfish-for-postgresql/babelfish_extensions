@@ -3857,7 +3857,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							const char* new_owner = get_obj_role(get_rolespec_name(rolspec));
 
-							/* We will not change the owner in the unlikely event that the "_obj" role does not exist */
+							/* We will not change the owner in the unlikely event that the "_bbfobj" role does not exist */
 							if (get_role_oid(new_owner, true) != InvalidOid)
 							{
 								create_schema->authrole = make_rolespec_node(new_owner);
