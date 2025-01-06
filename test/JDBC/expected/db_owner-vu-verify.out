@@ -690,14 +690,13 @@ CREATE TABLE #db_owner_roles(userName sys.SYSNAME, roleName sys.SYSNAME, loginNa
 go
 INSERT INTO #db_owner_roles EXEC sp_helpuser 'dbowner__u1';
 go
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 SELECT userName, roleName FROM #db_owner_roles;
 go
 ~~START~~
 varchar#!#varchar
 dbowner__u1#!#db_owner
-dbowner__u1#!#public
 ~~END~~
 
 DROP TABLE #db_owner_roles;
