@@ -450,8 +450,6 @@ SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 CAST(
   CASE Ext.orig_username
-    WHEN 'dbo' THEN 1
-    WHEN 'guest' THEN 2
     WHEN 'db_owner' THEN 16384
     WHEN 'db_accessadmin' THEN 16385
     WHEN 'db_securityadmin' THEN 16386
@@ -623,8 +621,26 @@ GRANT SELECT ON sys.sysusers TO PUBLIC;
 -- DATABASE_ROLE_MEMBERS
 CREATE OR REPLACE VIEW sys.database_role_members AS
 SELECT
-CAST(Auth1.oid AS INT) AS role_principal_id,
-CAST(Auth2.oid AS INT) AS member_principal_id
+CAST(
+  CASE Ext1.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16390
+    ELSE Auth1.oid
+  END AS INT) AS role_principal_id,
+CAST(
+  CASE Ext2.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16390
+    ELSE Auth2.oid
+  END AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
 INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
 INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
