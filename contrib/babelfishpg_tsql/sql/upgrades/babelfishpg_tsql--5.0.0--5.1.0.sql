@@ -135,6 +135,10 @@ $$;
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
 														IN p_moneyval NUMERIC,
 														IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
 	v_style SMALLINT;
 	v_format VARCHAR COLLATE "C";
 	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
