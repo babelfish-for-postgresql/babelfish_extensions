@@ -661,7 +661,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
-		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
+		AND (Ext2.orig_username IS NULL OR Ext2.type = 'R')
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
@@ -732,7 +732,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
-		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
+		AND (Ext2.orig_username IS NULL OR Ext2.type = 'R')
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
