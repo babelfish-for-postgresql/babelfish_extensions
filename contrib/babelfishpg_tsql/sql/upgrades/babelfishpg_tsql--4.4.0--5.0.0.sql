@@ -276,7 +276,7 @@ GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sysadmin';
 
 -- At this point, there will be only one database fixed role which is db_owner.
-UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1, type = 'R' WHERE orig_username = 'db_owner';
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
 CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
