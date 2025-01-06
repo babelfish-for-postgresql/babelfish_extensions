@@ -1390,7 +1390,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
 		/*
-         * find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+                 * find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
 		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
 		 * of return type 
 		 */
