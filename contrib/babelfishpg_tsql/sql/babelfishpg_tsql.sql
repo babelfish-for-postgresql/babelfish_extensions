@@ -1370,6 +1370,7 @@ FROM sys.sp_column_privileges_internal()
 WHERE GRANTEE NOT IN ('db_datareader', 'db_datawriter');
 GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
 
+-- TODO: BABEL-5523
 CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
