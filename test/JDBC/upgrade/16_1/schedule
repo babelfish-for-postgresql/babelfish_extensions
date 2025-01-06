@@ -459,7 +459,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-test_windows_login
+test_windows_login_before-17_2
 test_windows_sp_helpuser
 TestXML
 timefromparts
@@ -472,7 +472,7 @@ doublequoted_string
 alter_authorization_change_db_owner
 sp_changedbowner
 datetimeoffset-timezone
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 host_id-before-16_5-or-15_9
 linked_srv_4229
 BABEL-4175
@@ -559,4 +559,5 @@ test_conv_string_to_datetimeoffset-before-17_3
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_3
 BABEL-5031
+test_conv_money_to_varchar
 

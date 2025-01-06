@@ -772,7 +772,7 @@ BEGIN
         JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
         JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
@@ -802,46 +802,21 @@ BEGIN
  	
 	IF (COALESCE(@table_owner, '') = '')
 	BEGIN
-		
-		IF EXISTS ( 
-			SELECT * FROM sys.sp_column_privileges_view 
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
-			)
-		BEGIN 
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
-		ELSE
-		BEGIN
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
+        SELECT
+        TABLE_QUALIFIER,
+        TABLE_OWNER,
+        TABLE_NAME,
+        COLUMN_NAME,
+        GRANTOR,
+        GRANTEE,
+        PRIVILEGE,
+        IS_GRANTABLE
+        FROM sys.sp_column_privileges_view
+        WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+            AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+            AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+            AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+        ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 	ELSE
 	BEGIN
@@ -892,7 +867,7 @@ BEGIN
         JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
     WHERE t4.privilege_type = 'DELETE';
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
@@ -2660,9 +2635,7 @@ DECLARE
     tz_offset PG_CATALOG.TEXT;
     tz_name PG_CATALOG.TEXT;
     lower_tzn PG_CATALOG.TEXT;
-    prev_res PG_CATALOG.TEXT;
     result PG_CATALOG.TEXT;
-    is_dstt bool;
     tz_diff PG_CATALOG.TEXT;
     input_expr_tx PG_CATALOG.TEXT;
     input_expr_tmz TIMESTAMPTZ;
@@ -2683,31 +2656,25 @@ BEGIN
     END IF;
 
     IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
-        input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        input_expr_tx := PG_CATALOG.concat(input_expr_tx,tz_offset);
-        return cast(input_expr_tx as sys.datetimeoffset);
+        input_expr_tx := input_expr::TEXT || ' ' || tz_name;
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
         input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        result := PG_CATALOG.concat(result,tz_offset);
-        return cast(result as sys.datetimeoffset);
     ELSE
         RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
     END IF;
-       
+
+    input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+    result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+    tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
+
+    if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := PG_CATALOG.concat('+',tz_diff);
+    END IF;
+
+    tz_offset := PG_CATALOG.left(tz_diff,6);
+    result := PG_CATALOG.concat(result,tz_offset);
+
+    return cast(result as sys.datetimeoffset);     
 END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;

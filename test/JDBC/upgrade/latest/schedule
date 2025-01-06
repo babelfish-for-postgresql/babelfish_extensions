@@ -484,7 +484,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
 datetimeoffset-timezone
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 host_id
 drop_index
 linked_srv_4229
@@ -600,4 +600,5 @@ db_owner
 smalldatetime_date_cmp
 BABEL-2961
 BABEL-5031
+test_conv_money_to_varchar
 
