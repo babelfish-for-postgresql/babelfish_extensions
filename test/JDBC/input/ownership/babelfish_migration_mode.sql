@@ -1,4 +1,20 @@
--- tsql
+CREATE TABLE babelfish_migration_mode_tbl (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
+GO
+
+CREATE TABLE babelfish_migration_mode_catalog_status (catalog_name VARCHAR(50), num INT)
+GO
+
+CREATE TABLE babelfish_migration_mode_catalog_status2 (catalog_name VARCHAR(50), num INT)
+GO
+
+CREATE PROC babelfish_migration_mode_compare AS
+BEGIN
+SELECT * FROM babelfish_migration_mode_catalog_status
+EXCEPT
+SELECT * FROM babelfish_migration_mode_catalog_status2
+END
+GO
+
 -- Test initial databases
 SELECT COUNT(*) FROM pg_roles where rolname = 'sysadmin';
 GO
@@ -128,6 +144,9 @@ GO
 DROP DATABASE babelfish_migration_mode_db2
 GO
 
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+
 INSERT INTO babelfish_migration_mode_catalog_status2 
 SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
 GO
@@ -163,4 +182,16 @@ GO
 
 -- Check catalog status
 EXEC babelfish_migration_mode_compare
+GO
+
+DROP PROC babelfish_migration_mode_compare
+GO
+
+DROP TABLE babelfish_migration_mode_tbl
+GO
+
+DROP TABLE babelfish_migration_mode_catalog_status
+GO
+
+DROP TABLE babelfish_migration_mode_catalog_status2
 GO
