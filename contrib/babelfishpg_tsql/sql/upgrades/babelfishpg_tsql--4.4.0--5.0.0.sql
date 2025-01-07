@@ -276,7 +276,7 @@ GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sysadmin';
 
 -- At this point, there will be only one database fixed role which is db_owner.
-UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1, type = 'R' WHERE orig_username = 'db_owner';
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
 CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
@@ -661,6 +661,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
+		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
@@ -731,6 +732,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
+		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
