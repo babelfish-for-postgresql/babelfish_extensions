@@ -132,7 +132,7 @@ SELECT DATEDIFF(quarter, @date1, @date2) as quarter_diff
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -144,7 +144,7 @@ SELECT DATEDIFF(qq, @date1, @date2) as qq_diff
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -241,7 +241,7 @@ SELECT DATEDIFF(quarter, @date1, @date2) as quarter_diff
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -253,7 +253,7 @@ SELECT DATEDIFF(qq, @date1, @date2) as qq_diff
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 

@@ -1318,6 +1318,8 @@ timestamp_diff(PG_FUNCTION_ARGS)
 	int32 seconddiff;
 	int32 millisecdiff;
 	int32 microsecdiff;
+	int32 days_in_timestamp1;
+	int32 days_in_timestamp2;
 	struct pg_tm tt1,
 			   *tm1 = &tt1;
 	fsec_t		fsec1;
@@ -1340,16 +1342,16 @@ timestamp_diff(PG_FUNCTION_ARGS)
 	type = DecodeUnits(0, lowunits, &val);
 
 	// Decode units does not handle doy properly
-	if(strncmp(lowunits, "doy", 3) == 0) {
+	if(strlen(lowunits) == 3 && strncmp(lowunits, "doy", 3) == 0) {
 		type = UNITS;
 		val = DTK_DOY;
 	}
 
-	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+	if(strlen(lowunits) == 10 && strncmp(lowunits, "nanosecond", 10) == 0) {
 		type = UNITS;
 		val = DTK_NANO;
 	}
-	if(strncmp(lowunits, "weekday", 7) == 0) {
+	if(strlen(lowunits) == 7 && strncmp(lowunits, "weekday", 7) == 0) {
 		type = UNITS;
 		val = DTK_DAY;
 	}
@@ -1364,6 +1366,21 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					yeardiff = tm2->tm_year - tm1->tm_year;
 					monthdiff = tm2->tm_mon - tm1->tm_mon;
 					diff = (yeardiff * 12 + monthdiff) / 3;
+					/* Calculate if quarter boundary is crossed for the remaining months */
+					if (monthdiff % 3 > 0)
+					{
+						if (yeardiff >= 0 && ((tm1->tm_mon - 1) % 3 > (tm2->tm_mon - 1) % 3))
+							diff++;
+						else if (yeardiff < 0 && ((tm1->tm_mon - 1) % 3 < (tm2->tm_mon - 1) % 3))
+							diff--;
+					}
+					else if (monthdiff % 3 < 0)
+					{
+						if (yeardiff > 0 && ((tm1->tm_mon - 1) % 3 > (tm2->tm_mon - 1) % 3))
+							diff++;
+						else if (yeardiff <= 0 && ((tm1->tm_mon - 1) % 3 < (tm2->tm_mon - 1) % 3))
+							diff--;
+					}
 					break;
 				case DTK_MONTH:
 					yeardiff = tm2->tm_year - tm1->tm_year;
@@ -1371,10 +1388,18 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					diff = yeardiff * 12 + monthdiff;
 					break;
 				case DTK_WEEK:
-					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					days_in_timestamp1 = days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					days_in_timestamp2 = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year);
+					daydiff = days_in_timestamp2 - days_in_timestamp1;
 					diff = daydiff / 7;
-					if(daydiff % 7 >= 4)
-						diff++;
+					/* Calculate if saturday-sunday boundary is crossed for the remaining days */
+					if (abs(daydiff) % 7 > ((Max(days_in_timestamp1, days_in_timestamp2) - 1) % 7))
+					{
+						if (daydiff < 0)
+							diff--;
+						else
+							diff++;
+					}
 					break;
 				case DTK_DAY:
 				case DTK_DOY:
@@ -1462,7 +1487,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 	if(overflow) {
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart")));
+				 errmsg("The %s function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use %s with a less precise datepart.", "datediff", "datediff")));
 	}
 
 	PG_RETURN_INT32(diff);
@@ -1489,6 +1514,8 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 	int64 seconddiff;
 	int64 millisecdiff;
 	int64 microsecdiff;
+	int64 days_in_timestamp1;
+	int64 days_in_timestamp2;
 	struct pg_tm tt1,
 			   *tm1 = &tt1;
 	fsec_t		fsec1;
@@ -1511,15 +1538,15 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 	type = DecodeUnits(0, lowunits, &val);
 
 	// Decode units does not handle doy or nano properly
-	if(strncmp(lowunits, "doy", 3) == 0) {
+	if(strlen(lowunits) == 3 && strncmp(lowunits, "doy", 3) == 0) {
 		type = UNITS;
 		val = DTK_DOY;
 	}
-	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+	if(strlen(lowunits) == 10 && strncmp(lowunits, "nanosecond", 10) == 0) {
 		type = UNITS;
 		val = DTK_NANO;
 	}
-	if(strncmp(lowunits, "weekday", 7) == 0) {
+	if(strlen(lowunits) == 7 && strncmp(lowunits, "weekday", 7) == 0) {
 		type = UNITS;
 		val = DTK_DAY;
 	}
@@ -1535,6 +1562,21 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 					yeardiff = tm2->tm_year - tm1->tm_year;
 					monthdiff = tm2->tm_mon - tm1->tm_mon;
 					diff = (yeardiff * 12 + monthdiff) / 3;
+					/* Calculate if quarter boundary is crossed for the remaining months */
+					if (monthdiff % 3 > 0)
+					{
+						if (yeardiff >= 0 && ((tm1->tm_mon - 1) % 3 > (tm2->tm_mon - 1) % 3))
+							diff++;
+						else if (yeardiff < 0 && ((tm1->tm_mon - 1) % 3 < (tm2->tm_mon - 1) % 3))
+							diff--;
+					}
+					else if (monthdiff % 3 < 0)
+					{
+						if (yeardiff > 0 && ((tm1->tm_mon - 1) % 3 > (tm2->tm_mon - 1) % 3))
+							diff++;
+						else if (yeardiff <= 0 && ((tm1->tm_mon - 1) % 3 < (tm2->tm_mon - 1) % 3))
+							diff--;
+					}
 					break;
 				case DTK_MONTH:
 					yeardiff = tm2->tm_year - tm1->tm_year;
@@ -1542,10 +1584,18 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 					diff = yeardiff * 12 + monthdiff;
 					break;
 				case DTK_WEEK:
-					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					days_in_timestamp1 = days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					days_in_timestamp2 = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year);
+					daydiff = days_in_timestamp2 - days_in_timestamp1;
 					diff = daydiff / 7;
-					if(daydiff % 7 >= 4)
-						diff++;
+					/* Calculate if saturday-sunday boundary is crossed for the remaining days */
+					if (abs(daydiff) % 7 > ((Max(days_in_timestamp1, days_in_timestamp2) - 1) % 7))
+					{
+						if (daydiff < 0)
+							diff--;
+						else
+							diff++;
+					}
 					break;
 				case DTK_DAY:
 				case DTK_DOY:
@@ -1627,12 +1677,12 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 	if(!validDateDiff) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\'%s\' is not a recognized %s option", lowunits, "datediff")));
+				 errmsg("\'%s\' is not a recognized %s option", lowunits, "datediff_big")));
 	}
 	if(overflow) {
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart")));
+				 errmsg("The %s function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use %s with a less precise datepart.", "datediff_big", "datediff_big")));
 	}
 
 	PG_RETURN_INT64(diff);
@@ -1738,15 +1788,15 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 
 	type = DecodeUnits(0, lowunits, &val);
 
-	if(strncmp(lowunits, "doy", 3) == 0 || strncmp(lowunits, "dayofyear", 9) == 0) {
+	if((strlen(lowunits) == 3 && strncmp(lowunits, "doy", 3) == 0) || (strlen(lowunits) == 9 && strncmp(lowunits, "dayofyear", 9) == 0)) {
 		type = UNITS;
 		val = DTK_DOY;
 	}
-	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+	if(strlen(lowunits) == 10 && strncmp(lowunits, "nanosecond", 10) == 0) {
 		type = UNITS;
 		val = DTK_NANO;
 	}
-	if(strncmp(lowunits, "weekday", 7) == 0) {
+	if(strlen(lowunits) == 7 && strncmp(lowunits, "weekday", 7) == 0) {
 		type = UNITS;
 		val = DTK_DAY;
 	}

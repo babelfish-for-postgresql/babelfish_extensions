@@ -102,7 +102,7 @@ exec datediff_p12
 GO
 ~~ERROR (Code: 535)~~
 
-~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart.)~~
 
 
 -- 1200000000000
@@ -167,7 +167,7 @@ SELECT DATEDIFF(nanosecond, cast('1900-01-01 01:01:20.98' as datetime), cast('20
 go
 ~~ERROR (Code: 535)~~
 
-~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart.)~~
 
 
 if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
@@ -180,3 +180,927 @@ compile time error
 
 if (@@trancount > 0) rollback tran
 GO
+
+Declare @runForDate datetime = '01/22/2012';
+Declare @evaluationDate datetime = DATEADD(DAY,-1,@runForDate);
+Select DATEDIFF(wk,7,@evaluationDate)
+GO
+~~START~~
+int
+5845
+~~END~~
+
+
+-- Basic Functionality
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATE), CAST('2023-01-01' AS DATE)) AS SameDate;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATETIME), CAST('2023-01-02' AS DATETIME)) AS ConsecutiveDaysSameWeek;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATE), CAST('2022-12-25' AS DATE)) AS DifferentWeeks;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2010-01-01' AS DATE), CAST('2009-12-19' AS DATE)) AS DifferentWeeks;
+GO
+~~START~~
+int
+-2
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATE), CAST('2023-01-31' AS DATE)) AS SameQuarter;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATETIME), CAST('2023-02-01' AS DATETIME)) AS ConsecutiveMonths;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-02-01' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS ConsecutiveMonths;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATE), CAST('2023-07-25' AS DATE)) AS DifferentQuarters;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2010-01-01' AS DATE), CAST('2011-12-19' AS DATE)) AS DifferentQuarters;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- No boundary crossed
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATE), CAST('2023-01-07' AS DATE)) AS NoBoundaryCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-07' AS DATE), CAST('2023-01-01' AS DATE)) AS NoBoundaryCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATE), CAST('2023-03-31' AS DATE)) AS NoBoundaryCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- One boundary crossed
+SELECT DATEDIFF(week, CAST('2023-01-07' AS DATETIME), CAST('2023-01-08' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(wk, CAST('2023-01-07' AS DATETIME), CAST('2023-01-08' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-08' AS DATETIME), CAST('2023-01-07' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATETIME), CAST('2023-04-01' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-04-01' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(qq, CAST('2023-01-01' AS DATETIME), CAST('2022-12-31' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2022-12-31' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS OneBoundaryCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Multiple boundaries crossed
+SELECT DATEDIFF(week, CAST('2023-01-07' AS DATE), CAST('2023-01-22' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATEDIFF(ww, CAST('2023-01-07' AS DATE), CAST('2023-01-22' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-22' AS DATE), CAST('2023-01-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+-3
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-07' AS DATE), CAST('2023-01-22' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(q, CAST('2023-01-07' AS DATE), CAST('2023-01-22' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(q, CAST('2023-01-22' AS DATE), CAST('2023-01-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(q, CAST('2023-05-22' AS DATE), CAST('2023-06-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-06-22' AS DATE), CAST('2023-05-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-06-22' AS DATE), CAST('2023-07-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-07-22' AS DATE), CAST('2023-06-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-22' AS DATE), CAST('2024-01-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2024-01-22' AS DATE), CAST('2023-01-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+-4
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-22' AS DATE), CAST('2024-04-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2024-01-22' AS DATE), CAST('2023-04-07' AS DATE)) AS MultipleBoundariesCrossed;
+GO
+~~START~~
+int
+-3
+~~END~~
+
+
+-- Time-sensitive crossing
+SELECT DATEDIFF(week, CAST('2023-01-07 23:59' AS DATETIME), CAST('2023-01-08 00:00' AS DATETIME)) AS TimeSensitiveBoundary;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-08 00:00' AS DATETIME), CAST('2023-01-07 23:59' AS DATETIME)) AS TimeSensitiveBoundary;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-09-30 23:59' AS DATETIME), CAST('2023-10-01 00:00' AS DATETIME)) AS TimeSensitiveBoundary;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-10-01 00:00' AS DATETIME), CAST('2023-09-30 23:59' AS DATETIME)) AS TimeSensitiveBoundary;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+-- Overlapping across years
+SELECT DATEDIFF(week, CAST('2022-12-31' AS DATE), CAST('2023-01-08' AS DATE)) AS YearBoundaryCrossed;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2022-12-31' AS DATE), CAST('2023-01-08' AS DATE)) AS YearBoundaryCrossed;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Week starts on Sunday
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATE), CAST('2023-01-08' AS DATE)) AS WeekStartsOnSunday;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Week ends on Saturday
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATETIME), CAST('2023-01-14' AS DATETIME)) AS WeekEndsOnSaturday;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Multiple weeks with no overlap
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATE), CAST('2023-01-28' AS DATE)) AS MultipleWeeksNoOverlap;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Start and end at exact boundaries
+SELECT DATEDIFF(week, CAST('2023-01-01 00:00:00' AS DATETIME), CAST('2023-01-08 00:00:00' AS DATETIME)) AS ExactBoundary;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01 00:00:00' AS DATETIME), CAST('2023-04-01 00:00:00' AS DATETIME)) AS ExactBoundary;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Start and end with fractional seconds
+SELECT DATEDIFF(week, CAST('2023-01-01 23:59:59.999999' AS DATETIME2), CAST('2023-01-08 00:00:00.000000' AS DATETIME2)) AS FractionalSecondsPrecision;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Leap Year
+SELECT DATEDIFF(week, CAST('2020-02-28' AS DATETIME), CAST('2020-03-01' AS DATETIME)) AS AcrossLeapDay;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2020-02-29' AS DATE), CAST('2020-03-07' AS DATE)) AS WeekWithLeapDay;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Negative Intervals
+SELECT DATEDIFF(week, CAST('2023-01-08' AS DATE), CAST('2023-01-01' AS DATE)) AS NegativeInterval;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-08 12:00' AS DATETIME), CAST('2023-01-01 12:00' AS DATETIME)) AS NegativeWithTime;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('9999-01-01' AS DATE), CAST('0001-01-01' AS DATE)) AS Date_ReverseRange;
+GO
+~~START~~
+int
+-521670
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('9999-01-01' AS DATETIME2), CAST('0001-01-01' AS DATETIME2)) AS Datetime2_ReverseRange;
+GO
+~~START~~
+int
+-521670
+~~END~~
+
+
+-- Boundary Conditions
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATETIME), CAST('2023-01-07' AS DATETIME)) AS SameWeekBoundary;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-07' AS DATE), CAST('2023-01-08' AS DATE)) AS WeekResetBoundary;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Across Years
+SELECT DATEDIFF(week, CAST('2022-12-31' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS SameWeekAcrossYears;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2022-12-31' AS DATE), CAST('2023-01-08' AS DATE)) AS DifferentWeeksAcrossYears;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- Null Inputs
+SELECT DATEDIFF(week, NULL, CAST('2023-01-01' AS DATE)) AS NullStartDate;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATETIME), NULL) AS NullEndDate;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEDIFF(week, NULL, NULL) AS BothNull;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEDIFF(quarter, NULL, CAST('2023-01-01' AS DATE)) AS NullStartDate;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATETIME), NULL) AS NullEndDate;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEDIFF(quarter, NULL, NULL) AS BothNull;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Invalid Inputs
+SELECT DATEDIFF(week, CAST('InvalidDate' AS DATE), CAST('2023-01-01' AS DATE)) AS InvalidStartDate;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type date: "InvalidDate")~~
+
+
+SELECT DATEDIFF(week, CAST('2023-01-01' AS DATETIME), CAST('InvalidDate' AS DATETIME)) AS InvalidEndDate;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "InvalidDate")~~
+
+
+SELECT DATEDIFF(quarter, CAST('InvalidDate' AS DATE), CAST('2023-01-01' AS DATE)) AS InvalidStartDate;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type date: "InvalidDate")~~
+
+
+SELECT DATEDIFF(quarter, CAST('2023-01-01' AS DATETIME), CAST('InvalidDate' AS DATETIME)) AS InvalidEndDate;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "InvalidDate")~~
+
+
+-- Large Date Ranges
+SELECT DATEDIFF(week, CAST('1923-01-01' AS DATE), CAST('2023-01-01' AS DATE)) AS CenturyDifference;
+GO
+~~START~~
+int
+5218
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS MillenniaDifference;
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('1923-01-01' AS DATE), CAST('2023-01-01' AS DATE)) AS CenturyDifference;
+GO
+~~START~~
+int
+400
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01' AS DATETIME), CAST('2023-01-01' AS DATETIME)) AS MillenniaDifference;
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- Boundary Testing
+SELECT DATEDIFF(week, CAST('0001-01-01' AS DATE), CAST('9999-12-31' AS DATE)) AS Date_FullRange;
+GO
+~~START~~
+int
+521722
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('1753-01-01' AS DATETIME), CAST('9999-12-31' AS DATETIME)) AS Datetime_FullRange;
+GO
+~~START~~
+int
+430307
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01' AS DATETIME), CAST('9999-12-31' AS DATETIME)) AS Datetime_FullRange_Error;
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01 00:00:00.000000' AS DATETIME2), CAST('9999-12-31 23:59:59.999999' AS DATETIME2)) AS Datetime2_FullRange;
+GO
+~~START~~
+int
+521722
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('1900-01-01 00:00:00' AS SMALLDATETIME), CAST('2079-06-06 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(week, CAST('1753-01-01 00:00:00' AS SMALLDATETIME), CAST('2079-06-06 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange_Error;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(week, CAST('1900-01-01 00:00:00' AS SMALLDATETIME), CAST('9999-12-31 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange_Error;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01 00:00:00.000000 +00:00' AS DATETIMEOFFSET), CAST('9999-12-31 23:59:59.999999 +00:00' AS DATETIMEOFFSET)) AS DatetimeOffset_FullRange;
+GO
+~~START~~
+int
+521722
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('12:00:00' AS TIME), CAST('18:00:00' AS TIME)) AS TimeDiff;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('12:00:00' AS TIME), CAST('2024-01-01' AS DATE)) AS TimeToDateDiff;
+GO
+~~START~~
+int
+6470
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('2024-01-01' AS DATE), CAST('12:00:00' AS TIME)) AS DateToTimeDiff;
+GO
+~~START~~
+int
+-6470
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01' AS DATE), CAST('9999-12-31' AS DATE)) AS Date_FullRange;
+GO
+~~START~~
+int
+39995
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('1753-01-01' AS DATETIME), CAST('9999-12-31' AS DATETIME)) AS Datetime_FullRange;
+GO
+~~START~~
+int
+32987
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01' AS DATETIME), CAST('9999-12-31' AS DATETIME)) AS Datetime_FullRange_Error;
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01 00:00:00.000000' AS DATETIME2), CAST('9999-12-31 23:59:59.999999' AS DATETIME2)) AS Datetime2_FullRange;
+GO
+~~START~~
+int
+39995
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('1900-01-01 00:00:00' AS SMALLDATETIME), CAST('2079-06-06 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('1753-01-01 00:00:00' AS SMALLDATETIME), CAST('2079-06-06 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange_Error;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('1900-01-01 00:00:00' AS SMALLDATETIME), CAST('9999-12-31 23:59:59' AS SMALLDATETIME)) AS Smalldatetime_FullRange_Error;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01 00:00:00.000000 +00:00' AS DATETIMEOFFSET), CAST('9999-12-31 23:59:59.999999 +00:00' AS DATETIMEOFFSET)) AS DatetimeOffset_FullRange;
+GO
+~~START~~
+int
+39995
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('12:00:00' AS TIME), CAST('18:00:00' AS TIME)) AS TimeDiff;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('12:00:00' AS TIME), CAST('2024-01-01' AS DATE)) AS TimeToDateDiff;
+GO
+~~START~~
+int
+496
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('2024-01-01' AS DATE), CAST('12:00:00' AS TIME)) AS DateToTimeDiff;
+GO
+~~START~~
+int
+-496
+~~END~~
+
+
+-- Will be fixed under BABEL-5492
+SELECT DATEDIFF(week, CAST('0001-01-01' AS DATE), CAST('9999-01-01 23:59:59' AS DATETIME)) AS DateToDatetime;
+GO
+~~START~~
+int
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01' AS DATE), CAST('9999-01-01 23:59:59' AS DATETIME)) AS DateToDatetime;
+GO
+~~START~~
+int
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- Mixed-Type Testing
+SELECT DATEDIFF(week, CAST('1753-01-01 00:00:00' AS DATETIME), CAST('9999-01-01 23:59:59.999' AS DATETIME2)) AS DatetimeToDatetime2;
+GO
+~~START~~
+int
+430255
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01 00:00:00+00:00' AS DATETIMEOFFSET), CAST('2079-06-06' AS SMALLDATETIME)) AS DatetimeOffsetToSmalldatetime;
+GO
+~~START~~
+int
+108447
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('1753-01-01 00:00:00' AS DATETIME2), CAST('1900-01-01' AS DATE)) AS Datetime2ToDate;
+GO
+~~START~~
+int
+7670
+~~END~~
+
+
+SELECT DATEDIFF(week, CAST('0001-01-01 00:00:00+00:00' AS DATETIMEOFFSET), CAST('1753-01-01 00:00:00' AS DATETIME2)) AS DatetimeOffsetTodatetime2;
+GO
+~~START~~
+int
+91415
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('1753-01-01 00:00:00' AS DATETIME), CAST('9999-01-01 23:59:59.999' AS DATETIME2)) AS DatetimeToDatetime2;
+GO
+~~START~~
+int
+32984
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01 00:00:00+00:00' AS DATETIMEOFFSET), CAST('2079-06-06' AS SMALLDATETIME)) AS DatetimeOffsetToSmalldatetime;
+GO
+~~START~~
+int
+8313
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('1753-01-01 00:00:00' AS DATETIME2), CAST('1900-01-01' AS DATE)) AS Datetime2ToDate;
+GO
+~~START~~
+int
+588
+~~END~~
+
+
+SELECT DATEDIFF(quarter, CAST('0001-01-01 00:00:00+00:00' AS DATETIMEOFFSET), CAST('1753-01-01 00:00:00' AS DATETIME2)) AS DatetimeOffsetTodatetime2;
+GO
+~~START~~
+int
+7008
+~~END~~
+
+
+-- Test Cases for Different Time Zones in DATETIMEOFFSET
+SELECT DATEDIFF(week, '2023-01-01 00:00:00+00:00', '2023-01-08 00:00:00+05:30') AS SameTimeDifferentOffsets;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, '2023-01-01 00:00:00+00:00', '2023-01-08 05:30:00+05:30') AS SameTimeDifferentOffsets;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(week, '2023-01-01 00:00:00-05:00', '2023-01-01 00:00:00+01:00') AS StartEarlierDifferentZone;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(week, '2024-01-05 23:59:59+00:00', '2024-01-06 00:00:01+05:30') AS CrossWeekBoundary;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(week, '2000-01-01 00:00:00+00:00', '2023-01-01 00:00:00+10:00') AS LargeIntervalDifferentOffsets;
+GO
+~~START~~
+int
+1200
+~~END~~
+
+
+SELECT DATEDIFF(week, '2023-01-01 00:00:00+05:30', '2000-01-01 00:00:00+00:00') AS ReverseIntervalDifferentOffsets;
+GO
+~~START~~
+int
+-1200
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2023-01-01 00:00:00+00:00', '2023-04-01 00:00:00+05:30') AS SameTimeDifferentOffsets;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2023-01-01 00:00:00+00:00', '2023-04-01 05:30:00+05:30') AS SameTimeDifferentOffsets;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2023-01-01 00:00:00-05:00', '2023-01-01 00:00:00+01:00') AS StartEarlierDifferentZone;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2023-12-31 23:59:59+00:00', '2024-01-01 00:00:01+05:30') AS CrossQuarterBoundary;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2000-01-01 00:00:00+00:00', '2023-01-01 00:00:00+10:00') AS LargeIntervalDifferentOffsets;
+GO
+~~START~~
+int
+91
+~~END~~
+
+
+SELECT DATEDIFF(quarter, '2023-01-01 00:00:00+05:30', '2000-01-01 00:00:00+00:00') AS ReverseIntervalDifferentOffsets;
+GO
+~~START~~
+int
+-91
+~~END~~
+

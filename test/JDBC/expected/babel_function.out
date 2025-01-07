@@ -1369,7 +1369,7 @@ select datediff(week,CAST('2037-03-01 23:30:05.523'AS sys.datetime),CAST('2036-0
 GO
 ~~START~~
 int
--52
+-53
 ~~END~~
 
 select datediff(hour, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
@@ -1426,7 +1426,7 @@ select datediff(quarter,CAST('2016-12-26 23:30:05.523456'AS datetime2), CAST('20
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select datediff(hour, CAST('2016-12-26 23:30:05'AS smalldatetime), CAST('2016-12-28 21:29:05'AS smalldatetime));
