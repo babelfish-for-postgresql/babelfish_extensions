@@ -64,9 +64,7 @@ hashbytes(PG_FUNCTION_ARGS)
         bytea	        *result;
         StringInfoData	utf16_data;
 
-        /*
-         * If the input_type is nvarchar then we convert it to UTF-16 encoding
-         */
+        /* If the input_type is nvarchar then we convert it to UTF-16 encoding */
 	initStringInfo(&utf16_data);
         if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
         {
