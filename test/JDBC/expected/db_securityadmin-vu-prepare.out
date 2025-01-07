@@ -41,17 +41,6 @@ GO
 CREATE SEQUENCE babel_5135_schema1.babel_5135_seq1 START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999 CYCLE;
 GO
 
-CREATE VIEW babel_5135_show_role_mem AS
-SELECT 
-roles.name AS RolePrincipalName
-, members.name AS MemberPrincipalName
-FROM sys.database_role_members AS db_role_mems
-INNER JOIN sys.database_principals AS roles
-    ON db_role_mems.role_principal_id = roles.principal_id
-INNER JOIN sys.database_principals AS members 
-    ON db_role_mems.member_principal_id = members.principal_id order by MemberPrincipalName;
-GO
-
 CREATE PROCEDURE babel_5135_roleop_proc1 AS BEGIN CREATE ROLE babel_5135_role2; ALTER ROLE babel_5135_role2 WITH NAME = babel_5135_role3; DROP ROLE babel_5135_role3; END
 GO
 CREATE PROCEDURE babel_5135_roleop_proc2 AS BEGIN ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1; END
@@ -99,15 +88,4 @@ USE babel_5135_db1;
 GO
 
 create user babel_5135_u1 for login babel_5135_l1;
-GO
-
-CREATE VIEW babel_5135_show_role_mem AS
-SELECT 
-roles.name AS RolePrincipalName
-, members.name AS MemberPrincipalName
-FROM sys.database_role_members AS db_role_mems
-INNER JOIN sys.database_principals AS roles
-    ON db_role_mems.role_principal_id = roles.principal_id
-INNER JOIN sys.database_principals AS members 
-    ON db_role_mems.member_principal_id = members.principal_id order by MemberPrincipalName;
 GO
