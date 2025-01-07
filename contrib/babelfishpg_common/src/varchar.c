@@ -48,8 +48,154 @@ void		TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int ch
 void		TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 void		TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 static inline int varcharTruelen(VarChar *arg);
+static char *pg_int64tostr(char *str, int64 value);
+static char *pg_int64tostr_zeropad(char *str, int64 value, int64 padding);
 
 #define DEFAULT_LCID 1033
+
+/*
+  * pg_int64tostr Converts 'value' into a decimal string representation of the
+  * number.
+  *
+  * Caller must ensure that 'str' points to enough memory to hold the result
+  * (at least 21 bytes, counting a leading sign and trailing NUL). Return
+  * value is a pointer to the new NUL terminated end of string.
+  */
+static char *
+pg_int64tostr(char *str, int64 value)
+{
+	char	   *start;
+	char	   *end;
+
+	/*
+	 * Handle negative numbers in a special way. We can't just append a '-'
+	 * prefix and reverse the sign as on two's complement machines negative
+	 * numbers can be 1 further from 0 than positive numbers, we do it this
+	 * way so we properly handle the smallest possible value.
+	 */
+	if (value < 0)
+	{
+		*str++ = '-';
+
+		/* mark the position we must reverse the string from. */
+		start = str;
+
+		/* Compute the result string backwards. */
+		do
+		{
+			int64		remainder;
+			int64		oldval = value;
+
+			value /= 10;
+			remainder = oldval - value * 10;
+			*str++ = '0' + -remainder;
+		} while (value != 0);
+	}
+	else
+	{
+		/* mark the position we must reverse the string from. */
+		start = str;
+		do
+		{
+			int64		remainder;
+			int64		oldval = value;
+
+			value /= 10;
+			remainder = oldval - value * 10;
+			*str++ = '0' + remainder;
+		} while (value != 0);
+	}
+
+	/* Add trailing NUL byte, and back up 'str' to the last character. */
+	end = str;
+	*str-- = '\0';
+
+	/* Reverse string. */
+	while (start < str)
+	{
+		char		swap = *start;
+
+		*start++ = *str;
+		*str-- = swap;
+	}
+	return end;
+}
+
+/*
+ * pg_int64tostr_zeropad
+ *		Converts 'value' into a decimal string representation of the number.
+ *		'padding' specifies the minimum width of the number. Any extra space
+ *		is filled up by prefixing the number with zeros. The return value is a
+ *		pointer to the NUL terminated end of the string.
+ *
+ * Note: Callers should ensure that 'padding' is above zero.
+ * Note: This function is optimized for the case where the number is not too
+ *		 big to fit inside of the specified padding.
+ * Note: Caller must ensure that 'str' points to enough memory to hold the
+		 result (at least 21 bytes, counting a leading sign and trailing NUL,
+		 or padding + 1 bytes, whichever is larger).
+ */
+static char *
+pg_int64tostr_zeropad(char *str, int64 value, int64 padding)
+{
+	char	   *start = str;
+	char	   *end = &str[padding];
+	int64		num = value;
+
+	Assert(padding > 0);
+
+	/*
+	 * Handle negative numbers in a special way. We can't just append a '-'
+	 * prefix and reverse the sign as on two's complement machines negative
+	 * numbers can be 1 further from 0 than positive numbers, we do it this
+	 * way so we properly handle the smallest possible value.
+	 */
+	if (num < 0)
+	{
+		*start++ = '-';
+		padding--;
+
+		/*
+		 * Build the number starting at the end. Here remainder will be a
+		 * negative number, we must reverse this sign on this before adding
+		 * '0' in order to get the correct ASCII digit
+		 */
+		while (padding--)
+		{
+			int64		remainder;
+			int64		oldval = num;
+
+			num /= 10;
+			remainder = oldval - num * 10;
+			start[padding] = '0' + -remainder;
+		}
+	}
+	else
+	{
+		/* build the number starting at the end */
+		while (padding--)
+		{
+			int64		remainder;
+			int64		oldval = num;
+
+			num /= 10;
+			remainder = oldval - num * 10;
+			start[padding] = '0' + remainder;
+		}
+	}
+
+	/*
+	 * If padding was not high enough to fit this number then num won't have
+	 * been divided down to zero. We'd better have another go, this time we
+	 * know there won't be any zero padding required so we can just enlist the
+	 * help of pg_int64tostr()
+	 */
+	if (num != 0)
+		return pg_int64tostr(str, value);
+
+	*end = '\0';
+	return end;
+}
 
 /*
  * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
@@ -382,6 +528,8 @@ PG_FUNCTION_INFO_V1(varchar2date);
 PG_FUNCTION_INFO_V1(varchar2time);
 PG_FUNCTION_INFO_V1(varchar2money);
 PG_FUNCTION_INFO_V1(varchar2numeric);
+PG_FUNCTION_INFO_V1(fixeddecimal2varchar);
+PG_FUNCTION_INFO_V1(fixeddecimal2bpchar);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -928,6 +1076,111 @@ varchar2numeric(PG_FUNCTION_ARGS)
 												 Int32GetDatum(-1)));
 	pfree(str);
 	PG_RETURN_NUMERIC(result);
+}
+
+/*
+ * fixeddecimal2str_helper
+ * Converts a fixed decimal value to a string, rounding it off to 2 decimal points.
+ */
+#define FIXEDDECIMAL_MULTIPLIER_NEW 100LL
+#define FIXEDDECIMAL_SCALE_NEW 2
+static char *
+fixeddecimal2str_helper(int64 val, char *buffer)
+{
+	char	   *ptr = buffer;
+	int64		integralpart;
+	int64		fractionalpart;
+	int64		last_digit = (val % FIXEDDECIMAL_MULTIPLIER_NEW) / 10;
+
+	/*
+	 * By default, last 4 digits are taken as digits after decimal but as we only need
+	 * 2 decimal points, remove last two decimal digits, round off remaining value and finally
+	 * use a new FIXEDDECIMAL_MULTIPLIER downscaled by 100.
+	 */
+	val = val / FIXEDDECIMAL_MULTIPLIER_NEW;
+	if (last_digit >= 5)
+		val = val >= 0 ? val + 1LL : val - 1LL;
+
+	integralpart = val / FIXEDDECIMAL_MULTIPLIER_NEW;
+	fractionalpart = val % FIXEDDECIMAL_MULTIPLIER_NEW;
+
+	if (val < 0)
+	{
+		fractionalpart = -fractionalpart;
+
+		/*
+		 * Handle special case for negative numbers where the intergral part
+		 * is zero. pg_int64tostr() won't prefix with "-0" in this case, so
+		 * we'll do it manually
+		 */
+		if (integralpart == 0)
+			*ptr++ = '-';
+	}
+	ptr = pg_int64tostr(ptr, integralpart);
+	*ptr++ = '.';
+	ptr = pg_int64tostr_zeropad(ptr, fractionalpart, FIXEDDECIMAL_SCALE_NEW);
+	buffer[(ptr - buffer)] = '\0';
+	return ptr;
+}
+#undef FIXEDDECIMAL_MULTIPLIER_NEW
+#undef FIXEDDECIMAL_SCALE_NEW
+
+Datum
+fixeddecimal2varchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	char		buf[MAXINT8LEN + 1];
+	char	   *end = fixeddecimal2str_helper(val, buf);
+	int32		len = (end - buf);
+	Datum		res;
+
+	maxByteLen -= VARHDRSZ;
+	if (maxByteLen >= 0 && len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar.")));
+
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(buf),
+							   Int32GetDatum(-1),
+							   BoolGetDatum(isExplicit));
+
+	PG_RETURN_DATUM(res);
+}
+
+Datum
+fixeddecimal2bpchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	char		buf[MAXINT8LEN + 1];
+	char	   *buf_padded;
+	char	   *end = fixeddecimal2str_helper(val, buf);
+	int32		len = (end - buf);
+	Datum		res;
+
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
+	maxByteLen -= VARHDRSZ;
+	if (len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar.")));
+
+	/* Left pad money value with the spaces */
+	buf_padded = (char *) palloc(maxByteLen + 1);
+	memset(buf_padded, ' ', maxByteLen - len);
+	memcpy(buf_padded + maxByteLen - len, buf, len);
+	buf_padded[maxByteLen] = '\0';
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   Int32GetDatum(-1),
+							   Int32GetDatum(isExplicit));
+
+	PG_RETURN_DATUM(res);
 }
 
 /*****************************************************************************
