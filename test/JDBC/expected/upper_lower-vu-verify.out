@@ -558,9 +558,13 @@ DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
 SELECT UPPER(@myid)
 SELECT LOWER(@myid)
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: The function upper is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function lower is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 DECLARE @myid sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -597,9 +601,15 @@ DECLARE @myid geometry = geometry::STGeomFromText('POINT (1 2)', 0)
 SELECT UPPER(CAST (@myid AS VARCHAR))
 SELECT LOWER(CAST (@myid AS VARCHAR))
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~START~~
+varchar
+point(1 2)
+~~END~~
 
 
 Select UPPER(a), LOWER(a) from upper_lower_text
