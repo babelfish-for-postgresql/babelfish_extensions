@@ -260,7 +260,18 @@ AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -291,7 +302,12 @@ WHERE Ext.database_name = DB_NAME()
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
+CAST(
+  CASE name
+    WHEN 'public' THEN 0
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
 CAST(type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -315,6 +331,41 @@ CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- DATABASE_ROLE_MEMBERS
+CREATE OR REPLACE VIEW sys.database_role_members AS
+SELECT
+CAST(
+  CASE Ext1.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth1.oid
+  END AS INT) AS role_principal_id,
+CAST(
+  CASE Ext2.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth2.oid
+  END AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME() 
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
