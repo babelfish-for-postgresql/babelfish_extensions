@@ -11,9 +11,6 @@
 all
 
 ignore#!#BABEL-4279
-ignore#!#babelfish_migration_mode-vu-prepare
-ignore#!#babelfish_migration_mode-vu-verify
-ignore#!#babelfish_migration_mode-vu-cleanup
 ignore#!#test_search_path
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -136,6 +133,9 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+ignore#!#babelfish_migration_mode-vu-prepare
+ignore#!#babelfish_migration_mode-vu-verify
+ignore#!#babelfish_migration_mode-vu-cleanup
 
 ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-prepare
 ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify
