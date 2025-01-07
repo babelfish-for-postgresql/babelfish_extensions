@@ -3852,13 +3852,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							owner_oid != get_dbo_oid(db_name, false) && owner_oid != db_owner_oid)
 						{
 							const char* new_owner = get_obj_role(get_rolespec_name(rolspec));
-
-							/* We will not change the owner in the unlikely event that the "_bbfobj" role does not exist */
-							if (get_role_oid(new_owner, true) != InvalidOid)
-							{
-								create_schema->authrole = make_rolespec_node(new_owner);
-								alter_owner = false;
-							}
+							create_schema->authrole = make_rolespec_node(new_owner);
+							alter_owner = false;
 						}
 					}
 
