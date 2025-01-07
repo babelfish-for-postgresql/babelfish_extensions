@@ -2744,14 +2744,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Throw error if there is a possibility of name clash with an internal role */
 					role_oid = get_role_oid(stmt->role, true);
 
-					if ((role_oid != InvalidOid) &&
+					if (OidIsValid(role_oid) &&
 						(is_admin_of_role(get_bbf_role_admin_oid(), role_oid)))
 					{
-						NameData rolname_namedata;
-						HeapTuple tuple_cache;
-
-						namestrcpy(&rolname_namedata, stmt->role);
-						tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname_namedata));
+						HeapTuple tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(stmt->role));
 
 						/*
 						 * If role:

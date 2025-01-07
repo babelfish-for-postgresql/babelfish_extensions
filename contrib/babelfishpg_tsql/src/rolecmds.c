@@ -2848,7 +2848,7 @@ static List
 	Relation	rel;
 
 	/* If role is already member of db_owner role, do nothing */
-	if (is_member_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+	if (has_privs_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
 		return stmt_list;
 
 	initStringInfo(&query);
@@ -2959,7 +2959,7 @@ static List
 	Relation	rel;
 
 	/* If role is already not a member of db_owner role, do nothing */
-	if (!is_member_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+	if (!has_privs_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
 		return stmt_list;
 
 	initStringInfo(&query);
@@ -3144,53 +3144,41 @@ change_object_owner_if_db_owner()
 
 	obj_rolname = get_obj_role(rolname);
 
-	if (get_role_oid(obj_rolname, true) == InvalidOid)
-	{
-		/*
-		 * Instead of failing the ownership reassignment in the
-		 * unlikely event that a user that is member of db_owner
-		 * role does not have corresponding "_bbfobj" role, we will
-		 * silently skip the ownership reassignment
-		 */
-	}
-	else
-	{
-		initStringInfo(&query);
-		appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
+	initStringInfo(&query);
+	appendStringInfoString(&query, "REASSIGN OWNED BY dummy TO dummy");
 
-		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-		if (list_length(parsetree_list) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Expected 1 statement but got %d statements after parsing",
-							list_length(parsetree_list))));
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("Expected 1 statement but got %d statements after parsing",
+						list_length(parsetree_list))));
 
-		/* Update the dummy statement with real values */
-		n = parsetree_nth_stmt(parsetree_list, 0);
-		update_ReassignOwnedStmt(n, rolname, obj_rolname);
+	/* Update the dummy statement with real values */
+	n = parsetree_nth_stmt(parsetree_list, 0);
+	update_ReassignOwnedStmt(n, rolname, obj_rolname);
 
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = n;
-		wrapper->stmt_location = 0;
-		wrapper->stmt_len = 0;
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = n;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
 
-		/* do this step */
-		ProcessUtility(wrapper,
-						"(REASSIGN OWNED )",
-						false,
-						PROCESS_UTILITY_SUBCOMMAND,
-						NULL,
-						NULL,
-						None_Receiver,
-						NULL);
+	/* do this step */
+	ProcessUtility(wrapper,
+					"(REASSIGN OWNED )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
 
-		CommandCounterIncrement();
+	CommandCounterIncrement();
 
-		pfree(query.data);
-	}
+	pfree(query.data);
 
 	if (obj_rolname)
 		pfree(obj_rolname);
