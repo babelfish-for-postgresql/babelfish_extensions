@@ -1090,7 +1090,7 @@ fixeddecimal2str_helper(int64 val, char *buffer)
 	char	   *ptr = buffer;
 	int64		integralpart;
 	int64		fractionalpart;
-	int64		last_digit = (val % FIXEDDECIMAL_MULTIPLIER_NEW) / 10;
+	int64		last_digit = abs(val / 10) % 10;
 
 	/*
 	 * By default, last 4 digits are taken as digits after decimal but as we only need
@@ -1130,7 +1130,6 @@ fixeddecimal2varchar(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
 	int32		maxByteLen = PG_GETARG_INT32(1);
-	bool		isExplicit = PG_GETARG_BOOL(2);
 	char		buf[MAXINT8LEN + 1];
 	char	   *end = fixeddecimal2str_helper(val, buf);
 	int32		len = (end - buf);
@@ -1144,8 +1143,8 @@ fixeddecimal2varchar(PG_FUNCTION_ARGS)
 
 	res = DirectFunctionCall3(varcharin,
 							   CStringGetDatum(buf),
-							   Int32GetDatum(-1),
-							   BoolGetDatum(isExplicit));
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
 
 	PG_RETURN_DATUM(res);
 }
@@ -1155,7 +1154,6 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
 	int32		maxByteLen = PG_GETARG_INT32(1);
-	bool		isExplicit = PG_GETARG_BOOL(2);
 	char		buf[MAXINT8LEN + 1];
 	char	   *buf_padded;
 	char	   *end = fixeddecimal2str_helper(val, buf);
@@ -1177,8 +1175,8 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 	buf_padded[maxByteLen] = '\0';
 	res = DirectFunctionCall3(bpcharin,
 							   CStringGetDatum(buf_padded),
-							   Int32GetDatum(-1),
-							   Int32GetDatum(isExplicit));
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
 
 	PG_RETURN_DATUM(res);
 }

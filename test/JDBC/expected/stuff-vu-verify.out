@@ -2521,7 +2521,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-123abcd6.0000
+123abcd6.00
 ~~END~~
 
 DECLARE @inputString money = 12356;
@@ -2545,7 +2545,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc12356.0000
+abc12356.00
 ~~END~~
 
 
@@ -2554,7 +2554,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-123abcd6.0000
+123abcd6.00
 ~~END~~
 
 DECLARE @inputString smallmoney = 12356;
@@ -2578,7 +2578,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc12356.0000
+abc12356.00
 ~~END~~
 
 
@@ -2802,59 +2802,59 @@ GO
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff('abcd', 4, 1, @inputString)
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stuff('xysd', @inputString, 1, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stuff('xysd', 1, @inputString, 'abcd')
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stuff('abcd', 4, 1, @inputString)
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
@@ -2894,16 +2894,14 @@ abc<body><fruit/></body>
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff(CAST(@inputString AS VARCHAR(50)), 4, 1, 'abcd')
 GO
-~~START~~
-varchar
-POIabcdT(1 2)
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT stuff('abcd', 4, 1, CAST(@inputString AS VARCHAR(50)))
 GO
-~~START~~
-varchar
-abcPOINT(1 2)
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
