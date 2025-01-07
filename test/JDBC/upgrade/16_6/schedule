@@ -466,7 +466,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-test_windows_login
+test_windows_login_before-17_2
 test_windows_sp_helpuser
 TestXML
 timefromparts
