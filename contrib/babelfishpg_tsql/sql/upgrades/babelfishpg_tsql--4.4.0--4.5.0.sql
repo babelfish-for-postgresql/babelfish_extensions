@@ -40,6 +40,49 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data pg_catalog.VARCHAR) RENAME TO hashbytes_varchar_deprecated_4_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varchar_deprecated_4_5_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data sys.bbf_varbinary) RENAME TO hashbytes_varbinary_deprecated_4_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varbinary_deprecated_4_5_0');
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.VARCHAR) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.NVARCHAR) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.NVARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.bbf_varbinary) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';

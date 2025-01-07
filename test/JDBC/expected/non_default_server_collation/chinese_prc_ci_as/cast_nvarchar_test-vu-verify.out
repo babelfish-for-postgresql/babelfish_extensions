@@ -1,44 +1,95 @@
+-- TEST CASE 1: creating a table and then calling hashbytes for nvarchar and varchar input
+insert into TestHash values('value1', 'value1');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DATALENGTH( nvarchar_data) as nvarchar_data_datalength
+        , LEN( nvarchar_data) AS nvarchar_data_len
+        , DATALENGTH( varchar_data) as varchar_data_btyes_datalength
+        , LEN( varchar_data) AS varchar_data_len
+        , * 
+from TestHash;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar#!#varchar#!#varbinary#!#varbinary#!#varbinary#!#varbinary
+6#!#6#!#6#!#6#!#value1#!#value1#!#BFF418C872BAFEE476F578F93BAD732F499B4193#!#BFF418C872BAFEE476F578F93BAD732F499B4193#!#8107759ABABCBFA34BCB02BC4309CAF6354982AB#!#8107759ABABCBFA34BCB02BC4309CAF6354982AB
+~~END~~
+
+-- TEST CASE 2: Casting nvarchar and varchar with different algorithms using Hashbytes
+SELECT hashbytes( 'sha1', 'test string' ) as vary_string, hashbytes( 'sha1', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+661295C9CBF9D6B2F6428414504A8DEED3020641#!#B4AA115AEBADD046850F18E1DF71A8BF254CD688
+~~END~~
+
+
+SELECT hashbytes( 'MD2', 'test string' ) as vary_string, hashbytes( 'MD2', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT hashbytes( 'MD4', 'test string' ) as vary_string, hashbytes( 'MD4', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT hashbytes( 'MD5', 'test string' ) as vary_string, hashbytes( 'MD5', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+6F8DB599DE986FAB7A21625B7916589C#!#8EF34B0E4B64320AA590A0DDD043D0A8
+~~END~~
+
+
+SELECT hashbytes( 'SHA2_256', 'test string' ) as vary_string, hashbytes( 'SHA2_256', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+D5579C46DFCC7F18207013E65B44E4CB4E2C2298F4AC457BA8F82743F31E930B#!#BDB5A12B473383674D31C9068D13896278CA7979CF99CDD592C64B3994FCB5CE
+~~END~~
+
+
+SELECT hashbytes( 'SHA2_512', 'test string' ) as vary_string, hashbytes( 'SHA2_512', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+10E6D647AF44624442F388C2C14A787FF8B17E6165B83D767EC047768D8CBCB71A1A3226E7CC7816BC79C0427D94A9DA688C41A3992C7BF5E4D7CC3E0BE5DBAC#!#7740DCE2348B37BDBD313DC4577E5FA91687EB35EE3B39A4BDA39B70EA20C5FE7865289F1612946E7CD89458CE42C8AC5577FB716975FAD0F9C53F3A28B10885
+~~END~~
+
+
+SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
+GO
+~~START~~
+varbinary#!#varbinary
+661295C9CBF9D6B2F6428414504A8DEED3020641#!#B4AA115AEBADD046850F18E1DF71A8BF254CD688
+~~END~~
+
+
+SELECT hashbytes( 'sha1', 'test string')
+GO
+~~START~~
+varbinary
+661295C9CBF9D6B2F6428414504A8DEED3020641
+~~END~~
+
+--TEST CASE 3: testing hashbytes via casting a varchar to nvarchar 
+SELECT hashbytes('sha1',cast('test string' as sys.nvarchar))
+GO
+~~START~~
+varbinary
+B4AA115AEBADD046850F18E1DF71A8BF254CD688
+~~END~~
 
 
 
-
-
-
-
-
-
-
--- to do in hashbytes pr
--- -- TEST CASE 1: creating a table and then calling hashbytes for nvarchar and varchar input
--- insert into TestHash values('value1', 'value1');
--- GO
--- SELECT DATALENGTH( nvarchar_data) as nvarchar_data_datalength
---         , LEN( nvarchar_data) AS nvarchar_data_len
---         , DATALENGTH( varchar_data) as varchar_data_btyes_datalength
---         , LEN( varchar_data) AS varchar_data_len
---         , * 
--- from TestHash;
--- GO
--- -- TEST CASE 2: Casting nvarchar and varchar with different algorithms using Hashbytes
--- SELECT hashbytes( 'sha1', 'test string' ) as vary_string, hashbytes( 'sha1', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'MD2', 'test string' ) as vary_string, hashbytes( 'MD2', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'MD4', 'test string' ) as vary_string, hashbytes( 'MD4', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'MD5', 'test string' ) as vary_string, hashbytes( 'MD5', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'SHA2_256', 'test string' ) as vary_string, hashbytes( 'SHA2_256', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'SHA2_512', 'test string' ) as vary_string, hashbytes( 'SHA2_512', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
--- GO
--- SELECT hashbytes( 'sha1', 'test string')
--- GO
--- --TEST CASE 3: testing hashbytes via casting a varchar to nvarchar 
--- SELECT hashbytes('sha1',cast('test string' as sys.nvarchar))
--- GO
 --TEST CASE 4: Casting function for nvarchar to varbinary
 SELECT cast(N'test string' as varbinary);
 GO
@@ -56,28 +107,47 @@ a
 ~~END~~
 
 
+-- Test Case 5: Empty strings and NULL values
+SELECT HASHBYTES('SHA1', '') AS empty_varchar,
+       HASHBYTES('SHA1', N'') AS empty_nvarchar,
+       HASHBYTES('SHA1', NULL) AS null_input;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+DA39A3EE5E6B4B0D3255BFEF95601890AFD80709#!#DA39A3EE5E6B4B0D3255BFEF95601890AFD80709#!#<NULL>
+~~END~~
 
 
+-- Test Case 6: Unicode characters
+SELECT HASHBYTES('SHA1', N'こんにちは') AS japanese,
+       HASHBYTES('SHA1', N'Здравствуйте') AS russian,
+       HASHBYTES('SHA1', N'🙂😊😀') AS emojis;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+468B7C156768A579085BBBD1630D2ED215D3A86C#!#EBFDE11B499DEA0130EE3DFCDC632ADEA0AD71F2#!#4D4A69489A61649C1330FB5B600191E00B76B6A0
+~~END~~
 
 
--- to do in hashbytes PR
--- -- Test Case 5: Empty strings and NULL values
--- SELECT HASHBYTES('SHA1', '') AS empty_varchar,
---        HASHBYTES('SHA1', N'') AS empty_nvarchar,
---        HASHBYTES('SHA1', NULL) AS null_input;
--- GO
--- -- Test Case 6: Unicode characters
--- SELECT HASHBYTES('SHA1', N'こんにちは') AS japanese,
---        HASHBYTES('SHA1', N'Здравствуйте') AS russian,
---        HASHBYTES('SHA1', N'🙂😊😀') AS emojis;
--- GO
--- -- Test Case 8: Different collations
--- SELECT HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CI_AS) AS ci_as,
---        HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CS_AS) AS cs_as;
--- GO
--- -- Test Case 9: Combining varchar and nvarchar
--- SELECT HASHBYTES('SHA1', 'hello' + N'world') AS combined;
--- GO
+-- Test Case 8: Different collations
+SELECT HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CI_AS) AS ci_as,
+       HASHBYTES('SHA1', N'hello' COLLATE Latin1_General_CS_AS) AS cs_as;
+GO
+~~START~~
+varbinary#!#varbinary
+B6D795FBD58CC7592D955A219374339A323801A9#!#B6D795FBD58CC7592D955A219374339A323801A9
+~~END~~
+
+
+-- Test Case 9: Combining varchar and nvarchar
+SELECT HASHBYTES('SHA1', 'hello' + N'world') AS combined;
+GO
+~~START~~
+varbinary
+D981D4B037201043FFDCBD310FCDE36F44D9AAC5
+~~END~~
+
+
 -- Test Case 10: Roundtrip conversions
 SELECT CAST(CAST(N'test' AS VARBINARY(8)) AS NVARCHAR(4)) AS nvarchar_roundtrip,
        CAST(CAST('test' AS VARBINARY(8)) AS VARCHAR(4)) AS varchar_roundtrip;
@@ -100,14 +170,18 @@ varbinary#!#varbinary#!#varbinary#!#varbinary
 ~~END~~
 
 
+-- Test Case 12: Testing with special characters
+SELECT HASHBYTES('SHA1', 'Hello, World!') AS varchar_special,
+       HASHBYTES('SHA1', N'Hello, World!') AS nvarchar_special,
+       HASHBYTES('SHA1', 'Hello' + CHAR(13) + CHAR(10) + 'World') AS varchar_newline,
+       HASHBYTES('SHA1', N'Hello' + NCHAR(13) + NCHAR(10) + N'World') AS nvarchar_newline;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary#!#varbinary
+0A0A9F2A6772942557AB5355D76AF442F8F65E01#!#1F725EE9D69965F6F755140E66089A041B5AACC2#!#62E451F6ED58D1FF234A05B8467C0CEB1D4B285F#!#C97EDD9DE05497798CBA896371C594DF87043753
+~~END~~
 
--- to do in hashbytes PR
--- -- Test Case 12: Testing with special characters
--- SELECT HASHBYTES('SHA1', 'Hello, World!') AS varchar_special,
---        HASHBYTES('SHA1', N'Hello, World!') AS nvarchar_special,
---        HASHBYTES('SHA1', 'Hello' + CHAR(13) + CHAR(10) + 'World') AS varchar_newline,
---        HASHBYTES('SHA1', N'Hello' + NCHAR(13) + NCHAR(10) + N'World') AS nvarchar_newline;
--- GO
+
 -- Test Case 13: NVARCHAR -> VARBINARY -> VARCHAR -> NVARCHAR -> VARBINARY
 SELECT CAST(
     CAST(
@@ -189,17 +263,86 @@ varbinary
 
 
 
+--Test 19: Hashbytes testing for user defined hashbytes
+CREATE FUNCTION dbo.hashbytes
+(
+    @algorithm VARCHAR(50),
+    @input NVARCHAR(MAX)
+)
+RETURNS VARCHAR(8000)
+AS
+BEGIN
+    RETURN cast('hello' as varchar);
+END
+GO
 
--- to do in hashbytes PR
--- -- Test Case 19: User defined hashbytes function
--- create function dbo.hashbytes(@data sys.varchar)returns sys.varchar AS BEGIN    return "dummy hashbytes";END
--- GO
--- SELECT hashbytes( 'SHA', 'test string' ) as vary_string, hashbytes( 'SHA', N'test string' ) as unicode_string
--- GO
--- select hashbytes('abc')
--- GO
--- drop function dbo.hashbytes
--- GO
+-- Create a table for sample data
+CREATE TABLE hashbytes_table
+(
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Data NVARCHAR(100)
+);
+GO
+
+INSERT INTO hashbytes_table (Data)
+VALUES (N'Test1'), (N'Test2'), (N'Test3'), (N'Test4'), (N'Test5');
+GO
+~~ROW COUNT: 5~~
+
+
+-- Create a view
+CREATE VIEW dbo.HashedDataView
+AS
+SELECT 
+    ID,
+    Data,
+    hashbytes('SHA2_256', Data) AS HashedData
+FROM hashbytes_table;
+GO
+SELECT * FROM dbo.HashedDataView;
+GO
+~~START~~
+int#!#nvarchar#!#varbinary
+1#!#Test1#!#8A863B145DC6E4ED7AC41C08F7536C476EBAC7509E028ED2B49F8BD5A3562B9F
+2#!#Test2#!#32E6E1E134F9CC8F14B05925667C118D19244AEBCE442D6FECD2AC38CDC97649
+3#!#Test3#!#68235F4551B9C6423DF2AF7EAD63C90CDD4201AC08525BC3A41CD4755C6C86CB
+4#!#Test4#!#B9CCA56A720F2BEEE61F2E744AB3D20A95772A4315D18C5EEE251A465F078012
+5#!#Test5#!#F9CA438226AAE2A1AA8503DA8FE3AA57ACA7036CA0AD8A2A381BEC25E188C48B
+~~END~~
+
+-- Create a view
+CREATE VIEW dbo.HashedDataView1
+AS
+SELECT 
+    ID,
+    Data,
+    dbo.hashbytes('SHA2_256', Data) AS HashedData
+FROM hashbytes_table;
+GO
+
+SELECT * FROM dbo.HashedDataView1;
+GO
+~~START~~
+int#!#nvarchar#!#varchar
+1#!#Test1#!#hello
+2#!#Test2#!#hello
+3#!#Test3#!#hello
+4#!#Test4#!#hello
+5#!#Test5#!#hello
+~~END~~
+
+drop view if exists hasheddataview;
+GO
+drop view if exists hasheddataview1;
+GO
+drop function dbo.hashbytes(
+    @algorithm VARCHAR(50),
+    @input NVARCHAR(MAX)
+);
+go
+
+
+
 -- Test 20: Calling the function, procedure, views from prepare scripts
 -- Test CastNVarcharToVarbinary function
 DECLARE @TestString NVARCHAR(100) = N'Test String';
@@ -273,18 +416,27 @@ Hello, World!
 
 
 
-
 --TEST CASE 22: Calling hashbytes via function, procedure, views
 -- Test the HashMultipleTypes function
 DECLARE @TestVarchar VARCHAR(10) = 'Test';
 DECLARE @TestNVarchar NVARCHAR(10) = N'Test';
 DECLARE @TestVarbinary VARBINARY(10) = 0x54657374; -- 'Test' in ASCII
--- to do in hashbytes PR
--- SELECT * FROM dbo.HashMultipleTypes(@TestVarchar, @TestNVarchar, @TestVarbinary);
--- GO
--- -- Test the HashDemoView
--- SELECT * FROM dbo.HashDemoView;
--- GO
+SELECT * FROM dbo.HashMultipleTypes(@TestVarchar, @TestNVarchar, @TestVarbinary);
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#E6FA3CA87B1B641AB646D3B4933BBA8D0970763F030B6578A60ABDEAE7366247#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25
+~~END~~
+
+-- Test the HashDemoView
+SELECT * FROM dbo.HashDemoView;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+185F8DB32271FE25F561A6FC938B2E264306EC304EDA518007D1764826381969#!#A07E4F7343246C82B26F32E56F85418D518D8B2F2DAE77F1D56FE7AF50DB97AF#!#185F8DB32271FE25F561A6FC938B2E264306EC304EDA518007D1764826381969
+~~END~~
+
+
 --TEST CASE 23: BINARY TO NVARCHAR
 select cast(cast(N'test string' as binary) as nvarchar)
 GO
@@ -354,4 +506,20 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Failed to convert from data type varbinary to nvarchar, invalid UTF16 byte sequence - code point 0 not supported)~~
+
+-- TEST CASE: HAshbytes test with char, nchar
+select hashbytes('sha1',cast('abc' as char))
+go
+~~START~~
+varbinary
+7C147B19F7DCDEA163A50ECB0B2856F5D691F5EB
+~~END~~
+
+select hashbytes('sha1',cast(N'abc' as binary))
+go
+~~START~~
+varbinary
+DCD910A03DF100E8892B6C764A4F762E08555087
+~~END~~
+
 

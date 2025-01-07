@@ -478,8 +478,6 @@ Function sys.get_icu_minor_version()
 Function sys.get_valid_srids()
 Function sys.has_dbaccess(sys.sysname)
 Function sys.hashbpchar(sys.bpchar)
-Function sys.hashbytes(character varying,character varying)
-Function sys.hashbytes(character varying,sys.bbf_varbinary)
 Function sys.hashvarchar(sys."varchar")
 Function sys.host_name()
 Function sys.ident_current(text)
@@ -960,7 +958,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."real"
-Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
