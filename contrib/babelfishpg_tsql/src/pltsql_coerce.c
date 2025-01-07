@@ -417,6 +417,7 @@ tsql_special_function_t tsql_special_function_list[] =
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
 	{"sys", "trim", "Trim", false, 1},
+	{"sys", "hashbytes", "hashbytes", false, 2},
 	{"sys", "trim", "Trim", false, 2},
 	{"sys", "ltrim", "ltrim", false, 1},
 	{"sys", "rtrim", "rtrim", false, 1},
@@ -1142,15 +1143,19 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, bool nu
 static FuncCandidateList
 tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
-	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_result_type;
-	char					   *proc_nsname;
-	char					   *proc_name;
-	bool						is_func_validated;
-	int							ncandidates;
-	Oid							rettype;
-	Oid							sys_oid = get_namespace_oid("sys", false);
-	Oid						   *new_input_typeids;
+	FuncCandidateList	current_candidate, best_candidate;
+	Oid 			expr_result_type;
+	char		       *proc_nsname;
+	char		       *proc_name;
+	bool			is_func_validated;
+	int			ncandidates;
+	Oid			rettype;
+	Oid			sys_oid = get_namespace_oid("sys", false);
+	Oid		       *new_input_typeids;
+	Oid		       *argtypes;
+	int			nargs_func;
+	Oid			second_arg_type = InvalidOid;
+        Oid                     expr_arg_type;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
@@ -1181,6 +1186,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
+	expr_arg_type = InvalidOid;
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0 && nargs == 2)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
@@ -1329,15 +1335,38 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (new_input_typeids[1])
+			|| new_input_typeids[1] == UNKNOWNOID)
+		{
+			expr_arg_type = get_sys_varcharoid();
+		}
+		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+		else if(is_tsql_binary_family_datatype(new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bbf_varbinary");
+		}
+	}
 
 	/* free new_input_typeids, as they are no longer needed */
 	if (new_input_typeids)
 		pfree(new_input_typeids);
 
-	if (!OidIsValid(expr_result_type))
+	if (!OidIsValid(expr_result_type) && !OidIsValid(expr_arg_type))
 		return NULL;
 
-	/* Get the candidate with matching return type */
+	/* 
+	 * Get the candidate with matching return type or 
+	 * second argument type(specifically for hashbytes function) 
+	 */
 	ncandidates = 0;
 	best_candidate = NULL;
 	for (current_candidate = candidates;
@@ -1349,13 +1378,24 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			continue;
 
 		rettype = get_func_rettype(current_candidate->oid);
+		/* get the function second argument if we have hashbytes function */
+		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+		{
+			get_func_signature(current_candidate->oid, &argtypes, &nargs_func);
+			second_arg_type = argtypes[1];
+		}
 		
 		/* Ignore following definitions as these are used when no other potential definition can be used. */
 		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
-
-		if (expr_result_type == rettype)
+		/*
+                 * Find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
+		 * of return type.
+		 */
+		if ((OidIsValid(expr_result_type) && expr_result_type == rettype)
+			|| (OidIsValid(expr_arg_type) && OidIsValid(second_arg_type) && expr_arg_type == second_arg_type))
 		{
 			best_candidate = current_candidate;
 			ncandidates++;
