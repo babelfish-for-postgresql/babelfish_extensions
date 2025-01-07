@@ -217,8 +217,7 @@ AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
--- PG reserves these oid > 16383 AND oid < 16400 for rds roles like rds_iam etc.
--- We need to make sure that any user defined role does not get assigned oid > 16383 AND oid < 16400.
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
 -- Any change here in the oid should be reflected in sys.database_role_members view as well.
 CAST(
   CASE Ext.orig_username
@@ -227,7 +226,7 @@ CAST(
     WHEN 'db_securityadmin' THEN 16386
     WHEN 'db_ddladmin' THEN 16387
     WHEN 'db_datareader' THEN 16390
-    WHEN 'db_datawriter' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
     ELSE Base.oid
   END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
@@ -300,7 +299,7 @@ CAST(
     WHEN 'db_securityadmin' THEN 16386
     WHEN 'db_ddladmin' THEN 16387
     WHEN 'db_datareader' THEN 16390
-    WHEN 'db_datawriter' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
     ELSE Auth1.oid
   END AS INT) AS role_principal_id,
 CAST(
@@ -310,7 +309,7 @@ CAST(
     WHEN 'db_securityadmin' THEN 16386
     WHEN 'db_ddladmin' THEN 16387
     WHEN 'db_datareader' THEN 16390
-    WHEN 'db_datawriter' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
     ELSE Auth2.oid
   END AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
