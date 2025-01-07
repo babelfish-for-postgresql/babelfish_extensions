@@ -1337,16 +1337,16 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 	}
 	else if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
 	{
-		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(new_input_typeids[1])
-			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(new_input_typeids[1])
-			|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(new_input_typeids[1])
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (new_input_typeids[1])
 			|| new_input_typeids[1] == UNKNOWNOID)
 		{
 			expr_arg_type = get_sys_varcharoid();
 		}
-		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
-			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1])
-			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1]))
+		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (new_input_typeids[1]))
 		{
 			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
 		}
