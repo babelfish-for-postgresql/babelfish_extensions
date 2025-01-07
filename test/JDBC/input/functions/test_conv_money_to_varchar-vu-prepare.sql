@@ -4,7 +4,7 @@ GO
 INSERT INTO test_conv_money_to_varchar_t1 VALUES (1234), (0), (123.12), (0.12456)
 GO
 
-CREATE VIEW test_conv_money_to_string_v1 as (
+CREATE VIEW test_conv_string_to_date_v1 as (
     SELECT val,
         val_convert = '$' + CONVERT(VARCHAR, val) ,
         val_convert_style_0 = '$' + CONVERT(VARCHAR, val, 0),
@@ -14,7 +14,7 @@ CREATE VIEW test_conv_money_to_string_v1 as (
 );
 GO
 
-CREATE PROCEDURE test_conv_money_to_string_p1 as (
+CREATE PROCEDURE test_conv_string_to_date_p1 as (
     SELECT val,
         val_convert = '$' + CONVERT(VARCHAR, val) ,
         val_convert_style_0 = '$' + CONVERT(VARCHAR, val, 0),
@@ -24,7 +24,7 @@ CREATE PROCEDURE test_conv_money_to_string_p1 as (
 );
 GO
 
-CREATE FUNCTION test_conv_money_to_string_f1()
+CREATE FUNCTION test_conv_string_to_date_f1()
 RETURNS TABLE AS
 RETURN (
     SELECT val,

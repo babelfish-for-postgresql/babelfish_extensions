@@ -1408,71 +1408,71 @@ SELECT CONVERT(DATE, @TM_ICLO)
 GO
 
 -- Dependent objects
-SELECT * FROM test_conv_string_to_date_v1
+SELECT * FROM babel_4896_test_conv_string_to_date_v1
 GO
-EXEC test_conv_string_to_date_p1
+EXEC babel_4896_test_conv_string_to_date_p1
 GO
-SELECT test_conv_string_to_date_f1()
-GO
-
-SELECT * FROM test_conv_string_to_date_v2
-GO
-EXEC test_conv_string_to_date_p2
-GO
-SELECT test_conv_string_to_date_f2()
+SELECT babel_4896_test_conv_string_to_date_f1()
 GO
 
-SELECT * FROM test_conv_string_to_date_v3
+SELECT * FROM babel_4896_test_conv_string_to_date_v2
 GO
-EXEC test_conv_string_to_date_p3
+EXEC babel_4896_test_conv_string_to_date_p2
 GO
-SELECT test_conv_string_to_date_f3()
-GO
-
-SELECT * FROM test_conv_string_to_date_v4
-GO
-EXEC test_conv_string_to_date_p4
-GO
-SELECT test_conv_string_to_date_f4()
+SELECT babel_4896_test_conv_string_to_date_f2()
 GO
 
-SELECT * FROM test_conv_string_to_date_v5
+SELECT * FROM babel_4896_test_conv_string_to_date_v3
 GO
-EXEC test_conv_string_to_date_p5
+EXEC babel_4896_test_conv_string_to_date_p3
 GO
-SELECT test_conv_string_to_date_f5()
-GO
-
-SELECT * FROM test_conv_string_to_date_v6
-GO
-EXEC test_conv_string_to_date_p6
-GO
-SELECT test_conv_string_to_date_f6()
+SELECT babel_4896_test_conv_string_to_date_f3()
 GO
 
-SELECT * FROM test_conv_string_to_date_v7
+SELECT * FROM babel_4896_test_conv_string_to_date_v4
 GO
-EXEC test_conv_string_to_date_p7
+EXEC babel_4896_test_conv_string_to_date_p4
 GO
-SELECT test_conv_string_to_date_f7()
-GO
-
-SELECT * FROM test_conv_string_to_date_v8
-GO
-EXEC test_conv_string_to_date_p8
-GO
-SELECT test_conv_string_to_date_f8()
+SELECT babel_4896_test_conv_string_to_date_f4()
 GO
 
-SELECT * FROM test_conv_string_to_date_v9
+SELECT * FROM babel_4896_test_conv_string_to_date_v5
 GO
-EXEC test_conv_string_to_date_p9
+EXEC babel_4896_test_conv_string_to_date_p5
 GO
-SELECT test_conv_string_to_date_f9()
-GO
-
-SELECT * FROM test_conv_string_to_date_v10
+SELECT babel_4896_test_conv_string_to_date_f5()
 GO
 
-SELECT * FROM test_conv_string_to_date_v12
+SELECT * FROM babel_4896_test_conv_string_to_date_v6
+GO
+EXEC babel_4896_test_conv_string_to_date_p6
+GO
+SELECT babel_4896_test_conv_string_to_date_f6()
+GO
+
+SELECT * FROM babel_4896_test_conv_string_to_date_v7
+GO
+EXEC babel_4896_test_conv_string_to_date_p7
+GO
+SELECT babel_4896_test_conv_string_to_date_f7()
+GO
+
+SELECT * FROM babel_4896_test_conv_string_to_date_v8
+GO
+EXEC babel_4896_test_conv_string_to_date_p8
+GO
+SELECT babel_4896_test_conv_string_to_date_f8()
+GO
+
+SELECT * FROM babel_4896_test_conv_string_to_date_v9
+GO
+EXEC babel_4896_test_conv_string_to_date_p9
+GO
+SELECT babel_4896_test_conv_string_to_date_f9()
+GO
+
+SELECT * FROM babel_4896_test_conv_string_to_date_v10
+GO
+
+SELECT * FROM babel_4896_test_conv_string_to_date_v12
 GO

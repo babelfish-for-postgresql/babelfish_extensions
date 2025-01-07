@@ -237,11 +237,11 @@ FROM test_conv_money_to_varchar_t1
 GO
 
 -- Dependent objects
-SELECT * FROM test_conv_money_to_string_v1
+SELECT * FROM test_conv_string_to_date_v1
 GO
 
-EXEC test_conv_money_to_string_p1
+EXEC test_conv_string_to_date_p1
 GO
 
-SELECT * FROM test_conv_money_to_string_f1()
+SELECT * FROM test_conv_string_to_date_f1()
 GO
