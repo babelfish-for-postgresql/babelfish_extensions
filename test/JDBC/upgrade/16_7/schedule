@@ -592,6 +592,6 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
-cast_nvarchar_test_before_16_5
+cast_nvarchar_test
 db_owner
 test_conv_money_to_varchar
