@@ -213,6 +213,8 @@ CREATE OR REPLACE FUNCTION sys.bbf_is_role_member(member NAME, rolename NAME)
 RETURNS BOOLEAN
 AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 
+ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated_4_5_0;
+
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
@@ -289,6 +291,9 @@ CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_4_5_0');
+
+ALTER VIEW sys.database_role_members RENAME TO database_role_members_deprecated_4_5_0;
 
 -- DATABASE_ROLE_MEMBERS
 CREATE OR REPLACE VIEW sys.database_role_members AS
@@ -324,6 +329,7 @@ AND Ext1.type = 'R'
 AND Ext2.orig_username != 'db_owner';
 
 GRANT SELECT ON sys.database_role_members TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_role_members_deprecated_4_5_0');
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
