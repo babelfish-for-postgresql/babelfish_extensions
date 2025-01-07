@@ -449,7 +449,7 @@ CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 -- PG reserves these oid > 16383 AND oid < 16400 for rds roles like rds_iam etc.
--- We need to make sure that any user defined role doesn't get assigned oid > 16383 AND oid < 16400.
+-- We need to make sure that any user defined role does not get assigned oid > 16383 AND oid < 16400.
 -- Any change here in the oid should be reflected in sys.database_role_members view as well.
 CAST(
   CASE Ext.orig_username
