@@ -318,17 +318,15 @@ varchar
 -- Wrong conversions that return NULL
 select TRY_CONVERT(date, 123);
 GO
-~~START~~
-date
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to date is not allowed.)~~
 
 select TRY_CONVERT(time, 123);
 GO
-~~START~~
-time
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type integer to time is not allowed.)~~
 
 select TRY_CONVERT(datetime, 123);
 GO
@@ -1369,7 +1367,7 @@ select datediff(week,CAST('2037-03-01 23:30:05.523'AS sys.datetime),CAST('2036-0
 GO
 ~~START~~
 int
--52
+-53
 ~~END~~
 
 select datediff(hour, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
@@ -1426,7 +1424,7 @@ select datediff(quarter,CAST('2016-12-26 23:30:05.523456'AS datetime2), CAST('20
 GO
 ~~START~~
 int
-6
+7
 ~~END~~
 
 select datediff(hour, CAST('2016-12-26 23:30:05'AS smalldatetime), CAST('2016-12-28 21:29:05'AS smalldatetime));

@@ -1439,6 +1439,15 @@ t
 ~~END~~
 
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
 DROP LOGIN db_securityadmin_restrictions_login;
 GO

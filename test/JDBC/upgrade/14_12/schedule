@@ -135,9 +135,9 @@ BABEL-3116
 BABEL-3117
 BABEL-3118
 BABEL-3249
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3474
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3646
 BABEL-3748
 BABEL-383
@@ -453,6 +453,12 @@ babel_4328_datetimeoffset
 translate-before-15_8-or-16_4
 substring-before-15_8-or-16_4
 babel_726
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
 BABEL-3401
 reverse-before-15_8-or-16_4
 stuff-before-15_8-or-16_4
@@ -473,5 +479,6 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
+BABEL-5031
 test_conv_money_to_varchar
 

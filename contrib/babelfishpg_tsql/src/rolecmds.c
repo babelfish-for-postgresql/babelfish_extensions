@@ -2826,7 +2826,7 @@ get_obj_role(const char *rolname)
 	initStringInfo(&rolname_obj);
 
 	appendStringInfoString(&rolname_obj, rolname);
-	appendStringInfoString(&rolname_obj, "_obj");
+	appendStringInfoString(&rolname_obj, "_bbfobj");
 
 	truncate_tsql_identifier(rolname_obj.data);
 
@@ -2840,7 +2840,7 @@ static List
 *gen_alter_dbowner_add_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData	query;
-	List		*stmt_list;
+	List		*stmt_list = NIL;
 	Node		*stmt;
 	int		expected_stmts = 7;
 	int		i = 0;
@@ -2852,9 +2852,20 @@ static List
 	ScanKeyData	skey;
 	Relation	rel;
 
+	/* If role is already member of db_owner role, do nothing */
+	if (has_privs_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+		return stmt_list;
+
 	initStringInfo(&query);
 
 	truncate_tsql_identifier(rolname_obj);
+
+	/* Throw relevant error if there will be a name clash */
+	if (get_role_oid(rolname_obj, true) != InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("Internal role \"%s\" could not be created because a "
+						"role already exists with the same name", rolname_obj)));
 
 	appendStringInfoString(&query, "CREATE ROLE dummy; ");
 	appendStringInfoString(&query, "GRANT dummy TO dummy; ");
@@ -2940,7 +2951,7 @@ static List
 *gen_alter_dbowner_drop_subcmds(const char *rolname, const char* dbname)
 {
 	StringInfoData query;
-	List		*stmt_list;
+	List		*stmt_list = NIL;
 	Node		*stmt;
 	int			expected_stmts = 7;
 	int			i = 0;
@@ -2951,6 +2962,10 @@ static List
 	SysScanDesc sscan;
 	ScanKeyData skey;
 	Relation	rel;
+
+	/* If role is already not a member of db_owner role, do nothing */
+	if (!has_privs_of_role(get_role_oid(rolname, false), get_db_owner_oid(dbname, false)))
+		return stmt_list;
 
 	initStringInfo(&query);
 
@@ -3098,6 +3113,7 @@ void
 change_object_owner_if_db_owner()
 {
 	Oid		dbo_id = InvalidOid;
+	Oid		db_owner_id = InvalidOid;
 	StringInfoData	query;
 	char		*rolname = NULL;
 	char 		*obj_rolname = NULL;
@@ -3113,9 +3129,11 @@ change_object_owner_if_db_owner()
 
 	cur_db_name = get_cur_db_name();
 	dbo_id = get_dbo_oid(cur_db_name, true);
+	db_owner_id = get_db_owner_oid(cur_db_name, true);
 
-	/* Don't change object owner if current user is dbo */
-	if (role_oid == dbo_id || dbo_id == InvalidOid)
+	/* Don't change object owner if database principal is dbo or db_owner */
+	if (role_oid == dbo_id || dbo_id == InvalidOid ||
+		role_oid == db_owner_id || db_owner_id == InvalidOid)
 		return;
 
 	rolname = GetUserNameFromId(role_oid, true);
@@ -3126,7 +3144,7 @@ change_object_owner_if_db_owner()
 	if (!user_exists_for_db(cur_db_name, rolname))
 		return;
 
-	if (!is_member_of_role(role_oid, get_db_owner_oid(cur_db_name, false)))
+	if (!is_member_of_role(role_oid, db_owner_id))
 		return;
 
 	obj_rolname = get_obj_role(rolname);
@@ -3176,7 +3194,7 @@ PG_FUNCTION_INFO_V1(bbf_is_role_member);
 /*
  * The bbf_is_role_memeber function will check if a user (u1) is member of a role (r1):
  * - If role is not a member of db_owner, we will check if u1 is member of r1 role
- * - If role is a member of db_owner, we will check if u1 is member of r1_obj role
+ * - If role is a member of db_owner, we will check if u1 is member of r1_bbfobj role
  */
 Datum
 bbf_is_role_member(PG_FUNCTION_ARGS)
@@ -3212,7 +3230,7 @@ bbf_is_role_member(PG_FUNCTION_ARGS)
 /*
  * This helper function will first check if user is member of
  * db_owner role. If it is, then we will attempt drop the linked
- * "_obj" role. If it is not, this function will do nothing.
+ * "_bbfobj" role. If it is not, this function will do nothing.
  */
 static void
 drop_db_owner_related_roles(Oid roleid, const char* rolname)
