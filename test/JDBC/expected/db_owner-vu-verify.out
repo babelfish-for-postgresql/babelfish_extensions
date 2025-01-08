@@ -2063,3 +2063,60 @@ use master
 go
 drop database dbowner_averyveryveryveryveryveryveryveryveryveryverylongdatabasename
 go
+
+-- Check for windows login
+exec sys.babelfish_add_domain_mapping_entry 'dbownerdomain', 'dbownerdomain.babel';
+go
+create login [dbownerdomain\abc] from windows
+go
+create user [dbownerdomain\abc]
+go
+select is_rolemember('db_owner', 'dbownerdomain\abc')
+go
+~~START~~
+int
+0
+~~END~~
+
+alter role db_owner add member [dbownerdomain\abc]
+go
+select is_rolemember('db_owner', 'dbownerdomain\abc')
+go
+~~START~~
+int
+1
+~~END~~
+
+alter role db_owner drop member [dbownerdomain\abc]
+go
+select is_rolemember('db_owner', 'dbownerdomain\abc')
+go
+~~START~~
+int
+0
+~~END~~
+
+exec sp_addrolemember 'db_owner', 'dbownerdomain\abc'
+go
+select is_rolemember('db_owner', 'dbownerdomain\abc')
+go
+~~START~~
+int
+1
+~~END~~
+
+exec sp_droprolemember 'db_owner', 'dbownerdomain\abc'
+go
+select is_rolemember('db_owner', 'dbownerdomain\abc')
+go
+~~START~~
+int
+0
+~~END~~
+
+drop user [dbownerdomain\abc]
+go
+drop login [dbownerdomain\abc]
+go
+exec sys.babelfish_remove_domain_mapping_entry 'dbownerdomain'
+go
