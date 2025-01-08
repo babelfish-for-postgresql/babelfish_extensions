@@ -19,6 +19,7 @@ runs:
         sed -i '1452 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         cd ../psql
+        grep -i "shared_preload_libraries" data/postgresql.conf
         sudo sed -i "s/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'	# (change requires restart)/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements,pgaudit'/g" data/postgresql.conf
         echo "everything set"
 
