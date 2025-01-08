@@ -1,8 +1,7 @@
 -- sla_for_parallel_query_enforced 2000000
 -- create tables with most of the datatypes
-
-SELECT set_config('enable_bitmapscan', 0, false);
-GO
+select relname, (select nspname from pg_namespace where oid = relnamespace) from pg_class where relnamespace in (select oid from pg_namespace where nspname in (select nspname from sys.babelfish_namespace_ext))
+go
 
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
@@ -530,7 +529,4 @@ DROP TABLE [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongS
 GO
 
 DROP SCHEMA [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_LongSchema]
-GO
-
-SELECT set_config('enable_bitmapscan', 1, false);
 GO
