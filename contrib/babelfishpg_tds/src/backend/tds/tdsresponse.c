@@ -153,7 +153,7 @@ static bool is_tsql_fixeddecimal_numeric(Oid oid);
 static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
-static Oid func_oid_of_cast_from_source_target(Oid castsource, Oid casttarget);
+static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 
 static inline void
 SendPendingDone(bool more)
@@ -531,14 +531,14 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 }
 
 static Oid
-func_oid_of_cast_from_source_target(Oid castsource, Oid casttarget)
+LookupCastFuncName(Oid castsource, Oid casttarget)
 {
 	HeapTuple	tuple;
 	Form_pg_cast castForm;
 
 	tuple = SearchSysCache2(CASTSOURCETARGET,
-											ObjectIdGetDatum(castsource),
-											ObjectIdGetDatum(casttarget));
+								ObjectIdGetDatum(castsource),
+								ObjectIdGetDatum(casttarget));
 	if (HeapTupleIsValid(tuple))
 	{
 		castForm = (Form_pg_cast) GETSTRUCT(tuple);
@@ -552,7 +552,7 @@ static bool
 is_tsql_bit_numeric(Oid oid)
 {
 	if (!OidIsValid(tsql_bit_numeric_oid))
-		tsql_bit_numeric_oid = func_oid_of_cast_from_source_target(tsql_bit_oid, NUMERICOID);
+		tsql_bit_numeric_oid = LookupCastFuncName(tsql_bit_oid, NUMERICOID);
 	return tsql_bit_numeric_oid == oid;
 }
 
@@ -560,7 +560,7 @@ static bool
 is_tsql_fixeddecimal_numeric(Oid oid)
 {
 	if (!OidIsValid(tsql_fixeddecimal_numeric_oid))
-		tsql_fixeddecimal_numeric_oid = func_oid_of_cast_from_source_target(tsql_fixeddecimal_oid, NUMERICOID);
+		tsql_fixeddecimal_numeric_oid = LookupCastFuncName(tsql_fixeddecimal_oid, NUMERICOID);
 	return tsql_fixeddecimal_numeric_oid == oid;
 }
 
@@ -568,7 +568,7 @@ static bool
 is_tsql_numeric_fixeddecimal(Oid oid)
 {
 	if (!OidIsValid(tsql_numeric_fixeddecimal_oid))
-		tsql_numeric_fixeddecimal_oid = func_oid_of_cast_from_source_target(NUMERICOID, tsql_fixeddecimal_oid);
+		tsql_numeric_fixeddecimal_oid = LookupCastFuncName(NUMERICOID, tsql_fixeddecimal_oid);
 	return tsql_numeric_fixeddecimal_oid == oid;
 }
 
@@ -576,7 +576,7 @@ static bool
 is_tsql_int4_bit(Oid oid)
 {
 	if (!OidIsValid(tsql_int4_bit_oid))
-		tsql_int4_bit_oid = func_oid_of_cast_from_source_target(INT4OID, tsql_bit_oid);
+		tsql_int4_bit_oid = LookupCastFuncName(INT4OID, tsql_bit_oid);
 	return tsql_int4_bit_oid == oid;
 }
 
@@ -589,17 +589,16 @@ is_tsql_int4_bit(Oid oid)
 static bool
 is_numeric_cast(Oid func_oid)
 {
-	sys_nspoid = get_namespace_oid("sys", false);
+	if (!OidIsValid(sys_nspoid))
+		sys_nspoid = get_namespace_oid("sys", false);
 
-	if (OidIsValid(sys_nspoid))
-	{
+	if (!OidIsValid(tsql_bit_oid))
 		tsql_bit_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("bit"), ObjectIdGetDatum(sys_nspoid));
+		
+	if (!OidIsValid(tsql_fixeddecimal_oid))
 		tsql_fixeddecimal_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("fixeddecimal"), ObjectIdGetDatum(sys_nspoid));
-	}
 
-	if (OidIsValid(tsql_bit_oid) &&
-		OidIsValid(tsql_fixeddecimal_oid) &&
-		(func_oid == F_NUMERIC_INT4 ||
+	if (func_oid == F_NUMERIC_INT4 ||
 		func_oid == F_NUMERIC_INT8 ||
 		func_oid == F_NUMERIC_INT2 ||
 		func_oid == F_NUMERIC_FLOAT4 ||
@@ -616,7 +615,7 @@ is_numeric_cast(Oid func_oid)
 		is_tsql_bit_numeric(func_oid) ||
 		is_tsql_int4_bit(func_oid) ||
 		is_tsql_fixeddecimal_numeric(func_oid) ||
-		is_tsql_numeric_fixeddecimal(func_oid)))
+		is_tsql_numeric_fixeddecimal(func_oid))
 		return true;
 	return false;
 }
