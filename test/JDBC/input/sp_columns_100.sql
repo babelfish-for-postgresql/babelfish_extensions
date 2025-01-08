@@ -1,8 +1,5 @@
 -- sla_for_parallel_query_enforced 2000000
 -- create tables with most of the datatypes
-select relname, (select nspname from pg_namespace where oid = relnamespace) from pg_class where relnamespace in (select oid from pg_namespace where nspname in (select nspname from sys.babelfish_namespace_ext))
-go
-
 create table var(a char(10), b nchar(9), c nvarchar(8), d varchar(7), e text, f ntext, g varbinary(10), h binary(9), i image, j xml)
 go
 
