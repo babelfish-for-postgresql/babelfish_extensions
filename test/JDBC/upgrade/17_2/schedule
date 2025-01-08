@@ -598,5 +598,6 @@ test_conv_string_to_datetime2-before-17_3
 test_conv_string_to_datetimeoffset-before-17_3
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_3
+BABEL-5031
 test_conv_money_to_varchar
 
