@@ -404,5 +404,12 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-14_6
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime-before-14_6
+test_conv_string_to_time-before-17_3
+BABEL-5031
 test_conv_money_to_varchar
 
