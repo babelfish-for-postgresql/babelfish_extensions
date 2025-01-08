@@ -8,8 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
-# sp_columns_100
+# all
+sp_columns_100
 
 ignore#!#BABEL-1435
 ignore#!#BABEL-1446
