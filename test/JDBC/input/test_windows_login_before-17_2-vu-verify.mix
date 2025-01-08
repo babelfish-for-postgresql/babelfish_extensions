@@ -3,36 +3,11 @@ select rolname, orig_loginname, type, default_database_name, default_language_na
 where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdbenglish@AD','userpassword','duplicate@BABEL','duplicatedefaultdb@BABEL',
 'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL') order by rolname;
 GO
-~~START~~
-name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
-aduser@AD#!#ad\Aduser#!#U#!#master#!#English
-aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
-aduserdbenglish@AD#!#ad\AduserdbEnglish#!#U#!#ad_db#!#English
-duplicate@BABEL#!#babel\duplicate#!#U#!#master#!#English
-duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#U#!#master#!#English
-passworduser#!#PassWordUser#!#S#!#master#!#English
-userpassword#!#usErpassWord#!#S#!#master#!#English
-ελπίδα@BABEL#!#babel\ελπίδα#!#U#!#master#!#English
-өглөө@BABEL#!#babel\өглөө#!#U#!#master#!#English
-كلب@BABEL#!#babel\كلب#!#U#!#master#!#English
-爱@BABEL#!#babel\爱#!#U#!#master#!#English
-~~END~~
-
 
 -- tsql
 select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
 where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb') order by rolname;
 GO
-~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-aduser@AD#!#ad\Aduser#!#master#!#English
-aduserdbenglish@AD#!#ad\AduserdbEnglish#!#ad_db#!#English
-duplicate@BABEL#!#babel\duplicate#!#master#!#English
-duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#master#!#English
-passworduser#!#PassWordUser#!#master#!#English
-userpassword#!#usErpassWord#!#master#!#English
-~~END~~
-
 
 -- tsql
 -- add [ad\Aduser] to sysadmin
@@ -44,11 +19,6 @@ SELECT COUNT(*) FROM pg_auth_members
 WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
 AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'aduser@AD');
 GO
-~~START~~
-int
-1
-~~END~~
-
 
 -- tsql
 ALTER SERVER ROLE sysadmin DROP MEMBER [ad\Aduser];
@@ -59,176 +29,47 @@ SELECT COUNT(*) FROM pg_auth_members
 WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
 AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'aduser@AD');
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 -- tsql
 select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
-~~START~~
-int
-0
-~~END~~
-
 select count(*) from sys.server_principals where name = 'passworduser';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'AD\aduser';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'AD\aduserdb';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'AD\aduserdbenglish';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'userpassword';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'BABEL\duplicate';
 GO
-~~START~~
-int
-1
-~~END~~
-
 select count(*) from sys.server_principals where name = 'BABEL\duplicatedefaultdb';
 GO
-~~START~~
-int
-1
-~~END~~
-
 
 -- psql
 select count(*) from pg_roles where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
-~~START~~
-int8
-0
-~~END~~
-
 select count(*) from pg_roles where rolname = 'passworduser';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'aduser@AD';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'aduserdb@AD';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'aduserdbenglish@AD';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'userpassword';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'duplicate@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'duplicatedefaultdb@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'كلب@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'өглөө@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = 'ελπίδα@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
 select count(*) from pg_roles where rolname = '爱@BABEL';
 GO
-~~START~~
-int8
-1
-~~END~~
-
-
--- validates bbf_role_admin is direct member of all the role entries of babelfish_authid_user_ext and babelfish_authid_login_ext with admin option
--- show entries of which bbf_role_admin is not direct member of.
--- should be 0
-WITH bbf_admin_roles AS (
-    SELECT r.rolname
-    FROM pg_auth_members m
-    JOIN pg_roles r ON (m.roleid = r.oid)
-    WHERE m.member IN (SELECT oid FROM pg_roles WHERE rolname = 'bbf_role_admin')
-    AND m.admin_option = true
-)
-SELECT COUNT(*)
-FROM (
-    SELECT rolname FROM sys.babelfish_authid_login_ext WHERE rolname != 'bbf_role_admin'
-    UNION ALL
-    SELECT rolname FROM sys.babelfish_authid_user_ext
-)
-WHERE rolname NOT IN (SELECT rolname FROM bbf_admin_roles);
-GO
-~~START~~
-int8
-0
-~~END~~
-

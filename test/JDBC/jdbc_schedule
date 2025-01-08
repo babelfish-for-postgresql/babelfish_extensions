@@ -83,9 +83,6 @@ ignore#!#host_id-before-16_5-or-15_9-vu-cleanup
 ignore#!#objectpropertyex-before-16_5-or-15_9-vu-prepare
 ignore#!#objectpropertyex-before-16_5-or-15_9-vu-verify
 ignore#!#objectpropertyex-before-16_5-or-15_9-vu-cleanup
-ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-prepare
-ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-verify
-ignore#!#test_like_for_AI-before-16_5-or-15_9-vu-cleanup
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-prepare
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-verify
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
@@ -492,6 +489,10 @@ ignore#!#BABEL-5059_before_16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
 ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
+
+ignore#!#test_windows_login_before-17_2-vu-prepare
+ignore#!#test_windows_login_before-17_2-vu-verify
+ignore#!#test_windows_login_before-17_2-vu-cleanup
 
 ignore#!#trim-before-15_11-or-16_7-vu-prepare
 ignore#!#trim-before-15_11-or-16_7-vu-verify
