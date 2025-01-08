@@ -152,6 +152,7 @@ babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 select-strip-parens-before-14-10
 BABEL-3147-before-16_3-or-15_7-or-14_12
