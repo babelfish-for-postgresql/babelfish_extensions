@@ -20,8 +20,10 @@ runs:
         # Determine PgAudit version based on Babelfish branch
         if [[ "${{ inputs.branch }}" == "BABEL_4_X_DEV" ]]; then
           PGAUDIT_BRANCH="REL_16_STABLE"
+          SED_LINE_NUMBER=1452
         elif [[ "${{ inputs.branch }}" == "BABEL_5_X_DEV" ]]; then
           PGAUDIT_BRANCH="REL_17_STABLE"
+          SED_LINE_NUMBER=1517
         else
           echo "Unsupported branch: ${{ inputs.branch }}"
           exit 1
@@ -30,11 +32,12 @@ runs:
         git clone --depth 1 --branch $PGAUDIT_BRANCH https://github.com/pgaudit/pgaudit.git
         cd pgaudit
         # adding the patch to fix BABEL-4600 to test in Github
-        sed -i '1452 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+        sed -i '${SED_LINE_NUMBER} s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
         cd ../psql
         grep -i "shared_preload_libraries" data/postgresql.conf
         sudo sed -i "s/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'		# (change requires restart)/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements,pgaudit'/g" data/postgresql.conf
+        grep -i "shared_preload_libraries" data/postgresql.conf
         echo "everything set"
 
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
