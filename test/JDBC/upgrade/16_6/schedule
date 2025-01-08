@@ -574,7 +574,7 @@ xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
-BABEL-CASE_EXPR
+BABEL-CASE_EXPR-before-16_6
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736

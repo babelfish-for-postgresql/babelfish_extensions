@@ -403,8 +403,8 @@ nvarchar
 SELECT * FROM BABEL_5103_V2
 GO
 ~~START~~
-varchar
-登録カード
+nvarchar
+登録カード–標準
 ~~END~~
 
 
@@ -536,7 +536,7 @@ END AS RESULT
 GO
 ~~START~~
 char
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -556,7 +556,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -576,7 +576,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -741,7 +741,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -884,7 +884,7 @@ END AS RESULT
 GO
 ~~START~~
 nvarchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -906,7 +906,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -1017,7 +1017,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -1028,7 +1028,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -1149,7 +1149,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -1160,7 +1160,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -1260,7 +1260,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -1271,7 +1271,7 @@ END AS RESULT
 GO
 ~~START~~
 ntext
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -1282,7 +1282,7 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -1359,7 +1359,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -1437,7 +1437,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -1503,7 +1503,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -2539,7 +2539,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -2550,7 +2550,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -2766,7 +2766,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -2790,7 +2790,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -2802,7 +2802,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -2826,7 +2826,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -2838,7 +2838,7 @@ END AS RESULT
 GO
 ~~START~~
 ntext
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -2850,7 +2850,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -3042,7 +3042,7 @@ END AS RESULT
 GO
 ~~START~~
 nvarchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -3054,7 +3054,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3090,7 +3090,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3126,7 +3126,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3150,7 +3150,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3222,7 +3222,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3270,7 +3270,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3306,7 +3306,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3330,7 +3330,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3366,7 +3366,7 @@ END AS RESULT
 GO
 ~~START~~
 nvarchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -3378,7 +3378,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3402,7 +3402,7 @@ END AS RESULT
 GO
 ~~START~~
 nvarchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -3414,7 +3414,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3438,7 +3438,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3462,7 +3462,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3742,7 +3742,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3958,7 +3958,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3982,7 +3982,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -3994,7 +3994,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -4018,7 +4018,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -4030,7 +4030,7 @@ END AS RESULT
 GO
 ~~START~~
 ntext
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -4042,7 +4042,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -5517,7 +5517,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -5638,7 +5638,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -5649,7 +5649,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -5671,7 +5671,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -5803,7 +5803,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -5814,7 +5814,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -5836,7 +5836,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6222,7 +6222,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6365,7 +6365,7 @@ END AS RESULT
 GO
 ~~START~~
 nvarchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -6387,7 +6387,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6621,7 +6621,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6742,7 +6742,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6753,7 +6753,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6775,7 +6775,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6907,7 +6907,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -6918,7 +6918,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -6940,7 +6940,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7175,7 +7175,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7296,7 +7296,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7307,7 +7307,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7329,7 +7329,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7461,7 +7461,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7472,7 +7472,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7494,7 +7494,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -7728,7 +7728,7 @@ END AS RESULT
 GO
 ~~START~~
 char
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7849,7 +7849,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7860,7 +7860,7 @@ END AS RESULT
 GO
 ~~START~~
 char
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7871,7 +7871,7 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7882,7 +7882,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -7893,7 +7893,7 @@ END AS RESULT
 GO
 ~~START~~
 ntext
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -8014,7 +8014,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8025,7 +8025,7 @@ END AS RESULT
 GO
 ~~START~~
 char
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -8047,7 +8047,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8435,7 +8435,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -8578,7 +8578,7 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -8600,7 +8600,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8834,7 +8834,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8955,7 +8955,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8966,7 +8966,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8977,7 +8977,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -8988,7 +8988,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -9120,7 +9120,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -9131,7 +9131,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -9142,7 +9142,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 
@@ -9153,7 +9153,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -9684,7 +9684,7 @@ END AS RESULT
 GO
 ~~START~~
 ntext
-登録カード–標準                                                                                    
+?????–??                                                                                            
 ~~END~~
 
 
@@ -10395,7 +10395,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -10426,7 +10426,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -10927,7 +10927,7 @@ END AS RESULT
 GO
 ~~START~~
 varchar
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -10958,7 +10958,7 @@ END AS RESULT
 GO
 ~~START~~
 text
-登録カード–標準
+?????–??
 ~~END~~
 
 
@@ -11154,7 +11154,7 @@ END AS RESULT
 GO
 ~~START~~
 nchar
-登録カード–標準                                                                                            
+?????–??                                                                                            
 ~~END~~
 
 

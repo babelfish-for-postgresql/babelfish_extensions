@@ -51,6 +51,7 @@
 #define NCHAR_MAX_TYPMOD 4000
 #define BPCHAR_MAX_TYPMOD 8000
 
+#define TDS_MAX_NUM_PRECISION 38
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -2039,16 +2040,21 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 }
 
 /* 
- * When we must merge types together (i.e. UNION), if the target type
- * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
- * equal to that of the largest expression
- * 
+ * When we must merge types together (i.e. UNION, CASE), if the target 
+ * type is CHAR, NCHAR, BINARY, NUMERIC or DECIMAL make the typmod 
+ * (representing the length)  equal to that of the largest expression
  * If -1 is returned, engine will handle finding a common typmod as usual
  */
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
-	int32		max_typmods=0;
+	int32		max_typmods=0,
+			max_precision = 0,
+			max_scale = 0,
+			precision = 0,
+			scale = 0,
+			integralDigitCount = 0,
+			numeric_result_typmod = -1;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
@@ -2059,10 +2065,17 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			 !utilptr->is_tsql_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_sys_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_varbinary_datatype(common_type) &&
-			 !utilptr->is_tsql_sys_varbinary_datatype(common_type))
+			 !utilptr->is_tsql_sys_varbinary_datatype(common_type) &&
+			 !utilptr->is_tsql_decimal_datatype(common_type) &&
+			 !((common_type == NUMERICOID)))
 		return -1;
 
-	/* If resulting type is a length, need to be max of length types */
+	/* 
+	 * If resulting type is a length, need to be max of length types,
+	 * If the type is numeric or decimal then we calculate scale as 
+	 * max(s1, s2) and precision as max(s1, s2) + max(p1 - s1, p2 - s2)
+	 * where s1, s2 are the scale of branches b1 & b2 and p1, p2 are the precision.
+	 */
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
@@ -2070,25 +2083,85 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		Oid   type = exprType(expr);
 		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
 
-		/* 
-		 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
-		 * By calculating typmod of its base type using getBaseTypeAndTypmod.
-		 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
-		 */
-		if (OidIsValid(immediate_base_type))
+		if (common_type == NUMERICOID ||
+			getBaseType(common_type) == NUMERICOID)
 		{
-			/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
-			int32 base_typmod = -1;
-			Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+			/* If UDT then calculate typmod.*/
+			if (OidIsValid(immediate_base_type))
+				type = getBaseTypeAndTypmod(type, &typmod);
 			
+			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
+			
+			if (typmod == -1 || getBaseType(type) != NUMERICOID)
+				continue;
+			
+			scale = (typmod - VARHDRSZ) & 0xffff;
+			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+			integralDigitCount = Max(precision - scale, max_precision - max_scale);
+			max_scale = Max(max_scale, scale);
+			max_precision = integralDigitCount + max_scale;
+			/*
+		 	 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 	 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 	 */
+			if (max_precision > TDS_MAX_NUM_PRECISION)
+			{
+				max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
+				max_precision = TDS_MAX_NUM_PRECISION;
+			}
+			numeric_result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+		}
+		else
+		{
+			/* 
+			 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
+			 * By calculating typmod of its base type using getBaseTypeAndTypmod.
+			 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
+			 */
+			if (OidIsValid(immediate_base_type))
+			{
+				/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
+				int32 base_typmod = -1;
+				Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+
+				/* 
+				 * This conditon is for the datatype with MAX typmod.
+				 * -1 will only be returned if common_type is a datatype
+				 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+				 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+				 */
+				if (base_typmod == -1 && 
+					is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+				{
+					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+						return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+					else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+						return NCHAR_MAX_TYPMOD + VARHDRSZ;
+					else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+						return -1;
+				}
+
+				typmod = base_typmod;	
+			}
+
+			/* 
+			 * Handling for sysname, In CASE expression if one of the branch is 
+			 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
+			 */
+			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+				typmod = SYSNAME_TYPMOD + VARHDRSZ;
+
+			if (is_tsql_str_const(expr))
+				typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
+
 			/* 
 			 * This conditon is for the datatype with MAX typmod.
 			 * -1 will only be returned if common_type is a datatype
-			 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+			 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
 			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
 			 */
-			if (base_typmod == -1 && 
-				is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+			if (expr_is_var_max(expr))
 			{
 				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
 					return BPCHAR_MAX_TYPMOD + VARHDRSZ;
@@ -2097,41 +2170,17 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
 					return -1;
 			}
-			
-			typmod = base_typmod;	
+
+			if (lc == list_head(exprs))
+				max_typmods = typmod;
+			else
+				max_typmods = Max(max_typmods, typmod);
 		}
-		
-		/* 
-		 * Handling for sysname, In CASE expression if one of the branch is 
-		 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
-		 */
-		if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
-			typmod = SYSNAME_TYPMOD + VARHDRSZ;
-
-		if (is_tsql_str_const(expr))
-			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
-
-		/* This conditon is for the datatype with MAX typmod.
-		 * -1 will only be returned if common_type is a datatype
-		 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
-		 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
-		 */
-		if (expr_is_var_max(expr))
-		{
-			if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
-				return BPCHAR_MAX_TYPMOD + VARHDRSZ;
-			else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
-				return NCHAR_MAX_TYPMOD + VARHDRSZ;
-			else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
-				return -1;
-		}
-
-		if (lc == list_head(exprs))
-			max_typmods = typmod;
-		else
-			max_typmods = Max(max_typmods, typmod);
 	}
 
+	if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
+		return numeric_result_typmod;
+		
 	return max_typmods;
 }
 

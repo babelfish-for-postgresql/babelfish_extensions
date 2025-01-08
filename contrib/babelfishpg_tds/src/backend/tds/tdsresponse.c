@@ -24,6 +24,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_cast.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/pathnodes.h"
@@ -132,15 +133,27 @@ static Oid sys_vector_oid = InvalidOid;
 static Oid sys_sparsevec_oid = InvalidOid;
 static Oid sys_halfvec_oid = InvalidOid;
 static Oid decimal_oid = InvalidOid;
+static Oid tsql_fixeddecimal_numeric_oid = InvalidOid;
+static Oid tsql_numeric_fixeddecimal_oid = InvalidOid;
+static Oid tsql_bit_numeric_oid = InvalidOid;
+static Oid tsql_int4_bit_oid = InvalidOid;
+static Oid sys_nspoid = InvalidOid;
+static Oid tsql_bit_oid = InvalidOid;
+static Oid tsql_fixeddecimal_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
+static bool is_numeric_cast(Oid func_oid);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
+static bool is_tsql_fixeddecimal_numeric(Oid oid);
+static bool is_tsql_numeric_fixeddecimal(Oid oid);
+static bool is_tsql_bit_numeric(Oid oid);
+static bool is_tsql_int4_bit(Oid oid);
+static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 
 static inline void
 SendPendingDone(bool more)
@@ -517,6 +530,96 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 }
 
+static Oid
+LookupCastFuncName(Oid castsource, Oid casttarget)
+{
+	HeapTuple	tuple;
+	Form_pg_cast castForm;
+
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+								ObjectIdGetDatum(castsource),
+								ObjectIdGetDatum(casttarget));
+	if (HeapTupleIsValid(tuple))
+	{
+		castForm = (Form_pg_cast) GETSTRUCT(tuple);
+		ReleaseSysCache(tuple);
+		return castForm->castfunc;
+	}
+	return InvalidOid;
+}
+
+static bool
+is_tsql_bit_numeric(Oid oid)
+{
+	if (!OidIsValid(tsql_bit_numeric_oid))
+		tsql_bit_numeric_oid = LookupCastFuncName(tsql_bit_oid, NUMERICOID);
+	return tsql_bit_numeric_oid == oid;
+}
+
+static bool
+is_tsql_fixeddecimal_numeric(Oid oid)
+{
+	if (!OidIsValid(tsql_fixeddecimal_numeric_oid))
+		tsql_fixeddecimal_numeric_oid = LookupCastFuncName(tsql_fixeddecimal_oid, NUMERICOID);
+	return tsql_fixeddecimal_numeric_oid == oid;
+}
+
+static bool
+is_tsql_numeric_fixeddecimal(Oid oid)
+{
+	if (!OidIsValid(tsql_numeric_fixeddecimal_oid))
+		tsql_numeric_fixeddecimal_oid = LookupCastFuncName(NUMERICOID, tsql_fixeddecimal_oid);
+	return tsql_numeric_fixeddecimal_oid == oid;
+}
+
+static bool
+is_tsql_int4_bit(Oid oid)
+{
+	if (!OidIsValid(tsql_int4_bit_oid))
+		tsql_int4_bit_oid = LookupCastFuncName(INT4OID, tsql_bit_oid);
+	return tsql_int4_bit_oid == oid;
+}
+
+/*
+ * is_numeric_cast checks if the given datatype can be cast to NUMERIC.
+ * This information is used when processing T_FuncExpr nodes to determine
+ * if resolve_numeric_typmod_from_exp should be called recursively.
+ * This ensures proper typmod resolution for nested numeric conversions.
+ */
+static bool
+is_numeric_cast(Oid func_oid)
+{
+	if (!OidIsValid(sys_nspoid))
+		sys_nspoid = get_namespace_oid("sys", false);
+
+	if (!OidIsValid(tsql_bit_oid))
+		tsql_bit_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("bit"), ObjectIdGetDatum(sys_nspoid));
+		
+	if (!OidIsValid(tsql_fixeddecimal_oid))
+		tsql_fixeddecimal_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("fixeddecimal"), ObjectIdGetDatum(sys_nspoid));
+
+	if (func_oid == F_NUMERIC_INT4 ||
+		func_oid == F_NUMERIC_INT8 ||
+		func_oid == F_NUMERIC_INT2 ||
+		func_oid == F_NUMERIC_FLOAT4 ||
+		func_oid == F_NUMERIC_FLOAT8 ||
+		func_oid == F_INT8_INT4 ||
+		func_oid == F_INT4_INT8 ||
+		func_oid == F_INT8_INT2 ||
+		func_oid == F_INT2_INT8 ||
+		func_oid == F_INT4_INT2 ||
+		func_oid == F_INT2_INT4 ||
+		func_oid == F_INT4_NUMERIC ||
+		func_oid == F_INT2_NUMERIC ||
+		func_oid == F_INT8_NUMERIC ||
+		is_tsql_bit_numeric(func_oid) ||
+		is_tsql_int4_bit(func_oid) ||
+		is_tsql_fixeddecimal_numeric(func_oid) ||
+		is_tsql_numeric_fixeddecimal(func_oid))
+		return true;
+	return false;
+}
+
 /*
  * is_numeric_datatype - returns bool if given datatype is numeric or decimal.
  */
@@ -536,7 +639,7 @@ is_numeric_datatype(Oid typid)
 }
 
 /* look for a typmod to return from a numeric expression */
-static int32
+int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	if (expr == NULL)
@@ -560,14 +663,32 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			{
 				Const	   *con = (Const *) expr;
 				Numeric		num;
-
-				if (!is_numeric_datatype(con->consttype) || con->constisnull)
+				int64		val;
+				
+				if ((!(con->consttype == INT4OID) && !is_numeric_datatype(con->consttype)) ||
+					con->constisnull)
 				{
 					/* typmod is undefined */
 					return -1;
 				}
 				else
 				{
+					/*
+					 * This function calculates the typmod for INT4
+					 * constants when called from the babelfishpg_tsql 
+					 * extension (referred to as non-plan context). It 
+					 * converts the INT4 value to NUMERIC and then determines 
+					 * the appropriate typmod. This process ensures correct 
+					 * numeric precision handling in Babelfish TSQL operations.
+					 */
+					if (plan == NULL && con->consttype == INT4OID)
+					{
+						val = con->constvalue;
+						num = int64_to_numeric(val);
+						return numeric_get_typmod(num);
+					}
+					else if (plan != NULL && con->consttype == INT4OID)
+						return -1;
 					num = (Numeric) con->constvalue;
 					return numeric_get_typmod(num);
 				}
@@ -577,7 +698,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Var		   *var = (Var *) expr;
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (var->varno == OUTER_VAR)
+				if (plan != NULL && var->varno == OUTER_VAR)
 				{
 					Assert(plan);
 					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
@@ -757,7 +878,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = Max(scale - delta, 0);
 					}
-
 					/*
 					 * Control reaching here for only arithmetic overflow
 					 * cases
@@ -770,7 +890,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				FuncExpr   *func = (FuncExpr *) expr;
 				Oid			func_oid = InvalidOid;
 				int			rettypmod = -1;
-
+				Node	   *arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
 					return rettypmod;
@@ -786,6 +906,21 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
 																					  func->args == NIL ? 0 : func->args->length,
 																					  func->funcresulttype);
+
+				/*
+				 * If the following conditions are met then we will recursively find typmod from arg.
+				 * 1) plan == NULL means we are invoking this function during parsing phase.
+				 * 2) rettypmod == -1 means unable to find typmod till now.
+				 * 3) check if only one args and then is that castable to numeric.
+				 */
+				if (plan == NULL &&
+					rettypmod == -1 &&
+					list_length(func->args) == 1 &&
+					is_numeric_cast(func_oid))
+				{
+					arg = linitial(func->args);
+					return resolve_numeric_typmod_from_exp(plan, arg);
+				}
 				return rettypmod;
 			}
 		case T_NullIfExpr:
@@ -956,6 +1091,38 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					return rlt->resulttypmod;
 				else
 					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+			}
+		case T_CoerceToDomain:
+			{
+				/* Copied from exprTypmod. */
+				CoerceToDomain *rlt = (CoerceToDomain *) expr;
+
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
+				else
+					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+			}
+		case T_SubLink:
+			{
+				/* Copied from exprTypmod. */
+				const SubLink *sublink = (const SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get type for untransformed sublink");
+					tent = linitial_node(TargetEntry, qtree->targetList);
+					Assert(!tent->resjunk);
+					return resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr);
+					/* note we don't need to care if it's an array */
+				}
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
+				return -1;
 			}
 			/* TODO handle more Expr types if needed */
 		default:
