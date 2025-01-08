@@ -1,0 +1,48 @@
+DROP VIEW test_conv_string_to_datetimeoffset_v1
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p1
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f1()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v2
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p2
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f2()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v3
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p3
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f3()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v4
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p4
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f4()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v5
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p5
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f5()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v6
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p6
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f6()
+GO
+
+DROP VIEW test_conv_string_to_datetimeoffset_v7
+GO
+DROP PROCEDURE test_conv_string_to_datetimeoffset_p7
+GO
+DROP FUNCTION test_conv_string_to_datetimeoffset_f7()
+GO

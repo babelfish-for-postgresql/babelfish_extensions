@@ -1,0 +1,101 @@
+CREATE VIEW test_conv_string_to_datetime2_v1 as (SELECT CONVERT(datetime2(1), CAST('2017-08-25 13:01:59' AS datetime)));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p1 as (SELECT CONVERT(datetime2(1), CAST('2017-08-25 13:01:59' AS datetime)));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f1()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2(1), CAST('2017-08-25 13:01:59' AS datetime)));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v2 as (SELECT CONVERT(datetime2, '2017-08-25 13:01:59.1234567'));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p2 as (SELECT CONVERT(datetime2, '2017-08-25 13:01:59.1234567'));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f2()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, '2017-08-25 13:01:59.1234567'));
+END
+GO
+
+CREATE PROCEDURE test_conv_string_to_datetime2_p2_2 as (SELECT CONVERT(datetime2(10), '2017-08-25 13:01:59.1234567'));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f2_2()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2(10), '2017-08-25 13:01:59.1234567'));
+END
+GO
+
+
+CREATE VIEW test_conv_string_to_datetime2_v3 as (SELECT CONVERT(datetime2(5), '2017-08-25 13:01:59.1234567'));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p3 as (SELECT CONVERT(datetime2(5), '2017-08-25 13:01:59.1234567'));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f3()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2(5), '2017-08-25 13:01:59.1234567'));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v4 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS TEXT)));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p4 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS TEXT)));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f4()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS TEXT)));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v5 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS CHAR(30))));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p5 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS CHAR(30))));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f5()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS CHAR(30))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v6 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NCHAR(30))));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p6 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NCHAR(30))));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f6()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NCHAR(30))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v7 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NVARCHAR(30))));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime2_p7 as (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NVARCHAR(30))));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f7()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, CAST('2017-08-25 13:01:59.1234567' AS NVARCHAR(30))));
+END
+GO
+
+CREATE VIEW test_conv_string_to_datetime2_v8 as (SELECT CONVERT(datetime2, CAST('2017' AS INTEGER)));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to datetime2)~~
+
+CREATE PROCEDURE test_conv_string_to_datetime2_p8 as (SELECT CONVERT(datetime2, CAST('2017' AS INTEGER)));
+GO
+CREATE FUNCTION test_conv_string_to_datetime2_f8()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT CONVERT(datetime2, CAST('2017' AS INTEGER)));
+END
+GO
