@@ -76,6 +76,9 @@ ignore#!#objectpropertyex-before-16_5-or-15_9-vu-cleanup
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-prepare
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-verify
 ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-prepare
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-verify
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-cleanup
 ignore#!#BABEL-2736-before-16_5-vu-prepare
 ignore#!#BABEL-2736-before-16_5-vu-verify
 ignore#!#BABEL-2736-before-16_5-vu-cleanup
