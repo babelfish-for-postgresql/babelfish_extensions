@@ -942,41 +942,18 @@ check_babelfish_droprole_restrictions(char *role)
 static bool
 is_babelfish_role(const char *role)
 {
-	Oid			sysadmin_oid;
 	Oid			role_oid;
-	Oid			bbf_master_guest_oid;
-	Oid			bbf_tempdb_guest_oid;
-	Oid			bbf_msdb_guest_oid;
-	Oid			securityadmin;
-	Oid			dbcreator;
 	Oid         bbf_admin_oid;
 
-	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
-	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
-	dbcreator = get_role_oid(BABELFISH_DBCREATOR, true);  /* missing OK */
 	bbf_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true); /* missing OK */
 
-	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) 
-			|| !OidIsValid(securityadmin) || !OidIsValid(dbcreator))
-		return false;
-
-	if (is_member_of_role(sysadmin_oid, role_oid) ||
-		is_member_of_role(securityadmin, role_oid) ||
-		is_member_of_role(dbcreator, role_oid) ||
-		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
+	/* check if it is bbf_role_admin */
+	if (pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0)
 		return true;
 
-	bbf_master_guest_oid = get_role_oid("master_guest", true);
-	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
-	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
-	if (OidIsValid(bbf_master_guest_oid)
-		&& OidIsValid(bbf_tempdb_guest_oid)
-		&& OidIsValid(bbf_msdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_master_guest_oid)
-		&& is_member_of_role(role_oid, bbf_tempdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_msdb_guest_oid)
-		&& is_member_of_role(bbf_admin_oid, role_oid))
+	/* If a role as 'bbf_role_admin' as a member, it's a Babelfish role. */
+	if (is_member_of_role(bbf_admin_oid, role_oid))
 		return true;
 
 	return false;
