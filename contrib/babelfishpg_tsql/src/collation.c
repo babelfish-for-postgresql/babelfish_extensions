@@ -327,7 +327,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
 	Node	   *ret;
-	Const	   *patt = NULL;
+	Const	   *patt;
 	Const	   *prefix;
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
