@@ -89,7 +89,7 @@ BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3513
 BABEL-3556
 BABEL-3588
@@ -592,6 +592,7 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
+cast_nvarchar_test
 test_conv_string_to_date-before-17_3
 test_conv_string_to_datetime-before-17_3
 test_conv_string_to_datetime2-before-17_3

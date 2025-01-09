@@ -591,6 +591,7 @@ BABEL-2736
 datareader_datawriter
 db_owner
 smalldatetime_date_cmp
+cast_nvarchar_test_before_16_5
 test_conv_string_to_date-before-17_3
 test_conv_string_to_datetime-before-17_3
 test_conv_string_to_datetime2-before-17_3

@@ -540,6 +540,7 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 dbcreator_role
 BABEL-5186
 BABEL-2736-before-16_5
+cast_nvarchar_test_before_16_5
 securityadmin_role
 datareader_datawriter
 smalldatetime_date_cmp
