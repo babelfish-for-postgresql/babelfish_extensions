@@ -935,7 +935,7 @@ check_babelfish_droprole_restrictions(char *role)
  * 	that is only accessible in babelfish_db.
  * 	Since role related DDLs could be executed in any PG databases,
  * 	This function check the underlying assumption on the membership chain instead
- * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
+ * 	bbf_admin_oid <-- dbo* <--- db_owner* <--- users/roles
  *
  * actual dbo and db_owner name varies across different babelfish logical databases
  */
@@ -943,7 +943,7 @@ static bool
 is_babelfish_role(const char *role)
 {
 	Oid			role_oid;
-	Oid         bbf_admin_oid;
+	Oid			bbf_admin_oid;
 
 	role_oid = get_role_oid(role, true);	/* missing OK */
 	bbf_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true); /* missing OK */
@@ -952,7 +952,7 @@ is_babelfish_role(const char *role)
 	if (pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0)
 		return true;
 
-	/* If a role as 'bbf_role_admin' as a member, it's a Babelfish role. */
+	/* If a role has 'bbf_role_admin' as a member, it's a Babelfish role. */
 	if (is_member_of_role(bbf_admin_oid, role_oid))
 		return true;
 
