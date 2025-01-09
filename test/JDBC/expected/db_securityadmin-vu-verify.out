@@ -1217,8 +1217,7 @@ GRANT db_securityadmin_restrictions_login TO master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "db_securityadmin_restrictions_login"
-  Detail: Only roles with the ADMIN option on role "db_securityadmin_restrictions_login" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -1229,8 +1228,7 @@ REVOKE master_dbo FROM master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to revoke role "master_dbo"
-  Detail: Only roles with the ADMIN option on role "master_dbo" may revoke this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -1291,8 +1289,7 @@ GRANT master_db_securityadmin TO db_securityadmin_restrictions_login;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "master_db_securityadmin"
-  Detail: Only roles with the ADMIN option on role "master_db_securityadmin" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -1300,8 +1297,7 @@ GRANT db_securityadmin_restrictions_login TO master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to grant role "db_securityadmin_restrictions_login"
-  Detail: Only roles with the ADMIN option on role "db_securityadmin_restrictions_login" may grant this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -1309,8 +1305,7 @@ REVOKE master_db_securityadmin FROM master_dbo;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to revoke role "master_db_securityadmin"
-  Detail: Only roles with the ADMIN option on role "master_db_securityadmin" may revoke this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -1318,8 +1313,7 @@ REVOKE master_dbo FROM master_db_securityadmin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to revoke role "master_dbo"
-  Detail: Only roles with the ADMIN option on role "master_dbo" may revoke this role.
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
