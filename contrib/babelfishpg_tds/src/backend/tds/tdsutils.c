@@ -951,6 +951,9 @@ is_babelfish_role(const char *role)
 	role_oid = get_role_oid(role, true);	/* missing OK */
 	bbf_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true); /* missing OK */
 
+	if (!OidIsValid(role_oid) || !OidIsValid(bbf_admin_oid))
+		return false;
+
 	/* check if it is bbf_role_admin */
 	if (pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0)
 		return true;
