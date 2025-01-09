@@ -3092,8 +3092,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/*
 					 * check whether sql user name and role name contains
 					 * '\' or not
+					 *
+					 * check can be skipped if query is creating internal role
+					 * for ALTER ROLE db_owner ADD MEMBER ...
 					 */
-					if (isrole || !from_windows)
+					if ((isrole || !from_windows) && strcmp(queryString, INTERNAL_ALTER_ROLE) != 0)
 						validateUserAndRole(stmt->role);
 
 					/* Save the previous user to be restored after creating the login. */
