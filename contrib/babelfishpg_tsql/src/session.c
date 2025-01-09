@@ -15,6 +15,7 @@
 #include "dbcmds.h"
 #include "multidb.h"
 #include "session.h"
+#include "pl_explain.h"
 #include "pltsql.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
@@ -48,16 +49,28 @@ get_cur_db_id(void)
 	return current_db_id;
 }
 
+/* same as get_current_pltsql_db_name but reurn value is palloc'd */
 char *
 get_cur_db_name(void)
 {
 	return pstrdup(current_db_name);
 }
 
+/*
+ * returns current active babelfish db name
+ * Callers should NOT pfree the return value
+ */
+const char *
+get_current_pltsql_db_name(void)
+{
+	return current_db_name;
+}
+
 void 
 set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 {
 	int len;
+	int16 db_id;
 
 	if (logical_db_name == NULL)
 		ereport(ERROR,
@@ -68,13 +81,15 @@ set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
-	if(!DbidIsValid(get_db_id(logical_db_name)))
+	db_id = get_db_id(logical_db_name);
+	if(!DbidIsValid(db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", logical_db_name)));
 	
 	strncpy(current_db_name, logical_db_name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
+	current_db_id = db_id;
 }
 
 
@@ -210,6 +225,9 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
+	reset_cached_cursor();
+	pltsql_explain_only = false;
+	pltsql_explain_analyze = false;
 }
 
 void

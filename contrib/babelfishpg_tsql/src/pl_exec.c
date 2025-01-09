@@ -62,7 +62,6 @@
 #include "guc.h"
 #include "multidb.h"
 #include "session.h"
-#include "guc.h"
 #include "catalog.h"
 
 uint64		rowcount_var = 0;
@@ -70,6 +69,7 @@ List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
 int			fetch_status_var = 0;
+int			saved_expr_kind = -1;
 
 typedef struct
 {
@@ -1036,9 +1036,10 @@ pltsql_exec_trigger(PLtsql_function *func,
 	PLtsql_rec *rec_new,
 			   *rec_old;
 	HeapTuple	rettup;
+	bool     	support_tsql_trans = pltsql_support_tsql_transactions();
 
 	/* Check if this trigger is called as part of any of postgres' function, procedure or trigger. */
-	if (!pltsql_support_tsql_transactions())
+	if (!support_tsql_trans)
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1050,7 +1051,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 	 */
 	pltsql_estate_setup(&estate, func, NULL, NULL);
 
-	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers)
+	if (support_tsql_trans && !pltsql_disable_txn_in_triggers)
 		estate.atomic = false;
 
 	estate.trigdata = trigdata;
@@ -1173,7 +1174,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		 * TSQL triggers terminate if there is no transaction active at the
 		 * end
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 					 errmsg("The transaction ended in the trigger. The batch has been aborted.")));
@@ -1181,7 +1182,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		/*
 		 * If an error was encountered when executing trigger.
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 					 errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
@@ -4368,6 +4369,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
 	es_cs_entry->next = exec_state_call_stack;
 	exec_state_call_stack = es_cs_entry;
+	saved_expr_kind = -1;
 }
 
 /* ----------
@@ -4621,6 +4623,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		fmtonly_enabled = true;
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
+	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
 	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
@@ -4798,7 +4801,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/* Open nesting level in engine */
 			BeginCompositeTriggers(CurrentMemoryContext);
 			/* TSQL commands must run inside an explicit transaction */
-			if (!pltsql_disable_batch_auto_commit && pltsql_support_tsql_transactions() &&
+			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
 				stmt->txn_data == NULL && !IsTransactionBlockActive())
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
@@ -4824,7 +4827,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 										  portal, expr, cmd, paramLI);
 		else if (stmt->need_to_push_result)
 			rc = execute_plan_and_push_result(estate, expr, paramLI);
-		else if (stmt->txn_data != NULL && !pltsql_support_tsql_transactions())
+		else if (stmt->txn_data != NULL && !support_tsql_trans)
 		{
 			elog(DEBUG2, "TSQL TXN Execute transaction command with PG semantics");
 			rc = execute_txn_command(estate, stmt);
@@ -5057,7 +5060,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
-			pltsql_support_tsql_transactions() &&
+			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
 			!ro_func && !estate->insert_exec)
 		{
@@ -7858,12 +7861,22 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
+	if (saved_expr_kind == EXPRKIND_TARGET)
+	{
+		/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
+		prm->pflags = 0;
+	}
+	else
+	{
+		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
+		prm->pflags = PARAM_FLAG_CONST;
+	}
+
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
 		prm->value = (Datum) 0;
 		prm->isnull = true;
-		prm->pflags = 0;
 		prm->ptype = InvalidOid;
 		return prm;
 	}
@@ -7872,8 +7885,6 @@ pltsql_param_fetch(ParamListInfo params,
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
-	/* We can always mark params as "const" for executor's purposes */
-	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -10110,7 +10121,6 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int			rc;
 	PLtsql_tbl *tbl;
 	bool		old_pltsql_explain_only = pltsql_explain_only;
-	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 	bool old_abort_curr_txn = AbortCurTransaction;
 
@@ -10132,7 +10142,13 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 			if (!tbl->need_drop)
 				continue;
 
-			query = psprintf(query_fmt, tbl->tblname);
+			/*
+			 * Use delimiters for names like @@var or @var#
+			 */
+			if (is_tsql_atatuservar(tbl->tblname))
+				query = psprintf("DROP TABLE [%s]", tbl->tblname);
+			else
+				query = psprintf("DROP TABLE %s", tbl->tblname);	
 
 			pltsql_explain_only = false;	/* Drop temporary table even in
 											 * EXPLAIN ONLY mode */
@@ -10422,4 +10438,39 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(pltsql_assign_var);
+
+/*
+ * pltsql_assign_var - Helper function to update local variables dynamically during execution.
+ * Any statement which updates local variables as part of TargetList will be re-written using
+ * this function. for example,
+ * @var = expr will be re-written to @var=sys.pltsql_assign_var(dno, cast((expr) as type)).
+ */
+Datum
+pltsql_assign_var(PG_FUNCTION_ARGS)
+{
+	int dno = PG_GETARG_INT32(0);
+	Datum data = PG_GETARG_DATUM(1);
+	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	bool isNull = PG_ARGISNULL(1);
+	int32 valtypmod = -1;
+	PLtsql_datum *target;
+	MemoryContext oldcontext;
+
+	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+	oldcontext = MemoryContextSwitchTo(estate->datum_context);
+	target = estate->datums[dno];
+
+	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (isNull)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(data);
 }

@@ -1637,7 +1637,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#<NULL>
+babel4157_c1#!#3
 ~~END~~
 
 
@@ -1890,14 +1890,14 @@ select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union sele
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type "nchar" to bbf_varbinary)~~
+~~ERROR (Message: UNION could not convert type "nchar" to varbinary)~~
 
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type varbinary to bpchar)~~
+~~ERROR (Message: UNION could not convert type varbinary to "nchar")~~
 
 
 SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));

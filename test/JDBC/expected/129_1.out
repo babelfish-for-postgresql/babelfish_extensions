@@ -111,7 +111,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure master_error_mapping.errorhandling1() does not exist)~~
+~~ERROR (Message: procedure error_mapping.errorhandling1() does not exist)~~
 
 
 DROP TABLE t129 
@@ -306,7 +306,7 @@ exec error_mapping.ErrorHandling2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure master_error_mapping.errorhandling1() does not exist)~~
+~~ERROR (Message: procedure error_mapping.errorhandling1() does not exist)~~
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -370,7 +370,7 @@ exec error_mapping.ErrorHandling2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure master_error_mapping.errorhandling1() does not exist)~~
+~~ERROR (Message: procedure error_mapping.errorhandling1() does not exist)~~
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;

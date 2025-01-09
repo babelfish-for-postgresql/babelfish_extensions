@@ -37,6 +37,46 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
+LANGUAGE C
+AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
+
+DO
+LANGUAGE plpgsql
+$$
+BEGIN
+    -- Check if the GUC is empty
+    IF current_setting('babelfishpg_tsql.restored_server_collation_name', true) <> '' THEN
+        -- Call the function to update the collation
+        EXECUTE 'SELECT sys.babelfish_update_server_collation_name()';
+    END IF;
+END;
+$$;
+
+DROP FUNCTION sys.babelfish_update_server_collation_name();
+
+-- reset babelfishpg_tsql.restored_server_collation_name GUC
+do
+language plpgsql
+$$
+    declare
+        query text;
+    begin
+        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
+        execute query;
+    end;
+$$;
+
+-- This is a temporary procedure which is only meant to be called during upgrade
+CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_guest_from_mapped_logins';
+
+CALL sys.babelfish_revoke_guest_from_mapped_logins();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_revoke_guest_from_mapped_logins();
+
 DO $$
 DECLARE
     exception_message text;
@@ -4406,7 +4446,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
-	CAST(CASE WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	CAST(CASE WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
 	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
 	-- For system-defined schemas, schema-owner name will be same as schema_name
 	-- For user-defined schemas having default owner, schema-owner will be dbo
@@ -4414,8 +4454,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	-- by owner name, so need to extract the owner name from rolname always.
 	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
 		  WHEN r.rolname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN
-			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
-			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
+			CASE WHEN PG_CATALOG.RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
+			     ELSE PG_CATALOG.RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
 			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
 	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
 	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",

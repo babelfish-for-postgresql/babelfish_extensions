@@ -30,7 +30,6 @@ BABEL-1715
 BABEL-1756
 BABEL-1756-dep
 BABEL-1963
-restricted_procedures
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
@@ -118,7 +117,6 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -348,9 +346,13 @@ stuff-before-15_8-or-16_4
 replicate-before-15_8-or-16_4
 string_agg-before-14_5
 concat-before-15_9-or-16_5
-concat_ws-before-15_9-or-16_5
+concat_ws-before-15_5-or-14_10
 space
 binary-datatype-operators
 BABEL-5059-before-14_7-or-15_2
 replace-before-15_8-or-16_4
 BABEL-CASE_EXPR-before-16_5-or-15_9
+smalldatetime_date_cmp-before-15_5-16_1
+datareader_datawriter
+test_conv_money_to_varchar
+

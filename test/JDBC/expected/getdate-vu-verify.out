@@ -80,18 +80,18 @@ int
 
 -- all the tests have datetime difference spillover correction to avoid flakiness.
 declare @x datetime2 = sysdatetime()
-select set_config('timezone', 'US/Pacific', false);
+select set_config('timezone', 'Asia/Kolkata', false);
 declare @y datetime2 = sysdatetime()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = -330 or @diff = -331
     SELECT 1;
 ELSE
     SELECT 0;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -106,18 +106,18 @@ int
 
 
 declare @x datetime2 = sysdatetimeoffset()
-select set_config('timezone', 'US/Pacific', false);
+select set_config('timezone', 'Asia/Kolkata', false);
 declare @y datetime2 = sysdatetimeoffset()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = -330 or @diff = -331
     SELECT 1;
 ELSE
     SELECT 0;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -132,18 +132,18 @@ int
 
 
 declare @x datetime2 = getdate()
-select set_config('timezone', 'US/Pacific', false);
+select set_config('timezone', 'Asia/Kolkata', false);
 declare @y datetime2 = getdate()
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = -330 or @diff = -331
     SELECT 1;
 ELSE
     SELECT 0;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -158,18 +158,18 @@ int
 
 
 declare @x datetime2 = CURRENT_TIMESTAMP
-select set_config('timezone', 'US/Pacific', false);
+select set_config('timezone', 'Asia/Kolkata', false);
 declare @y datetime2 = CURRENT_TIMESTAMP
 select set_config('timezone', 'UTC', false);
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = 420 or @diff = 419
+IF @diff = -330 or @diff = -331
     SELECT 1;
 ELSE
     SELECT 0;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -183,7 +183,7 @@ int
 ~~END~~
 
 
-declare @x datetime2 = sysdatetime() AT TIME ZONE 'Pacific Standard Time'
+declare @x datetime2 = sysdatetime() AT TIME ZONE 'India Standard Time'
 declare @y datetime2 = sysdatetime() AT TIME ZONE 'UTC'
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
 IF @diff = 0 or @diff = -1
@@ -197,10 +197,10 @@ int
 ~~END~~
 
 
-declare @x datetime2 = sysdatetimeoffset() AT TIME ZONE 'Pacific Standard Time'
+declare @x datetime2 = sysdatetimeoffset() AT TIME ZONE 'India Standard Time'
 declare @y datetime2 = sysdatetimeoffset() AT TIME ZONE 'UTC'
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
-IF @diff = -420 or @diff = -421
+IF @diff = 330 or @diff = 329
     SELECT 1;
 ELSE
     SELECT 0;
@@ -211,7 +211,7 @@ int
 ~~END~~
 
 
-declare @x datetime2 = getdate() AT TIME ZONE 'Pacific Standard Time'
+declare @x datetime2 = getdate() AT TIME ZONE 'India Standard Time'
 declare @y datetime2 = getdate() AT TIME ZONE 'UTC'
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
 IF @diff = 0 or @diff = -1
@@ -225,7 +225,7 @@ int
 ~~END~~
 
 
-declare @x datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'Pacific Standard Time'
+declare @x datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'India Standard Time'
 declare @y datetime2 = CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
 DECLARE @diff int = DATEDIFF(MINUTE, @y, @x);
 IF @diff = 0 or @diff = -1
@@ -243,7 +243,7 @@ EXEC dbo.GetSysDatetimeDiff;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -261,7 +261,7 @@ EXEC dbo.GetSysDatetimeOffsetDiff;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -279,7 +279,7 @@ EXEC dbo.GetDateDiff;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -297,7 +297,7 @@ EXEC dbo.GetCurrTimestampDiff;
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -320,13 +320,13 @@ int#!#int#!#int#!#int
 
 
 declare @x datetime2 = SYSDATETIME();
-select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeDiffFunc(@x, -420, 1)
+select set_config('timezone', 'Asia/Kolkata', false);
+select dbo.GetSysDatetimeDiffFunc(@x, 330, 1)
 select set_config('timezone', 'UTC', false);
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -341,13 +341,13 @@ UTC
 
 
 declare @x datetime2 = sysdatetimeoffset();
-select set_config('timezone', 'US/Pacific', false);
-select dbo.GetSysDatetimeOffsetDiffFunc(@x, -420, 1)
+select set_config('timezone', 'Asia/Kolkata', false);
+select dbo.GetSysDatetimeOffsetDiffFunc(@x, 330, 1)
 select set_config('timezone', 'UTC', false);
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -362,13 +362,13 @@ UTC
 
 
 declare @x datetime2 = getdate();
-select set_config('timezone', 'US/Pacific', false);
-select dbo.GetDateDiffFunc(@x, -420, 1)
+select set_config('timezone', 'Asia/Kolkata', false);
+select dbo.GetDateDiffFunc(@x, 330, 1)
 select set_config('timezone', 'UTC', false);
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -383,13 +383,13 @@ UTC
 
 
 declare @x datetime2 = CURRENT_TIMESTAMP;
-select set_config('timezone', 'US/Pacific', false);
-select dbo.GetCurrTimestampDiffFunc(@x, -420, 1)
+select set_config('timezone', 'Asia/Kolkata', false);
+select dbo.GetCurrTimestampDiffFunc(@x, 330, 1)
 select set_config('timezone', 'UTC', false);
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~
@@ -407,7 +407,7 @@ INSERT INTO datetimediffTable values (0, 0, 0, 0)
 go
 ~~START~~
 text
-US/Pacific
+Asia/Kolkata
 ~~END~~
 
 ~~START~~

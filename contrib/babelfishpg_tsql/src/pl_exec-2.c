@@ -22,6 +22,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
 #include "rolecmds.h"
@@ -131,6 +132,9 @@ static bool prev_insert_bulk_check_constraints = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
+
+/* Enclose a user-defined @@var or @var# name in delimiters */
+static char *delimit_tsql_atatuservar(const char *src);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -882,6 +886,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	else
 		estate->schema_name = NULL;
 
+	/*
+	 * We need to disable the explain gucs incase of sp_reset_connection
+	 * execution otherwise we will get explain output for it which is
+	 * not intended.
+	 */
+	if (strcmp(stmt->proc_name, "sp_reset_connection") == 0)
+	{
+		pltsql_explain_only = false;
+		pltsql_explain_analyze = false;
+	}
+
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
 	{
@@ -942,7 +957,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doesn't allow call procedure in function */
+		/* T-SQL doesn't allow procedure calls in a function */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
@@ -1364,6 +1379,7 @@ static int
 exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 {
 	char	   *tblname;
+	char	   *tblname_create;
 	char	   *query;
 	PLtsql_tbl *var = (PLtsql_tbl *) (estate->datums[stmt->dno]);
 	int			rc;
@@ -1388,8 +1404,8 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 
 		/*
 		 * If the original refname was already >=63 characters (the max limit of PG identifiers),
-		 * then the above construction of tblname will be >63 characters, which will violate the
-		 * max length of PG identiefiers and cause issues down the road. Fix this by truncating
+		 * then the above construction of tblname will be >63 characters, which will exceed the
+		 * max length of PG identifiers and cause issues down the road. Fix this by truncating
 		 * tblname so that adding the "_<@@nestlevel>" suffix will be exactly 63 characters.
 		 */
 		if (strlen(tblname) >= NAMEDATALEN)
@@ -1400,12 +1416,20 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 			tblname = psprintf("%s_%d", tblname, estate->nestlevel);
 		}
 		
+		/*
+		 * Add delimiters for valid T-SQL variable names like @@var or @var#
+		 */
+		if (is_tsql_atatuservar(tblname))
+			tblname_create = psprintf("[%s]", tblname);
+		else
+			tblname_create = psprintf("%s", tblname);			
+					
 		if (stmt->tbltypname)
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-							 tblname, stmt->tbltypname);
+							 tblname_create, stmt->tbltypname);
 		else
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
-							 tblname, stmt->coldef);
+							 tblname_create, stmt->coldef);
 
 		/*
 		 * If a table with the same name already exists, we should just use
@@ -1474,7 +1498,15 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
 	expr = palloc0(sizeof(PLtsql_expr));
-	expr->query = psprintf("select * from %s", tbl->tblname);
+	
+	/*
+	 * Add delimiters for valid T-SQL variable names like @@var or @var#
+	 */	
+	if (is_tsql_atatuservar(tbl->tblname))
+		expr->query = psprintf("select * from [%s]", tbl->tblname);
+	else
+		expr->query = psprintf("select * from %s", tbl->tblname);
+
 	expr->plan = NULL;
 	expr->paramnos = NULL;
 	expr->rwparam = -1;
@@ -1802,6 +1834,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	int			ret = 0;
+
+	/* T-SQL doesn't allow procedure calls in a function */
+	if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("Only functions can be executed within a function")));
+	}
 
 	switch (stmt->sp_type_code)
 	{
@@ -2494,6 +2534,179 @@ is_char_identpart(char c)
 }
 
 /*
+ * Check for allowed chars in @variable name
+ * ToDo: support non-standard ASCII chars (Unicode ranges)
+ * and align with is_identifier_char()
+ */
+static inline bool
+is_variable_name_char(unsigned char c)
+{
+	bool valid = (
+					isalpha(c) ||
+					isdigit(c) ||
+					c == '_' || 
+					c == '@' || 
+					c == '$' || 
+					c == '#'
+				);
+
+	return valid;	
+}
+
+/*
+ * Put delimiters around a T-SQL variable/parameter that is
+ * named '@@var' or contains a hash, e.g. '@var#'.
+ * Without delimiters, the backend will raise an error.
+ * This is used for the parameter argument of sp_executesql, so the input
+ * string may contain multiple names, e.g.: @par1 int, @par2 varchar(20), ...
+ * This function calls palloc() to allocate a new string and returns a pointer
+ * to this string.
+ */
+static char *
+delimit_tsql_atatuservar(const char *src)
+{
+	char *s = (char *) src;
+	char *varname_start = NULL;
+	bool add_delimiter = false;
+	
+	/* 
+	 * Reserving twice the amount of space of the input string: since the shortest possible
+	 * parameter definition is 5 characters ('@@p x' , where x would be the type), this will 
+	 * always be enough for adding delimiters.
+	 * Note that there can be multiple parameter names in the input string.
+	 */
+	char *result = (char *) palloc(sizeof(char)*strlen(src)*2);	
+	char *tgt = result;
+
+	while (*s)
+	{
+		/* Look for start of variable name, which is always '@' */
+		if (*s != '@')
+		{
+			*tgt++ = *s++;
+			continue;
+		}
+
+		/* Start of variable name found */
+		add_delimiter = false;
+
+		varname_start = s;
+
+		/* Name starting with @@ */
+		if (*(s+1))
+		{
+			if (*(s+1) == '@')
+			{
+				add_delimiter = true;
+			}
+		}
+
+		/* Find end of variable name */
+		while (*s)
+		{
+			/* Check for allowed chars in @variable name */
+			if (is_variable_name_char(*s))
+			{
+				/* Name contains # */
+				if (*s == '#')
+				{
+					add_delimiter = true;
+				}
+
+				s++;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (varname_start != src)
+		{
+			/* 
+			 * Do not add delimiters if the name is already delimited.
+			 * Both square brackets and double quotes are used as delimiters for variable names.
+			 */
+			if ((*(varname_start-1) == '[') || (*(varname_start-1) == '"'))
+			{
+				add_delimiter = false;
+			}
+		}
+
+		// Add delimiters to the name if required
+		if (add_delimiter) *tgt++ = '[';
+		while (varname_start != s)
+		{
+			*tgt++ = *varname_start++;
+		}
+		if (add_delimiter) *tgt++ = ']';
+	} /* while */
+
+	*tgt = '\0';
+	return result;
+}
+
+/*
+ * Determine whether the passed name is a T-SQL variable/parameter name that is
+ * named '@@var' or contains a hash, e.g. '@var#'.
+ */
+bool
+is_tsql_atatuservar(const char *varname)
+{
+	char *s = (char *) varname;
+	bool is_atatuservar = false;
+
+	/* The variable names we're looking for are at least 3 chars */
+	if (strlen(varname) <= 2)
+	{
+		return false;
+	} 
+	
+	/* Variable name must start with '@' */
+	if (*s != '@')
+	{
+		return false;
+	}
+	
+	/* Starts with '@@' ? */
+	s++;
+	if (*s == '@')
+	{
+		is_atatuservar = true;
+	}	
+
+	while (*s)
+	{
+		/* Check for allowed chars in @variable name */
+		if (is_variable_name_char(*s))
+		{
+			/* Name contains # */
+			if (*s == '#')
+			{
+				is_atatuservar = true;
+			}
+
+			s++;
+		}
+		else
+		{
+			return false;
+		}
+	} /* while */
+	
+	/* 
+	 * The variable name should continue until end of string; if not, 
+	 * something is wrong
+	 *
+	 * NB: The assertion below is logically true given the loop above,
+	 * but kept in the code for clarity.
+	 */
+	Assert(*s == '\0');  
+	
+	return is_atatuservar;
+}
+
+/*
  * Read parameter definitions
  */
 void
@@ -2518,10 +2731,11 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	/*
 	 * Create a fake CREATE PROCEDURE statement to get the param definition
 	 * parse tree.
+	 * Delimiters will be applied around parameter names like @@par or @par#.
 	 */
 	initStringInfo(&proc_stmt);
 	appendStringInfoString(&proc_stmt, str1);
-	appendStringInfoString(&proc_stmt, paramdefstr);
+	appendStringInfoString(&proc_stmt, delimit_tsql_atatuservar(paramdefstr));
 	appendStringInfoString(&proc_stmt, str2);
 
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
@@ -3015,11 +3229,12 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or securityadmin, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner
+					&& !is_member_of_role(GetSessionUserId(), get_securityadmin_oid()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Grantor does not have GRANT permission.")));
@@ -3768,11 +3983,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
 
-		/* Special database roles should throw an error. */
-		if (strcmp(grantee_name, "db_owner") == 0)
-			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
-
 		if (!is_public && !OidIsValid(role_oid))
 		{
 			/* sys or information_schema roles should throw an error. */
@@ -3791,11 +4001,21 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
+		/* Special database roles should throw an error. */
+		if (IS_FIXED_DB_PRINCIPAL(grantee_name))
+			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+
 		/*
 		 * If the login is not the db owner or the login is not the member of
-		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+		 * sysadmin or login is not the schema owner,
+		 * or current_user is not member of db_securityadmin fixed role
+		 * then it doesn't have the permission to GRANT/REVOKE.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+			!login_is_db_owner &&
+			!object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), get_db_securityadmin_oid(dbname, false)))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
@@ -3908,10 +4128,10 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		
 		/* Revoke dbo role from the previous owner */
-		grant_revoke_dbo_to_login(get_owner_of_db(stmt->db_name), stmt->db_name, false);
+		grant_revoke_role_to_login(get_owner_of_db(stmt->db_name), get_dbo_role_name(stmt->db_name), NULL, false);
 
 		/* Grant dbo role to the new owner */
-		grant_revoke_dbo_to_login(stmt->new_owner_name, stmt->db_name, true);
+		grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), NULL, true);
 		update_db_owner(stmt->new_owner_name, stmt->db_name);	
 	}
 	PG_FINALLY();
@@ -4101,7 +4321,8 @@ check_create_or_drop_permission_for_partition_specifier(const char *name, bool i
 	if (strncmp(login, get_owner_of_db(dbname), NAMEDATALEN) == 0)
 		login_is_db_owner = true;
 
-	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)))
+	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)) &&
+		!has_privs_of_role(GetUserId(), get_db_ddladmin_oid(dbname, false)))
 	{
 		if (is_create)
 			ereport(ERROR, 

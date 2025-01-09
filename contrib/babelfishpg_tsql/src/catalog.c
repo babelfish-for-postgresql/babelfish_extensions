@@ -14,6 +14,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "commands/schemacmds.h"
 #include "commands/user.h"
@@ -373,8 +374,7 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 void pltsql_drop_relation_refcnt_hook(Relation relation)
 {
 	int expected_refcnt = 0;
-	if (sql_dialect != SQL_DIALECT_TSQL ||
-		!RelationIsBBFTableVariable(relation))
+	if (!IsTsqlTableVariable(relation))
 		return;
 
 	expected_refcnt = relation->rd_isnailed ? 2 : 1;
@@ -450,13 +450,12 @@ get_one_user_db_name(void)
 		db_name = TextDatumGetCString(name);
 
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		if (!IS_BBF_BUILT_IN_DB(db_name))
 		{
 			user_db_name = db_name;
 			break;
 		}
+		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 
@@ -848,74 +847,48 @@ get_authid_login_ext_idx_oid(void)
  *			USER EXT
  *****************************************/
 
-bool
-is_user(Oid role_oid)
+/*
+ * Check if role is a bbf db principal. Returns BBF_ROLE if it is
+ * a db role, returns BBF_USER if it is db user else returns 0
+ */
+
+const int
+get_db_principal_kind(Oid role_oid, const char *db_name)
 {
-	bool		is_user = true;
+	char    	result = 0;
+	bool    	isnull;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
+	char    	*rolname;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+	Assert(OidIsValid(role_oid) && db_name);
 
-	if (!HeapTupleIsValid(tuple))
-		is_user = false;
-	else
+	rolname = GetUserNameFromId(role_oid, false);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
+	pfree(rolname);
+
+	if (HeapTupleIsValid(tuple))
 	{
 		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		char *type_str = bpchar_to_cstring(&type);
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name,
+									  &isnull);
+		char *type_str;
+		char *db_name_cstring;
 
-		/*
-		 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-		 * is "S" or "U" etc, we should drop the user
-		 */
-		if (strcmp(type_str, "R") == 0)
-			is_user = false;
+		Assert(!isnull);
+
+		type_str = bpchar_to_cstring(&type);
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
+			result = (strcmp(type_str, "R") == 0) ? BBF_ROLE : BBF_USER;
+
+		pfree(type_str);
+		pfree(db_name_cstring);
 		ReleaseSysCache(tuple);
 	}
 
-	ReleaseSysCache(authtuple);
-
-	return is_user;
-}
-
-bool
-is_role(Oid role_oid)
-{
-	bool		is_role = true;
-	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
-
-	if (!HeapTupleIsValid(tuple))
-		is_role = false;
-	else
-	{
-		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-		char *type_str = bpchar_to_cstring(&type);
-
-		if (strcmp(type_str, "R") != 0)
-			is_role = false;
-		ReleaseSysCache(tuple);
-	}
-
-	ReleaseSysCache(authtuple);
-
-	return is_role;
+	return result;
 }
 
 Oid
@@ -938,15 +911,58 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
+/* Returns palloc'd original name given the physical name of the db principal */
+char *
+get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error)
+{
+	char*    	orig_username = NULL;
+	bool    	isnull;
+	HeapTuple	tuple;
+
+	Assert(physical_role_name && strlen(physical_role_name) != 0);
+	Assert(db_name && strlen(db_name) != 0);
+
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_role_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name, &isnull);
+		char *db_name_cstring;
+
+		Assert(!isnull);
+
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									Anum_bbf_authid_user_ext_orig_username, &isnull);
+			Assert(!isnull);
+			orig_username = TextDatumGetCString(datum);
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple);
+	}
+
+	if (orig_username == NULL && !suppress_error)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Could not find original name for db principal %s in database %s", physical_role_name, db_name)));
+
+	return orig_username;
+}
+
 char *
 get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
 	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
+	ScanKeyData key[2];
 
 	if (!db_name || !login)
 		return NULL;
@@ -956,26 +972,23 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+	
 	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_login_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(login_name));
+			Anum_bbf_authid_user_ext_login_name,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			NameGetDatum(login_name));
 	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
+			Anum_bbf_authid_user_ext_database_name,
+			BTEqualStrategyNumber, F_TEXTEQ,
+			CStringGetTextDatum(db_name));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Form_authid_user_ext userform;
-
+	
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
 		user_name = pstrdup(NameStr(userform->rolname));
 	}
@@ -1035,13 +1048,14 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 }
 
 List *
-get_authid_user_ext_db_users(const char *db_name)
+get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
 	ScanKeyData key;
 	TableScanDesc scan;
 	List	   *db_users_list = NIL;
+	Oid		dbo_oid = get_role_oid(dbo_name, false);
 
 	if (!db_name)
 		return NULL;
@@ -1061,17 +1075,51 @@ get_authid_user_ext_db_users(const char *db_name)
 	{
 		char	   *user_name;
 		Form_authid_user_ext userform;
+		Oid	    user_oid;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
 		user_name = pstrdup(NameStr(userform->rolname));
 		db_users_list = lappend(db_users_list, user_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		user_oid = get_role_oid(user_name, false);
+
+		/*
+		 * We also check if these users/roles are member of db_owner and
+		 * if they are, we append the linked internal role to the list.
+		 *
+		 * dbo user does not have any internal role associated with it
+		 * so we must skip it.
+		 */
+		if (is_member_of_role(user_oid, db_owner_oid) && (user_oid != dbo_oid) && (user_oid != db_owner_oid))
+			db_users_list = lappend(db_users_list, get_obj_role(user_name));
 	}
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return db_users_list;
+}
+
+/* Checks if the user is enabled on a given database. */
+static bool
+user_has_dbaccess(const char *user, const char *db_name)
+{
+	HeapTuple	tuple;
+	bool		has_access = false;
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isnull = true;
+		int	user_can_connect = 0;
+		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+		if (user_can_connect == 1 || has_privs_of_role(get_role_oid(user, false), get_db_accessadmin_oid(db_name, false)))
+			has_access = true;
+		ReleaseSysCache(tuple);
+	}
+	return has_access;
 }
 
 /*
@@ -1090,6 +1138,9 @@ get_user_for_database(const char *db_name)
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
+
+	if (user && !user_has_dbaccess(user, db_name) && !guest_has_dbaccess((char *) db_name))
+		user = NULL;
 
 	if (!user)
 	{
@@ -1326,10 +1377,10 @@ void
 clean_up_bbf_server_def()
 {
 	/* Fetch the relation */
-	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), AccessExclusiveLock);
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_servers_def_rel);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	table_close(bbf_servers_def_rel, AccessExclusiveLock);
 }
 
 /*****************************************
@@ -1895,7 +1946,6 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
-static char *get_db_owner_role_name(const char *dbname);
 static void alter_guest_schema_for_db(const char *dbname);
 
 /* Helper function Rename BBF catalog update*/
@@ -3139,7 +3189,7 @@ create_guest_role_for_db(const char *dbname)
 	if (list_length(logins) > 0)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
-		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins);
+		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins, NULL);
 	}
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
@@ -3175,7 +3225,7 @@ create_guest_role_for_db(const char *dbname)
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						   "(CREATE LOGICAL DATABASE )",
+						   CREATE_LOGICAL_DATABASE,
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -3206,7 +3256,7 @@ create_guest_role_for_db(const char *dbname)
  * database from the catalog, it doesn't rely on the
  * migration mode GUC.
  */
-static char *
+char *
 get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;
@@ -4218,7 +4268,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 
 				/* do this step */
 				ProcessUtility(wrapper,
-							"(GRANT STATEMENT )",
+							INTERNAL_GRANT_STATEMENT,
 							false,
 							PROCESS_UTILITY_SUBCOMMAND,
 							NULL,
@@ -4239,19 +4289,40 @@ grant_perms_to_objects_in_schema(const char *schema_name,
  * implicitly at the time of CREATE function/procedure.
  */
 void
-exec_internal_grant_on_function(const char *logicalschema,
-								const char *object_name,
-								const char *object_type)
+exec_internal_grant_on_function(Oid objectId)
 {
 	SysScanDesc scan;
 	Relation	bbf_schema_rel;
 	TupleDesc	dsc;
 	HeapTuple	tuple_bbf_schema;
+	HeapTuple	proc_tuple;
 	const char	*grantee = NULL;
 	int			current_permission;
 	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
-	const char *db_name = get_cur_db_name();
+	Oid 		phy_sch_oid;
+	char 		*object_name;
+	char 		*schema;
+	const char 	*logicalschema;
+	char 		object_type;
+	Form_pg_proc	procedureStruct;
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
+
+	proc_tuple = SearchSysCache1(PROCOID,
+								ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proc_tuple))
+		elog(ERROR, "cache lookup failed for function %u", objectId);
+
+	procedureStruct = (Form_pg_proc) GETSTRUCT(proc_tuple);
+
+	object_name = NameStr(procedureStruct->proname);
+	phy_sch_oid = procedureStruct->pronamespace;
+	schema = get_namespace_name(phy_sch_oid);
+	logicalschema = get_logical_schema_name(schema, true);
+	object_type = procedureStruct->prokind;
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -4292,16 +4363,15 @@ exec_internal_grant_on_function(const char *logicalschema,
 		if (current_permission & ALL_PERMISSIONS_ON_FUNCTION)
 		{
 			const char	*query = NULL;
-			char			*schema;
 			List			*res;
 			GrantStmt		*grant;
 			PlannedStmt		*wrapper;
+			Oid     		save_userid;
+			int     		save_sec_context;
 
-			schema = get_physical_schema_name((char *)db_name, logicalschema);
-
-			if (strcmp(object_type, OBJ_FUNCTION) == 0)
+			if (object_type == PROKIND_FUNCTION)
 				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
-			else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
+			else if (object_type == PROKIND_PROCEDURE)
 				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
@@ -4314,20 +4384,37 @@ exec_internal_grant_on_function(const char *logicalschema,
 			wrapper->stmt_location = 0;
 			wrapper->stmt_len = 1;
 
-			/* do this step */
-			ProcessUtility(wrapper,
-						"(GRANT STATEMENT )",
-						false,
-						PROCESS_UTILITY_SUBCOMMAND,
-						NULL,
-						NULL,
-						None_Receiver,
-						NULL);
+			GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+			PG_TRY();
+			{
+				/*
+				 * babelfish routines could be transferred to schema owner during creation so
+				 * current user may not have grant privilege on this routine when we reach here
+				 */
+				SetUserIdAndSecContext(procedureStruct->proowner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+				ProcessUtility(wrapper,
+							INTERNAL_GRANT_STATEMENT,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+			}
+			PG_FINALLY();
+			{
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+			}
+			PG_END_TRY();
 		}
 		tuple_bbf_schema = systable_getnext(scan);
 	}
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
+	pfree(schema);
+	ReleaseSysCache(proc_tuple);
 }
 
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest_schema);
@@ -4842,6 +4929,17 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Cannot change the name of the system database %s.", old_db_name)));
 
+	/* 
+	 * Check permission on the given database.
+	 * Dbcreator can only alter the databases in which it has a mapped user.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) && !(get_user_for_database(old_db_name) 
+							&& has_privs_of_role(GetSessionUserId(), get_dbcreator_oid())))
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
+					old_db_name)));
+
 	Assert (*pltsql_protocol_plugin_ptr);
 	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
 	for (tries = 0; tries < 50; tries++)
@@ -4861,13 +4959,6 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ereport(ERROR,
 			(errcode(ERRCODE_OBJECT_IN_USE),
 				errmsg("The database could not be exclusively locked to perform the operation.")));
-
-	/* Check permission on the given database. */
-	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
-		ereport(ERROR,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
-					old_db_name)));
 
 	/*
 	 * Get an exclusive lock on the logical database we are trying to rename.
@@ -4937,9 +5028,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			char *old_role_name;
 			char *new_role_name;
 
-			if (SINGLE_DB == get_migration_mode() &&
-				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+			if (SINGLE_DB == get_migration_mode() && IS_FIXED_DB_PRINCIPAL(role))
 				continue;
 
 			old_role_name = get_physical_user_name(old_db_name, role, true, true);
@@ -6046,4 +6135,155 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
 	PG_RETURN_INT32(0);
+}
+
+/*
+ * get_proc_namespace_oid:
+ * Find namespace oid of a procedure based on proc name.
+ */
+static Oid
+get_proc_namespace_oid(char **proc_name, char *curr_db)
+{
+	char *physical_sch_name;
+	char *db_name;
+	char *schema_name;
+	char *object_name;
+	Oid obj_schema_oid = InvalidOid;
+
+	if (*proc_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("procedure name cannot be NULL")));
+
+	/*
+	 * Split the proc name, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(*proc_name, NULL, &db_name, &schema_name, &object_name);
+	*proc_name = object_name;
+
+	if (!strcmp(db_name, ""))
+		db_name = curr_db;
+
+	if (!strcmp(schema_name, ""))
+	{
+		/* Find the default schema for current user. */
+		char *user = get_user_for_database(db_name);
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, (const char *) user);
+	}
+
+	/* Get physical schema name from logical schema name. */
+	physical_sch_name = get_physical_schema_name(db_name, schema_name);
+	/* Get namespace oid from physical schema name. */
+	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_sch_name);
+
+	return obj_schema_oid;
+}
+
+/*
+ * get_proargtypes_oid:
+ * Given a procedure name, namespace, user ID, and target argument name
+ * return the OID of the argument's type in the procedure.
+ *
+ * Returns InvalidOid if no matching procedure argument is found.
+ */
+static Oid
+get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
+{
+	HeapTuple    tuple;
+	CatCList   *catlist;
+	Oid matched_type = InvalidOid;
+
+	/* Downcase and truncate identifier if needed. */
+	targeted_arg_name = downcase_truncate_identifier(targeted_arg_name, strlen(targeted_arg_name), true);
+
+	/* First search in pg_proc by name. */
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
+
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+		/* Then consider only procs in specified namespace. */
+		if (procform->pronamespace == pronamespace &&
+			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+		{
+			/* Get the list of proargames and corresponding proargtypes oids. */
+			char **proargnames = fetch_func_input_arg_names(tuple);
+			Oid *proargtypes = procform->proargtypes.values;
+
+			/* Find the typeoid corresponding to target TVP argument. */
+			for (int j = 0; j < procform->pronargs; j++)
+			{
+				if (strcmp(proargnames[j], targeted_arg_name) == 0)
+				{
+					matched_type = proargtypes[j];
+					break;
+				}
+			}
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	if (matched_type == InvalidOid)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
+						proname, targeted_arg_name)));
+	}
+	return matched_type;
+}
+
+/*
+ * get_tvp_typename_typeschemaname:
+ * Retrieves the type name and schema name of a Table-Valued Parameter (TVP)
+ * for a given stored procedure and argument name.
+ */
+void
+get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name)
+{
+	bool			xactStarted = IsTransactionOrTransactionBlock();
+	Oid 			tvp_proargtype = InvalidOid;
+	Oid 			user_id = InvalidOid;
+	Oid 			obj_schema_oid = InvalidOid;
+	HeapTuple		tuple;
+	char 			*typnamespace;
+	char 			*curr_db;
+	MemoryContext 	oldContext;
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	user_id = GetUserId();
+	curr_db = get_cur_db_name();
+
+	/* Get procedure namespaceid. */
+	obj_schema_oid = get_proc_namespace_oid(&proc_name, curr_db);
+
+	/* Fetch proargtype value of our targeted variable. */
+	tvp_proargtype = get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
+
+	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
+	/* Check if user have right permission on object. */
+	if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+		*tvp_type_name = NameStr(pg_type->typname);
+		typnamespace = get_namespace_name(pg_type->typnamespace);
+
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		*tvp_type_schema_name = pstrdup((char *) get_logical_schema_name(typnamespace, true));
+		MemoryContextSwitchTo(oldContext);
+		ReleaseSysCache(tuple);
+	}
+
+	if(!xactStarted)
+		CommitTransactionCommand();
 }

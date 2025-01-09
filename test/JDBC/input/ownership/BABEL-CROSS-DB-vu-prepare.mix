@@ -259,3 +259,19 @@ GO
 
 GRANT EXECUTE ON FUNCTION master_dbo.babel_cross_db_vu_prepare_pg_func to master_babel_cross_db_vu_prepare_u1;
 GO
+
+-- tsql
+USE master;
+GO
+
+CREATE LOGIN babel_cross_db_vu_prepare_l3 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_cross_db_vu_prepare_u3 FOR LOGIN babel_cross_db_vu_prepare_l3;
+GO
+
+CREATE TABLE babel_cross_db_vu_prepare_t4 (a INT);
+GO
+
+GRANT SELECT ON babel_cross_db_vu_prepare_t4 TO guest;
+GO

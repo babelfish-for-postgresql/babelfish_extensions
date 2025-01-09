@@ -1,3 +1,5 @@
+set quoted_identifier off
+go
 create table t1_unary_plus_op_string(i int, vc varchar(30))
 go
 

@@ -942,9 +942,14 @@ transform_likenode(Node *node)
 		 * by a user. So, it is safe to go ahead with replacing the ci_as
 		 * collation with a corresponding cs_as one if an ILIKE node is found
 		 * during dump and restore.
+		 * For CS_AI collation, we keep the LIKE operator but convert it to
+		 * CS_AS by adding a call to remove_accents_internal*. During restore,
+		 * it will take the same code path and will try to add a new call to
+		 * remove_accents_internal* on top of current node. So, we take care
+		 * of that case here.
 		 */
 		init_and_check_collation_callbacks();
-		if ((*collation_callbacks_ptr->has_ilike_node) (node) && babelfish_dump_restore)
+		if (babelfish_dump_restore && ((*collation_callbacks_ptr->has_ilike_node) (node) || (*collation_callbacks_ptr->has_like_node) (node)))
 		{
 			int			collidx_of_cs_as;
 
@@ -965,6 +970,13 @@ transform_likenode(Node *node)
 				/* If a collation is not specified, use the default one */
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
+
+			/*
+			 * If this has a like node, then it is CS collation
+			 * So we can return from here directly
+			 */
+			if ((*collation_callbacks_ptr->has_like_node) (node))
+				return node;
 		}
 
 		if (OidIsValid(like_entry.like_oid) &&
@@ -1010,8 +1022,13 @@ pltsql_predicate_transformer(Node *expr)
 
 	if (IsA(expr, OpExpr))
 	{
-		/* Singleton predicate */
-		return transform_likenode(expr);
+		Node *ret = transform_likenode(expr);
+		if (expr == ret)
+			/* If it's not a like Opexpr, then walk through args */
+			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
+		else 
+			/* Singleton predicate */
+			return ret;
 	}
 	else
 	{
@@ -1137,6 +1154,16 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 								int kind)
 {
 	/*
+	 * check if this is called to reset saved expression kind. Quickly return if so.
+	 */
+	if (kind == -1)
+	{
+		Assert(expr == NULL);
+		saved_expr_kind = -1;
+		return NULL;
+	}
+
+	/*
 	 * Fall out quickly if expression is empty.
 	 */
 	if (expr == NULL)
@@ -1144,6 +1171,7 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 
 	if (EXPRKIND_TARGET == kind)
 	{
+		saved_expr_kind = EXPRKIND_TARGET;
 		/*
 		 * If expr is NOT a Boolean expression then recurse through its
 		 * expresion tree

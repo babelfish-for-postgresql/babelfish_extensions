@@ -75,8 +75,8 @@ jobs:
         id: setup-pub-sub
         if: always() && steps.start-secondary.outcome == 'success'
         run: |
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE PUBLICATION my_pub;"
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=jdbc_testdb password=12345678' PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CREATE PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=babelfish_db password=12345678' PUBLICATION my_pub;"
 
       - name: Run Replication Tests
         id: replication
@@ -91,7 +91,7 @@ jobs:
         id: cleanup
         if: always() && steps.replication.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')

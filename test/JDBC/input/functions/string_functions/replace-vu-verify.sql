@@ -1,3 +1,10 @@
+-- client tests
+select replace(cast('rohit' as pg_catalog.char(5)), 'r', 'm')
+go
+
+select top 5 replace(type, 'U', 'R') from sys.all_objects
+go
+
 declare @string1 nvarchar(30) = N'比尔·拉',@string2 nvarchar(30) = N'斯', @pat nvarchar(10) = N'尔'
 select REPLACE(@string1, @pat, @string2)
 GO
@@ -962,7 +969,58 @@ GO
 SELECT replace(b, b, c) FROM babel_4836_replace_var_UDT_t
 GO
 
--- other different datatypes, all of these should be blocked
+-- Arguments with pg datatypes
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t1
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t2
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t3
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t4
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t5
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t6
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t7
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t8
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t9
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t10
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t11
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t12
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t13
+GO
+
+SELECT replace(a, b, c) FROM dbo.babel_4836_replace_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT replace(@inputString, 'de', 'pq')
+GO
+
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂', @pattern sysname = N'🙂de', @replacement sysname = N'x🙂y'
+SELECT replace(@inputString, @pattern, @replacement)
+GO
+
 DECLARE @inputString date = '2016-12-21'
 SELECT replace(@inputString, '12', '06');
 GO
