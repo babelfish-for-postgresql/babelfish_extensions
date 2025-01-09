@@ -36,7 +36,7 @@ jobs:
 
       - name: Read Base Version and Final Version
         id: read-base-and-final-version
-        if: always() && steps.install-yq.outcome == 'success'
+        if: steps.install-yq.outcome == 'success'
         run: > 
           echo "base-version=$(
             yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
@@ -47,7 +47,7 @@ jobs:
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
-        if: always() && steps.read-base-and-final-version.outcome == 'success'
+        if: steps.read-base-and-final-version.outcome == 'success'
         run: >
           echo "base-engine-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
@@ -59,7 +59,7 @@ jobs:
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
-        if: always() && steps.find-branch.outcome == 'success'
+        if: steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
@@ -71,7 +71,7 @@ jobs:
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca
-        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        if: steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-upgrade-version-ca
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
@@ -79,20 +79,20 @@ jobs:
 
       - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test
-        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
+        if: steps.setup-upgrade-ver-ca.outcome == 'success' 
         uses: ./.github/composite-actions/upgrade-version
 
       # Due to some action/checkout's in previous step the dynamically generated upgrade-version composite action isn't available,
       # hence to avoid error in post action step recreated the upgrade-version composite action
       - name: Recreate Upgrade Version Composite Action
-        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        if: steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-upgrade-version-ca
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        if: (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -124,7 +124,7 @@ jobs:
           done
  
       - name: Upload Logs
-        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        if: (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs-${{ matrix.upgrade-path.title }}
@@ -138,6 +138,6 @@ jobs:
             ~/failed-testscript-outputs
       
       - name: Check and upload coredumps
-        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        if: (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump
             

@@ -17,37 +17,37 @@ jobs:
 
       - name: Build Modified Postgres
         id: build-modified-postgres
-        if: always() && steps.install-dependencies.outcome == 'success'
+        if: steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
 
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
+        if: steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
 
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
 
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
       - name: Build babelfishpg_unit
         id: build-babelfishpg_unit
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: steps.install-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-babelfishpg_unit
 
       - name: Run Unit Tests
         id: unit
-        if: always() && steps.build-babelfishpg_unit.outcome == 'success'
+        if: steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -f .github/scripts/unit_tests.sql > >(tee ~/psql/output.out) 2>&1
@@ -59,7 +59,7 @@ jobs:
           rm -rf ~/psql/output.out
 
       - name: Upload Log
-        if: always() && steps.unit.outcome == 'failure'
+        if: steps.unit.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: postgres-log

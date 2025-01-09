@@ -20,14 +20,14 @@ jobs:
 
       - name: Clone, build, and run tests for Postgres engine using ${{env.ENGINE_VER_FROM}}
         id: build-modified-postgres-older
-        if: always() && steps.install-dependencies.outcome == 'success'
+        if: steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
 
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres-older.outcome == 'success'
+        if: steps.build-modified-postgres-older.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
           version: 4.9.3
@@ -39,7 +39,7 @@ jobs:
 
       - name: Build PostGIS Extension using ${{env.EXTENSION_VER_FROM}}
         id: build-postgis-extension-old
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: steps.compile-antlr.outcome == 'success'
         run: |
           cd ..
           export CC='ccache gcc'
@@ -77,12 +77,12 @@ jobs:
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
         id: build-extensions-older
-        if: always() && steps.build-postgis-extension-old.outcome == 'success'
+        if: steps.build-postgis-extension-old.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
-        if: always() && steps.build-extensions-older.outcome == 'success'
+        if: steps.build-extensions-older.outcome == 'success'
         run: |
           cd ..
           export TDS_FDW_VERSION="2.0.3"
@@ -110,31 +110,31 @@ jobs:
 
       - name: Install extensions
         id: install-extensions-older
-        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
+        if: steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
-        if: always() && steps.install-extensions-older.outcome == 'success'
+        if: steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
       
       - name: Compile new ANTLR
         id: compile-new-antlr
-        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
+        if: steps.build-modified-postgres-newer.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
 
       - name: Set env variables and build extensions
         id: build-extensions-newer
-        if: always() && steps.compile-new-antlr.outcome == 'success'
+        if: steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-extensions-newer.outcome == 'success'
+        if: steps.build-extensions-newer.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
 
       - name: Update extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: steps.build-postgis-extension.outcome == 'success'
         run: |
           ulimit -c unlimited
           cd ~
@@ -157,7 +157,7 @@ jobs:
           mvn -B -ntp test
 
       - name: Upload Log
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: postgres-log
@@ -166,7 +166,7 @@ jobs:
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -175,19 +175,19 @@ jobs:
           mv "$timestamp"_runSummary.log ../upgrade-run-summary.log
 
       - name: Upload Run Summary 
-        if: always() && steps.test-file-rename == 'success'
+        if: steps.test-file-rename == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: upgrade-run-summary.log
           path: test/JDBC/Info/upgrade-run-summary.log
 
       - name: Upload Output Diff
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: upgrade-output-diff.diff
           path: test/JDBC/Info/upgrade-output-diff.diff
       
       - name: Check and upload coredumps
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         uses: ./.github/composite-actions/upload-coredump

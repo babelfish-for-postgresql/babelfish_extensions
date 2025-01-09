@@ -19,37 +19,37 @@ jobs:
 
       - name: Build Modified Postgres
         id: build-modified-postgres
-        if: always() && steps.install-dependencies.outcome == 'success'
+        if: steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
       
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
+        if: steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
       
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-tds_fdw-extension
 
       - name: Build vector Extension
         id: build-vector-extension
-        if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
+        if:  steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-vector-extension
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() &&  steps.build-vector-extension.outcome == 'success'
+        if:  steps.build-vector-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
 
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         with:
           server_collation_name: ${{ env.SERVER_COLLATION_NAME }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: Run JDBC Tests
         id: jdbc
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
@@ -71,7 +71,7 @@ jobs:
 
       - name: Start secondary server
         id: start-secondary
-        if: always() && steps.jdbc.outcome == 'success'
+        if: steps.jdbc.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         with:
           psql_port: 5433
@@ -80,14 +80,14 @@ jobs:
 
       - name: Setup Publication and Subscription
         id: setup-pub-sub
-        if: always() && steps.start-secondary.outcome == 'success'
+        if: steps.start-secondary.outcome == 'success'
         run: |
           ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CREATE PUBLICATION my_pub;"
           ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=babelfish_db password=12345678' PUBLICATION my_pub;"
 
       - name: Run Replication Tests
         id: replication
-        if: always() && steps.setup-pub-sub.outcome == 'success'
+        if: steps.setup-pub-sub.outcome == 'success'
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests
         with:
@@ -95,12 +95,12 @@ jobs:
 
       - name: Cleanup babelfish database
         id: cleanup
-        if: always() && steps.replication.outcome == 'success'
+        if: steps.replication.outcome == 'success'
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
+        if: (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: postgres-log
@@ -111,7 +111,7 @@ jobs:
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
+        if: (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -128,19 +128,19 @@ jobs:
             mv "$timestamp"_runSummary.log ../replication-run-summary.log
       
       - name: Upload Run Summary 
-        if: always() && steps.test-file-rename.outcome == 'success'
+        if: steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
       
       - name: Upload Output Diff
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
+        if: (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
 
       - name: Check and upload coredumps
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
+        if: (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump

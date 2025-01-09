@@ -27,13 +27,13 @@ jobs:
 
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
-        if: always() && steps.setup-base-version.outcome == 'success'
+        if: steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/check-babelfish-inconsistency
 
       - name: Upgrade to latest version and run verify-cleanup tests
         id: upgrade-and-verify
         if: |
-          always() && steps.setup-base-version.outcome == 'success' 
+          steps.setup-base-version.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outcome == 'success'
         uses: ./.github/composite-actions/major-version-upgrade-util
         with:
@@ -46,14 +46,14 @@ jobs:
 
       
       - name: Upload New Postgres log
-        if: always() && steps.upgrade-and-verify.outcome == 'failure'
+        if: steps.upgrade-and-verify.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
          name: postgres-log-new
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
-        if: always() && steps.upgrade-and-verify.outcome == 'failure'
+        if: steps.upgrade-and-verify.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs
@@ -61,7 +61,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
+        if: ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -82,7 +82,7 @@ jobs:
           done
 
       - name: Upload Run Summary
-        if: always() && steps.test-file-rename.outcome == 'success'
+        if: steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: Test Run Artificats
@@ -93,5 +93,5 @@ jobs:
             ~/${{env.NEW_INSTALL_DIR}}/data/pg_upgrade_output.d/*
       
       - name: Check and upload coredumps
-        if: always() && ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
+        if: ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
         uses: ./.github/composite-actions/upload-coredump

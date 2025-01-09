@@ -70,7 +70,7 @@ jobs:
     - name: Generate Overall Code Coverage
       id: generate-total-code-coverage
       if: |
-        always() && steps.download-dotnet-coverage.outcome == 'success'
+        steps.download-dotnet-coverage.outcome == 'success'
         && steps.download-jdbc-coverage.outcome == 'success' 
         && steps.download-odbc-coverage.outcome == 'success' 
         && steps.download-python-coverage.outcome == 'success'
@@ -82,7 +82,7 @@ jobs:
       shell: bash
 
     - name: Upload coverage to coveralls
-      if: always() && steps.generate-total-code-coverage.outcome == 'success'
+      if: steps.generate-total-code-coverage.outcome == 'success'
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}

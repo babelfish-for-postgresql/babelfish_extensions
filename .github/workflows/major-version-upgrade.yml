@@ -20,7 +20,7 @@ jobs:
 
       - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_FROM}}
         id: build-modified-postgres-old
-        if: always() && steps.install-dependencies.outcome == 'success'
+        if: steps.install-dependencies.outcome == 'success'
         run: |
           cd ..
           git clone --branch ${{env.ENGINE_BRANCH_FROM}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
@@ -35,7 +35,7 @@ jobs:
       
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres-old.outcome == 'success'
+        if: steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
           version: 4.9.3
@@ -48,7 +48,7 @@ jobs:
 
       - name: Build PostGIS Extension using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-postgis-extension-old
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: steps.compile-antlr.outcome == 'success'
         run: |
           cd ..
           export CC='ccache gcc'
@@ -86,7 +86,7 @@ jobs:
       
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-extensions-old
-        if: always() && steps.build-postgis-extension-old.outcome == 'success'
+        if: steps.build-postgis-extension-old.outcome == 'success'
         run: |
           export PG_CONFIG=~/${{env.OLD_INSTALL_DIR}}/bin/pg_config
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
@@ -102,7 +102,7 @@ jobs:
 
       - name: Install Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: install-extensions-old
-        if: always() && steps.build-extensions-old.outcome == 'success'
+        if: steps.build-extensions-old.outcome == 'success'
         run: |
           ulimit -c unlimited
           cd ~
@@ -132,7 +132,7 @@ jobs:
 
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
-        if: always() && steps.install-extensions-old.outcome == 'success'
+        if: steps.install-extensions-old.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
@@ -140,42 +140,42 @@ jobs:
       
       - name: Compile new ANTLR
         id: compile-new-antlr
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.compile-new-antlr.outcome == 'success'
+        if: steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
-        if: always() && steps.build-extensions-new.outcome == 'success'
+        if: steps.build-extensions-new.outcome == 'success'
         uses: ./.github/composite-actions/build-tds_fdw-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build vector Extension
         id: build-vector-extension
-        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
+        if: steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-vector-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-vector-extension.outcome == 'success'
+        if: steps.build-vector-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Setup new data directory
         id: setup-new-datadir
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: steps.build-postgis-extension.outcome == 'success'
         run: |
           cd ~
           ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data
@@ -196,20 +196,20 @@ jobs:
 
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
-        if: always() && steps.setup-new-datadir.outcome == 'success'
+        if: steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/check-babelfish-inconsistency
 
       - name: Run pg_upgrade
         id: run-pg_upgrade
         if: |
-          always() && steps.setup-new-datadir.outcome == 'success'
+          steps.setup-new-datadir.outcome == 'success'
           && steps.check-babelfish-inconsistency.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - name: Disable TDS fault injection tests in release mode
         id: disable-fault-injection
         if: |
-          always() && steps.setup-new-datadir.outcome == 'success' 
+          steps.setup-new-datadir.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outputs.check_result == 0
         run: |
@@ -221,7 +221,7 @@ jobs:
       - name: Run JDBC Tests
         id: jdbc
         timeout-minutes: 60
-        if: always() && steps.run-pg_upgrade.outcome == 'success'
+        if: steps.run-pg_upgrade.outcome == 'success'
         run: |
           export PATH=~/${{env.NEW_INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
@@ -231,14 +231,14 @@ jobs:
           mvn -B -ntp test
      
       - name: Upload Postgres log
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
          name: postgres-log
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
-        if: always() && steps.run-pg_upgrade.outcome == 'failure'
+        if: steps.run-pg_upgrade.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs
@@ -249,7 +249,7 @@ jobs:
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -258,19 +258,19 @@ jobs:
           mv "$timestamp"_runSummary.log ../run-summary.log
 
       - name: Upload Run Summary
-        if: always() && steps.test-file-rename.outcome == 'success'
+        if: steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
 
       - name: Upload Output Diff
-        if: always() && steps.test-file-rename.outcome == 'success'
+        if: steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
       
       - name: Check and upload coredumps
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: steps.jdbc.outcome == 'failure'
         uses: ./.github/composite-actions/upload-coredump

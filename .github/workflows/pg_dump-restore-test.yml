@@ -43,7 +43,7 @@ jobs:
 
       - name: Read Base Version and Final Version
         id: read-base-and-final-version
-        if: always() && steps.install-yq.outcome == 'success'
+        if: steps.install-yq.outcome == 'success'
         run: > 
           echo "base-version=$(
             yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
@@ -54,7 +54,7 @@ jobs:
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
-        if: always() && steps.read-base-and-final-version.outcome == 'success'
+        if: steps.read-base-and-final-version.outcome == 'success'
         run: >
           echo "base-engine-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
@@ -66,7 +66,7 @@ jobs:
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
-        if: always() && steps.find-branch.outcome == 'success'
+        if: steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
@@ -78,14 +78,14 @@ jobs:
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca
-        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        if: steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-dump-restore-ca
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Dump and restore till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: dump-restore-and-test
-        if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
+        if: steps.setup-dump-restore-ca.outcome == 'success' 
         uses: ./.github/composite-actions/dump-restore
 
       - uses: actions/checkout@v2
@@ -93,14 +93,14 @@ jobs:
       # Due to some action/checkout's in previous step the dynamically generated dump-restore composite action isn't available,
       # hence to avoid error in post action step recreated the dump-restore composite action
       - name: Recreate Dump Restore Composite Action
-        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        if: steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-dump-restore-ca
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
+        if: (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
         run: |
           cd ~/work/babelfish_extensions/babelfish_extensions/
           cd test/JDBC/Info
@@ -133,7 +133,7 @@ jobs:
           done
  
       - name: Upload Logs
-        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
+        if: (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: dump-restore-logs-${{ matrix.upgrade-path.dump_method }}-${{ matrix.upgrade-path.title }}-${{ matrix.upgrade-path.dump_format }}-${{ matrix.upgrade-path.type }}
