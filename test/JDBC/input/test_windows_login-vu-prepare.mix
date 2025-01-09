@@ -1,4 +1,5 @@
--- sla 55000
+-- sla 180000
+-- TODO: BABEL-5349
 -- psql
 do 
 $$ begin 
@@ -7,6 +8,7 @@ $$ begin
     end if; 
 end $$;
 GO
+-- terminate-psql-conn
 
 -- tsql
 CREATE DATABASE ad_db;

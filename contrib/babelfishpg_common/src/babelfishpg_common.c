@@ -208,6 +208,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.resolve_pg_type_to_tsql = &resolve_pg_type_to_tsql;
 		common_utility_plugin_var.GetUTF8CodePoint = &GetUTF8CodePoint;
 		common_utility_plugin_var.TsqlUTF8LengthInUTF16 = &TsqlUTF8LengthInUTF16;
+		common_utility_plugin_var.TsqlUTF8toUTF16StringInfo = &TsqlUTF8toUTF16StringInfo;
 	}
 	return &common_utility_plugin_var;
 }

@@ -733,6 +733,9 @@ GO
 SELECT * FROM babel_4838_stuff_dep_view_5
 GO
 
+SELECT * FROM babel_4838_stuff_dep_view_6
+GO
+
 -- input type UDT
 -- in table babel_4838_stuff_UDT, col 'a' has basetype image and col 'b' has basetype varchar
 SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_UDT
@@ -741,7 +744,54 @@ GO
 SELECT stuff(b, 4, 2, b) FROM babel_4838_stuff_UDT
 GO
 
--- other different datatypes, should throw error
+-- Arguments with pg datatypes
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t1
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t2
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t3
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t4
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t5
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t6
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t7
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t8
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t9
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t10
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t11
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t12
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t13
+GO
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂';
+SELECT stuff(@inputString, 3, 4, 'pqrs')
+GO
+
 DECLARE @inputString date = '2016-12-21';
 SELECT stuff(@inputString, 4, 1, 'abcd')
 GO

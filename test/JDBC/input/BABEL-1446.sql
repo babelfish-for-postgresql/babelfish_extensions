@@ -53,9 +53,6 @@ AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db_owner');
 GO
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 CREATE DATABASE db1;
 GO
 
@@ -136,9 +133,6 @@ AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db_owner');
 GO
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 

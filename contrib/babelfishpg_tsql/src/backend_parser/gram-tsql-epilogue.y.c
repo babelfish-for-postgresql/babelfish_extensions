@@ -573,20 +573,12 @@ createOpenJsonWithColDef(char *elemName, TypeName *elemType)
 TypeName *
 setCharTypmodForOpenjson(TypeName *t)
 {
-	int			curTMod = getElemTypMod(t);
 	List	   *tmods = (List *) t->typmods;
 
 	if (tmods == NULL)
 	{
 		/* Default value when no typmod is provided is 1 */
 		t->typmods = list_make1(makeIntConst(1, -1));
-		return t;
-	}
-	else if (curTMod == TSQLMaxTypmod)
-	{
-		/* TSQLMaxTypmod is represented as -8000 so we need to change to */
-		/* the actual max value of 4000 */
-		t->typmods = list_make1(makeIntConst(4000, -1));
 		return t;
 	}
 	else
@@ -2056,5 +2048,26 @@ tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 			default:
 				break;
 		}
+	}
+}
+
+static void
+check_server_role_and_throw_if_unsupported (const char *serverrole, int position, core_yyscan_t yyscanner)
+{
+	if (strcmp(serverrole, "serveradmin") == 0
+		|| strcmp(serverrole, "setupadmin") == 0
+		|| strcmp(serverrole, "processadmin") == 0
+		|| strcmp(serverrole, "diskadmin") == 0
+		|| strcmp(serverrole, "bulkadmin") == 0) 
+	{
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Fixed server role '%s' is currently not supported in Babelfish", serverrole),
+										parser_errposition(position)));
+	}
+	else if (!IS_BBF_FIXED_SERVER_ROLE(serverrole))
+	{
+		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
+							parser_errposition(position)));
 	}
 }

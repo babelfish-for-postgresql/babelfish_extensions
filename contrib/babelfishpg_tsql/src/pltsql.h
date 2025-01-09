@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "collation.h"
 #include "executor/spi.h"
+#include "libpq/libpq-be.h"
 #include "optimizer/planner.h"
 #include "utils/expandedrecord.h"
 #include "utils/plancache.h"
@@ -1800,7 +1801,9 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_reset_tds_connection_flag) ();
 
 	bool		(*get_reset_tds_connection_flag) ();
-
+	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
+													char **tvp_type_name, char **tvp_type_schema_name);
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -1920,6 +1923,8 @@ extern common_utility_plugin *common_utility_plugin_ptr;
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
 
+#define IS_TDS_CONN() (MyProcPort && MyProcPort->is_tds_conn)
+
 extern Oid	procid_var;
 extern uint64 rowcount_var;
 extern List *columns_updated_list;
@@ -1980,6 +1985,39 @@ extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 extern bool insert_bulk_check_constraints;
+
+
+/* BBF SUBCOMMANDS QUERY STRING */
+#define CREATE_LOGICAL_DATABASE "(CREATE LOGICAL DATABASE )"
+#define CREATE_GUEST_SCHEMAS_DURING_UPGRADE "(CREATE GUEST SCHEMAS DURING UPGRADE )"
+#define CREATE_FIXED_DB_ROLES "(CREATE FIXED DATABASE ROLES )"
+#define ALTER_DEFAULT_PRIVILEGES "(ALTER DEFAULT PRIVILEGES )"
+#define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
+#define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
+#define INTERNAL_ALTER_ROLE "(ALTER ROLE ADD )"
+
+/* FIXED DB PRINCIPALS */
+#define DBO "dbo"
+#define DB_OWNER "db_owner"
+#define DB_ACCESSADMIN "db_accessadmin"
+#define DB_SECURITYADMIN "db_securityadmin"
+#define DB_DATAREADER "db_datareader"
+#define DB_DATAWRITER "db_datawriter"
+#define DB_DDLADMIN "db_ddladmin"
+
+#define IS_BBF_BUILT_IN_DB(dbname) \
+    ((strlen(dbname) == 6 && strncmp(dbname, "master", 6) == 0)|| \
+     (strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)|| \
+     (strlen(dbname) == 4 && strncmp(dbname, "msdb", 4) == 0))
+
+#define IS_FIXED_DB_PRINCIPAL(rolname) \
+	((strlen(rolname) == 3 && strncmp(rolname, DBO, 3) == 0) || \
+	 (strlen(rolname) == 8 && strncmp(rolname, DB_OWNER, 8) == 0) || \
+	 (strlen(rolname) == 14 && strncmp(rolname, DB_ACCESSADMIN, 14) == 0) || \
+	 (strlen(rolname) == 16 && strncmp(rolname, DB_SECURITYADMIN, 16) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAREADER, 13) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAWRITER, 13) == 0) || \
+	 (strlen(rolname) == 11 && strncmp(rolname, DB_DDLADMIN, 11) == 0))
 
 /**********************************************************************
  * Function declarations
@@ -2063,6 +2101,7 @@ extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 extern Oid get_owner_of_schema(const char *schema);
+extern void exec_database_roles_subcmds(const char *physical_schema);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -2177,7 +2216,10 @@ extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv);
 extern AccessPriv *make_accesspriv_node(const char *priv_name);
 extern RoleSpec   *make_rolespec_node(const char *rolename);
+extern void throw_error_for_fixed_db_role(char *rolname, char *dbname);
 extern void pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func);
+extern void update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role);
+extern void update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
@@ -2205,6 +2247,7 @@ extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvar
 extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
 extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
+extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
 
 typedef struct
 {
@@ -2298,8 +2341,7 @@ extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 /*
  * Functions in pltsql_coerce.c
  */
-extern bool validate_special_function(char *proc_nsname, char *proc_name,  List* fargs, int nargs, Oid *input_typeids, bool num_args_match);
-extern void init_special_function_list(void);
+extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
 
 /*
  * Function in pltsql_ruleutils.c

@@ -44,7 +44,6 @@ BABEL-3121
 sys-events
 sys-suser_sid
 sys-trigger_events
-restricted_procedures
 BABEL-2688
 BABEL-328
 BABEL-3166-before-16_5-or-15_9
@@ -132,7 +131,6 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
-BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
@@ -178,6 +176,7 @@ babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147
 collation_tests_arabic
@@ -386,7 +385,6 @@ case_insensitive_collation-before-16_5-or-15_9
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID-before-16_5-or-15_9
-BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
@@ -467,4 +465,5 @@ cast-varchar-to-time
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5186
-
+smalldatetime_date_cmp-before-15_5-16_1
+test_conv_money_to_varchar
