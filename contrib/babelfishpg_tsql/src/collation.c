@@ -388,23 +388,10 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 	{
-		if (IsA(rightop, CollateExpr))
-		{
-			CollateExpr	*collateExpr = (CollateExpr*) rightop;
-			if (!IsA(collateExpr->arg, Const))
-				return node;
-		}
-		else
-			return node;
+		return node;
 	}
 
-	if (IsA(rightop, Const))
-		patt = (Const *) rightop;
-	else if (IsA(rightop, CollateExpr))
-	{
-		CollateExpr	*collateExpr = (CollateExpr*) rightop;
-		patt = (Const *) (collateExpr->arg);
-	}
+	patt = (Const *) rightop;
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
