@@ -1246,10 +1246,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 
 		roleid = get_role_oid(rolename, false);
 		if (OidIsValid(roleid) && is_babelfish_role(rolename))
-		{
-			pfree(rolename);
 			check_babelfish_alterrole_restictions(false);
-		}
 	}
 
 	/* Restrict grant to/from bbf created role */
