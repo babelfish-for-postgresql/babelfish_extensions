@@ -10,7 +10,6 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
-
 -- Update all grants to babelfish users to make bbf_role_admin as grantor.
 DO
 LANGUAGE plpgsql
