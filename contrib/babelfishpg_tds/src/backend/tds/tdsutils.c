@@ -943,6 +943,9 @@ static bool
 is_babelfish_role(const char *role)
 {
 	Oid			role_oid;
+	Oid			bbf_master_guest_oid;
+	Oid			bbf_tempdb_guest_oid;
+	Oid			bbf_msdb_guest_oid;
 	Oid			bbf_admin_oid;
 
 	role_oid = get_role_oid(role, true);	/* missing OK */
@@ -952,9 +955,17 @@ is_babelfish_role(const char *role)
 	if (pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0)
 		return true;
 
-	/* If a role has 'bbf_role_admin' as a member, it's a Babelfish role. */
-	if (is_member_of_role(bbf_admin_oid, role_oid))
-		return true;
+	bbf_master_guest_oid = get_role_oid("master_guest", true);
+	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
+	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
+	if (OidIsValid(bbf_master_guest_oid)
+		&& OidIsValid(bbf_tempdb_guest_oid)
+		&& OidIsValid(bbf_msdb_guest_oid)
+		&& is_member_of_role(role_oid, bbf_master_guest_oid)
+		&& is_member_of_role(role_oid, bbf_tempdb_guest_oid)
+		&& is_member_of_role(role_oid, bbf_msdb_guest_oid)
+		&& is_member_of_role(bbf_admin_oid, role_oid)) 	/* If a role has 'bbf_role_admin' as a member, it's a Babelfish role. */
+			return true;
 
 	return false;
 }
