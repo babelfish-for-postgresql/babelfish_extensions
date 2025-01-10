@@ -327,7 +327,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
 	Node	   *ret;
-	Const	   *patt;
+	Const	   *patt = NULL;
 	Const	   *prefix;
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
@@ -388,10 +388,23 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 	{
-		return node;
+		if (IsA(rightop, CollateExpr))
+		{
+			CollateExpr	*collateExpr = (CollateExpr*) rightop;
+			if (!IsA(collateExpr->arg, Const))
+				return node;
+		}
+		else
+			return node;
 	}
 
-	patt = (Const *) rightop;
+	if (IsA(rightop, Const))
+		patt = (Const *) rightop;
+	else if (IsA(rightop, CollateExpr))
+	{
+		CollateExpr	*collateExpr = (CollateExpr*) rightop;
+		patt = (Const *) (collateExpr->arg);
+	}
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
