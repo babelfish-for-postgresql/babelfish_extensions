@@ -34,9 +34,11 @@ runs:
         # adding the patch to fix BABEL-4600 to test in Github
         sed -i '${SED_LINE_NUMBER} s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
         make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
-        cd ../psql
+        cd ~/${{ inputs.install_dir }}
+        echo "Current shared_preload_libraries setting:"
         grep -i "shared_preload_libraries" data/postgresql.conf
         sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf
+        echo "Updated shared_preload_libraries setting:"
         grep -i "shared_preload_libraries" data/postgresql.conf
         echo "everything set"
 
