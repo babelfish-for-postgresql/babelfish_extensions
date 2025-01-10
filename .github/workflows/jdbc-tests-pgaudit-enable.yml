@@ -66,6 +66,13 @@ jobs:
         with:
           wal_level: logical
 
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 120
+        with:
+          limit-access-to-actor: true
+
       - name: Build and Install PgAudit
         uses: ./.github/composite-actions/build-install-pgaudit-extension
         with:
