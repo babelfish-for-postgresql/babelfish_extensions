@@ -18,12 +18,12 @@ runs:
         cd ~
         rm -rf pgaudit
         # Determine PgAudit version based on Babelfish branch
-        if [[ "${{ inputs.branch }}" == "BABEL_4_X_DEV" ]]; then
-          PGAUDIT_BRANCH="REL_16_STABLE"
-          SED_LINE_NUMBER=1452
-        elif [[ "${{ inputs.branch }}" == "BABEL_5_X_DEV" ]]; then
+        if [[ "${{ inputs.branch }}" == "BABEL_5_X_DEV" ]]; then
           PGAUDIT_BRANCH="REL_17_STABLE"
-          SED_LINE_NUMBER=1517
+          SED_LINE_NUMBER = 1517
+        elif [[ "${{ inputs.branch }}" == "BABEL_4_X_DEV" ]]; then
+          PGAUDIT_BRANCH = "REL_16_STABLE"
+          SED_LINE_NUMBER = 1452
         else
           echo "Unsupported branch: ${{ inputs.branch }}"
           exit 1
