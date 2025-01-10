@@ -418,7 +418,7 @@ GO
 money#!#varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: There is insufficient result space to convert a money/smallmoney value to varchar.)~~
+~~ERROR (Message: There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.)~~
 
 
 -- Dependent objects

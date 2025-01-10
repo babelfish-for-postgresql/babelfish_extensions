@@ -1136,7 +1136,7 @@ fixeddecimal2varchar(PG_FUNCTION_ARGS)
 	if (len > maxByteLen)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar.")));
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
 
 	res = DirectFunctionCall3(varcharin,
 							   CStringGetDatum(buf),
@@ -1171,7 +1171,7 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 	if (len > maxByteLen)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar.")));
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
 
 	/* Left pad money value with the spaces */
 	buf_padded = (char *) palloc(maxByteLen + 1);
