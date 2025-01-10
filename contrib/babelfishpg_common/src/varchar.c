@@ -1110,8 +1110,8 @@ varchar2numeric(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-#define FIXEDDECIMAL_MULTIPLIER_NEW 100LL
-#define FIXEDDECIMAL_SCALE_NEW 2
+#define FIXEDDECIMAL_2_VARCHAR_MULTIPLIER 100LL
+#define FIXEDDECIMAL_2_VARCHAR_SCALE 2
 Datum
 fixeddecimal2varchar(PG_FUNCTION_ARGS)
 {
@@ -1127,11 +1127,13 @@ fixeddecimal2varchar(PG_FUNCTION_ARGS)
 		fixeddecimal2str_p = (fixeddecimal2str_t)
 			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
 
-	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_MULTIPLIER_NEW, FIXEDDECIMAL_SCALE_NEW);
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
 	len = (end - buf);
 
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
 	maxByteLen -= VARHDRSZ;
-	if (maxByteLen >= 0 && len > maxByteLen)
+	if (len > maxByteLen)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar.")));
@@ -1160,7 +1162,7 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 		fixeddecimal2str_p = (fixeddecimal2str_t)
 			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
 
-	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_MULTIPLIER_NEW, FIXEDDECIMAL_SCALE_NEW);
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
 	len = (end - buf);
 
 	if (maxByteLen < 0)
@@ -1183,8 +1185,8 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 
 	PG_RETURN_DATUM(res);
 }
-#undef FIXEDDECIMAL_MULTIPLIER_NEW
-#undef FIXEDDECIMAL_SCALE_NEW
+#undef FIXEDDECIMAL_2_VARCHAR_MULTIPLIER
+#undef FIXEDDECIMAL_2_VARCHAR_SCALE
 
 /*****************************************************************************
  *	 bpchar - char()														 *

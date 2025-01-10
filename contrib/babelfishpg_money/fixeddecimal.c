@@ -409,9 +409,10 @@ fixeddecimal2str(int64 val, char *buffer,
 	 * By default, fixeddecimal contains 4 digits after decimal but if we only need
 	 * 2 decimal points, remove last two decimal digits, round off remaining value.
 	 */
-	if (fixeddecimal_scale == 2)
+	if (fixeddecimal_scale < 4)
 	{
-		int64		last_digit = abs(val / 10) % 10;
+		int64		scale_factor = FIXEDDECIMAL_MULTIPLIER / (fixeddecimal_multiplier * 10);
+		int64		last_digit = abs(val / scale_factor) % 10;
 
 		val = val / fixeddecimal_multiplier;
 		if (last_digit >= 5)
