@@ -1436,12 +1436,12 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
-				if (!PRETTY_PAREN(context) && (!dump_retore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+				if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
 					appendStringInfoChar(buf, '(');
 				get_rule_expr_paren(arg, context, showimplicit, node);
 				appendStringInfo(buf, " COLLATE %s",
 								 generate_tsql_collation_name(collate->collOid));
-				if (!PRETTY_PAREN(context) && (!dump_retore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+				if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
 					appendStringInfoChar(buf, ')');
 			}
 			break;
