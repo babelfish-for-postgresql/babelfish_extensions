@@ -5325,16 +5325,167 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
 
+// static List *
+// handle_unpivot_star_expansion(ParseState *pstate, SelectStmt *stmt, 
+//                             List *source_cols, char *unpivot_alias,
+//                             char *measure_colname, char *dim_colname,
+//                             char *source_table_alias)
+// {
+//     Query *temp_src_query;
+//     List *temp_src_targetlist;
+//     List *new_targetlist = NIL;
+//     List *used_names = NIL;
+//     bool has_ambiguous_refs = false;
+
+//     /* First analyze the source query to get correct target list */
+//     temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
+//                                      false, false);
+//     temp_src_targetlist = temp_src_query->targetList;
+
+//     /* First pass: check for ambiguous references */
+//     for (int i = 0; i < temp_src_targetlist->length; i++)
+//     {
+//         TargetEntry *tempEntry = list_nth_node(TargetEntry, temp_src_targetlist, i);
+//         char *colName = tempEntry->resname;
+//         ListCell *lc;
+
+//         foreach(lc, used_names)
+//         {
+//             if (strcmp(colName, strVal(lfirst(lc))) == 0)
+//             {
+//                 has_ambiguous_refs = true;
+//                 break;
+//             }
+//         }
+//         used_names = lappend(used_names, makeString(colName));
+//     }
+
+//     /* Get the targetList of the source table excluding unpivot columns */
+//     for (int i = 0; i < temp_src_targetlist->length; i++)
+//     {
+//         ResTarget *tempResTarget;
+//         TargetEntry *tempEntry = list_nth_node(TargetEntry, temp_src_targetlist, i);
+//         char *colName = tempEntry->resname;
+//         bool skip_column = false;
+//         ListCell *source_lc;
+//         List *col_fields = NIL;
+
+//         /* Skip if column is in source_cols list */
+//         foreach(source_lc, source_cols)
+//         {
+//             String *source_col = (String *) lfirst(source_lc);
+//             if (strcmp(colName, strVal(source_col)) == 0)
+//             {
+//                 skip_column = true;
+//                 break;
+//             }
+//         }
+
+//         if (!skip_column)
+//         {
+//             /* Handle ambiguous references by qualifying with table alias */
+//             if (has_ambiguous_refs && source_table_alias)
+//             {
+//                 col_fields = list_make2(
+//                     makeString(source_table_alias),
+//                     makeString(colName)
+//                 );
+//             }
+//             else
+//             {
+//                 col_fields = list_make1(makeString(colName));
+//             }
+
+//             /* prepare target list entry */
+//             tempResTarget = make_restarget_from_cstr_list(col_fields);
+
+//             /* Set explicit column name to avoid ambiguity in output */
+//             if (has_ambiguous_refs && source_table_alias)
+//             {
+//                 tempResTarget->name = psprintf("%s_%s", 
+//                                             source_table_alias, 
+//                                             colName);
+//             }
+
+//             new_targetlist = lappend(new_targetlist, tempResTarget);
+//         }
+//     }
+
+//     /* Add measure and dimension columns */
+//     {
+//         ResTarget *measure_res = makeNode(ResTarget);
+//         ResTarget *dim_res = makeNode(ResTarget);
+//         ColumnRef *measure_cref = makeNode(ColumnRef);
+//         ColumnRef *dim_cref = makeNode(ColumnRef);
+
+//         /* Add measure column with explicit alias */
+//         measure_cref->fields = list_make2(
+//             makeString(unpivot_alias),
+//             makeString(measure_colname));
+//         measure_cref->location = -1;
+//         measure_res->name = measure_colname;  /* Explicit name */
+//         measure_res->indirection = NIL;
+//         measure_res->val = (Node *) measure_cref;
+//         measure_res->location = -1;
+
+//         /* Add dimension column with explicit alias */
+//         dim_cref->fields = list_make2(
+//             makeString(unpivot_alias),
+//             makeString(dim_colname));
+//         dim_cref->location = -1;
+//         dim_res->name = dim_colname;  /* Explicit name */
+//         dim_res->indirection = NIL;
+//         dim_res->val = (Node *) dim_cref;
+//         dim_res->location = -1;
+
+//         new_targetlist = lappend(new_targetlist, measure_res);
+//         new_targetlist = lappend(new_targetlist, dim_res);
+//     }
+
+//     list_free(used_names);
+//     return new_targetlist;
+// }
+
 static void 
 transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
-	Node *where_clause = stmt->whereClause;
+    Node *where_clause = stmt->whereClause;
+	// Node *srcSql = (Node *) copyObject(stmt->srcSql);
     ListCell *lc;
+    // Query *temp_query;
+    // List *temp_targetlist;
+    // ListCell *tl;
 
     foreach(lc, stmt->fromClause)
     {
         transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause);
     }
+
+    // temp_query = parse_sub_analyze(srcSql, 
+    //                              pstate, 
+    //                              NULL,
+    //                              false,
+    //                              false
+    //                              );
+    
+    // temp_targetlist = temp_query->targetList;
+
+    // /* Print each target entry */
+    // elog(NOTICE, "Target List Entries:");
+    // foreach(tl, temp_targetlist)
+    // {
+    //     TargetEntry *te = (TargetEntry *) lfirst(tl);
+    //     elog(NOTICE, "Column: %s, ResNo: %d", 
+    //          te->resname ? te->resname : "unnamed",
+    //          te->resno);
+        
+    //     /* Print more details about the expression */
+    //     if (te->expr)
+    //     {
+    //         elog(NOTICE, "Expression type: %d", nodeTag(te->expr));
+    //         elog(NOTICE, "Expression dump: %s", nodeToString(te->expr));
+    //     }
+    // }
 
     stmt->whereClause = where_clause;
 }
@@ -5367,7 +5518,7 @@ static void transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
             strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
         {
             unpivot_alias = strVal(list_nth(unpivot_info, 1));
-            measure_col = strVal(list_nth(unpivot_info, 3));
+            measure_col = strVal(list_nth(unpivot_info,3));
             transformed_node = list_nth(unpivot_info, 5);
 
             /* Create IS NOT NULL condition */

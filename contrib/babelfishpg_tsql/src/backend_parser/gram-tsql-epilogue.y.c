@@ -2025,6 +2025,33 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	return (Node *)pivot_sl;
 }
 
+/*
+ * Generate a unique alias name for source table in UNPIVOT transformation
+ * Returns a palloc'd string containing the alias name
+ */
+char *
+generate_unpivot_source_table_alias(const char *base)
+{
+    char *result;
+    int base_len;
+    
+    /* Use "src" as base if none provided */
+    if (!base)
+    {    base = "src"; }
+        
+    /* Ensure base name length fits within NAMEDATALEN with suffix */
+    base_len = strlen(base);
+    if (base_len + 7 > NAMEDATALEN) /* 7 = underscore + 6 digits */
+    {    base_len = NAMEDATALEN - 7; }
+        
+    /* Generate unique name: base_XXXXXX where X is random digit */
+    result = palloc(base_len + 8); /* +8 for underscore, 6 digits, null terminator */
+    memcpy(result, base, base_len);
+    sprintf(result + base_len, "_%06d", rand() % 1000000);
+    
+    return result;
+}
+
 static Node *
 tsql_unpivot_debug_transformation(List *components)
 {
@@ -2039,7 +2066,7 @@ tsql_unpivot_debug_transformation(List *components)
     SelectStmt *values_subquery;
     List *values_list = NIL;
     ListCell *lc;
-    RangeVar *larg;
+    //RangeVar *larg;
 	char *source_alias;
 	List *result_info;
     //List *unpivot_cols;
@@ -2075,22 +2102,26 @@ tsql_unpivot_debug_transformation(List *components)
     rarg = makeNode(RangeSubselect);
     values_subquery = makeNode(SelectStmt);
 
-    /* Set up left side with alias */
+    /* Set up left side with alias if not present */
+	//source_alias = generate_source_table_alias(table_ref);
+
     if (IsA(table_ref, RangeVar))
     {
-        larg = (RangeVar *)table_ref;
+        RangeVar *larg = (RangeVar *)table_ref;
         if (larg->alias == NULL)
         {
-			/* TODO: need logic to generate unique alias */
-            larg->alias = makeAlias("c", NIL);
+            larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
         }
 		source_alias = larg->alias->aliasname;
-
     }
 	else if (IsA(table_ref, RangeSubselect))
     {
         RangeSubselect *rsq = (RangeSubselect *)table_ref;
-        source_alias = rsq->alias ? rsq->alias->aliasname : "c";
+		if (rsq->alias == NULL)
+		{
+			rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
+		}
+		source_alias = rsq->alias->aliasname;
     }
     else if (IsA(table_ref, JoinExpr))
     {
@@ -2101,20 +2132,48 @@ tsql_unpivot_debug_transformation(List *components)
         if (IsA(last_table, RangeVar))
         {
             RangeVar *rv = (RangeVar *)last_table;
-            if (rv->alias == NULL)
-                rv->alias = makeAlias("c", NIL);
+            if (rv->alias == NULL) {
+            	rv->alias = makeAlias(generate_unpivot_source_table_alias(rv->relname), NIL);
+			}
             source_alias = rv->alias->aliasname;
         }
         else if (IsA(last_table, RangeSubselect))
         {
             RangeSubselect *rsq = (RangeSubselect *)last_table;
-            source_alias = rsq->alias ? rsq->alias->aliasname : "c";
+            if (rsq->alias == NULL) {
+				rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
+			}
+			source_alias = rsq->alias->aliasname;
         }
     }
-	/* TODO: else case or error throw UNSUPPORTED needed here? 
-	Depends on what is actually supported for TSQL unpivot */
-    n->larg = table_ref;
-
+	else if (IsA(table_ref, List))
+    {
+        /* Handle case where table_ref is an UNPIVOT node */
+        List *prev_unpivot = (List *)table_ref;
+        if (list_length(prev_unpivot) == 6 &&
+            IsA(linitial(prev_unpivot), String) &&
+            strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
+        {
+            /* Use the alias from previous UNPIVOT */
+            source_alias = strVal(list_nth(prev_unpivot, 4));
+            /* Use the transformed node as our left arg */
+            //n->larg = (Node *)list_nth(prev_unpivot, 5);
+			
+        }
+        else
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_SYNTAX_ERROR),
+                     errmsg("Invalid source structure for UNPIVOT operation")));
+        }
+    }
+	else
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_SYNTAX_ERROR),
+                 errmsg("Invalid source structure for UNPIVOT operation")));
+    }
+	n->larg = table_ref;
     /* Build VALUES list from source columns */
     foreach(lc, source_cols)
     {
@@ -2198,7 +2257,7 @@ tsql_unpivot_debug_transformation(List *components)
     
     /* Append the transformed node */
 	elog(DEBUG1, "Final transformed node: %s", NameListToString(result_info));
-
+	//result_info = lappend(result_info, source_cols);
     result_info = lappend(result_info, n);
 
     return (Node *) result_info;
