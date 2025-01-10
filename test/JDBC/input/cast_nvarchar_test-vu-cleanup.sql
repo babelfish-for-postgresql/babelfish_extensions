@@ -1,6 +1,5 @@
--- to do in hashbytes PR
--- DROP TABLE IF EXISTS TestHash;
--- GO
+DROP TABLE IF EXISTS TestHash;
+GO
 DROP type user_defined_varbinary;
 GO
 DROP type user_defined_nvarchar;
@@ -17,11 +16,17 @@ DROP FUNCTION IF EXISTS dbo.CastbinaryToNVarchar;
 GO
 DROP TABLE IF EXISTS casttable;
 GO
--- to do in hashbytes PR
--- DROP FUNCTION IF EXISTS dbo.HashMultipleTypes;
--- GO
--- DROP PROCEDURE IF EXISTS dbo.PrintHashResults;
--- GO
--- DROP VIEW IF EXISTS dbo.HashDemoView;
--- GO
+DROP FUNCTION IF EXISTS dbo.HashMultipleTypes;
+GO
+DROP PROCEDURE IF EXISTS dbo.PrintHashResults;
+GO
+DROP VIEW IF EXISTS dbo.HashDemoView;
+GO
+drop view if exists hasheddataview;
+GO
+drop view if exists hasheddataview1;
+GO
+drop table IF EXISTS hashbytes_table;
+GO
+
 
