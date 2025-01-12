@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ matrix.extension_branch }}
         id: checkout
 
       - name: Install Dependencies
