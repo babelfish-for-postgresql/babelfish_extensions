@@ -9,7 +9,6 @@ jobs:
     strategy:
       matrix:
         extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV]
-        engine_branch: [BABEL_4_X_DEV__PG_16_X,BABEL_5_X_DEV__PG_17_X]
 
     env:
       INSTALL_DIR: psql
@@ -23,13 +22,24 @@ jobs:
         if: always()
         uses: ./.github/composite-actions/install-dependencies
 
+      - name: Determine Engine Branch
+        id: determine-engine-branch
+        run: |
+          if [[ "${{ env.EXTENSION_BRANCH }}" == "BABEL_4_X_DEV" ]]; then
+            echo "ENGINE_BRANCH=BABEL_4_X_DEV__PG_16_X" >> $GITHUB_OUTPUT
+          elif [[ "${{ env.EXTENSION_BRANCH }}" == "BABEL_5_X_DEV" ]]; then
+            echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
+          else
+            echo "ENGINE_BRANCH=main" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Modified Postgres
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: 'psql'
-          engine_branch: ${{ inputs.engine_branch }}
+          engine_branch: ${{ steps.determine-engine-branch.outputs.ENGINE_BRANCH }}
       
       - name: Compile ANTLR
         id: compile-antlr
