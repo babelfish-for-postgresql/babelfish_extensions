@@ -35,6 +35,29 @@ GO
 	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc in (select baseloc from t4)  order by DM.empno
 GO
 
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc = 'A'  order by DM.empno
+GO
 
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc > 'A' order by DM.empno
+GO
 
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc < 'Z'  order by DM.empno
+GO
+
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc >= 'A'  order by DM.empno
+GO
+
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc <= 'W'  order by DM.empno
+GO
+
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc1, 
+	CASE WHEN baseloc LIKE 'CHI%' THEN REPLACE(baseloc,'CHICAGO','C') ELSE baseloc END AS baseloc2,
+	deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc1, DM.baseloc2 from EMP_T DM where DM.baseloc1 < DM.baseloc2  order by DM.empno
+GO
 

@@ -224,13 +224,14 @@ static bool isAtAtUserVarName(const std::string name);
 static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);	
+static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
 
 /*
  * Structure / Utility function for general purpose of query string modification
  *
  * The difficulty of query string modification is that, upper-level general grammar (i.e. dml_clause, ddl_clause, ...)
- * actaully creates PLtsql_stmt but logic of query modification is available in low-level fine-grained grammar (i.e. full_object_name, select_list, ...)
- * We can't modify the query string in enter/exit function of low-evel grammar because it may append query string in middle of query
+ * actually creates PLtsql_stmt but logic of query modification is available in low-level fine-grained grammar (i.e. full_object_name, select_list, ...)
+ * We can't modify the query string in enter/exit function of low-level grammar because it may append query string in middle of query
  * so it may lead to inconsistency between query string and token index information obtained from ANTLR parser.
  * (i.e. if we rewrite "SELECT 'a'=1 from T" to "SELECT 1 as 'a' FROM T", T appears poisition 22 after rewriting but ANTLR token still keeps position 19)
  *
@@ -1016,7 +1017,7 @@ public:
 						}
 					}
 				}
-				if (id->keyword()->TRIM() || id->keyword()->REPLACE() || id->keyword()->TRANSLATE() || id->keyword()->SUBSTRING() || id->keyword()->STRING_AGG()  || id->keyword()->CONCAT() || id->keyword()->CONCAT_WS())
+				if (id->keyword()->TRIM())
 				{
 					size_t startPosition = id->keyword()->start->getStartIndex();
 					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "sys.")));
@@ -1856,6 +1857,7 @@ public:
             graft(makeSQL(ctx), peekContainer());
         }
 
+		is_cross_db = false;
 		// prepare rewriting
 		clear_rewritten_query_fragment();
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
@@ -1916,7 +1918,10 @@ public:
 
 		// record whether stmt is cross-db
 		if (is_cross_db)
+		{
 			stmt->is_cross_db = true;
+			is_cross_db = false;
+		}
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
 		// record if a function call
@@ -2960,7 +2965,7 @@ public:
 			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
 			fragment->cond = rewrite_if_condition(ctx);
 		}
-	}	
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3256,6 +3261,8 @@ public:
 		if (ctx->expression()) {
 			in_procedure_parameter = true;
 		}
+
+		CheckDeclareAtAtGlobalVarName(getFullText(ctx->local_id()), getLineNo(ctx));
 	}
 
 	void enterFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
@@ -3467,12 +3474,29 @@ public:
 			}
 		}
 		return;
-	}	
+	}
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
 	}
 
+	void enterDeclare_local(TSqlParser::Declare_localContext * ctx) override {
+		CheckDeclareAtAtGlobalVarName(getFullText(ctx->LOCAL_ID()), getLineNo(ctx));
+	}
+
+	void enterDeclare_statement(TSqlParser::Declare_statementContext * ctx) override {
+		if (ctx->local_id()) {
+			CheckDeclareAtAtGlobalVarName(getFullText(ctx->local_id()), getLineNo(ctx));
+		}
+	}
+
+	void enterFunc_body_returns_table(TSqlParser::Func_body_returns_tableContext * ctx) override {
+		CheckDeclareAtAtGlobalVarName(getFullText(ctx->local_id()), getLineNo(ctx));
+	}
+
+	void enterExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext * ctx) override {
+		CheckDeclareAtAtGlobalVarName(getFullText(ctx->local_id()), getLineNo(ctx));
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -9858,4 +9882,20 @@ delimitIfAtAtUserVarName(const std::string name)
 		str = "[" + str + "]";
 	}
 	return str;
+}
+
+// Intercept declarations of reserved names for @@ global variables
+static void
+CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
+{
+	// @@PGERROR is a special case since that would be valid outside the Babelfish context
+	if (pg_strcasecmp(name.c_str(), "@@PGERROR") == 0)
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s': this is a reserved variable name in Babelfish.", name.c_str()), lineNr, 0);
+	}
+
+	if (is_tsql_atatglobalvar(name.c_str()))
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", name.c_str()), lineNr, 0);
+	}
 }

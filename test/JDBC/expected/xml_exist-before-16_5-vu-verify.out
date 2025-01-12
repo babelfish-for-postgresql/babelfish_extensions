@@ -422,7 +422,7 @@ SELECT @xml.EXIST('/artists/artist/@name')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_@xml" does not exist)~~
+~~ERROR (Message: schema "@xml" does not exist)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
@@ -430,7 +430,7 @@ SELECT @xml.Exist('/artists/artist/@name')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_@xml" does not exist)~~
+~~ERROR (Message: schema "@xml" does not exist)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
@@ -438,7 +438,7 @@ SELECT @xml.ExIsT('/artists/artist/@name')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_@xml" does not exist)~~
+~~ERROR (Message: schema "@xml" does not exist)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
@@ -446,7 +446,7 @@ SELECT @xml.eXiSt('/artists/artist/@name')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_@xml" does not exist)~~
+~~ERROR (Message: schema "@xml" does not exist)~~
 
 
 -- Acceptable argument types

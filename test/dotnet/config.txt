@@ -11,6 +11,7 @@ bcpPath=/usr/local/bin/bcp
 
 runInParallel = false
 printToConsole = true
+runInRegression = true
 
 driver = sql
 provider = SQL NATIVE CLIENT

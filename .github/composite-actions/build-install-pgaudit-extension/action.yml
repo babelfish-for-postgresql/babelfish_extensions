@@ -23,8 +23,8 @@ runs:
         echo "everything set"
 
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
-        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION pgaudit;"
-        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+        sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
 
       shell: bash
       

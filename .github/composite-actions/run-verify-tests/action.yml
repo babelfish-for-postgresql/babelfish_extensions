@@ -41,6 +41,7 @@ runs:
         touch dummy_schedule
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
+        export physicalDatabaseName=babelfish_db
         export isUpgradeTestMode=false
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           export serverCollationName=${{ inputs.server_collation_name }}
@@ -81,5 +82,5 @@ runs:
       id: cleanup
       if: always() && steps.jdbc-verify-tests.outcome == 'success' && inputs.is_final_ver == 'true'
       run: |
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
       shell: bash

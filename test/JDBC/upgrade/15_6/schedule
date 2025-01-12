@@ -41,7 +41,6 @@ BABEL-2086
 BABEL-2170
 BABEL-2203
 BABEL-2208
-restricted_procedures
 BABEL-2257
 BABEL-2449
 BABEL-2535
@@ -63,7 +62,6 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010
 BABEL-3116
-BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -151,6 +149,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -168,7 +167,6 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
-BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -431,6 +429,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -546,8 +545,17 @@ space
 binary-datatype-operators
 BABEL-5059_before_16_5
 cast-varchar-to-time
+db_accessadmin
+db_ddladmin
+db_securityadmin
 xml_exist-before-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
+dbcreator_role
 BABEL-5186
 BABEL-2736-before-16_5
+cast_nvarchar_test_before_16_5
+smalldatetime_date_cmp
+securityadmin_role
+datareader_datawriter
+test_conv_money_to_varchar
 
