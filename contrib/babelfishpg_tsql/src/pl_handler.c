@@ -2519,6 +2519,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool 				with_recompile = false;
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
+					HeapTuple 			proctup;
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2600,8 +2601,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectId = oldoid;
 						originalFunc.classId = ProcedureRelationId;
 						originalFunc.objectSubId = 0;
+						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
 
-						HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
 						if (proctup == NULL)
 						{
 						    ereport(ERROR,
@@ -2618,6 +2619,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						            (errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						             errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
 						}
+						ReleaseSysCache(proctup);
+
 						if(!cfs->is_procedure)
 						{
 							/*
