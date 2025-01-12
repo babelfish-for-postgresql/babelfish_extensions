@@ -67,6 +67,7 @@ jobs:
         uses: ./.github/composite-actions/build-install-pgaudit-extension
         with:
           install_dir: 'psql'
+          branch_extension: ${{ inputs.extension_branch }}
 
       - name: Ignore some JDBC files 
         run: |
