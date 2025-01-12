@@ -8,7 +8,8 @@ jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
     strategy:
       matrix:
-        extension_branch: [BABEL_5_X_DEV]
+        extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV]
+        engine_branch: [BABEL_4_X_DEV__PG_16_X,BABEL_5_X_DEV__PG_17_X]
 
     env:
       INSTALL_DIR: psql
@@ -28,6 +29,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: 'psql'
+          engine_branch: ${{ inputs.engine_branch }}
       
       - name: Compile ANTLR
         id: compile-antlr
