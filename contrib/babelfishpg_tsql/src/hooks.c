@@ -5627,7 +5627,8 @@ default_collation_for_builtin_type(Type typ)
 
 	typtup = (Form_pg_type) GETSTRUCT(typ);
 	if (OidIsValid(typtup->typcollation) &&
-		sql_dialect == SQL_DIALECT_TSQL)
+		sql_dialect == SQL_DIALECT_TSQL &&
+		(typtup->typnamespace == sys_schema_oid))
 	{
 		/*
 		 * Always set CLUSTER_COLLATION_OID() for babelfish collatable types so that
@@ -5639,6 +5640,9 @@ default_collation_for_builtin_type(Type typ)
 	{
 		oid = typtup->typcollation;
 	}
+
+	if (oid == DEFAULT_COLLATION_OID)
+		oid = CLUSTER_COLLATION_OID();
 
 	return oid;
 }
