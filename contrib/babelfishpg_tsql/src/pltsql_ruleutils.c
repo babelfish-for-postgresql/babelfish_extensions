@@ -2650,11 +2650,13 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	}
 	else
 	{
-		const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-		if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+		// const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+		// if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+		if (!PRETTY_PAREN(context))
 			appendStringInfoChar(buf, '(');
 		get_rule_expr_paren(arg, context, false, parentNode);
-		if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+		// if (!PRETTY_PAREN(context) && (!dump_restore || (dump_restore && strcmp(dump_restore, "on") != 0)))
+		if (!PRETTY_PAREN(context))
 			appendStringInfoChar(buf, ')');
 	}
 
