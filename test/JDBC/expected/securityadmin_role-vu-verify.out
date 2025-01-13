@@ -413,10 +413,6 @@ int
 -- psql
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: extension "tds_fdw" already exists, skipping  Server SQLState: 42710)~~
-
 
 -- securityadmin should not have membership in database guest role
 SELECT roleid::regrole, member::regrole FROM pg_auth_members WHERE member = 'securityadmin'::regrole;
