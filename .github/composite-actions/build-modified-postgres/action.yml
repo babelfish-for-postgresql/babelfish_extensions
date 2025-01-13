@@ -65,6 +65,7 @@ runs:
     - name: Build and Install the Modified PostgreSQL Instance and Run Tests
       if: ${{steps.cache-engine.outputs.cache-hit != 'true'}}
       run: |
+        cd ..
         cd postgresql_modified_for_babelfish
 
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
