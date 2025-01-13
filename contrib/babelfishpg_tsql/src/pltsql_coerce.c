@@ -1051,11 +1051,17 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	/* Get immediate base type id of given type id */
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
 	if (!HeapTupleIsValid(tuple))
+	{
+		ReleaseSysCache(tuple);
 		return InvalidOid;
+	}
 
 	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typbasetype, &isnull);
 	if (isnull)
+	{
+		ReleaseSysCache(tuple);
 		return InvalidOid;
+	}
 
 	base_type = DatumGetObjectId(datum);
 	ReleaseSysCache(tuple);
