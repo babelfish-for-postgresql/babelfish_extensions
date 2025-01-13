@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_database.h"
 #include "commands/dbcommands.h"
@@ -29,10 +30,12 @@
 #include "parser/parser.h"
 #include "parser/parse_node.h"
 #include "utils/acl.h"
+#include "utils/catcache.h"
 #include "utils/elog.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
@@ -926,6 +929,35 @@ check_babelfish_droprole_restrictions(char *role)
 }
 
 /*
+ * Checks if bbf_role_admin is the direct admin of a role.
+ */
+static bool
+is_bbf_admin_of_role(Oid roleid, Oid bbf_role_admin)
+{
+	CatCList   *memlist;
+	int			i;
+	bool		is_bbf_admin_of_role = true;
+
+	/* Find roles that roleid is directly a member of */
+	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+                                  ObjectIdGetDatum(roleid));
+	for (i = 0; i < memlist->n_members; i++)
+	{
+		HeapTuple	tup = &memlist->members[i]->tuple;
+		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+
+		/* If role is member of a login other than bbf_role_admin WITH ADMIN OPTION. */
+		if (form->member != bbf_role_admin && form->admin_option)
+		{
+			is_bbf_admin_of_role = false;
+			break;
+		}
+	}
+	ReleaseSysCacheList(memlist);
+	return is_bbf_admin_of_role;
+}
+
+/*
  * is_babelfish_role
  *
  * Helper function to check if a given role is babelfish user or role or login
@@ -934,46 +966,24 @@ check_babelfish_droprole_restrictions(char *role)
  * 	Direct evidence of babelfish membership is stored in babelfish catalog,
  * 	that is only accessible in babelfish_db.
  * 	Since role related DDLs could be executed in any PG databases,
- * 	This function check the underlying assumption on the membership chain instead
- * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
- *
- * actual dbo and db_owner name varies across different babelfish logical databases
+ * 	This function check the underlying assumption:
+ * 	1. Given role is the bbf_role_admin.
+ * 	2. If bbf_role_admin is admin of the given role.
  */
 static bool
 is_babelfish_role(const char *role)
 {
-	Oid			sysadmin_oid;
 	Oid			role_oid;
-	Oid			bbf_master_guest_oid;
-	Oid			bbf_tempdb_guest_oid;
-	Oid			bbf_msdb_guest_oid;
-	Oid			securityadmin;
-	Oid			dbcreator;
+	Oid			bbf_admin_oid;
 
-	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
-	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
-	dbcreator = get_role_oid(BABELFISH_DBCREATOR, true);  /* missing OK */
+	bbf_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true); /* missing OK */
 
-	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) 
-			|| !OidIsValid(securityadmin) || !OidIsValid(dbcreator))
+	if (!OidIsValid(role_oid) || !OidIsValid(bbf_admin_oid))
 		return false;
 
-	if (is_member_of_role(sysadmin_oid, role_oid) ||
-		is_member_of_role(securityadmin, role_oid) ||
-		is_member_of_role(dbcreator, role_oid) ||
-		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
-		return true;
-
-	bbf_master_guest_oid = get_role_oid("master_guest", true);
-	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
-	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
-	if (OidIsValid(bbf_master_guest_oid)
-		&& OidIsValid(bbf_tempdb_guest_oid)
-		&& OidIsValid(bbf_msdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_master_guest_oid)
-		&& is_member_of_role(role_oid, bbf_tempdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_msdb_guest_oid))
+	if ((pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) ||
+			(is_bbf_admin_of_role(role_oid, bbf_admin_oid) && is_admin_of_role(bbf_admin_oid, role_oid)))
 		return true;
 
 	return false;
@@ -1242,7 +1252,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
@@ -1254,7 +1264,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolespec->rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
