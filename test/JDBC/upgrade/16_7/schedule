@@ -602,3 +602,4 @@ test_conv_string_to_time-before-17_3
 db_owner
 BABEL-5031
 test_conv_money_to_varchar
+fixeddecimal_modulo
