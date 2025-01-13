@@ -35,7 +35,6 @@
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "utils/lsyscache.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
@@ -934,11 +933,11 @@ check_babelfish_droprole_restrictions(char *role)
 static bool
 is_bbf_admin_of_role(Oid roleid, Oid bbf_role_admin)
 {
-	CatCList   *memlist;
-	int			i;
+	CatCList	*memlist;
+	int		i;
 	bool		is_bbf_admin_of_role = true;
 
-	/* Find roles that roleid is directly a member of */
+	/* Find roles that are direct membes of roleid */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
                                   ObjectIdGetDatum(roleid));
 	for (i = 0; i < memlist->n_members; i++)
@@ -968,7 +967,7 @@ is_bbf_admin_of_role(Oid roleid, Oid bbf_role_admin)
  * 	Since role related DDLs could be executed in any PG databases,
  * 	This function check the underlying assumption:
  * 	1. Given role is the bbf_role_admin.
- * 	2. If bbf_role_admin is admin of the given role.
+ * 	2. If bbf_role_admin is only admin of the given role.
  */
 static bool
 is_babelfish_role(const char *role)
