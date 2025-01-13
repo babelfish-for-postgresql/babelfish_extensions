@@ -1,3 +1,26 @@
 -- psql
 VACUUM ANALYZE
 GO
+
+-- psql
+CREATE OR REPLACE FUNCTION drop_orphaned_temp_schemas() RETURNS void AS $$
+DECLARE
+    schema_record RECORD;
+BEGIN
+    FOR schema_record IN 
+        SELECT nspname 
+        FROM pg_namespace 
+        WHERE nspname LIKE 'pg_temp%' 
+           OR nspname LIKE 'pg_toast_temp%'
+    LOOP
+        EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(schema_record.nspname) || ' CASCADE';
+        RAISE NOTICE 'Dropped schema: %', schema_record.nspname;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- psql 
+select drop_orphaned_temp_schemas()
+GO
+
