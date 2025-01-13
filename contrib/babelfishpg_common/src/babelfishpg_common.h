@@ -86,4 +86,5 @@ typedef struct common_utility_plugin
 	const char	   	*(*resolve_pg_type_to_tsql) (Oid oid);
 	int32_t		(*GetUTF8CodePoint) (const unsigned char *in, int len, int *consumed_p);
 	int			(*TsqlUTF8LengthInUTF16) (const void *vin, int len);
+	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);
 } common_utility_plugin;

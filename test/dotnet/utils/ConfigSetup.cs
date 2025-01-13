@@ -13,6 +13,7 @@ namespace BabelfishDotnetFramework
 		public static readonly string TestName = Dictionary["testName"];
 		public static readonly bool RunInParallel = bool.Parse(Dictionary["runInParallel"]);
 		public static readonly bool PrintToConsole = bool.Parse(Dictionary["printToConsole"]);
+		public static bool RunInRegression;
 		public static string Database;
 		public static string Provider = Dictionary["provider"];
 
@@ -42,6 +43,7 @@ namespace BabelfishDotnetFramework
 			}
 			Database = dictionary["driver"];
 			Provider = dictionary["provider"];
+			RunInRegression = bool.Parse(dictionary["runInRegression"]);
 
 			/* Creating Server Connection String and Query. */
 			dictionary["bblConnectionString"] = BuildConnectionString(dictionary["babel_URL"], dictionary["babel_port"],
@@ -58,8 +60,10 @@ namespace BabelfishDotnetFramework
 					return @"Provider = " + ConfigSetup.Provider + ";Data Source = " + url + "," + port + "; Initial Catalog = " + db
 						   + "; User ID = " + uid + "; Password = " + pwd + ";";
 				case "sql":
-					return @"Data Source = " + url + "," + port + "; Initial Catalog = " + db
-						   + "; User ID = " + uid + "; Password = " + pwd + ";";
+					string baseConnectionString = $"Data Source={url},{port};Initial Catalog={db};User ID={uid};Password={pwd};";
+                    return ConfigSetup.RunInRegression
+                        ? $"{baseConnectionString};Encrypt=false"
+                        : baseConnectionString;
 				default:
 					throw new Exception("Driver Not Supported");
 			}

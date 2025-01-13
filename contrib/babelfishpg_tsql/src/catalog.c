@@ -9,6 +9,7 @@
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
@@ -6286,4 +6287,50 @@ get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **t
 
 	if(!xactStarted)
 		CommitTransactionCommand();
+}
+
+/*
+ * Checks if the given member is 'bbf_role_admin' role and has the privilege 
+ * to grant a specified role through direct membership. This privilege is 
+ * determined by the presence of the 'admin_option' flag, which allows the 
+ * member to grant the role to others. 
+ * 
+ * @return true if the member is 'bbf_role_admin' and also has the admin option 
+ *         to grant the specified role; otherwise, returns false.
+ */
+bool
+bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role)
+{
+	CatCList   *memlist;
+
+	/* 
+	 * TSQL specific behavior and member must be bbf_role_admin.
+	 * If not return false. 
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN()
+		|| member !=  get_bbf_role_admin_oid())
+		return false;
+
+	/* 
+	 * Find all existing tuples for given role
+	 * whose member is bbf_role_admin
+	 */
+	memlist = SearchSysCacheList2(AUTHMEMROLEMEM,
+									ObjectIdGetDatum(role),
+									ObjectIdGetDatum(member));
+	for (int i = 0; i < memlist->n_members; i++)
+	{
+		HeapTuple	tup = &memlist->members[i]->tuple;
+		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+	
+		/* Return true if admin_option is true */
+		if (form->admin_option)
+		{
+			ReleaseSysCacheList(memlist);
+			return true;
+		}
+	}
+
+	ReleaseSysCacheList(memlist);
+	return false;
 }

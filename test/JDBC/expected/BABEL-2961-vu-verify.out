@@ -1,0 +1,104 @@
+CREATE TABLE schema_2961.t(a int)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "schema_2961" does not exist)~~
+
+
+EXEC dbo.myproc
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.myproc() does not exist)~~
+
+
+SELECT * FROM dbo.t14
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.t14" does not exist)~~
+
+
+DROP USER smith
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'smith', because it does not exist or you do not have permission.)~~
+
+
+EXEC dbo.CallNonExistentProc
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.nonexistentproc() does not exist)~~
+
+
+EXEC dbo.DropNonExistentUser
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'nonexistentuser', because it does not exist or you do not have permission.)~~
+
+
+-- Attempt multiple operations within a single transaction
+BEGIN TRANSACTION
+    CREATE TABLE dbo.TestTable (ID INT)
+    INSERT INTO dbo.TestTable VALUES (1)
+    SELECT * FROM dbo.NonExistentTable
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.nonexistenttable" does not exist)~~
+
+
+-- Verify if the transaction rolled back correctly
+SELECT * FROM dbo.TestTable
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.testtable" does not exist)~~
+
+
+CREATE DATABASE TestDB2961
+GO
+
+USE TestDB2961
+GO
+
+CREATE TABLE schema_2961.t(a int)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "schema_2961" does not exist)~~
+
+
+EXEC dbo.myproc
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.myproc() does not exist)~~
+
+
+SELECT * FROM dbo.t14
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.t14" does not exist)~~
+
+
+DROP USER smith
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'smith', because it does not exist or you do not have permission.)~~
+
+
+USE master
+GO
+
+DROP DATABASE TestDB2961
+GO
+

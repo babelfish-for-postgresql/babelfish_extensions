@@ -804,7 +804,7 @@ SELECT CONCAT_WS('-', 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f'
 GO
 ~~START~~
 nvarchar
-a-b-🙂🙂-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-🙂🙂-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
+a-b-🙂🙂-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-晥-O-P-Q-R-S-T-🙂🙂-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-杦
 ~~END~~
 
 
@@ -812,7 +812,7 @@ SELECT CONCAT_WS(N'-', 'a', 'b', CAST('🙂🙂' AS varchar), 'd', 'e', CAST('f'
 GO
 ~~START~~
 nvarchar
-a-b-🙂🙂-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-ef-O-P-Q-R-S-T-🙂🙂-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-fg
+a-b-🙂🙂-d-e-f-比尔-h-i-j-k-l-m-n-o-p-q-r-s-t-u-v-w-x-y-z-A-B-C-D-E-F-G-H-I-J-K-L-M-晥-O-P-Q-R-S-T-🙂🙂-V-W-X-Y-Z-0-1-2-3-4-5-6-7-8-9-.-,---_-!-@-#-$-%-^-&-*-(-)-[-]-{-}-<->-/-\\-|-:-;-"-\-?-+-=-~-`-a-b-c-d-杦
 ~~END~~
 
 
@@ -1544,16 +1544,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_binary) from babel_3409_concat_w
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -1578,16 +1578,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_varbinary) from babel_3409_conca
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -2683,16 +2683,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_binary) from babel_3409_concat_w
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -2700,16 +2700,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_binary) from babel_3409_concat_
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -2717,16 +2717,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_varbinary) from babel_3409_conca
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -2734,16 +2734,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_varbinary) from babel_3409_conc
 GO
 ~~START~~
 nvarchar
-abcabcab
-🙂defghi🙂defghicd
-🙂🙂🙂🙂ef
-比尔·拉比尔·拉gh
-莫斯莫斯ip
+abcabc扡
+🙂defghi🙂defghi摣
+🙂🙂🙂🙂晥
+比尔·拉比尔·拉桧
+莫斯莫斯灩
 
 
-AnikaitAnikaitqr
+AnikaitAnikait牱
 
-AgrawalAgrawalrs
+AgrawalAgrawal獲
 ~~END~~
 
 
@@ -3808,16 +3808,16 @@ EXEC babel_3409_concat_ws_dep_proc2
 GO
 ~~START~~
 nvarchar
-abc-12.0000-2000-12-12 12:43:10-2000-12-12 12:43:10-ab-2000-12-12-12:43:10-2000-12-12 12:43:10.1234 +10:00
-🙂defghi-13.0000-2000-12-13 12:43:10-2000-12-13 12:43:10-cd-2000-12-13-12:43:10-2000-12-13 12:43:10.1234 +10:00
-🙂🙂-14.0000-2000-12-14 12:43:10-2000-12-14 12:43:10-ef-2000-12-14-12:43:10-2000-12-14 12:43:10.1234 +10:00
-比尔·拉-15.0000-2000-12-15 12:43:10-2000-12-15 12:43:10-gh-2000-12-15-12:43:10-2000-12-15 12:43:10.1234 +10:00
-莫斯-16.0000-2000-12-16 12:43:10-2000-12-16 12:43:10-ip-2000-12-16-12:43:10-2000-12-16 12:43:10.1234 +10:00
+abc-12.0000-2000-12-12 12:43:10-2000-12-12 12:43:10-扡-2000-12-12-12:43:10-2000-12-12 12:43:10.1234 +10:00
+🙂defghi-13.0000-2000-12-13 12:43:10-2000-12-13 12:43:10-摣-2000-12-13-12:43:10-2000-12-13 12:43:10.1234 +10:00
+🙂🙂-14.0000-2000-12-14 12:43:10-2000-12-14 12:43:10-晥-2000-12-14-12:43:10-2000-12-14 12:43:10.1234 +10:00
+比尔·拉-15.0000-2000-12-15 12:43:10-2000-12-15 12:43:10-桧-2000-12-15-12:43:10-2000-12-15 12:43:10.1234 +10:00
+莫斯-16.0000-2000-12-16 12:43:10-2000-12-16 12:43:10-灩-2000-12-16-12:43:10-2000-12-16 12:43:10.1234 +10:00
 
 
-Anikait-17.0000-2000-12-17 12:43:10-2000-12-17 12:43:10-qr-2000-12-17-12:43:10-2000-12-17 12:43:10.1234 +10:00
+Anikait-17.0000-2000-12-17 12:43:10-2000-12-17 12:43:10-牱-2000-12-17-12:43:10-2000-12-17 12:43:10.1234 +10:00
 
-Agrawal-18.0000-2000-12-18 12:43:10-2000-12-18 12:43:10-rs-2000-12-18-12:43:10-2000-12-18 12:43:10.1234 +10:00
+Agrawal-18.0000-2000-12-18 12:43:10-2000-12-18 12:43:10-獲-2000-12-18-12:43:10-2000-12-18 12:43:10.1234 +10:00
 ~~END~~
 
 
@@ -3825,7 +3825,7 @@ SELECT babel_3409_concat_ws_dep_func2()
 GO
 ~~START~~
 nvarchar
-abc-ab-abc-abc
+abc-扡-abc-abc
 ~~END~~
 
 

@@ -2582,7 +2582,7 @@ select count(*) from master.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
 
 select count(*) from tempdb.myschema.sysobjects
 go
@@ -5090,7 +5090,7 @@ select count(*) from tempdb.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "tempdb_myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
 
 select count(*) from myschematest_mydb.myschema.sysobjects
 go
@@ -7716,7 +7716,7 @@ select count(*) from myschematest_mydb.myschema.sysobjects
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "myschematest_mydb_myschema.sysobjects" does not exist)~~
+~~ERROR (Message: relation "myschema.sysobjects" does not exist)~~
 
 
 

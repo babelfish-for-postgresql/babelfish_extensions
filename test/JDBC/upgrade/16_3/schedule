@@ -89,11 +89,11 @@ BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3513_before_15_8_or_16_4
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -150,6 +150,7 @@ babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
 check_for_inconsistent_metadata
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -418,7 +419,7 @@ Test-Computed-Columns
 TestDate
 TestDatetime
 TestDatetime2
-TestDatetime-numeric-dateaddfunction
+TestDatetime-numeric-dateaddfunction-before-17_3
 TestDatetime-numeric-representation
 TestDecimal
 TestFloat
@@ -462,7 +463,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-test_windows_login
+test_windows_login_before-17_2
 test_windows_sp_helpuser
 TestXML
 timefromparts
@@ -481,7 +482,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
 datetimeoffset-timezone
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 host_id-before-16_5-or-15_9
 drop_index
 linked_srv_4229
@@ -530,7 +531,7 @@ babel_test_int4_numeric_oper
 babel_test_int8_numeric_oper
 babel_test_int2_numeric_oper
 login_token-dep
-test_like_for_AI-before-16_5-or-15_9
+test_like_for_AI
 BABEL-4869
 babel_4328_datetime
 babel_4328_datetime2
@@ -565,9 +566,18 @@ GRANT_SCHEMA-before-15_9-16_5
 BABEL-CASE_EXPR-before-16_5-or-15_9
 BABEL-5186
 BABEL-2736-before-16_5
+cast_nvarchar_test_before_16_5
 dbcreator_role
 securityadmin_role
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
 

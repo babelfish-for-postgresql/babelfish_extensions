@@ -81,11 +81,11 @@ BABEL-3370
 BABEL-3380
 BABEL-3402
 BABEL-3474
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3513_before_15_8_or_16_4
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -121,6 +121,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -386,7 +387,7 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
 getdate-before-15_9-or-16_5
 BABEL_4330-before-15_8-or-16_4
@@ -440,4 +441,12 @@ datareader_datawriter
 BABEL-5186
 BABEL-2736-before-15_3
 smalldatetime_date_cmp-before-15_5-16_1
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
 

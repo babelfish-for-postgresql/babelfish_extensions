@@ -70,6 +70,7 @@ void
 set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 {
 	int len;
+	int16 db_id;
 
 	if (logical_db_name == NULL)
 		ereport(ERROR,
@@ -80,13 +81,15 @@ set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
-	if(!DbidIsValid(get_db_id(logical_db_name)))
+	db_id = get_db_id(logical_db_name);
+	if(!DbidIsValid(db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", logical_db_name)));
 	
 	strncpy(current_db_name, logical_db_name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
+	current_db_id = db_id;
 }
 
 
