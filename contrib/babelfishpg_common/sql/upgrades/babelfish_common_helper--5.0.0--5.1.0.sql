@@ -39,22 +39,37 @@ RETURNS sys.VARCHAR
 AS 'babelfishpg_common', 'fixeddecimal2varchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.fixeddecimal2pgvarchar(sys.FIXEDDECIMAL, integer, BOOLEAN)
+RETURNS pg_catalog.VARCHAR
+AS 'babelfishpg_common', 'fixeddecimal2varchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN)
 RETURNS sys.BPCHAR
 AS 'babelfishpg_common', 'fixeddecimal2bpchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.FIXEDDECIMAL AS sys.VARCHAR)
-WITH FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CREATE CAST (sys.FIXEDDECIMAL AS sys.VARCHAR)
+    WITH FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
 
-CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.VARCHAR)
-WITH FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+    CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.VARCHAR)
+    WITH FUNCTION sys.fixeddecimal2pgvarchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
 
-CREATE CAST (sys.FIXEDDECIMAL AS sys.BPCHAR)
-WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+    CREATE CAST (sys.FIXEDDECIMAL AS sys.BPCHAR)
+    WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
 
-CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.BPCHAR)
-WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+    CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.BPCHAR)
+    WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+EXCEPTION WHEN duplicate_object THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
