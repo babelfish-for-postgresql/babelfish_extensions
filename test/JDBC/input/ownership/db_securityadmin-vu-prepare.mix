@@ -38,6 +38,9 @@ GO
 CREATE FUNCTION babel_5135_schema1.babel_5135_tvf1() RETURNS TABLE AS RETURN (SELECT a, b FROM babel_5135_schema1.babel_5135_t1);
 GO
 
+CREATE SEQUENCE babel_5135_schema1.babel_5135_seq1 START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999 CYCLE;
+GO
+
 CREATE PROCEDURE babel_5135_roleop_proc1 AS BEGIN CREATE ROLE babel_5135_role2; ALTER ROLE babel_5135_role2 WITH NAME = babel_5135_role3; DROP ROLE babel_5135_role3; END
 GO
 CREATE PROCEDURE babel_5135_roleop_proc2 AS BEGIN ALTER ROLE babel_5135_r1 ADD MEMBER babel_5135_u1; END
@@ -52,6 +55,7 @@ GRANT SELECT ON babel_5135_schema1.babel_5135_v1 TO babel_5135_u1;
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_p1 TO babel_5135_u1;
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_f1 TO babel_5135_u1;
 GRANT EXECUTE ON babel_5135_schema1.babel_5135_tvf1 TO babel_5135_u1;
+GRANT UPDATE ON babel_5135_schema1.babel_5135_seq1 TO babel_5135_u1;
 END
 GO
 CREATE PROCEDURE babel_5135_revokeop_proc1 AS BEGIN
@@ -60,6 +64,7 @@ REVOKE SELECT ON babel_5135_schema1.babel_5135_v1 FROM babel_5135_u1;
 REVOKE EXECUTE ON babel_5135_schema1.babel_5135_p1 FROM babel_5135_u1;
 REVOKE EXECUTE ON babel_5135_schema1.babel_5135_f1 FROM babel_5135_u1;
 REVOKE EXECUTE ON babel_5135_schema1.babel_5135_tvf1 FROM babel_5135_u1;
+REVOKE UPDATE ON babel_5135_schema1.babel_5135_seq1 FROM babel_5135_u1;
 END
 GO
 

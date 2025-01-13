@@ -23,6 +23,8 @@ DROP FUNCTION babel_5135_schema1.babel_5135_f1();
 GO
 DROP FUNCTION babel_5135_schema1.babel_5135_tvf1();
 GO
+DROP SEQUENCE babel_5135_schema1.babel_5135_seq1;
+GO
 DROP PROCEDURE babel_5135_roleop_proc1;
 GO
 DROP PROCEDURE babel_5135_roleop_proc2;

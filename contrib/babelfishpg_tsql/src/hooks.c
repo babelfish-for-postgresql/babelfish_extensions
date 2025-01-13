@@ -5723,6 +5723,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		case OBJECT_TABLE:
 		case OBJECT_COLUMN:
 		case OBJECT_VIEW:
+		case OBJECT_SEQUENCE:
 			classid = RelationRelationId;
 			break;
 		case OBJECT_FUNCTION:
