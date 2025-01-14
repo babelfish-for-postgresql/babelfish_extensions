@@ -2624,7 +2624,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 
@@ -2642,7 +2642,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-12.0000
+12.00
 ~~END~~
 
 
@@ -2651,7 +2651,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 
@@ -2669,7 +2669,7 @@ SELECT replace(@inputString, @pattern, @replacement)
 GO
 ~~START~~
 varchar
-12.0000
+12.00
 ~~END~~
 
 

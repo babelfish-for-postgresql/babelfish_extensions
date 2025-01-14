@@ -2378,7 +2378,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-123abcd6.0000
+123abcd6.00
 ~~END~~
 
 DECLARE @inputString money = 12356;
@@ -2402,7 +2402,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc12356.0000
+abc12356.00
 ~~END~~
 
 
@@ -2411,7 +2411,7 @@ SELECT stuff(@inputString, 4, 1, 'abcd')
 GO
 ~~START~~
 varchar
-123abcd6.0000
+123abcd6.00
 ~~END~~
 
 DECLARE @inputString smallmoney = 12356;
@@ -2435,7 +2435,7 @@ SELECT stuff('abcd', 4, 1, @inputString)
 GO
 ~~START~~
 varchar
-abc12356.0000
+abc12356.00
 ~~END~~
 
 
