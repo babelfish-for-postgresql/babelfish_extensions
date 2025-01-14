@@ -29,6 +29,8 @@ jobs:
             echo "ENGINE_BRANCH=BABEL_4_X_DEV__PG_16_X" >> $GITHUB_OUTPUT
           elif [[ "${{ env.EXTENSION_BRANCH }}" == "BABEL_5_X_DEV" ]]; then
             echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
+          elif [[ "${{ env.EXTENSION_BRANCH }}" == "latest" ]]; then
+            echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
           else
             echo "ENGINE_BRANCH=main" >> $GITHUB_OUTPUT
           fi
