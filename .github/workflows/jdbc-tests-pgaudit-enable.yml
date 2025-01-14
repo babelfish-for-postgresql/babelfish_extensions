@@ -85,6 +85,11 @@ jobs:
           install_dir: 'psql'
           branch_extension: ${{ matrix.extension_branch }}
 
+      - uses: actions/checkout@v2
+              with:
+                repository: babelfish-for-postgresql/babelfish_extensions
+                ref: ${{ matrix.extension_branch }}
+
       - name: Ignore some JDBC files 
         run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
