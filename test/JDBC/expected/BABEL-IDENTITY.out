@@ -137,19 +137,19 @@ SET IDENTITY_INSERT test_table2 ON;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "test_table2" does not exist)~~
+~~ERROR (Message: Cannot find the object "test_table2" because it does not exist or you do not have permissions.)~~
 
 SET IDENTITY_INSERT fake_schema.test_table1 ON;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "master_fake_schema" does not exist)~~
+~~ERROR (Message: Cannot find the object "fake_schema.test_table1" because it does not exist or you do not have permissions.)~~
 
 SET IDENTITY_INSERT fake_db.dbo.test_table1 ON;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cross-database references are not implemented: "fake_db.master_dbo.test_table1")~~
+~~ERROR (Message: Cannot find the object "fake_db.dbo.test_table1" because it does not exist or you do not have permissions.)~~
 
 
 CREATE TABLE dbo.test_table2 (test_id INT IDENTITY(7,2), test_col1 INT);
@@ -763,7 +763,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.214 ms
+Babelfish T-SQL Batch Parsing Time: 9.847 ms
 ~~END~~
 
 
@@ -778,7 +778,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.005 ms
+Babelfish T-SQL Batch Parsing Time: 3.876 ms
 ~~END~~
 
 
@@ -793,7 +793,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 11.694 ms
+Babelfish T-SQL Batch Parsing Time: 5.248 ms
 ~~END~~
 
 
@@ -808,7 +808,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 67.645 ms
+Babelfish T-SQL Batch Parsing Time: 42.659 ms
 ~~END~~
 
 
@@ -825,7 +825,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.888 ms
+Babelfish T-SQL Batch Parsing Time: 6.945 ms
 ~~END~~
 
 
@@ -840,7 +840,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.746 ms
+Babelfish T-SQL Batch Parsing Time: 1.681 ms
 ~~END~~
 
 
@@ -857,7 +857,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.471 ms
+Babelfish T-SQL Batch Parsing Time: 6.932 ms
 ~~END~~
 
 
@@ -873,7 +873,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.360 ms
+Babelfish T-SQL Batch Parsing Time: 0.508 ms
 ~~END~~
 
 
@@ -888,7 +888,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.401 ms
+Babelfish T-SQL Batch Parsing Time: 2.283 ms
 ~~END~~
 
 
@@ -903,7 +903,7 @@ Index Scan using test_id_index_tinyint_pkey on test_id_index_tinyint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.229 ms
+Babelfish T-SQL Batch Parsing Time: 0.252 ms
 ~~END~~
 
 
@@ -918,7 +918,7 @@ Index Scan using test_id_index_smallint_pkey on test_id_index_smallint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.259 ms
 ~~END~~
 
 
@@ -933,7 +933,7 @@ Index Scan using test_id_index_bigint_pkey on test_id_index_bigint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.178 ms
 ~~END~~
 
 
@@ -948,7 +948,7 @@ Index Scan using test_id_index_numeric_pkey on test_id_index_numeric
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -974,7 +974,7 @@ Index Scan using test_numeric_index_no_id_pkey on test_numeric_index_no_id
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.255 ms
 ~~END~~
 
 
@@ -1194,7 +1194,7 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.187 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 select id from babel_3384_test WHERE id = @@IDENTITY
@@ -1208,7 +1208,7 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.159 ms
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
