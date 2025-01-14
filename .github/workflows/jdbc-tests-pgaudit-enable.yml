@@ -53,7 +53,7 @@ jobs:
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
-          extension_branch: ${{ matrix.extension_branch }}
+          branch_extension: ${{ matrix.extension_branch }}
 
 
       - name: Build tds_fdw Extension
@@ -82,7 +82,7 @@ jobs:
         uses: ./.github/composite-actions/build-install-pgaudit-extension
         with:
           install_dir: 'psql'
-          extension_branch: ${{ matrix.extension_branch }}
+          branch_extension: ${{ inputs.extension_branch }}
 
       - name: Ignore some JDBC files 
         run: |
