@@ -2072,6 +2072,8 @@ tsql_unpivot_debug_transformation(List *components)
     //List *unpivot_cols;
 	char *measure_colname;
     char *dim_colname;
+	char *inner_alias_name;
+
 
 
     /* Extract components */
@@ -2155,7 +2157,8 @@ tsql_unpivot_debug_transformation(List *components)
             strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
         {
             /* Use the alias from previous UNPIVOT */
-            source_alias = strVal(list_nth(prev_unpivot, 4));
+            //source_alias = strVal(list_nth(prev_unpivot, 1));
+			source_alias = strVal(list_nth(prev_unpivot, 1));
             /* Use the transformed node as our left arg */
             //n->larg = (Node *)list_nth(prev_unpivot, 5);
 			
@@ -2174,7 +2177,8 @@ tsql_unpivot_debug_transformation(List *components)
                  errmsg("Invalid source structure for UNPIVOT operation")));
     }
 	n->larg = table_ref;
-    /* Build VALUES list from source columns */
+
+	/* Build VALUES list from source columns */
     foreach(lc, source_cols)
     {
         String *col_name = (String *)lfirst(lc);
@@ -2203,37 +2207,28 @@ tsql_unpivot_debug_transformation(List *components)
     values_subquery->valuesLists = values_list;
     rarg->subquery = (Node *)values_subquery;
 
-    /* Handle alias for VALUES clause */
-	/* TODO: can remove check or add error: UNPIVOT table alias cannot be NULL 
-	throw error in parser rule body if alias is NULL */
+    /* Handle alias for Join-Values (RangeSubSelect) clause */
+	inner_alias_name = psprintf("%s_1", alias->aliasname);
     if (alias != NULL)
     {
-        rarg->alias = alias;
-        /* Add column names if not specified */
-		/* TODO: alias->colnames wont exist in the alias object of UNPIVOT stmt so can remove check*/
-        if (rarg->alias->colnames == NIL)
-        {
-            rarg->alias->colnames = list_make2(
-				makeString(measure_colname),
-            	makeString(dim_colname)
-            );
-        }
+        rarg->alias = makeAlias(inner_alias_name, list_make2(
+			makeString(measure_colname),
+			makeString(dim_colname)
+			)
+		);
     }
     else
     {
-        /* Create default alias if none provided */
-        rarg->alias = makeAlias(
-            "unpvt",
-            list_make2(
-				makeString(measure_colname),
-            	makeString(dim_colname)
-            )
-        );
+        ereport(ERROR,
+                    (errcode(ERRCODE_SYNTAX_ERROR),
+                     errmsg("Alias for UNPIVOT operation is required.")));
     }
 
     n->rarg = (Node *)rarg;
     n->usingClause = NIL;
     n->quals = NULL;
+	/* Rewrite by adding unpivot alias as the complete Join operation alias */
+	n->alias = alias;
 
     elog(DEBUG1, "Final transformed node: %s", nodeToString((Node *)n));
 
@@ -2249,7 +2244,7 @@ tsql_unpivot_debug_transformation(List *components)
 	/* Create result info list */
     result_info = list_make5(
         makeString("UNPIVOT"),
-        makeString(rarg->alias->aliasname),	/* unpivot alias and its columns: */
+        makeString(alias->aliasname),	/* unpivot alias and its columns: */
         makeString(dim_colname),			/* dimension column */
         makeString(measure_colname),		/* measure column */
         makeString(source_alias)			/* source table/query alias */
