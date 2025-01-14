@@ -1391,16 +1391,16 @@ SELECT CONCAT_WS(col_varchar, col_varchar, col_smallmoney) from babel_3409_conca
 GO
 ~~START~~
 varchar
-abcabc12.0000
-?defghi?defghi13.0000
-????14.0000
-比??拉比??拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+?defghi?defghi13.00
+????14.00
+比??拉比??拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1408,16 +1408,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_smallmoney) from babel_3409_conc
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1425,16 +1425,16 @@ SELECT CONCAT_WS(col_varchar, col_varchar, col_money) from babel_3409_concat_ws_
 GO
 ~~START~~
 varchar
-abcabc12.0000
-?defghi?defghi13.0000
-????14.0000
-比??拉比??拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+?defghi?defghi13.00
+????14.00
+比??拉比??拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1442,16 +1442,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_money) from babel_3409_concat_ws
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2547,16 +2547,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_smallmoney) from babel_3409_conc
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2564,16 +2564,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_smallmoney) from babel_3409_con
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2581,16 +2581,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_money) from babel_3409_concat_ws
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2598,16 +2598,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_money) from babel_3409_concat_w
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -3381,16 +3381,16 @@ SELECT CONCAT_WS(col_smallmoney, col_varchar, col_varchar) from babel_3409_conca
 GO
 ~~START~~
 varchar
-abc12.0000abc
-?defghi13.0000?defghi
-??14.0000??
-比??拉15.0000比??拉
-莫斯16.0000莫斯
+abc12.00abc
+?defghi13.00?defghi
+??14.00??
+比??拉15.00比??拉
+莫斯16.00莫斯
 
 
-Anikait17.0000Anikait
+Anikait17.00Anikait
 
-Agrawal18.0000Agrawal
+Agrawal18.00Agrawal
 ~~END~~
 
 
@@ -3398,16 +3398,16 @@ SELECT CONCAT_WS(col_money, col_varchar, col_varchar) from babel_3409_concat_ws_
 GO
 ~~START~~
 varchar
-abc12.0000abc
-?defghi13.0000?defghi
-??14.0000??
-比??拉15.0000比??拉
-莫斯16.0000莫斯
+abc12.00abc
+?defghi13.00?defghi
+??14.00??
+比??拉15.00比??拉
+莫斯16.00莫斯
 
 
-Anikait17.0000Anikait
+Anikait17.00Anikait
 
-Agrawal18.0000Agrawal
+Agrawal18.00Agrawal
 ~~END~~
 
 
@@ -3791,16 +3791,16 @@ SELECT * FROM babel_3409_concat_ws_dep_view2
 GO
 ~~START~~
 nvarchar
-abc-abc                 -abc-12-12.0000-2000-12-12 12:43:00
-🙂defghi-🙂defghi             -🙂defghi-13-13.0000-2000-12-13 12:43:00
-🙂🙂-🙂🙂                  -🙂🙂-14-14.0000-2000-12-14 12:43:00
-比尔·拉-比尔·拉                -比尔·拉-15-15.0000-2000-12-15 12:43:00
-莫斯-莫斯                  -莫斯-16-16.0000-2000-12-16 12:43:00
+abc-abc                 -abc-12-2000-12-12 12:43:00
+🙂defghi-🙂defghi             -🙂defghi-13-2000-12-13 12:43:00
+🙂🙂-🙂🙂                  -🙂🙂-14-2000-12-14 12:43:00
+比尔·拉-比尔·拉                -比尔·拉-15-2000-12-15 12:43:00
+莫斯-莫斯                  -莫斯-16-2000-12-16 12:43:00
 
 
-Anikait-Anikait             -Anikait-17-17.0000-2000-12-17 12:43:00
+Anikait-Anikait             -Anikait-17-2000-12-17 12:43:00
 
-Agrawal-Agrawal             -Agrawal-18-18.0000-2000-12-18 12:43:00
+Agrawal-Agrawal             -Agrawal-18-2000-12-18 12:43:00
 ~~END~~
 
 
@@ -3808,16 +3808,16 @@ EXEC babel_3409_concat_ws_dep_proc2
 GO
 ~~START~~
 nvarchar
-abc-12.0000-2000-12-12 12:43:10-2000-12-12 12:43:10-扡-2000-12-12-12:43:10-2000-12-12 12:43:10.1234 +10:00
-🙂defghi-13.0000-2000-12-13 12:43:10-2000-12-13 12:43:10-摣-2000-12-13-12:43:10-2000-12-13 12:43:10.1234 +10:00
-🙂🙂-14.0000-2000-12-14 12:43:10-2000-12-14 12:43:10-晥-2000-12-14-12:43:10-2000-12-14 12:43:10.1234 +10:00
-比尔·拉-15.0000-2000-12-15 12:43:10-2000-12-15 12:43:10-桧-2000-12-15-12:43:10-2000-12-15 12:43:10.1234 +10:00
-莫斯-16.0000-2000-12-16 12:43:10-2000-12-16 12:43:10-灩-2000-12-16-12:43:10-2000-12-16 12:43:10.1234 +10:00
+abc-12.00-2000-12-12 12:43:10-2000-12-12 12:43:10-扡-2000-12-12-12:43:10-2000-12-12 12:43:10.1234 +10:00
+🙂defghi-13.00-2000-12-13 12:43:10-2000-12-13 12:43:10-摣-2000-12-13-12:43:10-2000-12-13 12:43:10.1234 +10:00
+🙂🙂-14.00-2000-12-14 12:43:10-2000-12-14 12:43:10-晥-2000-12-14-12:43:10-2000-12-14 12:43:10.1234 +10:00
+比尔·拉-15.00-2000-12-15 12:43:10-2000-12-15 12:43:10-桧-2000-12-15-12:43:10-2000-12-15 12:43:10.1234 +10:00
+莫斯-16.00-2000-12-16 12:43:10-2000-12-16 12:43:10-灩-2000-12-16-12:43:10-2000-12-16 12:43:10.1234 +10:00
 
 
-Anikait-17.0000-2000-12-17 12:43:10-2000-12-17 12:43:10-牱-2000-12-17-12:43:10-2000-12-17 12:43:10.1234 +10:00
+Anikait-17.00-2000-12-17 12:43:10-2000-12-17 12:43:10-牱-2000-12-17-12:43:10-2000-12-17 12:43:10.1234 +10:00
 
-Agrawal-18.0000-2000-12-18 12:43:10-2000-12-18 12:43:10-獲-2000-12-18-12:43:10-2000-12-18 12:43:10.1234 +10:00
+Agrawal-18.00-2000-12-18 12:43:10-2000-12-18 12:43:10-獲-2000-12-18-12:43:10-2000-12-18 12:43:10.1234 +10:00
 ~~END~~
 
 

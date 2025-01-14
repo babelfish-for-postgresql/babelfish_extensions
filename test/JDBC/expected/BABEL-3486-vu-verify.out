@@ -1586,7 +1586,7 @@ SELECT * FROM BABEL_3486_vu_prepare_v63
 GO
 ~~START~~
 varchar
-1.0000
+1.00
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v63
@@ -1596,7 +1596,7 @@ EXEC BABEL_3486_vu_prepare_p63
 GO
 ~~START~~
 varchar
-1.0000
+1.00
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p63

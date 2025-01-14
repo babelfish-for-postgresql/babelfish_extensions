@@ -976,10 +976,10 @@ SELECT STRING_AGG(col_money, '-') FROM babel_5156_string_agg_t1 GROUP BY group_i
 GO
 ~~START~~
 nvarchar
-12.0000-13.0000-14.0000
-15.0000-16.0000
+12.00-13.00-14.00
+15.00-16.00
 <NULL>
-17.0000-18.0000
+17.00-18.00
 ~~END~~
 
 
@@ -996,10 +996,10 @@ SELECT STRING_AGG(col_smallmoney, '-') FROM babel_5156_string_agg_t1 GROUP BY gr
 GO
 ~~START~~
 nvarchar
-12.0000-13.0000-14.0000
-15.0000-16.0000
+12.00-13.00-14.00
+15.00-16.00
 <NULL>
-17.0000-18.0000
+17.00-18.00
 ~~END~~
 
 

@@ -57,7 +57,7 @@ SELECT * FROM babel_2877_vu_prepare_func1(10, 'abc', $5);
 GO
 ~~START~~
 varchar
-10abc5.00001.2
+10abc5.001.2
 ~~END~~
 
 
@@ -65,7 +65,7 @@ SELECT * FROM babel_2877_vu_prepare_func2();
 GO
 ~~START~~
 varchar
-10abc5.00001.2
+10abc5.001.2
 ~~END~~
 
 
@@ -80,7 +80,7 @@ SELECT * FROM babel_2877_vu_prepare_func3(10, 'abc', $5, 1.2);
 GO
 ~~START~~
 varchar
-10abc5.00001.2
+10abc5.001.2
 ~~END~~
 
 
@@ -88,7 +88,7 @@ SELECT * FROM babel_2877_vu_prepare_view1;
 GO
 ~~START~~
 varchar
-20def5.00001.2
+20def5.001.2
 ~~END~~
 
 
@@ -96,7 +96,7 @@ SELECT * FROM babel_2877_vu_prepare_view2;
 GO
 ~~START~~
 varchar
-10abc5.00001.2
+10abc5.001.2
 ~~END~~
 
 
@@ -104,7 +104,7 @@ SELECT * FROM babel_2877_vu_prepare_view3;
 GO
 ~~START~~
 varchar
-20def10.00001.8
+20def10.001.8
 ~~END~~
 
 

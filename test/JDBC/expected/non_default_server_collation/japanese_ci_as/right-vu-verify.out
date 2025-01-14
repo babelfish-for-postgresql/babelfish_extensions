@@ -715,7 +715,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-000
+.00
 ~~END~~
 
 
@@ -724,7 +724,7 @@ SELECT RIGHT(@inputString, 3)
 GO
 ~~START~~
 varchar
-000
+.00
 ~~END~~
 
 

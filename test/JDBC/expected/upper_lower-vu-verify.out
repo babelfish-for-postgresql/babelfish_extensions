@@ -472,12 +472,12 @@ SELECT LOWER(@money)
 GO
 ~~START~~
 varchar
-2.0000
+2.00
 ~~END~~
 
 ~~START~~
 varchar
-2.0000
+2.00
 ~~END~~
 
 
@@ -487,12 +487,12 @@ SELECT LOWER(@smallmoney)
 GO
 ~~START~~
 varchar
-2.0000
+2.00
 ~~END~~
 
 ~~START~~
 varchar
-2.0000
+2.00
 ~~END~~
 
 

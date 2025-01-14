@@ -1229,16 +1229,16 @@ SELECT CONCAT_WS(col_varchar, col_varchar, col_smallmoney) from babel_3409_conca
 GO
 ~~START~~
 varchar
-abcabc12.0000
-?defghi?defghi13.0000
-????14.0000
-比??拉比??拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+?defghi?defghi13.00
+????14.00
+比??拉比??拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1246,16 +1246,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_smallmoney) from babel_3409_conc
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1263,16 +1263,16 @@ SELECT CONCAT_WS(col_varchar, col_varchar, col_money) from babel_3409_concat_ws_
 GO
 ~~START~~
 varchar
-abcabc12.0000
-?defghi?defghi13.0000
-????14.0000
-比??拉比??拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+?defghi?defghi13.00
+????14.00
+比??拉比??拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -1280,16 +1280,16 @@ SELECT CONCAT_WS(col_nvarchar, col_varchar, col_money) from babel_3409_concat_ws
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2141,16 +2141,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_smallmoney) from babel_3409_conc
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2158,16 +2158,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_smallmoney) from babel_3409_con
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2175,16 +2175,16 @@ SELECT CONCAT_WS(col_varchar, col_nvarchar, col_money) from babel_3409_concat_ws
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 
@@ -2192,16 +2192,16 @@ SELECT CONCAT_WS(col_nvarchar, col_nvarchar, col_money) from babel_3409_concat_w
 GO
 ~~START~~
 nvarchar
-abcabc12.0000
-🙂defghi🙂defghi13.0000
-🙂🙂🙂🙂14.0000
-比尔·拉比尔·拉15.0000
-莫斯莫斯16.0000
+abcabc12.00
+🙂defghi🙂defghi13.00
+🙂🙂🙂🙂14.00
+比尔·拉比尔·拉15.00
+莫斯莫斯16.00
 
 
-AnikaitAnikait17.0000
+AnikaitAnikait17.00
 
-AgrawalAgrawal18.0000
+AgrawalAgrawal18.00
 ~~END~~
 
 

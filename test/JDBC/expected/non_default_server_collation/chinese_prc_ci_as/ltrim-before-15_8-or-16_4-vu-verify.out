@@ -491,7 +491,7 @@ SELECT LTRIM(@inputString)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 
@@ -500,7 +500,7 @@ SELECT LTRIM(@inputString)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 

@@ -1644,7 +1644,7 @@ SELECT TRIM(@inputString)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 
@@ -1662,7 +1662,7 @@ SELECT TRIM(@inputString)
 GO
 ~~START~~
 varchar
-12356.0000
+12356.00
 ~~END~~
 
 
