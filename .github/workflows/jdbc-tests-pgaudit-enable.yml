@@ -52,6 +52,9 @@ jobs:
         id: build-extensions
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
+        with:
+          extension_branch: ${{ matrix.extension_branch }}
+
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
