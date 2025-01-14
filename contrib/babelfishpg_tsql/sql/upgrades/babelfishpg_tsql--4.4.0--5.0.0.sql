@@ -276,7 +276,7 @@ GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sysadmin';
 
 -- At this point, there will be only one database fixed role which is db_owner.
-UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1, type = 'R' WHERE orig_username = 'db_owner';
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
 CREATE OR REPLACE PROCEDURE sys.create_db_roles_during_upgrade()
@@ -543,7 +543,18 @@ AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -574,7 +585,12 @@ WHERE Ext.database_name = DB_NAME()
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
+CAST(
+  CASE name
+    WHEN 'public' THEN 0
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
 CAST(type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -598,6 +614,41 @@ CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- DATABASE_ROLE_MEMBERS
+CREATE OR REPLACE VIEW sys.database_role_members AS
+SELECT
+CAST(
+  CASE Ext1.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth1.oid
+  END AS INT) AS role_principal_id,
+CAST(
+  CASE Ext2.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth2.oid
+  END AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME() 
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
@@ -661,6 +712,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
+		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
@@ -731,6 +783,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type != 'R'
+		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;

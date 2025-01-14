@@ -601,7 +601,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-0000.65321
+00.65321
 ~~END~~
 
 
@@ -610,7 +610,7 @@ SELECT reverse(@inputString)
 GO
 ~~START~~
 varchar
-0000.65321
+00.65321
 ~~END~~
 
 

@@ -557,6 +557,12 @@ translate
 substring
 babel_4328_datetimeoffset
 babel_726
+test_conv_string_to_date
+test_conv_string_to_datetime
+test_conv_string_to_datetime2
+test_conv_string_to_datetimeoffset
+test_conv_string_to_smalldatetime
+test_conv_string_to_time
 BABEL-3401
 BABEL-3820
 stuff
@@ -589,7 +595,11 @@ BABEL-CASE_EXPR
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
+cast_nvarchar_test
 datareader_datawriter
 db_owner
 smalldatetime_date_cmp
 BABEL-2961
+BABEL-5031
+test_conv_money_to_varchar
+
