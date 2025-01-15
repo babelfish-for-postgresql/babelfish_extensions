@@ -411,6 +411,7 @@ int
 -- terminate-tsql-conn user=securityadmin_login1 password=123
 
 -- psql
+SET client_min_messages = 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
 
