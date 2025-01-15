@@ -928,14 +928,14 @@ check_babelfish_droprole_restrictions(char *role)
 }
 
 /*
- * Checks if admin_of is member of the given roleid and its immediate admin.
+ * Checks if admin_of is member of the given roleid and its direct admin.
  */
 static bool
-member_and_immediate_admin_of_role(Oid admin_of, Oid roleid)
+member_and_direct_admin_of_role(Oid admin_of, Oid roleid)
 {
 	CatCList	*memlist;
 	int		i;
-	bool		member_and_immediate_admin_of_role = false;
+	bool		member_and_direct_admin_of_role = false;
 
 	/* Find roles that are direct membes of roleid */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
@@ -948,12 +948,12 @@ member_and_immediate_admin_of_role(Oid admin_of, Oid roleid)
 		/* If admin_of is the direct member of roleid WITH ADMIN OPTION. */
 		if (form->member == admin_of && form->admin_option)
 		{
-			member_and_immediate_admin_of_role = true;
+			member_and_direct_admin_of_role = true;
 			break;
 		}
 	}
 	ReleaseSysCacheList(memlist);
-	return member_and_immediate_admin_of_role;
+	return member_and_direct_admin_of_role;
 }
 
 /*
@@ -967,7 +967,7 @@ member_and_immediate_admin_of_role(Oid admin_of, Oid roleid)
  * 	Since role related DDLs could be executed in any PG databases,
  * 	This function check the underlying assumption:
  * 	1. Given role is the bbf_role_admin.
- * 	2. If bbf_role_admin is member of the given role and its immediate admin.
+ * 	2. If bbf_role_admin is member of the given role and its direct admin.
  */
 static bool
 is_babelfish_role(const char *role)
@@ -982,7 +982,7 @@ is_babelfish_role(const char *role)
 		return false;
 
 	if ((pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) ||
-			member_and_immediate_admin_of_role(bbf_admin_oid, role_oid))
+			member_and_direct_admin_of_role(bbf_admin_oid, role_oid))
 		return true;
 
 	return false;
