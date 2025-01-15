@@ -197,3 +197,9 @@ int#!#int
 
 drop view if exists babel_2514_complex_view;
 go
+
+IF EXISTS 
+( 
+SELECT tblnam = a.name FROM sysobjects a where a.name = 'tablename'
+) PRINT 'Exists'; ELSE PRINT 'Not Exists';
+GO
