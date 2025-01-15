@@ -1,6 +1,7 @@
 -- Conversion of money to varchar
 DECLARE @val MONEY = 1234
 SELECT @val,
+    val_cast = '$' + CAST(@val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, @val, 1),
@@ -8,13 +9,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(VARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 DECLARE @val MONEY = 0
 SELECT @val,
+    val_cast = '$' + CAST(@val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, @val, 1),
@@ -22,13 +24,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(VARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
 ~~END~~
 
 
 DECLARE @val MONEY = 123.12
 SELECT @val,
+    val_cast = '$' + CAST(@val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, @val, 1),
@@ -36,13 +39,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(VARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
 ~~END~~
 
 
 DECLARE @val MONEY = 0.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, @val, 1),
@@ -50,13 +54,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(VARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
 ~~END~~
 
 
 DECLARE @val MONEY = 123456789123456.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, @val, 1),
@@ -64,48 +69,51 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(VARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123456789123456.1246#!#$123456789123456.12#!#$123456789123456.12#!#$123,456,789,123,456.12#!#$123456789123456.1246#!#$123456789123456.1246
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123456789123456.1246#!#$123456789123456.12#!#$123456789123456.12#!#$123456789123456.12#!#$123,456,789,123,456.12#!#$123456789123456.1246#!#$123456789123456.1246
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS VARCHAR),
     val_convert = '$' + CONVERT(VARCHAR, val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR, val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR, val, 1),
     val_convert_style_2 = '$' + CONVERT(VARCHAR, val, 2),
     val_convert_style_126 = '$' + CONVERT(VARCHAR, val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS VARCHAR(10)),
     val_convert = '$' + CONVERT(VARCHAR(10), val),
     val_convert_style_0 = '$' + CONVERT(VARCHAR(10), val, 0),
     val_convert_style_1 = '$' + CONVERT(VARCHAR(10), val, 1),
     val_convert_style_2 = '$' + CONVERT(VARCHAR(10), val, 2),
     val_convert_style_126 = '$' + CONVERT(VARCHAR(10), val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 -- Conversion of money to char
 DECLARE @val MONEY = 1234
 SELECT @val,
+    val_cast = '$' + CAST(@val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), @val, 1),
@@ -113,13 +121,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(CHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1234.0000#!#$                  1234.00#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
 ~~END~~
 
 
 DECLARE @val MONEY = 0
 SELECT @val,
+    val_cast = '$' + CAST(@val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), @val, 1),
@@ -127,13 +136,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(CHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-0.0000#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$                     0.00#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
 ~~END~~
 
 
 DECLARE @val MONEY = 123.12
 SELECT @val,
+    val_cast = '$' + CAST(@val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), @val, 1),
@@ -141,13 +151,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(CHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123.1200#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123.1200#!#$                   123.12#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
 ~~END~~
 
 
 DECLARE @val MONEY = 0.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), @val, 1),
@@ -155,13 +166,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(CHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-0.1246#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.1246#!#$                     0.12#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
 ~~END~~
 
 
 DECLARE @val MONEY = 123456789123456.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), @val, 1),
@@ -169,31 +181,33 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(CHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123456789123456.1246#!#$123456789123456.12       #!#$123456789123456.12       #!#$123,456,789,123,456.12   #!#$123456789123456.1246     #!#$123456789123456.1246     
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123456789123456.1246#!#$       123456789123456.12#!#$123456789123456.12       #!#$123456789123456.12       #!#$123,456,789,123,456.12   #!#$123456789123456.1246     #!#$123456789123456.1246     
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS CHAR(25)),
     val_convert = '$' + CONVERT(CHAR(25), val),
     val_convert_style_0 = '$' + CONVERT(CHAR(25), val, 0),
     val_convert_style_1 = '$' + CONVERT(CHAR(25), val, 1),
     val_convert_style_2 = '$' + CONVERT(CHAR(25), val, 2),
     val_convert_style_126 = '$' + CONVERT(CHAR(25), val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
-0.0000#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
-123.1200#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
-0.1246#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+money#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$                     0.00#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
+0.1246#!#$                     0.12#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+123.1200#!#$                   123.12#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
+1234.0000#!#$                  1234.00#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
 ~~END~~
 
 
 -- Conversion of money to nvarchar
 DECLARE @val MONEY = 1234
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, @val, 1),
@@ -201,13 +215,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 DECLARE @val MONEY = 0
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, @val, 1),
@@ -215,13 +230,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
 ~~END~~
 
 
 DECLARE @val MONEY = 123.12
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, @val, 1),
@@ -229,13 +245,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
 ~~END~~
 
 
 DECLARE @val MONEY = 0.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, @val, 1),
@@ -243,13 +260,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
 ~~END~~
 
 
 DECLARE @val MONEY = 123456789123456.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, @val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, @val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, @val, 1),
@@ -257,48 +275,51 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-123456789123456.1246#!#$123456789123456.12#!#$123456789123456.12#!#$123,456,789,123,456.12#!#$123456789123456.1246#!#$123456789123456.1246
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+123456789123456.1246#!#$123456789123456.12#!#$123456789123456.12#!#$123456789123456.12#!#$123,456,789,123,456.12#!#$123456789123456.1246#!#$123456789123456.1246
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR, val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR, val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR, val, 1),
     val_convert_style_2 = '$' + CONVERT(NVARCHAR, val, 2),
     val_convert_style_126 = '$' + CONVERT(NVARCHAR, val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS NVARCHAR),
     val_convert = '$' + CONVERT(NVARCHAR(10), val),
     val_convert_style_0 = '$' + CONVERT(NVARCHAR(10), val, 0),
     val_convert_style_1 = '$' + CONVERT(NVARCHAR(10), val, 1),
     val_convert_style_2 = '$' + CONVERT(NVARCHAR(10), val, 2),
     val_convert_style_126 = '$' + CONVERT(NVARCHAR(10), val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000#!#$1234.0000
 ~~END~~
 
 
 -- Conversion of money to nchar
 DECLARE @val MONEY = 1234
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), @val, 1),
@@ -306,13 +327,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1234.0000#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+1234.0000#!#$                  1234.00#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
 ~~END~~
 
 
 DECLARE @val MONEY = 0
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), @val, 1),
@@ -320,13 +342,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-0.0000#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.0000#!#$                     0.00#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
 ~~END~~
 
 
 DECLARE @val MONEY = 123.12
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), @val, 1),
@@ -334,13 +357,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-123.1200#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+123.1200#!#$                   123.12#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
 ~~END~~
 
 
 DECLARE @val MONEY = 0.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), @val, 1),
@@ -348,13 +372,14 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-0.1246#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.1246#!#$                     0.12#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
 ~~END~~
 
 
 DECLARE @val MONEY = 123456789123456.12456
 SELECT @val,
+    val_cast = '$' + CAST(@val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), @val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), @val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), @val, 1),
@@ -362,26 +387,38 @@ SELECT @val,
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), @val, 126);
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-123456789123456.1246#!#$123456789123456.12       #!#$123456789123456.12       #!#$123,456,789,123,456.12   #!#$123456789123456.1246     #!#$123456789123456.1246     
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+123456789123456.1246#!#$       123456789123456.12#!#$123456789123456.12       #!#$123456789123456.12       #!#$123,456,789,123,456.12   #!#$123456789123456.1246     #!#$123456789123456.1246     
 ~~END~~
 
 
 SELECT val,
+    val_cast = '$' + CAST(val AS NCHAR(25)),
     val_convert = '$' + CONVERT(NCHAR(25), val),
     val_convert_style_0 = '$' + CONVERT(NCHAR(25), val, 0),
     val_convert_style_1 = '$' + CONVERT(NCHAR(25), val, 1),
     val_convert_style_2 = '$' + CONVERT(NCHAR(25), val, 2),
     val_convert_style_126 = '$' + CONVERT(NCHAR(25), val, 126)
-FROM test_conv_money_to_varchar_t1
+FROM test_conv_money_to_varchar_t1 ORDER BY val
 GO
 ~~START~~
-money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1234.0000#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
-0.0000#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
-123.1200#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
-0.1246#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+money#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+0.0000#!#$                     0.00#!#$0.00                     #!#$0.00                     #!#$0.00                     #!#$0.0000                   #!#$0.0000                   
+0.1246#!#$                     0.12#!#$0.12                     #!#$0.12                     #!#$0.12                     #!#$0.1246                   #!#$0.1246                   
+123.1200#!#$                   123.12#!#$123.12                   #!#$123.12                   #!#$123.12                   #!#$123.1200                 #!#$123.1200                 
+1234.0000#!#$                  1234.00#!#$1234.00                  #!#$1234.00                  #!#$1,234.00                 #!#$1234.0000                #!#$1234.0000                
 ~~END~~
+
+
+-- Should throw error since resultant money value is larger than specified typmod
+DECLARE @val MONEY = 1234.5678
+SELECT @val, val_cast = '$' + CAST(@val AS CHAR(5));
+GO
+~~START~~
+money#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.)~~
 
 
 -- Dependent objects
@@ -389,31 +426,31 @@ SELECT * FROM test_conv_string_to_date_v1
 GO
 ~~START~~
 money#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
 0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
 0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
 ~~END~~
 
 
 EXEC test_conv_string_to_date_p1
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246
+money#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$                          0.00#!#$                     0.00#!#$                          0.00#!#$                     0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$                          0.12#!#$                     0.12#!#$                          0.12#!#$                     0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$                        123.12#!#$                   123.12#!#$                        123.12#!#$                   123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1234.00#!#$                       1234.00#!#$                  1234.00#!#$                       1234.00#!#$                  1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
 ~~END~~
 
 
 SELECT * FROM test_conv_string_to_date_f1()
 GO
 ~~START~~
-money#!#varchar#!#varchar#!#varchar#!#varchar
-1234.0000#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
-0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.0000
-123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
-0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.1246
+money#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+0.0000#!#$0.00#!#$0.00#!#$0.00#!#$0.00#!#$                          0.00#!#$                     0.00#!#$                          0.00#!#$                     0.00#!#$0.00#!#$0.00#!#$0.00#!#$0.0000
+0.1246#!#$0.12#!#$0.12#!#$0.12#!#$0.12#!#$                          0.12#!#$                     0.12#!#$                          0.12#!#$                     0.12#!#$0.12#!#$0.12#!#$0.12#!#$0.1246
+123.1200#!#$123.12#!#$123.12#!#$123.12#!#$123.12#!#$                        123.12#!#$                   123.12#!#$                        123.12#!#$                   123.12#!#$123.12#!#$123.12#!#$123.12#!#$123.1200
+1234.0000#!#$1234.00#!#$1234.00#!#$1234.00#!#$1234.00#!#$                       1234.00#!#$                  1234.00#!#$                       1234.00#!#$                  1234.00#!#$1234.00#!#$1234.00#!#$1,234.00#!#$1234.0000
 ~~END~~
 

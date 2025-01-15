@@ -1343,6 +1343,76 @@ GO
 ~~ERROR (Message: The role has members. It must be empty before it can be dropped.)~~
 
 
+-- tsql
+-- Test system defined database role memberships
+-- Following should return 1
+select is_rolemember('db_ddladmin', 'db_ddladmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_securityadmin', 'db_securityadmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_accessadmin', 'db_accessadmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_datareader', 'db_datareader')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_datawriter', 'db_datawriter')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_owner', 'db_owner')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('db_owner', 'dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select is_rolemember('dbo', 'dbo')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- This should return NULL
+select is_rolemember('dbo', 'db_owner')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+
 -- Clean up
 DROP USER test_user1
 GO

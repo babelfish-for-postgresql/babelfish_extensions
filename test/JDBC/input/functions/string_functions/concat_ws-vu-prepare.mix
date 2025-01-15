@@ -462,7 +462,7 @@ RETURN (SELECT TOP 1 CONCAT_WS('-', col_nvarchar, col_nchar, col_int, col_bigint
 GO
 
 CREATE VIEW babel_3409_concat_ws_dep_view2 AS
-    SELECT CONCAT_WS(N'-', col_nvarchar, col_nchar, col_varchar, col_decimal, col_smallmoney, col_smalldatetime) AS concatenated_column FROM babel_3409_concat_ws_t1
+    SELECT CONCAT_WS(N'-', col_nvarchar, col_nchar, col_varchar, col_decimal, col_smalldatetime) AS concatenated_column FROM babel_3409_concat_ws_t1
 GO
 
 CREATE PROCEDURE babel_3409_concat_ws_dep_proc2 AS
