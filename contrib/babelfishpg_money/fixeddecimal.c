@@ -161,6 +161,7 @@ PG_FUNCTION_INFO_V1(fixeddecimalpl);
 PG_FUNCTION_INFO_V1(fixeddecimalmi);
 PG_FUNCTION_INFO_V1(fixeddecimalmul);
 PG_FUNCTION_INFO_V1(fixeddecimaldiv);
+PG_FUNCTION_INFO_V1(fixeddecimalmod);
 PG_FUNCTION_INFO_V1(fixeddecimalabs);
 PG_FUNCTION_INFO_V1(fixeddecimallarger);
 PG_FUNCTION_INFO_V1(fixeddecimalsmaller);
@@ -1770,6 +1771,32 @@ fixeddecimaldiv(PG_FUNCTION_ARGS)
 				 errmsg("fixeddecimal out of range")));
 
 	PG_RETURN_INT64((int64) result);
+}
+
+Datum
+fixeddecimalmod(PG_FUNCTION_ARGS)
+{
+	int64		dividend = PG_GETARG_INT64(0);
+	int64		divisor = PG_GETARG_INT64(1);
+
+	if (divisor == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+	/*
+»    * Some machines throw a floating-point exception for INT_MIN % -1, which
+»    * is a bit silly since the correct answer is perfectly well-defined,
+»    * namely zero. Refer to function int4mod in Postgres.
+»    */
+	if (divisor == -1)
+		PG_RETURN_INT64(0);
+
+	PG_RETURN_INT64(dividend % divisor);
 }
 
 /* fixeddecimalabs()

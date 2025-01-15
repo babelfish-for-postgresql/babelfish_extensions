@@ -466,6 +466,20 @@ ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
 CREATE DOMAIN sys.MONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -922337203685477.5808 AND VALUE <= 922337203685477.5807);
 CREATE DOMAIN sys.SMALLMONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -214748.3648 AND VALUE <= 214748.3647);
 
+-- Define modulo operator directly on MONEY type.
+-- Otherwise the operator between Integer and SMALLMONEY will tend to choose the fixeddecimal version,
+-- which will return the result in MONEY type.
+CREATE FUNCTION sys.fixeddecimalmod(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimalmod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.% (
+    LEFTARG    = sys.MONEY,
+    RIGHTARG   = sys.MONEY,
+    PROCEDURE  = fixeddecimalmod
+);
+
 --
 -- Cross type operators with int8
 --
@@ -1645,6 +1659,11 @@ RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.fixeddecimalmod(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalmod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.SMALLMONEY,
@@ -1674,6 +1693,12 @@ CREATE OPERATOR sys./ (
     LEFTARG    = sys.SMALLMONEY,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = fixeddecimaldiv
+);
+
+CREATE OPERATOR sys.% (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = fixeddecimalmod
 );
 
 CREATE FUNCTION sys.fixeddecimalint8pl(sys.SMALLMONEY, INT8)

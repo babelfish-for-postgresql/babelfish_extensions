@@ -403,4 +403,4 @@ datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
 test_conv_money_to_varchar
-
+fixeddecimal_modulo

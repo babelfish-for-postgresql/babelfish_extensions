@@ -104,5 +104,37 @@ EXCEPTION WHEN duplicate_object THEN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION sys.fixeddecimalmod(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimalmod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.money'::pg_catalog.regtype and oprright = 'sys.money'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '%' and oprresult != 0) THEN
+CREATE OPERATOR sys.% (
+    LEFTARG    = sys.MONEY,
+    RIGHTARG   = sys.MONEY,
+    PROCEDURE  = fixeddecimalmod
+);
+END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimalmod(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalmod'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.smallmoney'::pg_catalog.regtype and oprright = 'sys.smallmoney'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '%' and oprresult != 0) THEN
+CREATE OPERATOR sys.% (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = fixeddecimalmod
+);
+END IF;
+END $$;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
