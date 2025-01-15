@@ -85,10 +85,11 @@ jobs:
           install_dir: 'psql'
           branch_extension: ${{ matrix.extension_branch }}
 
-      - uses: actions/checkout@v2
-              with:
-                repository: babelfish-for-postgresql/babelfish_extensions
-                ref: ${{ matrix.extension_branch }}
+      - if: ${{ matrix.extension_branch != 'latest' }}
+        uses: actions/checkout@v2
+        with:
+          repository: babelfish-for-postgresql/babelfish_extensions
+          ref: ${{ matrix.extension_branch }}
 
       - name: Ignore some JDBC files 
         run: |
@@ -114,8 +115,6 @@ jobs:
         id: run-dotnet-tests
         if: always() && steps.install-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-and-run-dotnet
-        
-      - uses: actions/checkout@v2
 
       - name: Start secondary server
         id: start-secondary
