@@ -145,6 +145,8 @@ jobs:
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
+      - uses: actions/checkout@v2
+      
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v4
