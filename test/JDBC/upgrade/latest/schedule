@@ -594,3 +594,4 @@ datareader_datawriter
 db_owner
 BABEL-2961
 test_conv_money_to_varchar
+fixeddecimal_modulo
