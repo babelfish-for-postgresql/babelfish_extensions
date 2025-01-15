@@ -36,11 +36,7 @@ runs:
         fi
         
         cd ~/${{ inputs.install_dir }}
-        echo "Current shared_preload_libraries setting:"
-        grep -i "shared_preload_libraries" data/postgresql.conf
         sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf
-        echo "Updated shared_preload_libraries setting:"
-        grep -i "shared_preload_libraries" data/postgresql.conf
         echo "everything set"
 
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
