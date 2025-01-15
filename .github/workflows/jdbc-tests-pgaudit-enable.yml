@@ -102,13 +102,13 @@ jobs:
             exit 1 
           fi
           
-          cd ~/${{ env.install_dir }}
+          cd ~/${{ env.INSTALL_DIR }}
           sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf
           echo "everything set"
 
-          ~/${{ env.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
-          sudo PGPASSWORD=12345678 ~/${{ env.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
-          sudo PGPASSWORD=12345678 ~/${{ env.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+          ~/${{ env.INSTALL_DIR }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
+          sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+          sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
 
         shell: bash
 
