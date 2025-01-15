@@ -66,8 +66,6 @@ jobs:
         if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-vector-extension
 
-      # - uses: actions/checkout@v2
-
       - name: Build PostGIS Extension
         id: build-postgis-extension
         if: always() &&  steps.build-vector-extension.outcome == 'success'
@@ -111,12 +109,6 @@ jobs:
           sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
 
         shell: bash
-
-      # - if: ${{ matrix.extension_branch != 'latest' }}
-      #   uses: actions/checkout@v2
-      #   with:
-      #     repository: babelfish-for-postgresql/babelfish_extensions
-      #     ref: ${{ matrix.extension_branch }}
 
       - name: Ignore some JDBC files 
         run: |
