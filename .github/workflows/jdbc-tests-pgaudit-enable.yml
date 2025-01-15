@@ -66,7 +66,7 @@ jobs:
         if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-vector-extension
 
-      - uses: actions/checkout@v2
+      # - uses: actions/checkout@v2
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
@@ -81,16 +81,42 @@ jobs:
           wal_level: logical
 
       - name: Build and Install PgAudit
-        uses: ./.github/composite-actions/build-install-pgaudit-extension
-        with:
-          install_dir: 'psql'
-          branch_extension: ${{ matrix.extension_branch }}
+        run: |
+          cd ~
+          rm -rf pgaudit
+          # Determine PgAudit version based on Babelfish branch
+          if [[ "${{ matrix.branch_extension }}" == 'BABEL_5_X_DEV' ]]; then
+            git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
+            cd pgaudit
+            # adding the patch to fix BABEL-4600 to test in Github
+            sed -i '1517 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
+          elif [[ "${{ matrix.branch_extension }}" == 'BABEL_4_X_DEV' ]]; then
+            git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
+            cd pgaudit
+            # adding the patch to fix BABEL-4600 to test in Github
+            sed -i '1452 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
+          else
+            echo "Unsupported branch: ${{ matrix.branch_extension }}"
+            exit 1 
+          fi
+          
+          cd ~/${{ inputs.install_dir }}
+          sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf
+          echo "everything set"
 
-      - if: ${{ matrix.extension_branch != 'latest' }}
-        uses: actions/checkout@v2
-        with:
-          repository: babelfish-for-postgresql/babelfish_extensions
-          ref: ${{ matrix.extension_branch }}
+          ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
+          sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+          sudo PGPASSWORD=12345678 ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+
+        shell: bash
+
+      # - if: ${{ matrix.extension_branch != 'latest' }}
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: babelfish-for-postgresql/babelfish_extensions
+      #     ref: ${{ matrix.extension_branch }}
 
       - name: Ignore some JDBC files 
         run: |
