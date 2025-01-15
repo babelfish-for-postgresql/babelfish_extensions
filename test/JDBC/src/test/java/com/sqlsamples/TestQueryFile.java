@@ -268,21 +268,19 @@ public class TestQueryFile {
     // close connections that are not null after every test
     @AfterEach
     public void closeConnections() throws SQLException, ClassNotFoundException, Throwable {
-        System.out.println("+++++++++++ WE HAVE NOT FOUND BUGGY TEST 1 ++++++++++++");
         if (isUpgradeTestMode) {
-            if (connection_bbl != null)
-            {
-                ResultSet rs = connection_bbl.createStatement().executeQuery("select 1 from pg_extension where extname=\'tds_fdw\'");
-                if (rs.next())
-                System.out.println("+++++++++++ WE HAVE FOUND BUGGY TEST ++++++++++++");
-                connection_bbl.close();
-            }
+            if (connection_bbl != null) connection_bbl.close();
             connection_bbl = null;
             return;
         }
         if (connection_bbl == null)
             return;
         try{
+            ResultSet rs = connection_bbl.createStatement().executeQuery("select 1 from pg_extension where extname=\'tds_fdw\'");
+            if (rs.next())
+                System.out.println("+++++++++++ WE HAVE FOUND BUGGY TEST ++++++++++++");
+            else
+                System.out.println("+++++++++++ WE HAVE NOT FOUND BUGGY TEST ++++++++++++");
             connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
         }
         catch (Exception e) {
