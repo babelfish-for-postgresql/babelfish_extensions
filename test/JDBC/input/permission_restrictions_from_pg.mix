@@ -65,6 +65,10 @@ go
 alter user permission_restrictions_psql_user1 with password '1234'
 go
 
+-- Grant on BBF role should not be allowed
+grant master_db_datareader to permission_restrictions_psql_user;
+go
+
 -- user has sysadmin membership, drop user is allowed
 drop user permission_restrictions_psql_user1;
 go
