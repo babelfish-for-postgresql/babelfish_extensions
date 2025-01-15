@@ -130,5 +130,5 @@ go
 IF EXISTS 
 (
 SELECT tblnam = a.name FROM sysobjects a where a.name = 'tablename'
-) PRINT 'Exists'; ELSE PRINT 'Not Exists';
+) select 'Exists'; ELSE select 'Not Exists';
 GO
