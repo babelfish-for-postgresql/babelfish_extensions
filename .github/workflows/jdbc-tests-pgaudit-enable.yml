@@ -20,7 +20,7 @@ jobs:
       - name: Install Dependencies
         id: install-dependencies
         if: always()
-        uses: ./.github/composite-actions/install-dependencies
+        uses: ./.github/composite-actions/install-dependencies 
 
       - name: Determine Engine Branch
         id: determine-engine-branch
