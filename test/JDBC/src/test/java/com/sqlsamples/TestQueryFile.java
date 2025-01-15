@@ -276,11 +276,6 @@ public class TestQueryFile {
         if (connection_bbl == null)
             return;
         try{
-            ResultSet rs = connection_bbl.createStatement().executeQuery("select 1 from pg_extension where extname=\'tds_fdw\'");
-            if (rs.next())
-                System.out.println("+++++++++++ WE HAVE FOUND BUGGY TEST ++++++++++++");
-            else
-                System.out.println("+++++++++++ WE HAVE NOT FOUND BUGGY TEST ++++++++++++");
             connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
         }
         catch (Exception e) {
