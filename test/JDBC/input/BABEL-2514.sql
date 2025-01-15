@@ -126,3 +126,9 @@ select * from babel_2514_complex_view order by b;
 go
 drop view if exists babel_2514_complex_view;
 go
+
+IF EXISTS 
+(
+SELECT tblnam = a.name FROM sysobjects a where a.name = 'tablename'
+) select 'Exists'; ELSE select 'Not Exists';
+GO
