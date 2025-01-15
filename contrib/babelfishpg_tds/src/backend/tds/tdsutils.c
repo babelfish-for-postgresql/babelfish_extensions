@@ -1242,7 +1242,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
@@ -1254,7 +1254,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolespec->rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
