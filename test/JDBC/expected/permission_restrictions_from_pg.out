@@ -45,6 +45,15 @@ go
     Server SQLState: 42501)~~
 
 
+-- Grant on BBF role should not be allowed
+grant master_db_datareader to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
 -- Dropping a role by an underprivileged login should be restricted
 drop user permission_restrictions_psql_user;
 go
