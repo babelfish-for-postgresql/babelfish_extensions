@@ -55,7 +55,6 @@ jobs:
         with:
           extension_branch: ${{ matrix.extension_branch }}
 
-      - uses: actions/checkout@v2
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
@@ -66,6 +65,8 @@ jobs:
         id: build-vector-extension
         if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-vector-extension
+
+      - uses: actions/checkout@v2
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
@@ -104,7 +105,6 @@ jobs:
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-prepare' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-verify' JDBC/jdbc_schedule
           sudo sed -i '$a\ignore#!#babel_datatype_sqlvariant-vu-cleanup' JDBC/jdbc_schedule
-          sudo sed -i '$a\ignore#!#linked_servers-vu-verify' JDBC/jdbc_schedule
 
       - name: Run JDBC Tests
         id: jdbc
