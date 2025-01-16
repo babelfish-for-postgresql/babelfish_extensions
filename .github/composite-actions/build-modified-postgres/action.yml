@@ -48,6 +48,33 @@ runs:
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
         git rev-parse HEAD
+        rm -rf ~/.ccache
+        if [[ ${{inputs.tap_tests}} == "yes" ]]; then
+          echo "CCACHE_KEY=$(git rev-parse --short HEAD)-tap" >> $GITHUB_ENV
+        elif [[ ${{inputs.release_mode}} == "yes" ]]; then
+          echo "CCACHE_KEY=$(git rev-parse --short HEAD)-release" >> $GITHUB_ENV
+        else
+          echo "CCACHE_KEY=$(git rev-parse --short HEAD)-default" >> $GITHUB_ENV
+        fi
+      shell: bash
+
+    - uses: actions/cache/restore@v4
+      id: restore-ccache
+      if: ${{ github.event_name == 'pull_request' }}
+      with:
+        path: ~/.ccache
+        key: ${{ env.CCACHE_KEY }}
+        restore-keys: ${{ env.CCACHE_KEY }}
+
+    - name: Save cache if cache hit fails in pull requests
+      if: ${{ github.event_name == 'pull_request' }} && steps.cache-deps.outputs.cache-matched-key == ''
+      run: echo "SAVE_CCACHE=1" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Checkout, Build, and Install the Modified PostgreSQL Instance and Run Tests
+      run: |
+        cd ..
+        cd postgresql_modified_for_babelfish
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
           ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then

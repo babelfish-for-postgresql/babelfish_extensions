@@ -102,6 +102,10 @@ jobs:
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
 
+      - name: Save cache
+        if: always() && steps.replication.outcome == 'success'
+        uses: ./.github/composite-actions/save-cache-on-push
+
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
@@ -142,4 +146,3 @@ jobs:
       - name: Check and upload coredumps
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump
-

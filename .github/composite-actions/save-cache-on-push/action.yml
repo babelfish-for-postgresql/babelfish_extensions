@@ -1,0 +1,25 @@
+name: 'Save Ccache if push event'
+
+runs:
+  using: "composite"
+  steps:  
+
+    - name: Setup new cache key
+      if: always()
+      shell: bash
+      run: echo "CCACHE_KEY=${{env.CCACHE_KEY}}-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - uses: actions/cache/save@v4
+      if: always() && ${{ env.CCACHE_KEY != '' && (github.event_name != 'pull_request' || env.SAVE_CCACHE == 1)}}
+      with:
+        path: ~/.ccache
+        key: ${{ env.CCACHE_KEY }}
+      
+    - name: Clean ccache directory and unset env variables
+      if: always()
+      shell: bash
+      run: |
+        rm -rf ~/.ccache
+        echo "CCACHE_KEY=" >> $GITHUB_ENV
+        echo "SAVE_CCACHE=" >> $GITHUB_ENV
+

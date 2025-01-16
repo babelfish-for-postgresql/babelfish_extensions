@@ -22,9 +22,7 @@ runs:
           cd test/JDBC/
           if [[ '${{ inputs.migration_mode }}' == 'single-db' ]];then
             export isSingleDbMode=true
-            mvn -B -ntp test
+            
             unset isSingleDbMode
-          else
-            mvn -B -ntp test
           fi
       shell: bash

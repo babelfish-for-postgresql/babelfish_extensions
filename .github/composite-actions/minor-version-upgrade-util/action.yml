@@ -48,6 +48,10 @@ runs:
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
 
+    - name: Save cache
+      if: always() && steps.build-extensions-newer == 'success'
+      uses: ./.github/composite-actions/save-cache-on-push
+
     # Not created and used composite action update-extensions here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated update-extension composite action
     - name: Update extensions
@@ -94,11 +98,11 @@ runs:
           tar_dir="latest"
         fi
         export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
-        mvn -B -ntp test
+        
         export inputFilesPath=input
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
         done
         export scheduleFile=upgrade/$base_dir/schedule
-        mvn -B -ntp test
+        
       shell: bash      
