@@ -971,9 +971,9 @@ is_babelfish_role(const char *role)
 	if (OidIsValid(bbf_master_guest_oid)
 		&& OidIsValid(bbf_tempdb_guest_oid)
 		&& OidIsValid(bbf_msdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_master_guest_oid)
-		&& is_member_of_role(role_oid, bbf_tempdb_guest_oid)
-		&& is_member_of_role(role_oid, bbf_msdb_guest_oid))
+		&& (is_member_of_role(role_oid, bbf_master_guest_oid)
+		|| is_member_of_role(role_oid, bbf_tempdb_guest_oid)
+		|| is_member_of_role(role_oid, bbf_msdb_guest_oid)))
 		return true;
 
 	return false;
@@ -1242,7 +1242,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
@@ -1254,7 +1254,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && IS_DEFAULT_BBF_SERVER_ROLE(rolespec->rolename))
+		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
