@@ -1052,14 +1052,12 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
 	if (!HeapTupleIsValid(tuple))
 	{
-		ReleaseSysCache(tuple);
 		return InvalidOid;
 	}
 
 	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typbasetype, &isnull);
 	if (isnull)
 	{
-		ReleaseSysCache(tuple);
 		return InvalidOid;
 	}
 
