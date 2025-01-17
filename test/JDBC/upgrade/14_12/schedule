@@ -41,7 +41,6 @@ sys-database_mirroring
 sys-databases
 sys-numbered_procedures
 BABEL-3121
-restricted_procedures
 sys-events
 sys-suser_sid
 sys-trigger_events
@@ -481,4 +480,4 @@ BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
 BABEL-5031
 test_conv_money_to_varchar
-
+fixeddecimal_modulo

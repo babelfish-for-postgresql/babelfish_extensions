@@ -228,7 +228,6 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
-restricted_procedures
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -600,4 +599,4 @@ test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_3
 BABEL-5031
 test_conv_money_to_varchar
-
+fixeddecimal_modulo

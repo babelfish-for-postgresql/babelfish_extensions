@@ -119,28 +119,28 @@ jobs:
           lcov --list lcov.info
       - name: Upload Coverage Report for babelfishpg_tsql extension
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_tsql_${{github.ref_name}}
           path: contrib/babelfishpg_tsql/coverage/
 
       - name: Upload Coverage Report for babelfishpg_tds extension
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_tds_${{github.ref_name}}
           path: contrib/babelfishpg_tds/coverage/
 
       - name: Upload Coverage Report for babelfishpg_common extension
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_common_${{github.ref_name}}
           path: contrib/babelfishpg_common/coverage/
 
       - name: Upload Coverage Report for babelfishpg_money extension
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage_money_${{github.ref_name}}
           path: contrib/babelfishpg_money/coverage/
@@ -163,7 +163,7 @@ jobs:
 
       - name: Upload CSV report with latest coverage numbers
         if: (github.event_name == 'schedule')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: csv_${{github.ref_name}}
           path: contrib/${{github.ref_name}}.csv

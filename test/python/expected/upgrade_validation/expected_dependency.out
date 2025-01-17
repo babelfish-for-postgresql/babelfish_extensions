@@ -767,6 +767,7 @@ Function sys.version()
 Function sys.xact_state()
 Function sys.xid8rowversion(xid8,integer,boolean)
 Function sys.year(anyelement)
+Operator <=(sys."varchar",sys."varchar")
 Operator <=(sys.bpchar,sys.bpchar)
 Operator <>(sys.bpchar,sys.bpchar)
 Operator <>(sys.bpchar,text)
@@ -776,6 +777,8 @@ Operator =(text,sys.bpchar)
 Operator >(sys.bpchar,sys.bpchar)
 Operator >=(sys."varchar",sys."varchar")
 Operator >=(sys.bpchar,sys.bpchar)
+Operator sys.%(sys.money,sys.money)
+Operator sys.%(sys.smallmoney,sys.smallmoney)
 Operator sys.*(bigint,sys.fixeddecimal)
 Operator sys.*(bigint,sys.smallmoney)
 Operator sys.*(integer,sys.fixeddecimal)
@@ -986,10 +989,12 @@ View sys.fulltext_catalogs
 View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
+View sys.linked_logins
 View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
+View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view

@@ -35,7 +35,6 @@ TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
-restricted_procedures
 TestXML
 sys-assembly_types
 sys-database_mirroring
@@ -482,4 +481,4 @@ test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_3
 BABEL-5031
 test_conv_money_to_varchar
-
+fixeddecimal_modulo

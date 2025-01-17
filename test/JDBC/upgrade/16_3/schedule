@@ -45,7 +45,6 @@ BABEL-2257
 BABEL-2449
 BABEL-2535
 BABEL-2688
-restricted_procedures
 BABEL-2765
 BABEL-2787
 BABEL-2787-2
@@ -581,4 +580,4 @@ test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_3
 BABEL-5031
 test_conv_money_to_varchar
-
+fixeddecimal_modulo

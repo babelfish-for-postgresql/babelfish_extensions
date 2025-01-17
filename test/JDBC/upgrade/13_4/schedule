@@ -26,7 +26,6 @@ BABEL-1683
 BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
-restricted_procedures
 BABEL-2086
 BABEL-2170
 BABEL-2203
@@ -261,4 +260,4 @@ test_conv_string_to_smalldatetime-before-14_6
 test_conv_string_to_time-before-13_6
 BABEL-5031
 test_conv_money_to_varchar
-
+fixeddecimal_modulo
