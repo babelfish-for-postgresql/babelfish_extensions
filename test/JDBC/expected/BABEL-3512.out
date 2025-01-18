@@ -1,3 +1,4 @@
+-- tsql
 
 /*
  * Test stored procs WITH hints. All tests examine the query plan AND the 

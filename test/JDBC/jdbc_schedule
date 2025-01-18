@@ -85,6 +85,9 @@ ignore#!#BABEL-2736-before-16_5-vu-cleanup
 ignore#!#BABEL-2736-before-15_3-vu-prepare
 ignore#!#BABEL-2736-before-15_3-vu-verify
 ignore#!#BABEL-2736-before-15_3-vu-cleanup
+ignore#!#restricted_procedures-vu-prepare
+ignore#!#restricted_procedures-vu-verify
+ignore#!#restricted_procedures-vu-cleanup
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
 ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup

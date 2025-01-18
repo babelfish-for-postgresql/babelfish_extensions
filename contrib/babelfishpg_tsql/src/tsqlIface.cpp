@@ -2936,17 +2936,38 @@ public:
 		clear_rewritten_query_fragment();
 	}
 
-	PLtsql_expr *rewrite_if_condition(TSqlParser::Search_conditionContext *ctx)
+	PLtsql_expr *rewrite_if_condition(TSqlParser::Search_conditionContext *ctx, PLtsql_expr *expr)
 	{
-		PLtsql_expr *expr = makeTsqlExpr(ctx, false);
-		PLtsql_expr_query_mutator mutator(expr, ctx);
-		add_rewritten_query_fragment_to_mutator(&mutator);
-		mutator.run();
+		if (!expr)
+			expr = makeTsqlExpr(ctx, false);
+		if (statementMutator)
+		{
+			add_rewritten_query_fragment_to_mutator(statementMutator.get());
+			statementMutator->run();
+			statementMutator = nullptr;
+		}
+		else
+		{
+			PLtsql_expr_query_mutator mutator(expr, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
 		clear_rewritten_query_fragment();
 
 		/* Now we can prepend SELECT to rewritten search_condition */
 		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
 		return expr;
+	}
+
+	void enterSearch_condition(TSqlParser::Search_conditionContext *ctx) override
+	{
+		if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->if_statement())
+		{
+			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = makeTsqlExpr(ctx, false);
+			clear_rewritten_query_fragment();
+			statementMutator = std::make_unique<PLtsql_expr_query_mutator>(fragment->cond, ctx);
+		}
 	}
 
 	void exitSearch_condition(TSqlParser::Search_conditionContext *ctx) override
@@ -2956,14 +2977,13 @@ public:
 
 		if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->if_statement())
 		{
-
 			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
-			fragment->cond = rewrite_if_condition(ctx);
+			fragment->cond = rewrite_if_condition(ctx, fragment->cond);
 		}
 		else if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->while_statement())
 		{
 			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
-			fragment->cond = rewrite_if_condition(ctx);
+			fragment->cond = rewrite_if_condition(ctx, fragment->cond);
 		}
 	}
 };
