@@ -57,3 +57,26 @@ GO
 -- Edge Test Case: Aggregating calculated values that exceed MONEY range
 EXEC get_column_info_p1 'ResultTableOverflow';
 GO
+
+-- Verify UDT Test
+EXEC get_column_info_p1 'ResultTableUDT';
+GO
+
+-- Verify Check Constraint Test
+EXEC get_column_info_p1 'ResultTableCheck';
+GO
+
+-- Verify Complex Dependent Objects Tests
+EXEC get_column_info_p1 'ResultTableView';
+GO
+
+EXEC get_column_info_p1 'ResultTableFunction';
+GO
+
+-- Verify Computed Column Test
+EXEC get_column_info_p1 'ResultTableComputed';
+GO
+
+-- Verify Indexed View Test
+EXEC get_column_info_p1 'ResultTableIndexedView';
+GO

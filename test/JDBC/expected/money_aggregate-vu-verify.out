@@ -141,3 +141,55 @@ GO
 varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
 ~~END~~
 
+
+-- Verify UDT Test
+EXEC get_column_info_p1 'ResultTableUDT';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+~~END~~
+
+
+-- Verify Check Constraint Test
+EXEC get_column_info_p1 'ResultTableCheck';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxcheckamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Verify Complex Dependent Objects Tests
+EXEC get_column_info_p1 'ResultTableView';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxviewamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+EXEC get_column_info_p1 'ResultTableFunction';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+totalfunctionamount#!#money#!#8#!#19#!#4
+~~END~~
+
+
+-- Verify Computed Column Test
+EXEC get_column_info_p1 'ResultTableComputed';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxcomputedamount#!#numeric#!#17#!#38#!#38
+~~END~~
+
+
+-- Verify Indexed View Test
+EXEC get_column_info_p1 'ResultTableIndexedView';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+maxindexedviewamount#!#money#!#8#!#19#!#4
+~~END~~
+

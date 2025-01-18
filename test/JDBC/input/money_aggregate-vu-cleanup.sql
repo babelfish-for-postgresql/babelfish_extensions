@@ -1,9 +1,6 @@
 DROP PROCEDURE IF EXISTS get_column_info_p1;
 GO
 
-DROP TABLE IF EXISTS TestMoneyTable;
-GO
-
 DROP TABLE IF EXISTS ResultTable1;
 GO
 
@@ -62,4 +59,59 @@ DROP TABLE IF EXISTS NonMoneyTable;
 GO
 
 DROP TABLE IF EXISTS ResultTableNonMoney;
+GO
+
+-- Clean up UDT Test
+DROP TABLE IF EXISTS ResultTableUDT;
+GO
+
+DROP TABLE IF EXISTS UDTMoneyTable;
+GO
+
+DROP TYPE IF EXISTS MoneyUDT;
+GO
+
+-- Clean up Check Constraint Test
+DROP TABLE IF EXISTS ResultTableCheck;
+GO
+
+DROP TABLE IF EXISTS CheckConstraintMoneyTable;
+GO
+
+-- Clean up Complex Dependent Objects Tests
+DROP TABLE IF EXISTS ResultTableView;
+GO
+
+DROP TABLE IF EXISTS ResultTableFunction;
+GO
+
+DROP VIEW IF EXISTS MoneyView;
+GO
+
+DROP FUNCTION IF EXISTS GetTotalMoney;
+GO
+
+DROP PROCEDURE IF EXISTS InsertMoney;
+GO
+
+
+-- Clean up Computed Column Test
+DROP TABLE IF EXISTS ResultTableComputed;
+GO
+
+DROP TABLE IF EXISTS ComputedMoneyTable;
+GO
+
+
+-- Clean up Indexed View Test
+DROP TABLE IF EXISTS ResultTableIndexedView;
+GO
+
+DROP VIEW IF EXISTS IndexedMoneyView;
+GO
+
+DROP TABLE IF EXISTS IndexedViewBaseTable;
+GO
+
+DROP TABLE IF EXISTS TestMoneyTable;
 GO
