@@ -189,7 +189,7 @@ FROM CheckConstraintMoneyTable;
 GO
 
 -- Complex Dependent Objects Test
-CREATE VIEW MoneyView AS SELECT Amount FROM TestMoneyTable WHERE Amount > 200;
+CREATE VIEW MoneyView AS SELECT Amount FROM TestMoneyTable;
 GO
 
 CREATE FUNCTION GetTotalMoney()
