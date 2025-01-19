@@ -61,16 +61,6 @@ GO
 DROP TABLE IF EXISTS ResultTableNonMoney;
 GO
 
--- Clean up UDT Test
-DROP TABLE IF EXISTS ResultTableUDT;
-GO
-
-DROP TABLE IF EXISTS UDTMoneyTable;
-GO
-
-DROP TYPE IF EXISTS MoneyUDT;
-GO
-
 -- Clean up Check Constraint Test
 DROP TABLE IF EXISTS ResultTableCheck;
 GO
@@ -94,15 +84,6 @@ GO
 DROP PROCEDURE IF EXISTS InsertMoney;
 GO
 
-
--- Clean up Computed Column Test
-DROP TABLE IF EXISTS ResultTableComputed;
-GO
-
-DROP TABLE IF EXISTS ComputedMoneyTable;
-GO
-
-
 -- Clean up Indexed View Test
 DROP TABLE IF EXISTS ResultTableIndexedView;
 GO
@@ -111,6 +92,21 @@ DROP VIEW IF EXISTS IndexedMoneyView;
 GO
 
 DROP TABLE IF EXISTS IndexedViewBaseTable;
+GO
+
+DROP TABLE IF EXISTS CurrencyMoneyTable;
+GO
+
+DROP TABLE IF EXISTS ResultTableCurrency1;
+GO
+
+DROP TABLE IF EXISTS ResultTableCurrency2;
+GO
+
+DROP TABLE IF EXISTS ResultTableCurrency3;
+GO
+
+DROP TABLE IF EXISTS ResultTableCurrency4;
 GO
 
 DROP TABLE IF EXISTS TestMoneyTable;

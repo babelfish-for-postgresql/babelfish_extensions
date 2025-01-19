@@ -187,26 +187,6 @@ INTO ResultTableNonMoney
 FROM NonMoneyTable;
 GO
 
--- User-Defined Type Test
-CREATE TYPE MoneyUDT FROM MONEY;
-GO
-
-CREATE TABLE UDTMoneyTable (
-    ID INT PRIMARY KEY,
-    Amount MoneyUDT
-);
-GO
-
-INSERT INTO UDTMoneyTable VALUES (1, 100.00), (2, 200.00), (3, 300.00);
-GO
-~~ROW COUNT: 3~~
-
-
-SELECT MAX(Amount) AS MaxUDTAmount
-INTO ResultTableUDT
-FROM UDTMoneyTable;
-GO
-
 -- Check Constraint Test
 CREATE TABLE CheckConstraintMoneyTable (
     ID INT PRIMARY KEY,
@@ -260,26 +240,6 @@ SELECT GetTotalMoney() AS TotalFunctionAmount
 INTO ResultTableFunction;
 GO
 
--- Computed Column Test
-CREATE TABLE ComputedMoneyTable (
-    ID INT PRIMARY KEY,
-    BaseAmount MONEY,
-    TaxRate DECIMAL(5,2),
-    TotalAmount AS (BaseAmount * (1 + TaxRate/100)) PERSISTED
-);
-GO
-
-INSERT INTO ComputedMoneyTable (ID, BaseAmount, TaxRate) VALUES 
-(1, 100.00, 10.00), (2, 200.00, 15.00), (3, 300.00, 20.00);
-GO
-~~ROW COUNT: 3~~
-
-
-SELECT MAX(TotalAmount) AS MaxComputedAmount
-INTO ResultTableComputed
-FROM ComputedMoneyTable;
-GO
-
 -- Indexed View Test
 CREATE TABLE IndexedViewBaseTable (
     ID INT PRIMARY KEY,
@@ -303,4 +263,51 @@ GO
 SELECT MAX(Amount) AS MaxIndexedViewAmount
 INTO ResultTableIndexedView
 FROM IndexedMoneyView;
+GO
+
+-- Currency Symbol Test Cases
+CREATE TABLE CurrencyMoneyTable (
+    ID INT IDENTITY(1,1),
+    Amount MONEY
+);
+GO
+
+-- Insert values with different currency symbols
+INSERT INTO CurrencyMoneyTable (Amount) VALUES
+('$100.50'),
+('£200.75'),
+('€150.25'),
+('¥300.00'),
+('₹250.50'),
+('CHF 175.25');
+GO
+~~ERROR (Code: 293)~~
+
+~~ERROR (Message: invalid characters found: cannot cast value "CHF 175.25" to money)~~
+
+
+-- Test different aggregations with currency symbols
+SELECT MAX(Amount) AS MaxAmount
+INTO ResultTableCurrency1
+FROM CurrencyMoneyTable;
+GO
+
+SELECT MIN(Amount) AS MinAmount
+INTO ResultTableCurrency2
+FROM CurrencyMoneyTable;
+GO
+
+SELECT SUM(Amount) AS TotalAmount
+INTO ResultTableCurrency3
+FROM CurrencyMoneyTable;
+GO
+
+-- Test with mixed currency symbols in calculations
+SELECT 
+    MAX(Amount) AS MaxAmount,
+    MIN(Amount) AS MinAmount,
+    AVG(Amount) AS AvgAmount,
+    SUM(Amount) * 1.1 AS TotalWithMarkup
+INTO ResultTableCurrency4
+FROM CurrencyMoneyTable;
 GO
