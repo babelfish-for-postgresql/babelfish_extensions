@@ -5,6 +5,10 @@ on:
 
 jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
+    strategy:
+      matrix:
+        extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV]
+
     env:
       INSTALL_DIR: psql
     runs-on: ubuntu-20.04
@@ -15,7 +19,20 @@ jobs:
       - name: Install Dependencies
         id: install-dependencies
         if: always()
-        uses: ./.github/composite-actions/install-dependencies
+        uses: ./.github/composite-actions/install-dependencies 
+
+      - name: Determine Engine Branch
+        id: determine-engine-branch
+        run: |
+          if [[ "${{ matrix.extension_branch }}" == "BABEL_4_X_DEV" ]]; then
+            echo "ENGINE_BRANCH=BABEL_4_X_DEV__PG_16_X" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.extension_branch }}" == "BABEL_5_X_DEV" ]]; then
+            echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.extension_branch }}" == "latest" ]]; then
+            echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
+          else
+            echo "ENGINE_BRANCH=main" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build Modified Postgres
         id: build-modified-postgres
@@ -23,6 +40,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: 'psql'
+          engine_branch: ${{ steps.determine-engine-branch.outputs.ENGINE_BRANCH }}
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -33,6 +51,9 @@ jobs:
         id: build-extensions
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
+        with:
+          extension_branch: ${{ matrix.extension_branch }}
+
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
@@ -57,9 +78,36 @@ jobs:
           wal_level: logical
 
       - name: Build and Install PgAudit
-        uses: ./.github/composite-actions/build-install-pgaudit-extension
-        with:
-          install_dir: 'psql'
+        run: |
+          cd ~
+          rm -rf pgaudit
+          # Determine PgAudit version based on Babelfish branch
+          if [[ "${{ matrix.extension_branch }}" == 'BABEL_5_X_DEV' ]]; then
+            git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
+            cd pgaudit
+            # adding the patch to fix BABEL-4600 to test in Github
+            sed -i '1517 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
+          elif [[ "${{ matrix.extension_branch }}" == 'BABEL_4_X_DEV' ]]; then
+            git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
+            cd pgaudit
+            # adding the patch to fix BABEL-4600 to test in Github
+            sed -i '1452 s/^        else$/        else if (auditEventStack != NULL)/' pgaudit.c
+            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
+          else
+            echo "Unsupported branch: ${{ matrix.extension_branch }}"
+            exit 1 
+          fi
+          
+          cd ~/${{ env.INSTALL_DIR }}
+          sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf
+          echo "everything set"
+
+          ~/${{ env.INSTALL_DIR }}/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
+          sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+          sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ALTER SYSTEM SET pgaudit.log = 'all';"
+
+        shell: bash
 
       - name: Ignore some JDBC files 
         run: |
@@ -120,7 +168,7 @@ jobs:
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
-          name: postgres-log-jdbc
+          name: postgres-log-jdbc-${{ matrix.extension_branch }}
           path: |
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
@@ -144,7 +192,7 @@ jobs:
             mv $timestamp.diff ../replication-output-diff.diff
             mv "$timestamp"_runSummary.log ../replication-run-summary.log
 
-      - name: Upload Run Summary 
+      - name: Upload Run Summary-${{ matrix.extension_branch }}
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
@@ -153,7 +201,7 @@ jobs:
             test/JDBC/Info/run-summary.log
             test/JDBC/Info/replication-run-summary.log
 
-      - name: Upload Output Diff
+      - name: Upload Output Diff-${{ matrix.extension_branch }}
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
@@ -162,7 +210,7 @@ jobs:
             test/JDBC/Info/output-diff.diff
             test/JDBC/Info/replication-output-diff.diff
 
-      - name: Check and upload coredumps
+      - name: Check and upload coredumps-${{ matrix.extension_branch }}
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump
         

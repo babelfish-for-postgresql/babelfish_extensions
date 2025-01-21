@@ -155,7 +155,7 @@ typedef struct LocalTdsStatus
 } LocalTdsStatus;
 
 static TdsStatus *TdsStatusArray = NULL;
-static TdsStatus *MyTdsStatusEntry;
+static TdsStatus *MyTdsStatusEntry = NULL;
 static LocalTdsStatus *localTdsStatusTable = NULL;
 
 uint32_t	MyTdsClientVersion = 0;
@@ -441,13 +441,19 @@ tds_status_shmem_startup(void)
 static void
 tds_stats_shmem_shutdown(int code, Datum arg)
 {
-	/* Don't try to save the outlines during a crash. */
-	if (code)
-		return;
+	volatile TdsStatus *myTdsStatusEntry = MyTdsStatusEntry;
 
 	/* Safety check ... shouldn't get here unless shmem is set up. */
-	if (TdsStatusArray == NULL)
+	if (TdsStatusArray == NULL || MyTdsStatusEntry == NULL)
 		return;
+
+	PGSTAT_BEGIN_WRITE_ACTIVITY(myTdsStatusEntry);
+
+	myTdsStatusEntry->st_procpid = 0;	/* mark invalid */
+
+	PGSTAT_END_WRITE_ACTIVITY(myTdsStatusEntry);
+
+	MyTdsStatusEntry = NULL;
 
 	return;
 }

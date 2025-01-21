@@ -2737,8 +2737,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool		isrole = false;
 					bool		from_windows = false;
 					Oid 		save_userid;
+					Oid 		role_oid = InvalidOid;
 					int 		save_sec_context;
 					const char	*old_createrole_self_grant;
+
+					/* Throw error if there is a possibility of name clash with an internal role */
+					role_oid = get_role_oid(stmt->role, true);
+
+					if (OidIsValid(role_oid) &&
+						(is_admin_of_role(get_bbf_role_admin_oid(), role_oid)))
+					{
+						HeapTuple tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(stmt->role));
+
+						/*
+						 * If role:
+						 *  - Is a valid PG role
+						 *  - Does not exist in Babelfish catalogs
+						 *  - bbf_role_admin is admin of this role
+						 *
+						 * We can safely assume it is a role created internally by us
+						 */
+						if (!HeapTupleIsValid(tuple_cache) && !is_login_name(stmt->role))
+							ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_OBJECT),
+								 errmsg("Cannot create database principal \"%s\" as there already exists "
+										"a Babelfish internal role with the same name", stmt->role)));
+
+						if (HeapTupleIsValid(tuple_cache))
+							ReleaseSysCache(tuple_cache);
+					}
 
 					/* Check if creating login or role. Expect islogin first */
 					if (stmt->options != NIL)
@@ -3065,8 +3092,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/*
 					 * check whether sql user name and role name contains
 					 * '\' or not
+					 *
+					 * check can be skipped if query is creating internal role
+					 * for ALTER ROLE db_owner ADD MEMBER ...
 					 */
-					if (isrole || !from_windows)
+					if ((isrole || !from_windows) && strcmp(queryString, INTERNAL_ALTER_ROLE) != 0)
 						validateUserAndRole(stmt->role);
 
 					/* Save the previous user to be restored after creating the login. */
@@ -3801,6 +3831,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
 						const char *db_name = get_current_pltsql_db_name();
+						Oid db_owner_oid = InvalidOid;
 
 						owner_oid = get_rolespec_oid(rolspec, true);
 						/*
@@ -3818,7 +3849,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							alter_owner = true;
 						}
 
-						if (has_privs_of_role(owner_oid, get_db_owner_oid(db_name, false)) && owner_oid != get_dbo_oid(db_name, false))
+						db_owner_oid = get_db_owner_oid(db_name, false);
+
+						if (has_privs_of_role(owner_oid, db_owner_oid) &&
+							owner_oid != get_dbo_oid(db_name, false) && owner_oid != db_owner_oid)
 						{
 							const char* new_owner = get_obj_role(get_rolespec_name(rolspec));
 							create_schema->authrole = make_rolespec_node(new_owner);

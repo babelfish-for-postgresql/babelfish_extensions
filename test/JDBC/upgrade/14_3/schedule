@@ -32,7 +32,6 @@ BABEL-1715
 BABEL-1756
 BABEL-1756-dep
 BABEL-1963
-restricted_procedures
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
@@ -109,6 +108,7 @@ babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string-before-15-5-or-14-10
@@ -208,7 +208,7 @@ sys-datefirst
 sys-dm_exec_connections
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions
-#sys-dm_exec_sessions-dep TODO:BABEL-5414
+sys-dm_exec_sessions-dep
 sys-dm_hadr_cluster
 sys-dm_hadr_database_replica_states
 sys-dm_os_host_info
@@ -338,7 +338,7 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 table_constraint_wo_comma-before-15_6-or-16_2
 BABEL_4330-before-15_8-or-16_4
 BABEL-4410
@@ -391,4 +391,12 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
-
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-14_6
+test_conv_string_to_datetime2-before-14_5
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime-before-14_6
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
+fixeddecimal_modulo
