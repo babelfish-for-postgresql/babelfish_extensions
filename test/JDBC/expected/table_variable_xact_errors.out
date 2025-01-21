@@ -245,7 +245,7 @@ GO
 varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_control.datarow" does not exist)~~
+~~ERROR (Message: relation "control.datarow" does not exist)~~
 
 
 DROP FUNCTION [Control].[csf_script_delete_row]
