@@ -1,0 +1,265 @@
+
+
+
+
+
+
+-- TEST FOR CHAR
+DECLARE @TestCases TABLE (
+    FloatValue FLOAT,
+    ScenarioDescription VARCHAR(200)
+);
+INSERT INTO @TestCases
+SELECT FloatValue, Description FROM float_char_t1;
+-- 1. Test Direct CAST/CONVERT
+INSERT INTO TestResults (TestCategory, TestName, TestScenario, ExpectedResult, ActualResult)
+SELECT 
+    'Direct Conversion',
+    'CAST vs CONVERT',
+    tc.ScenarioDescription,
+    CAST(tc.FloatValue AS CHAR(30)),
+    CONVERT(CHAR(30), tc.FloatValue)
+FROM @TestCases tc;
+-- Display Results by Category
+SELECT 
+    TestCategory,
+    TestName,
+    TestScenario,
+    ExpectedResult,
+    ActualResult,
+    TestStatus
+FROM TestResults
+ORDER BY TestCategory, TestID;
+-- Test Stored Procedure Execution
+DECLARE @FloatValue FLOAT;
+DECLARE cur CURSOR FOR SELECT FloatValue FROM @TestCases;
+OPEN cur;
+FETCH NEXT FROM cur INTO @FloatValue;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    EXEC float_char_p1 @FloatValue;
+    FETCH NEXT FROM cur INTO @FloatValue;
+END
+CLOSE cur;
+DEALLOCATE cur;
+GO
+~~ROW COUNT: 8~~
+
+~~ROW COUNT: 8~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#                       123.456#!# 123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#                      -123.456#!#-123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#                             0#!# 0                            #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#                   10000000000#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#                             0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#                 9999999999.99#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#                             0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+char#!#char
+                       123.456#!# 123.456                      
+~~END~~
+
+~~START~~
+char#!#char
+                      -123.456#!#-123.456                      
+~~END~~
+
+~~START~~
+char#!#char
+                             0#!# 0                            
+~~END~~
+
+~~START~~
+char#!#char
+                   10000000000#!#1e+10                         
+~~END~~
+
+~~START~~
+char#!#char
+                             0#!# 0.000000                     
+~~END~~
+
+~~START~~
+char#!#char
+                 9999999999.99#!#1e+10                         
+~~END~~
+
+~~START~~
+char#!#char
+                             0#!# 0.000000                     
+~~END~~
+
+~~START~~
+char#!#char
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- 2. Test Views
+SELECT * FROM float_char_v1; 
+SELECT * FROM float_char_v2; 
+GO
+~~START~~
+char
+-123.456                      
+~~END~~
+
+~~START~~
+char
+-123.456                      
+~~END~~
+
+
+-- 3. Test Functions
+SELECT float_char_f1('123.4567')
+SELECT float_char_f2('123.4567')
+GO
+~~START~~
+varchar
+                      123.4567
+~~END~~
+
+~~START~~
+varchar
+ 123.457                      
+~~END~~
+
+
+
+
+
+
+
+
+
+-- TEST FOR VARCHAR
+DECLARE @TestCases TABLE (
+    FloatValue FLOAT,
+    ScenarioDescription VARCHAR(200)
+);
+INSERT INTO @TestCases
+SELECT FloatValue, Description FROM float_varchar_t1;
+-- 1. Test Direct CAST/CONVERT
+INSERT INTO TestResults_1 (TestCategory, TestName, TestScenario, ExpectedResult, ActualResult)
+SELECT 
+    'Direct Conversion',
+    'CAST vs CONVERT',
+    tc.ScenarioDescription,
+    CAST(tc.FloatValue AS VARCHAR(30)),
+    CONVERT(VARCHAR(30), tc.FloatValue)
+FROM @TestCases tc;
+-- Display Results by Category
+SELECT 
+    TestCategory,
+    TestName,
+    TestScenario,
+    ExpectedResult,
+    ActualResult,
+    TestStatus
+FROM TestResults_1
+ORDER BY TestCategory, TestID;
+-- Test Stored Procedure Execution
+DECLARE @FloatValue FLOAT;
+DECLARE cur CURSOR FOR SELECT FloatValue FROM @TestCases;
+OPEN cur;
+FETCH NEXT FROM cur INTO @FloatValue;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    EXEC float_varchar_p1 @FloatValue;
+    FETCH NEXT FROM cur INTO @FloatValue;
+END
+CLOSE cur;
+DEALLOCATE cur;
+GO
+~~ROW COUNT: 8~~
+
+~~ROW COUNT: 8~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456#!# 123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#-123.456#!#-123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0#!# 0                            #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#10000000000#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#9999999999.99#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#varchar
+123.456#!# 123.456                      
+~~END~~
+
+~~START~~
+varchar#!#varchar
+-123.456#!#-123.456                      
+~~END~~
+
+~~START~~
+varchar#!#varchar
+0#!# 0                            
+~~END~~
+
+~~START~~
+varchar#!#varchar
+10000000000#!#1e+10                         
+~~END~~
+
+~~START~~
+varchar#!#varchar
+0#!# 0.000000                     
+~~END~~
+
+~~START~~
+varchar#!#varchar
+9999999999.99#!#1e+10                         
+~~END~~
+
+~~START~~
+varchar#!#varchar
+0#!# 0.000000                     
+~~END~~
+
+~~START~~
+varchar#!#varchar
+<NULL>#!#<NULL>
+~~END~~
+
+
+
+-- 2. Test Views
+SELECT * FROM float_varchar_v1; 
+SELECT * FROM float_varchar_v2; 
+GO
+~~START~~
+varchar
+-123.456
+~~END~~
+
+~~START~~
+char
+-123.456                      
+~~END~~
+
+
+-- 3. Test Functions
+SELECT float_varchar_f1('123.4567')
+SELECT float_varchar_f2('123.4567')
+GO
+~~START~~
+varchar
+123.4567
+~~END~~
+
+~~START~~
+varchar
+ 123.457                      
+~~END~~
+
