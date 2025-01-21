@@ -289,10 +289,12 @@ CREATE USER babel_5569_l1
 GO
 ALTER ROLE db_ddladmin ADD MEMBER babel_5569_l1
 GO
-
--- tsql user=babel_5569_l1 password=12345678
 CREATE TABLE babel_5569_table(a INT)
 GO
+GRANT SELECT ON babel_5569_table TO babel_5569_l1
+GO
+
+-- tsql user=babel_5569_l1 password=12345678
 CREATE TABLE #babel_5569_temp_table (a INT)
 GO
 
