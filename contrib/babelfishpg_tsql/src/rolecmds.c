@@ -980,6 +980,8 @@ suser_name(PG_FUNCTION_ARGS)
 
 	// if (server_user_id == InvalidOid)
 	// 	server_user_id = GetSessionUserId();
+	if (server_user_id == InvalidOid)
+		PG_RETURN_NULL();
 
 	ret = GetUserNameFromId(server_user_id, true);
 
