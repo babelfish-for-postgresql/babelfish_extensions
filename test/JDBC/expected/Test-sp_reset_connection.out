@@ -48,6 +48,8 @@ GO
 int
 ~~END~~
 
+DROP TABLE IF EXISTS sp_reset_connection_test_table;
+GO
 
 -- 3. Test temp tables are deleted on reset
 CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)
@@ -653,7 +655,7 @@ Result  (cost=0.00..0.01 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
 ~~END~~
 
 
