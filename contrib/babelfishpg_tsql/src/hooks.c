@@ -5801,13 +5801,19 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempNamespace(namespaceId))
 		return ownerId;
 
 	if (!OidIsValid(ownerId))
 		ownerId = GetUserId();
 
 	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema with OID %u does not exist", namespaceId)));
+
 	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
 
 	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
@@ -5862,10 +5868,14 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempNamespace(namespaceId))
 		return false;
 
 	nspname = get_namespace_name(namespaceId);
+
+	if (nspname == NULL)
+		return false;
+
 	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
 	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
 
