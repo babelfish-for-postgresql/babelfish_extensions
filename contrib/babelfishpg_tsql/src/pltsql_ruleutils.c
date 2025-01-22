@@ -537,7 +537,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	if (isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
