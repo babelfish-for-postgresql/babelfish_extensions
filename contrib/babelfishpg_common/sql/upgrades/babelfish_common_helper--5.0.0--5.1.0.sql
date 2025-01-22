@@ -103,5 +103,29 @@ CREATE OPERATOR sys.% (
 END IF;
 END $$;
 
+CREATE OR REPLACE FUNCTION sys.moneylarger(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimallarger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.moneysmaller(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimalsmaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.money) (
+    SFUNC = sys.moneysmaller,
+    STYPE = sys.money,
+    COMBINEFUNC = sys.moneysmaller,
+    PARALLEL = SAFE
+);
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.money) (
+    SFUNC = sys.moneylarger,
+    STYPE = sys.money,
+    COMBINEFUNC = sys.moneylarger,
+    PARALLEL = SAFE
+);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
