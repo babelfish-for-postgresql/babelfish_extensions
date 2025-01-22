@@ -775,31 +775,25 @@ DROP DATABASE identity_insert_db
 GO
 
 -- We should ensure physical schema found corresponds to appropriate logical database
-CREATE DATABASE ident_ins
+CREATE DATABASE master_ident_ins
 GO
 
-CREATE DATABASE ident_ins_ident_ins
-GO
-
-USE ident_ins_ident_ins
+USE master_ident_ins
 GO
 
 CREATE TABLE ident_t1 (a int identity, b int)
 GO
 
 -- Should not fail because relation exists
-SET IDENTITY_INSERT ident_ins_ident_ins.dbo.ident_t1 ON
+SET IDENTITY_INSERT master_ident_ins.dbo.ident_t1 ON
 GO
 
 -- Should fail because relation does not exist
-SET IDENTITY_INSERT ident_ins.ident_ins_dbo.ident_t1 ON
+SET IDENTITY_INSERT master.ident_ins_dbo.ident_t1 ON
 GO
 
 USE master
 GO
 
-DROP DATABASE ident_ins
-GO
-
-DROP DATABASE ident_ins_ident_ins
+DROP DATABASE master_ident_ins
 GO
