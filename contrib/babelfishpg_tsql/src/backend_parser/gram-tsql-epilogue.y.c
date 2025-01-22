@@ -94,6 +94,17 @@ construct_unique_index_name(char *index_name, char *relation_name)
 	return name;
 }
 
+PG_FUNCTION_INFO_V1(bbf_construct_unique_index_name);
+
+Datum
+bbf_construct_unique_index_name(PG_FUNCTION_ARGS)
+{
+	char	*index_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	*table_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	PG_RETURN_TEXT_P(cstring_to_text(construct_unique_index_name(index_name, table_name)));
+}
+
 /*
  * Convert a list of (dotted) names for a table type to a RangeVar.
  * This differs from makeRangeVarFromAnyName in that it only allows 1 prefix,

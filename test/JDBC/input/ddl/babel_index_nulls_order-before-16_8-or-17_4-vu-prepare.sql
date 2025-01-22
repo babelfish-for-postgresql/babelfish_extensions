@@ -8,8 +8,6 @@ INSERT INTO babel_index_nulls_order_tbl VALUES
 (5, 'mno'), (6, 'pqr'), (7, 'stu'), (8, 'xyz'),
 (NULL, NULL)
 go
-~~ROW COUNT: 17~~
-
 
 CREATE INDEX babel_index_nulls_order_asc_idx_a ON babel_index_nulls_order_tbl (a ASC)
 go
@@ -21,13 +19,6 @@ go
 SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'babel_index_nulls_order_tbl'
 ORDER BY indexname
 go
-~~START~~
-varchar#!#text
-babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f#!#CREATE INDEX babel_index_nulls_order_asc_idxe9daa5ef2b0c11acbc565480994a3b5f ON master_dbo.babel_index_nulls_order_tbl USING btree (a NULLS FIRST) WITH (bbf_original_rel_name=babel_index_nulls_order_asc_idx_a)
-babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93#!#CREATE INDEX babel_index_nulls_order_default36696f80588c2802b7570cf53f8a7d93 ON master_dbo.babel_index_nulls_order_tbl USING btree (a NULLS FIRST, b NULLS FIRST) WITH (bbf_original_rel_name=babel_index_nulls_order_default_idx_ab)
-babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac#!#CREATE INDEX babel_index_nulls_order_desc_idd9c7b3b18a405e8210be834aac2207ac ON master_dbo.babel_index_nulls_order_tbl USING btree (b DESC NULLS LAST) WITH (bbf_original_rel_name=babel_index_nulls_order_desc_idx_b)
-~~END~~
-
 
 CREATE VIEW babel_index_nulls_order_a_v1 AS
 SELECT TOP 1 a FROM babel_index_nulls_order_tbl WHERE a <= 5 OR a IS NULL ORDER BY a DESC
