@@ -430,6 +430,11 @@ GO
 CREATE OR REPLACE FUNCTION drop_orphaned_temp_schemas() RETURNS void AS $$
 DECLARE
     schema_record RECORD;
+    v_state text;
+    v_msg text;
+    v_detail text;
+    v_hint text;
+    v_context text;
 BEGIN
     FOR schema_record IN 
         SELECT nspname 
@@ -437,10 +442,27 @@ BEGIN
         WHERE nspname LIKE 'pg_temp%' 
            OR nspname LIKE 'pg_toast_temp%'
     LOOP
-        EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(schema_record.nspname) || ' CASCADE';
+        BEGIN
+            EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(schema_record.nspname) || ' CASCADE';
+        EXCEPTION
+            WHEN insufficient_privilege THEN
+                RAISE EXCEPTION 'Permission denied: must be owner of schema';
+        END;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+GO
+SET ROLE sysadmin;
+GO
+SELECT drop_orphaned_temp_schemas();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Permission denied: must be owner of schema
+  Where: PL/pgSQL function drop_orphaned_temp_schemas() line 20 at RAISE
+    Server SQLState: P0001)~~
+
+RESET ROLE;
 GO
 SELECT drop_orphaned_temp_schemas();
 GO
