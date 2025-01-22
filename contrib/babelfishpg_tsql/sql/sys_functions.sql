@@ -294,10 +294,8 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
-AS $$
-    SELECT sys.suser_name_internal(-1);
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+AS 'babelfishpg_tsql', 'suser_name_current_session'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 -- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
 -- with a different input data type
