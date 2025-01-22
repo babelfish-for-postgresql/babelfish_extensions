@@ -1,4 +1,4 @@
-name: 'Save ccache on push'
+name: 'Save ccache on push' 
 
 runs:
   using: "composite"
