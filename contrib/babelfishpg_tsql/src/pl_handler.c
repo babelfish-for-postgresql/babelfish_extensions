@@ -466,19 +466,13 @@ assign_identity_insert(const char *newval, void *extra)
 			HeapTuple	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(schema_name));
 
 			if (!HeapTupleIsValid(tuple))
-			{
-				ReleaseSysCache(tuple);
 				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
-			}
 
 			datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_dbid, &isnull);
 			db_id = DatumGetInt16(datum);
 
 			if (!DbidIsValid(db_id) || db_id != get_db_id(cur_db_name))
-			{
-				ReleaseSysCache(tuple);
 				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
-			}
 
 			ReleaseSysCache(tuple);
 		}
