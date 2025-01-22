@@ -587,3 +587,4 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 test_conv_money_to_varchar
+fixeddecimal_modulo

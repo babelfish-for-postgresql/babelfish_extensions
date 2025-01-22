@@ -131,7 +131,7 @@ select cast(cast(cast('$123.123' as money) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-123.1230
+123.12
 ~~END~~
 
 -- smallmoney
@@ -146,7 +146,7 @@ select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-123.1230
+123.12
 ~~END~~
 
 -- bigint

@@ -127,14 +127,14 @@ select CAST(CAST(4936.56 AS MONEY) AS varchar(10));
 GO
 ~~START~~
 varchar
-4936.5600
+4936.56
 ~~END~~
 
 select CAST(CAST(-4936.56 AS MONEY) AS varchar(10));
 GO
 ~~START~~
 varchar
--4936.5600
+-4936.56
 ~~END~~
 
 select CAST(4936.56 AS smallmoney);
@@ -955,14 +955,14 @@ select TRY_CAST(TRY_CAST(4936.56 AS MONEY) AS varchar(10));
 GO
 ~~START~~
 varchar
-4936.5600
+4936.56
 ~~END~~
 
 select TRY_CAST(TRY_CAST(-4936.56 AS MONEY) AS varchar(10));
 GO
 ~~START~~
 varchar
--4936.5600
+-4936.56
 ~~END~~
 
 select TRY_CAST(4936.56 AS smallmoney);
