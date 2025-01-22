@@ -102,13 +102,24 @@ jobs:
 
       - name: Check for cache reference leak
         if: always()
+        id: cache-reference-leak
         run: |
-          if grep -q "cache reference leak" ~/psql/data/logfile ~/psql/data_5433/logfile; then
+          if grep -q "cache reference leak" ~/psql/data/logfile; then
             echo "Cache reference leak detected in logs!"
+            grep -n "cache reference leak" ~/psql/data/logfile
             exit 1
           else
             echo "No cache reference leak found in logs."
           fi
+
+      - name: Upload Log 
+        if: always() && (steps.cache-reference-leak.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-log-jdbc
+          path: |
+            ~/psql/data/logfile
+            ~/psql/data_5433/logfile
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
