@@ -458,7 +458,8 @@ assign_identity_insert(const char *newval, void *extra)
 			curr_user_id = GetUserId();
 
 		/* Check if the physical schema is actually associated with current logical database */
-		if (schema_name)
+		/* Ignore for temporary tables */
+		if (schema_name && !isTempNamespace(get_namespace_oid(schema_name, false)))
 		{
 			Datum		datum;
 			int16		db_id;
