@@ -2100,7 +2100,6 @@ extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
-extern Oid get_pg_class_obj_owner_id(Oid relation_oid);
 extern Oid get_owner_of_schema(const char *schema);
 extern void exec_database_roles_subcmds(const char *physical_schema);
 

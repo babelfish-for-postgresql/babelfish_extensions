@@ -2461,23 +2461,6 @@ privilege_to_string(AclMode privilege)
 	return NULL;
 }
 
-Oid
-get_pg_class_obj_owner_id(Oid relation_oid)
-{
-	HeapTuple		tuple;
-	Oid      		ownerId;
-
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relation_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist", relation_oid)));
-	ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-	ReleaseSysCache(tuple);
-
-	return ownerId;
-}
-
 AccessPriv *
 make_accesspriv_node(const char *priv_name)
 {

@@ -490,7 +490,7 @@ assign_identity_insert(const char *newval, void *extra)
 		 * 1. User is owner of object
 		 * 2. User is member of db_ddladmin or db_owner database role
 		 */
-		if (!(has_privs_of_role(curr_user_id, get_pg_class_obj_owner_id(rel_oid)) ||
+		if (!(object_ownercheck(RelationRelationId, rel_oid, curr_user_id) ||
 			has_privs_of_role(curr_user_id, get_db_ddladmin_oid(cur_db_name, false)) ||
 			has_privs_of_role(curr_user_id, get_db_owner_oid(cur_db_name, false))))
 			throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
