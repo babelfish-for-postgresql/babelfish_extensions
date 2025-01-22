@@ -816,7 +816,7 @@ EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Feature not supported: renaming object type Index)~~
+~~ERROR (Message: Either the parameter @objname is ambiguous or the claimed @objtype (INDEX) is wrong.)~~
 
 
 -- Statistics
