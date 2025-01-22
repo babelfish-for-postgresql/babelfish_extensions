@@ -763,7 +763,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.838 ms
+Babelfish T-SQL Batch Parsing Time: 9.421 ms
 ~~END~~
 
 
@@ -778,7 +778,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.876 ms
+Babelfish T-SQL Batch Parsing Time: 3.621 ms
 ~~END~~
 
 
@@ -793,7 +793,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 4.624 ms
+Babelfish T-SQL Batch Parsing Time: 4.367 ms
 ~~END~~
 
 
@@ -808,7 +808,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 42.811 ms
+Babelfish T-SQL Batch Parsing Time: 41.568 ms
 ~~END~~
 
 
@@ -825,7 +825,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 5.908 ms
+Babelfish T-SQL Batch Parsing Time: 5.800 ms
 ~~END~~
 
 
@@ -840,7 +840,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.330 ms
+Babelfish T-SQL Batch Parsing Time: 1.250 ms
 ~~END~~
 
 
@@ -857,7 +857,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.051 ms
+Babelfish T-SQL Batch Parsing Time: 5.660 ms
 ~~END~~
 
 
@@ -873,7 +873,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.377 ms
+Babelfish T-SQL Batch Parsing Time: 0.332 ms
 ~~END~~
 
 
@@ -888,7 +888,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.835 ms
+Babelfish T-SQL Batch Parsing Time: 2.524 ms
 ~~END~~
 
 
@@ -903,7 +903,7 @@ Index Scan using test_id_index_tinyint_pkey on test_id_index_tinyint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.297 ms
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
 ~~END~~
 
 
@@ -918,7 +918,7 @@ Index Scan using test_id_index_smallint_pkey on test_id_index_smallint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.238 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -933,7 +933,7 @@ Index Scan using test_id_index_bigint_pkey on test_id_index_bigint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.234 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -948,7 +948,7 @@ Index Scan using test_id_index_numeric_pkey on test_id_index_numeric
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.233 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -974,7 +974,7 @@ Index Scan using test_numeric_index_no_id_pkey on test_numeric_index_no_id
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.304 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
@@ -1194,7 +1194,7 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.165 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 select id from babel_3384_test WHERE id = @@IDENTITY
@@ -1533,4 +1533,38 @@ USE master
 GO
 
 DROP DATABASE identity_insert_db
+GO
+
+-- We should ensure physical schema found corresponds to appropriate logical database
+CREATE DATABASE ident_ins
+GO
+
+CREATE DATABASE ident_ins_ident_ins
+GO
+
+USE ident_ins_ident_ins
+GO
+
+CREATE TABLE ident_t1 (a int identity, b int)
+GO
+
+-- Should not fail because relation exists
+SET IDENTITY_INSERT ident_ins_ident_ins.dbo.ident_t1 ON
+GO
+
+-- Should fail because relation does not exist
+SET IDENTITY_INSERT ident_ins.ident_ins_dbo.ident_t1 ON
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the object "ident_ins.ident_ins_dbo.ident_t1" because it does not exist or you do not have permissions.)~~
+
+
+USE master
+GO
+
+DROP DATABASE ident_ins
+GO
+
+DROP DATABASE ident_ins_ident_ins
 GO
