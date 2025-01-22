@@ -2603,7 +2603,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectSubId = 0;
 						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
 
-						if (proctup == NULL)
+						if (!HeapTupleIsValid(proctup))
 						{
 						    ereport(ERROR,
 						            (errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -2611,9 +2611,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						if (get_bbf_function_tuple_from_proctuple(proctup) == NULL)
 						{
-						    /* Release the tuple before reporting the error */
-						    ReleaseSysCache(proctup);
-
 						    /* Detect PSQL functions and throw error */
 						    ereport(ERROR,
 						            (errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
