@@ -1,0 +1,21 @@
+2025-01-09 10:40:51.672 UTC [38905] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-17), 64-bit
+2025-01-09 10:40:51.672 UTC [38905] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-01-09 10:40:51.680 UTC [38905] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-01-09 10:40:51.691 UTC [38908] LOG:  database system was shut down at 2025-01-09 10:40:51 UTC
+2025-01-09 10:40:51.697 UTC [38905] LOG:  database system is ready to accept connections
+2025-01-09 10:45:33.975 UTC [38905] LOG:  received fast shutdown request
+2025-01-09 10:45:33.978 UTC [38905] LOG:  aborting any active transactions
+2025-01-09 10:45:33.980 UTC [38905] LOG:  background worker "logical replication launcher" (PID 38911) exited with exit code 1
+2025-01-09 10:45:33.980 UTC [38906] LOG:  shutting down
+2025-01-09 10:45:33.983 UTC [38906] LOG:  checkpoint starting: shutdown immediate
+2025-01-09 10:45:34.007 UTC [38906] LOG:  checkpoint complete: wrote 46 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.008 s, sync=0.005 s, total=0.028 s; sync files=11, longest=0.003 s, average=0.001 s; distance=277 kB, estimate=277 kB; lsn=0/156D968, redo lsn=0/156D968
+2025-01-09 10:45:34.013 UTC [38905] LOG:  database system is shut down
+2025-01-09 10:45:34.096 UTC [42681] LOG:  starting PostgreSQL 16.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-17), 64-bit
+2025-01-09 10:45:34.096 UTC [42681] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-01-09 10:45:34.096 UTC [42681] LOG:  listening on IPv6 address "::", port 5432
+2025-01-09 10:45:34.103 UTC [42681] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-01-09 10:45:34.106 UTC [42681] LOG:  listening on IPv4 address "0.0.0.0", port 1433
+2025-01-09 10:45:34.106 UTC [42681] LOG:  listening on unrecognized address family 10 address "::", port 1433
+2025-01-09 10:45:34.113 UTC [42684] LOG:  database system was shut down at 2025-01-09 10:45:33 UTC
+2025-01-09 10:45:34.120 UTC [42681] LOG:  database system is ready to accept connections
+2025-01-09 10:46:58.750 UTC [43780] FATAL:  database "ijaspals" does not exist

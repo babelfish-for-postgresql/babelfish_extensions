@@ -2086,6 +2086,10 @@ func_expr_common_subexpr:
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}
+			| TSQL_CONTAINS '(' '(' var_cols ')' ',' tsql_contains_search_condition ')'
+				{
+					$$ = TsqlExpressionContains($4, $7, yyscanner);
+				}
 			| TSQL_LOG '(' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_log"),

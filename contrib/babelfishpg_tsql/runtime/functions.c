@@ -2772,25 +2772,61 @@ type_name(PG_FUNCTION_ARGS)
 }
 
 /*
- * Wrapper for C function replace_special_chars_fts_impl()
+ * Wrapper for C function replace_special_chars_fts_impl() 
+ * That accepts PG_FUNCTION_ARGS and length of column list
  */
 Datum
 replace_special_chars_fts(PG_FUNCTION_ARGS)
 {
-	text		*input_text = PG_GETARG_TEXT_P(0);
-	char		*input_str = text_to_cstring(input_text);
-	char		*output_str;
-	text		*result_text;
-	
-	/* Modify the input_str in place */
-	output_str = replace_special_chars_fts_impl(input_str);
-	
+	text			*result_text;
+	char			*output_str;
+	char			*s;
+	int				len = PG_NARGS();
+	StringInfoData	buf;
+
+	/* initialize a StringInfoData with an empty string */
+	initStringInfo(&buf);
+	// output_str = malloc(sizeof(char*));
+	// *output_str = '\0';
+	for(int i=0; i<len; i++)
+	{
+		text		*input_text = PG_GETARG_TEXT_P(i);
+		char		*input_str = text_to_cstring(input_text);
+		char 		*col_str;
+		/* Modify the input_str in place */
+		if(input_str != NULL)
+		{
+			col_str = replace_special_chars_fts_impl(input_str);
+		}
+
+		if (col_str != NULL) 
+		{
+			appendStringInfoString(&buf, col_str);
+			// output_size += strlen(col_str) + (i < len - 1 ? 7 : 0);
+			// output_str = realloc((char*)output_str, output_size);
+
+			/* Append new columns to the output_str  */
+			// strncat(output_str, col_str, strlen(col_str));
+			// /* append the concates */
+			if(i<len-1){
+				appendStringInfo(&buf, "||' '||");
+			}
+			pfree(col_str);
+		}
+		/* Free the memory allocated for input_str */
+		// if(input_str!=NULL)
+		// {
+		// 	pfree(input_str);
+		// }
+	}
+	output_str = (&buf)->data;
 	/* Convert the modified input_str back to text */
-	result_text = cstring_to_text(output_str);
-	
-	/* Free the memory allocated for input_str */
-	pfree(input_str);
-	pfree(output_str);
+	if(output_str!=NULL)
+	{
+		s = pstrdup(output_str);
+		result_text = cstring_to_text(s);
+	}
+	// pfree(&buf);
 	PG_RETURN_TEXT_P(result_text);
 }
 

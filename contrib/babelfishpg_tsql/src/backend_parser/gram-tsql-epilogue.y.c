@@ -800,77 +800,169 @@ TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
     return (Node *)fts;
 }
 
+/*rewrite sql column name into pg column*/
+// static Node*
+// rewriteToPGColumn(char *colId, core_yyscan_t yyscanner)
+// {
+	// char *dot1, *dot2;
+	// char *schemaName;
+	// char *tableName;
+	// char *columnName;
+	// Node *col;
+	// /* Find the first and second dots in the column identifier */
+    // dot1 = strchr(colId, '.');
+    // dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
+    
+    // if (dot1)
+    // {
+    //     if (dot2)
+    //     {
+    //         /* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
+    //          * Parse the schema name, table name, and column name accordingly
+    //          */
+    //         *dot1 = '\0';
+    //         *dot2 = '\0';
+    //         schemaName = colId;
+    //         tableName = dot1 + 1;
+    //         columnName = dot2 + 1;
+    //     } 
+    //     else
+    //     {
+    //         /* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
+    //          * Parse the table name and column name accordingly
+    //          */
+    //         *dot1 = '\0';
+    //         tableName = colId;
+    //         columnName = dot1 + 1;
+    //     }
+    // }
+    // else
+    // {
+    //     /* If no dots are found, then the input is just the column name
+    //      * Set the column name directly
+    //      */
+    //     columnName = colId;
+    // }
+    
+    // if (schemaName)
+    // {
+    //     /* If a schema name is present, create column reference to the schema first then append the table name and column name */
+    //     col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
+    //     ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
+    //     ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+    // }
+    // else if (tableName)
+    // {
+    //     /* If a table name is present, create column reference to the table first then append the column name */
+    //     col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
+    //     ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+    // }
+    // else
+    // {
+    //     /* Create a ColumnRef node for the column */
+    //     col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+    // }
+// 	return col;
+// }
+
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 static Node *
 makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
-    Node	*col;
+    // Node	*cols;
     List	*args;
     Node	*replaceSpecialCharsFunc;
     List	*replaceSpecialCharsArgs;
-    char	*schemaName = NULL;
-    char	*tableName = NULL;
-    char	*columnName = NULL;
-    char	*dot1, *dot2;
-    
-    /* Find the first and second dots in the column identifier */
-    dot1 = strchr(colId, '.');
-    dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
-    
-    if (dot1)
-    {
-        if (dot2)
-        {
-            /* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
-             * Parse the schema name, table name, and column name accordingly
-             */
-            *dot1 = '\0';
-            *dot2 = '\0';
-            schemaName = colId;
-            tableName = dot1 + 1;
-            columnName = dot2 + 1;
-        } 
-        else
-        {
-            /* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
-             * Parse the table name and column name accordingly
-             */
-            *dot1 = '\0';
-            tableName = colId;
-            columnName = dot1 + 1;
-        }
-    }
-    else
-    {
-        /* If no dots are found, then the input is just the column name
-         * Set the column name directly
-         */
-        columnName = colId;
-    }
-    
-    if (schemaName)
-    {
-        /* If a schema name is present, create column reference to the schema first then append the table name and column name */
-        col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
-        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
-        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
-    }
-    else if (tableName)
-    {
-        /* If a table name is present, create column reference to the table first then append the column name */
-        col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
-        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
-    }
-    else
-    {
-        /* Create a ColumnRef node for the column */
-        col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
-    }
+    char	*comma;		//to detect multiple columns
+	// char 	col[200];
+			replaceSpecialCharsArgs = NIL;
+			
+    // char	*schemaName = NULL;
+    // char	*tableName = NULL;
+    // char	*columnName = NULL;
+    // char	*dot1, *dot2;
+	/*assuming no spaces between two column names*/
+	do
+	{
+		Node 	*col;
+		char 	*schemaName = NULL;
+		char 	*tableName = NULL;
+		char 	*columnName = NULL;
+		char 	*dot1, *dot2;
+		comma = strchr(colId, ',');
+		if(comma)
+		{
+			*comma = '\0';
+		}
+		/* Find the first and second dots in the column identifier */
+		dot1 = strchr(colId, '.');
+		dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
+		
+		if (dot1)
+		{
+			if (dot2)
+			{
+				/* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
+				* Parse the schema name, table name, and column name accordingly
+				*/
+				*dot1 = '\0';
+				*dot2 = '\0';
+				schemaName = colId;
+				tableName = dot1 + 1;
+				columnName = dot2 + 1;
+			} 
+			else
+			{
+				/* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
+				* Parse the table name and column name accordingly
+				*/
+				*dot1 = '\0';
+				tableName = colId;
+				columnName = dot1 + 1;
+			}
+		}
+		else
+		{
+			/* If no dots are found, then the input is just the column name
+			* Set the column name directly
+			*/
+			columnName = colId;
+		}
+		
+		if (schemaName)
+		{
+			/* If a schema name is present, create column reference to the schema first then append the table name and column name */
+			col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
+			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
+			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+		}
+		else if (tableName)
+		{
+			/* If a table name is present, create column reference to the table first then append the column name */
+			col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
+			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+		}
+		else
+		{
+			/* Create a ColumnRef node for the column */
+			col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+		}
 
+		// replaceSpecialCharsArgs = list_make1(col); //list_make1(rewriteToPGColumn(colId, yyscanner));
+		/* snprintf takes input the destination string and and size of atmost intake bytes, 
+		this makes sure that the string to be copied is terminated with a null character 
+		and there are no buffer overflow risks. */
+		// snprintf(col, sizeof(col), "%s", colId);
+
+		replaceSpecialCharsArgs = lappend(replaceSpecialCharsArgs, col);
+		if(comma!=NULL)
+			colId = comma+1;
+	}while(comma);
+
+	/* -------------------------------------------------------------- */
+	
     /* Create a function call for replace_special_chars_fts(column_name) */
-    replaceSpecialCharsArgs = list_make1(col);
     replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
-
     /* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
     args = list_make2(pgconfig, replaceSpecialCharsFunc);
 
