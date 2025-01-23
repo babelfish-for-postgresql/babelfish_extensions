@@ -2152,15 +2152,14 @@ tsql_unpivot_debug_transformation(List *components)
     {
         /* Handle case where table_ref is an UNPIVOT node */
         List *prev_unpivot = (List *)table_ref;
-        if (list_length(prev_unpivot) == 6 &&
+        if (list_length(prev_unpivot) == 7 &&
             IsA(linitial(prev_unpivot), String) &&
             strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
         {
             /* Use the alias from previous UNPIVOT */
-            //source_alias = strVal(list_nth(prev_unpivot, 1));
 			source_alias = strVal(list_nth(prev_unpivot, 1));
             /* Use the transformed node as our left arg */
-            //n->larg = (Node *)list_nth(prev_unpivot, 5);
+            //n->larg = (Node *)list_nth(prev_unpivot, 6);
 			
         }
         else
@@ -2178,9 +2177,10 @@ tsql_unpivot_debug_transformation(List *components)
     }
 	n->larg = table_ref;
 
-	/* Build VALUES list from source columns */
+	/* Build VALUES list from unpivot source columns */
     foreach(lc, source_cols)
     {
+		// needs to be llast if aliases are used in values list, ex c.q1
         String *col_name = (String *)lfirst(lc);
         List *value_pair;
         ColumnRef *col_ref;
@@ -2208,6 +2208,7 @@ tsql_unpivot_debug_transformation(List *components)
     rarg->subquery = (Node *)values_subquery;
 
     /* Handle alias for Join-Values (RangeSubSelect) clause */
+	// TODO: replace '_1' logic with alias generator, else can conflict
 	inner_alias_name = psprintf("%s_1", alias->aliasname);
     if (alias != NULL)
     {
@@ -2230,8 +2231,6 @@ tsql_unpivot_debug_transformation(List *components)
 	/* Rewrite by adding unpivot alias as the complete Join operation alias */
 	n->alias = alias;
 
-    elog(DEBUG1, "Final transformed node: %s", nodeToString((Node *)n));
-
 	/* Create result info list */
     // result_info = list_make3(
     //     list_make1(makeString("UNPIVOT")),
@@ -2244,15 +2243,14 @@ tsql_unpivot_debug_transformation(List *components)
 	/* Create result info list */
     result_info = list_make5(
         makeString("UNPIVOT"),
-        makeString(alias->aliasname),	/* unpivot alias and its columns: */
+        makeString(alias->aliasname),		/* unpivot alias */
         makeString(dim_colname),			/* dimension column */
         makeString(measure_colname),		/* measure column */
         makeString(source_alias)			/* source table/query alias */
     );
     
-    /* Append the transformed node */
-	elog(DEBUG1, "Final transformed node: %s", NameListToString(result_info));
-	//result_info = lappend(result_info, source_cols);
+    /* Append the unpivot source columns and transformed node */
+	result_info = lappend(result_info, source_cols);
     result_info = lappend(result_info, n);
 
     return (Node *) result_info;
