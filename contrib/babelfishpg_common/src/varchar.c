@@ -1217,7 +1217,8 @@ float82varchar(PG_FUNCTION_ARGS)
 	double_to_shortest_decimal_buf(num, ascii);
 
 	/* Check if the number fits within the specified length */
-	if (maxlen > 0) {
+	if (maxlen > 0) 
+	{
 		size_t str_len = strlen(ascii);
 		if (str_len > maxlen) 
 		{
@@ -1264,7 +1265,8 @@ float82bpchar(PG_FUNCTION_ARGS)
 	double_to_shortest_decimal_buf(num, ascii);
 
 	/* Check if the number fits within the specified length */
-	if (maxlen > 0) {
+	if (maxlen > 0)
+	{
 		str_len = strlen(ascii);
 		if (str_len > maxlen) 
 		{
