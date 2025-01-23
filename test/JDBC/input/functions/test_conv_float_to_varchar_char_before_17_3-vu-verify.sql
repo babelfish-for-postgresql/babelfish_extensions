@@ -111,3 +111,37 @@ GO
 SELECT float_varchar_f1('123.4567')
 SELECT float_varchar_f2('123.4567')
 GO
+
+-- 4. Test Convert/CAST in WHERE
+SELECT COUNT(*) FROM float_varchar_t1 where length(CAST(FloatValue as VARCHAR)) < 8;
+GO
+SELECT COUNT(*) FROM float_varchar_t1 WHERE length(CONVERT(VARCHAR(30),FloatValue)) = 30;
+GO
+
+-- 5. Test Insuffiecient String Length
+SELECT CAST(CAST('214555.32435254' AS FLOAT) AS VARCHAR(5));
+GO
+SELECT CAST(CAST('214555.32435254' AS FLOAT) AS CHAR(5));
+GO
+
+-- 6. Test Special Values
+SELECT CAST(CAST('NaN' as Float) as VARCHAR(30))
+GO
+SELECT CAST(CAST('NaN' as Float) as CHAR(30))
+GO
+SELECT CAST(CAST('Inf' as Float) as VARCHAR)
+GO
+SELECT CAST(CAST('Inf' as Float) as CHAR)
+GO
+
+-- 7. Test Constraints
+INSERT INTO float_char_t2 VALUES('-1.245243')
+GO
+INSERT INTO float_varchar_t2 VALUES('-1.245243')
+GO
+
+-- 8. Test With Variables
+DECLARE @flt1 Float = 1.3242335
+DECLARE @flt2 Float = -54235.4322
+SELECT cast(@flt1*@flt2 as varchar(30)),cast(@flt1/@flt2 as varchar(30)),cast(@flt1+@flt2 as char(30)),cast(@flt1/@flt2 as char(30))
+GO

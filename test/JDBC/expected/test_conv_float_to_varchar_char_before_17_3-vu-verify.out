@@ -263,3 +263,84 @@ varchar
  123.457                      
 ~~END~~
 
+
+-- 4. Test Convert/CAST in WHERE
+SELECT COUNT(*) FROM float_varchar_t1 where length(CAST(FloatValue as VARCHAR)) < 8;
+GO
+~~START~~
+int
+4
+~~END~~
+
+SELECT COUNT(*) FROM float_varchar_t1 WHERE length(CONVERT(VARCHAR(30),FloatValue)) = 30;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- 5. Test Insuffiecient String Length
+SELECT CAST(CAST('214555.32435254' AS FLOAT) AS VARCHAR(5));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a float value to varchar/nvarchar.)~~
+
+SELECT CAST(CAST('214555.32435254' AS FLOAT) AS CHAR(5));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: There is insufficient result space to convert a float value to char/nchar.)~~
+
+
+-- 6. Test Special Values
+SELECT CAST(CAST('NaN' as Float) as VARCHAR(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error Converting Float Value to String.)~~
+
+SELECT CAST(CAST('NaN' as Float) as CHAR(30))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error Converting Float Value to String.)~~
+
+SELECT CAST(CAST('Inf' as Float) as VARCHAR)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error Converting Float Value to String.)~~
+
+SELECT CAST(CAST('Inf' as Float) as CHAR)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error Converting Float Value to String.)~~
+
+
+-- 7. Test Constraints
+INSERT INTO float_char_t2 VALUES('-1.245243')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "float_char_t2" violates check constraint "float_char_t2_a_check")~~
+
+INSERT INTO float_varchar_t2 VALUES('-1.245243')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "float_varchar_t2" violates check constraint "float_varchar_t2_a_check")~~
+
+
+-- 8. Test With Variables
+DECLARE @flt1 Float = 1.3242335
+DECLARE @flt2 Float = -54235.4322
+SELECT cast(@flt1*@flt2 as varchar(30)),cast(@flt1/@flt2 as varchar(30)),cast(@flt1+@flt2 as char(30)),cast(@flt1/@flt2 as char(30))
+GO
+~~START~~
+varchar#!#varchar#!#char#!#char
+-71820.376206#!#-2.4e-05#!#                 -54234.107967#!#                      -2.4e-05
+~~END~~
+

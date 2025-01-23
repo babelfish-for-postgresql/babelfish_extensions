@@ -9,14 +9,16 @@ GO
 CREATE VIEW float_char_v1
 AS
 SELECT
-    CAST(CAST('-123.456' AS FLOAT)  AS CHAR(30)) AS CastValue
+    CAST(CAST('-123.456325678543' AS FLOAT)  AS CHAR(30)) AS CastValue,
+    CAST(CAST('-123.456325678543' AS FLOAT(53))  AS CHAR(30)) AS CastValue2
 GO
 
 -- 2. View that uses CONVERT
 CREATE VIEW float_char_v2
 AS
 SELECT 
-    CONVERT(CHAR(30), CAST('-123.456' as FLOAT)) AS ConvertValue
+    CONVERT(CHAR(30), CAST('-123.456325678543' as FLOAT)) AS ConvertValue,
+    CONVERT(CHAR(30), CAST('-123.456325678543' as FLOAT(53))) AS ConvertValue2
 GO
 
 -- 3. Function using CAST
@@ -89,14 +91,16 @@ GO
 CREATE VIEW float_varchar_v1
 AS
 SELECT
-    CAST(CAST('-123.456' AS FLOAT)  AS VARCHAR(30)) AS CastValue
+    CAST(CAST('-123.456325678543' AS FLOAT)  AS VARCHAR(30)) AS CastValue,
+    CAST(CAST('-123.456325678543' AS FLOAT(53))  AS VARCHAR(30)) AS CastValue2
 GO
 
 -- 2. View that uses CONVERT
 CREATE VIEW float_varchar_v2
 AS
 SELECT 
-    CONVERT(CHAR(30), CAST('-123.456' as FLOAT)) AS ConvertValue
+    CONVERT(VARCHAR(30), CAST('-123.456325678543' as FLOAT)) AS ConvertValue,
+    CONVERT(VARCHAR(30), CAST('-123.456325678543' as FLOAT(53))) AS ConvertValue2
 GO
 
 -- 3. Function using CAST
@@ -156,3 +160,19 @@ CREATE TABLE TestResults_1 (
     TestStatus VARCHAR(20)
 );
 GO
+
+CREATE TABLE float_char_t2
+(
+    a char(30),
+    check (cast(a as float) > 0)
+)
+GO
+
+CREATE TABLE float_varchar_t2
+(
+    a varchar(30),
+    check (cast(a as float) > 0)
+)
+GO
+
+

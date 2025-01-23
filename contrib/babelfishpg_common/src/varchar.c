@@ -1196,12 +1196,21 @@ float82varchar(PG_FUNCTION_ARGS)
 {
 	float8 num = PG_GETARG_FLOAT8(0);
 	int32 typmod = PG_GETARG_INT32(1);
-	int maxlen = (typmod == -1) ? 0 : (typmod - VARHDRSZ);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
 	Datum res;
-	char	   *ascii = (char *) palloc(32);
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
+	char	   *ascii = (char *) palloc0(32);
 	
 	/* round to 6 decimal digits */
-	if (!(isinf(num)|| isnan(num))) {
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
 		num = round(num * 1000000.0) / 1000000.0;
 	}
 
@@ -1210,7 +1219,8 @@ float82varchar(PG_FUNCTION_ARGS)
 	/* Check if the number fits within the specified length */
 	if (maxlen > 0) {
 		size_t str_len = strlen(ascii);
-		if (str_len > maxlen) {
+		if (str_len > maxlen) 
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 					 errmsg("There is insufficient result space to convert a float value to varchar/nvarchar.")));
@@ -1220,7 +1230,7 @@ float82varchar(PG_FUNCTION_ARGS)
 	res = DirectFunctionCall3(varcharin,
 							   CStringGetDatum(ascii),
 							   ObjectIdGetDatum(0),
-							   Int32GetDatum(-1));
+							   Int32GetDatum(typmod));
 	
 	PG_RETURN_DATUM(res);
 
@@ -1231,14 +1241,23 @@ float82bpchar(PG_FUNCTION_ARGS)
 {
 	float8 num = PG_GETARG_FLOAT8(0);
 	int32 typmod = PG_GETARG_INT32(1);
-	int maxlen = (typmod == -1) ? 0 : (typmod - VARHDRSZ);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
 	Datum res;
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
 	char	   *ascii = (char *) palloc0(32);
 	char	   *buf_padded;
 	int		   str_len = -1;
 	
 	/* Handle special cases */
-	if (!(isinf(num)|| isnan(num))) {
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
 		num = round(num * 1000000.0) / 1000000.0;
 	}
 
@@ -1247,7 +1266,8 @@ float82bpchar(PG_FUNCTION_ARGS)
 	/* Check if the number fits within the specified length */
 	if (maxlen > 0) {
 		str_len = strlen(ascii);
-		if (str_len > maxlen) {
+		if (str_len > maxlen) 
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 					 errmsg("There is insufficient result space to convert a float value to char/nchar.")));
@@ -1258,12 +1278,11 @@ float82bpchar(PG_FUNCTION_ARGS)
 	buf_padded = (char *) palloc0(maxlen + 1);
 	memset(buf_padded, ' ', maxlen - str_len);
 	memcpy(buf_padded + maxlen - str_len, ascii, str_len);
-	buf_padded[maxlen] = '\0';
 	
 	res = DirectFunctionCall3(bpcharin,
 							   CStringGetDatum(buf_padded),
 							   ObjectIdGetDatum(0),
-							   Int32GetDatum(-1));
+							   Int32GetDatum(typmod));
 	
 	PG_RETURN_DATUM(res);
 
