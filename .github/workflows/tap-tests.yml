@@ -45,7 +45,8 @@ jobs:
         with:
           engine_branch: ${{env.ENGINE_BRANCH_16}}
           install_dir: ${{env.INSTALL_DIR_16}}
-
+      
+      
       - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_OLD}}
         id: build-modified-postgres-old
         if: always() && steps.build-modified-postgres-16.outcome == 'success'
@@ -100,6 +101,8 @@ jobs:
           sudo make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config install
         shell: bash
 
+      
+
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_OLD}}
         id: build-extensions-old
         if: always() && steps.build-postgis-extension-old.outcome == 'success'
@@ -110,6 +113,10 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - name: Save cache
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
+      
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
         if: always() && steps.build-extensions-old.outcome == 'success'
@@ -117,6 +124,8 @@ jobs:
         with:
           tap_tests: 'yes'
           install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      
       
       - name: Compile new ANTLR
         id: compile-new-antlr
@@ -138,6 +147,10 @@ jobs:
         uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - name: Save cache
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
 
       - name: Run TAP Tests
         id: tap

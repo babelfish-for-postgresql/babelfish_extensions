@@ -327,6 +327,10 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
+    - name: Save cache
+      if: always()
+      uses: ./.github/composite-actions/save-ccache
+
     - name: Run Verify Tests
       if: always() && steps.run-pg_dump-restore.outcome == 'success' && inputs.is_final_ver == 'true'
       uses: ./.github/composite-actions/run-verify-tests
