@@ -5486,18 +5486,6 @@ BEGIN
 END;
 $$;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_try_conv_float_to_string(TEXT, FLOAT, NUMERIC) RENAME TO babelfish_try_conv_float_to_string_deprecated_in_5_1_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
 														  IN p_floatval FLOAT,
 														  IN p_style NUMERIC DEFAULT 0)
@@ -5570,8 +5558,6 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_float_to_string_deprecated_in_5_1_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
