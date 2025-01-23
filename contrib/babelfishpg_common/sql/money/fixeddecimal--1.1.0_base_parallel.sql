@@ -2005,3 +2005,13 @@ CREATE FUNCTION sys.smallmoneysmaller(sys.SMALLMONEY, sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'fixeddecimalsmaller'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.moneylarger(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimallarger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.moneysmaller(sys.MONEY, sys.MONEY)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'fixeddecimalsmaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
