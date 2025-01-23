@@ -17,8 +17,8 @@ GO
 CREATE VIEW float_char_v2
 AS
 SELECT 
-    CONVERT(CHAR(30), CAST('-123.456325678543' as FLOAT)) AS ConvertValue,
-    CONVERT(CHAR(30), CAST('-123.456325678543' as FLOAT(53))) AS ConvertValue2
+    CONVERT(CHAR(30), CAST('-123.456' as FLOAT)) AS ConvertValue,
+    CONVERT(CHAR(30), CAST('-123.456' as FLOAT(53))) AS ConvertValue2
 GO
 
 -- 3. Function using CAST

@@ -105,13 +105,13 @@ SELECT * FROM float_char_v1;
 SELECT * FROM float_char_v2; 
 GO
 ~~START~~
-char
--123.456                      
+char#!#char
+-123.456325678543             #!#-123.456325678543             
 ~~END~~
 
 ~~START~~
-char
--123.456                      
+char#!#char
+-123.456                      #!#-123.456                      
 ~~END~~
 
 
@@ -239,13 +239,13 @@ SELECT * FROM float_varchar_v1;
 SELECT * FROM float_varchar_v2; 
 GO
 ~~START~~
-varchar
--123.456
+varchar#!#varchar
+-123.456325678543#!#-123.456325678543
 ~~END~~
 
 ~~START~~
-char
--123.456                      
+varchar#!#varchar
+-123.456                      #!#-123.456                      
 ~~END~~
 
 
