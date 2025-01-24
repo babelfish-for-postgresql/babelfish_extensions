@@ -105,7 +105,7 @@ jobs:
         id: check-leak-warnings
         run: |
           # Set the path to the expected-warnings.out file
-          EXPECTED_WARNINGS_FILE=~work/babelfish_extensions/babelfish_extensions/test/JDBC/expected/expected-warnings.out
+          EXPECTED_WARNINGS_FILE=~/work/babelfish_extensions/babelfish_extensions/test/JDBC/expected/expected-warnings.out
 
           # Collect all leak warnings from log files, extracting only the warning type
           grep -i "WARNING:.*leak" ~/psql/data/logfile ~/psql/data_5433/logfile | sed -E 's/^.*WARNING:\s*([^:]+\s+reference\s+leak):.*/WARNING:  \1:/' | sort | uniq > actual-leak-warnings.out
