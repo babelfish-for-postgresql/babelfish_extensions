@@ -52,7 +52,6 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
-
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -238,6 +237,11 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
+/*  fixeddecimal */
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "varchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "varchar", NULL, 'i', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
@@ -308,11 +312,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "numeric", "sys", "varchar", NULL, 'i', 'i'},
 /*  // fixeddecimal -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "text", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "varchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "sys", "varchar", NULL, 'i', 'i'},
-/*  fixeddecimal -> string via I/O */
+/*  uniqueidentifier -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "bpchar", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "sys", "bpchar", NULL, 'i', 'i'},
@@ -419,6 +419,7 @@ tsql_special_function_t tsql_special_function_list[] =
 	{"sys", "stuff", "stuff", false, 4},
 	{"sys", "translate", "translate", false, 3},
 	{"sys", "trim", "Trim", false, 1},
+	{"sys", "hashbytes", "hashbytes", false, 2},
 	{"sys", "trim", "Trim", false, 2},
 	{"sys", "ltrim", "ltrim", false, 1},
 	{"sys", "rtrim", "rtrim", false, 1},
@@ -1144,15 +1145,19 @@ validate_special_function(char *func_nsname, char *func_name, int nargs, bool nu
 static FuncCandidateList
 tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
-	FuncCandidateList			current_candidate, best_candidate;
-	Oid 						expr_result_type;
-	char					   *proc_nsname;
-	char					   *proc_name;
-	bool						is_func_validated;
-	int							ncandidates;
-	Oid							rettype;
-	Oid							sys_oid = get_namespace_oid("sys", false);
-	Oid						   *new_input_typeids;
+	FuncCandidateList	current_candidate, best_candidate;
+	Oid 			expr_result_type;
+	char		       *proc_nsname;
+	char		       *proc_name;
+	bool			is_func_validated;
+	int			ncandidates;
+	Oid			rettype;
+	Oid			sys_oid = get_namespace_oid("sys", false);
+	Oid		       *new_input_typeids;
+	Oid		       *argtypes;
+	int			nargs_func;
+	Oid			second_arg_type = InvalidOid;
+        Oid                     expr_arg_type;
 
 	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
@@ -1183,6 +1188,7 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 
 	/* function based logic to decide return type */
 	expr_result_type = InvalidOid;
+	expr_arg_type = InvalidOid;
 	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0 && nargs == 2)
 	{
 		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
@@ -1331,15 +1337,38 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_result_type = get_sys_varcharoid();
 		}
 	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (new_input_typeids[1])
+			|| new_input_typeids[1] == UNKNOWNOID)
+		{
+			expr_arg_type = get_sys_varcharoid();
+		}
+		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+		else if(is_tsql_binary_family_datatype(new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bbf_varbinary");
+		}
+	}
 
 	/* free new_input_typeids, as they are no longer needed */
 	if (new_input_typeids)
 		pfree(new_input_typeids);
 
-	if (!OidIsValid(expr_result_type))
+	if (!OidIsValid(expr_result_type) && !OidIsValid(expr_arg_type))
 		return NULL;
 
-	/* Get the candidate with matching return type */
+	/* 
+	 * Get the candidate with matching return type or 
+	 * second argument type(specifically for hashbytes function) 
+	 */
 	ncandidates = 0;
 	best_candidate = NULL;
 	for (current_candidate = candidates;
@@ -1351,13 +1380,24 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			continue;
 
 		rettype = get_func_rettype(current_candidate->oid);
+		/* get the function second argument if we have hashbytes function */
+		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+		{
+			get_func_signature(current_candidate->oid, &argtypes, &nargs_func);
+			second_arg_type = argtypes[1];
+		}
 		
 		/* Ignore following definitions as these are used when no other potential definition can be used. */
 		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
 			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
 			continue;
-
-		if (expr_result_type == rettype)
+		/*
+                 * Find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
+		 * of return type.
+		 */
+		if ((OidIsValid(expr_result_type) && expr_result_type == rettype)
+			|| (OidIsValid(expr_arg_type) && OidIsValid(second_arg_type) && expr_arg_type == second_arg_type))
 		{
 			best_candidate = current_candidate;
 			ncandidates++;
@@ -2015,7 +2055,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			precision = 0,
 			scale = 0,
 			integralDigitCount = 0,
-			result_typmod = -1;
+			numeric_result_typmod = -1;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
@@ -2031,10 +2071,11 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			 !((common_type == NUMERICOID)))
 		return -1;
 
-	/* If resulting type is a length, need to be max of length types,
+	/* 
+	 * If resulting type is a length, need to be max of length types,
 	 * If the type is numeric or decimal then we calculate scale as 
 	 * max(s1, s2) and precision as max(s1, s2) + max(p1 - s1, p2 - s2)
-	 * where s1, s2 are the scale of branches and p1, p2 are the precision.
+	 * where s1, s2 are the scale of branches b1 & b2 and p1, p2 are the precision.
 	 */
 	foreach(lc, exprs)
 	{
@@ -2042,24 +2083,18 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		int32 typmod = exprTypmod(expr);
 		Oid   type = exprType(expr);
 		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
-		
 
 		if (common_type == NUMERICOID ||
 			getBaseType(common_type) == NUMERICOID)
 		{
-			/* If Udt then calculate typmod.*/
+			/* If UDT then calculate typmod.*/
 			if (OidIsValid(immediate_base_type))
-			{
 				type = getBaseTypeAndTypmod(type, &typmod);
-			}
 			
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
-			{
-				Plan* temp = NULL;
-				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(temp, expr);
-			}
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
 			
-			if(typmod == -1)
+			if (typmod == -1 || getBaseType(type) != NUMERICOID)
 				continue;
 			
 			scale = (typmod - VARHDRSZ) & 0xffff;
@@ -2068,15 +2103,15 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			max_scale = Max(max_scale, scale);
 			max_precision = integralDigitCount + max_scale;
 			/*
-		 	* If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
-		 	* to TDS_MAX_NUM_PRECISION at the cost of scale.
-		 	*/
+		 	 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 	 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 	 */
 			if (max_precision > TDS_MAX_NUM_PRECISION)
 			{
 				max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
 				max_precision = TDS_MAX_NUM_PRECISION;
 			}
-			result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+			numeric_result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
 		}
 		else
 		{
@@ -2121,7 +2156,8 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			if (is_tsql_str_const(expr))
 				typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
-			/* This conditon is for the datatype with MAX typmod.
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
 			 * -1 will only be returned if common_type is a datatype
 			 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
 			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
@@ -2141,15 +2177,10 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			else
 				max_typmods = Max(max_typmods, typmod);
 		}
-		
 	}
 
 	if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
-	{
-		if (result_typmod == -1)
-			return -1;
-		return result_typmod;
-	}
+		return numeric_result_typmod;
 		
 	return max_typmods;
 

@@ -13,6 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
+money_aggregate
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -592,3 +593,6 @@ cast_nvarchar_test
 smalldatetime_date_cmp
 datareader_datawriter
 db_owner
+BABEL-2961
+test_conv_money_to_varchar
+fixeddecimal_modulo

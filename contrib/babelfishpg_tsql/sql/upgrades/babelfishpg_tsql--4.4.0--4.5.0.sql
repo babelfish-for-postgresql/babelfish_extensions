@@ -40,6 +40,49 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data pg_catalog.VARCHAR) RENAME TO hashbytes_varchar_deprecated_4_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varchar_deprecated_4_5_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data sys.bbf_varbinary) RENAME TO hashbytes_varbinary_deprecated_4_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varbinary_deprecated_4_5_0');
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.VARCHAR) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.NVARCHAR) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.NVARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.bbf_varbinary) RETURNS sys.bbf_varbinary
+AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -85,7 +128,7 @@ $$ LANGUAGE plpgsql;
 UPDATE sys.babelfish_authid_login_ext SET is_fixed_role = 1 WHERE rolname = 'sysadmin';
 
 -- At this point, there will be only one database fixed role which is db_owner.
-UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1 WHERE orig_username = 'db_owner';
+UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 1, type = 'R' WHERE orig_username = 'db_owner';
 UPDATE sys.babelfish_authid_user_ext SET is_fixed_role = 0 WHERE orig_username != 'db_owner';
 
 -- This is a temporary procedure which is only meant to be called during upgrade
@@ -217,7 +260,18 @@ AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -248,7 +302,12 @@ WHERE Ext.database_name = DB_NAME()
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
+CAST(
+  CASE name
+    WHEN 'public' THEN 0
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
 CAST(type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -272,6 +331,41 @@ CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- DATABASE_ROLE_MEMBERS
+CREATE OR REPLACE VIEW sys.database_role_members AS
+SELECT
+CAST(
+  CASE Ext1.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth1.oid
+  END AS INT) AS role_principal_id,
+CAST(
+  CASE Ext2.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth2.oid
+  END AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME() 
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
@@ -305,6 +399,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
+        AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		ORDER BY UserName, RoleName;
 	END
@@ -375,6 +470,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND (Ext1.type != 'R' OR Ext1.type != 'A')
+        AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
 		ORDER BY UserName, RoleName;
@@ -1072,7 +1168,7 @@ BEGIN
         JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
         JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
@@ -1103,46 +1199,21 @@ BEGIN
  	
 	IF (COALESCE(@table_owner, '') = '')
 	BEGIN
-		
-		IF EXISTS ( 
-			SELECT * FROM sys.sp_column_privileges_view 
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name) and pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_qualifier)
-			)
-		BEGIN 
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower(SCHEMA_NAME()) = pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
-		ELSE
-		BEGIN
-			SELECT 
-			TABLE_QUALIFIER,
-			TABLE_OWNER,
-			TABLE_NAME,
-			COLUMN_NAME,
-			GRANTOR,
-			GRANTEE,
-			PRIVILEGE,
-			IS_GRANTABLE
-			FROM sys.sp_column_privileges_view
-			WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
-				AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
-				AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
-				AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
-			ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
-		END
+        SELECT
+        TABLE_QUALIFIER,
+        TABLE_OWNER,
+        TABLE_NAME,
+        COLUMN_NAME,
+        GRANTOR,
+        GRANTEE,
+        PRIVILEGE,
+        IS_GRANTABLE
+        FROM sys.sp_column_privileges_view
+        WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+            AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+            AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+            AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+        ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
 	END
 	ELSE
 	BEGIN
@@ -1193,7 +1264,7 @@ BEGIN
         JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
     WHERE t4.privilege_type = 'DELETE';
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
@@ -1693,6 +1764,9 @@ BEGIN
     
     ELSIF role = 'public' COLLATE sys.database_default THEN
     	RETURN 1;
+
+    ELSEIF role = login THEN
+		RETURN 0;
 	
  	ELSIF role COLLATE sys.database_default IN ('sysadmin', 'securityadmin', 'dbcreator') THEN
 	  	has_role = (pg_has_role(login::TEXT, role::TEXT, 'MEMBER')
@@ -2717,9 +2791,7 @@ DECLARE
     tz_offset PG_CATALOG.TEXT;
     tz_name PG_CATALOG.TEXT;
     lower_tzn PG_CATALOG.TEXT;
-    prev_res PG_CATALOG.TEXT;
     result PG_CATALOG.TEXT;
-    is_dstt bool;
     tz_diff PG_CATALOG.TEXT;
     input_expr_tx PG_CATALOG.TEXT;
     input_expr_tmz TIMESTAMPTZ;
@@ -2740,31 +2812,25 @@ BEGIN
     END IF;
 
     IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
-        input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        input_expr_tx := PG_CATALOG.concat(input_expr_tx,tz_offset);
-        return cast(input_expr_tx as sys.datetimeoffset);
+        input_expr_tx := input_expr::TEXT || ' ' || tz_name;
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
         input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        result := PG_CATALOG.concat(result,tz_offset);
-        return cast(result as sys.datetimeoffset);
     ELSE
         RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
     END IF;
-       
+
+    input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+    result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+    tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
+
+    if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := PG_CATALOG.concat('+',tz_diff);
+    END IF;
+
+    tz_offset := PG_CATALOG.left(tz_diff,6);
+    result := PG_CATALOG.concat(result,tz_offset);
+
+    return cast(result as sys.datetimeoffset);     
 END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
@@ -11472,7 +11538,7 @@ BEGIN
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT 
@@ -11512,6 +11578,171 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
   		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT)
+RETURNS INTEGER
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+DECLARE
+    extra_bytes CONSTANT INTEGER := 4;
+    return_value INTEGER;
+BEGIN
+	return_value:=
+        CASE pg_catalog.LOWER(property_name)
+            WHEN 'charmaxlen' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes
+                    ELSE NULL
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'allowsnull' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attnotnull THEN 0
+                    ELSE 1
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'iscomputed' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attgenerated != '' THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            WHEN 'columnid' COLLATE sys.database_default THEN
+                (SELECT a.attnum FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'ordinal' COLLATE sys.database_default THEN
+                (SELECT b.count FROM (SELECT attname, row_number() OVER (ORDER BY a.attnum) AS count FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
+            WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN char_length(a.attidentity) > 0 THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            ELSE
+                NULL
+        END;
+    RETURN return_value::INTEGER;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_try_conv_money_to_string(TEXT, PG_CATALOG.MONEY, NUMERIC) RENAME TO babelfish_try_conv_money_to_string_deprecated_in_4_5_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
+														IN p_moneyval NUMERIC,
+														IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+	v_format VARCHAR COLLATE "C";
+	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
+	v_moneysign NUMERIC(19,4) := sign(v_moneyval);
+	v_moneyabs NUMERIC(19,4) := abs(v_moneyval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_result TEXT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+	v_digits := length(v_moneyabs::TEXT);
+	v_decimal_digits := scale(v_moneyabs);
+	IF (v_decimal_digits > 0) THEN
+		v_integral_digits := v_digits - v_decimal_digits - 1;
+	ELSE
+		v_integral_digits := v_digits;
+	END IF;
+	IF (v_style = 0) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+	ELSIF (v_style = 1) THEN
+		IF (v_moneysign::SMALLINT = -1) THEN
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 1, 1) || substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 3);
+		ELSE
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
+		END IF;
+	ELSIF (v_style = 2 OR v_style = 126) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
+	ELSE
+		RAISE invalid_parameter_value;
+	END IF;
+
+	RETURN v_result;
+EXCEPTION
+	WHEN invalid_parameter_value THEN
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
+					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+					HINT := 'Change "style" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_4_5_0'); 
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

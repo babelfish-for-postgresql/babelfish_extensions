@@ -623,6 +623,31 @@ GO
 DROP ROLE test_role3
 GO
 
+-- Test system defined database role memberships
+-- tsql
+-- Following should return 1
+select is_rolemember('db_ddladmin', 'db_ddladmin')
+GO
+select is_rolemember('db_securityadmin', 'db_securityadmin')
+GO
+select is_rolemember('db_accessadmin', 'db_accessadmin')
+GO
+select is_rolemember('db_datareader', 'db_datareader')
+GO
+select is_rolemember('db_datawriter', 'db_datawriter')
+GO
+select is_rolemember('db_owner', 'db_owner')
+GO
+select is_rolemember('db_owner', 'dbo')
+GO
+select is_rolemember('dbo', 'dbo')
+GO
+
+-- This should return NULL
+select is_rolemember('dbo', 'db_owner')
+GO
+
+
 -- Clean up
 DROP USER test_user1
 GO

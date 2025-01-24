@@ -1170,9 +1170,7 @@ DECLARE
     tz_offset PG_CATALOG.TEXT;
     tz_name PG_CATALOG.TEXT;
     lower_tzn PG_CATALOG.TEXT;
-    prev_res PG_CATALOG.TEXT;
     result PG_CATALOG.TEXT;
-    is_dstt bool;
     tz_diff PG_CATALOG.TEXT;
     input_expr_tx PG_CATALOG.TEXT;
     input_expr_tmz TIMESTAMPTZ;
@@ -1193,31 +1191,25 @@ BEGIN
     END IF;
 
     IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
-        input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        input_expr_tx := PG_CATALOG.concat(input_expr_tx,tz_offset);
-        return cast(input_expr_tx as sys.datetimeoffset);
+        input_expr_tx := input_expr::TEXT || ' ' || tz_name;
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
         input_expr_tx := input_expr::TEXT;
-        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
-        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
-        tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
-        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
-            tz_diff := PG_CATALOG.concat('+',tz_diff);
-        END IF;
-        tz_offset := PG_CATALOG.left(tz_diff,6);
-        result := PG_CATALOG.concat(result,tz_offset);
-        return cast(result as sys.datetimeoffset);
     ELSE
         RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
     END IF;
-       
+
+    input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+    result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+    tz_diff := (SELECT input_expr_tmz AT TIME ZONE tz_name - input_expr_tmz AT TIME ZONE 'UTC')::TEXT;
+
+    if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := PG_CATALOG.concat('+',tz_diff);
+    END IF;
+
+    tz_offset := PG_CATALOG.left(tz_diff,6);
+    result := PG_CATALOG.concat(result,tz_offset);
+
+    return cast(result as sys.datetimeoffset);
 END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
@@ -3172,8 +3164,8 @@ BEGIN
                 (SELECT a.attnum FROM pg_catalog.pg_attribute a
                  WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
             WHEN 'ordinal' COLLATE sys.database_default THEN
-                (SELECT b.count FROM (SELECT attname, row_number() OVER () AS count FROM pg_catalog.pg_attribute a
-                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0 ORDER BY a.attnum) AS b WHERE b.attname = property COLLATE sys.database_default)
+                (SELECT b.count FROM (SELECT attname, row_number() OVER (ORDER BY a.attnum) AS count FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
             WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
                 CASE
                     WHEN char_length(a.attidentity) > 0 THEN 1

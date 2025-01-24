@@ -7965,7 +7965,7 @@ GO
 -- Test Case 56: UDTs with BIT and mathematical operations
 SELECT CASE 3
    WHEN 1 THEN CAST(1 AS BIT) * CAST(12345.67 AS NumericType_BABEL_5341)
-   WHEN 2 THEN CAST(0 AS BIT) * CAST(98765.4321 AS DecimalType_BABEL_5341)
+   WHEN 2 THEN CAST(1 AS BIT) * CAST(98765.4321 AS DecimalType_BABEL_5341)
    WHEN 3 THEN CAST(1 AS BIT) + CAST(1234567.8901 AS BigNumericType_BABEL_5341)
    WHEN 4 THEN CAST(1 AS BIT) - CAST(99.99 AS SmallDecimalType_BABEL_5341)
    ELSE CAST(0 AS NumericType_BABEL_5341)
@@ -8200,6 +8200,9 @@ SELECT CAST(4.56 AS NUMERIC(5,2))
 ORDER BY value;
 GO
 
+-- TODO FIX: While calculating for money and smallmoney
+-- babelfish is calculating it same as numeric logic
+-- which is different from TSQL.
 -- Test Case 81: UNION with MONEY type
 SELECT CAST(1.23 AS DECIMAL(10,2)) AS value
 UNION ALL
@@ -8298,4 +8301,95 @@ ratio_case_one = CASE WHEN a.integer_two = 0 THEN NULL ELSE a.integer_one / CONV
 ratio_case_two = CASE WHEN 1 = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END,
 ratio_case_three = CASE WHEN @test_int = 0 THEN NULL ELSE a.integer_one / CONVERT(DECIMAL, a.integer_two) END
 FROM BABEL_5341_T2 a;
+GO
+
+-- Test Case 93: to get scale and precision of views from system metadata
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V1'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V2'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V3'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V4'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V5'
+    AND c.[name] = 'RESULT';
+GO
+
+SELECT 
+    o.[name] AS view_name,
+    c.[name] AS column_name,
+    t.[name] AS data_type,
+    c.[precision],
+    c.[scale]
+FROM 
+    sys.views o
+    INNER JOIN sys.columns c ON o.[object_id] = c.[object_id]
+    INNER JOIN sys.types t ON c.[user_type_id] = t.[user_type_id]
+WHERE 
+    o.[name] = 'BABEL_5341_V6'
+    AND c.[name] = 'RESULT';
 GO
