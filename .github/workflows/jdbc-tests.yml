@@ -100,15 +100,24 @@ jobs:
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
 
-      - name: Check for cache reference leak
+      - name: Check for unexpected leak warnings
         if: always()
-        id: cache-reference-leak
+        id: check-leak-warnings
         run: |
-          if grep -q "WARNING:  cache reference leak" ~/psql/data/logfile ~/psql/data_5433/logfile; then
-            echo "Cache reference leak detected in logs!"
-            exit 1
+          # Set the path to the expected-warnings.out file
+          EXPECTED_WARNINGS_FILE=~/babelfish_extensions/test/JDBC/expected/expected-warnings.out
+
+          # Collect all leak warnings from log files, extracting only the warning type
+          grep -i "WARNING:.*leak" ~/psql/data/logfile ~/psql/data_5433/logfile | sed -E 's/^.*WARNING:\s*([^:]+\s+reference\s+leak):.*/WARNING:  \1:/' | sort | uniq > actual-leak-warnings.out
+
+          # Compare actual leak warnings with expected leak warnings
+          if diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out; then
+            echo "No unexpected leak warnings found in logs."
           else
-            echo "No cache reference leak found in logs."
+            echo "Unexpected leak warnings detected in logs!"
+            echo "Differences between expected and actual leak warnings:"
+            diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out
+            exit 1
           fi
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
