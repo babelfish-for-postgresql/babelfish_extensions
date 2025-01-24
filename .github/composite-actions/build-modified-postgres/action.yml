@@ -35,7 +35,7 @@ runs:
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi            
-          REPOSITORY_OWNER=$HEAD_OWNER
+          REPOSITORY_OWNER=${{ github.event.pull_request.head.repo.owner.login }}
         else
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
             ENGINE_BRANCH=$GITHUB_REF_NAME
