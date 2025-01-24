@@ -1,3 +1,354 @@
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  SPI connection leak found, expected count
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
+WARNING:  TupleDesc reference leak
 WARNING:  relcache reference leak
 WARNING:  relcache reference leak
 WARNING:  relcache reference leak
@@ -27,354 +378,3 @@ WARNING:  relcache reference leak
 WARNING:  relcache reference leak
 WARNING:  relcache reference leak
 WARNING:  relcache reference leak
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  SPI connection leak found, expected count
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
-WARNING:  TupleDesc reference leak
