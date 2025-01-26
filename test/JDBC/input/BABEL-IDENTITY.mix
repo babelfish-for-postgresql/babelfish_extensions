@@ -557,3 +557,243 @@ GO
 
 DROP TABLE babel_3384_test
 GO
+
+-- tsql
+CREATE DATABASE identity_insert_db
+GO
+
+USE identity_insert_db
+GO
+
+CREATE LOGIN identity_insert_l1 WITH PASSWORD = '123'
+GO
+
+CREATE USER identity_insert_u1 FOR LOGIN identity_insert_l1 WITH DEFAULT_SCHEMA = identity_insert_sch
+GO
+
+CREATE SCHEMA identity_insert_sch AUTHORIZATION identity_insert_u1
+GO
+
+CREATE TABLE identity_insert_t1 (a int identity, b int)
+GO
+
+-- Three part name: wrong catalog name. Should throw error
+SET IDENTITY_INSERT wrong_db.dbo.identity_insert_t1 ON
+GO
+
+-- Three part name: wrong schema name. Should throw error
+SET IDENTITY_INSERT identity_insert_db.wrong_sch.identity_insert_t1 ON
+GO
+
+-- Three part name: wrong table name. Should throw error
+SET IDENTITY_INSERT identity_insert_db.dbo.wrong_t1 ON
+GO
+
+-- Three part name: omit database name. Should throw syntax error
+SET IDENTITY_INSERT .dbo.wrong_t1 ON
+GO
+
+-- Three part name: omit schema name. Should throw syntax error
+SET IDENTITY_INSERT identity_insert_db..wrong_t1 ON
+GO
+
+-- Three part name: omit both database and schema name. Should throw syntax error
+SET IDENTITY_INSERT ..wrong_t1 ON
+GO
+
+-- Should fail as IDENTITY_INSERT is OFF by default
+INSERT INTO identity_insert_t1 (a, b) VALUES (2, 102);
+GO
+
+-- Three-part name: catalog name = current database
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
+GO
+
+-- Should not fail
+INSERT INTO identity_insert_t1 (a, b) VALUES (3, 103);
+GO
+
+SELECT * FROM identity_insert_t1 ORDER BY a
+GO
+
+USE master
+GO
+
+-- Three-part name: catalog name != current database (cross-db)
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 OFF
+GO
+
+-- Should fail
+INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (4, 104);
+GO
+
+-- tsql user=identity_insert_l1 password=123
+USE master
+GO
+
+-- User does not have ALTER permission on table
+-- Three-part name: catalog name != current database (cross-db). Should throw error
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
+GO
+
+-- tsql
+-- Add user as member of db_owner
+USE identity_insert_db
+GO
+
+ALTER ROLE db_owner ADD MEMBER identity_insert_u1
+GO
+
+-- tsql user=identity_insert_l1 password=123
+-- Should now have permission
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 OFF
+GO
+
+-- Should fail
+INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (5, 105);
+GO
+
+-- tsql
+-- Drop from db_owner, give all supported GRANTs. Should still not have permission to set IDENTITY_INSERT
+USE identity_insert_db
+GO
+
+ALTER ROLE db_owner DROP MEMBER identity_insert_u1
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON OBJECT :: identity_insert_t1 TO identity_insert_u1
+GO
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA :: dbo TO identity_insert_u1
+GO
+
+-- tsql user=identity_insert_l1 password=123
+-- Should not have permission. Should give error
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
+GO
+
+-- tsql
+-- Revoke all the GRANTs. Add user as a member of db_ddladmin. Should now have permission to set IDENTITY_INSERT
+USE identity_insert_db
+GO
+
+REVOKE SELECT, INSERT, UPDATE, DELETE ON OBJECT :: identity_insert_t1 FROM identity_insert_u1
+GO
+
+REVOKE SELECT, INSERT, UPDATE, DELETE ON SCHEMA :: dbo FROM identity_insert_u1
+GO
+
+ALTER ROLE db_ddladmin ADD MEMBER identity_insert_u1
+GO
+
+-- tsql user=identity_insert_l1 password=123
+-- Should now have permission
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 OFF
+GO
+
+-- Should fail
+INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (6, 106);
+GO
+
+-- tsql
+-- Remove user as a member of db_ddladmin. Should not have permission to set IDENTITY_INSERT
+USE identity_insert_db
+GO
+
+ALTER ROLE db_ddladmin DROP MEMBER identity_insert_u1
+GO
+
+-- tsql user=identity_insert_l1 password=123
+-- Should not have permission. Should give error
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
+GO
+
+-- Create a table in schema where user is owner
+USE identity_insert_db
+GO
+
+CREATE TABLE identity_insert_sch.identity_insert_t2 (c int identity, d int)
+GO
+
+SELECT USER_NAME(), IS_MEMBER('db_owner'), IS_MEMBER('db_ddladmin')
+GO
+
+USE master
+GO
+
+SELECT USER_NAME(), IS_MEMBER('db_owner'), IS_MEMBER('db_ddladmin')
+GO
+
+-- Even though user is not member of db_owner, db_ddladmin roles, as owner of table it can set IDENTITY_INSERT
+-- Three part name
+SET IDENTITY_INSERT identity_insert_db.identity_insert_sch.identity_insert_t2 ON
+GO
+
+USE identity_insert_db
+GO
+
+-- Should not fail
+INSERT INTO identity_insert_t2 (c, d) VALUES (1, 101);
+GO
+
+SELECT * FROM identity_insert_t2
+GO
+
+DROP TABLE identity_insert_t2
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'identity_insert_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE identity_insert_db
+GO
+
+DROP TABLE identity_insert_t1
+GO
+
+DROP SCHEMA identity_insert_sch
+GO
+
+DROP USER identity_insert_u1
+GO
+
+DROP LOGIN identity_insert_l1
+GO
+
+USE master
+GO
+
+DROP DATABASE identity_insert_db
+GO
+
+-- We should ensure physical schema found corresponds to appropriate logical database
+CREATE DATABASE master_ident_ins
+GO
+
+USE master_ident_ins
+GO
+
+CREATE TABLE ident_t1 (a int identity, b int)
+GO
+
+-- Should not fail because relation exists
+SET IDENTITY_INSERT master_ident_ins.dbo.ident_t1 ON
+GO
+
+-- Should fail because relation does not exist
+SET IDENTITY_INSERT master.ident_ins_dbo.ident_t1 ON
+GO
+
+USE master
+GO
+
+DROP DATABASE master_ident_ins
+GO
