@@ -168,14 +168,11 @@ jobs:
               echo "Warning counts are as expected:"
               echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
               echo "Leak warnings: $LEAK_COUNT"
-              exit 0
           fi
           
           # Count warnings by type
           echo "Warning counts:"
           cut -d: -f1 "$CURRENT_WARNINGS" | sort | uniq -c
-          
-          exit 0
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
