@@ -100,22 +100,26 @@ jobs:
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
 
-      - name: Check for unexpected leak warnings
+      - name: Check for unexpected warnings
         if: always()
-        id: check-leak-warnings
+        id: check-warnings
         run: |
           # Set the path to the expected-warnings.out file
           EXPECTED_WARNINGS_FILE=~/work/babelfish_extensions/babelfish_extensions/test/JDBC/expected/expected-warnings.out
 
           # Collect all leak warnings from log files, extracting only the warning type
-          grep -i "WARNING:.*leak" ~/psql/data/logfile | sed -E 's/^.*WARNING:\s*([^:]+(\s+reference\s+leak|connection leak)[^:]*):.*/WARNING:  \1/' | sort  > actual-leak-warnings.out
+          grep -h "WARNING:" ~/psql/data/logfile ~/psql/data_5433/logfile test_logs.out | 
+          sed -E 's/^.*WARNING:\s*/WARNING:  /' | 
+          grep -E "WARNING:  (cast will be ignored because the source data type is a domain|role|permission denied to analyze|transaction left non-empty SPI stack|NUMERIC or DECIMAL type is cast to BIGINT|TIME\(7\)|TIMESTAMP\(7\)|snapshot|This function has been deprecated and will no longer drop all users|parameter cannot be null|you don't own a lock of type (ShareLock|RowExclusiveLock)|babelfishpg_tds.product_version cannot be set|Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION|no privileges were granted|TupleDesc reference leak|SPI connection leak|relcache reference leak|cache reference leak)" | 
+          sed -E 's/(WARNING:  .*?(reference leak|connection leak)):.*/\1/' |
+          sort > actual-warnings.out
 
-          # Compare actual leak warnings with expected leak warnings
+          # Compare actual warnings with expected leak warnings
           if diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out; then
-            echo "No unexpected leak warnings found in logs."
+            echo "No unexpected warnings found in logs."
           else
             echo "Unexpected leak warnings detected in logs!"
-            echo "Differences between expected and actual leak warnings:"
+            echo "Differences between expected and actual warnings:"
             diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out
             exit 1
           fi
