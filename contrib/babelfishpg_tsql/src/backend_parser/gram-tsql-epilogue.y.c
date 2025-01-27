@@ -2040,24 +2040,24 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 char *
 generate_unpivot_source_table_alias(const char *base)
 {
-    char *result;
-    int base_len;
-    
-    /* Use "src" as base if none provided */
-    if (!base)
-    {    base = "src"; }
-        
-    /* Ensure base name length fits within NAMEDATALEN with suffix */
-    base_len = strlen(base);
-    if (base_len + 7 > NAMEDATALEN) /* 7 = underscore + 6 digits */
-    {    base_len = NAMEDATALEN - 7; }
-        
-    /* Generate unique name: base_XXXXXX where X is random digit */
-    result = palloc(base_len + 8); /* +8 for underscore, 6 digits, null terminator */
-    memcpy(result, base, base_len);
-    sprintf(result + base_len, "_%06d", rand() % 1000000);
-    
-    return result;
+	char *result;
+	int base_len;
+	
+	/* Use "src" as base if none provided */
+	if (!base)
+	{	base = "src"; }
+		
+	/* Ensure base name length fits within NAMEDATALEN with suffix */
+	base_len = strlen(base);
+	if (base_len + 7 > NAMEDATALEN) /* 7 = underscore + 6 digits */
+	{	base_len = NAMEDATALEN - 7; }
+		
+	/* Generate unique name: base_XXXXXX where X is random digit */
+	result = palloc(base_len + 8); /* +8 for underscore, 6 digits, null terminator */
+	memcpy(result, base, base_len);
+	sprintf(result + base_len, "_%06d", rand() % 1000000);
+	
+	return result;
 }
 
 /*
@@ -2067,7 +2067,7 @@ generate_unpivot_source_table_alias(const char *base)
  *
  * Input: components = list_make3(table_ref, unpivot_clause, alias)
  * Returns: List of ["UNPIVOT", unpivot_alias, dimension_col, measure_col, 
- *                   source_alias, source_cols, transformed_node]
+ *				   source_alias, source_cols, transformed_node]
  *
  * The function:
  * - Extracts measure column, dimension column and source columns from unpivot clause
@@ -2079,195 +2079,182 @@ static Node *
 tsql_unpivot_debug_transformation(List *components)
 {
 	Node *table_ref;
-    List *unpivot_info;
-    Alias *alias;
-    Node *measure_col;
-    Node *dim_col;
-    List *source_cols;
-    JoinExpr *n;
-    RangeSubselect *rarg;
-    SelectStmt *values_subquery;
-    List *values_list = NIL;
-    ListCell *lc;
-    //RangeVar *larg;
+	List *unpivot_info;
+	Alias *alias;
+	Node *measure_col;
+	Node *dim_col;
+	List *source_cols;
+	JoinExpr *n;
+	RangeSubselect *rarg;
+	SelectStmt *values_subquery;
+	List *values_list = NIL;
+	ListCell *lc;
 	char *source_alias;
 	List *result_info;
-    //List *unpivot_cols;
 	char *measure_colname;
-    char *dim_colname;
+	char *dim_colname;
 	char *inner_alias_name;
-
-
-    /* Extract components */
-    table_ref = (Node *)linitial(components);
-    unpivot_info = (List *)lsecond(components);
-    alias = (Alias *)lthird(components);
-
-    /* Extract unpivot components */
-    measure_col = (Node *)linitial(unpivot_info);
-    dim_col = (Node *)lsecond(unpivot_info);
-    source_cols = (List *)lthird(unpivot_info);
-
+	
+	/* Extract components */
+	table_ref = (Node *)linitial(components);
+	unpivot_info = (List *)lsecond(components);
+	alias = (Alias *)lthird(components);
+	
+	/* Extract unpivot components */
+	measure_col = (Node *)linitial(unpivot_info);
+	dim_col = (Node *)lsecond(unpivot_info);
+	source_cols = (List *)lthird(unpivot_info);
+	
 	measure_colname = strVal(llast(((ColumnRef *)measure_col)->fields));
-    dim_colname = strVal(llast(((ColumnRef *)dim_col)->fields));
-
-    /* Create basic nodes for equivalent CROSS JOIN LATERAL query tree */
-    n = makeNode(JoinExpr);
-    rarg = makeNode(RangeSubselect);
-    values_subquery = makeNode(SelectStmt);
-
+	dim_colname = strVal(llast(((ColumnRef *)dim_col)->fields));
+	
+	/* Create basic nodes for equivalent CROSS JOIN LATERAL query tree */
+	n = makeNode(JoinExpr);
+	rarg = makeNode(RangeSubselect);
+	values_subquery = makeNode(SelectStmt);
+	
 	n->jointype = JOIN_INNER;
-    n->isNatural = false;
-
-    /* Set up left side with alias if not present */
-    if (IsA(table_ref, RangeVar))
-    {
+	n->isNatural = false;
+	
+	/* Set up left side with alias if not present */
+	if (IsA(table_ref, RangeVar))
+	{
 		/* Source is a table */
-        RangeVar *larg = (RangeVar *)table_ref;
-        if (larg->alias == NULL)
-        {
-            larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
-        }
+		RangeVar *larg = (RangeVar *)table_ref;
+		if (larg->alias == NULL)
+		{
+			larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
+		}
 		source_alias = larg->alias->aliasname;
-    }
+	}
 	else if (IsA(table_ref, RangeSubselect))
-    {
+	{
 		/* Source is a subquery */
-        RangeSubselect *rsq = (RangeSubselect *)table_ref;
+		RangeSubselect *rsq = (RangeSubselect *)table_ref;
 		if (rsq->alias == NULL)
 		{
 			rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
 		}
 		source_alias = rsq->alias->aliasname;
-    }
-    else if (IsA(table_ref, JoinExpr))
-    {
-        /* For JOIN, we need to ensure the last joined table has an alias */
+	}
+	else if (IsA(table_ref, JoinExpr))
+	{
+		/* For JOIN, we need to ensure the last joined table has an alias */
 		/* TODO: First extract Join Alias if present else rarg */
-        JoinExpr *join = (JoinExpr *)table_ref;
-        Node *last_table = join->rarg;
-        
-        if (IsA(last_table, RangeVar))
-        {
-            RangeVar *rv = (RangeVar *)last_table;
-            if (rv->alias == NULL) {
-            	rv->alias = makeAlias(generate_unpivot_source_table_alias(rv->relname), NIL);
+		JoinExpr *join = (JoinExpr *)table_ref;
+		Node *last_table = join->rarg;
+		
+		if (IsA(last_table, RangeVar))
+		{
+			RangeVar *rv = (RangeVar *)last_table;
+			if (rv->alias == NULL) {
+				rv->alias = makeAlias(generate_unpivot_source_table_alias(rv->relname), NIL);
 			}
-            source_alias = rv->alias->aliasname;
-        }
-        else if (IsA(last_table, RangeSubselect))
-        {
-            RangeSubselect *rsq = (RangeSubselect *)last_table;
-            if (rsq->alias == NULL) {
+			source_alias = rv->alias->aliasname;
+		}
+		else if (IsA(last_table, RangeSubselect))
+		{
+			RangeSubselect *rsq = (RangeSubselect *)last_table;
+			if (rsq->alias == NULL) {
 				rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
 			}
 			source_alias = rsq->alias->aliasname;
-        }
-    }
+		}
+	}
 	else if (IsA(table_ref, List))
-    {
-        /* Handle case where table_ref is an UNPIVOT node */
-        List *prev_unpivot = (List *)table_ref;
-        if (list_length(prev_unpivot) == 7 &&
-            IsA(linitial(prev_unpivot), String) &&
-            strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
-        {
-            /* Use the alias from previous UNPIVOT */
+	{
+		/* Handle case where table_ref is an UNPIVOT node */
+		List *prev_unpivot = (List *)table_ref;
+		if (list_length(prev_unpivot) == 7 &&
+			IsA(linitial(prev_unpivot), String) &&
+			strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
+		{
+			/* Use the alias from previous UNPIVOT */
 			source_alias = strVal(list_nth(prev_unpivot, 1));
-            /* Use the transformed node as our left arg */
-            //n->larg = (Node *)list_nth(prev_unpivot, 6);
-			
-        }
-        else
-        {
-            ereport(ERROR,
-                    (errcode(ERRCODE_SYNTAX_ERROR),
-                     errmsg("Invalid source structure for UNPIVOT operation")));
-        }
-    }
+			/* Use the transformed node as our left arg */
+			//n->larg = (Node *)list_nth(prev_unpivot, 6);
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Invalid source structure for UNPIVOT operation")));
+		}
+	}
 	else
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_SYNTAX_ERROR),
-                 errmsg("Invalid source structure for UNPIVOT operation")));
-    }
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Invalid source structure for UNPIVOT operation")));
+	}
 	n->larg = table_ref;
-
+	
 	/* Build VALUES list from unpivot source columns */
-    foreach(lc, source_cols)
-    {
+	foreach(lc, source_cols)
+	{
 		// TODO: needs to be llast if aliases are used in values list, ex c.q1
-        String *col_name = (String *)lfirst(lc);
-        List *value_pair;
-        ColumnRef *col_ref;
-        
-        /* Create ColumnRef with source table's alias */
-        col_ref = makeNode(ColumnRef);
-        col_ref->fields = list_make2(
-            makeString(source_alias),     /* source table alias */
-            makeString(strVal(col_name)) /* column name */
-        );
-        
-        /* Create pair (column_ref, column_name) */
-        value_pair = list_make2(
-            col_ref,
-            makeStringConst(strVal(col_name), -1)
-        );
-        values_list = lappend(values_list, value_pair);
-    }
-
-    /* Set up LATERAL VALUES */
-    rarg->lateral = true;
-    values_subquery->valuesLists = values_list;
-    rarg->subquery = (Node *)values_subquery;
-
-    /* Handle alias for Join-Values (RangeSubSelect) clause 
+		String *col_name = (String *)lfirst(lc);
+		List *value_pair;
+		ColumnRef *col_ref;
+		
+		/* Create ColumnRef with source table's alias */
+		col_ref = makeNode(ColumnRef);
+		col_ref->fields = list_make2(
+			makeString(source_alias), /* source table alias */
+			makeString(strVal(col_name)) /* column name */
+		);
+		
+		/* Create pair (column_ref, column_name) */
+		value_pair = list_make2(
+			col_ref,
+			makeStringConst(strVal(col_name), -1)
+		);
+		values_list = lappend(values_list, value_pair);
+	}
+	
+	/* Set up LATERAL VALUES */
+	rarg->lateral = true;
+	values_subquery->valuesLists = values_list;
+	rarg->subquery = (Node *)values_subquery;
+	
+	/* Handle alias for Join-Values (RangeSubSelect) clause 
 	basically, replace unpivot_alias with unpivot_alias_XXXXXX */
 	inner_alias_name = generate_unpivot_source_table_alias(alias->aliasname);
-    if (alias != NULL)
-    {
-        rarg->alias = makeAlias(inner_alias_name, list_make2(
+	if (alias != NULL)
+	{
+		rarg->alias = makeAlias(inner_alias_name, list_make2(
 			makeString(measure_colname),
 			makeString(dim_colname)
 			)
 		);
-    }
-    else
-    {
-        ereport(ERROR,
-                    (errcode(ERRCODE_SYNTAX_ERROR),
-                     errmsg("Alias for UNPIVOT operation is required.")));
-    }
-
-    n->rarg = (Node *)rarg;
-    n->usingClause = NIL;
-    n->quals = NULL;
+	}
+	else
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Alias for UNPIVOT operation is required.")));
+	}
+	
+	n->rarg = (Node *)rarg;
+	n->usingClause = NIL;
+	n->quals = NULL;
 	/* Rewrite by adding unpivot alias as the complete Join operation alias */
 	n->alias = alias;
-
+	
 	/* Create result info list */
-    // result_info = list_make3(
-    //     list_make1(makeString("UNPIVOT")),
-    //     list_make2(
-    //         list_make2(rarg->alias->aliasname, unpivot_cols),  /* unpivot alias and its columns */
-    //         list_make2(larg->alias->aliasname, NIL)            /* source table alias */
-    //     ),
-    //     list_make1(n)  /* transformed node */
-    // );
-	/* Create result info list */
-    result_info = list_make5(
-        makeString("UNPIVOT"),
-        makeString(alias->aliasname),		/* unpivot alias */
-        makeString(dim_colname),			/* dimension column */
-        makeString(measure_colname),		/* measure column */
-        makeString(source_alias)			/* source table/query alias */
-    );
-    
-    /* Append the unpivot source columns and transformed node */
+	result_info = list_make5(
+		makeString("UNPIVOT"),
+		makeString(alias->aliasname),		/* unpivot alias */
+		makeString(dim_colname),			/* dimension column */
+		makeString(measure_colname),		/* measure column */
+		makeString(source_alias)			/* source table/query alias */
+	);
+	
+	/* Append the unpivot source columns and transformed node */
 	result_info = lappend(result_info, source_cols);
-    result_info = lappend(result_info, n);
-
-    return (Node *) result_info;
+	result_info = lappend(result_info, n);
+	
+	return (Node *) result_info;
 }
 
 /* 
