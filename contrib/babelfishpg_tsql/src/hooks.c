@@ -139,7 +139,7 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 													SortByDir ordering);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
-static bool transform_unpivot_clause_recursive(Node **node, Node **where_clause, List **dim_cols, List **unpivot_src_cols);
+static bool transform_unpivot_clause_recursive(Node **node, Node **where_clause, List **measure_cols, List **unpivot_src_cols);
 static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols);
 /*****************************************
  * 			Commands Hooks
@@ -5334,14 +5334,14 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
     Node *where_clause = stmt->whereClause;
     ListCell *lc;
-	List *dim_cols = NIL;
+	List *measure_cols = NIL;
 	List *src_cols = NIL;
 	bool has_unpivot = false;
 
 
     foreach(lc, stmt->fromClause)
     {
-        has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause, &dim_cols, &src_cols);
+        has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause, &measure_cols, &src_cols);
     }
 
     if (has_unpivot)
@@ -5349,9 +5349,9 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 		stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
 
 		/* Create IS NOT NULL where conditions for all collected columns */
-		if (dim_cols != NIL)
+		if (measure_cols != NIL)
 		{
-			foreach(lc, dim_cols)
+			foreach(lc, measure_cols)
 			{
 				char *measure_col = strVal(lfirst(lc));
 				ColumnRef *measure_ref;
@@ -5388,14 +5388,28 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/* Free allocated memory */
-    list_free_deep(dim_cols);
+    list_free_deep(measure_cols);
+	//list_free_deep(src_cols);
+	//free(has_unpivot);
 }
 
-static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **dim_cols, List **unpivot_src_cols)
+/*
+ * Recursively process UNPIVOT list nodes in FROM clause tree.
+ * Traverses nodes to find and process UNPIVOT transformations.
+ * Extracts metadata from List and reassigns JoinExpr node to pointer.
+ *
+ * Parameters:
+ *   node_ptr - Current node being processed
+ *   where_clause - Accumulating WHERE conditions
+ *   measure_cols - List of measure columns for NULL handling
+ *   unpivot_src_cols - Source columns for SELECT * filtering
+ *
+ * Returns: true if UNPIVOT found and processed
+ */
+static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **measure_cols, List **unpivot_src_cols)
 {
     JoinExpr *join;
     List *unpivot_info;
-    //char *unpivot_alias;
     char *measure_col;
     Node *transformed_node;
 	List *cols;
@@ -5408,8 +5422,8 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
     if (IsA(*node_ptr, JoinExpr))
     {
         join = (JoinExpr *)*node_ptr;
-		found_unpivot |= transform_unpivot_clause_recursive(&join->larg, where_clause, dim_cols, unpivot_src_cols);
-        found_unpivot |= transform_unpivot_clause_recursive(&join->rarg, where_clause, dim_cols, unpivot_src_cols);
+		found_unpivot |= transform_unpivot_clause_recursive(&join->larg, where_clause, measure_cols, unpivot_src_cols);
+        found_unpivot |= transform_unpivot_clause_recursive(&join->rarg, where_clause, measure_cols, unpivot_src_cols);
     }
     else if (IsA(*node_ptr, List))
     {
@@ -5422,7 +5436,7 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
             transformed_node = list_nth(unpivot_info, 6);
 
             /* Add this measure column to the list */
-            *dim_cols = lappend(*dim_cols, makeString(measure_col));
+            *measure_cols = lappend(*measure_cols, makeString(measure_col));
 
             /* Get source columns */
 			cols = (List *)list_nth(unpivot_info, 5);
@@ -5434,7 +5448,7 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
             /* Replace UNPIVOT info with transformed node and recurse on it */
             *node_ptr = transformed_node;
 			found_unpivot = true;
-			found_unpivot |= transform_unpivot_clause_recursive(node_ptr, where_clause, dim_cols, unpivot_src_cols);
+			found_unpivot |= transform_unpivot_clause_recursive(node_ptr, where_clause, measure_cols, unpivot_src_cols);
         }
     }
 
@@ -5442,8 +5456,16 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
 }
 
 /*
- * Expand * and remove unpivot source columns from target list
- * Returns new target list with source columns removed
+ * Process SELECT * for UNPIVOT queries by removing source columns.
+ * Expands * and filters out columns used in UNPIVOT operation.
+ *
+ * Parameters:
+ *   pstate - Parser state
+ *   stmt - Statement containing target list
+ *   source_cols - List of columns to exclude
+ *
+ * Returns: Filtered target list excluding unpivot source columns
+ * Note: Only processes if target list contains * 
  */
 static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols)
 {
@@ -5488,6 +5510,7 @@ static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt 
         if (!skip_column)
         {
             /* Create new ResTarget for this column */
+            //ResTarget *rt = make_restarget_from_cstr_list(list_make1(makeString(te->resname)));
             ResTarget *rt = make_restarget_from_cstr_list(list_make1(makeString(te->resname)));
             result_targetlist = lappend(result_targetlist, rt);
         }

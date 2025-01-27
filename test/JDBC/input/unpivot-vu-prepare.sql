@@ -7,10 +7,127 @@ CREATE TABLE customer_turnover (
 GO
     
 INSERT INTO customer_turnover VALUES
-    (1, 'Cust A', 'R', 100, 200, 300, 400),
     (2, 'Cust B', 'P', 150, 250, 350, 450),
+    (1, 'Cust A', 'R', 100, 200, 300, 400),
     (3, 'Cust C', 'R', NULL, 0, 400, 500);
 GO
+
+-- table with all numeric types
+CREATE TABLE all_numeric_types (
+    id INT,
+    -- Bit values
+    bit_val1 BIT,
+    bit_val2 BIT,
+    bit_val3 BIT,
+    
+    -- Decimal/Numeric values (exact, fixed-precision)
+    decimal_val1 DECIMAL(18,2),
+    decimal_val2 DECIMAL(18,2),
+    numeric_val1 NUMERIC(18,2),
+    numeric_val2 NUMERIC(18,2),
+    
+    -- Float/Real values (approximate)
+    float_val1 FLOAT,
+    float_val2 FLOAT,
+    real_val1 REAL,
+    real_val2 REAL,
+    
+    -- Integer family values
+    bigint_val1 BIGINT,
+    bigint_val2 BIGINT,
+    int_val1 INT,
+    int_val2 INT,
+    smallint_val1 SMALLINT,
+    smallint_val2 SMALLINT,
+    tinyint_val1 TINYINT,
+    tinyint_val2 TINYINT,
+    
+    -- Money values
+    money_val1 MONEY,
+    money_val2 MONEY,
+    smallmoney_val1 SMALLMONEY,
+    smallmoney_val2 SMALLMONEY
+);
+
+INSERT INTO all_numeric_types VALUES (
+    1,                          -- id
+    1, 0, 1,                   -- bit
+    123456.78, 98765.43,       -- decimal
+    987654.32, 456789.01,      -- numeric
+    123456.789, 98765.432,     -- float
+    987654.321, 456789.012,    -- real
+    9223372036854775807, 4611686018427387904,  -- bigint
+    2147483647, 1073741824,    -- int
+    32767, 16384,              -- smallint
+    255, 128,                  -- tinyint
+    214748.3647, 107374.1824,  -- money
+    214748.3647, 107374.1824   -- smallmoney
+);
+
+-- table with all string types
+CREATE TABLE string_types (
+    id INT,
+    -- CHAR types (fixed-length, non-Unicode)
+    char_val1 CHAR(10),
+    char_val2 CHAR(10),
+    char_val3 CHAR(10),
+
+    -- VARCHAR types (variable-length, non-Unicode)
+    varchar_val1 VARCHAR(50),
+    varchar_val2 VARCHAR(50),
+    varchar_val3 VARCHAR(50),
+
+    -- NCHAR types (fixed-length, Unicode)
+    nchar_val1 NCHAR(10),
+    nchar_val2 NCHAR(10),
+    nchar_val3 NCHAR(10),
+
+    -- NVARCHAR types (variable-length, Unicode)
+    nvarchar_val1 NVARCHAR(50),
+    nvarchar_val2 NVARCHAR(50),
+    nvarchar_val3 NVARCHAR(50),
+
+    -- Text types
+    text_val1 TEXT,
+    text_val2 TEXT,
+
+    -- NText types (Unicode)
+    ntext_val1 NTEXT,
+    ntext_val2 NTEXT
+);
+
+INSERT INTO string_types VALUES (1,
+    'ABC',
+    '123',
+    '@#$',
+    
+    'Café',
+    'Test_123',
+    '   spaces   ',
+
+    N'한글',
+    N'日本',
+    N'Привет',
+
+    N'Hello世界',
+    N'🌟Star⭐',
+    N'König',
+
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum Duis aute irure dolor in reprehenderit in voluptate velit esse cillum Lorem ipsum dolore Lorem ipsum eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, Lorem ipsumomnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem Lorem ipsum quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, Lorem ipsum ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat. Sed ut perspiciatis unde Lorem ipsum omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consecttur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et doloe magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem Lorem ipsum ullam corporis suscipit laboriosam, nisi ut aliquid Lorem ipsum ex ea commoi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero Lorem eos et accusamus et Lorem ipsum odio dignissimos ducimus quiblanditiis praesentium voluptatum deleniti atque corupi quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero Lorem ipsum tempore, cum soluta nobis est eligendi optio cumque nihil impeit quo minus id quod maxime placeat facere possimus, omnis voluptas assumen dolor repellendus. Temporibus Lorem ipsum autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusadae. Itaque earum rerum hic tenetur a Lorem ipsum sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.',
+    'Special chars: /\@#$%^&*()',
+
+    N'علم',
+    N'שלום'
+);
+
+CREATE TABLE mixed_types (
+    id INT,
+    val1 INT,
+    val2 DECIMAL(10,2),
+    val3 MONEY,
+    val4 FLOAT
+);
+
 
 CREATE TABLE sales_data (
     product_id INT,
@@ -29,15 +146,16 @@ GO
 
 CREATE TABLE product_sales (
     product_id INT,
+    product_desc VARCHAR(25),
     quantity_q1 INT, revenue_q1 DECIMAL(10,2),
     quantity_q2 INT, revenue_q2 DECIMAL(10,2)
 );
 GO
 
 INSERT INTO product_sales VALUES
-    (1, 100, 1000.00, 150, 1500.00),
-    (2, 80, 1600.00, 90, 1800.00),
-    (3, 0, 0, NULL, NULL);
+    (2, 'PQR', 80, 1600.00, 90, 1800.00),
+    (3, 'XYZ', 0, 0, NULL, NULL),
+    (1, 'ABC', 100, 1000.00, 150, 1500.00);
 GO
 
 CREATE TABLE customer_info (
