@@ -35,7 +35,7 @@ runs:
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi            
-          REPOSITORY_OWNER=$HEAD_OWNER
+          REPOSITORY_OWNER=${{ github.event.pull_request.head.repo.owner.login }}
         else
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
             ENGINE_BRANCH=$GITHUB_REF_NAME
@@ -86,13 +86,13 @@ runs:
         cd ..
         cd postgresql_modified_for_babelfish
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
+          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8  --without-readline --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         elif [[ ${{inputs.release_mode}} == "yes" ]]; then
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --without-readline --with-libxml --with-uuid=ossp --with-icu
         else
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --without-readline --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         fi
         make -j 4
         make install
