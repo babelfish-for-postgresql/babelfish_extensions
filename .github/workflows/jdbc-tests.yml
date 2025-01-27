@@ -104,25 +104,78 @@ jobs:
         if: always()
         id: check-warnings
         run: |
-          # Set the path to the expected-warnings.out file
-          EXPECTED_WARNINGS_FILE=~/work/babelfish_extensions/babelfish_extensions/test/JDBC/expected/expected-warnings.out
+          LOG_FILE=~/psql/data/logfile
+          
+          
+          # File to store the current warnings
+          CURRENT_WARNINGS="actual-leak-warnings.out"
+          
+          # Function to extract and classify warnings
+          extract_and_classify_warnings() {
+              grep "WARNING:" "$LOG_FILE" | 
+              awk -F"WARNING: " '{print $2}' | 
+              sort | 
+              while read -r line; do
+                  case "$line" in
+                      *"snapshot"*"still active"*)
+                          echo "SNAPSHOT_ACTIVE_WARNING: $line"
+                          ;;
+                      *"leak"*)
+                          echo "LEAK_WARNING: $line"
+                          ;;
+                      *"role"*|*"permission denied"*|*"transaction"*|*"cast"*|*"Query parsing failed using SLL parser mode but succeeded with LL mode"*|*"Using the TDS Foreign data wrapper (tds_fdw) as provider"*|*"Ignoring @provstr argument value"*|*"Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION"*|*"no privileges could be revoked for"*|*"could not convert locale name"*|*"you don't own a lock of type"*|*"precision reduced to maximum allowed"*|*"WITH TIME ZONE precision reduced to maximum allowed"*|*"no privileges were granted for"*|*"parameter cannot be null"*|*"babelfishpg_tds.product_version cannot be set"*|*"could not convert locale name"*|*"This function has been deprecated and will no longer drop all users."*|*"cannot add relations to publication:"*)
+                          # These warnings are expected and will be ignored
+                          ;;
+                      *)
+                          echo "OTHER_WARNING: $line"
+                          ;;
+                  esac
+              done
+          }
+          
+          # Extract and classify warnings
+          extract_and_classify_warnings > "$CURRENT_WARNINGS"
+          
+          # Check for other warnin
+          OTHER_WARNING_COUNT=$(grep -c "OTHER_WARNING:" "$CURRENT_WARNINGS")
 
-          # Collect all leak warnings from log files, extracting only the warning type
-          grep -h "WARNING:" ~/psql/data/logfile ~/psql/data_5433/logfile test_logs.out | 
-          sed -E 's/^.*WARNING:\s*/WARNING:  /' | 
-          grep -E "WARNING:  (cast will be ignored because the source data type is a domain|role|permission denied to analyze|transaction left non-empty SPI stack|NUMERIC or DECIMAL type is cast to BIGINT|TIME\(7\)|TIMESTAMP\(7\)|snapshot|This function has been deprecated and will no longer drop all users|parameter cannot be null|you don't own a lock of type (ShareLock|RowExclusiveLock)|babelfishpg_tds.product_version cannot be set|Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION|no privileges were granted|TupleDesc reference leak|SPI connection leak|relcache reference leak|cache reference leak)" | 
-          sed -E 's/(WARNING:  .*?(reference leak|connection leak)):.*/\1/' |
-          sort > actual-warnings.out
-
-          # Compare actual warnings with expected leak warnings
-          if diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out; then
-            echo "No unexpected warnings found in logs."
-          else
-            echo "Unexpected leak warnings detected in logs!"
-            echo "Differences between expected and actual warnings:"
-            diff -u "$EXPECTED_WARNINGS_FILE" actual-leak-warnings.out
-            exit 1
+          if [ "$OTHER_WARNING_COUNT" -ge 1 ]; then
+              echo "Error: $OTHER_WARNING_COUNT unexpected warning type(s) detected."
+              grep "OTHER_WARNING:" "$CURRENT_WARNINGS"
+              exit 1
           fi
+          # Count warnings
+          SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
+          LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
+          ERROR=false
+          
+          if [ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]; then
+              echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
+              ERROR=true
+          fi
+          
+          if [ "$LEAK_COUNT" -ne 380 ]; then
+              echo "Error: Expected 380 leak warnings, but found $LEAK_COUNT"
+              ERROR=true
+          fi
+          
+          if [ "$ERROR" = true ]; then
+              echo "Unexpected warning counts detected. Please investigate."
+              echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
+              echo "Leak warnings: $LEAK_COUNT"
+              exit 1
+          else
+              echo "Warning counts are as expected:"
+              echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
+              echo "Leak warnings: $LEAK_COUNT"
+              exit 0
+          fi
+          
+          # Count warnings by type
+          echo "Warning counts:"
+          cut -d: -f1 "$CURRENT_WARNINGS" | sort | uniq -c
+          
+          exit 0
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
