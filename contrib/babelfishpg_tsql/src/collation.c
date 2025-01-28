@@ -394,12 +394,15 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		if (IsA(rightop, CollateExpr))
 		{
 			CollateExpr	*collateExpr = (CollateExpr*) rightop;
+			Const *constNode;
+
 			if (!IsA(collateExpr->arg, Const))
 				return node;
 			if (((Const *) (collateExpr->arg))->constisnull)
 				return node;
-
-			patt = (Const *) (collateExpr->arg);
+			collateExpr->collOid = op->inputcollid;
+			constNode = (Const *) collateExpr->arg;
+			patt = constNode;
 		}
 		/* This is for CI_AI, as we will get a FuncExpr because of remove_accents_internal */
 		else if (IsA(rightop, RelabelType))
@@ -421,10 +424,12 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 					{
 						CollateExpr *collateExpr = (CollateExpr *) arg;
 						if (IsA(collateExpr->arg, Const))
-						{
-							if (((Const *) (collateExpr->arg))->constisnull)
+						{	
+							Const *constNode = (Const *) collateExpr->arg;
+							if (constNode->constisnull)
 								return node;
-							patt = (Const *) (collateExpr->arg);
+
+							patt = constNode;
 						}
 						else
 							return node;
@@ -432,6 +437,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 					else
 						return node;
 				}
+				relabel->resultcollid = op->inputcollid;
 			}
 			else 
 				return node;
@@ -441,11 +447,17 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	}
 
 	if (IsA(rightop, Const))
-		patt = (Const *) rightop;
+	{
+		Const *constNode = (Const *) rightop;
+		patt = constNode;
+		constNode->constcollid = op->inputcollid;
+	}
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
 											&prefix, NULL);
+
+	prefix->constcollid = op->inputcollid;
 
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
@@ -466,7 +478,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
+											op->inputcollid, op->inputcollid, oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
 	}
@@ -485,10 +497,10 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+											op->inputcollid, op->inputcollid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
+		highest_sort_key = makeConst(TEXTOID, -1, op->inputcollid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
@@ -497,7 +509,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
 										(Expr *) prefix, (Expr *) highest_sort_key,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										op->inputcollid, op->inputcollid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
 		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
@@ -507,8 +519,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										op->inputcollid, op->inputcollid, oprfuncid(optup));
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+		
 		if (like_entry.is_not_match)
 		{
 			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);

@@ -1,3 +1,4 @@
+-- parallel_query_expected
 select relname from pg_class where relname like NULL;
 GO
 select relname from pg_class where relname like '';
