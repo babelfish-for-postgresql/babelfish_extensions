@@ -297,7 +297,7 @@ select TRY_CONVERT(varchar(30), CAST('11234561231231.234' AS float), 0);
 GO
 ~~START~~
 varchar
-<NULL>
+1.12346e+13                   
 ~~END~~
 
 select TRY_CONVERT(varchar(30), CAST('11234561231231.234'AS float), 1);
