@@ -1,0 +1,137 @@
+select relname from pg_class where relname like NULL;
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like '';
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like 'pg\[1:9\]class';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select relname from pg_class where relname like NULL;
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like '';
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like 'pg\[1:9\]class';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+
+select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+CREATE TABLE babel_like_t1(col1 varchar(11));
+GO
+
+INSERT INTO babel_like_t1 VALUES ('ab');
+GO
+~~ROW COUNT: 1~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT * FROM babel_like_t1 WHERE col1 LIKE 'ab' COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_like_t1 WHERE col1 LIKE 'ab' COLLATE Latin1_General_CI_AI
+Gather  (cost=0.00..16.58 rows=7 width=32)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_like_t1  (cost=0.00..16.58 rows=2 width=32)
+        Filter: ((remove_accents_internal((col1)::text))::text = 'ab'::text COLLATE "default")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.621 ms
+~~END~~
+
+
+SELECT * FROM babel_like_t1 WHERE col1 LIKE 'a%' COLLATE Latin1_General_CI_AI;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_like_t1 WHERE col1 LIKE 'a%' COLLATE Latin1_General_CI_AI
+Gather  (cost=0.00..20.97 rows=7 width=32)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_like_t1  (cost=0.00..20.97 rows=2 width=32)
+        Filter: (((remove_accents_internal((col1)::text))::text ~~* 'a%'::text) AND ((remove_accents_internal((col1)::text))::text >= 'a'::text COLLATE "default") AND ((remove_accents_internal((col1)::text))::text < 'a?'::text))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.151 ms
+~~END~~
+
+
+SELECT * FROM babel_like_t1 WHERE col1 LIKE 'ab' COLLATE Latin1_General_CI_AS;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_like_t1 WHERE col1 LIKE 'ab' COLLATE Latin1_General_CI_AS
+Gather  (cost=0.00..15.48 rows=7 width=32)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_like_t1  (cost=0.00..15.48 rows=2 width=32)
+        Filter: ((col1)::text = 'ab'::text COLLATE "default")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.148 ms
+~~END~~
+
+
+SELECT * FROM babel_like_t1 WHERE col1 LIKE 'a%' COLLATE Latin1_General_CI_AS;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_like_t1 WHERE col1 LIKE 'a%' COLLATE Latin1_General_CI_AS
+Gather  (cost=0.00..17.68 rows=7 width=32)
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_like_t1  (cost=0.00..17.68 rows=2 width=32)
+        Filter: (((col1)::text ~~* 'a%'::text) AND ((col1)::text >= 'a'::text COLLATE "default") AND ((col1)::text < 'a?'::text))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+DROP TABLE babel_like_t1;
+GO
