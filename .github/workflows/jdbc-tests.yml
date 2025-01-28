@@ -105,8 +105,6 @@ jobs:
         id: check-warnings
         run: |
           LOG_FILE=~/psql/data/logfile
-          
-          echo "checkpoint 1 executed successfully"
           # File to store the current warnings
           CURRENT_WARNINGS="actual-leak-warnings.out"
           
@@ -137,38 +135,33 @@ jobs:
           extract_and_classify_warnings > "$CURRENT_WARNINGS"
           ERROR_FOUND=false
           # Check for other warning
-          OTHER_WARNING_COUNT=$(grep -c "OTHER_WARNING:" "$CURRENT_WARNINGS")
-
-          echo "checkpoint 2 executed successfully"
+          OTHER_WARNING_COUNT=$(grep -c "OTHER_WARNING:" "$CURRENT_WARNINGS" || echo 0)
 
           if [[ "$OTHER_WARNING_COUNT" -ge 1 ]]; then
               echo "Error: $OTHER_WARNING_COUNT unexpected warning type(s) detected."
               grep "OTHER_WARNING:" "$CURRENT_WARNINGS"
               ERROR_FOUND=true
           fi
-          echo "checkpoint 3 executed successfully"
           # Count warnings
           SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
           LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
 
-          echo "checkpoint 4 executed successfully"
           if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
               echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
               ERROR_FOUND=true
-          fi    
-          echo "checkpoint 5 executed successfully"
+          fi
+
           if [[ "$LEAK_COUNT" -ne 380 ]]; then
               echo "Error: Expected 380 leak warnings, but found $LEAK_COUNT"
               ERROR_FOUND=true
           fi
-          echo "checkpoint 6 executed successfully"
+
           if [[ "$ERROR_FOUND" = true ]]; then
               echo "Unexpected warning counts detected. Please investigate."
               echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
               echo "Leak warnings: $LEAK_COUNT"
               exit 1
           fi
-          echo "checkpoint 7 executed successfully"
           echo "Warning counts are as expected:"
           echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
           echo "Leak warnings: $LEAK_COUNT"
