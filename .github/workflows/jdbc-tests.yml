@@ -177,7 +177,6 @@ jobs:
           # Display the contents of CURRENT_WARNINGS for debugging
           echo "Contents of $CURRENT_WARNINGS:"
           cat "$CURRENT_WARNINGS"
-         shell: bash
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
