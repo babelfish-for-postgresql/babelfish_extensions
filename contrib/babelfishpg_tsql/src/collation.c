@@ -390,10 +390,45 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 	{
+		/* This is for CI_AS */
 		if (IsA(rightop, CollateExpr))
 		{
 			CollateExpr	*collateExpr = (CollateExpr*) rightop;
 			if (!IsA(collateExpr->arg, Const))
+				return node;
+			patt = (Const *) (collateExpr->arg);
+		}
+		/* This is for CI_AI, as we will get a FuncExpr because of remove_accents_internal */
+		else if (IsA(rightop, RelabelType))
+		{
+			RelabelType		*relabel = (RelabelType *) rightop;
+			if (IsA(relabel->arg, FuncExpr))
+			{
+				FuncExpr *funcexpr = (FuncExpr*) relabel->arg;
+				ListCell *lc;
+
+				/* If the function is not remove_accents_internal, then we do not want to proceed further */
+				if (funcexpr->funcid != remove_accents_internal_oid)
+					return node;
+
+				foreach(lc, funcexpr->args)
+				{
+					Node *arg = (Node *) lfirst(lc);
+					if (IsA(arg, CollateExpr))
+					{
+						CollateExpr *collateExpr = (CollateExpr *) arg;
+						if (IsA(collateExpr->arg, Const))
+						{
+							patt = (Const *) (collateExpr->arg);
+						}
+						else
+							return node;
+					}
+					else
+						return node;
+				}
+			}
+			else 
 				return node;
 		}
 		else
@@ -402,11 +437,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	if (IsA(rightop, Const))
 		patt = (Const *) rightop;
-	else if (IsA(rightop, CollateExpr))
-	{
-		CollateExpr	*collateExpr = (CollateExpr*) rightop;
-		patt = (Const *) (collateExpr->arg);
-	}
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
