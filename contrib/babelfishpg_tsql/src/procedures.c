@@ -4086,25 +4086,25 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_INDEX) ||
 		(objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
 	{
-		char *newobjname = (char *)newname;
+		char *newobjname = lowerstr(newname);
 
 		renamestmt->renameType = objtype;
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->schemaname = lowerstr(schemaname);
 
 		if (objtype == OBJECT_INDEX)
 		{
 			char *lower_relname = lowerstr(curr_relname);
 
-			newobjname = construct_unique_index_name((char *)newname, lower_relname);
+			newobjname = construct_unique_index_name(newobjname, lower_relname);
 			renamestmt->subname = NULL;
 			renamestmt->newname = newobjname;
-			renamestmt->relation->relname = construct_unique_index_name((char *)objname, lower_relname);
+			renamestmt->relation->relname = construct_unique_index_name(lowerstr(objname), lower_relname);
 		}
 		else
 		{
-			renamestmt->subname = pstrdup(lowerstr(objname));
-			renamestmt->newname = pstrdup(lowerstr(newobjname));
-			renamestmt->relation->relname = pstrdup(lowerstr(objname));
+			renamestmt->subname = lowerstr(objname);
+			renamestmt->newname = lowerstr(newobjname);
+			renamestmt->relation->relname = lowerstr(objname);
 		}
 
 		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
@@ -4120,8 +4120,8 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			if (!IsA(altertablestmt, AlterTableStmt))
 				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
-			altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-			altertablestmt->relation->relname = pstrdup(lowerstr(newobjname));
+			altertablestmt->relation->schemaname = lowerstr(schemaname);
+			altertablestmt->relation->relname = lowerstr(newobjname);
 			/* get data of the first node */
 			lc = list_head(altertablestmt->cmds);
 			cmd = (AlterTableCmd *) lfirst(lc);
