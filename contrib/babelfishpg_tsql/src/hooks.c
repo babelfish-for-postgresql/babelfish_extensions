@@ -28,6 +28,8 @@
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
+#include "commands/extension.h"
+#include "commands/proclang.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -90,6 +92,13 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
+typedef enum PltsqlInitPrivsOptions
+{
+	SAVE_INIT_PRIVS,
+	DISCARD_INIT_PRIVS,
+	ERROR_INIT_PRIVS
+} PltsqlInitPrivsOptions;
+
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
@@ -108,7 +117,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
 Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
 static Node *transform_like_in_add_constraint(Node *node);
-static char** fetch_func_input_arg_names(HeapTuple func_tuple);
+char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -189,6 +198,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 
 /*****************************************
  * 			Replication Hooks
@@ -216,6 +226,7 @@ static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, 
 static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
+static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -243,6 +254,7 @@ static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_c
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
+static remove_db_name_in_schema_hook_type prev_remove_db_name_in_schema_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
@@ -296,6 +308,7 @@ static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determi
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
+static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -345,6 +358,9 @@ InstallExtendedHooks(void)
 
 	prev_get_trigger_object_address_hook = get_trigger_object_address_hook;
 	get_trigger_object_address_hook = get_trigger_object_address;
+
+	prev_remove_db_name_in_schema_hook = remove_db_name_in_schema_hook;
+	remove_db_name_in_schema_hook = remove_db_name_in_schema;
 
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
@@ -514,12 +530,17 @@ InstallExtendedHooks(void)
 
 	prev_bbf_execute_grantstmt_as_dbsecadmin_hook = bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = handle_grantstmt_for_dbsecadmin;
+
+	prev_bbf_check_member_has_direct_priv_to_grant_role_hook = bbf_check_member_has_direct_priv_to_grant_role_hook;
+	bbf_check_member_has_direct_priv_to_grant_role_hook = bbf_check_member_has_direct_priv_to_grant_role;
 	
 	pltsql_get_object_identity_event_trigger_hook = pltsql_get_object_identity_event_trigger;
 
 	pltsql_get_object_owner_hook = pltsql_get_object_owner;
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
+
+	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
 }
 
 void
@@ -538,6 +559,7 @@ UninstallExtendedHooks(void)
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
+	remove_db_name_in_schema_hook = prev_remove_db_name_in_schema_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
@@ -590,12 +612,15 @@ UninstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
+	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
+
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
+	pltsql_allow_storing_init_privs_hook = NULL;
 }
 
 /*****************************************
@@ -2673,7 +2698,7 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 			 * Check whether function is an special function or not, and 
 			 * report appropriate error if applicable 
 			 */
-			validate_special_function(schemaname, funcname, fargs, nargs, input_typeids, found);
+			validate_special_function(schemaname, funcname, nargs, found);
 		}
 		
 		/*
@@ -4227,7 +4252,7 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
  * @param func_tuple or proc_tuple
  * @return char** list of input arg names
  */
-static char** fetch_func_input_arg_names(HeapTuple func_tuple)
+char** fetch_func_input_arg_names(HeapTuple func_tuple)
 {
 	Datum proargnames;
 	Datum		proargmodes;
@@ -5900,6 +5925,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		case OBJECT_TABLE:
 		case OBJECT_COLUMN:
 		case OBJECT_VIEW:
+		case OBJECT_SEQUENCE:
 			classid = RelationRelationId;
 			break;
 		case OBJECT_FUNCTION:
@@ -6046,4 +6072,166 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 		return true;
 
 	return false;
+}
+
+static bool
+allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid)
+{
+	ObjectAddress			address;
+	Oid						nspoid = InvalidOid;
+	ObjectType				objtype;
+	PltsqlInitPrivsOptions	init_privs_opt = ERROR_INIT_PRIVS;
+
+	/*
+	 * Check if it is create/upgrade script of babelfishpg_tsql extension
+	 * Otherwise return true -- Allow storing.
+	 */
+	if (!(creating_extension &&
+		OidIsValid(CurrentExtensionObject) &&
+		CurrentExtensionObject == get_extension_oid("babelfishpg_tsql", true)))
+		return true;
+
+	/* 
+	 * There are 3 category of handling
+	 * 1. SAVE_INIT_PRIVS    : Check if it is objects created during CREATE extension and
+	 *                         store initial privs for them. system, information_schema_tsql
+	 *                         objects and pltsql language are the examples of it.
+	 * 
+	 * 2. DISCARD_INIT_PRIVS : If it is schema contained object within system created
+	 *                         TSQL schema like master, msdb or tempdb OR user created schema,
+	 *                         Do not store initial privileges for them.
+	 * 
+	 * 3. ERROR_INIT_PRIVS   : The default case when above 2 conditions doesn't match then error
+	 *                         out. To avoid error please classify it between above 2 condtions. 
+	 */
+	ObjectAddressSet(address, classoid, objoid);
+	objtype = get_object_type(classoid, objoid);
+	if (objtype == OBJECT_SCHEMA)
+	{
+		nspoid = objoid;
+	}
+	else
+	{
+		nspoid = get_object_namespace(&address);
+	}
+	if (OidIsValid(nspoid)) /* Schema contained objects */
+	{
+		char *nspname = get_namespace_name(nspoid);
+		if (nspname && is_shared_schema(nspname))
+		{
+			init_privs_opt = SAVE_INIT_PRIVS;
+		}
+		else if (nspname && get_logical_schema_name(nspname, true))
+		{
+			init_privs_opt = DISCARD_INIT_PRIVS;
+		}
+	}
+	else /* Non-schema contained object */
+	{
+		switch (objtype)
+		{
+			case OBJECT_LANGUAGE:
+				if (OidIsValid(objoid) &&
+					objoid == get_language_oid("pltsql", true))
+				{
+					init_privs_opt = SAVE_INIT_PRIVS;
+					break;
+				}
+				else
+				{
+					break;
+				}
+			case OBJECT_DATABASE:
+				if (OidIsValid(objoid) &&
+					objoid == MyDatabaseId)
+				{
+					init_privs_opt = DISCARD_INIT_PRIVS;
+					break;
+				}
+				else
+				{
+					break;
+				}
+			default:
+				break;
+		}
+	}
+
+	switch (init_privs_opt)
+	{
+		case SAVE_INIT_PRIVS:
+			return true;
+			break;
+		case DISCARD_INIT_PRIVS:
+			return false;
+			break;
+		case ERROR_INIT_PRIVS:
+			/*
+			 * NOTE: Following error message mentions that upgrade script shouldn't
+			 * be storing initial privileges BUT it is not the rigid ristriction.
+			 * If it is required to add initial privileges for some objects like objects created
+			 * during CREATE extension then please add an exception for them in above logic.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Initial privileges for given object %s can not be "
+							"added during Babelfish upgrade.",
+							getObjectDescription(&address, true))));
+			return true;
+	}
+	return true;
+}
+
+/*
+ * remove_db_name_in_schema - remove the db name and underscore at the beginning
+ * 	of the given string. It is used to unmap schema name in error messages.
+ *
+ * 	@param object_name - char *
+ *  @param object_type - char *, can be 'sch' or 'func'
+ * 	@return - unmapped schema name char *
+ */
+static const char *
+remove_db_name_in_schema(const char *object_name, const char *object_type)
+{
+	char		*cur_db_name;
+	char		**splited_object_name;
+	char		*schema_name = NULL;
+	char		*mutable_name;
+    size_t		db_name_len;
+    size_t		prefix_len = 0;
+	size_t		schema_name_len;
+
+	mutable_name = pstrdup(object_name);
+	splited_object_name = split_object_name(mutable_name);
+
+	if (strcmp(object_type, "sch") == 0) {
+		/* If input is 'sch_name' format, consider when there is only one part in splited_object_name */
+		/* If there are two parts or more, then it’s a cross-db object name (db.sch_name) so we don’t need to deal with it */
+		if (strlen(splited_object_name[2]) == 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[3];
+	} else if (strcmp(object_type, "func") == 0) {
+		/* If input is 'func_name' format, consider when there is two parts in splited_object_name, like db1_sch.db1_func */
+		if (strlen(splited_object_name[2]) > 0 && strlen(splited_object_name[1]) == 0)
+			schema_name = splited_object_name[2];
+	}
+
+	if (schema_name)
+	{
+		cur_db_name = get_cur_db_name();
+		db_name_len = strlen(cur_db_name);
+		schema_name_len = strlen(schema_name);
+
+		if (schema_name_len > db_name_len && strncmp(schema_name, cur_db_name, db_name_len) == 0 && schema_name[db_name_len] == '_') {
+			/* Return the part after the prefix */
+			prefix_len = db_name_len + 1;
+		} 
+		pfree(cur_db_name);
+	} 
+	
+	pfree(mutable_name);
+	for (int k = 0; k < 4; k++)
+        pfree(splited_object_name[k]);
+	pfree(splited_object_name);
+
+	return (const char *)pstrdup(object_name + prefix_len);
 }

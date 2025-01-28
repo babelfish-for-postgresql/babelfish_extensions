@@ -44,3 +44,5 @@ nvarchar
 世界
 ~~END~~
 
+drop table if exists unicode_test;
+go

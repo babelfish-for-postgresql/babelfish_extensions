@@ -1,11 +1,11 @@
 name: Minor Version Upgrade Tests for empty database
-on: []
+on: [push, pull_request]
 
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_4_0_STABLE__PG_16_1
-      EXTENSION_VER_FROM: BABEL_4_0_STABLE
+      ENGINE_VER_FROM: BABEL_5_0_STABLE__PG_17_2
+      EXTENSION_VER_FROM: BABEL_5_0_STABLE
       INSTALL_DIR: psql
 
     name: Build and test
@@ -29,8 +29,6 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres-older.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
-        with:
-          version: 4.9.3
 
       - uses: actions/checkout@v2
         with:
@@ -113,19 +111,18 @@ jobs:
         
       - uses: actions/checkout@v2
 
+      - name: Save cache
+        if: always() && steps.build-extensions-older.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
+
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
         if: always() && steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-      
-      - name: Compile new ANTLR
-        id: compile-new-antlr
-        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
 
       - name: Set env variables and build extensions
         id: build-extensions-newer
-        if: always() && steps.compile-new-antlr.outcome == 'success'
+        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
@@ -139,12 +136,12 @@ jobs:
           ulimit -c unlimited
           cd ~
           ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run JDBC Tests

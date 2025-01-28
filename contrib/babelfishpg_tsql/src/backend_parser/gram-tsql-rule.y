@@ -4553,6 +4553,7 @@ tsql_TransactionStmt:
 					n->kind = TRANS_STMT_BEGIN;
 					n->savepoint_name = $3;
 					n->options = NIL;
+					n->location = -1;
 					$$ = (Node *)n;
 				}
 			| COMMIT tsql_TranKeyword tsql_OptTranName
@@ -4560,6 +4561,7 @@ tsql_TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
+					n->location = -1;
 					$$ = (Node *)n;
 				}
 			| COMMIT tsql_OptWorkKeyword
@@ -4567,6 +4569,7 @@ tsql_TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
+					n->location = -1;
 					$$ = (Node *)n;
 				}
 			| ROLLBACK tsql_TranKeyword tsql_OptTranName
@@ -4575,6 +4578,7 @@ tsql_TransactionStmt:
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->savepoint_name = $3;
 					n->options = NIL;
+					n->location = -1;
 					$$ = (Node *)n;
 				}
 			| ROLLBACK tsql_OptWorkKeyword
@@ -4582,6 +4586,7 @@ tsql_TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
+					n->location = -1;
 					$$ = (Node *)n;
 				}
 			| TSQL_SAVE tsql_TranKeyword ColId
@@ -4589,6 +4594,7 @@ tsql_TransactionStmt:
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_SAVEPOINT;
 					n->savepoint_name = $3;
+					n->location = @3;
 					$$ = (Node *)n;
 				}
 			;

@@ -18,3 +18,5 @@ select "你好世界" from unicode_test with(nolock);
 go
 select 中文列名 from unicode_test with(nolock);
 go
+drop table if exists unicode_test;
+go

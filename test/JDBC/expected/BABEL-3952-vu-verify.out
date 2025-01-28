@@ -651,3 +651,6 @@ time
 12:24:00.0000000
 ~~END~~
 
+
+DROP TABLE IF EXISTS dbucket
+GO

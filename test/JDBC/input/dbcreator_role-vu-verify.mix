@@ -13,6 +13,16 @@ go
 select is_srvrolemember('dbcreator', 'securityadmin')
 go
 
+select is_srvrolemember('dbcreator','dbcreator')
+go
+
+select is_srvrolemember('sysadmin','sysadmin')
+go
+
+-- should return NULL for invalid login
+select is_srvrolemember('l1', 'l1')
+go
+
 alter login dbcreator_login1 with password='123'
 go
 
@@ -396,6 +406,37 @@ go
 
 -- tsql
 create role dummy_role
+go
+
+-- Do not allow predefined server roles to be members of each other
+Alter server role sysadmin add member securityadmin
+go
+
+Alter server role sysadmin add member dbcreator
+go
+
+Alter server role securityadmin add member dbcreator
+go
+
+Alter server role securityadmin add member securityadmin
+go
+
+Alter server role dbcreator add member securityadmin
+go
+
+Alter server role dbcreator add member dbcreator
+go
+
+Alter server role dbcreator add member sysadmin
+go
+
+Alter server role securityadmin add member sysadmin
+go
+
+Alter server role dbcreator add member dbcreator
+go
+
+Alter server role sysadmin add member sysadmin
 go
 
 -- terminate-tsql-conn

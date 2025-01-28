@@ -1,0 +1,254 @@
+-- tsql
+CREATE TABLE babel_4839_reverse_t1(a NCHAR(50))
+GO
+INSERT INTO babel_4839_reverse_t1 VALUES(N'abc🙂defghi🙂🙂')
+INSERT INTO babel_4839_reverse_t1 VALUES(N'比尔·拉莫斯')
+GO
+
+CREATE TABLE babel_4839_reverse_t2(a NVARCHAR(50))
+GO
+INSERT INTO babel_4839_reverse_t2 VALUES(N'abc🙂defghi🙂🙂')
+GO
+
+CREATE TABLE babel_4839_reverse_t3(a CHAR(50))
+GO
+INSERT INTO babel_4839_reverse_t3 VALUES('abcdefghi')
+GO
+
+CREATE TABLE babel_4839_reverse_t4(a VARCHAR(50))
+GO
+INSERT INTO babel_4839_reverse_t4 VALUES('abcdefghi')
+GO
+
+CREATE TABLE babel_4839_reverse_t5(a VARBINARY(50))
+GO
+INSERT INTO babel_4839_reverse_t5 VALUES(0x2020616263642020)
+GO
+
+CREATE TABLE babel_4839_reverse_chinese_prc_ci_as(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AS)
+GO
+INSERT INTO babel_4839_reverse_chinese_prc_ci_as VALUES(N'比尔·拉莫斯')
+GO
+
+CREATE TABLE babel_4839_reverse_chinese_prc_cs_as(a VARCHAR(50) COLLATE CHINESE_PRC_CS_AS)
+GO
+INSERT INTO babel_4839_reverse_chinese_prc_cs_as VALUES(N'比尔·拉莫斯')
+GO
+
+CREATE TABLE babel_4839_reverse_chinese_prc_ci_ai(a VARCHAR(50) COLLATE CHINESE_PRC_CI_AI)
+GO
+INSERT INTO babel_4839_reverse_chinese_prc_ci_ai VALUES(N'比尔·拉莫斯')
+GO
+
+CREATE TABLE babel_4839_reverse_arabic_ci_as(a VARCHAR(50) COLLATE ARABIC_CI_AS)
+GO
+INSERT INTO babel_4839_reverse_arabic_ci_as VALUES(N'الله مع المتقين')
+GO
+
+CREATE TABLE babel_4839_reverse_arabic_cs_as(a VARCHAR(50) COLLATE ARABIC_CS_AS)
+GO
+INSERT INTO babel_4839_reverse_arabic_cs_as VALUES(N'الله مع المتقين')
+GO
+
+CREATE TABLE babel_4839_reverse_arabic_ci_ai(a VARCHAR(50) COLLATE ARABIC_CI_AI)
+GO
+INSERT INTO babel_4839_reverse_arabic_ci_ai VALUES(N'الله مع المتقين')
+GO
+
+CREATE TABLE babel_4839_reverse_image(a IMAGE)
+GO
+INSERT INTO babel_4839_reverse_image values(CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS image))
+GO
+
+CREATE TABLE babel_4839_reverse_text(a TEXT, b NTEXT)
+GO
+INSERT INTO babel_4839_reverse_text VALUES (N'abc🙂defghi🙂🙂', N'abc🙂defghi🙂🙂')
+GO
+
+CREATE TYPE dbo.babel_4839_reverse_imageUDT FROM image;
+GO
+
+CREATE TYPE dbo.babel_4839_reverse_varUDT FROM varchar(50);
+GO
+
+CREATE TABLE babel_4839_reverse_UDT(a dbo.babel_4839_reverse_imageUDT, b dbo.babel_4839_reverse_varUDT)
+GO
+INSERT INTO babel_4839_reverse_UDT VALUES(CAST('abcdef' as dbo.babel_4839_reverse_imageUDT), CAST('abcdef' as dbo.babel_4839_reverse_varUDT))
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view AS
+    SELECT reverse(a) as result from babel_4839_reverse_t2
+GO
+
+CREATE PROCEDURE babel_4839_reverse_dep_proc AS
+    SELECT reverse(a) as result from babel_4839_reverse_t2
+GO
+
+CREATE FUNCTION babel_4839_reverse_dep_func()
+RETURNS NVARCHAR(50)
+AS
+BEGIN
+RETURN (SELECT TOP 1 reverse(a) from babel_4839_reverse_t2)
+END
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_1 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_t1
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_2 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_t2
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_3 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_t3
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_4 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_t4
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_5 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_t5
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_6 AS
+    SELECT reverse(a) as result FROM babel_4839_reverse_text
+GO
+
+CREATE VIEW babel_4839_reverse_dep_view_7 AS
+    SELECT reverse(b) as result FROM babel_4839_reverse_text
+GO
+
+CREATE FUNCTION babel_4839_reverse_itvf_func()
+RETURNS TABLE
+AS
+RETURN (SELECT reverse(a) as result from babel_4839_reverse_t2)
+GO
+
+-- psql
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t1(a CHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t1 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t1 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t2(a BPCHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t2 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t2 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t3(a CHARACTER(50))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t3 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t3 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t4(a VARCHAR(50))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t4 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t4 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t5(a character varying(50))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t5 VALUES ('  abcdefghi    ')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t5 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t6(a INTEGER)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t6 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t6 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t7(a BIGINT)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t7 VALUES (12345678)
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t7 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t8(a MONEY)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t8 VALUES (123456)
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t8 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t9(a BYTEA)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t9 VALUES ('\x656667686970'::bytea)
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t9 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t10(a TIMESTAMP)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t10 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t10 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t11(a DATE)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t11 VALUES ('12-21-16')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t11 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t12(a BOOLEAN)
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t12 VALUES (TRUE)
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t12 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t13(a BIT(3), b BIT(3))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t13 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t13 TO master_dbo;
+GO
+
+CREATE TABLE master_dbo.babel_4839_reverse_psql_t14(a BIT VARYING(3), b BIT VARYING(3))
+GO
+
+INSERT INTO master_dbo.babel_4839_reverse_psql_t14 VALUES (B'101', B'101')
+GO
+
+GRANT SELECT ON master_dbo.babel_4839_reverse_psql_t14 TO master_dbo;
+GO

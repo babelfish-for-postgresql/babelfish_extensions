@@ -62,6 +62,7 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -88,11 +89,11 @@ BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3513
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -150,6 +151,7 @@ babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
 check_for_inconsistent_metadata
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -167,6 +169,7 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
+BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -228,7 +231,6 @@ FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
 BABEL-4785
-restricted_procedures
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -419,7 +421,7 @@ Test-Computed-Columns
 TestDate
 TestDatetime
 TestDatetime2
-TestDatetime-numeric-dateaddfunction
+TestDatetime-numeric-dateaddfunction-before-17_3
 TestDatetime-numeric-representation
 TestDecimal
 TestFloat
@@ -464,7 +466,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-test_windows_login
+test_windows_login_before-17_2
 test_windows_sp_helpuser
 TestXML
 timefromparts
@@ -483,7 +485,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
 datetimeoffset-timezone
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 host_id
 drop_index
 linked_srv_4229
@@ -495,7 +497,6 @@ set_tran_isolvl
 with_recompile
 alter_proc_recompile
 catalogs_dbo_sys_schema-upgrade
-unary_plus_op_string
 BABEL-4217
 Test_ISNULL
 BABEL-4270
@@ -533,7 +534,7 @@ BABEL-4707
 BABEL_4817
 upper_lower
 BABEL-4641
-trim
+trim-before-15_11-or-16_7
 ltrim
 rtrim
 left
@@ -575,10 +576,11 @@ xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
-BABEL-CASE_EXPR
+BABEL-CASE_EXPR-before-16_6
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
+cast_nvarchar_test_before_16_5
 securityadmin_role
 db_accessadmin
 datareader_datawriter
@@ -586,3 +588,13 @@ dbcreator_role
 db_securityadmin
 db_ddladmin
 smalldatetime_date_cmp
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
+fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3

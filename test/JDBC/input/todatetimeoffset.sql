@@ -241,3 +241,5 @@ GO
 Select todatetimeoffset('10000-12-31 23:12:00.123 +00:00',743)
 GO
 
+drop table tem
+GO

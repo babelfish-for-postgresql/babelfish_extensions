@@ -28,6 +28,7 @@ extern bool IsPLtsqlExtendedCatalog(Oid relationId);
 extern bool IsPltsqlToastRelationHook(Relation relation);
 extern bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup);
 extern void pltsql_drop_relation_refcnt_hook(Relation relation);
+extern bool bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role);
 
 /*****************************************
  *			SYS schema
@@ -580,5 +581,7 @@ typedef struct Rule
 
 	RelData    *tbldata;		/* extra catalog info */
 } Rule;
+
+extern void get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name);
 
 #endif

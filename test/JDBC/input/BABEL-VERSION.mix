@@ -84,10 +84,10 @@ GO
 Alter system set babelfishpg_tds.product_version = " ";
 GO
 
-ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.version = "test";
 GO
 
-ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.version = "default";
 GO
 
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";

@@ -1,3 +1,4 @@
+-- tsql
 -- Nulls check
 SELECT * FROM babel_index_nulls_order_a_v1
 go

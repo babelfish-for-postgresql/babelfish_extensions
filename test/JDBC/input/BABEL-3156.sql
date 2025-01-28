@@ -56,7 +56,7 @@ GO
 
 exec sp_describe_undeclared_parameters
     N'UPDATE BABEL_3156 SET a=@P1 WHERE not_a_col=@P2';
-G
+GO
 
 DROP TABLE BABEL_3156;
 GO

@@ -108,7 +108,7 @@ go
 SELECT pg_sleep(1);
 go
 
-SELECT pg_stat_statements_reset();
+SELECT CASE WHEN pg_stat_statements_reset() IS NOT NULL THEN TRUE ELSE FALSE END;
 go
 
 -- tsql

@@ -149,7 +149,9 @@ extern bool pltsql_check_guc_plan(CachedPlanSource *plansource);
 bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
 extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
-static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
+static void check_invalid_column_constraints(RangeVar *relation, ColumnDef *column);
+static void check_invalid_constraints(RangeVar *relation, Constraint *constraint);
+static bool checkAndSetTsqlSystemFunc(FuncCall *fc);
 static bool is_identity_constraint(ColumnDef *column);
 extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
@@ -316,6 +318,19 @@ check_identity_insert(char** newval, void **extra, GucSource source)
 }
 
 static void
+throw_error_for_identity_insert(char *database, char *schema, char* object)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("Cannot find the object \"%s%s%s%s%s\" because it does not exist or you do not have permissions.",
+				database ? database : "",
+				database ? "." : "",
+				schema ? schema : "",
+				schema ? "." : "",
+				object)));
+}
+
+static void
 assign_identity_insert(const char *newval, void *extra)
 {
 	if (IsParallelWorker())
@@ -333,6 +348,10 @@ assign_identity_insert(const char *newval, void *extra)
 		char	   *id_insert_rel_name = NULL;
 		char	   *id_insert_schema_name = NULL;
 		char	   *cur_db_name;
+		char	   *catalog_name = NULL;
+		char	   *logical_schema_name = NULL;
+		char	   *curr_user_if_cross_db = NULL;
+		Oid			curr_user_id = InvalidOid;
 
 		cur_db_name = get_cur_db_name();
 
@@ -360,40 +379,61 @@ assign_identity_insert(const char *newval, void *extra)
 		option_flag = (char *) linitial(elemlist);
 		rel_name = (char *) lsecond(elemlist);
 
+		/* Use catalog name if provided */
+		if (list_length(elemlist) == 4)
+		{
+			catalog_name = (char *) lfourth(elemlist);
+
+			if(!DbidIsValid(get_db_id(catalog_name)))
+			{
+				/* Get schema name for error message */
+				logical_schema_name = (char *) lthird(elemlist);
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
+			}
+
+			cur_db_name = catalog_name;
+			curr_user_if_cross_db = get_user_for_database(cur_db_name);
+
+			/*
+			 * User in cross-db case can be NULL if login has no user
+			 * that it can use to connect to that database. We should
+			 * throw permission denied error in that case
+			 */
+			if (!curr_user_if_cross_db)
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
+		}
+
 		/* Check the user provided schema value */
 		if (list_length(elemlist) >= 3)
 		{
-			schema_name = (char *) lthird(elemlist);
+			logical_schema_name = (char *) lthird(elemlist);
 
 			if (cur_db_name)
 				schema_name = get_physical_schema_name(cur_db_name,
-													   schema_name);
+													   logical_schema_name);
+
+			/* If no schema name is provided, we should use default schema */
+			if (!schema_name)
+			{
+				char *user_name = NULL;
+
+				/* If catalog name is not NULL, it is cross-db */
+				if (catalog_name)
+					user_name = curr_user_if_cross_db;
+				else
+					user_name = GetUserNameFromId(GetUserId(), false);
+
+				schema_name = get_physical_schema_name(cur_db_name,
+								get_authid_user_ext_schema_name(cur_db_name, user_name));
+			}
 
 			schema_oid = LookupExplicitNamespace(schema_name, true);
 			if (!OidIsValid(schema_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						 errmsg("schema \"%s\" does not exist",
-								schema_name)));
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
 
 			rel_oid = get_relname_relid(rel_name, schema_oid);
 			if (!OidIsValid(rel_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" does not exist",
-								rel_name)));
-		}
-
-		/* Check the catalog name then ignore it */
-		if (list_length(elemlist) == 4)
-		{
-			char	   *catalog_name = (char *) lfourth(elemlist);
-
-			if (strcmp(catalog_name, get_database_name(MyDatabaseId)) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
-								catalog_name, schema_name, rel_name)));
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
 		}
 
 		/* If schema is not provided, find it from the search path. */
@@ -405,14 +445,50 @@ assign_identity_insert(const char *newval, void *extra)
 			 */
 			rel_oid = RelnameGetRelid(rel_name);
 			if (!OidIsValid(rel_oid))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" does not exist",
-								rel_name)));
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
 
 			schema_oid = get_rel_namespace(rel_oid);
 			schema_name = get_namespace_name(schema_oid);
 		}
+
+		/* If catalog name is not NULL, it is cross-db */
+		if (catalog_name)
+			curr_user_id = get_role_oid(curr_user_if_cross_db, false);
+		else
+			curr_user_id = GetUserId();
+
+		/* Check if the physical schema is actually associated with current logical database */
+		/* Ignore for temporary tables */
+		if (schema_name && !isTempNamespace(get_namespace_oid(schema_name, false)))
+		{
+			Datum		datum;
+			int16		db_id;
+			bool		isnull;
+			HeapTuple	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(schema_name));
+
+			if (!HeapTupleIsValid(tuple))
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
+
+			datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_dbid, &isnull);
+			db_id = DatumGetInt16(datum);
+
+			if (!DbidIsValid(db_id) || db_id != get_db_id(cur_db_name))
+				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
+
+			ReleaseSysCache(tuple);
+		}
+
+		/*
+		 * For SET IDENTITY_INSERT, ALTER permission on relation is needed. In
+		 * Babelfish, current user has ALTER permission on relation if either:
+		 *
+		 * 1. User is owner of object
+		 * 2. User is member of db_ddladmin or db_owner database role
+		 */
+		if (!(object_ownercheck(RelationRelationId, rel_oid, curr_user_id) ||
+			has_privs_of_role(curr_user_id, get_db_ddladmin_oid(cur_db_name, false)) ||
+			has_privs_of_role(curr_user_id, get_db_owner_oid(cur_db_name, false))))
+			throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
 
 		/* Process assignment logic */
 		if (strcmp(option_flag, "on") == 0)
@@ -1089,7 +1165,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						switch (nodeTag(element))
 						{
 							case T_ColumnDef:
-								check_nullable_identity_constraint(stmt->relation,
+								check_invalid_column_constraints(stmt->relation,
 																   (ColumnDef *) element);
 								if (is_identity_constraint((ColumnDef *) element))
 								{
@@ -1176,7 +1252,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						switch (cmd->subtype)
 						{
 							case AT_AddColumn:
-								check_nullable_identity_constraint(atstmt->relation,
+								check_invalid_column_constraints(atstmt->relation,
 																   castNode(ColumnDef, cmd->def));
 								if (is_identity_constraint(castNode(ColumnDef, cmd->def)))
 								{
@@ -1203,6 +1279,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case AT_AddConstraint:
 								{
 									Constraint *c = castNode(Constraint, cmd->def);
+
+									check_invalid_constraints(atstmt->relation, c);
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
@@ -1253,6 +1331,17 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case AT_ColumnDefault:
 								{
 									int			colnamelen = strlen(cmd->name);
+
+									if (nodeTag(cmd->def) == T_FuncCall)
+									{
+										if (atstmt->relation->relpersistence == RELPERSISTENCE_TEMP && 
+											!checkAndSetTsqlSystemFunc(castNode(FuncCall, cmd->def)))
+										{
+											ereport(ERROR,
+													(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+													errmsg("User-defined functions, partition functions, and column references are not allowed in expressions in this context.")));
+										}
+									}
 
 									/*
 									 * Disallow defaults on a rowversion
@@ -1855,9 +1944,13 @@ revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, 
 	CommandCounterIncrement();
 }
 
-
+/*
+ * Check for constraints that are invalid in TSQL. For example:
+ * 1. Identity columns cannot be nullable
+ * 2. User-defined functions (UDFs) are not allowed in TSQL temp table or table variable column defaults.
+ */
 static void
-check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
+check_invalid_column_constraints(RangeVar *relation, ColumnDef *column)
 {
 	ListCell   *clist;
 	bool		is_null = false;
@@ -1866,6 +1959,7 @@ check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
 	foreach(clist, column->constraints)
 	{
 		Constraint *constraint = lfirst_node(Constraint, clist);
+		check_invalid_constraints(relation, constraint);
 
 		switch (constraint->contype)
 		{
@@ -1888,6 +1982,76 @@ check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
 				 errmsg("Could not create IDENTITY attribute on nullable column '%s', table '%s'.",
 						column->colname,
 						relation->relname)));
+}
+
+/*
+ * Similar to check_invalid_column_constraints, but for individual constraints, such as added by
+ * ALTER TABLE ADD CONSTRAINT
+ */
+static void
+check_invalid_constraints(RangeVar *relation, Constraint *constraint)
+{
+	switch (constraint->contype)
+	{		
+		case CONSTR_DEFAULT:
+		{
+			if (IsA(constraint->raw_expr, FuncCall))
+			{
+				FuncCall *fc = castNode(FuncCall, constraint->raw_expr);
+				if (relation->relpersistence == RELPERSISTENCE_TEMP && !checkAndSetTsqlSystemFunc(fc))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+							errmsg("User-defined functions, partition functions, and column references are not allowed in expressions in this context.")));
+				}
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+/*
+ * Returns true iff the function is a system function. For Babelfish, this means searching in the "sys"
+ * schema, but the "sys" schema is meant to be opaque to customers, so to match SQL Server behavior
+ * we assume that it will never be schema-qualified in order to be true.
+ * If we do find a matching system function, then we modify the func call to explicitly call the fully-qualified
+ * system function, to prevent inadvertently using any user-defined overrides for the function name.
+ */
+static bool
+checkAndSetTsqlSystemFunc(FuncCall *fc)
+{
+	List *name_to_search;
+	ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+	char *sys = palloc0(4);
+	strncpy(sys, "sys", 3);
+	if (list_length(fc->funcname) == 1)
+	{
+		/* explicitly search in the "sys" schema */
+		name_to_search = list_make2(makeString(sys), linitial(fc->funcname));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("Column \"%s\" is not allowed in this context, and the user-defined function or aggregate \"%s\" could not be found.",
+						strVal(linitial(fc->funcname)),
+						NameListToString(fc->funcname))));
+	}
+
+	owa->objname = name_to_search;
+	owa->args_unspecified = true;
+
+	if (LookupFuncWithArgs(OBJECT_FUNCTION, owa, true))
+	{
+		list_free(fc->funcname);
+		fc->funcname = name_to_search;
+		return true;
+	}
+
+	return false;
 }
 
 static void
@@ -2647,8 +2811,35 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool		isrole = false;
 					bool		from_windows = false;
 					Oid 		save_userid;
+					Oid 		role_oid = InvalidOid;
 					int 		save_sec_context;
 					const char	*old_createrole_self_grant;
+
+					/* Throw error if there is a possibility of name clash with an internal role */
+					role_oid = get_role_oid(stmt->role, true);
+
+					if (OidIsValid(role_oid) &&
+						(is_admin_of_role(get_bbf_role_admin_oid(), role_oid)))
+					{
+						HeapTuple tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(stmt->role));
+
+						/*
+						 * If role:
+						 *  - Is a valid PG role
+						 *  - Does not exist in Babelfish catalogs
+						 *  - bbf_role_admin is admin of this role
+						 *
+						 * We can safely assume it is a role created internally by us
+						 */
+						if (!HeapTupleIsValid(tuple_cache) && !is_login_name(stmt->role))
+							ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_OBJECT),
+								 errmsg("Cannot create database principal \"%s\" as there already exists "
+										"a Babelfish internal role with the same name", stmt->role)));
+
+						if (HeapTupleIsValid(tuple_cache))
+							ReleaseSysCache(tuple_cache);
+					}
 
 					/* Check if creating login or role. Expect islogin first */
 					if (stmt->options != NIL)
@@ -2975,8 +3166,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/*
 					 * check whether sql user name and role name contains
 					 * '\' or not
+					 *
+					 * check can be skipped if query is creating internal role
+					 * for ALTER ROLE db_owner ADD MEMBER ...
 					 */
-					if (isrole || !from_windows)
+					if ((isrole || !from_windows) && strcmp(queryString, INTERNAL_ALTER_ROLE) != 0)
 						validateUserAndRole(stmt->role);
 
 					/* Save the previous user to be restored after creating the login. */
@@ -3711,6 +3905,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (rolspec && strcmp(queryString, CREATE_FIXED_DB_ROLES) != 0)
 					{
 						const char *db_name = get_current_pltsql_db_name();
+						Oid db_owner_oid = InvalidOid;
 
 						owner_oid = get_rolespec_oid(rolspec, true);
 						/*
@@ -3728,7 +3923,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							alter_owner = true;
 						}
 
-						if (has_privs_of_role(owner_oid, get_db_owner_oid(db_name, false)) && owner_oid != get_dbo_oid(db_name, false))
+						db_owner_oid = get_db_owner_oid(db_name, false);
+
+						if (has_privs_of_role(owner_oid, db_owner_oid) &&
+							owner_oid != get_dbo_oid(db_name, false) && owner_oid != db_owner_oid)
 						{
 							const char* new_owner = get_obj_role(get_rolespec_name(rolspec));
 							create_schema->authrole = make_rolespec_node(new_owner);
@@ -4937,7 +5135,6 @@ _PG_init(void)
 
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
-	init_special_function_list();
 	init_tsql_cursor_hash_tab(fcinfo);
 	RegisterXactCallback(pltsql_xact_cb, NULL);
 	RegisterSubXactCallback(pltsql_subxact_cb, NULL);
@@ -5002,6 +5199,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
 		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
 		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
+		(*pltsql_protocol_plugin_ptr)->get_tvp_typename_typeschemaname = &get_tvp_typename_typeschemaname;
 
 		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
 		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;
@@ -5297,7 +5495,7 @@ Datum
 pltsql_call_handler(PG_FUNCTION_ARGS)
 {
 	bool		nonatomic;
-	PLtsql_function *func;
+	PLtsql_function *func = NULL;
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
@@ -5418,6 +5616,11 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+
+		/* If func is NULL then we have encountered a parser error. */
+		if (!func)
+			terminate_batch(true /* send_error */ , true /* compile_error */ , current_spi_stack_depth);
+
 	}
 	PG_END_TRY();
 

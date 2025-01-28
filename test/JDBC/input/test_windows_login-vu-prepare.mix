@@ -1,5 +1,4 @@
--- sla 180000
--- TODO: BABEL-5349
+-- sla 55000
 -- psql
 do 
 $$ begin 

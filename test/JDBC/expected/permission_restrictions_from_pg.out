@@ -2,6 +2,12 @@
 create login permission_restrictions_tsql_login with password = '123';
 go
 
+create login permission_restrictions_tsql_login1 with password = '123';
+go
+
+create user permission_restrictions_tsql_user1 for login permission_restrictions_tsql_login1;
+go
+
 -- psql
 create user permission_restrictions_psql_user with password '123';
 go
@@ -42,6 +48,56 @@ go
 
 ~~ERROR (Message: ERROR: permission denied to alter role
   Detail: To change another role's password, the current user must have the CREATEROLE attribute and the ADMIN option on the role.
+    Server SQLState: 42501)~~
+
+
+-- Grant on BBF role should not be allowed
+grant master_db_datareader to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant master_db_datareader to master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant master_db_datareader to master_db_datareader;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- dropping of BBF users/logins should not be allowed
+drop user permission_restrictions_tsql_login1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+drop user master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -117,6 +173,56 @@ go
 alter user permission_restrictions_psql_user1 with password '1234'
 go
 
+-- Grant on BBF role should not be allowed
+grant master_db_datareader to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant master_db_datareader to master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+grant master_db_datareader to master_db_datareader;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- dropping of BBF users/logins should not be allowed
+drop user permission_restrictions_tsql_login1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+drop user master_permission_restrictions_tsql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
 -- user has sysadmin membership, drop user is allowed
 drop user permission_restrictions_psql_user1;
 go
@@ -169,6 +275,28 @@ void
 ~~END~~
 
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
+drop user permission_restrictions_tsql_user1;
+go
+
+drop login permission_restrictions_tsql_login1;
+go
+
 drop login permission_restrictions_tsql_login
 go

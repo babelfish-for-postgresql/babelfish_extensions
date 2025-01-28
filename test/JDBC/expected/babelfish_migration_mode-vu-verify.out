@@ -96,14 +96,6 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 ~~START~~
@@ -240,27 +232,11 @@ int
 USE master
 GO
 
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 
 
 -- should fail in single-db
 USE babelfish_migration_mode_db2
 GO
-
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
 
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
@@ -387,14 +363,6 @@ int
 USE master
 GO
 
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 ~~START~~
@@ -406,14 +374,6 @@ multi-db
 -- should fail in single-db
 USE babelfish_migration_mode_db2
 GO
-
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
 
 SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
@@ -443,14 +403,6 @@ GO
 
 DROP DATABASE babelfish_migration_mode_db2
 GO
-
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
 
 
 
@@ -485,25 +437,6 @@ varchar#!#int
 
 TRUNCATE TABLE babelfish_migration_mode_catalog_status2
 GO
-
-SELECT set_config('role', 'jdbc_user', false)
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
--- Reset migration mode to default
-DECLARE @mig_mode VARCHAR(10)
-SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
-SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
-GO
-~~START~~
-int
-1
-~~END~~
-
 
 INSERT INTO babelfish_migration_mode_catalog_status2 
 SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases

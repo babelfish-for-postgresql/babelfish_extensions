@@ -35,7 +35,6 @@ TestTinyInt
 TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
-restricted_procedures
 TestXML
 sys-assembly_types
 sys-database_mirroring
@@ -132,11 +131,12 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3249
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3474
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3646
 BABEL-3748
 BABEL-383
@@ -178,6 +178,7 @@ babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
@@ -386,6 +387,7 @@ case_insensitive_collation-before-16_5-or-15_9
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID-before-16_5-or-15_9
+BABEL_SCHEMATA
 isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
@@ -471,4 +473,13 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 datareader_datawriter
 BABEL-5186
 smalldatetime_date_cmp-before-15_5-16_1
-
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
+fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3

@@ -1,0 +1,3 @@
+CREATE TABLE fixeddecimal_modulo_t1 (a MONEY);
+INSERT INTO fixeddecimal_modulo_t1 VALUES (5.5);
+GO

@@ -933,7 +933,58 @@ GO
 SELECT TRANSLATE(b, b, c) FROM babel_4837_translate_UDT
 GO
 
--- other different datatypes, all of these should be blocked
+-- Arguments with pg datatypes
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t1
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t2
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t3
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t4
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t5
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t6
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t7
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t8
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t9
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t10
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t11
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t12
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t13
+GO
+
+SELECT translate(a, b, c) FROM dbo.babel_4837_translate_psql_t14
+GO
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT translate(@inputString, 'de', 'pq')
+GO
+
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂', @characters sysname = N'🙂de', @translations sysname = N'x🙂y'
+SELECT translate(@inputString, @characters, @translations)
+GO
+
 DECLARE @inputString date = '2016-12-21'
 SELECT TRANSLATE(@inputString, '12', '06');
 GO

@@ -46,7 +46,6 @@ BABEL-2449
 BABEL-2535
 BABEL-2688
 BABEL-2765
-restricted_procedures
 BABEL-2787
 BABEL-2787-2
 BABEL-2795
@@ -63,6 +62,7 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -89,11 +89,11 @@ BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
-BABEL-3486
+BABEL-3486-before-17_3
 BABEL-3513_before_15_8_or_16_4
 BABEL-3556
 BABEL-3588
-BABEL-3614
+BABEL-3614-before-17_3
 BABEL-3640
 BABEL-3646
 BABEL-3655
@@ -150,6 +150,7 @@ babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
+babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
 babel_function_string
@@ -167,6 +168,7 @@ BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
 BABEL-ROLE-MEMBER
+BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -416,7 +418,7 @@ Test-Computed-Columns
 TestDate
 TestDatetime
 TestDatetime2
-TestDatetime-numeric-dateaddfunction
+TestDatetime-numeric-dateaddfunction-before-17_3
 TestDatetime-numeric-representation
 TestDecimal
 TestFloat
@@ -460,7 +462,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-test_windows_login
+test_windows_login_before-17_2
 test_windows_sp_helpuser
 TestXML
 timefromparts
@@ -479,7 +481,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
 datetimeoffset-timezone
-# BABEL-4046 - TODO JIRA -  BABEL-5397
+BABEL-4046
 host_id-before-16_5-or-15_9
 drop_index
 linked_srv_4229
@@ -562,7 +564,17 @@ BABEL-CASE_EXPR-before-16_5-or-15_9
 declare_atatglobalvars_upgrade-before-16_5
 BABEL-5186
 BABEL-2736-before-16_5
+cast_nvarchar_test_before_16_5
 securityadmin_role
 datareader_datawriter
 smalldatetime_date_cmp
-
+test_conv_string_to_date-before-17_3
+test_conv_string_to_datetime-before-17_3
+test_conv_string_to_datetime2-before-17_3
+test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_smalldatetime
+test_conv_string_to_time-before-17_3
+BABEL-5031
+test_conv_money_to_varchar
+fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3
