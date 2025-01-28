@@ -136,19 +136,20 @@ jobs:
           # Extract and classify warnings
           extract_and_classify_warnings > "$CURRENT_WARNINGS"
           echo "checkpoint 2 executed successfully"
-          
+          ERROR=false
           # Check for other warnin
           OTHER_WARNING_COUNT=$(grep -c "OTHER_WARNING:" "$CURRENT_WARNINGS")
 
           if [ "$OTHER_WARNING_COUNT" -ge 1 ]; then
               echo "Error: $OTHER_WARNING_COUNT unexpected warning type(s) detected."
               grep "OTHER_WARNING:" "$CURRENT_WARNINGS"
-              exit 1
+              ERROR=true
+
           echo "checkpoint 3 executed successfully"
           # Count warnings
           SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
           LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
-          ERROR=false
+
           echo "checkpoint 4 executed successfully"
           if [ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]; then
               echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
