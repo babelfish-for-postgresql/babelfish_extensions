@@ -143,7 +143,7 @@ jobs:
               echo "Error: $OTHER_WARNING_COUNT unexpected warning type(s) detected."
               grep "OTHER_WARNING:" "$CURRENT_WARNINGS"
               exit 1
-          fi
+
           # Count warnings
           SNAPSHOT_ACTIVE_COUNT=$(grep -c "SNAPSHOT_ACTIVE_WARNING:" "$CURRENT_WARNINGS")
           LEAK_COUNT=$(grep -c "LEAK_WARNING:" "$CURRENT_WARNINGS")
@@ -152,31 +152,20 @@ jobs:
           if [ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]; then
               echo "Error: Expected 44 'snapshot ... still active' warnings, but found $SNAPSHOT_ACTIVE_COUNT"
               ERROR=true
-          fi
-          
+
           if [ "$LEAK_COUNT" -ne 380 ]; then
               echo "Error: Expected 380 leak warnings, but found $LEAK_COUNT"
               ERROR=true
-          fi
-          
+
           if [ "$ERROR" = true ]; then
               echo "Unexpected warning counts detected. Please investigate."
               echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
               echo "Leak warnings: $LEAK_COUNT"
               exit 1
-          else
-              echo "Warning counts are as expected:"
-              echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
-              echo "Leak warnings: $LEAK_COUNT"
-          fi
-          
-          # Count warnings by type
-          echo "Warning counts:"
-          cut -d: -f1 "$CURRENT_WARNINGS" | sort | uniq -c
 
-          # Display the contents of CURRENT_WARNINGS for debugging
-          echo "Contents of $CURRENT_WARNINGS:"
-          cat "$CURRENT_WARNINGS"
+          echo "Warning counts are as expected:"
+          echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
+          echo "Leak warnings: $LEAK_COUNT"
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
