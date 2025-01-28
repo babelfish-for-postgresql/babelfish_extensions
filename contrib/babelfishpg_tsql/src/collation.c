@@ -396,6 +396,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			CollateExpr	*collateExpr = (CollateExpr*) rightop;
 			if (!IsA(collateExpr->arg, Const))
 				return node;
+			if (((Const *) (collateExpr->arg))->constisnull)
+				return node;
+
 			patt = (Const *) (collateExpr->arg);
 		}
 		/* This is for CI_AI, as we will get a FuncExpr because of remove_accents_internal */
@@ -419,6 +422,8 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 						CollateExpr *collateExpr = (CollateExpr *) arg;
 						if (IsA(collateExpr->arg, Const))
 						{
+							if (((Const *) (collateExpr->arg))->constisnull)
+								return node;
 							patt = (Const *) (collateExpr->arg);
 						}
 						else
