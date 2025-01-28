@@ -58,8 +58,10 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'suser_name_depreca
 
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'suser_name_current_session'
-LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+AS $$
+    SELECT sys.suser_name_internal(suser_id());
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 DO $$
 DECLARE

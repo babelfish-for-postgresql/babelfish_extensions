@@ -968,39 +968,6 @@ get_original_login_name(char *login)
 	return result;
 }
 
-PG_FUNCTION_INFO_V1(suser_name_current_session);
-Datum
-suser_name_current_session(PG_FUNCTION_ARGS)
-{
-	Oid			server_user_id;
-	char	   *ret;
-	char	   *orig_loginname;
-
-	server_user_id = GetSessionUserId();
-
-	if (server_user_id == InvalidOid)
-		PG_RETURN_NULL();
-
-	ret = GetUserNameFromId(server_user_id, true);
-
-	if (!ret)
-		PG_RETURN_NULL();
-
-	if (!is_login(server_user_id))
-	{
-		pfree(ret);
-		PG_RETURN_NULL();
-	}
-
-	orig_loginname = get_original_login_name(ret);
-
-	pfree(ret);
-	if (!orig_loginname)
-		PG_RETURN_NULL();
-
-	PG_RETURN_TEXT_P(cstring_to_text(orig_loginname));
-}
-
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
