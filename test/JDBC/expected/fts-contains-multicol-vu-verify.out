@@ -1,0 +1,379 @@
+-- Basic Multiple Column Tests
+SELECT sys.replace_special_chars_fts('one`two', 'three@four', 'five#six');
+SELECT sys.replace_special_chars_fts('one@two', 'three#four', 'five$six', 'seven&eight');
+GO
+~~START~~
+text
+onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo||' '||three specialCharscat1e09616b53f5138735a7d0a79e78e804e four||' '||five specialCharscat1e09616b53f5138735a7d0a79e78e804e six
+~~END~~
+
+~~START~~
+text
+one specialCharscat1e09616b53f5138735a7d0a79e78e804e two||' '||three specialCharscat1e09616b53f5138735a7d0a79e78e804e four||' '||five specialCharscat1e09616b53f5138735a7d0a79e78e804e six||' '||seven specialCharscat1e09616b53f5138735a7d0a79e78e804e eight
+~~END~~
+
+
+-- Mixed Single and Multiple Column Tests
+SELECT sys.replace_special_chars_fts('"one @ @ @ @ two"');
+SELECT sys.replace_special_chars_fts('"one @ @ @ @ two"', 'three ^ four', 'five & six');
+GO
+~~START~~
+text
+"one @ @ @ @ two"
+~~END~~
+
+~~START~~
+text
+"one @ @ @ @ two"||' '||three specialCharscat1e09616b53f5138735a7d0a79e78e804e four||' '||five specialCharscat1e09616b53f5138735a7d0a79e78e804e six
+~~END~~
+
+
+-- Quoted String Multiple Column Tests
+SELECT sys.replace_special_chars_fts('"one @ two"', '"three $ four"', '"five # six"');
+SELECT sys.replace_special_chars_fts('"one   @ two    ^ three"', '"four % five"', '"six & seven"');
+GO
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two"||' '||"three specialCharscat1e09616b53f5138735a7d0a79e78e804e four"||' '||"five specialCharscat1e09616b53f5138735a7d0a79e78e804e six"
+~~END~~
+
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three"||' '||"four specialCharscat1e09616b53f5138735a7d0a79e78e804e five"||' '||"six specialCharscat1e09616b53f5138735a7d0a79e78e804e seven"
+~~END~~
+
+
+-- Multiple Spaces Multiple Column Tests
+SELECT sys.replace_special_chars_fts('one     two', 'three    four', 'five   six');
+SELECT sys.replace_special_chars_fts('   one   two   ', '   three   four   ', '   five   six   ');
+GO
+~~START~~
+text
+one     two||' '||three    four||' '||five   six
+~~END~~
+
+~~START~~
+text
+   one   two   ||' '||   three   four   ||' '||   five   six   
+~~END~~
+
+
+-- Apostrophe Multiple Column Tests
+SELECT sys.replace_special_chars_fts('Arts '' opening', 'Bob''s place', 'Smith''s store');
+SELECT sys.replace_special_chars_fts('Don''t', 'Won''t', 'Can''t', 'Shouldn''t');
+GO
+~~START~~
+text
+Arts specialCharscat3e09616b53f5138735a7d0a79e78e804e opening||' '||BobspecialCharscat3e09616b53f5138735a7d0a79e78e804es place||' '||SmithspecialCharscat3e09616b53f5138735a7d0a79e78e804es store
+~~END~~
+
+~~START~~
+text
+DonspecialCharscat3e09616b53f5138735a7d0a79e78e804et||' '||WonspecialCharscat3e09616b53f5138735a7d0a79e78e804et||' '||CanspecialCharscat3e09616b53f5138735a7d0a79e78e804et||' '||ShouldnspecialCharscat3e09616b53f5138735a7d0a79e78e804et
+~~END~~
+
+
+
+
+-- -- Babelfish FTS Rewrite Multiple Column Tests
+-- SELECT sys.babelfish_fts_rewrite('"one @ @ @ @ two"', '"three # # four"', '"five $ $ six"');
+-- SELECT sys.babelfish_fts_rewrite('"one   @ two    ^ three"', '"four % five"', '"six & seven"');
+-- GO
+-- -- Colon Multiple Column Tests
+-- SELECT sys.babelfish_fts_rewrite(':one', ':two', ':three');
+-- SELECT sys.babelfish_fts_rewrite('one:', 'two:', 'three:');
+-- SELECT sys.babelfish_fts_rewrite('one:  ', 'two:  ', 'three:  ');
+-- GO
+-- Mixed Special Characters Multiple Column Tests
+SELECT sys.replace_special_chars_fts('one@two#three', 'four$five^six', 'seven&eight*nine');
+SELECT sys.replace_special_chars_fts('"one@@two"', '"three##four"', '"five$$six"');
+GO
+~~START~~
+text
+one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three||' '||four specialCharscat1e09616b53f5138735a7d0a79e78e804e five specialCharscat1e09616b53f5138735a7d0a79e78e804e six||' '||seven specialCharscat1e09616b53f5138735a7d0a79e78e804e eight specialCharscat1e09616b53f5138735a7d0a79e78e804e nine
+~~END~~
+
+~~START~~
+text
+"one@@two"||' '||"three##four"||' '||"five$$six"
+~~END~~
+
+
+-- Empty and NULL Multiple Column Tests
+SELECT sys.replace_special_chars_fts('', NULL, 'three');
+SELECT sys.replace_special_chars_fts(NULL, '', NULL);
+-- SELECT sys.babelfish_fts_rewrite('', NULL, 'three');
+GO
+~~START~~
+text
+||' '||three
+~~END~~
+
+~~START~~
+text
+||' '||
+~~END~~
+
+
+-- Unicode Character Multiple Column Tests
+SELECT sys.replace_special_chars_fts('café@résumé', 'über#müller', 'señor$españa');
+SELECT sys.replace_special_chars_fts('"café@résumé"', '"über#müller"', '"señor$españa"');
+GO
+~~START~~
+text
+café specialCharscat1e09616b53f5138735a7d0a79e78e804e résumé||' '||über specialCharscat1e09616b53f5138735a7d0a79e78e804e müller||' '||señor specialCharscat1e09616b53f5138735a7d0a79e78e804e españa
+~~END~~
+
+~~START~~
+text
+"café specialCharscat1e09616b53f5138735a7d0a79e78e804e résumé"||' '||"über specialCharscat1e09616b53f5138735a7d0a79e78e804e müller"||' '||"señor specialCharscat1e09616b53f5138735a7d0a79e78e804e españa"
+~~END~~
+
+
+-- Mixed Content Type Tests
+SELECT sys.replace_special_chars_fts('normal text', '"quoted text"', 'special@text');
+SELECT sys.replace_special_chars_fts('UPPER CASE', 'lower case', 'Mixed@Case');
+GO
+~~START~~
+text
+normal text||' '||"quoted text"||' '||special specialCharscat1e09616b53f5138735a7d0a79e78e804e text
+~~END~~
+
+~~START~~
+text
+UPPER CASE||' '||lower case||' '||Mixed specialCharscat1e09616b53f5138735a7d0a79e78e804e Case
+~~END~~
+
+
+-- Large Number of Columns Test
+SELECT sys.replace_special_chars_fts(
+    'column1@test',
+    'column2#test',
+    'column3$test',
+    'column4%test',
+    'column5^test',
+    'column6&test',
+    'column7*test',
+    'column8(test'
+);
+GO
+~~START~~
+text
+column1 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column2 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column3 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column4 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column5 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column6 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column7 specialCharscat1e09616b53f5138735a7d0a79e78e804e test||' '||column8(test
+~~END~~
+
+
+-- Complex Multiple Column Tests
+SELECT sys.replace_special_chars_fts(
+    '"Complex @ Test"',
+    'Simple # Test',
+    '"Mixed @ # $ Test"',
+    'Normal Text'
+);
+GO
+~~START~~
+text
+"Complex specialCharscat1e09616b53f5138735a7d0a79e78e804e Test"||' '||Simple specialCharscat1e09616b53f5138735a7d0a79e78e804e Test||' '||"Mixed @ # $ Test"||' '||Normal Text
+~~END~~
+
+
+-- Special Characters Combination Tests
+SELECT sys.replace_special_chars_fts(
+    'one@two#three',
+    '"four$five^six"',
+    'seven & eight',
+    '"nine @ ten"'
+);
+GO
+~~START~~
+text
+one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three||' '||"four specialCharscat1e09616b53f5138735a7d0a79e78e804e five specialCharscat1e09616b53f5138735a7d0a79e78e804e six"||' '||seven specialCharscat1e09616b53f5138735a7d0a79e78e804e eight||' '||"nine specialCharscat1e09616b53f5138735a7d0a79e78e804e ten"
+~~END~~
+
+
+-- Edge Cases with Multiple Columns
+SELECT sys.replace_special_chars_fts('""""', '@@@', '###', '$$$');
+SELECT sys.replace_special_chars_fts('    ', '"   "', '  @  ', ' # ');
+-- SELECT sys.babelfish_fts_rewrite('""""', '@@@', '###', '$$$');
+GO
+~~START~~
+text
+""""||' '||@@@||' '||###||' '||$$$
+~~END~~
+
+~~START~~
+text
+    ||' '||"   "||' '|| specialCharscat1e09616b53f5138735a7d0a79e78e804e ||' '|| specialCharscat1e09616b53f5138735a7d0a79e78e804e 
+~~END~~
+
+
+-- Mixed Length Tests
+SELECT sys.replace_special_chars_fts(
+    'short',
+    'medium length text',
+    'very long text with special @ characters and spaces',
+    '"quoted short"'
+);
+GO
+~~START~~
+text
+short||' '||medium length text||' '||very long text with special specialCharscat1e09616b53f5138735a7d0a79e78e804e characters and spaces||' '||"quoted short"
+~~END~~
+
+
+-- Nested Quotes Tests
+SELECT sys.replace_special_chars_fts(
+    '"outer "inner" quote"',
+    '"another "inner" test"',
+    'no quotes here'
+);
+GO
+~~START~~
+text
+"outer "inner" quote"||' '||"another "inner" test"||' '||no quotes here
+~~END~~
+
+
+-- Special Character Position Tests
+SELECT sys.replace_special_chars_fts(
+    '@start',
+    'middle@middle',
+    'end@',
+    '"@quoted@"'
+);
+GO
+~~START~~
+text
+ specialCharscat1e09616b53f5138735a7d0a79e78e804e start||' '||middle specialCharscat1e09616b53f5138735a7d0a79e78e804e middle||' '||end specialCharscat1e09616b53f5138735a7d0a79e78e804e ||' '||" specialCharscat1e09616b53f5138735a7d0a79e78e804e quoted specialCharscat1e09616b53f5138735a7d0a79e78e804e "
+~~END~~
+
+
+
+
+
+-- Verify the results
+SELECT TOP 50 * FROM test_tb ORDER BY id;
+-- Check total count
+SELECT COUNT(*) as total_records FROM test_tb;
+-- Check pattern repetition (first 24 rows vs next 24 rows)
+SELECT 'First 24 rows' as Pattern, * FROM (
+    SELECT TOP 24 * FROM test_tb ORDER BY id
+) t1
+UNION ALL
+SELECT 'Next 24 rows' as Pattern, * FROM (
+    SELECT TOP 24 * FROM (
+        SELECT TOP 48 * FROM test_tb ORDER BY id
+    ) t ORDER BY id DESC
+) t2;
+GO
+~~START~~
+int#!#text#!#text#!#text#!#text
+1#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+2#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+3#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+4#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+5#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+6#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+7#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+8#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+9#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+10#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.
+11#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+12#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+13#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+14#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+15#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+16#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.
+17#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+18#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+19#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+20#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+21#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+22#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+23#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+24#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+25#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.
+26#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.
+27#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.
+28#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+29#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.
+30#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+31#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.
+32#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.
+33#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.
+34#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.
+35#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.
+36#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.
+37#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.
+38#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+39#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.
+40#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.
+41#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+42#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.
+43#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.
+44#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+45#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.
+46#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.
+47#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+48#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.
+49#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+50#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+~~END~~
+
+~~START~~
+int
+1000
+~~END~~
+
+~~START~~
+varchar#!#int#!#text#!#text#!#text#!#text
+First 24 rows#!#1#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#2#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#3#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#4#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#5#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#6#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#7#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#8#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#9#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#10#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.
+First 24 rows#!#11#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#12#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+First 24 rows#!#13#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#14#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#15#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+First 24 rows#!#16#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.
+First 24 rows#!#17#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#18#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+First 24 rows#!#19#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#20#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#21#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+First 24 rows#!#22#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+First 24 rows#!#23#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+First 24 rows#!#24#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+Next 24 rows#!#48#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#47#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#46#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#45#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#44#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#43#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#42#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#41#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#40#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#39#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.
+Next 24 rows#!#38#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#37#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.
+Next 24 rows#!#36#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#35#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#34#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Quantum computing leverages superposition to perform complex calculations.
+Next 24 rows#!#33#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.
+Next 24 rows#!#32#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#31#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.
+Next 24 rows#!#30#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#29#!#Quantum computing leverages superposition to perform complex calculations.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#28#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.
+Next 24 rows#!#27#!#Quantum computing leverages superposition to perform complex calculations.#!#Mozart composed his first symphony at age eight.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.
+Next 24 rows#!#26#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Blockchain technology enables secure, decentralized transactions.#!#Mozart composed his first symphony at age eight.
+Next 24 rows#!#25#!#Quantum computing leverages superposition to perform complex calculations.#!#Ancient Egyptians built the pyramids as tombs for their pharaohs.#!#Mozart composed his first symphony at age eight.#!#Blockchain technology enables secure, decentralized transactions.
+~~END~~
+

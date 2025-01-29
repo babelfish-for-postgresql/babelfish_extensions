@@ -2066,7 +2066,7 @@ GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, I
 
 -- This function performs replacing special characters to their corresponding unique hashes
 -- in the search condition or the full text search CONTAINS predicate
-CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(IN phrase text) RETURNS TEXT AS 
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts() RETURNS TEXT AS 
 'babelfishpg_tsql', 'replace_special_chars_fts'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;

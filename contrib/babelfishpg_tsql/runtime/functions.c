@@ -2778,21 +2778,37 @@ type_name(PG_FUNCTION_ARGS)
 Datum
 replace_special_chars_fts(PG_FUNCTION_ARGS)
 {
-	text			*result_text;
-	char			*output_str;
-	char			*s;
-	int				len = PG_NARGS();
-	StringInfoData	buf;
+	ArrayType *array = 	PG_GETARG_ARRAYTYPE_P(0);
+	Datum 				*elements;
+	bool				*nulls;
+	int					nelements;
+	text				*result_text;
+	char				*output_str;
+	char				*s;
+	StringInfoData		buf;
 
 	/* initialize a StringInfoData with an empty string */
 	initStringInfo(&buf);
-	// output_str = malloc(sizeof(char*));
-	// *output_str = '\0';
-	for(int i=0; i<len; i++)
+
+	/* Deconstruct the array */
+	deconstruct_array(array, TEXTOID, -1, false, 'i', &elements, &nulls, &nelements);
+
+	for(int i=0; i<nelements; i++)
 	{
-		text		*input_text = PG_GETARG_TEXT_P(i);
-		char		*input_str = text_to_cstring(input_text);
+		
+		text		*input_text;
+		char		*input_str;
 		char 		*col_str;
+
+		if(nulls[i])
+		{
+			continue;
+		}
+		
+		input_text = DatumGetTextP(elements[i]);
+		input_str = text_to_cstring(input_text);
+
+
 		/* Modify the input_str in place */
 		if(input_str != NULL)
 		{
@@ -2801,33 +2817,29 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 
 		if (col_str != NULL) 
 		{
-			appendStringInfoString(&buf, col_str);
-			// output_size += strlen(col_str) + (i < len - 1 ? 7 : 0);
-			// output_str = realloc((char*)output_str, output_size);
-
 			/* Append new columns to the output_str  */
-			// strncat(output_str, col_str, strlen(col_str));
-			// /* append the concates */
-			if(i<len-1){
+			appendStringInfoString(&buf, col_str);
+
+			/* append the concates if this is not the last column to be added  */
+			if(i<nelements-1){
 				appendStringInfo(&buf, "||' '||");
 			}
 			pfree(col_str);
 		}
-		/* Free the memory allocated for input_str */
-		// if(input_str!=NULL)
-		// {
-		// 	pfree(input_str);
-		// }
 	}
 	output_str = (&buf)->data;
-	/* Convert the modified input_str back to text */
+
+	/* Convert the modified input_str back to text with null safety  */
 	if(output_str!=NULL)
 	{
 		s = pstrdup(output_str);
 		result_text = cstring_to_text(s);
+		PG_RETURN_TEXT_P(result_text);
 	}
-	// pfree(&buf);
-	PG_RETURN_TEXT_P(result_text);
+	else
+	{
+		PG_RETURN_NULL();
+	}
 }
 
 Datum

@@ -14,6 +14,9 @@ fts-contains-utils-vu-cleanup
 fts-contains-vu-prepare
 fts-contains-vu-verify
 fts-contains-vu-cleanup
+fts-contains-multicol-vu-prepare
+fts-contains-multicol-vu-verify
+fts-contains-multicol-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 

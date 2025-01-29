@@ -2082,13 +2082,13 @@ func_expr_common_subexpr:
 							parser_errposition(@1)));
 					}
 				}
-			| TSQL_CONTAINS '(' var_name ',' tsql_contains_search_condition ')'
+			| TSQL_CONTAINS '(' opt_var_name ',' tsql_contains_search_condition ')'
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}
-			| TSQL_CONTAINS '(' '(' var_cols ')' ',' tsql_contains_search_condition ')'
+			| TSQL_CONTAINS '(' opt_var_name_list ',' tsql_contains_search_condition ')'
 				{
-					$$ = TsqlExpressionContains($4, $7, yyscanner);
+					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}
 			| TSQL_LOG '(' a_expr ')'
 				{
