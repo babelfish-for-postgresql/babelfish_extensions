@@ -2772,8 +2772,7 @@ type_name(PG_FUNCTION_ARGS)
 }
 
 /*
- * Wrapper for C function replace_special_chars_fts_impl() 
- * That accepts PG_FUNCTION_ARGS and length of column list
+ * Wrapper for C function replace_special_chars_fts_impl()
  */
 Datum
 replace_special_chars_fts(PG_FUNCTION_ARGS)
