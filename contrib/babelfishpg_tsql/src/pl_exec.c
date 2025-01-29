@@ -5500,7 +5500,12 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 				datum = SysCacheGetAttr(SYSNAMESPACENAME, schema_tuple, Anum_namespace_ext_dbid, &isnull);
 				db_id = DatumGetInt16(datum);
 
-				if (!DbidIsValid(db_id) || db_id != get_cur_db_id())
+				if(!DbidIsValid(db_id))
+					ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("dbid in babelfish_namespace_ext catalog doesn't exists in babelfish_sysdatabases catalog")));
+
+				if (db_id != get_cur_db_id())
 				{
 					char *db_name = get_db_name(db_id);
 					char *user = get_user_for_database(db_name);
@@ -5509,6 +5514,7 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 					{
 						is_cross_db = true;
 						pfree(db_name);
+						pfree(user);
 					}
 					else
 					{
