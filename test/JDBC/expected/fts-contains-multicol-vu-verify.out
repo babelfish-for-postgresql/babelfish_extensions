@@ -74,16 +74,6 @@ DonspecialCharscat3e09616b53f5138735a7d0a79e78e804et||' '||WonspecialCharscat3e0
 
 
 
-
--- -- Babelfish FTS Rewrite Multiple Column Tests
--- SELECT sys.babelfish_fts_rewrite('"one @ @ @ @ two"', '"three # # four"', '"five $ $ six"');
--- SELECT sys.babelfish_fts_rewrite('"one   @ two    ^ three"', '"four % five"', '"six & seven"');
--- GO
--- -- Colon Multiple Column Tests
--- SELECT sys.babelfish_fts_rewrite(':one', ':two', ':three');
--- SELECT sys.babelfish_fts_rewrite('one:', 'two:', 'three:');
--- SELECT sys.babelfish_fts_rewrite('one:  ', 'two:  ', 'three:  ');
--- GO
 -- Mixed Special Characters Multiple Column Tests
 SELECT sys.replace_special_chars_fts('one@two#three', 'four$five^six', 'seven&eight*nine');
 SELECT sys.replace_special_chars_fts('"one@@two"', '"three##four"', '"five$$six"');

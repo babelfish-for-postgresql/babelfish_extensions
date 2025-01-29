@@ -23,16 +23,6 @@ SELECT sys.replace_special_chars_fts('Arts '' opening', 'Bob''s place', 'Smith''
 SELECT sys.replace_special_chars_fts('Don''t', 'Won''t', 'Can''t', 'Shouldn''t');
 GO
 
--- -- Babelfish FTS Rewrite Multiple Column Tests
--- SELECT sys.babelfish_fts_rewrite('"one @ @ @ @ two"', '"three # # four"', '"five $ $ six"');
--- SELECT sys.babelfish_fts_rewrite('"one   @ two    ^ three"', '"four % five"', '"six & seven"');
--- GO
-
--- -- Colon Multiple Column Tests
--- SELECT sys.babelfish_fts_rewrite(':one', ':two', ':three');
--- SELECT sys.babelfish_fts_rewrite('one:', 'two:', 'three:');
--- SELECT sys.babelfish_fts_rewrite('one:  ', 'two:  ', 'three:  ');
--- GO
 
 -- Mixed Special Characters Multiple Column Tests
 SELECT sys.replace_special_chars_fts('one@two#three', 'four$five^six', 'seven&eight*nine');

@@ -132,29 +132,12 @@ GO
 CREATE TABLE test_tb1 (
     sr INT NOT NULL,
     txt TEXT,
-    val INT,
-    small_int SMALLINT,
-    mon MONEY,
-	num NUMERIC(6, 3)
+    chr CHAR(5),
+    val VARCHAR(100)
 );
 GO
 
--- Create table if not exists
-IF OBJECT_ID('test_tb1', 'U') IS NOT NULL
-    DROP TABLE test_tb1;
-GO
-
-CREATE TABLE test_tb1 (
-    sr INT NOT NULL,
-    txt TEXT,
-    val INT,
-    small_int SMALLINT,
-    mon MONEY,
-    num NUMERIC(6, 3)
-);
-GO
-
--- Insert 1000 records using recursive CTE with varied mock data
+-- Insert 1000 records using recursive CTE
 WITH NumberSequence AS (
     SELECT 1 AS sr
     UNION ALL
@@ -162,42 +145,76 @@ WITH NumberSequence AS (
     FROM NumberSequence
     WHERE sr < 1000
 ),
-MockData AS (
-    -- Sample text data
-    SELECT n as id, txt FROM (VALUES
-        (1, 'Monthly Revenue Report'),
-        (2, 'Customer Feedback Analysis'),
-        (3, 'Inventory Status Update'),
-        (4, 'Employee Performance Review'),
-        (5, 'Sales Forecast Summary'),
-        (6, 'Quality Control Metrics'),
-        (7, 'Project Timeline Status'),
-        (8, 'Budget Analysis Report'),
-        (9, 'Market Research Data'),
-        (10, 'Operations Overview')
-    ) AS SampleText(n, txt)
+SampleData AS (
+    -- Sample text data for txt column
+    SELECT n, long_text FROM (VALUES
+        (1, 'The quick brown fox jumps over the lazy dog'),
+        (2, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'),
+        (3, 'To be or not to be, that is the question'),
+        (4, 'All work and no play makes Jack a dull boy'),
+        (5, 'The only way to do great work is to love what you do')
+    ) AS LongText(n, long_text)
+),
+CharData AS (
+    -- Sample data for chr column
+    SELECT n, char_val FROM (VALUES
+        (1, 'hi'),
+        (2, 'you'),
+        (3, 'us'),
+        (4, 'two'),
+        (5, 'four'),
+        (6, 'six'),
+        (7, 'three'),
+        (8, 'why'),
+        (9, 'ok'),
+        (10, 'nope')
+    ) AS Chars(n, char_val)
+),
+VarcharData AS (
+    -- Sample data for val column
+    SELECT n, var_text FROM (VALUES
+        (1, 'Product-A123'),
+        (2, 'Customer#456'),
+        (3, 'Order_789'),
+        (4, 'Invoice/001'),
+        (5, 'REF-2024-001'),
+        (6, 'CODE:ABC123'),
+        (7, 'ID#12345'),
+        (8, 'TEST-999'),
+        (9, 'SAMPLE@001'),
+        (10, 'DOC#2024')
+    ) AS VarText(n, var_text)
 )
-INSERT INTO test_tb1 (sr, txt, val, small_int, mon, num)
+INSERT INTO test_tb1 (sr, txt, chr, val)
 SELECT 
     n.sr,
-    -- Text: Rotate through sample texts
-    md.txt,
-    -- Val: Generate numbers between 1000 and 100000
-    ABS(CHECKSUM(NEWID())) % 99001 + 1000,
-    -- Small_int: Generate numbers between -32000 and 32000
-    CAST((ABS(CHECKSUM(NEWID())) % 64001) - 32000 AS SMALLINT),
-    -- Money: Generate amounts between 10.00 and 9999.99
-    CAST(((ABS(CHECKSUM(NEWID())) % 999000) + 1000) / 100.0 AS MONEY),
-    -- Numeric: Generate numbers between 0.001 and 999.999
-    CAST(((ABS(CHECKSUM(NEWID())) % 999999) + 1) / 1000.0 AS NUMERIC(6,3))
+    -- txt: Rotate through sample texts
+    sd.long_text,
+    -- chr: Rotate through single characters
+    cd.char_val,
+    -- val: Rotate through varchar values
+    vd.var_text
 FROM 
     NumberSequence n
     CROSS APPLY (
-        SELECT txt 
-        FROM MockData 
-        WHERE id = ((n.sr - 1) % 10) + 1
-    ) md
+        SELECT long_text 
+        FROM SampleData 
+        WHERE n = ((n.sr - 1) % 5) + 1
+    ) sd
+    CROSS APPLY (
+        SELECT char_val 
+        FROM CharData 
+        WHERE n = ((n.sr - 1) % 10) + 1
+    ) cd
+    CROSS APPLY (
+        SELECT var_text 
+        FROM VarcharData 
+        WHERE n = ((n.sr - 1) % 10) + 1
+    ) vd
 OPTION (MAXRECURSION 1000);
+GO
+
+SELECT * FROM test_tb1
 GO
 
 CREATE UNIQUE INDEX usr ON test_tb1(sr);
@@ -206,43 +223,31 @@ GO
 CREATE FULLTEXT INDEX ON test_tb1(txt, val) KEY INDEX usr
 GO
 
-SELECT * FROM test_tb1 WHERE contains((txt, val), '"Monthly Revenue"')
+SELECT * FROM test_tb1 WHERE contains((txt, val), 'Product-A123')
 GO
-
--- DROP FULLTEXT INDEX ON test_tb1
--- GO
 
 -- should throw an error as the previous full text index is not dropped
-CREATE FULLTEXT INDEX ON test_tb1(val, small_int) KEY INDEX usr
+CREATE FULLTEXT INDEX ON test_tb1(val, chr) KEY INDEX usr
 GO
 
--- should throw an error as small_int is not fulltext indexed
-SELECT * FROM test_tb1 WHERE contains((val, small_int), '-15121')
-GO
-
-DROP FULLTEXT INDEX ON test_tb1
-GO
-
-CREATE FULLTEXT INDEX ON test_tb1(txt, mon) KEY INDEX usr
-GO
-
-SELECT * FROM test_tb1 WHERE contains((txt, val), '27802')
+-- should throw an error as chr is not fulltext indexed
+SELECT * FROM test_tb1 WHERE contains((val, chr), 'four')
 GO
 
 DROP FULLTEXT INDEX ON test_tb1
 GO
 
-CREATE FULLTEXT INDEX ON test_tb1(val, small_int, mon, num) KEY INDEX usr
+CREATE FULLTEXT INDEX ON test_tb1(chr, val) KEY INDEX usr
 GO
 
-SELECT * FROM test_tb1 WHERE contains((val, small_int, num), '481.530')
+SELECT * FROM test_tb1 WHERE contains((val, chr), 'X')
 GO
 
 DROP FULLTEXT INDEX ON test_tb1
 GO
 
-CREATE FULLTEXT INDEX ON test_tb1(txt, val, small_int, mon, num) KEY INDEX usr
+CREATE FULLTEXT INDEX ON test_tb1(txt, val, chr) KEY INDEX usr
 GO
 
-SELECT * FROM test_tb1 WHERE contains((txt, val), '"Customer Feedback"')
+SELECT * FROM test_tb1 WHERE contains((txt, val), '"The quick brown fox"')
 GO

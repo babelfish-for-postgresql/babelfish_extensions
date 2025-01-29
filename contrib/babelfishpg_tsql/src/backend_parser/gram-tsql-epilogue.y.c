@@ -809,44 +809,22 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
     List	*args;
     Node	*replaceSpecialCharsFunc;
     List	*replaceSpecialCharsArgs;
-    // char	*comma;		/* to detect multiple columns */
-	int 	len = colId->length; 	/* length of list of columns passed */
-	// int 	occ=0;
+	int 	len = colId->length; 	/* length of list of columns passed as colId */
 
-	/*  inititalize the list of columns as null as we are using lappend function to append column(s)
-		so its necessary to have a null list to start with  */
-			replaceSpecialCharsArgs = NIL;
-	
-	/* count the number of occurances of pauses */
-	// for(int i=0; i<strlen(colId); i++)
-	// {
-	// 	if(colId[i] == ',')
-	// 	{
-	// 		occ++;
-	// 	}
-	// }
-
-	// /* #columns passed in the arguments is one more than the #occurances of pauses (,) */
-	// no_of_cols = occ+1;
+	/* inititalize the list of columns as null as we are using lappend function to append column(s)
+	 * so its necessary to have a null list to start with  
+	 */
+	replaceSpecialCharsArgs = NIL;
 
 	for(int i=0; i<len; i++)
 	{
-		/*rewrite sql column name into pg column*/
 		Node 		*col;
-		// ListCell	*cell;
 		char 		*colName = (colId->elements[i]).ptr_value;
 		char 		*schemaName = NULL;
 		char 		*tableName = NULL;
 		char 		*columnName = NULL;
 		char 		*dot1, *dot2;
-		// ListCell *cell;
 
-
-		// comma = strchr(colId, ',');
-		// if(comma)
-		// {
-		// 	*comma = '\0';
-		// }
 		/* Find the first and second dots in the column identifier */
 		dot1 = strchr(colName, '.');
 		dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
@@ -900,14 +878,14 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 			/* Create a ColumnRef node for the column */
 			col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
 		}
-		// cell->ptr_value = col;
+
+		/* append the col nodes to create a list of column nodes */
 		replaceSpecialCharsArgs = lappend(replaceSpecialCharsArgs, col);
 	}
 
 	/* -------------------------------------------------------------- */
 	
     /* Create a function call for replace_special_chars_fts(column_name) */
-    replaceSpecialCharsArgs = list_make1(col);
     replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
 
     /* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */

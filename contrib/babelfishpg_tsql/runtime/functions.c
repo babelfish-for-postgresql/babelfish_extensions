@@ -2777,6 +2777,7 @@ type_name(PG_FUNCTION_ARGS)
 Datum
 replace_special_chars_fts(PG_FUNCTION_ARGS)
 {
+	/* Get the list argument as an array */
 	ArrayType *array = 	PG_GETARG_ARRAYTYPE_P(0);
 	Datum 				*elements;
 	bool				*nulls;
@@ -2789,7 +2790,7 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 	/* initialize a StringInfoData with an empty string */
 	initStringInfo(&buf);
 
-	/* Deconstruct the array */
+	/* Deconstruct the array to extract elements and nulls from the array*/
 	deconstruct_array(array, TEXTOID, -1, false, 'i', &elements, &nulls, &nelements);
 
 	for(int i=0; i<nelements; i++)
@@ -2799,6 +2800,7 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 		char		*input_str;
 		char 		*col_str;
 
+		/* if at the current index has a null then move to next index */
 		if(nulls[i])
 		{
 			continue;
@@ -2831,10 +2833,13 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 	/* Convert the modified input_str back to text with null safety  */
 	if(output_str!=NULL)
 	{
+		/* create a copy of the output string */
 		s = pstrdup(output_str);
 		result_text = cstring_to_text(s);
 		PG_RETURN_TEXT_P(result_text);
 	}
+
+	/* Null safety check */
 	else
 	{
 		PG_RETURN_NULL();
