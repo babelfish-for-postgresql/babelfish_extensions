@@ -526,7 +526,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if (!isnull)
 		probin_c = TextDatumGetCString(tmp);
 	if (!probin_c || probin_c[0] != '{')
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	number_args = proc->pronargs;
 	if (isfunction)
