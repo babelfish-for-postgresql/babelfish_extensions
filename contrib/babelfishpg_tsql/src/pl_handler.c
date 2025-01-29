@@ -400,7 +400,11 @@ assign_identity_insert(const char *newval, void *extra)
 			 * throw permission denied error in that case
 			 */
 			if (!curr_user_if_cross_db)
+			{
+				/* Get schema name for error message */
+				logical_schema_name = (char *) lthird(elemlist);
 				throw_error_for_identity_insert(catalog_name, logical_schema_name, rel_name);
+			}
 		}
 
 		/* Check the user provided schema value */
