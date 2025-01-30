@@ -397,6 +397,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
 											&prefix, NULL);
 
+	/* update the collation for the prefix as well */
+	prefix->constcollid = coll_info_of_inputcollid.oid;
+
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
 	{
@@ -409,14 +412,14 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		op_str = like_entry.is_not_match ? "<>" : "=";
-		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
 		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
+											coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
 	}
@@ -429,13 +432,13 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Const	   *highest_sort_key;
 
 		/* construct leftop >= pattern */
-		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+											coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
 		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
@@ -447,17 +450,17 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
 										(Expr *) prefix, (Expr *) highest_sort_key,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
-		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
 		if (like_entry.is_not_match)
 		{
@@ -751,12 +754,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node)
+convert_node_to_funcexpr_for_like(Node *node, Oid inputCollOid)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
+	newFuncExpr->inputcollid = newFuncExpr->funccollid = inputCollOid;
 
 	if (node == NULL)
 		return node;
@@ -784,6 +788,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					con->constcollid = inputCollOid;
 					return (Node *) con;
 				}
 				else
@@ -846,20 +851,20 @@ convert_node_to_funcexpr_for_like(Node *node)
 
 
 static Node *
-transform_likenode_for_AI(Node *node, OpExpr *op)
+transform_likenode_for_AI(Node *node, OpExpr *op, Oid inputCollOid)
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop),
+												convert_node_to_funcexpr_for_like(leftop, inputCollOid),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop),
+												convert_node_to_funcexpr_for_like(rightop, inputCollOid),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
@@ -906,7 +911,7 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	return transform_likenode_for_AI(node, op);	
+	return transform_likenode_for_AI(node, op, coll_info_of_inputcollid.oid);	
 }
 
 /*
@@ -996,7 +1001,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op, coll_info_of_inputcollid.oid), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
