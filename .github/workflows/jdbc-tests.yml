@@ -104,7 +104,7 @@ jobs:
         if: always()
         id: check-warnings
         run: |
-            bash ./.github/scripts/unexpected-warnings.sh
+            bash ./.github/scripts/scan-warnings.sh
 
       - name: Upload Unexpected Warning
         if: always() && steps.check-warnings.outcome == 'failure'
