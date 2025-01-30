@@ -392,6 +392,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	}
 
 	patt = (Const *) rightop;
+	patt->constcollid = op->inputcollid;
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
@@ -760,7 +761,7 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputCollOid)
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
-	newFuncExpr->inputcollid = newFuncExpr->funccollid = inputCollOid;
+	newFuncExpr->funccollid = inputCollOid;
 
 	if (node == NULL)
 		return node;
