@@ -64,6 +64,10 @@ runs:
       with:
         install_dir: ${{ inputs.pg_new_dir }}
 
+    - name: Save cache
+      if: always() && steps.build-postgis-extension == 'success'
+      uses: ./.github/composite-actions/save-ccache
+
     - name: Setup new data directory
       id: setup-new-datadir
       if: always() && steps.build-postgis-extension.outcome == 'success'

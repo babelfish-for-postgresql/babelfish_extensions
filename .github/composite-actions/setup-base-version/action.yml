@@ -222,6 +222,10 @@ runs:
 
     - uses: actions/checkout@v2
 
+    - name: Save cache
+      if: always() && steps.jdbc-upgrade-tests.outcome == 'success'
+      uses: ./.github/composite-actions/save-ccache
+
     - name: Install Python
       id: install-python
       if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}

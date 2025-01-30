@@ -113,6 +113,10 @@ jobs:
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
+      - name: Save cache
+        if: always() && steps.build-extensions-older.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
+
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
         if: always() && steps.install-extensions-older.outcome == 'success'
