@@ -1,0 +1,205 @@
+-- tsql user=jdbc_user password=1
+-- Case 1: Original repro issue
+INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- Case 2: Trigger Functionality with Table Variables
+CREATE TRIGGER tr_Child_Insert ON Child AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempParents TABLE (ID INT);
+    INSERT INTO @TempParents (ID)
+    SELECT DISTINCT ParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @TempParents t
+        LEFT JOIN Parent p ON t.ID = p.ID
+        WHERE p.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('One or more parents do not exist', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Child VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Child VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
+
+
+
+
+-- Case 3: Trigger Functionality with Temporary Tables
+CREATE TRIGGER tr_Child_Update ON Child AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(ParentID)
+    BEGIN
+        CREATE TABLE #UpdatedParents (ID INT);
+        INSERT INTO #UpdatedParents (ID)
+        SELECT DISTINCT ParentID FROM inserted;
+        IF EXISTS (
+            SELECT 1 FROM #UpdatedParents u
+            LEFT JOIN Parent p ON u.ID = p.ID
+            WHERE p.ID IS NULL
+        )
+        BEGIN
+            RAISERROR ('Invalid ParentID', 16, 1);
+            ROLLBACK TRANSACTION;
+        END
+        DROP TABLE #UpdatedParents;
+    END
+END;
+GO
+
+UPDATE Child SET ParentID = 2 WHERE ID = 1; -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE Child SET ParentID = 999 WHERE ID = 1; -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
+
+
+
+-- Case 4: Complex Trigger Scenarios
+CREATE TRIGGER tr_Parent_Insert ON Parent AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempGrandParents TABLE (ID INT);
+    INSERT INTO @TempGrandParents (ID)
+    SELECT DISTINCT GrandParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @TempGrandParents t
+        LEFT JOIN GrandParent gp ON t.ID = gp.ID
+        WHERE gp.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('GrandParent does not exist', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Parent VALUES (3, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Parent VALUES (4, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "parent" violates foreign key constraint "fk_parent_grandparent")~~
+
+
+
+-- Case 5: NULL test
+CREATE TRIGGER tr_Child_NullHandling ON Child AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @NullTemp TABLE (ID INT);
+    INSERT INTO @NullTemp (ID)
+    SELECT ParentID FROM inserted WHERE ParentID IS NOT NULL
+    UNION ALL
+    SELECT NULL;
+    IF EXISTS (
+        SELECT 1 FROM @NullTemp t
+        LEFT JOIN Parent p ON t.ID = p.ID
+        WHERE (p.ID IS NULL AND t.ID IS NOT NULL) OR t.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid or NULL ParentID', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Child VALUES (1000, NULL); -- Should fail
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: One or more parents do not exist)~~
+
+
+
+-- Case 6: Nesting test
+CREATE TRIGGER tr_Level3_Insert ON Level3 AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Temp3 TABLE (ID INT);
+    INSERT INTO @Temp3 (ID)
+    SELECT DISTINCT Level2ID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @Temp3 t
+        LEFT JOIN Level2 l2 ON t.ID = l2.ID
+        WHERE l2.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid Level2ID', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Level3 VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Level3 VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "level3" violates foreign key constraint "fk_level3_level2")~~
+
+
+
+-- Case 7: Special Characters support test
+CREATE TRIGGER tr_SpecialChar_Insert ON [Child#Table] AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @SpecialTemp TABLE (ID INT);
+    INSERT INTO @SpecialTemp (ID)
+    SELECT DISTINCT ParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @SpecialTemp t
+        LEFT JOIN [Parent@Table] p ON t.ID = p.ID
+        WHERE p.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid ParentID in special character tables', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO [Child#Table] VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [Child#Table] VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child#table" violates foreign key constraint "fk_childtable_parenttable")~~
+
