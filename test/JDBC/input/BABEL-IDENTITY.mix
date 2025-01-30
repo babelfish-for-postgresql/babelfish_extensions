@@ -613,6 +613,9 @@ GO
 INSERT INTO identity_insert_t1 (a, b) VALUES (3, 103);
 GO
 
+INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (3, 103);
+GO
+
 SELECT * FROM identity_insert_t1 ORDER BY a
 GO
 
@@ -646,10 +649,10 @@ GO
 
 -- tsql user=identity_insert_l1 password=123
 -- Should now have permission
-SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 OFF
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
 GO
 
--- Should fail
+-- Should not fail
 INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (5, 105);
 GO
 
@@ -729,11 +732,11 @@ GO
 SET IDENTITY_INSERT identity_insert_db.identity_insert_sch.identity_insert_t2 ON
 GO
 
-USE identity_insert_db
+-- Should not fail
+INSERT INTO identity_insert_db.identity_insert_sch.identity_insert_t2 (c, d) VALUES (1, 101);
 GO
 
--- Should not fail
-INSERT INTO identity_insert_t2 (c, d) VALUES (1, 101);
+USE identity_insert_db
 GO
 
 SELECT * FROM identity_insert_t2

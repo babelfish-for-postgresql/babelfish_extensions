@@ -5483,6 +5483,47 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			Oid			seqid = InvalidOid;
 			SPITupleTable *tuptable = SPI_tuptable;
 			uint64		n_processed = SPI_processed;
+			bool		is_cross_db;
+			char	   *schema_name = NULL;
+			HeapTuple	schema_tuple;
+			Oid			current_user_id = InvalidOid;
+
+			schema_name = get_namespace_name(get_rel_namespace(tsql_identity_insert.rel_oid));
+			schema_tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(schema_name));
+
+			if (HeapTupleIsValid(schema_tuple))
+			{
+				Datum		datum;
+				int16		db_id;
+				bool		isnull;
+
+				datum = SysCacheGetAttr(SYSNAMESPACENAME, schema_tuple, Anum_namespace_ext_dbid, &isnull);
+				db_id = DatumGetInt16(datum);
+
+				if (!DbidIsValid(db_id) || db_id != get_cur_db_id())
+				{
+					char *db_name = get_db_name(db_id);
+					char *user = get_user_for_database(db_name);
+
+					if (user)
+					{
+						is_cross_db = true;
+						pfree(db_name);
+					}
+					else
+					{
+						char *login = GetUserNameFromId(GetSessionUserId(), false);
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("The server principal \"%s\" is not able to access "
+							"the database \"%s\" under the current security context",
+							login, db_name)));
+					}
+
+				}
+
+				ReleaseSysCache(schema_tuple);
+			}
 
 			/* Get the identity column name */
 			rel = RelationIdGetRelation(tsql_identity_insert.rel_oid);
@@ -5566,6 +5607,12 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 
 						PG_TRY();
 						{
+							if (is_cross_db)
+							{
+								current_user_id = GetUserId();
+								SetCurrentRoleId(GetSessionUserId(), false);
+							}
+
 							/*
 							 * We want the T-SQL behavior of setval function.
 							 * Please check the variable definition for
@@ -5590,6 +5637,9 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 						{
 							/* reset the value */
 							pltsql_setval_identity_mode = false;
+
+							if (is_cross_db)
+								SetCurrentRoleId(current_user_id, false);
 						}
 						PG_END_TRY();
 
