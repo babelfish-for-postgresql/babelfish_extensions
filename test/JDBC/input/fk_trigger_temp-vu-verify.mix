@@ -1,4 +1,4 @@
--- tsql user=jdbc_user password=1
+-- tsql user=jdbc_user password=12345678
 -- Case 1: Original repro issue
 INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
 GO
@@ -6,6 +6,7 @@ GO
 INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 2: Trigger Functionality with Table Variables
 CREATE TRIGGER tr_Child_Insert ON Child AFTER INSERT AS
 BEGIN
@@ -32,6 +33,7 @@ GO
 INSERT INTO Child VALUES (2, 999); -- Should fail
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 3: Trigger Functionality with Temporary Tables
 CREATE TRIGGER tr_Child_Update ON Child AFTER UPDATE AS
 BEGIN
@@ -63,6 +65,7 @@ GO
 UPDATE Child SET ParentID = 999 WHERE ID = 1; -- Should fail
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 4: Complex Trigger Scenarios
 CREATE TRIGGER tr_Parent_Insert ON Parent AFTER INSERT AS
 BEGIN
@@ -89,6 +92,7 @@ GO
 INSERT INTO Parent VALUES (4, 999); -- Should fail
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 5: NULL test
 CREATE TRIGGER tr_Child_NullHandling ON Child AFTER INSERT AS
 BEGIN
@@ -114,6 +118,7 @@ GO
 INSERT INTO Child VALUES (1000, NULL); -- Should fail
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 6: Nesting test
 CREATE TRIGGER tr_Level3_Insert ON Level3 AFTER INSERT AS
 BEGIN
@@ -140,6 +145,7 @@ GO
 INSERT INTO Level3 VALUES (2, 999); -- Should fail
 GO
 
+-- tsql user=jdbc_user password=12345678
 -- Case 7: Special Characters support test
 CREATE TRIGGER tr_SpecialChar_Insert ON [Child#Table] AFTER INSERT AS
 BEGIN
