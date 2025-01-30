@@ -37,6 +37,7 @@
 
 %type <node> openjson_expr
 %type <node> openjson_col_def
+%type <list> var_name_list opt_var_name_list
 %type <list> openjson_col_defs
 %type <str> optional_path
 %type <boolean> optional_asJson

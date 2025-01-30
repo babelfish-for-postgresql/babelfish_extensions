@@ -1,0 +1,1339 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- Basic Multiple Column Tests
+SELECT sys.replace_special_chars_fts('one`two', 'three@four', 'five#six');
+GO
+~~START~~
+text
+onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo||' '||three specialCharscat1e09616b53f5138735a7d0a79e78e804e four||' '||five specialCharscat1e09616b53f5138735a7d0a79e78e804e six
+~~END~~
+
+
+-- Mixed Single and Multiple Column Tests
+SELECT sys.replace_special_chars_fts('"one @ @ @ @ two"');
+GO
+~~START~~
+text
+"one @ @ @ @ two"
+~~END~~
+
+
+-- Quoted String Multiple Column Tests
+SELECT sys.replace_special_chars_fts('"one @ two"', '"three $ four"', '"five # six"');
+GO
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two"||' '||"three specialCharscat1e09616b53f5138735a7d0a79e78e804e four"||' '||"five specialCharscat1e09616b53f5138735a7d0a79e78e804e six"
+~~END~~
+
+
+-- Apostrophe Multiple Column Tests
+SELECT sys.replace_special_chars_fts('Arts '' opening', 'Bob''s place', 'Smith''s store');
+GO
+~~START~~
+text
+Arts specialCharscat3e09616b53f5138735a7d0a79e78e804e opening||' '||BobspecialCharscat3e09616b53f5138735a7d0a79e78e804es place||' '||SmithspecialCharscat3e09616b53f5138735a7d0a79e78e804es store
+~~END~~
+
+
+-- Empty and NULL Multiple Column Tests
+SELECT sys.replace_special_chars_fts('', NULL, 'three');
+GO
+~~START~~
+text
+||' '||three
+~~END~~
+
+
+-- Mixed Content Type Tests
+SELECT sys.replace_special_chars_fts('normal text', '"quoted text"', 'special@text');
+GO
+~~START~~
+text
+normal text||' '||"quoted text"||' '||special specialCharscat1e09616b53f5138735a7d0a79e78e804e text
+~~END~~
+
+
+
+
+-- Test cases for the relation test_tb
+-- gives error as fulltext index is still not created
+SELECT * FROM test_tb WHERE contains(txt1, '"human or quantum')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'test_tb' because it is not full-text indexed.)~~
+
+
+CREATE FULLTEXT INDEX ON test_tb(txt1, txt2, txt3, txt4) KEY INDEX uid
+GO
+
+select * from test_tb where contains((txt1, txt2, txt4), '"Artificial Intelligence"' )
+GO
+~~START~~
+int#!#text#!#text#!#text#!#text
+1#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+3#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+5#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+6#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+7#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+9#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+11#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+12#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+13#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+15#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+17#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+18#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+19#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+20#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+21#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+22#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+23#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+24#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+121#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+123#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+125#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+126#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+127#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+129#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+131#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+132#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+133#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+135#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+137#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+138#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+139#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+140#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+141#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+142#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+143#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+144#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+241#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+243#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+245#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+246#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+247#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+249#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+251#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+252#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+253#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+255#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+257#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+258#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+259#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+260#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+261#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+262#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+263#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+264#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+361#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+363#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+365#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+366#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+367#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+369#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+371#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+372#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+373#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+375#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+377#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+378#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+379#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+380#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+381#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+382#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+383#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+384#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+481#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+483#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+485#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+486#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+487#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+489#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+491#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+492#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+493#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+495#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+497#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+498#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+499#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+500#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+501#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+502#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+503#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+504#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+601#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+603#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+605#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+606#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+607#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+609#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+611#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+612#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+613#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+615#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+617#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+618#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+619#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+620#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+621#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+622#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+623#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+624#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+721#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+723#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+725#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+726#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+727#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+729#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+731#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+732#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+733#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+735#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+737#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+738#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+739#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+740#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+741#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+742#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+743#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+744#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+841#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+843#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+845#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+846#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+847#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+849#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+851#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+852#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+853#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+855#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+857#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+858#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+859#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+860#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+861#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+862#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+863#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+864#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+961#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+963#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+965#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+966#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+967#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+969#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+971#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+972#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+973#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+975#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.
+977#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+978#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+979#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+980#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+981#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+982#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.
+983#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+984#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.
+~~END~~
+
+
+DROP FULLTEXT INDEX ON test_tb
+GO
+
+CREATE FULLTEXT INDEX ON test_tb(txt1, txt2) KEY INDEX uid
+GO
+
+SELECT * FROM test_tb WHERE contains((txt1, txt2), '"The human genome"' )
+GO
+~~START~~
+int#!#text#!#text#!#text#!#text
+1#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+2#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+3#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+4#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+5#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+6#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+7#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+8#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+13#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+14#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+19#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+20#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+121#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+122#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+123#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+124#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+125#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+126#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+127#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+128#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+133#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+134#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+139#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+140#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+241#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+242#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+243#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+244#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+245#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+246#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+247#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+248#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+253#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+254#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+259#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+260#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+361#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+362#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+363#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+364#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+365#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+366#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+367#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+368#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+373#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+374#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+379#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+380#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+481#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+482#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+483#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+484#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+485#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+486#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+487#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+488#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+493#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+494#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+499#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+500#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+601#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+602#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+603#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+604#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+605#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+606#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+607#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+608#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+613#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+614#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+619#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+620#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+721#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+722#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+723#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+724#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+725#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+726#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+727#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+728#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+733#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+734#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+739#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+740#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+841#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+842#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+843#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+844#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+845#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+846#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+847#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+848#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+853#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+854#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+859#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+860#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+961#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+962#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+963#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+964#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+965#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+966#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+967#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#Artificial Intelligence is transforming various industries today.
+968#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+973#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Artificial Intelligence is transforming various industries today.
+974#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Artificial Intelligence is transforming various industries today.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+979#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.
+980#!#Artificial Intelligence is transforming various industries today.#!#The human genome contains approximately 3 billion DNA base pairs.#!#Vincent van Gogh's "Starry Night" exemplifies post-impressionist style.#!#The Renaissance period marked Europe's cultural rebirth in the 14th century.
+~~END~~
+
+
+-- negative test
+-- should throw an error as the column txt3 is not fulltext indexed, BUT DOES NOT
+SELECT * FROM test_tb WHERE contains((txt1, txt3), '"The Industrial Revolution"')
+GO
+~~START~~
+int#!#text#!#text#!#text#!#text
+51#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+53#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+55#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+56#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+57#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+58#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+59#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+60#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+61#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+66#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+67#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+72#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+171#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+173#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+175#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+176#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+177#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+178#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+179#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+180#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+181#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+186#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+187#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+192#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+291#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+293#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+295#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+296#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+297#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+298#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+299#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+300#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+301#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+306#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+307#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+312#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+411#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+413#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+415#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+416#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+417#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+418#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+419#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+420#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+421#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+426#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+427#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+432#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+531#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+533#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+535#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+536#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+537#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+538#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+539#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+540#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+541#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+546#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+547#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+552#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+651#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+653#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+655#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+656#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+657#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+658#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+659#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+660#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+661#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+666#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+667#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+672#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+771#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+773#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+775#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+776#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+777#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+778#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+779#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+780#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+781#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+786#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+787#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+792#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+891#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+893#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+895#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.
+896#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+897#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.
+898#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.
+899#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+900#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.
+901#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+906#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+907#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+912#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+~~END~~
+
+
+-- negative test
+-- should throw an error as the columns txt3 and txt4 are not fulltext indexed, BUT DOES NOT
+SELECT * FROM test_tb WHERE contains((txt4, txt3), '"The Industrial Revolution"')
+GO
+~~START~~
+int#!#text#!#text#!#text#!#text
+51#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+52#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+53#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+54#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+61#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+62#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+65#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+66#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+67#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+68#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+71#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+72#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+171#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+172#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+173#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+174#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+181#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+182#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+185#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+186#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+187#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+188#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+191#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+192#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+291#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+292#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+293#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+294#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+301#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+302#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+305#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+306#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+307#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+308#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+311#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+312#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+411#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+412#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+413#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+414#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+421#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+422#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+425#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+426#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+427#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+428#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+431#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+432#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+531#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+532#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+533#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+534#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+541#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+542#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+545#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+546#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+547#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+548#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+551#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+552#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+651#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+652#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+653#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+654#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+661#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+662#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+665#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+666#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+667#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+668#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+671#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+672#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+771#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+772#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+773#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+774#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+781#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+782#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+785#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+786#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+787#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+788#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+791#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+792#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+891#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+892#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+893#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+894#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+901#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#The Internet of Things connects everyday devices to the network.
+902#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.
+905#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+906#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Internet of Things connects everyday devices to the network.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+907#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.
+908#!#The Internet of Things connects everyday devices to the network.#!#Photosynthesis converts light energy into chemical energy in plants.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.
+911#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#Photosynthesis converts light energy into chemical energy in plants.#!#The Industrial Revolution transformed manufacturing processes globally.
+912#!#The Internet of Things connects everyday devices to the network.#!#Shakespeare wrote 37 plays and 154 sonnets during his lifetime.#!#The Industrial Revolution transformed manufacturing processes globally.#!#Photosynthesis converts light energy into chemical energy in plants.
+~~END~~
+
+
+
+
+
+-- Test cases for the relation fts_schema.test_tb1
+SELECT * FROM fts_schema.test_tb1 WHERE contains((txt, val), 'Product-A123')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+1#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+11#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+21#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+31#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+41#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+51#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+61#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+71#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+81#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+91#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+101#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+111#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+121#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+131#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+141#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+151#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+161#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+171#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+181#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+191#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+201#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+211#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+221#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+231#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+241#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+251#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+261#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+271#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+281#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+291#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+301#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+311#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+321#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+331#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+341#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+351#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+361#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+371#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+381#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+391#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+401#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+411#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+421#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+431#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+441#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+451#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+461#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+471#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+481#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+491#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+501#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+511#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+521#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+531#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+541#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+551#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+561#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+571#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+581#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+591#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+601#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+611#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+621#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+631#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+641#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+651#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+661#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+671#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+681#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+691#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+701#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+711#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+721#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+731#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+741#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+751#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+761#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+771#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+781#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+791#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+801#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+811#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+821#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+831#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+841#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+851#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+861#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+871#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+881#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+891#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+901#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+911#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+921#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+931#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+941#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+951#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+961#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+971#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+981#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+991#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+~~END~~
+
+
+-- should throw an error as the previous full text index is not dropped
+CREATE FULLTEXT INDEX ON fts_schema.test_tb1(val, chr) KEY INDEX usr
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A full-text index for table or indexed view "test_tb1" has already been created.)~~
+
+
+-- negative test
+-- should throw an error as chr is not fulltext indexed, BUT DOES NOT
+SELECT * FROM fts_schema.test_tb1 WHERE contains((val, chr), 'four')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+5#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+15#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+25#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+35#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+45#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+55#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+65#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+75#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+85#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+95#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+105#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+115#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+125#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+135#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+145#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+155#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+165#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+175#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+185#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+195#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+205#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+215#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+225#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+235#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+245#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+255#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+265#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+275#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+285#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+295#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+305#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+315#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+325#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+335#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+345#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+355#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+365#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+375#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+385#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+395#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+405#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+415#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+425#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+435#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+445#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+455#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+465#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+475#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+485#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+495#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+505#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+515#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+525#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+535#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+545#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+555#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+565#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+575#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+585#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+595#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+605#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+615#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+625#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+635#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+645#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+655#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+665#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+675#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+685#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+695#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+705#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+715#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+725#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+735#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+745#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+755#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+765#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+775#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+785#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+795#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+805#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+815#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+825#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+835#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+845#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+855#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+865#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+875#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+885#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+895#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+905#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+915#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+925#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+935#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+945#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+955#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+965#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+975#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+985#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+995#!#The only way to do great work is to love what you do#!#four #!#REF-2024-001
+~~END~~
+
+
+DROP FULLTEXT INDEX ON fts_schema.test_tb1
+GO
+
+CREATE FULLTEXT INDEX ON fts_schema.test_tb1(txt, val, chr) KEY INDEX usr
+GO
+
+SELECT * FROM fts_schema.test_tb1 WHERE contains((test_tb1.txt, val), '"The quick brown fox"')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+1#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+11#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+21#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+31#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+41#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+51#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+61#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+71#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+81#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+91#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+101#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+111#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+121#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+131#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+141#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+151#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+161#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+171#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+181#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+191#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+201#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+211#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+221#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+231#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+241#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+251#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+261#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+271#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+281#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+291#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+301#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+311#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+321#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+331#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+341#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+351#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+361#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+371#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+381#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+391#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+401#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+411#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+421#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+431#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+441#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+451#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+461#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+471#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+481#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+491#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+501#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+511#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+521#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+531#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+541#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+551#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+561#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+571#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+581#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+591#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+601#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+611#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+621#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+631#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+641#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+651#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+661#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+671#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+681#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+691#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+701#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+711#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+721#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+731#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+741#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+751#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+761#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+771#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+781#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+791#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+801#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+811#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+821#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+831#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+841#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+851#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+861#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+871#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+881#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+891#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+901#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+911#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+921#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+931#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+941#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+951#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+961#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+971#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+981#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+991#!#The quick brown fox jumps over the lazy dog#!#hi   #!#Product-A123
+6#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+16#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+26#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+36#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+46#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+56#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+66#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+76#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+86#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+96#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+106#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+116#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+126#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+136#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+146#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+156#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+166#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+176#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+186#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+196#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+206#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+216#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+226#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+236#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+246#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+256#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+266#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+276#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+286#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+296#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+306#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+316#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+326#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+336#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+346#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+356#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+366#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+376#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+386#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+396#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+406#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+416#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+426#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+436#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+446#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+456#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+466#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+476#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+486#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+496#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+506#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+516#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+526#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+536#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+546#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+556#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+566#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+576#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+586#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+596#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+606#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+616#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+626#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+636#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+646#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+656#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+666#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+676#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+686#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+696#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+706#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+716#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+726#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+736#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+746#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+756#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+766#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+776#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+786#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+796#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+806#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+816#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+826#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+836#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+846#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+856#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+866#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+876#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+886#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+896#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+906#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+916#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+926#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+936#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+946#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+956#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+966#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+976#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+986#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+996#!#The quick brown fox jumps over the lazy dog#!#six  #!#CODE:ABC123
+~~END~~
+
+
+SELECT * FROM fts_schema.test_tb1 WHERE contains((test_tb1.val, test_tb1.chr), 'TEST-999')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+8#!#To be or not to be, that is the question#!#why  #!#TEST-999
+18#!#To be or not to be, that is the question#!#why  #!#TEST-999
+28#!#To be or not to be, that is the question#!#why  #!#TEST-999
+38#!#To be or not to be, that is the question#!#why  #!#TEST-999
+48#!#To be or not to be, that is the question#!#why  #!#TEST-999
+58#!#To be or not to be, that is the question#!#why  #!#TEST-999
+68#!#To be or not to be, that is the question#!#why  #!#TEST-999
+78#!#To be or not to be, that is the question#!#why  #!#TEST-999
+88#!#To be or not to be, that is the question#!#why  #!#TEST-999
+98#!#To be or not to be, that is the question#!#why  #!#TEST-999
+108#!#To be or not to be, that is the question#!#why  #!#TEST-999
+118#!#To be or not to be, that is the question#!#why  #!#TEST-999
+128#!#To be or not to be, that is the question#!#why  #!#TEST-999
+138#!#To be or not to be, that is the question#!#why  #!#TEST-999
+148#!#To be or not to be, that is the question#!#why  #!#TEST-999
+158#!#To be or not to be, that is the question#!#why  #!#TEST-999
+168#!#To be or not to be, that is the question#!#why  #!#TEST-999
+178#!#To be or not to be, that is the question#!#why  #!#TEST-999
+188#!#To be or not to be, that is the question#!#why  #!#TEST-999
+198#!#To be or not to be, that is the question#!#why  #!#TEST-999
+208#!#To be or not to be, that is the question#!#why  #!#TEST-999
+218#!#To be or not to be, that is the question#!#why  #!#TEST-999
+228#!#To be or not to be, that is the question#!#why  #!#TEST-999
+238#!#To be or not to be, that is the question#!#why  #!#TEST-999
+248#!#To be or not to be, that is the question#!#why  #!#TEST-999
+258#!#To be or not to be, that is the question#!#why  #!#TEST-999
+268#!#To be or not to be, that is the question#!#why  #!#TEST-999
+278#!#To be or not to be, that is the question#!#why  #!#TEST-999
+288#!#To be or not to be, that is the question#!#why  #!#TEST-999
+298#!#To be or not to be, that is the question#!#why  #!#TEST-999
+308#!#To be or not to be, that is the question#!#why  #!#TEST-999
+318#!#To be or not to be, that is the question#!#why  #!#TEST-999
+328#!#To be or not to be, that is the question#!#why  #!#TEST-999
+338#!#To be or not to be, that is the question#!#why  #!#TEST-999
+348#!#To be or not to be, that is the question#!#why  #!#TEST-999
+358#!#To be or not to be, that is the question#!#why  #!#TEST-999
+368#!#To be or not to be, that is the question#!#why  #!#TEST-999
+378#!#To be or not to be, that is the question#!#why  #!#TEST-999
+388#!#To be or not to be, that is the question#!#why  #!#TEST-999
+398#!#To be or not to be, that is the question#!#why  #!#TEST-999
+408#!#To be or not to be, that is the question#!#why  #!#TEST-999
+418#!#To be or not to be, that is the question#!#why  #!#TEST-999
+428#!#To be or not to be, that is the question#!#why  #!#TEST-999
+438#!#To be or not to be, that is the question#!#why  #!#TEST-999
+448#!#To be or not to be, that is the question#!#why  #!#TEST-999
+458#!#To be or not to be, that is the question#!#why  #!#TEST-999
+468#!#To be or not to be, that is the question#!#why  #!#TEST-999
+478#!#To be or not to be, that is the question#!#why  #!#TEST-999
+488#!#To be or not to be, that is the question#!#why  #!#TEST-999
+498#!#To be or not to be, that is the question#!#why  #!#TEST-999
+508#!#To be or not to be, that is the question#!#why  #!#TEST-999
+518#!#To be or not to be, that is the question#!#why  #!#TEST-999
+528#!#To be or not to be, that is the question#!#why  #!#TEST-999
+538#!#To be or not to be, that is the question#!#why  #!#TEST-999
+548#!#To be or not to be, that is the question#!#why  #!#TEST-999
+558#!#To be or not to be, that is the question#!#why  #!#TEST-999
+568#!#To be or not to be, that is the question#!#why  #!#TEST-999
+578#!#To be or not to be, that is the question#!#why  #!#TEST-999
+588#!#To be or not to be, that is the question#!#why  #!#TEST-999
+598#!#To be or not to be, that is the question#!#why  #!#TEST-999
+608#!#To be or not to be, that is the question#!#why  #!#TEST-999
+618#!#To be or not to be, that is the question#!#why  #!#TEST-999
+628#!#To be or not to be, that is the question#!#why  #!#TEST-999
+638#!#To be or not to be, that is the question#!#why  #!#TEST-999
+648#!#To be or not to be, that is the question#!#why  #!#TEST-999
+658#!#To be or not to be, that is the question#!#why  #!#TEST-999
+668#!#To be or not to be, that is the question#!#why  #!#TEST-999
+678#!#To be or not to be, that is the question#!#why  #!#TEST-999
+688#!#To be or not to be, that is the question#!#why  #!#TEST-999
+698#!#To be or not to be, that is the question#!#why  #!#TEST-999
+708#!#To be or not to be, that is the question#!#why  #!#TEST-999
+718#!#To be or not to be, that is the question#!#why  #!#TEST-999
+728#!#To be or not to be, that is the question#!#why  #!#TEST-999
+738#!#To be or not to be, that is the question#!#why  #!#TEST-999
+748#!#To be or not to be, that is the question#!#why  #!#TEST-999
+758#!#To be or not to be, that is the question#!#why  #!#TEST-999
+768#!#To be or not to be, that is the question#!#why  #!#TEST-999
+778#!#To be or not to be, that is the question#!#why  #!#TEST-999
+788#!#To be or not to be, that is the question#!#why  #!#TEST-999
+798#!#To be or not to be, that is the question#!#why  #!#TEST-999
+808#!#To be or not to be, that is the question#!#why  #!#TEST-999
+818#!#To be or not to be, that is the question#!#why  #!#TEST-999
+828#!#To be or not to be, that is the question#!#why  #!#TEST-999
+838#!#To be or not to be, that is the question#!#why  #!#TEST-999
+848#!#To be or not to be, that is the question#!#why  #!#TEST-999
+858#!#To be or not to be, that is the question#!#why  #!#TEST-999
+868#!#To be or not to be, that is the question#!#why  #!#TEST-999
+878#!#To be or not to be, that is the question#!#why  #!#TEST-999
+888#!#To be or not to be, that is the question#!#why  #!#TEST-999
+898#!#To be or not to be, that is the question#!#why  #!#TEST-999
+908#!#To be or not to be, that is the question#!#why  #!#TEST-999
+918#!#To be or not to be, that is the question#!#why  #!#TEST-999
+928#!#To be or not to be, that is the question#!#why  #!#TEST-999
+938#!#To be or not to be, that is the question#!#why  #!#TEST-999
+948#!#To be or not to be, that is the question#!#why  #!#TEST-999
+958#!#To be or not to be, that is the question#!#why  #!#TEST-999
+968#!#To be or not to be, that is the question#!#why  #!#TEST-999
+978#!#To be or not to be, that is the question#!#why  #!#TEST-999
+988#!#To be or not to be, that is the question#!#why  #!#TEST-999
+998#!#To be or not to be, that is the question#!#why  #!#TEST-999
+~~END~~
+
+
+SELECT * FROM fts_schema.test_tb1 WHERE contains((fts_schema.test_tb1.txt, test_tb1.chr), 'three')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+7#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+17#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+27#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+37#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+47#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+57#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+67#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+77#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+87#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+97#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+107#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+117#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+127#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+137#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+147#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+157#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+167#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+177#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+187#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+197#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+207#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+217#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+227#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+237#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+247#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+257#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+267#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+277#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+287#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+297#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+307#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+317#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+327#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+337#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+347#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+357#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+367#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+377#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+387#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+397#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+407#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+417#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+427#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+437#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+447#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+457#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+467#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+477#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+487#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+497#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+507#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+517#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+527#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+537#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+547#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+557#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+567#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+577#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+587#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+597#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+607#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+617#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+627#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+637#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+647#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+657#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+667#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+677#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+687#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+697#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+707#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+717#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+727#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+737#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+747#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+757#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+767#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+777#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+787#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+797#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+807#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+817#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+827#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+837#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+847#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+857#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+867#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+877#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+887#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+897#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+907#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+917#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+927#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+937#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+947#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+957#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+967#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+977#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+987#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+997#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit#!#three#!#ID#12345
+~~END~~
+
+
+SELECT * FROM fts_schema.test_tb1 WHERE contains((fts_schema.test_tb1.txt, fts_schema.test_tb1.val, chr), 'Invoice/001')
+GO
+~~START~~
+int#!#text#!#char#!#varchar
+4#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+14#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+24#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+34#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+44#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+54#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+64#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+74#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+84#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+94#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+104#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+114#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+124#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+134#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+144#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+154#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+164#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+174#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+184#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+194#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+204#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+214#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+224#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+234#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+244#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+254#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+264#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+274#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+284#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+294#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+304#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+314#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+324#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+334#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+344#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+354#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+364#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+374#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+384#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+394#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+404#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+414#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+424#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+434#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+444#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+454#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+464#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+474#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+484#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+494#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+504#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+514#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+524#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+534#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+544#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+554#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+564#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+574#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+584#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+594#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+604#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+614#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+624#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+634#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+644#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+654#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+664#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+674#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+684#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+694#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+704#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+714#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+724#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+734#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+744#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+754#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+764#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+774#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+784#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+794#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+804#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+814#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+824#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+834#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+844#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+854#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+864#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+874#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+884#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+894#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+904#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+914#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+924#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+934#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+944#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+954#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+964#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+974#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+984#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+994#!#All work and no play makes Jack a dull boy#!#two  #!#Invoice/001
+~~END~~
+

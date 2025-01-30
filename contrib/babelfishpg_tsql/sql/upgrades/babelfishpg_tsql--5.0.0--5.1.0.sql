@@ -112,6 +112,13 @@ CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.bbf_var
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
 
+-- This function performs replacing special characters to their corresponding unique hashes
+-- in the search condition or the full text search CONTAINS predicate
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) RETURNS TEXT AS 
+'babelfishpg_tsql', 'replace_special_chars_fts'
+LANGUAGE C IMMUTABLE STRICT;
+GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)

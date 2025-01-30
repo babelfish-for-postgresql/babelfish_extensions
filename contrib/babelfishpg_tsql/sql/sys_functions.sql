@@ -943,7 +943,8 @@ LANGUAGE C STABLE STRICT;
 
 -- This function performs replacing special characters to their corresponding unique hashes
 -- in the search condition or the full text search CONTAINS predicate
-CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(IN phrase text) RETURNS TEXT AS 
+-- to handle dynamic number of columns as argument we use VARIADIC that expects list of type text
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) RETURNS TEXT AS 
 'babelfishpg_tsql', 'replace_special_chars_fts'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
