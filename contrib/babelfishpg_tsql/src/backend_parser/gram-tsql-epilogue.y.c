@@ -848,7 +848,7 @@ concatClause(Node *lexpr, Node *rexpr)
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 static Node *
-makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
+makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
 	List	*args;
 	Node	*replaceSpecialCharsFunc;
