@@ -1,4 +1,4 @@
--- tsql user=jdbc_user password=1
+-- tsql user=jdbc_user password=12345678
 -- Case 1: Original repro issue
 INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
 GO
@@ -10,6 +10,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 -- Case 2: Trigger Functionality with Table Variables
 CREATE TRIGGER tr_Child_Insert ON Child AFTER INSERT AS
@@ -42,6 +43,7 @@ GO
 ~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 
 -- Case 3: Trigger Functionality with Temporary Tables
@@ -79,6 +81,7 @@ GO
 ~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 -- Case 4: Complex Trigger Scenarios
 CREATE TRIGGER tr_Parent_Insert ON Parent AFTER INSERT AS
@@ -111,6 +114,7 @@ GO
 ~~ERROR (Message: insert or update on table "parent" violates foreign key constraint "fk_parent_grandparent")~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 -- Case 5: NULL test
 CREATE TRIGGER tr_Child_NullHandling ON Child AFTER INSERT AS
@@ -140,6 +144,7 @@ GO
 ~~ERROR (Message: One or more parents do not exist)~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 -- Case 6: Nesting test
 CREATE TRIGGER tr_Level3_Insert ON Level3 AFTER INSERT AS
@@ -172,6 +177,7 @@ GO
 ~~ERROR (Message: insert or update on table "level3" violates foreign key constraint "fk_level3_level2")~~
 
 
+-- tsql user=jdbc_user password=12345678
 
 -- Case 7: Special Characters support test
 CREATE TRIGGER tr_SpecialChar_Insert ON [Child#Table] AFTER INSERT AS
