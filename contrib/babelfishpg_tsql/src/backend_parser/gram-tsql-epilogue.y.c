@@ -811,34 +811,26 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 static Node *
 makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
-	List	*args;
-	Node	*replaceSpecialCharsFunc;
-	List	*replaceSpecialCharsArgs;
+    List	*args;
+    Node	*replaceSpecialCharsFunc;
+    List	*replaceSpecialCharsArgs;
 
 	/* length of list of columns passed as colId */
 	int 	len = colId->length; 	
 
 	/* inititalize the list of columns as null as we are using lappend function to append column(s)
-		* so its necessary to have a null list to start with  
-		*/
+	 * so its necessary to have a null list to start with  
+	 */
 	replaceSpecialCharsArgs = NIL;
 
 	for(int i = 0; i < len; i++)
 	{
-		/* Node to store the passed column as a column reference */
-		Node 	*col = NULL;
-
-		char 	*colName = (colId->elements[i]).ptr_value;
-		char 	*schemaName = NULL;
-		char 	*tableName = NULL;
-		char 	*columnName = NULL;
-		char 	*dot1, *dot2;
-
-		/* Check if the column name is NULL or empty */
-		if(colName == NULL)
-		{
-			continue;
-		}
+		Node 		*col;
+		char 		*colName = (colId->elements[i]).ptr_value;
+		char 		*schemaName = NULL;
+		char 		*tableName = NULL;
+		char 		*columnName = NULL;
+		char 		*dot1, *dot2;
 
 		/* Find the first and second dots in the column identifier */
 		dot1 = strchr(colName, '.');
@@ -898,8 +890,8 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 		replaceSpecialCharsArgs = lappend(replaceSpecialCharsArgs, col);
 	}
 	
-	/* Create a function call for replace_special_chars_fts(column_list) */
-	replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
+    /* Create a function call for replace_special_chars_fts(column_list) */
+    replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
 
 	/* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 	args = list_make2(pgconfig, replaceSpecialCharsFunc);

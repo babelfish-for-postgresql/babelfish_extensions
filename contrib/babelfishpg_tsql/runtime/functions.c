@@ -2790,14 +2790,15 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 	/* initialize a StringInfoData with an empty string */
 	initStringInfo(&buf);
 
-	/* Deconstruct the array to extract elements and nulls from the array */
+	/* Deconstruct the array to extract elements and nulls from the array*/
 	deconstruct_array(array, TEXTOID, -1, false, 'i', &elements, &nulls, &nelems);
 
 	for(int i = 0; i < nelems; i++)
-	{	
+	{
+		
 		text		*input_text;
 		char		*input_str;
-		char 		*col_str = NULL;
+		char 		*col_str;
 
 		/* if at the current index has a null then move to next index */
 		if(nulls[i])
