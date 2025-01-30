@@ -705,7 +705,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				outerplan = outerPlan(plan);
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (plan && outerplan && !(IsA(plan, Result)) && var->varno == OUTER_VAR)
+				// if (plan && outerplan && !(IsA(plan, Result)) && var->varno == OUTER_VAR)
+				if (plan && outerplan && ((IsA(plan,Agg) && IsA(outerplan, Gather)) || IsA(plan, Gather) || IsA(plan, Sort)))
 				{
 					Assert(plan);
 					Assert(outerplan);
