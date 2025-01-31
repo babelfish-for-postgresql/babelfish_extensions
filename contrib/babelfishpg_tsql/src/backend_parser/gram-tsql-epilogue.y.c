@@ -918,8 +918,8 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 	/* create list of the created ColumnRef node in the replaceSpecialCharsArgs list */
 	replaceSpecialCharsArgs = list_make1(col);
 	
-    /* Create a function call for replace_special_chars_fts(column_list) */
-    replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
+	/* Create a function call for replace_special_chars_fts(column_list) */
+	replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
 
 	/* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 	args = list_make2(pgconfig, replaceSpecialCharsFunc);
