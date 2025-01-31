@@ -209,3 +209,157 @@ GO
 
 ~~ERROR (Message: insert or update on table "child#table" violates foreign key constraint "fk_childtable_parenttable")~~
 
+
+-- tsql user=jdbc_user password=12345678
+-- Case 8: Unique constraints
+-- Trigger with unique constraint check
+CREATE TRIGGER tr_UniqueChild_Insert ON UniqueChild AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempUnique TABLE (
+        ParentID INT,
+        UniqueValue VARCHAR(50)
+    );
+    
+    INSERT INTO @TempUnique (ParentID, UniqueValue)
+    SELECT i.ParentID, p.UniqueValue
+    FROM inserted i
+    JOIN UniqueParent p ON i.ParentID = p.ID;
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempUnique t
+        JOIN UniqueChild c ON t.UniqueValue = c.UniqueChildValue
+        WHERE c.ID NOT IN (SELECT ID FROM inserted)
+    )
+    BEGIN
+        RAISERROR ('Unique constraint violation', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (1, 1, 'Child1');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (unique constraint violation)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (2, 2, 'Child1');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (2, 2, 'Child2');
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Trigger with temporary table and unique constraint
+CREATE TRIGGER tr_UniqueChild_Update ON UniqueChild AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(UniqueChildValue)
+    BEGIN
+        CREATE TABLE #UpdatedUnique (
+            ID INT,
+            NewValue VARCHAR(50)
+        );
+        
+        INSERT INTO #UpdatedUnique (ID, NewValue)
+        SELECT i.ID, i.UniqueChildValue
+        FROM inserted i;
+        
+        IF EXISTS (
+            SELECT 1 FROM #UpdatedUnique u
+            JOIN UniqueChild c ON u.NewValue = c.UniqueChildValue
+            WHERE c.ID <> u.ID
+        )
+        BEGIN
+            RAISERROR ('Update violates unique constraint', 16, 1);
+            ROLLBACK TRANSACTION;
+        END
+        
+        DROP TABLE #UpdatedUnique;
+    END
+END;
+GO
+
+-- Should succeed
+UPDATE UniqueChild SET UniqueChildValue = 'UpdatedChild1' WHERE ID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (unique constraint violation)
+UPDATE UniqueChild SET UniqueChildValue = 'UpdatedChild1' WHERE ID = 2;
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Complex trigger with multiple unique constraints
+CREATE TRIGGER tr_UniqueChild_ComplexInsert ON UniqueChild AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempComplex TABLE (
+        ID INT,
+        ParentID INT,
+        ParentUniqueValue VARCHAR(50),
+        ChildUniqueValue VARCHAR(50)
+    );
+    
+    INSERT INTO @TempComplex (ID, ParentID, ParentUniqueValue, ChildUniqueValue)
+    SELECT i.ID, i.ParentID, p.UniqueValue, i.UniqueChildValue
+    FROM inserted i
+    JOIN UniqueParent p ON i.ParentID = p.ID;
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempComplex t
+        WHERE t.ParentUniqueValue = t.ChildUniqueValue
+    )
+    BEGIN
+        RAISERROR ('Child value cannot be the same as parent unique value', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempComplex t
+        GROUP BY t.ChildUniqueValue
+        HAVING COUNT(*) > 1
+    )
+    BEGIN
+        RAISERROR ('Duplicate child unique values in batch insert', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (3, 2, 'Child3');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (child value same as parent unique value)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (4, 1, 'Parent1');
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Child value cannot be the same as parent unique value)~~
+
+
+-- Should fail (duplicate child unique values in batch insert)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) 
+VALUES (5, 1, 'Child5'), (6, 2, 'Child5');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+

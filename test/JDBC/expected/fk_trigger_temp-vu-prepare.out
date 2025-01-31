@@ -149,3 +149,25 @@ INSERT INTO Level2 VALUES (1, 1), (2, 2);
 GO
 ~~ROW COUNT: 2~~
 
+
+CREATE TABLE UniqueParent (
+    ID INT PRIMARY KEY,
+    UniqueValue VARCHAR(50) UNIQUE
+);
+GO
+
+CREATE TABLE UniqueChild (
+    ID INT PRIMARY KEY,
+    ParentID INT,
+    UniqueChildValue VARCHAR(50) UNIQUE
+);
+GO
+
+ALTER TABLE UniqueChild ADD CONSTRAINT FK_UniqueChild_UniqueParent FOREIGN KEY (ParentID) REFERENCES UniqueParent(ID);
+GO
+
+INSERT INTO UniqueParent (ID, UniqueValue) VALUES (1, 'Parent1'), (2, 'Parent2');
+GO
+~~ROW COUNT: 2~~
+
+

@@ -8,6 +8,10 @@ DROP TRIGGER IF EXISTS tr_Parent_Insert
 DROP TRIGGER IF EXISTS tr_Child_Update
 DROP TRIGGER IF EXISTS tr_Child_Insert
 DROP TRIGGER IF EXISTS [trg_i_COD]
+DROP TRIGGER IF EXISTS tr_UniqueChild_Insert;
+DROP TRIGGER IF EXISTS tr_UniqueChild_Update;
+DROP TRIGGER IF EXISTS tr_UniqueChild_ComplexInsert;
+ALTER TABLE UniqueChild DROP CONSTRAINT IF EXISTS FK_UniqueChild_UniqueParent;
 GO
 
 -- tables
@@ -21,4 +25,6 @@ DROP TABLE IF EXISTS Parent
 DROP TABLE IF EXISTS GrandParent
 DROP TABLE IF EXISTS [dbo].[OrderItem]
 DROP TABLE IF EXISTS [order]
+DROP TABLE IF EXISTS UniqueChild;
+DROP TABLE IF EXISTS UniqueParent;
 GO
