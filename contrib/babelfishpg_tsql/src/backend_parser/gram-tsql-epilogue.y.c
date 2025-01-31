@@ -777,55 +777,68 @@ is_json_query(List *name)
 }
 
 /*
-* Parse T-SQL CONTAINS predicate. Currently only supports 
+* Parse T-SQL CONTAINS predicate. Currently supports
+*					single column
 * ... CONTAINS(column_name, '<contains_search_condition>') ...
-* This function transform it into a Postgres AST that stands for
+*					column_list
+* ... CONTAINS((column_list), '<contains_search_condition>')...
+* This function transform it into a Postgres AST for single column that stands for
 * to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* for column_list
+* to_tsvector(pgconfig, col_1||' '||col_2||' '||...) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
 TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
-    A_Expr *fts;
-    Node *to_tsvector_call, *to_tsquery_call;
-    Node *result_pgconfig;
-    List *args_pgconfig;
+	A_Expr *fts;
+	Node *to_tsvector_call, *to_tsquery_call;
+	Node *result_pgconfig;
+	List *args_pgconfig;
 
-    args_pgconfig = list_make1(search_expr);
-    result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+	args_pgconfig = list_make1(search_expr);
+	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
 
-    to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
-    to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-    
-    fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
+	to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
+	to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+	
+	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
 
-    return (Node *)fts;
+	return (Node *)fts;
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 static Node *
 makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
-    List	*args;
-    Node	*replaceSpecialCharsFunc;
-    List	*replaceSpecialCharsArgs;
+	List	*args;
+	Node	*replaceSpecialCharsFunc;
+	List	*replaceSpecialCharsArgs;
 
 	/* length of list of columns passed as colId */
 	int 	len = colId->length; 	
 
 	/* inititalize the list of columns as null as we are using lappend function to append column(s)
-	 * so its necessary to have a null list to start with  
-	 */
+		* so its necessary to have a null list to start with  
+		*/
 	replaceSpecialCharsArgs = NIL;
 
 	for(int i = 0; i < len; i++)
 	{
-		Node 		*col;
-		char 		*colName = (colId->elements[i]).ptr_value;
-		char 		*schemaName = NULL;
-		char 		*tableName = NULL;
-		char 		*columnName = NULL;
-		char 		*dot1, *dot2;
+		/* Node to store the passed column as a column reference */
+		Node 	*col = NULL;
+
+		char 	*colName = (colId->elements[i]).ptr_value;
+		char 	*schemaName = NULL;
+		char 	*tableName = NULL;
+		char 	*columnName = NULL;
+		char 	*dot1, *dot2;
+
+		/* Check if the column name is NULL or empty */
+		if(colName == NULL)
+		{
+			continue;
+		}
 
 		/* Find the first and second dots in the column identifier */
 		dot1 = strchr(colName, '.');
@@ -885,28 +898,28 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 		replaceSpecialCharsArgs = lappend(replaceSpecialCharsArgs, col);
 	}
 	
-    /* Create a function call for replace_special_chars_fts(column_list) */
-    replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
+	/* Create a function call for replace_special_chars_fts(column_list) */
+	replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
 
-    /* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
-    args = list_make2(pgconfig, replaceSpecialCharsFunc);
+	/* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
+	args = list_make2(pgconfig, replaceSpecialCharsFunc);
 
-    return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
+	return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
 }
 
 /* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')) */
 static Node *
 makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
 {
-    List		*args;
-    Node		*result_rewrite;
-    List		*args_rewrite;
+	List		*args;
+	Node		*result_rewrite;
+	List		*args_rewrite;
 
-    args_rewrite = list_make1(search_expr);
-    result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+	args_rewrite = list_make1(search_expr);
+	result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
 
-    args = list_make2(pgconfig, result_rewrite);
-    return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
+	args = list_make2(pgconfig, result_rewrite);
+	return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
 }
 
 
