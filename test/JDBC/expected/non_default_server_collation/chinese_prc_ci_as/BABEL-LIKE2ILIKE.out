@@ -178,6 +178,7 @@ int
 with p1 as (select c1 from like_tesing1 where c1 LIKE '__Ć_'),
 p2 as (select c3 from like_tesing1 where c3 LIKE 'äƀ__')
 select * from p1 union all select * from p2
+order by 1
 GO
 ~~START~~
 nvarchar

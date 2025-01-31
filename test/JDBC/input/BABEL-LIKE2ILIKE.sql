@@ -58,6 +58,7 @@ GO
 with p1 as (select c1 from like_tesing1 where c1 LIKE '__Ć_'),
 p2 as (select c3 from like_tesing1 where c3 LIKE 'äƀ__')
 select * from p1 union all select * from p2
+order by 1
 GO
 -- test case expression
 select c1,(case when c1 LIKE 'j%' then 1 when c1 NOT LIKE 'j%' then 2 end) from like_tesing1
