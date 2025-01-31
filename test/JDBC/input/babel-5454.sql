@@ -63,6 +63,21 @@ GO
 SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 GO
 
+select ExchangeRate + Hello from ExchangeRate2
+go
+select ExchangeRate + Hello from ExchangeRate2 order by ExchangeRate
+go
+select abc from (select ExchangeRate + Hello as abc from ExchangeRate2)
+go
+
+select curr_num + Hello from (SELECT curr_num, ExchangeRate + Hello,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+go
+
+select sum + Hello from (SELECT curr_num, ExchangeRate + Hello as sum,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+go
+
+select avg(sum_num) from (select sum + Hello as sum_num from (SELECT curr_num, ExchangeRate + Hello as sum,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2)) a;
+GO
 
 -- 1.1 THIS QUERY DOES WORK when union with decimal, so not an issue of position? - 5,2 and 9,8 , went to NUMERIC_SUB_OID, final 12,8
 SELECT cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
@@ -90,8 +105,8 @@ go
 SELECT cr1 description, ex+ Hello sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
 go
 -- from second union
-SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
-go
+-- SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
+-- go
 
 
 -- 2 works without my fix, correct answer also, 5,2 and 9.8 -> final 12,8
@@ -323,8 +338,16 @@ go
 
 
 CREATE TABLE testdecimal_vu_prepare_tab2 (id INT IDENTITY(1,1) PRIMARY KEY, in4 DECIMAL(20,6), in5 DECIMAL(20,6));
-CREATE TABLE tab2 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(20,6));
+CREATE TABLE tab21 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(20,6));
 INSERT INTO testdecimal_vu_prepare_tab2 (in4, in5) VALUES (99999999999999.111111, 11111111111111.999999);
-INSERT INTO tab2 (a) VALUES (99999999999999.111111);
+INSERT INTO tab21 (a) VALUES (99999999999999.111111);
 -- correct 
-select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab2 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab2)
+select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab21 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab2)
+
+
+-- Drop tables
+DROP TABLE testdecimal_vu_prepare_tab21;
+DROP TABLE tab2;
+DROP TABLE testdecimal_vu_prepare_tab2;
+DROP TABLE tab21;
+GO

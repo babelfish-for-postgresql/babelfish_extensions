@@ -51,9 +51,138 @@ GO
 
 
 
+
+-- formatted 
+SELECT 
+    cr1 AS description,
+    ex + Hello AS sum_num
+FROM (
+    SELECT 
+        ExchangeRate AS ex,
+        CurrencyName AS cr1,
+        CurrencyName,
+        Hello
+    FROM currency2
+    INNER JOIN ExchangeRate2
+        ON ToCurrencyCode = CurrencyCode
+    UNION ALL
+    SELECT
+        1 AS aw,
+        CurrencyName AS cr,
+        CurrencyName,
+        curr_num AS aw1
+    FROM currency2
+) a;
+GO
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
+
 -- should  notb work withoit my changes
--- SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
--- GO
+SELECT cr1 description, ex + Hello sum_num FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+GO
+~~START~~
+nvarchar#!#numeric
+US#!#6.12345678
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
+~~END~~
+
+
+select ExchangeRate + Hello from ExchangeRate2
+go
+~~START~~
+numeric
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
+~~END~~
+
+select ExchangeRate + Hello from ExchangeRate2 order by ExchangeRate
+go
+~~START~~
+numeric
+1.24345678
+6.12345678
+5.37345678
+25.99345678
+113.62345678
+~~END~~
+
+select abc from (select ExchangeRate + Hello as abc from ExchangeRate2)
+go
+~~START~~
+numeric
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
+~~END~~
+
+
+select curr_num + Hello from (SELECT curr_num, ExchangeRate + Hello,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+go
+~~START~~
+numeric
+7.22345678
+2.22345678
+5.22345678
+7.22345678
+9.22345678
+3.10000000
+2.10000000
+4.10000000
+5.10000000
+6.10000000
+~~END~~
+
+
+select sum + Hello from (SELECT curr_num, ExchangeRate + Hello as sum,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
+go
+~~START~~
+numeric
+11.24691356
+2.36691356
+28.11691356
+116.74691356
+9.49691356
+3.10000000
+2.10000000
+4.10000000
+5.10000000
+6.10000000
+~~END~~
+
+
+select avg(sum_num) from (select sum + Hello as sum_num from (SELECT curr_num, ExchangeRate + Hello as sum,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 as aw, 1 AS aw1,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2)) a;
+GO
+~~START~~
+numeric
+18.84745678
+~~END~~
+
+
 -- 1.1 THIS QUERY DOES WORK when union with decimal, so not an issue of position? - 5,2 and 9,8 , went to NUMERIC_SUB_OID, final 12,8
 SELECT cr1 description, ex + Hello ex1   FROM (SELECT ExchangeRate ex,CurrencyName cr1, CurrencyName ,Hello FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT curr_num AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2) a;
 GO
@@ -169,15 +298,11 @@ Ja#!#5.10000000
 Ca#!#6.10000000
 ~~END~~
 
+
+
 -- from second union
-SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "curr_num" does not exist)~~
-
-
-
+-- SELECT cr1 description, curr_num+ curr_num sum_num  FROM (SELECT Hello,CurrencyName cr1, CurrencyName ,ExchangeRate ex FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT 1 AS aw,CurrencyName as cr, CurrencyName,curr_num as aw1 FROM currency2);
+-- go
 -- 2 works without my fix, correct answer also, 5,2 and 9.8 -> final 12,8
 SELECT cr1 description, ex + Hello sum_numeric   FROM (SELECT CurrencyName cr1,ExchangeRate ex, Hello,CurrencyName FROM currency2 INNER JOIN ExchangeRate2 ON ToCurrencyCode = CurrencyCode UNION ALL SELECT CurrencyName as cr,1 AS aw,curr_num as aw1, CurrencyName FROM currency2) a;
 go
@@ -532,3 +657,117 @@ DROP TABLE Exchange;
 GO
 DROP TYPE TestUDT;
 GO
+
+
+
+
+CREATE TABLE testdecimal_vu_prepare_tab21 (id INT IDENTITY(1,1) PRIMARY KEY,in4 DECIMAL(10,2),in5 DECIMAL(10,2));
+CREATE TABLE tab2 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(10,2));
+INSERT INTO testdecimal_vu_prepare_tab21 (in4, in5) VALUES (10.50, 2.00), (25.75, 4.00), (100.00, 0.50), (7.25, 3.00), (50.00, 1.50);
+go
+~~ROW COUNT: 5~~
+
+
+
+INSERT INTO tab2 (a) VALUES (30.00), (45.50), (75.25), (12.75), (60.00);
+select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab2 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab21)
+go
+~~ROW COUNT: 5~~
+
+~~START~~
+numeric#!#numeric
+60.00#!#30.00
+91.00#!#45.50
+150.50#!#75.25
+25.50#!#12.75
+120.00#!#60.00
+25.00#!#10.50
+59.50#!#25.75
+201.00#!#100.00
+20.50#!#7.25
+103.00#!#50.00
+~~END~~
+
+
+
+
+
+
+
+
+
+-- getting 
+-- result2                                  a           
+-- ---------------------------------------- ------------
+--                              25.00000000        10.50
+--                              59.50000000        25.75
+--                             201.00000000       100.00
+--                              20.50000000         7.25
+--                             103.00000000        50.00
+--                              60.00000000        30.00
+--                              91.00000000        45.50
+--                             150.50000000        75.25
+--                              25.50000000        12.75
+--                             120.00000000        60.00
+-- expected 
+-- result2        a           
+-- -------------- ------------
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+-- with my change and without parallel query 
+-- result2        a           
+-- -------------- ------------
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+-- with return -> with my changes 9n parallel 
+-- 2> go
+-- result2        a           
+-- -------------- ------------
+--          25.00        10.50
+--          59.50        25.75
+--         201.00       100.00
+--          20.50         7.25
+--         103.00        50.00
+--          60.00        30.00
+--          91.00        45.50
+--         150.50        75.25
+--          25.50        12.75
+--         120.00        60.00
+CREATE TABLE testdecimal_vu_prepare_tab2 (id INT IDENTITY(1,1) PRIMARY KEY, in4 DECIMAL(20,6), in5 DECIMAL(20,6));
+CREATE TABLE tab21 (id INT IDENTITY(1,1) PRIMARY KEY, a DECIMAL(20,6));
+INSERT INTO testdecimal_vu_prepare_tab2 (in4, in5) VALUES (99999999999999.111111, 11111111111111.999999);
+INSERT INTO tab21 (a) VALUES (99999999999999.111111);
+-- correct 
+select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM tab21 union all SELECT in4, in4 + in5 AS result FROM testdecimal_vu_prepare_tab2)
+-- Drop tables
+DROP TABLE testdecimal_vu_prepare_tab21;
+DROP TABLE tab2;
+DROP TABLE testdecimal_vu_prepare_tab2;
+DROP TABLE tab21;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric#!#numeric
+199999999999998.222222#!#99999999999999.111111
+222222222222222.222220#!#99999999999999.111111
+~~END~~
+
