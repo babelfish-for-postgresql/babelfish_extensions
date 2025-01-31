@@ -392,6 +392,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	}
 
 	patt = (Const *) rightop;
+	patt->constcollid = op->inputcollid;
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
@@ -409,7 +410,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		op_str = like_entry.is_not_match ? "<>" : "=";
-		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
@@ -429,7 +430,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Const	   *highest_sort_key;
 
 		/* construct leftop >= pattern */
-		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
@@ -450,7 +451,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
-		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
