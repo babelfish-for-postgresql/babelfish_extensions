@@ -394,6 +394,12 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	patt = (Const *) rightop;
 	patt->constcollid = op->inputcollid;
 
+	/* we also want left operand to match this expected cs_as collation */
+	if (IsA(linitial(op->args), CollateExpr))
+	{
+		((CollateExpr *) linitial(op->args))->collOid = op->inputcollid;
+	}
+
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
 											&prefix, NULL);
@@ -439,7 +445,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
+		highest_sort_key = makeConst(TEXTOID, -1, DEFAULT_COLLATION_OID, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
@@ -448,7 +454,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
 										(Expr *) prefix, (Expr *) highest_sort_key,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										DEFAULT_COLLATION_OID, DEFAULT_COLLATION_OID, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
 		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
