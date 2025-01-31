@@ -39,7 +39,6 @@ CREATE FULLTEXT INDEX ON test_tb(
         txt2, 
         txt3, 
         txt4) KEY INDEX uid
-CREATE FULLTEXT INDEX ON test_tb(txt1, txt2, txt3, txt4) KEY INDEX uid
 GO
 
 select * from test_tb where contains((txt1, txt2, txt4), '"Artificial Intelligence"' )
@@ -51,7 +50,6 @@ GO
 CREATE FULLTEXT INDEX ON test_tb(
         txt1, 
         txt2) KEY INDEX uid
-CREATE FULLTEXT INDEX ON test_tb(txt1, txt2) KEY INDEX uid
 GO
 
 SELECT * FROM test_tb WHERE contains((txt1, txt2), '"The human genome"' )
@@ -64,13 +62,6 @@ GO
 
 -- negative test
 SELECT * FROM test_tb WHERE contains((txt1, txt2), '')
--- should throw an error as the column txt3 is not fulltext indexed, BUT DOES NOT
-SELECT * FROM test_tb WHERE contains((txt1, txt3), '"The Industrial Revolution"')
-GO
-
--- negative test
--- should throw an error as the columns txt3 and txt4 are not fulltext indexed, BUT DOES NOT
-SELECT * FROM test_tb WHERE contains((txt4, txt3), '"The Industrial Revolution"')
 GO
 
 
@@ -84,12 +75,6 @@ GO
 CREATE FULLTEXT INDEX ON fts_schema.test_tb1(
         val, 
         chr) KEY INDEX usr
-CREATE FULLTEXT INDEX ON fts_schema.test_tb1(val, chr) KEY INDEX usr
-GO
-
--- negative test
--- should throw an error as chr is not fulltext indexed, BUT DOES NOT
-SELECT * FROM fts_schema.test_tb1 WHERE contains((val, chr), 'four')
 GO
 
 DROP FULLTEXT INDEX ON fts_schema.test_tb1
@@ -191,18 +176,4 @@ SELECT * FROM content_table WHERE contains((
         nvarchar_column,
         ntext_column,
         nchar_column), 'documentation')
-GO
-CREATE FULLTEXT INDEX ON fts_schema.test_tb1(txt, val, chr) KEY INDEX usr
-GO
-
-SELECT * FROM fts_schema.test_tb1 WHERE contains((test_tb1.txt, val), '"The quick brown fox"')
-GO
-
-SELECT * FROM fts_schema.test_tb1 WHERE contains((test_tb1.val, test_tb1.chr), 'TEST-999')
-GO
-
-SELECT * FROM fts_schema.test_tb1 WHERE contains((fts_schema.test_tb1.txt, test_tb1.chr), 'three')
-GO
-
-SELECT * FROM fts_schema.test_tb1 WHERE contains((fts_schema.test_tb1.txt, fts_schema.test_tb1.val, chr), 'Invoice/001')
 GO

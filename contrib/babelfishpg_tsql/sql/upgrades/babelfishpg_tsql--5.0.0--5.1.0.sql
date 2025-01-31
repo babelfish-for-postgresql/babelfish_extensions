@@ -100,6 +100,21 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varbinary_deprecated_4_5_0');
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.replace_special_chars_fts(IN phrase text) RENAME TO replace_special_chars_fts_deprecated_5_1_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_special_chars_fts_deprecated_5_1_0');
+
 CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.VARCHAR) RETURNS sys.bbf_varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;

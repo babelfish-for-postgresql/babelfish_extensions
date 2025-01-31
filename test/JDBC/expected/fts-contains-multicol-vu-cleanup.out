@@ -1,4 +1,3 @@
--- tsql user=jdbc_user password=12345678
 -- enable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
