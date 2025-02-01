@@ -14,15 +14,15 @@ all
 
 
 # JDBC Fulltext search tests
-ignore#!#fts-contains-multicol-vu-prepare
-ignore#!#fts-contains-multicol-vu-verify
-ignore#!#fts-contains-multicol-vu-cleanup
-ignore#!#fts-contains-utils-vu-prepare
-ignore#!#fts-contains-utils-vu-verify
-ignore#!#fts-contains-utils-vu-cleanup
-ignore#!#fts-contains-vu-prepare
-ignore#!#fts-contains-vu-verify
-ignore#!#fts-contains-vu-cleanup
+# ignore#!#fts-contains-multicol-vu-prepare
+# ignore#!#fts-contains-multicol-vu-verify
+# ignore#!#fts-contains-multicol-vu-cleanup
+# ignore#!#fts-contains-utils-vu-prepare
+# ignore#!#fts-contains-utils-vu-verify
+# ignore#!#fts-contains-utils-vu-cleanup
+# ignore#!#fts-contains-vu-prepare
+# ignore#!#fts-contains-vu-verify
+# ignore#!#fts-contains-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
