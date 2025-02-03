@@ -407,6 +407,44 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		return node;
 	}
 
+	/* Take care of CI_AI first */
+	if (IsA(leftop, RelabelType))
+	{
+		RelabelType		*relabel = (RelabelType *) leftop;
+		if (IsA(relabel->arg, FuncExpr))
+		{
+			FuncExpr *funcexpr = (FuncExpr*) relabel->arg;
+
+			/* If the function is not remove_accents_internal, then we do not want to touch it */
+			if (funcexpr->funcid == remove_accents_internal_oid)
+			{
+				/* Since we know this function has only one argument */
+				Node *arg = linitial(funcexpr->args);
+    
+				/* Keep stripping CollateExpr until we find non-CollateExpr */
+				while (arg != NULL && IsA(arg, CollateExpr))
+				{
+					CollateExpr *collate = (CollateExpr *) arg;
+					arg = (Node *) collate->arg;
+				}
+
+				if (arg != NULL)
+				{
+					/* Replace with innermost non-CollateExpr node */
+					funcexpr->args = list_make1(arg);
+				}
+			}
+		}
+	}
+
+	/* Now, take care of CI_AS */
+	while (IsA(linitial(op->args), CollateExpr))
+	{
+		CollateExpr *collate = (CollateExpr *) linitial(op->args);
+		linitial(op->args) = (Node *) collate->arg;
+		leftop = linitial(op->args);
+	}
+
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
@@ -439,7 +477,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
 		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
@@ -461,7 +499,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
-										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
 		if (like_entry.is_not_match)
 		{
@@ -755,13 +793,13 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node, Oid inputCollOid)
+convert_node_to_funcexpr_for_like(Node *node, Oid colloid_of_cs_as)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
-	newFuncExpr->funccollid = inputCollOid;
+	newFuncExpr->funccollid = colloid_of_cs_as;
 
 	if (node == NULL)
 		return node;
@@ -789,7 +827,7 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputCollOid)
 					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
-					con->constcollid = inputCollOid;
+					con->constcollid = colloid_of_cs_as;
 					return (Node *) con;
 				}
 				else
@@ -852,20 +890,34 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputCollOid)
 
 
 static Node *
-transform_likenode_for_AI(Node *node, OpExpr *op, Oid inputCollOid)
+transform_likenode_for_AI(Node *node, OpExpr *op, coll_info_t coll_info_of_inputcollid)
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
+	Oid			colloid_of_cs_as;
+
+	/* Find the CS_AS collation corresponding to the CS_AI collation */
+	int collidx_of_cs_as =
+		tsql_find_cs_as_collation_internal(
+											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+
+	if (NOT_FOUND == collidx_of_cs_as)
+	{
+		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
+		return node;
+	}
+
+	colloid_of_cs_as = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop, inputCollOid),
+												convert_node_to_funcexpr_for_like(leftop, colloid_of_cs_as),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop, inputCollOid),
+												convert_node_to_funcexpr_for_like(rightop, colloid_of_cs_as),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
@@ -912,7 +964,7 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	return transform_likenode_for_AI(node, op, coll_info_of_inputcollid.oid);	
+	return transform_likenode_for_AI(node, op, coll_info_of_inputcollid);	
 }
 
 /*
@@ -1002,7 +1054,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op, coll_info_of_inputcollid.oid), op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op, coll_info_of_inputcollid), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
