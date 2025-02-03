@@ -1,0 +1,178 @@
+CREATE TABLE float_char_t1 (
+    ID INT IDENTITY(1,1),
+    FloatValue FLOAT,
+    Description VARCHAR(100)
+);
+GO
+-- Create dependent objects for testing
+-- 1. View that uses CAST
+CREATE VIEW float_char_v1
+AS
+SELECT
+    CAST(CAST('-123.456325678543' AS FLOAT)  AS CHAR(30)) AS CastValue,
+    CAST(CAST('-123.456325678543' AS FLOAT(53))  AS CHAR(30)) AS CastValue2
+GO
+
+-- 2. View that uses CONVERT
+CREATE VIEW float_char_v2
+AS
+SELECT 
+    CONVERT(CHAR(30), CAST('-123.456' as FLOAT)) AS ConvertValue,
+    CONVERT(CHAR(30), CAST('-123.456' as FLOAT(53))) AS ConvertValue2
+GO
+
+-- 3. Function using CAST
+CREATE FUNCTION float_char_f1
+(
+    @FloatInput FLOAT
+)
+RETURNS VARCHAR(30)
+AS
+BEGIN
+    RETURN CAST(@FloatInput AS CHAR(30))
+END;
+GO
+
+-- 4. Function using CONVERT
+CREATE FUNCTION float_char_f2
+(
+    @FloatInput FLOAT
+)
+RETURNS VARCHAR(30)
+AS
+BEGIN
+    RETURN CONVERT(CHAR(30), @FloatInput)
+END;
+GO
+
+CREATE PROCEDURE float_char_p1
+    @FloatInput FLOAT
+AS
+BEGIN
+    SELECT 
+        CAST(@FloatInput AS CHAR(30)) AS CastResult,
+        CONVERT(CHAR(30), @FloatInput) AS ConvertResult
+END;
+GO
+
+-- Insert test data
+INSERT INTO float_char_t1 (FloatValue, Description) VALUES
+    (123.456, 'Standard positive decimal'),
+    (-123.456, 'Negative decimal'),
+    (0.0, 'Zero value'),
+    (1E10, 'Scientific notation - large'),
+    (1E-10, 'Scientific notation - small'),
+    (9999999999.99, 'Large decimal'),
+    (0.000000001, 'Very small decimal'),
+	(NULL, 'NULL Value')
+GO
+
+
+CREATE TABLE TestResults (
+    TestID INT IDENTITY(1,1),
+    TestCategory VARCHAR(50),
+    TestName VARCHAR(100),
+    TestScenario VARCHAR(200),
+    ExpectedResult VARCHAR(50),
+    ActualResult VARCHAR(50),
+    TestStatus VARCHAR(20)
+);
+GO
+
+
+CREATE TABLE float_varchar_t1 (
+    ID INT IDENTITY(1,1),
+    FloatValue FLOAT,
+    Description VARCHAR(100)
+);
+GO
+-- Create dependent objects for testing
+-- 1. View that uses CAST
+CREATE VIEW float_varchar_v1
+AS
+SELECT
+    CAST(CAST('-123.456325678543' AS FLOAT)  AS VARCHAR(30)) AS CastValue,
+    CAST(CAST('-123.456325678543' AS FLOAT(53))  AS VARCHAR(30)) AS CastValue2
+GO
+
+-- 2. View that uses CONVERT
+CREATE VIEW float_varchar_v2
+AS
+SELECT 
+    CONVERT(VARCHAR(30), CAST('-123.456325678543' as FLOAT)) AS ConvertValue,
+    CONVERT(VARCHAR(30), CAST('-123.456325678543' as FLOAT(53))) AS ConvertValue2
+GO
+
+-- 3. Function using CAST
+CREATE FUNCTION float_varchar_f1
+(
+    @FloatInput FLOAT
+)
+RETURNS VARCHAR(30)
+AS
+BEGIN
+    RETURN CAST(@FloatInput AS VARCHAR(30))
+END;
+GO
+
+-- 4. Function using CONVERT
+CREATE FUNCTION float_varchar_f2
+(
+    @FloatInput FLOAT
+)
+RETURNS VARCHAR(30)
+AS
+BEGIN
+    RETURN CONVERT(VARCHAR(30), @FloatInput)
+END;
+GO
+
+CREATE PROCEDURE float_varchar_p1
+    @FloatInput FLOAT
+AS
+BEGIN
+    SELECT 
+        CAST(@FloatInput AS VARCHAR(30)) AS CastResult,
+        CONVERT(VARCHAR(30), @FloatInput) AS ConvertResult
+END;
+GO
+
+-- Insert test data
+INSERT INTO float_varchar_t1 (FloatValue, Description) VALUES
+    (123.456, 'Standard positive decimal'),
+    (-123.456, 'Negative decimal'),
+    (0.0, 'Zero value'),
+    (1E10, 'Scientific notation - large'),
+    (1E-10, 'Scientific notation - small'),
+    (9999999999.99, 'Large decimal'),
+    (0.000000001, 'Very small decimal'),
+	(NULL, 'NULL Value')
+GO
+
+
+CREATE TABLE TestResults_1 (
+    TestID INT IDENTITY(1,1),
+    TestCategory VARCHAR(50),
+    TestName VARCHAR(100),
+    TestScenario VARCHAR(200),
+    ExpectedResult VARCHAR(50),
+    ActualResult VARCHAR(50),
+    TestStatus VARCHAR(20)
+);
+GO
+
+CREATE TABLE float_char_t2
+(
+    a char(30),
+    check (cast(a as float) > 0)
+)
+GO
+
+CREATE TABLE float_varchar_t2
+(
+    a varchar(30),
+    check (cast(a as float) > 0)
+)
+GO
+
+

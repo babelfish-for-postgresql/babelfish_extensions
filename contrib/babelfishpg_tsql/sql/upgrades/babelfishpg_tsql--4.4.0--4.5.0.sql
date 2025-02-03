@@ -11744,6 +11744,79 @@ RETURNS NULL ON NULL INPUT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_money_to_string_deprecated_in_4_5_0'); 
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
+														  IN p_floatval FLOAT,
+														  IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+	v_format VARCHAR COLLATE "C";
+	v_floatval NUMERIC := abs(p_floatval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_sign SMALLINT := sign(p_floatval);
+	v_result TEXT;
+	v_res_length SMALLINT;
+	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+	IF (v_style = 0) THEN
+		v_digits := length(v_floatval::NUMERIC::TEXT);
+		v_decimal_digits := scale(v_floatval);
+		IF (v_decimal_digits > 0) THEN
+			v_integral_digits := v_digits - v_decimal_digits - 1;
+		ELSE
+			v_integral_digits := v_digits;
+		END IF;
+		IF (v_floatval >= 999999.5) THEN
+			v_format := '9D99999EEEE';
+			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
+			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
+		ELSE
+            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+                v_decimal_digits := 6 - v_integral_digits;
+            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+                v_decimal_digits := 6;
+            END IF;
+			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
+			IF (v_decimal_digits > 0) THEN
+				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
+			END IF;
+			v_result := to_char(p_floatval, v_format);
+		END IF;
+	ELSIF (v_style = 1) THEN
+		v_format := '9D9999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSIF (v_style = 2) THEN
+		v_format := '9D999999999999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSIF (v_style = 3) THEN
+		v_format := '9D9999999999999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSE
+		RAISE invalid_parameter_value;
+	END IF;
+
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
+	IF v_res_length IS NULL THEN
+		RETURN v_result;
+	ELSE
+		RETURN rpad(v_result,  v_res_length, ' ');
+	END IF;
+EXCEPTION
+	WHEN invalid_parameter_value THEN
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from FLOAT to a character string.', v_style),
+					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+					HINT := 'Change "style" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

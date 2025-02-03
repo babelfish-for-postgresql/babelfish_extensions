@@ -17,6 +17,7 @@
 
 #include "access/hash.h"
 #include "collation.h"
+#include "common/shortest_dec.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "encoding/encoding.h"
@@ -562,6 +563,8 @@ PG_FUNCTION_INFO_V1(varchar2money);
 PG_FUNCTION_INFO_V1(varchar2numeric);
 PG_FUNCTION_INFO_V1(fixeddecimal2varchar);
 PG_FUNCTION_INFO_V1(fixeddecimal2bpchar);
+PG_FUNCTION_INFO_V1(float82varchar);
+PG_FUNCTION_INFO_V1(float82bpchar);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -1187,6 +1190,105 @@ fixeddecimal2bpchar(PG_FUNCTION_ARGS)
 }
 #undef FIXEDDECIMAL_2_VARCHAR_MULTIPLIER
 #undef FIXEDDECIMAL_2_VARCHAR_SCALE
+
+Datum
+float82varchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
+	char	   *ascii = (char *) palloc0(32);
+	
+	/* round to 6 decimal digits */
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		num = round(num * 1000000.0) / 1000000.0;
+	}
+
+	double_to_shortest_decimal_buf(num, ascii);
+
+	/* Check if the number fits within the specified length */
+	if (maxlen > 0) 
+	{
+		size_t str_len = strlen(ascii);
+		if (str_len > maxlen) 
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("There is insufficient result space to convert a float value to varchar/nvarchar.")));
+		}
+	}
+	
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(ascii),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
+}
+
+Datum
+float82bpchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
+	char	   *ascii = (char *) palloc0(32);
+	char	   *buf_padded;
+	int		   str_len = -1;
+	
+	/* Handle special cases */
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		num = round(num * 1000000.0) / 1000000.0;
+	}
+
+	double_to_shortest_decimal_buf(num, ascii);
+
+	/* Check if the number fits within the specified length */
+	if (maxlen > 0)
+	{
+		str_len = strlen(ascii);
+		if (str_len > maxlen) 
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("There is insufficient result space to convert a float value to char/nchar.")));
+		}
+	}
+
+	/* Left pad float value with the spaces */
+	buf_padded = (char *) palloc0(maxlen + 1);
+	memset(buf_padded, ' ', maxlen - str_len);
+	memcpy(buf_padded + maxlen - str_len, ascii, str_len);
+	
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
+}
 
 /*****************************************************************************
  *	 bpchar - char()														 *

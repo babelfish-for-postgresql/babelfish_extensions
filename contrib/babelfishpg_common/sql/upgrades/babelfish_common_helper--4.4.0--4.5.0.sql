@@ -82,6 +82,16 @@ RETURNS sys.BPCHAR
 AS 'babelfishpg_common', 'fixeddecimal2bpchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_common', 'float82varchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'float82bpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 DO $$
 DECLARE
     exception_message text;
@@ -135,6 +145,22 @@ CREATE OPERATOR sys.% (
 );
 END IF;
 END $$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+CREATE CAST (pg_catalog.float8 AS sys.VARCHAR)
+WITH FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT; 
+
+CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
+WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;
+EXCEPTION WHEN duplicate_object THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.moneylarger(sys.MONEY, sys.MONEY)
 RETURNS sys.MONEY
