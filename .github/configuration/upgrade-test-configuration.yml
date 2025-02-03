@@ -81,7 +81,7 @@ upgrade-version: [{
       upgrade-type: minor
     }
   ]
-}
+},
 {
   upgrade-path: [
     {
