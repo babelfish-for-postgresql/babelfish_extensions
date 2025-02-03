@@ -105,7 +105,6 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.replace_special_chars_fts(IN phrase text) RENAME TO replace_special_chars_fts_deprecated_5_1_0;
-
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -131,7 +130,7 @@ GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary
 -- in the search condition or the full text search CONTAINS predicate
 CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) RETURNS TEXT AS 
 'babelfishpg_tsql', 'replace_special_chars_fts'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+LANGUAGE C IMMUTABLE STRICT;
 GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
