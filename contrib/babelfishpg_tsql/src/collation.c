@@ -458,7 +458,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
-											coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
+											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
 	}
