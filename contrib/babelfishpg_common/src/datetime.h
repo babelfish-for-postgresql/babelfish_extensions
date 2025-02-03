@@ -26,6 +26,10 @@
 #define MIN_DATETIME	INT64CONST(-7794489600000000)
 /* upper bond: 9999-12-31 23:59:29.999 */
 #define END_DATETIME	INT64CONST(252455615999999000)
+/* TSQL default datetime: 1900-01-01 00:00:00.000 */
+#define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
+/* TSQL MAX_DATETIME for 4 bytes varbinary: 1900-01-01 23:59:59.999 */
+#define MAX_4_BYTE_VARBINARY_DATETIME	INT64CONST(-3155587200004000)
 
 extern Timestamp initializeToDefaultDatetime(void);
 /** Utility function to calculate days from '1900-01-01 00:00:00' */

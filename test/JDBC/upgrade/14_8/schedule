@@ -123,7 +123,7 @@ babel_char
 BABEL-CHECK-CONSTRAINT
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-babel_datetime
+babel_datetime-before-17_3
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext

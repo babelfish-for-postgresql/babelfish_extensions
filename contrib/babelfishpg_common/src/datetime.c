@@ -29,6 +29,7 @@ PG_FUNCTION_INFO_V1(datetime_recv);
 PG_FUNCTION_INFO_V1(date_datetime);
 PG_FUNCTION_INFO_V1(time_datetime);
 PG_FUNCTION_INFO_V1(timestamp_datetime);
+PG_FUNCTION_INFO_V1(varbinary_datetime);
 PG_FUNCTION_INFO_V1(timestamptz_datetime);
 PG_FUNCTION_INFO_V1(datetime_varchar);
 PG_FUNCTION_INFO_V1(varchar_datetime);
@@ -61,6 +62,7 @@ PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 void		CheckDatetimeRange(const Timestamp time, Node *escontext);
 void		CheckDatetimePrecision(fsec_t fsec);
+bool		is_valid_datetime_for_4byte_varbinary(int64 total_usecs);
 
 #define DTK_NANO 32
 
@@ -761,6 +763,75 @@ timestamp_datetime(PG_FUNCTION_ARGS)
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
 	CheckDatetimeRange(result, fcinfo->context);
+	PG_RETURN_TIMESTAMP(result);
+}
+
+/* For 4 byte varbinary datetime range from 1900-01-01 00:00:00.000 to 1900-01-01 23:59:59:999*/
+bool
+is_valid_datetime_for_4byte_varbinary(int64 total_usecs)
+{
+	return (total_usecs >= TSQL_DEFAULT_DATETIME && total_usecs <= MAX_4_BYTE_VARBINARY_DATETIME);
+}
+
+/* 
+ * varbinary_datetime()
+ * Convert varbinary to datetime
+ */
+Datum
+varbinary_datetime(PG_FUNCTION_ARGS)
+{
+	bytea			*arg = PG_GETARG_BYTEA_PP(0);
+	int32			size = VARSIZE_ANY_EXHDR(arg);
+	int32			days;
+	int32			time_part;
+	int64			ms_value;
+	int64			usecs;
+	Timestamp		result;
+	unsigned char		*buffer = (unsigned char *)VARDATA_ANY(arg);
+
+	/* TSQL datetime is 8 bytes */
+	if (size != sizeof(int64) && size != sizeof(int32))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid binary size for datetime conversion")));
+
+	/* Extract days and time parts from the binary data */
+	if (size == sizeof(int32))
+	{
+		days = 0;
+		time_part = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+	}
+	else
+	{
+		days = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+		time_part = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
+	}
+
+	/* Convert time_part to microseconds */
+	ms_value = ((int64)time_part * 10LL) / 3LL;
+	usecs = ms_value * 1000;
+
+	if (days < 0)
+	{
+		/* Handle pre-1900 dates */
+		int64 day_value = (int64) (((int64) days) & ((int64) 0xFFFFFFFF));
+		int64 total_usecs = (day_value - 0xFFFF2E46LL) * USECS_PER_DAY + usecs;
+		result = MIN_DATETIME + total_usecs;
+	}
+	else
+	{
+		/* Handle post-1900 dates */
+		int64 total_usecs = days * USECS_PER_DAY + usecs;
+		result = TSQL_DEFAULT_DATETIME + total_usecs;
+	}
+
+	if (size == sizeof(int32) && !is_valid_datetime_for_4byte_varbinary(result))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("data out of range for datetime")));
+
+	CheckDatetimeRange(result, fcinfo->context);
+
 	PG_RETURN_TIMESTAMP(result);
 }
 
