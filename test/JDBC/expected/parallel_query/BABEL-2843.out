@@ -35,7 +35,7 @@ text
 Query Text: select 1
 Gather  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 1
+  Workers Launched: 0
   Single Copy: true
   ->  Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
 ~~END~~
@@ -51,8 +51,8 @@ text
 Query Text: select * from babel_2843_t1 where b1 = 1
 Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=0 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=1)
         Filter: (b1 = 1)
 ~~END~~
 
@@ -78,7 +78,7 @@ int#!#int
 
 ~~START~~
 xml
-<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select * from babel_2843_t1 where b1 = 1</Query-Text><newline>  <Plan><newline>    <Node-Type>Gather</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>19.11</Total-Cost><newline>    <Plan-Rows>11</Plan-Rows><newline>    <Plan-Width>8</Plan-Width><newline>    <Actual-Rows>0</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>    <Workers-Planned>3</Workers-Planned><newline>    <Workers-Launched>3</Workers-Launched><newline>    <Single-Copy>false</Single-Copy><newline>    <Plans><newline>      <Plan><newline>        <Node-Type>Seq Scan</Node-Type><newline>        <Parent-Relationship>Outer</Parent-Relationship><newline>        <Parallel-Aware>true</Parallel-Aware><newline>        <Async-Capable>false</Async-Capable><newline>        <Relation-Name>babel_2843_t1</Relation-Name><newline>        <Alias>babel_2843_t1</Alias><newline>        <Startup-Cost>0.00</Startup-Cost><newline>        <Total-Cost>19.11</Total-Cost><newline>        <Plan-Rows>4</Plan-Rows><newline>        <Plan-Width>8</Plan-Width><newline>        <Actual-Rows>0</Actual-Rows><newline>        <Actual-Loops>4</Actual-Loops><newline>        <Filter>(b1 = 1)</Filter><newline>        <Rows-Removed-by-Filter>0</Rows-Removed-by-Filter><newline>        <Workers><newline>        </Workers><newline>      </Plan><newline>    </Plans><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
+<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select * from babel_2843_t1 where b1 = 1</Query-Text><newline>  <Plan><newline>    <Node-Type>Gather</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>19.11</Total-Cost><newline>    <Plan-Rows>11</Plan-Rows><newline>    <Plan-Width>8</Plan-Width><newline>    <Actual-Rows>0</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>    <Workers-Planned>3</Workers-Planned><newline>    <Workers-Launched>0</Workers-Launched><newline>    <Single-Copy>false</Single-Copy><newline>    <Plans><newline>      <Plan><newline>        <Node-Type>Seq Scan</Node-Type><newline>        <Parent-Relationship>Outer</Parent-Relationship><newline>        <Parallel-Aware>true</Parallel-Aware><newline>        <Async-Capable>false</Async-Capable><newline>        <Relation-Name>babel_2843_t1</Relation-Name><newline>        <Alias>babel_2843_t1</Alias><newline>        <Startup-Cost>0.00</Startup-Cost><newline>        <Total-Cost>19.11</Total-Cost><newline>        <Plan-Rows>4</Plan-Rows><newline>        <Plan-Width>8</Plan-Width><newline>        <Actual-Rows>0</Actual-Rows><newline>        <Actual-Loops>1</Actual-Loops><newline>        <Filter>(b1 = 1)</Filter><newline>        <Rows-Removed-by-Filter>0</Rows-Removed-by-Filter><newline>      </Plan><newline>    </Plans><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
 ~~END~~
 
 
@@ -103,7 +103,7 @@ int#!#int
 
 ~~START~~
 text
-{<newline>  "Query Text": "select * from babel_2843_t1 where b1 = 1",<newline>  "Plan": {<newline>    "Node Type": "Gather",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 19.11,<newline>    "Plan Rows": 11,<newline>    "Plan Width": 8,<newline>    "Actual Rows": 0,<newline>    "Actual Loops": 1,<newline>    "Workers Planned": 3,<newline>    "Workers Launched": 3,<newline>    "Single Copy": false,<newline>    "Plans": [<newline>      {<newline>        "Node Type": "Seq Scan",<newline>        "Parent Relationship": "Outer",<newline>        "Parallel Aware": true,<newline>        "Async Capable": false,<newline>        "Relation Name": "babel_2843_t1",<newline>        "Alias": "babel_2843_t1",<newline>        "Startup Cost": 0.00,<newline>        "Total Cost": 19.11,<newline>        "Plan Rows": 4,<newline>        "Plan Width": 8,<newline>        "Actual Rows": 0,<newline>        "Actual Loops": 4,<newline>        "Filter": "(b1 = 1)",<newline>        "Rows Removed by Filter": 0,<newline>        "Workers": [<newline>        ]<newline>      }<newline>    ]<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
+{<newline>  "Query Text": "select * from babel_2843_t1 where b1 = 1",<newline>  "Plan": {<newline>    "Node Type": "Gather",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 19.11,<newline>    "Plan Rows": 11,<newline>    "Plan Width": 8,<newline>    "Actual Rows": 0,<newline>    "Actual Loops": 1,<newline>    "Workers Planned": 3,<newline>    "Workers Launched": 0,<newline>    "Single Copy": false,<newline>    "Plans": [<newline>      {<newline>        "Node Type": "Seq Scan",<newline>        "Parent Relationship": "Outer",<newline>        "Parallel Aware": true,<newline>        "Async Capable": false,<newline>        "Relation Name": "babel_2843_t1",<newline>        "Alias": "babel_2843_t1",<newline>        "Startup Cost": 0.00,<newline>        "Total Cost": 19.11,<newline>        "Plan Rows": 4,<newline>        "Plan Width": 8,<newline>        "Actual Rows": 0,<newline>        "Actual Loops": 1,<newline>        "Filter": "(b1 = 1)",<newline>        "Rows Removed by Filter": 0<newline>      }<newline>    ]<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
 ~~END~~
 
 
@@ -128,7 +128,7 @@ int#!#int
 
 ~~START~~
 text
-Query Text: "select * from babel_2843_t1 where b1 = 1"<newline>Plan: <newline>  Node Type: "Gather"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Startup Cost: 0.00<newline>  Total Cost: 19.11<newline>  Plan Rows: 11<newline>  Plan Width: 8<newline>  Actual Rows: 0<newline>  Actual Loops: 1<newline>  Workers Planned: 3<newline>  Workers Launched: 3<newline>  Single Copy: false<newline>  Plans: <newline>    - Node Type: "Seq Scan"<newline>      Parent Relationship: "Outer"<newline>      Parallel Aware: true<newline>      Async Capable: false<newline>      Relation Name: "babel_2843_t1"<newline>      Alias: "babel_2843_t1"<newline>      Startup Cost: 0.00<newline>      Total Cost: 19.11<newline>      Plan Rows: 4<newline>      Plan Width: 8<newline>      Actual Rows: 0<newline>      Actual Loops: 4<newline>      Filter: "(b1 = 1)"<newline>      Rows Removed by Filter: 0<newline>      Workers: <newline>Triggers: 
+Query Text: "select * from babel_2843_t1 where b1 = 1"<newline>Plan: <newline>  Node Type: "Gather"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Startup Cost: 0.00<newline>  Total Cost: 19.11<newline>  Plan Rows: 11<newline>  Plan Width: 8<newline>  Actual Rows: 0<newline>  Actual Loops: 1<newline>  Workers Planned: 3<newline>  Workers Launched: 0<newline>  Single Copy: false<newline>  Plans: <newline>    - Node Type: "Seq Scan"<newline>      Parent Relationship: "Outer"<newline>      Parallel Aware: true<newline>      Async Capable: false<newline>      Relation Name: "babel_2843_t1"<newline>      Alias: "babel_2843_t1"<newline>      Startup Cost: 0.00<newline>      Total Cost: 19.11<newline>      Plan Rows: 4<newline>      Plan Width: 8<newline>      Actual Rows: 0<newline>      Actual Loops: 1<newline>      Filter: "(b1 = 1)"<newline>      Rows Removed by Filter: 0<newline>Triggers: 
 ~~END~~
 
 
@@ -193,8 +193,8 @@ text
 Query Text: select * from babel_2843_t1
 Gather  (cost=0.00..17.29 rows=2260 width=8) (actual rows=2 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..17.29 rows=729 width=8) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..17.29 rows=729 width=8) (actual rows=2 loops=1)
 ~~END~~
 
 ~~START~~
@@ -207,8 +207,8 @@ text
 Query Text: select * from babel_2843_t2
 Gather  (cost=0.00..17.29 rows=2260 width=8) (actual rows=1 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on babel_2843_t2  (cost=0.00..17.29 rows=729 width=8) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on babel_2843_t2  (cost=0.00..17.29 rows=729 width=8) (actual rows=1 loops=1)
 ~~END~~
 
 
@@ -239,10 +239,10 @@ text
 Query Text: select * from babel_2843_t1 where a1 = "@param"
 Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=1 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=1 loops=1)
         Filter: (a1 = 1)
-        Rows Removed by Filter: 0
+        Rows Removed by Filter: 2
 ~~END~~
 
 drop procedure babel_2843_proc;
@@ -362,7 +362,7 @@ text
 Query Text: select 1
 Gather  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 1
+  Workers Launched: 0
   Single Copy: true
   ->  Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
 ~~END~~
@@ -388,10 +388,10 @@ text
 Query Text: select * from babel_2843_t1 where a1 = "@param"
 Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=1 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=1 loops=1)
         Filter: (a1 = 2)
-        Rows Removed by Filter: 0
+        Rows Removed by Filter: 2
 ~~END~~
 
 

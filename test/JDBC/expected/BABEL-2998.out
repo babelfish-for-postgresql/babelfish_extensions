@@ -3,11 +3,12 @@
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT NULL AS Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
@@ -15,11 +16,12 @@ SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT NULL AS Col1
 GROUP BY Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
@@ -27,11 +29,12 @@ char
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT CAST(NULL AS CHAR(10)) AS Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
@@ -39,11 +42,12 @@ SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT CONVERT(CHAR(10), NULL) AS Col1
 GROUP BY Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
@@ -51,22 +55,24 @@ SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT CAST(NULL AS CHAR(10)) AS Col1
 GROUP BY Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT CONVERT(CHAR(10), NULL) AS Col1
+ORDER BY Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
