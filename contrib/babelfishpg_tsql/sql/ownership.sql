@@ -393,8 +393,8 @@ WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 UNION ALL
 SELECT
 CAST('public' AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
-CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 as INT) as sys.varbinary(85)) AS sid,
 CAST('R' AS CHAR(1)) as type,
 CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
 CAST(0 AS INT) AS is_disabled,

@@ -980,6 +980,11 @@ suser_name(PG_FUNCTION_ARGS)
 
 	if (server_user_id == InvalidOid)
 		server_user_id = GetSessionUserId();
+	
+	if (server_user_id == 0x02)
+	{
+		PG_RETURN_TEXT_P(cstring_to_text("public"));
+	}
 
 	ret = GetUserNameFromId(server_user_id, true);
 
@@ -1028,7 +1033,11 @@ suser_id(PG_FUNCTION_ARGS)
 		{
 			login[i] = tolower(login[i]);
 		}
-
+		/* Check if login is 'public' */
+		if (strcmp(login, "public") == 0)
+		{
+            PG_RETURN_OID(2);
+		}
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
 		if (!HeapTupleIsValid(auth_tuple))
