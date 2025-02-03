@@ -155,3 +155,62 @@ GO
 INSERT INTO UniqueParent (ID, UniqueValue) VALUES (1, 'Parent1'), (2, 'Parent2');
 GO
 
+CREATE TABLE ParentNoAction (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentCascade (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentSetNull (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentSetDefault (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildNoAction (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildCascade (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildSetNull (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildSetDefault (ChildID INT PRIMARY KEY, ParentID INT DEFAULT 0, ChildName NVARCHAR(50));
+GO
+
+ALTER TABLE ChildNoAction ADD CONSTRAINT FK_ChildNoAction_Parent FOREIGN KEY (ParentID) REFERENCES ParentNoAction(ParentID);
+GO
+
+ALTER TABLE ChildCascade ADD CONSTRAINT FK_ChildCascade_Parent FOREIGN KEY (ParentID) REFERENCES ParentCascade(ParentID) ON DELETE CASCADE ON UPDATE CASCADE;
+GO
+
+ALTER TABLE ChildSetNull ADD CONSTRAINT FK_ChildSetNull_Parent FOREIGN KEY (ParentID) REFERENCES ParentSetNull(ParentID) ON DELETE SET NULL ON UPDATE SET NULL;
+GO
+
+ALTER TABLE ChildSetDefault ADD CONSTRAINT FK_ChildSetDefault_Parent FOREIGN KEY (ParentID) REFERENCES ParentSetDefault(ParentID) ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
+GO
+
+INSERT INTO ParentNoAction (ParentID, ParentName) VALUES (1, 'ParentNoAction1'), (2, 'ParentNoAction2');
+GO
+
+INSERT INTO ParentCascade (ParentID, ParentName) VALUES (1, 'ParentCascade1'), (2, 'ParentCascade2');
+GO
+
+INSERT INTO ParentSetNull (ParentID, ParentName) VALUES (1, 'ParentSetNull1'), (2, 'ParentSetNull2');
+GO
+
+INSERT INTO ParentSetDefault (ParentID, ParentName) VALUES (1, 'ParentSetDefault1'), (2, 'ParentSetDefault2');
+GO
+
+INSERT INTO ChildNoAction (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildNoAction1'), (2, 2, 'ChildNoAction2');
+GO
+
+INSERT INTO ChildCascade (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildCascade1'), (2, 2, 'ChildCascade2');
+GO
+
+INSERT INTO ChildSetNull (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildSetNull1'), (2, 2, 'ChildSetNull2');
+GO
+
+INSERT INTO ChildSetDefault (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildSetDefault1'), (2, 2, 'ChildSetDefault2');
+GO

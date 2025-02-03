@@ -301,3 +301,55 @@ GO
 INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) 
 VALUES (5, 1, 'Child5'), (6, 2, 'Child5');
 GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 9: DELETE/UPDATE NO ACTION
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentNoAction WHERE ParentID = 1;
+GO
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentNoAction SET ParentID = 3 WHERE ParentID = 1;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 10: DELETE/UPDATE CASCADE
+DELETE FROM ParentCascade WHERE ParentID = 1;
+GO
+
+-- (All child rows with ParentID = 1 should be deleted)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 1;
+GO
+
+UPDATE ParentCascade SET ParentID = 3 WHERE ParentID = 2;
+GO
+
+-- (The child row should have its ParentID updated from 2 to 3, matching the update in the parent table.)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 3
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 11: DELETE/UPDATE SET NULL
+DELETE FROM ParentSetNull WHERE ParentID = 1;
+GO
+
+-- (One child row should have its ParentID set to NULL after the corresponding parent row is deleted.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL
+GO
+
+UPDATE ParentSetNull SET ParentID = 3 WHERE ParentID = 2;
+GO
+
+-- (Both child rows should now have NULL ParentIDs. One from the previous DELETE test, and one from this UPDATE test.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 12: DELETE/UPDATE SET DEFAULT
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentSetDefault WHERE ParentID = 1;
+GO
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentSetDefault SET ParentID = 3 WHERE ParentID = 2;
+GO

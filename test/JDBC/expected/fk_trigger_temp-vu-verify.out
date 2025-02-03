@@ -363,3 +363,99 @@ GO
 
 ~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
 
+
+-- tsql user=jdbc_user password=12345678
+-- Case 9: DELETE/UPDATE NO ACTION
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentNoAction WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: update or delete on table "parentnoaction" violates foreign key constraint "fk_childnoaction_parent" on table "childnoaction")~~
+
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentNoAction SET ParentID = 3 WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: update or delete on table "parentnoaction" violates foreign key constraint "fk_childnoaction_parent" on table "childnoaction")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 10: DELETE/UPDATE CASCADE
+DELETE FROM ParentCascade WHERE ParentID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (All child rows with ParentID = 1 should be deleted)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+UPDATE ParentCascade SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (The child row should have its ParentID updated from 2 to 3, matching the update in the parent table.)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 3
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 11: DELETE/UPDATE SET NULL
+DELETE FROM ParentSetNull WHERE ParentID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (One child row should have its ParentID set to NULL after the corresponding parent row is deleted.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+UPDATE ParentSetNull SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (Both child rows should now have NULL ParentIDs. One from the previous DELETE test, and one from this UPDATE test.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 12: DELETE/UPDATE SET DEFAULT
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentSetDefault WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "childsetdefault" violates foreign key constraint "fk_childsetdefault_parent")~~
+
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentSetDefault SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "childsetdefault" violates foreign key constraint "fk_childsetdefault_parent")~~
+
