@@ -89,6 +89,9 @@ ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
 ignore#!#restricted_procedures-vu-prepare
 ignore#!#restricted_procedures-vu-verify
 ignore#!#restricted_procedures-vu-cleanup
+ignore#!#babel_datetime-before-17_3-vu-prepare
+ignore#!#babel_datetime-before-17_3-vu-verify
+ignore#!#babel_datetime-before-17_3-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
