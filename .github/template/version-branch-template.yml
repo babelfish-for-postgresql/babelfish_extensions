@@ -94,6 +94,9 @@
 '16.6':
   engine_branch: BABEL_4_4_STABLE__PG_16_6
   extension_branch: BABEL_4_4_STABLE
+'16.7':
+  engine_branch: BABEL_4_5_STABLE__PG_16_7
+  extension_branch: BABEL_4_5_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest
