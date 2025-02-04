@@ -588,3 +588,4 @@ db_securityadmin
 db_ddladmin
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3
