@@ -321,7 +321,7 @@ transform_funcexpr(Node *node)
 static Node *
 transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
-	Node	   *leftop = (Node *) linitial(op->args);
+	Node	   *leftop = copyObject(linitial(op->args));
 	Node	   *rightop = (Node *) lsecond(op->args);
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
@@ -407,44 +407,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		return node;
 	}
 
-	/* Take care of CI_AI first */
-	if (IsA(leftop, RelabelType))
-	{
-		RelabelType		*relabel = (RelabelType *) leftop;
-		if (IsA(relabel->arg, FuncExpr))
-		{
-			FuncExpr *funcexpr = (FuncExpr*) relabel->arg;
-
-			/* If the function is not remove_accents_internal, then we do not want to touch it */
-			if (funcexpr->funcid == remove_accents_internal_oid)
-			{
-				/* Since we know this function has only one argument */
-				Node *arg = linitial(funcexpr->args);
-    
-				/* Keep stripping CollateExpr until we find non-CollateExpr */
-				while (arg != NULL && IsA(arg, CollateExpr))
-				{
-					CollateExpr *collate = (CollateExpr *) arg;
-					arg = (Node *) collate->arg;
-				}
-
-				if (arg != NULL)
-				{
-					/* Replace with innermost non-CollateExpr node */
-					funcexpr->args = list_make1(arg);
-				}
-			}
-		}
-	}
-
-	/* Now, take care of CI_AS */
-	while (IsA(linitial(op->args), CollateExpr))
-	{
-		CollateExpr *collate = (CollateExpr *) linitial(op->args);
-		linitial(op->args) = (Node *) collate->arg;
-		leftop = linitial(op->args);
-	}
-
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
@@ -470,11 +432,19 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Node	   *constant_suffix;
 		Const	   *highest_sort_key;
 
+		/* Always create a CollateExpr on top to match with op->inputcollid */
+		CollateExpr *new_leftop = makeNode(CollateExpr);
+		new_leftop->arg = linitial(op->args);
+		new_leftop->collOid = op->inputcollid;
+		linitial(op->args) = (Node*) new_leftop;
+
 		/* construct leftop >= pattern */
 		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
+
+		/* Use the original node to create the operator */
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 											(Expr *) leftop, (Expr *) prefix,
 											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
@@ -497,6 +467,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		if (optup == (Operator) NULL)
 			return node;
 
+		/* Use the original node to create the operator */
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
