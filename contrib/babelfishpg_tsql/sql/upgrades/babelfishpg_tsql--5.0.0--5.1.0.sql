@@ -134,6 +134,8 @@ CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) 
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_special_chars_fts_deprecated_5_1_0');
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
 														IN p_style NUMERIC DEFAULT -1)

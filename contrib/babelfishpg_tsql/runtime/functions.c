@@ -196,6 +196,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
+PG_FUNCTION_INFO_V1(replace_special_chars_fts_deprecated_5_1_0);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2805,17 +2806,41 @@ type_name(PG_FUNCTION_ARGS)
 /*
  * Wrappers for C function replace_special_chars_fts_impl()
  */
+
+/* 
+ * This function is for the deprecated SQL function that accepts only one column as an input and 
+ */
+Datum
+replace_special_chars_fts_deprecated_5_1_0(PG_FUNCTION_ARGS)
+{
+	text		*input_text = PG_GETARG_TEXT_P(0);
+	char		*input_str = text_to_cstring(input_text);
+	char		*output_str;
+	text		*result_text;
+	
+	/* Modify the input_str in place */
+	output_str = replace_special_chars_fts_impl(input_str);
+	
+	/* Convert the modified input_str back to text */
+	result_text = cstring_to_text(output_str);
+	
+	/* Free the memory allocated for input_str */
+	pfree(input_str);
+	pfree(output_str);
+	PG_RETURN_TEXT_P(result_text);
+}
+
 Datum
 replace_special_chars_fts(PG_FUNCTION_ARGS)
 {
 	/* Get the list argument as an array */
 	ArrayType *array = 	PG_GETARG_ARRAYTYPE_P(0);
-	Datum 				*elements;
-	bool				*nulls;
-	int					nelems;
-	text				*result_text;
-	char				*output_str;
-	char				*s;
+	Datum 			*elements;
+	bool			*nulls;
+	int			nelems;
+	text			*result_text;
+	char			*output_str;
+	char			*s;
 	StringInfoData		buf;
 
 	/* initialize a StringInfoData with an empty string */
