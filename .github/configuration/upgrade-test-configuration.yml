@@ -149,7 +149,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '15.10',
+      version: '15.11',
       upgrade-type: null
     },
     { 
