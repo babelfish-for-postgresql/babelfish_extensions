@@ -1036,7 +1036,7 @@ suser_id(PG_FUNCTION_ARGS)
 		/* Check if login is 'public' */
 		if (strcmp(login, "public") == 0)
 		{
-            PG_RETURN_OID(2);
+			PG_RETURN_OID(2);
 		}
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
