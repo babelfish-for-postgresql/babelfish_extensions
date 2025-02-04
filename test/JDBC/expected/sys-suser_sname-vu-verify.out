@@ -43,7 +43,7 @@ SELECT * FROM sys_suser_sname_view_vu_prepare
 GO
 ~~START~~
 nvarchar
-jdbc_user
+<NULL>
 ~~END~~
 
 
@@ -51,7 +51,7 @@ EXEC sys_suser_sname_proc_vu_prepare
 GO
 ~~START~~
 nvarchar
-jdbc_user
+<NULL>
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT sys_suser_sname_func_vu_prepare()
 GO
 ~~START~~
 varchar
-jdbc_user
+<NULL>
 ~~END~~
 
 
@@ -67,7 +67,7 @@ SELECT * FROM sys_suser_name_view_vu_prepare
 GO
 ~~START~~
 nvarchar
-jdbc_user
+<NULL>
 ~~END~~
 
 
@@ -75,7 +75,7 @@ EXEC sys_suser_name_proc_vu_prepare
 GO
 ~~START~~
 nvarchar
-jdbc_user
+<NULL>
 ~~END~~
 
 
@@ -83,6 +83,6 @@ SELECT sys_suser_name_func_vu_prepare()
 GO
 ~~START~~
 varchar
-jdbc_user
+<NULL>
 ~~END~~
 
