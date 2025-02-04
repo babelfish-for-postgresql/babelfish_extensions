@@ -2534,16 +2534,20 @@ exec_database_roles_subcmds(const char *schema)
 	int		i=0;
 	Oid save_userid;
 	int save_sec_context;
+	char		*guest_role;
+	bool		is_guest_schema = false;
 
 	db_datareader = get_db_datareader_name(dbname);
 	db_datawriter = get_db_datawriter_name(dbname);
 	db_ddladmin = get_db_ddladmin_role_name(dbname);
 	dbo_role = get_dbo_role_name(dbname);
 	db_owner = get_db_owner_name(dbname);
+	guest_role = get_guest_role_name(dbname);
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
 	schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+	is_guest_schema = (strcmp(schema_owner, guest_role) == 0);
 
 	initStringInfo(&query);
 
@@ -2555,6 +2559,14 @@ exec_database_roles_subcmds(const char *schema)
 	/* Grant privileges to db_ddladmin */
 	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
 	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
+
+	if (is_guest_schema)
+	{
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE ON TABLES TO dummy; ");
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+		expected_stmts += 2;  // Increase expected statements
+	}
+
 
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
@@ -2575,6 +2587,14 @@ exec_database_roles_subcmds(const char *schema)
 	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_ddladmin, NULL);
 	stmts = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantStmt(stmts, schema, NULL, db_ddladmin, NULL);
+
+	if (is_guest_schema)
+	{
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);
+		stmts = parsetree_nth_stmt(stmt_list, i++);
+		update_GrantStmt(stmts, schema, NULL, guest_role, NULL);
+	}
 
 	PG_TRY();
 	{
