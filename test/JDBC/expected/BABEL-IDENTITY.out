@@ -763,7 +763,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.792 ms
+Babelfish T-SQL Batch Parsing Time: 9.564 ms
 ~~END~~
 
 
@@ -778,7 +778,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.872 ms
+Babelfish T-SQL Batch Parsing Time: 3.754 ms
 ~~END~~
 
 
@@ -793,7 +793,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 4.621 ms
+Babelfish T-SQL Batch Parsing Time: 4.633 ms
 ~~END~~
 
 
@@ -808,7 +808,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 42.064 ms
+Babelfish T-SQL Batch Parsing Time: 42.276 ms
 ~~END~~
 
 
@@ -825,7 +825,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.045 ms
+Babelfish T-SQL Batch Parsing Time: 5.772 ms
 ~~END~~
 
 
@@ -840,7 +840,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.038 ms
+Babelfish T-SQL Batch Parsing Time: 1.271 ms
 ~~END~~
 
 
@@ -857,7 +857,7 @@ Bitmap Heap Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.868 ms
+Babelfish T-SQL Batch Parsing Time: 5.620 ms
 ~~END~~
 
 
@@ -873,7 +873,7 @@ Index Scan using test_id_index_pkey on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.577 ms
+Babelfish T-SQL Batch Parsing Time: 0.312 ms
 ~~END~~
 
 
@@ -888,7 +888,7 @@ Seq Scan on test_id_index
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.833 ms
+Babelfish T-SQL Batch Parsing Time: 1.654 ms
 ~~END~~
 
 
@@ -903,7 +903,7 @@ Index Scan using test_id_index_tinyint_pkey on test_id_index_tinyint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.302 ms
+Babelfish T-SQL Batch Parsing Time: 0.194 ms
 ~~END~~
 
 
@@ -918,7 +918,7 @@ Index Scan using test_id_index_smallint_pkey on test_id_index_smallint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.229 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 
@@ -933,7 +933,7 @@ Index Scan using test_id_index_bigint_pkey on test_id_index_bigint
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.226 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -948,7 +948,7 @@ Index Scan using test_id_index_numeric_pkey on test_id_index_numeric
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.223 ms
+Babelfish T-SQL Batch Parsing Time: 0.159 ms
 ~~END~~
 
 
@@ -974,7 +974,7 @@ Index Scan using test_numeric_index_no_id_pkey on test_numeric_index_no_id
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.290 ms
+Babelfish T-SQL Batch Parsing Time: 0.191 ms
 ~~END~~
 
 
@@ -1194,7 +1194,7 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.171 ms
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
 ~~END~~
 
 select id from babel_3384_test WHERE id = @@IDENTITY
@@ -1208,7 +1208,7 @@ Index Only Scan using babel_3384_test_pkey on babel_3384_test
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.208 ms
 ~~END~~
 
 
@@ -1318,10 +1318,16 @@ GO
 ~~ROW COUNT: 1~~
 
 
+INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (3, 103);
+GO
+~~ROW COUNT: 1~~
+
+
 SELECT * FROM identity_insert_t1 ORDER BY a
 GO
 ~~START~~
 int#!#int
+3#!#103
 3#!#103
 ~~END~~
 
@@ -1364,15 +1370,13 @@ GO
 
 -- tsql user=identity_insert_l1 password=123
 -- Should now have permission
-SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 OFF
+SET IDENTITY_INSERT identity_insert_db.dbo.identity_insert_t1 ON
 GO
 
--- Should fail
+-- Should not fail
 INSERT INTO identity_insert_db.dbo.identity_insert_t1 (a, b) VALUES (5, 105);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot insert a non-DEFAULT value into column "a")~~
+~~ROW COUNT: 1~~
 
 
 -- tsql
@@ -1473,14 +1477,14 @@ guest#!#0#!#0
 SET IDENTITY_INSERT identity_insert_db.identity_insert_sch.identity_insert_t2 ON
 GO
 
-USE identity_insert_db
-GO
-
 -- Should not fail
-INSERT INTO identity_insert_t2 (c, d) VALUES (1, 101);
+INSERT INTO identity_insert_db.identity_insert_sch.identity_insert_t2 (c, d) VALUES (1, 101);
 GO
 ~~ROW COUNT: 1~~
 
+
+USE identity_insert_db
+GO
 
 SELECT * FROM identity_insert_t2
 GO
