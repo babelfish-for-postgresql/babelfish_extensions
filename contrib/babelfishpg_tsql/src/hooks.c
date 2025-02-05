@@ -184,6 +184,7 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
+static Datum bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -224,6 +225,7 @@ static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
+static int32 tsql_get_numeric_typmod_from_exp(Plan *plan, Node *expr);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -270,10 +272,12 @@ static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
+static bbf_trunc_numeric_result_hook_type prev_bbf_trunc_numeric_result_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
+static resolve_numeric_typmod_from_exp_hook_type prev_resolve_numeric_typmod_from_exp_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -413,6 +417,9 @@ InstallExtendedHooks(void)
 	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
 	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger;
 
+	prev_bbf_trunc_numeric_result_hook = bbf_trunc_numeric_result_hook;
+	bbf_trunc_numeric_result_hook = bbf_trunc_numeric_result;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -424,6 +431,9 @@ InstallExtendedHooks(void)
 
 	prev_replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults;
+
+	prev_resolve_numeric_typmod_from_exp_hook = resolve_numeric_typmod_from_exp_hook;
+	resolve_numeric_typmod_from_exp_hook = tsql_get_numeric_typmod_from_exp;
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
@@ -569,10 +579,12 @@ UninstallExtendedHooks(void)
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
+	bbf_trunc_numeric_result_hook = prev_bbf_trunc_numeric_result_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
+	resolve_numeric_typmod_from_exp_hook = prev_resolve_numeric_typmod_from_exp_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -1188,6 +1200,26 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			break;
 	}
 	return false;
+}
+
+static Datum
+bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type)
+{
+	int32       result_typmod;
+	int32       scale;
+
+	if (result_type == NUMERICOID ||
+			(*common_utility_plugin_ptr->is_tsql_decimal_datatype) (result_type))
+	{
+		result_typmod = tsql_get_numeric_typmod_from_exp(NULL, fn_expr);
+		if (result_typmod != -1)
+		{
+			scale = (result_typmod - VARHDRSZ) & 0xffff; 
+			return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+		}		
+	}
+
+	return result;
 }
 
 /*
@@ -6038,4 +6070,10 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 	pfree(splited_object_name);
 
 	return (const char *)pstrdup(object_name + prefix_len);
+}
+
+static int32
+tsql_get_numeric_typmod_from_exp(Plan *plan, Node *expr)
+{
+	return (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
 }

@@ -665,6 +665,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Numeric		num;
 				int64		val;
 				
+				if (con->consttypmod != -1)
+					return con->consttypmod;
+
 				if ((!(con->consttype == INT4OID) && !is_numeric_datatype(con->consttype)) ||
 					con->constisnull)
 				{
