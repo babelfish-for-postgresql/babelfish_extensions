@@ -2179,8 +2179,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		return numeric_result_typmod;
 		
 	return max_typmods;
-
-	
 }
 
 /* 
