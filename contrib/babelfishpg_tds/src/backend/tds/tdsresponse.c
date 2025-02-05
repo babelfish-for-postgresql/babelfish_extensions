@@ -642,7 +642,7 @@ is_numeric_datatype(Oid typid)
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
-	if (expr == NULL)
+	if (expr == NULL || !is_numeric_datatype(exprType(expr)))
 		return -1;
 	switch (nodeTag(expr))
 	{
