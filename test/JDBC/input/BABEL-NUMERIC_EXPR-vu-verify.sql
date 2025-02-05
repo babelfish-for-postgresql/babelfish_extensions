@@ -402,7 +402,7 @@ SELECT
     COALESCE(SmallIntCol, 0) AS result,
     CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
 FROM TestTypes
-order by sum_result;
+order by sum_result, result;
 GO
 
 -- Test Case 2: Nested queries with decimal and numeric operations

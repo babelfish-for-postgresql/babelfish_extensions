@@ -693,15 +693,15 @@ SELECT
     COALESCE(SmallIntCol, 0) AS result,
     CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
 FROM TestTypes
-order by sum_result;
+order by sum_result, result;
 GO
 ~~START~~
 float#!#float
 10.0#!#200.24685
 10.0#!#200.24685
 100.12345#!#200.5
-200.5#!#400.24685
 20.0#!#400.24685
+200.5#!#400.24685
 200.12345#!#400.5
 ~~END~~
 
