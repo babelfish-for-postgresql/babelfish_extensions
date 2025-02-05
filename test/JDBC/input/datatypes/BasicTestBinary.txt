@@ -1,0 +1,28 @@
+CREATE TABLE BINARY_dt(a BINARY(5), b VARBINARY(10));
+#inserting random values
+INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+INSERT INTO BINARY_dt(a, b) values (NULL, NULL);
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x3132333435);
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x00);
+INSERT INTO BINARY_dt(a, b) values (0x00, 0x3132333435);
+INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x);
+INSERT INTO BINARY_dt(a, b) values (0x, 0x3132333435);
+
+#boundary conditions
+INSERT INTO BINARY_dt(a, b) values (0x3132333435, 0x31323334353637383940);
+INSERT INTO BINARY_dt(a, b) values (0x313233343536, 0x31323334353637383940);
+INSERT INTO BINARY_dt(a, b) values (0x3132333435, 0x3132333435363738394041);
+
+#string to binary insert / test left padding
+INSERT INTO BINARY_dt(a, b) values ('abc ', ' abc ');
+
+SELECT * FROM BINARY_dt order by a;
+
+prepst#!# INSERT INTO BINARY_dt(a, b) values(@a, @b) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
+prepst#!#exec#!#binary|-|a|-|12345678#!#varbinary|-|b|-|12345
+prepst#!#exec#!#binary|-|a|-|12345#!#varbinary|-|b|-|12345678999
+prepst#!#exec#!#binary|-|a|-|<NULL>#!#varbinary|-|b|-|<NULL>
+
+SELECT * FROM BINARY_dt order by a;
+DROP TABLE BINARY_dt;
+
