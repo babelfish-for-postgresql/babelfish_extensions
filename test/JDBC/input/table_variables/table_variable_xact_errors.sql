@@ -484,6 +484,9 @@ GO
 EXECUTE myproc2
 GO
 
+DROP TABLE mytab
+GO
+
 DROP PROCEDURE myproc
 GO
 

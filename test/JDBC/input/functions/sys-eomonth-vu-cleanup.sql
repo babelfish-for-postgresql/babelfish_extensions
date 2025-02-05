@@ -9,3 +9,6 @@ GO
 
 DROP PROCEDURE IF EXISTS GetEndOfNextMonthDate_EOMONTH;
 GO
+
+DROP Table eomonth_datestable
+GO

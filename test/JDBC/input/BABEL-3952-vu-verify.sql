@@ -262,3 +262,6 @@ insert into dbucket (a) values(date_bucket(minute,12, CAST('12:32:23.23' as time
 Select * from dbucket
 Select date_bucket(second,10, a) from dbucket
 GO
+
+DROP TABLE IF EXISTS dbucket
+GO

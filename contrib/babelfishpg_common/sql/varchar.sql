@@ -349,3 +349,19 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
   combinefunc = sys.nvarchar_smaller,
   parallel = safe
 );
+
+CREATE OR REPLACE FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_common', 'float82varchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'float82bpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.float8 AS sys.VARCHAR)
+WITH FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT; 
+
+CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
+WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;

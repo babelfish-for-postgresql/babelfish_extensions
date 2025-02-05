@@ -13,6 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
+money_aggregate
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -598,3 +599,4 @@ BABEL-2961
 BABEL-5031
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char
