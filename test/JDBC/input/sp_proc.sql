@@ -95,7 +95,48 @@ go
 exec @a;
 go
 
+use master
+go
+create table sometableinmaster(somecolumn INT)
+go
+use db1
+go
+create schema s1
+go
+
+-- should resolve to db1.dbo.sp_hello
+exec db1.dbo.sp_hello
+go
+exec db1..sp_hello
+go
+
+-- should throw an error
+exec db1.sys.sp_hello
+go
+
+-- should thorw an error
+exec db1.s1.sp_hello
+go
+
 drop proc sp_hello;
+go
+
+-- should resolve to master.dbo.sp_hello since proc does not exists in db1
+-- special behaviour for sp_ procs
+exec db1.dbo.sp_hello
+go
+exec db1..sp_hello
+go
+
+-- should resolve to sys sp_tables
+exec db1.dbo.sp_tables
+go
+exec db1..sp_tables
+go
+-- procedure should be executed as if current db was master
+exec master..sp_tables @table_name = N'sometableinmaster'
+go
+exec master.dbo.sp_tables @table_name = N'sometableinmaster'
 go
 
 use master
@@ -193,6 +234,8 @@ go
 use master
 go
 
+drop table sometableinmaster
+go
 drop proc sp_hello
 go
 

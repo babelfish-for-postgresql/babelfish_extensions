@@ -2225,7 +2225,7 @@ set_search_path_for_pltsql_stmt(PLtsql_stmt *stmt)
 			pfree(physical_schema);
 			pfree(dbo_schema);
 		}
-		else if (execsqlstmt->is_ddl && current_db_search_path)
+		else if (execsqlstmt->is_ddl)
 		{
 			new_search_path = pstrdup(current_db_search_path);
 		}

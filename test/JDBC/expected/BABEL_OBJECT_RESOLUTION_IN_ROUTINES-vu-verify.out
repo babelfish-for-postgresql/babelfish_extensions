@@ -1,0 +1,748 @@
+
+-- tsql
+
+
+-- All tests will be triggered from babel_5448_db database
+-- For cross database, we will use master database
+/*********************************/
+/*********** SAME DB ************/
+/*********************************/
+USE babel_5448_db
+GO
+
+-- All objects should resolve to babel_5448_db.dbo schema in this call
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.babel_5448_user_default_schema schema in this call
+-- except EXEC call stmt
+EXEC babel_5448_user_default_schema.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.babel_5448_s1 schema in this call
+-- except EXEC call stmt
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+
+
+-- Now we will run the same procedures again but this time we will references objects from other schema
+-- proc in dbo will reference objects from babel_5448_user_default_schema schema
+-- proc in babel_5448_user_default_schema will reference objects from babel_5448_s1 schema
+-- proc in babel_5448_s1 will reference objects from dbo schema
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    EXEC babel_5448_user_default_schema.babel_5448_p;
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
+AS
+    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
+    EXEC babel_5448_s1.babel_5448_p;
+    INSERT INTO babel_5448_s1.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    EXEC dbo.babel_5448_p;
+    INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM dbo.babel_5448_t;
+GO
+
+-- All objects should resolve to babel_5448_db.babel_5448_user_default_schema schema in this call
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.babel_5448_s1 schema in this call
+EXEC babel_5448_user_default_schema.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1#!#temp inserted row to check DML and trigger executiong
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.dbo schema in this call
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+
+-- testing different schemas
+-- procedure and function will be on same schema but
+-- table & trigger will be different schema
+-- basically testing row level search path changes
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    -- trigger execution will tells use what the function resolved to
+    -- and what the objects inside triggers resolved to
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_user_default_schema'
+GO
+
+ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
+AS
+    INSERT INTO babel_5448_s1.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    -- trigger execution will tells use what the function resolved to
+    -- and what the objects inside triggers resolved to
+    DELETE FROM babel_5448_s1.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_s1'
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    INSERT INTO dbo.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    -- trigger execution will tells use what the function resolved to
+    -- and what the objects inside triggers resolved to
+    DELETE FROM dbo.babel_5448_t WHERE id != 'babel_5448_db.dbo'
+GO
+
+
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+
+EXEC babel_5448_user_default_schema.babel_5448_p1
+GO
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+babel_5448_db.babel_5448_user_default_schema
+babel_5448_db.babel_5448_user_default_schema
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 4~~
+
+
+
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+
+
+/*********************************/
+/*********** CROSS DB ************/
+/*********************************/
+USE babel_5448_db
+GO
+
+-- All objects should resolve to master.dbo schema in this call
+EXEC master.dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.dbo#!#master.dbo
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+
+-- All objects should resolve to master.babel_5448_user_default_schema schema in this call
+-- except EXEC call stmt
+EXEC master.babel_5448_user_default_schema.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+
+-- All objects should resolve to master.babel_5448_s1 schema in this call
+-- except EXEC call stmt
+EXEC master.babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+
+-- Now we need to alter the procedure so switch to master database 
+-- alter the master database procedures and then execute then from
+-- babel_5448_db again
+USE master
+GO
+
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    EXEC babel_5448_user_default_schema.babel_5448_p;
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
+AS
+    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
+    EXEC babel_5448_s1.babel_5448_p;
+    INSERT INTO babel_5448_s1.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    EXEC dbo.babel_5448_p;
+    INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM dbo.babel_5448_t;
+GO
+
+USE babel_5448_db
+GO
+
+-- Now execute the altered master database procedures
+-- All objects should resolve to master.babel_5448_user_default_schema schema in this call
+EXEC master.dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+
+-- All objects should resolve to master.babel_5448_s1 schema in this call
+EXEC master.babel_5448_user_default_schema.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#master.babel_5448_s1
+master.babel_5448_s1#!#temp inserted row to check DML and trigger executiong
+~~END~~
+
+
+-- All objects should resolve to master.dbo schema in this call
+EXEC master.babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.dbo#!#master.dbo
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
