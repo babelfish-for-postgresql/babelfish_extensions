@@ -1035,14 +1035,20 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				uint8_t		precision,
 							scale;
 
-				Assert(aggref->args != NIL);
+				if (aggref->aggstar)
+					typmod = -1;
+				else
+				{
+					Assert(aggref->args != NIL);
 
-				te = (TargetEntry *) linitial(aggref->args);
-				typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
+					te = (TargetEntry *) linitial(aggref->args);
+					typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
+
+					scale = (typmod - VARHDRSZ) & 0xffff;
+					precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+				}
 				aggFuncName = get_func_name(aggref->aggfnoid);
 
-				scale = (typmod - VARHDRSZ) & 0xffff;
-				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
 				/*
 				 * If we recieve typmod as -1 we should fallback to default
