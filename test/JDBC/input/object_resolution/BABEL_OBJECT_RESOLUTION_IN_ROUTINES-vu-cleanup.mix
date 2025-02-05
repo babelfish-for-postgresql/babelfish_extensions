@@ -1,4 +1,10 @@
 -- tsql
+USE babel_5448_db
+GO
+DROP PROC dbo.babel_5448_p1, babel_5448_s1.babel_5448_p1, babel_5448_user_default_schema.babel_5448_p1
+GO
+USE master
+GO
 DROP DATABASE babel_5448_db
 GO
 
