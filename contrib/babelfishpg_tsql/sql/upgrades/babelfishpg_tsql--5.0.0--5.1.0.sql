@@ -5746,13 +5746,6 @@ END;
 $$
 LANGUAGE 'pltsql';
 
-CREATE OR REPLACE PROCEDURE sys.sp_renamedb(
-	IN "@objname" sys.SYSNAME,
-	IN "@newname" sys.SYSNAME
-)
-AS 'babelfishpg_tsql', 'sp_renamedb_internal'
-LANGUAGE C;
-
 CREATE OR REPLACE PROCEDURE sys.sp_rename(
 	IN "@objname" sys.nvarchar(776) = NULL,
 	IN "@newname" sys.SYSNAME = NULL,

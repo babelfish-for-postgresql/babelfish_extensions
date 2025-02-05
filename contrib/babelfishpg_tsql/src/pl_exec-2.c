@@ -4267,7 +4267,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
+				is_create ? CREATE_FULLTEXT_INDEX : DELETE_FULLTEXT_INDEX,
 				false,
 				PROCESS_UTILITY_QUERY,
 				NULL,

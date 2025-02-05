@@ -1995,6 +1995,8 @@ extern bool insert_bulk_check_constraints;
 #define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
 #define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
 #define INTERNAL_ALTER_ROLE "(ALTER ROLE ADD )"
+#define CREATE_FULLTEXT_INDEX "(CREATE FULLTEXT INDEX STATEMENT )"
+#define DELETE_FULLTEXT_INDEX "(DELETE FULLTEXT INDEX STATEMENT )"
 
 /* FIXED DB PRINCIPALS */
 #define DBO "dbo"
@@ -2189,7 +2191,6 @@ extern void pltsql_read_procedure_info(StringInfo inout_str,
 void PLTsqlProcessTransaction(Node *parsetree,
 						            ParamListInfo params,
 						 			QueryCompletion *qc);
-
 
 extern void PLTsqlStartTransaction(char *txnName);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);

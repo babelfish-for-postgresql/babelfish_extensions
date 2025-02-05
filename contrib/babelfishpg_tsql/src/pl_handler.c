@@ -4341,7 +4341,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				IndexStmt	*stmt = (IndexStmt *) parsetree;
 
 				if (sql_dialect == SQL_DIALECT_TSQL &&
-					strcmp(queryString, "(CREATE FULLTEXT INDEX STATEMENT )") != 0) /* Skip fulltext indexes since they don't even have an original name */
+					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
 				{
 					char    	*original_name = stmt->idxname != NULL ? pstrdup(stmt->idxname) : NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;

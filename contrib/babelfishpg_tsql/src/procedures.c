@@ -4086,19 +4086,19 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_INDEX) ||
 		(objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
 	{
-		char *newobjname = lowerstr(newname);
+		char *newobjname = downcase_truncate_identifier(newname, strlen(newname), false);
 
 		renamestmt->renameType = objtype;
 		renamestmt->relation->schemaname = lowerstr(schemaname);
 
 		if (objtype == OBJECT_INDEX)
 		{
-			char *lower_relname = lowerstr(curr_relname);
+			char *lower_relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
 
 			newobjname = construct_unique_index_name(newobjname, lower_relname);
 			renamestmt->subname = NULL;
 			renamestmt->newname = newobjname;
-			renamestmt->relation->relname = construct_unique_index_name(lowerstr(objname), lower_relname);
+			renamestmt->relation->relname = construct_unique_index_name(downcase_truncate_identifier(objname, strlen(objname), false), lower_relname);
 		}
 		else
 		{
