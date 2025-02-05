@@ -147,7 +147,6 @@ static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static bool is_numeric_cast(Oid func_oid);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
 static bool is_tsql_numeric_fixeddecimal(Oid oid);
@@ -599,7 +598,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				outerplan = outerPlan(plan);
 
 				/* If we are in parallel mode or have sort node then from its outer plan then find the original tle from it */
-				if (plan && outerplan && ((IsA(plan,Agg) && IsA(outerplan, Gather)) || IsA(plan, Gather) || IsA(plan, Sort)))
+				if (plan && outerplan && ((IsA(plan, Agg) && IsA(outerplan, Gather)) || 
+                          IsA(plan, Gather) || 
+                          IsA(plan, Sort) || 
+                          IsA(plan, GatherMerge)))
 				{
 					Assert(plan);
 					Assert(outerplan);
