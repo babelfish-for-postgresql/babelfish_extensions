@@ -184,7 +184,7 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
-static Datum bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type);
+static Datum bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 result_typmod);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -1203,15 +1203,16 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 }
 
 static Datum
-bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type)
+bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 result_typmod)
 {
-	int32       result_typmod;
 	int32       scale;
 
 	if (result_type == NUMERICOID ||
 			(*common_utility_plugin_ptr->is_tsql_decimal_datatype) (result_type))
 	{
-		result_typmod = tsql_get_numeric_typmod_from_exp(NULL, fn_expr);
+		if (fn_expr != NULL && result_typmod == -1)
+			result_typmod = tsql_get_numeric_typmod_from_exp(NULL, fn_expr);
+
 		if (result_typmod != -1)
 		{
 			scale = (result_typmod - VARHDRSZ) & 0xffff; 
