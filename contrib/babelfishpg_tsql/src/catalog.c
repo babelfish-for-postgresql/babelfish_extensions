@@ -1002,47 +1002,33 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 char *
 get_authid_user_ext_schema_name(const char *db_name, const char *user)
 {
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
 	char	   *schema_name = NULL;
-	NameData   *user_name;
 
 	if (!db_name || !user)
 		return NULL;
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+	tuple_user_ext = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
 
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", user);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Datum		datum;
-		bool		is_null;
+		Datum datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											 Anum_bbf_authid_user_ext_database_name);
+		char  *db_name_cstring = TextDatumGetCString(datum);
 
-		datum = heap_getattr(tuple_user_ext,
-							 Anum_bbf_authid_user_ext_default_schema_name,
-							 bbf_authid_user_ext_rel->rd_att,
-							 &is_null);
-		schema_name = pstrdup(TextDatumGetCString(datum));
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			Datum 	schema_datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											   Anum_bbf_authid_user_ext_default_schema_name);
+			char  	*default_schema_name = TextDatumGetCString(schema_datum);
+
+			if (strlen(default_schema_name))
+				schema_name = default_schema_name;
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple_user_ext);
 	}
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return schema_name;
 }

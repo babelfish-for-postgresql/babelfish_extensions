@@ -1166,12 +1166,9 @@ typedef struct PLtsql_stmt_execsql
 											 * SELECT @a=1) */
 	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
-	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
-	bool		func_call;		/* Function call? */
 	char	   *schema_name;	/* Schema specified */
 	char	   *db_name;		/* db_name: only for cross db query */
-	bool		is_schema_specified;	/* is schema name specified? */
 	bool		is_create_view; /* CREATE VIEW? */
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
@@ -1306,6 +1303,8 @@ typedef struct PLtsql_function
 	int			fetch_status_varno;
 	int			new_varno;
 	int			old_varno;
+	int16			fn_dbid;         /* logical db which contains the function */
+	char			*fn_search_path;
 
 	TupleDesc	fn_tupdesc;		/* tuple descriptor for return info */
 
@@ -1537,8 +1536,6 @@ typedef struct PLtsql_execstate
 	bool		insert_exec;
 
 	List	   *explain_infos;
-	char	   *schema_name;
-	const char *db_name;
 	instr_time	planning_start;
 	instr_time	planning_end;
 	instr_time	execution_start;
@@ -2025,6 +2022,8 @@ extern bool insert_bulk_check_constraints;
  * Function declarations
  **********************************************************************/
 
+# define PLTSQL_SEARCH_PATH_BUFFER "%s, %s, sys, pg_catalog"
+
 /*
  * Functions in pl_comp.c
  */
@@ -2227,7 +2226,6 @@ extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
-extern char *flatten_search_path(List *oid_list);
 extern char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char *message);
 extern void init_and_check_common_utility(void);

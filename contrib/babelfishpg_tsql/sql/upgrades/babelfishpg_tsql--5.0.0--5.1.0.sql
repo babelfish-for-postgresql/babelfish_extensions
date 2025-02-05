@@ -69,6 +69,13 @@ $$;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+CREATE OR REPLACE FUNCTION sys.db_id() RETURNS SMALLINT
+AS 'babelfishpg_tsql', 'babelfish_db_id'
+LANGUAGE C PARALLEL SAFE STABLE;
+
+CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
+AS 'babelfishpg_tsql', 'babelfish_db_name'
+LANGUAGE C PARALLEL SAFE STABLE;
 
  DO $$
 DECLARE
@@ -5558,6 +5565,72 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_addlinkedserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_droplinkedsrvlogin;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_dropserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_testlinkedserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_enum_oledb_providers;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -233,42 +233,42 @@ SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_addlinkedserver'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_addlinkedsrvlogin'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_dropserver'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_droplinkedsrvlogin'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_testlinkedserver'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_enum_oledb_providers'), 'IsMSShipped')
 GO
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 

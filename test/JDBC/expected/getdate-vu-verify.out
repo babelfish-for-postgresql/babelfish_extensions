@@ -429,6 +429,7 @@ int#!#int#!#int#!#int
 
 
 -- psql
+SET search_path = master_dbo, sys, pg_catalog;
 SET timezone = '+05:30';
 select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.SYSDATETIME(), sys.SYSDATETIME() AT TIME ZONE 'UTC'), 330, 1);
 select master_dbo.checkDatetimeDiff(sys.DATEDIFF('MINUTE', sys.getdate(), sys.getdate() AT TIME ZONE 'UTC'), 330, 1);

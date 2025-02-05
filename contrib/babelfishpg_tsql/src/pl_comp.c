@@ -42,6 +42,7 @@
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "analyzer.h"
+#include "catalog.h"
 #include "codegen.h"
 #include "iterative_exec.h"
 #include "multidb.h"
@@ -147,6 +148,7 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid);
 
 /* ----------
  * pltsql_compile		Make an execution tree for a PL/tsql function.
@@ -967,6 +969,18 @@ do_compile(FunctionCallInfo fcinfo,
 	for (i = 0; i < function->fn_nargs; i++)
 		function->fn_argvarnos[i] = in_arg_varnos[i];
 
+	/* store the logical db which contains this function */
+	if (IS_TDS_CONN() && procStruct->provolatile != PROVOLATILE_IMMUTABLE && procStruct->proparallel == PROPARALLEL_UNSAFE)
+	{
+		function->fn_dbid = get_dbid_from_physical_schema_name(get_namespace_name(procStruct->pronamespace), true);
+		function->fn_search_path = get_local_schema_for_bbf_functions(procStruct->pronamespace, function->fn_dbid);
+	}
+	else
+	{
+		function->fn_dbid = InvalidDbid;
+		function->fn_search_path = NULL;
+	}
+
 	pltsql_finish_datums(function);
 
 	/* Debug dump for completed functions */
@@ -1112,6 +1126,8 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	function->fn_retbyval = true;
 	function->fn_rettyplen = sizeof(int32);
 	function->fn_tupdesc = NULL;
+	function->fn_dbid = InvalidDbid;
+	function->fn_search_path = NULL;
 
 	/*
 	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
@@ -3251,4 +3267,35 @@ reset_cached_batch()
 	while (cur_handle_id > 0)
 		delete_cached_batch(cur_handle_id--);
 	cur_handle_id = 1;
+}
+
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid)
+{
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	char  			*func_dbo_schema;
+
+	if (!IS_TDS_CONN() || !DbidIsValid(dbid))
+		return NULL;
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
+	{
+		func_schema_name = get_namespace_name(proc_nsp_oid);
+		func_dbo_schema = get_dbo_schema_name(get_db_name(dbid));
+
+		new_search_path = psprintf(PLTSQL_SEARCH_PATH_BUFFER,
+									quote_identifier(func_schema_name),
+									quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
+		
+		pfree(func_schema_name);
+		pfree(func_dbo_schema);
+	}
+
+	return new_search_path;
 }
