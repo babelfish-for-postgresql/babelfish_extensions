@@ -48,6 +48,8 @@ GO
 int
 ~~END~~
 
+DROP TABLE IF EXISTS sp_reset_connection_test_table;
+GO
 
 -- 3. Test temp tables are deleted on reset
 CREATE TABLE #babel_temp_table (ID INT identity(1,1), Data INT)

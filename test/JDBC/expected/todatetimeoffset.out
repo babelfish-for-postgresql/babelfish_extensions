@@ -601,3 +601,5 @@ GO
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
+drop table tem
+GO

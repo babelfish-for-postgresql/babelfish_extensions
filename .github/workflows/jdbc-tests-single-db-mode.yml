@@ -102,6 +102,10 @@ jobs:
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
 
+      - name: Save cache
+        if: always() && steps.replication.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
+
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename

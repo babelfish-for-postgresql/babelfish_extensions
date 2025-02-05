@@ -682,6 +682,9 @@ GO
 ~~ERROR (Message: missing FROM-clause entry for table "i")~~
 
 
+DROP TABLE mytab
+GO
+
 DROP PROCEDURE myproc
 GO
 
