@@ -1,0 +1,5 @@
+if(EXISTS "/home/mrxmohit/workplace/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/antlr4_tests[1]_tests.cmake")
+  include("/home/mrxmohit/workplace/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr4/build/runtime/antlr4_tests[1]_tests.cmake")
+else()
+  add_test(antlr4_tests_NOT_BUILT antlr4_tests_NOT_BUILT)
+endif()
