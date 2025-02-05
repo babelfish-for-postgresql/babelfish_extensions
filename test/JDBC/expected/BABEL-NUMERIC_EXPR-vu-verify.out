@@ -1,44 +1,80 @@
 -- basic operator testing
 -- test 1
-select COL2_T2 + COL3_T2 from BABEL_5454_T2
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2
 go
 ~~START~~
 numeric
-1.243457
-25.993456
-113.623456
-5.373456
-6.123456
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
 ~~END~~
 
 
--- test 2 : with order by
-select COL2_T2 + COL3_T2 from BABEL_5454_T2 order by COL2_T2
+SELECT COL2_T2 * COL3_T2 FROM BABEL_5454_T2
+GO
+~~START~~
+numeric
+0.1348148136
+50.6869133386
+345.1419741900
+5.1543209750
+5.1234567800
+~~END~~
+
+
+SELECT COL2_T2 - COL3_T2 FROM BABEL_5454_T2
 go
 ~~START~~
 numeric
-1.243457
-6.123456
-5.373456
-25.993456
-113.623456
+-1.00345678
+21.74654322
+107.37654322
+-2.87345678
+-4.12345678
+~~END~~
+
+
+SELECT COL2_T2 / COL3_T2 FROM BABEL_5454_T2
+go
+~~START~~
+numeric
+0.106813187775
+11.241104704754
+35.377470470393
+0.303143713319
+0.195180723277
+~~END~~
+
+
+-- test 2 : with ORDER BY
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2 ORDER BY COL2_T2
+go
+~~START~~
+numeric
+1.24345678
+6.12345678
+5.37345678
+25.99345678
+113.62345678
 ~~END~~
 
 -- test 3 : subquery
-select abc from (select COL2_T2 + COL3_T2 as abc from BABEL_5454_T2)
+SELECT val1 FROM (SELECT COL2_T2 + COL3_T2 AS val1 FROM BABEL_5454_T2)
 go
 ~~START~~
 numeric
-1.243457
-25.993456
-113.623456
-5.373456
-6.123456
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
 ~~END~~
 
 
 
--- Selecting varchar and numeric
+-- Selecting varchar and numeric, JIRA QUERY
 SELECT
     cr1 AS description,
     ex + COL3_T2 AS sum_num
@@ -63,16 +99,16 @@ ORDER BY sum_num;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Eu#!#2.100000
-US#!#3.100000
-Br#!#4.100000
-Ja#!#5.100000
-Ca#!#5.373456
-Ca#!#6.100000
-US#!#6.123456
-Br#!#25.993456
-Ja#!#113.623456
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -102,16 +138,16 @@ ORDER BY val;
 GO
 ~~START~~
 numeric
-2.100000
-2.223457
-3.100000
-4.100000
-5.100000
-5.223456
-6.100000
-7.223456
-7.223456
-9.223456
+2.10000000
+2.22345678
+3.10000000
+4.10000000
+5.10000000
+5.22345678
+6.10000000
+7.22345678
+7.22345678
+9.22345678
 ~~END~~
 
 
@@ -141,16 +177,16 @@ ORDER BY val;
 GO
 ~~START~~
 numeric
-2.100000
-2.366914
-3.100000
-4.100000
-5.100000
-6.100000
-9.496912
-11.246912
-28.116912
-116.746912
+2.10000000
+2.36691356
+3.10000000
+4.10000000
+5.10000000
+6.10000000
+9.49691356
+11.24691356
+28.11691356
+116.74691356
 ~~END~~
 
 
@@ -183,7 +219,7 @@ FROM (
 GO
 ~~START~~
 numeric
-18.847456
+18.84745678
 ~~END~~
 
 
@@ -209,20 +245,20 @@ FROM (
         COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-order by ex1
+ORDER BY ex1
 GO
 ~~START~~
 int#!#nvarchar#!#numeric
-1#!#Eu#!#1.243457
-1#!#Eu#!#2.200000
-1#!#US#!#4.200000
-1#!#Ca#!#5.373456
-1#!#US#!#6.123456
-1#!#Br#!#6.200000
-1#!#Ja#!#8.200000
-1#!#Ca#!#10.200000
-1#!#Br#!#25.993456
-1#!#Ja#!#113.623456
+1#!#Eu#!#1.24345678
+1#!#Eu#!#2.20000000
+1#!#US#!#4.20000000
+1#!#Ca#!#5.37345678
+1#!#US#!#6.12345678
+1#!#Br#!#6.20000000
+1#!#Ja#!#8.20000000
+1#!#Ca#!#10.20000000
+1#!#Br#!#25.99345678
+1#!#Ja#!#113.62345678
 ~~END~~
 
 
@@ -245,16 +281,16 @@ ORDER BY ex;
 GO
 ~~START~~
 numeric#!#nvarchar#!#nvarchar
-1.100000#!#Eu#!#Eu
-1.243457#!#Eu#!#Eu
-2.100000#!#US#!#US
-3.100000#!#Br#!#Br
-4.100000#!#Ja#!#Ja
-5.100000#!#Ca#!#Ca
-5.373456#!#Ca#!#Ca
-6.123456#!#US#!#US
-25.993456#!#Br#!#Br
-113.623456#!#Ja#!#Ja
+1.10000000#!#Eu#!#Eu
+1.24345678#!#Eu#!#Eu
+2.10000000#!#US#!#US
+3.10000000#!#Br#!#Br
+4.10000000#!#Ja#!#Ja
+5.10000000#!#Ca#!#Ca
+5.37345678#!#Ca#!#Ca
+6.12345678#!#US#!#US
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
 ~~END~~
 
 
@@ -276,16 +312,16 @@ ORDER BY ex;
 GO
 ~~START~~
 numeric#!#nvarchar#!#nvarchar
-1.000000#!#Ca#!#Ca
-1.000000#!#US#!#US
-1.000000#!#Eu#!#Eu
-1.000000#!#Br#!#Br
-1.000000#!#Ja#!#Ja
-1.243457#!#Eu#!#Eu
-5.373456#!#Ca#!#Ca
-6.123456#!#US#!#US
-25.993456#!#Br#!#Br
-113.623456#!#Ja#!#Ja
+1.00000000#!#Ca#!#Ca
+1.00000000#!#US#!#US
+1.00000000#!#Eu#!#Eu
+1.00000000#!#Br#!#Br
+1.00000000#!#Ja#!#Ja
+1.24345678#!#Eu#!#Eu
+5.37345678#!#Ca#!#Ca
+6.12345678#!#US#!#US
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
 ~~END~~
 
 
@@ -304,16 +340,16 @@ FROM (
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Br#!#25.993456
-Ja#!#113.623456
-Ca#!#5.373456
-US#!#6.123456
-US#!#3.100000
-Eu#!#2.100000
-Br#!#4.100000
-Ja#!#5.100000
-Ca#!#6.100000
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#6.12345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
 ~~END~~
 
 
@@ -333,8 +369,8 @@ WHERE cr1 = 'US';
 GO
 ~~START~~
 nvarchar#!#numeric
-US#!#6.123456
-US#!#3.100000
+US#!#6.12345678
+US#!#3.10000000
 ~~END~~
 
 
@@ -353,16 +389,16 @@ FROM (
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Br#!#25.993456
-Ja#!#113.623456
-Ca#!#5.373456
-US#!#6.123456
-US#!#3.100000
-Eu#!#2.100000
-Br#!#4.100000
-Ja#!#5.100000
-Ca#!#6.100000
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#6.12345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
 ~~END~~
 
 
@@ -381,16 +417,16 @@ FROM (
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Br#!#25.993456
-Ja#!#113.623456
-Ca#!#5.373456
-US#!#6.123456
-US#!#3.100000
-Eu#!#2.100000
-Br#!#4.100000
-Ja#!#5.100000
-Ca#!#6.100000
+Eu#!#1.24345678
+Br#!#25.99345678
+Ja#!#113.62345678
+Ca#!#5.37345678
+US#!#6.12345678
+US#!#3.10000000
+Eu#!#2.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#6.10000000
 ~~END~~
 
 
@@ -413,16 +449,16 @@ ORDER BY test1;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Eu#!#2.100000
-US#!#3.100000
-Br#!#4.100000
-Ja#!#5.100000
-Ca#!#5.373456
-Ca#!#6.100000
-US#!#6.123456
-Br#!#25.993456
-Ja#!#113.623456
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -445,16 +481,16 @@ ORDER BY test1;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Eu#!#2.200000
-US#!#4.200000
-Ca#!#5.373456
-US#!#6.123456
-Br#!#6.200000
-Ja#!#8.200000
-Ca#!#10.200000
-Br#!#25.993456
-Ja#!#113.623456
+Eu#!#1.24345678
+Eu#!#2.20000000
+US#!#4.20000000
+Ca#!#5.37345678
+US#!#6.12345678
+Br#!#6.20000000
+Ja#!#8.20000000
+Ca#!#10.20000000
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -477,16 +513,16 @@ ORDER BY test1;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#1.243457
-Ca#!#2.000000
-US#!#2.000000
-Eu#!#2.000000
-Br#!#2.000000
-Ja#!#2.000000
-Ca#!#5.373456
-US#!#6.123456
-Br#!#25.993456
-Ja#!#113.623456
+Eu#!#1.24345678
+Ca#!#2.00000000
+US#!#2.00000000
+Eu#!#2.00000000
+Br#!#2.00000000
+Ja#!#2.00000000
+Ca#!#5.37345678
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -596,16 +632,16 @@ ORDER BY result;
 GO
 ~~START~~
 numeric
-2.486914
-4.200000
-6.200000
-8.200000
-10.200000
-10.746912
-12.200000
-12.246912
-51.986912
-227.246912
+2.48691356
+4.20000000
+6.20000000
+8.20000000
+10.20000000
+10.74691356
+12.20000000
+12.24691356
+51.98691356
+227.24691356
 ~~END~~
 
 
@@ -621,16 +657,16 @@ FROM (
     SELECT COL3_T2
     FROM BABEL_5454_T2
 ) AS derived_table
-order by sum_result
+ORDER BY sum_result
 GO
 ~~START~~
 numeric
-2.240000
-2.246914
-4.246912
-6.246912
-8.246912
-10.246912
+2.24000000
+2.24691356
+4.24691356
+6.24691356
+8.24691356
+10.24691356
 ~~END~~
 
 
@@ -655,25 +691,25 @@ FROM (
         ) a
     )
 ) AS subquery
-order by ex_result
+ORDER BY ex_result
 GO
 ~~START~~
 numeric
-0.240000
-2.000000
-2.486914
-2.500000
-4.400000
-8.400000
-10.746912
-12.246912
-12.400000
-16.400000
-20.400000
-47.740000
-51.986912
-221.000000
-227.246912
+0.24000000
+2.00000000
+2.48691356
+2.50000000
+4.40000000
+8.40000000
+10.74691356
+12.24691356
+12.40000000
+16.40000000
+20.40000000
+47.74000000
+51.98691356
+221.00000000
+227.24691356
 ~~END~~
 
 
@@ -693,7 +729,7 @@ SELECT
     COALESCE(SmallIntCol, 0) AS result,
     CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
 FROM TestTypes
-order by sum_result, result;
+ORDER BY sum_result, result;
 GO
 ~~START~~
 float#!#float
@@ -709,7 +745,7 @@ float#!#float
 -- Test Case 2: Nested queries with decimal and numeric operations
 SELECT outer_result + inner_result AS final_result
 FROM (
-    SELECT 
+    SELECT
         (SELECT AVG(NumericCol) FROM TestTypes) AS outer_result,
         (
             SELECT TOP 1 UDTCol + FloatCol 
@@ -717,7 +753,7 @@ FROM (
             ORDER BY IntCol DESC
         ) AS inner_result
 ) AS nested_query
-order by final_result;
+ORDER BY final_result;
 GO
 ~~START~~
 float
@@ -735,7 +771,7 @@ SELECT
     CAST(9876.54321 AS numeric(12,8)) + UDTCol,
     CAST(9876.54321 AS numeric(12,8)) * UDTCol
 FROM TestTypes
-order by dec_num_sum;
+ORDER BY dec_num_sum;
 GO
 ~~START~~
 numeric#!#numeric
@@ -772,7 +808,7 @@ SELECT
     CAST(100 AS smallint) * CAST(2.5 AS float),
     CAST(1000 AS numeric(10,4)) / NULLIF(CAST(3 AS int), 0)
 FROM TestTypes
-order by int_float_sum;
+ORDER BY int_float_sum;
 GO
 ~~START~~
 float#!#float#!#float
@@ -812,7 +848,7 @@ FROM TestTypes
 UNION
 SELECT UDTCol
 FROM TestTypes
-order by result;
+ORDER BY result;
 GO
 ~~START~~
 numeric
@@ -827,6 +863,47 @@ numeric
 ~~END~~
 
 
+-- inner query is selecting same column with and without alias, large numbers
+SELECT
+    result1 + result1 AS result2,
+    a
+FROM
+    (
+        SELECT
+            a,
+            a AS result1
+        FROM
+            BABEL_5454_T4
+        UNION ALL
+        SELECT
+            in4,
+            in4 + in5 AS result
+        FROM
+            BABEL_5454_T3
+    ) a
+ORDER BY result2;
+GO
+~~START~~
+numeric#!#numeric
+199999999999998.222222#!#99999999999999.111111
+222222222222222.222220#!#99999999999999.111111
+~~END~~
 
+
+-- test
+SELECT a FROM BABEL_5454_T7
+UNION All
+SELECT amount + 100 FROM BABEL_5454_T8
+where id = 1
+ORDER BY a
+GO
+~~START~~
+numeric
+<NULL>
+1.2000
+4.0000
+10.1234
+5100.0000
+~~END~~
 
 

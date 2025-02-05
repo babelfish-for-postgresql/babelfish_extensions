@@ -591,24 +591,25 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			}
 		case T_Var:
 			{
-				Var		   *var = (Var *) expr;
+				Var		    *var = (Var *) expr;
 				Plan		*outerplan = NULL;
 				TargetEntry	*tle;
-				if (plan)
-				outerplan = outerPlan(plan);
+				if (plan) outerplan = outerPlan(plan);
 
-				/* If we are in parallel mode or have sort node then from its outer plan then find the original tle from it */
-				if (plan && outerplan && ((IsA(plan, Agg) && IsA(outerplan, Gather)) || 
-                          IsA(plan, Gather) || 
-                          IsA(plan, Sort) || 
-                          IsA(plan, GatherMerge)))
+				/* If we are in parallel mode or have a Sort node then
+     			 * find the original target list entry from the outer plan
+				 */
+				if (plan && outerplan && (
+					(IsA(plan, Agg) && IsA(outerplan, Gather)) ||
+					IsA(plan, Gather) ||
+					IsA(plan, Sort) ||
+					IsA(plan, GatherMerge)))
 				{
 					Assert(plan);
 					Assert(outerplan);
 					tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
 					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
-				
 				return var->vartypmod;
 			}
 		case T_OpExpr:

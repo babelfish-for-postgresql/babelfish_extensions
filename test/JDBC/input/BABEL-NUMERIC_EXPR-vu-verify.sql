@@ -1,17 +1,26 @@
 -- basic operator testing
 -- test 1
-select COL2_T2 + COL3_T2 from BABEL_5454_T2
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2
 go
 
--- test 2 : with order by
-select COL2_T2 + COL3_T2 from BABEL_5454_T2 order by COL2_T2
+SELECT COL2_T2 * COL3_T2 FROM BABEL_5454_T2
+GO
+
+SELECT COL2_T2 - COL3_T2 FROM BABEL_5454_T2
+go
+
+SELECT COL2_T2 / COL3_T2 FROM BABEL_5454_T2
+go
+
+-- test 2 : with ORDER BY
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2 ORDER BY COL2_T2
 go
 -- test 3 : subquery
-select abc from (select COL2_T2 + COL3_T2 as abc from BABEL_5454_T2)
+SELECT val1 FROM (SELECT COL2_T2 + COL3_T2 AS val1 FROM BABEL_5454_T2)
 go
 
 
--- Selecting varchar and numeric
+-- Selecting varchar and numeric, JIRA QUERY
 SELECT
     cr1 AS description,
     ex + COL3_T2 AS sum_num
@@ -135,7 +144,7 @@ FROM (
         COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-order by ex1
+ORDER BY ex1
 GO
 
 -- Testing inner query with operator
@@ -359,7 +368,7 @@ FROM (
     SELECT COL3_T2
     FROM BABEL_5454_T2
 ) AS derived_table
-order by sum_result
+ORDER BY sum_result
 GO
 
 -- Multiple UNION ALL query
@@ -383,7 +392,7 @@ FROM (
         ) a
     )
 ) AS subquery
-order by ex_result
+ORDER BY ex_result
 GO
 
 -- UDT
@@ -402,13 +411,13 @@ SELECT
     COALESCE(SmallIntCol, 0) AS result,
     CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
 FROM TestTypes
-order by sum_result, result;
+ORDER BY sum_result, result;
 GO
 
 -- Test Case 2: Nested queries with decimal and numeric operations
 SELECT outer_result + inner_result AS final_result
 FROM (
-    SELECT 
+    SELECT
         (SELECT AVG(NumericCol) FROM TestTypes) AS outer_result,
         (
             SELECT TOP 1 UDTCol + FloatCol 
@@ -416,7 +425,7 @@ FROM (
             ORDER BY IntCol DESC
         ) AS inner_result
 ) AS nested_query
-order by final_result;
+ORDER BY final_result;
 GO
 
 -- Test Case 3: Decimal + Numeric with different scales and precisions
@@ -429,7 +438,7 @@ SELECT
     CAST(9876.54321 AS numeric(12,8)) + UDTCol,
     CAST(9876.54321 AS numeric(12,8)) * UDTCol
 FROM TestTypes
-order by dec_num_sum;
+ORDER BY dec_num_sum;
 GO
 
 -- Test Case 4: UDT operations
@@ -452,7 +461,7 @@ SELECT
     CAST(100 AS smallint) * CAST(2.5 AS float),
     CAST(1000 AS numeric(10,4)) / NULLIF(CAST(3 AS int), 0)
 FROM TestTypes
-order by int_float_sum;
+ORDER BY int_float_sum;
 GO
 
 -- Test Case 6: All possible operations
@@ -478,14 +487,35 @@ FROM TestTypes
 UNION
 SELECT UDTCol
 FROM TestTypes
-order by result;
+ORDER BY result;
 GO
 
--- inner query is selecting same column with and without alias
-select result1+result1 as result2 , a from (SELECT a , a AS result1 FROM BABEL_5454_T4 union all SELECT in4, in4 + in5 AS result FROM BABEL_5454_T3) order by result2
-
+-- inner query is selecting same column with and without alias, large numbers
+SELECT
+    result1 + result1 AS result2,
+    a
+FROM
+    (
+        SELECT
+            a,
+            a AS result1
+        FROM
+            BABEL_5454_T4
+        UNION ALL
+        SELECT
+            in4,
+            in4 + in5 AS result
+        FROM
+            BABEL_5454_T3
+    ) a
+ORDER BY result2;
+GO
 
 -- test
-select a from BABEL_5454_T7 UNION All
-SELECT amount + 100 FROM BABEL_5454_T8 where id = 1
+SELECT a FROM BABEL_5454_T7
+UNION All
+SELECT amount + 100 FROM BABEL_5454_T8
+where id = 1
+ORDER BY a
+GO
 
