@@ -12,21 +12,6 @@
 
 all
 
-
-# JDBC Fulltext search tests
-#fts-contains-multicol-vu-prepare
-#fts-contains-multicol-vu-verify
-#fts-contains-multicol-vu-cleanup
-#fts-contains-utils-vu-prepare
-#fts-contains-utils-vu-verify
-#fts-contains-utils-vu-cleanup
-ignore#!#fts-contains-utils_before_17_2-vu-prepare
-ignore#!#fts-contains-utils_before_17_2-vu-verify
-ignore#!#fts-contains-utils_before_17_2-vu-cleanup
-#fts-contains-vu-prepare
-#fts-contains-vu-verify
-#fts-contains-vu-cleanup
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
