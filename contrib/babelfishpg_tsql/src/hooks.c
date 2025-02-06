@@ -1188,8 +1188,7 @@ bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 res
 {
 	int32       scale;
 
-	if (result_type == NUMERICOID ||
-			(*common_utility_plugin_ptr->is_tsql_decimal_datatype) (result_type))
+	if (result && OidIsValid(result_type) && getBaseType(result_type) == NUMERICOID)
 	{
 		if (fn_expr != NULL && result_typmod == -1)
 			result_typmod = tsql_get_numeric_typmod_from_exp(NULL, fn_expr);
@@ -5962,5 +5961,7 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 static int32
 tsql_get_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
-	return (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
+		return (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
+	return -1;
 }
