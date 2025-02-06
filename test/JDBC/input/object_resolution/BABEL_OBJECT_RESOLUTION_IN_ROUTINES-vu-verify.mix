@@ -310,3 +310,18 @@ GO
 
 USE babel_5448_db
 GO
+
+/*************************************************************************************/
+/************************** START OF DDLs TESTS **************************************/
+/*************************************************************************************/
+
+EXEC babel_5448_s1.babel_5448_p9;
+GO
+
+EXEC master.babel_5448_s1.babel_5448_p9;
+GO
+
+-- run this in a new connection to avoid hitting BABEL-5604
+-- tsql database=babel_5448_db
+EXEC master.babel_5448_s1.babel_5448_p10;
+GO

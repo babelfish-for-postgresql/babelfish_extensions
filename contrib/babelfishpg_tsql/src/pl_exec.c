@@ -4625,13 +4625,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
 	char	   *cur_dbname = get_cur_db_name();
+	bool		is_cross_db = stmt->is_cross_db && stmt->db_name && strcmp(cur_dbname, stmt->db_name) != 0;
 	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
 						  (estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
 						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
 	original_query_string = stmt->original_query ? stmt->original_query : NULL;
 
-	if (stmt->is_cross_db)
+	if (is_cross_db)
 	{
 		/*
 		 * When there is cross db reference to sys or information_schema
@@ -4648,7 +4649,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
-			if (stmt->is_cross_db)
+			if (is_cross_db)
 			{
 				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 					set_cur_user_db_and_path(cur_dbname, true);
@@ -5050,7 +5051,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		original_query_string = NULL;
 
-		if (stmt->is_cross_db)
+		if (is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 				set_cur_user_db_and_path(cur_dbname, true);

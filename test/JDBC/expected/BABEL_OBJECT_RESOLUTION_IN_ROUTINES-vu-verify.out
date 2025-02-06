@@ -1113,3 +1113,89 @@ msdb
 
 USE babel_5448_db
 GO
+
+
+/*************************************************************************************/
+/************************** START OF DDLs TESTS **************************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p9;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p9;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+
+-- tsql database=babel_5448_db
+-- run this in a new connection to avoid hitting BABEL-5604
+EXEC master.babel_5448_s1.babel_5448_p10;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+

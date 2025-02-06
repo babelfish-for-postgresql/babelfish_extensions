@@ -459,3 +459,53 @@ AS
     END CATCH
     SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
 GO
+
+
+/*************************************************************************************/
+/************************** START OF DDLs TESTS **************************************/
+/*************************************************************************************/
+USE master
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p9
+AS
+    CREATE TABLE #temp (rolename TEXT, roleid TEXT, isapprole TEXT)
+    CREATE ROLE babel_5448_r1;
+    CREATE ROLE babel_5448_r2;
+    ALTER ROLE babel_5448_r1 ADD MEMBER babel_5448_r2;
+    INSERT INTO #temp EXEC sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC master.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC babel_5448_db.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    DROP ROLE babel_5448_r2;
+    DROP ROLE babel_5448_r1;
+    DROP TABLE #temp;
+GO
+
+-- test nested cross database case for ddls
+CREATE PROC babel_5448_s1.babel_5448_p10
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC babel_5448_db.babel_5448_s1.babel_5448_p9;
+GO
+
+
+USE babel_5448_db
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p9
+AS
+    CREATE TABLE #temp (rolename TEXT, roleid TEXT, isapprole TEXT)
+    CREATE ROLE babel_5448_r1;
+    CREATE ROLE babel_5448_r2;
+    ALTER ROLE babel_5448_r1 ADD MEMBER babel_5448_r2;
+    INSERT INTO #temp EXEC sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC master.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC babel_5448_db.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    DROP ROLE babel_5448_r2;
+    DROP ROLE babel_5448_r1;
+    DROP TABLE #temp;
+GO
