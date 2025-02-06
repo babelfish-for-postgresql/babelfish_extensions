@@ -1,3 +1,21 @@
+
+
+CREATE LOGIN [test_pwd1] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+ALTER LOGIN [test_pwd1] DISABLE
+GO
+
+
+
+CREATE LOGIN [test_pwd2] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+ALTER LOGIN [test_pwd2] DISABLE
+GO
+
+
+
+CREATE LOGIN [test_pwd3] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+ALTER LOGIN [test_pwd3] DISABLE
+GO
+
 CREATE USER [test_usr1] FOR LOGIN [test_pwd1] WITH DEFAULT_SCHEMA=[dbo]
 GO
 

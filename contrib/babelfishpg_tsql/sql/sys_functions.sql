@@ -4126,6 +4126,28 @@ END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
+
+CREATE OR REPLACE FUNCTION sys.loginproperty(arg1 sys.sysname, arg2 sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(arg1 INT, arg2 sys.varbinary(128), arg3 INT, arg4 INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+
+
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
     property SYS.VARCHAR
