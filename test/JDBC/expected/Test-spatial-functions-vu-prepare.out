@@ -7,6 +7,15 @@ INSERT INTO TestSpatialFunction_YourTable1Temp (ID, PointColumn) VALUES (1, geom
 ~~ROW COUNT: 3~~
 
 
+CREATE DATABASE TestGeospatialMethods_DB;
+
+USE TestGeospatialMethods_DB;
+
+CREATE TABLE TestGeospatialMethods_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
+INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+~~ROW COUNT: 3~~
+
+
 USE MASTER
 
 CREATE TABLE TestSpatialFunction_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
@@ -112,19 +121,6 @@ CREATE VIEW TestSpatialFunction_point_inTemp AS SELECT p1.location.STContains(p2
 CREATE VIEW TestSpatialFunction_SRIDFromGeom AS SELECT PointColumn.STSrid AS SRID FROM TestSpatialFunction_YourTableTemp;
 
 CREATE VIEW TestSpatialFunction_SRIDFromGeog AS SELECT  location.STSrid AS Area FROM TestSpatialFunction_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
-
-CREATE DATABASE TestGeospatialMethods_DB;
-
-USE TestGeospatialMethods_DB;
-
-CREATE TABLE TestGeospatialMethods_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
-INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
-~~ROW COUNT: 3~~
-
-
-CREATE DATABASE TestGeospatialMethodstemp_DB;
-
-USE TestGeospatialMethodstemp_DB;
 
 CREATE TABLE TestGeospatialMethods_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 
 INSERT INTO TestGeospatialMethods_YourTableTemp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));

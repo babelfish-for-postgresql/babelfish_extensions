@@ -715,18 +715,18 @@ SELECT @point1 . STIntersects ( @point2 );
 go
 
 --Use in an ORDER BY Clause
-SELECT PointColumn1.STIntersects(PointColumn2) AS Intersects FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT PointColumn1.STIntersects(PointColumn2) AS Intersects FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT PointColumn1.STIntersects(@point1) AS Intersects FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT PointColumn1.STIntersects(@point1) AS Intersects FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point1.STIntersects(PointColumn2) AS Intersects FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT @point1.STIntersects(PointColumn2) AS Intersects FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
-SELECT ID, PointColumn1.STIntersects(PointColumn2) AS Intersecting_points FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT ID, PointColumn1.STIntersects(PointColumn2) AS Intersecting_points FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -736,35 +736,35 @@ go
 --Use in a WHERE Clause
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @doesintersect BIT = 0;
-SELECT PointColumn.STSrid FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp WHERE PointColumn.STIntersects(@referencePoint) = @doesintersect ORDER BY PointColumn.STSrid;
+SELECT PointColumn.STSrid FROM TestGeospatialMethods_YourTableTemp WHERE PointColumn.STIntersects(@referencePoint) = @doesintersect ORDER BY PointColumn.STSrid;
 go
 
 --Use in a CTE (Common Table Expression)
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH IntersectCTE AS ( SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp)
+WITH IntersectCTE AS ( SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethods_YourTableTemp)
 SELECT * FROM IntersectCTE WHERE Intersection = 1 ORDER BY Intersection;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH IntersectCTE AS ( SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersections FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
+WITH IntersectCTE AS ( SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersections FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
 SELECT * FROM IntersectCTE WHERE Intersections = 1.0 ORDER BY Intersections;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH IntersectCTE AS ( SELECT ID, @referencePoint.STIntersects(PointColumn) AS Intersections FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
+WITH IntersectCTE AS ( SELECT ID, @referencePoint.STIntersects(PointColumn) AS Intersections FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
 SELECT * FROM IntersectCTE WHERE Intersections != 1.0 ORDER BY Intersections;
 GO
 
 -- Use in a JOIN Operation
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON PointA.STIntersects(TestGeospatialMethods_TableBTemp.PointB) != 1 ORDER BY PointA.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON PointA.STIntersects(TestGeospatialMethods_TableBTemp.PointB) != 1 ORDER BY PointA.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON @referencePoint.STIntersects(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY PointA.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON @referencePoint.STIntersects(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY PointA.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON PointA.STIntersects(@referencePoint) != 1 ORDER BY PointA.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON PointA.STIntersects(@referencePoint) != 1 ORDER BY PointA.STX;
 go
 
 --Use in a CASE Statement
@@ -772,7 +772,7 @@ DECLARE @doesintersect BIT = 1;
 SELECT ID, PointColumn1.STIntersects(PointColumn2) AS doesintersect,
 CASE WHEN PointColumn1.STIntersects(PointColumn2) = @doesintersect THEN 'yes' ELSE 'no'
 END AS doesintersect
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --Use in a Conditional Statement
@@ -782,7 +782,7 @@ SELECT ID, PointColumn.STIntersects(@referencePoint) AS IntersectingReferancePoi
 CASE WHEN PointColumn.STIntersects(@referencePoint) = @doesintersect THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -790,7 +790,7 @@ SELECT ID, @referencePoint.STIntersects(PointColumn) AS IntersectingReferancePoi
 CASE WHEN @referencePoint.STIntersects(PointColumn) = @referencePoint.STY THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in a Pivot Query
@@ -800,7 +800,7 @@ SELECT * FROM ( SELECT ID,
 CASE WHEN PointColumn1.STIntersects(PointColumn2) BETWEEN 0 AND 1 THEN 'yes'
 ELSE 'no'
 END AS Range
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX
 ) AS Source
 PIVOT ( COUNT(ID) FOR Range IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
 go
@@ -809,17 +809,17 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersections,
 JSON_QUERY('{"Intersections":' + CAST(PointColumn.STIntersects(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, @referencePoint.STIntersects(PointColumn) AS Intersections,
 JSON_QUERY('{"Intersections":' + CAST(@referencePoint.STIntersects(PointColumn) AS NVARCHAR(MAX)) + '}') Json
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Using Square brackets '[]' identifier
-SELECT [PointColumn1].STIntersects([PointColumn2]) AS Intersection FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT [PointColumn1].STIntersects([PointColumn2]) AS Intersection FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --Use in Prepared Statement
@@ -832,7 +832,7 @@ SELECT ID, PointColumn.STIntersects(@referencePoint) AS IntersectingReferancePoi
 CASE WHEN PointColumn.STIntersects(@referencePoint) = @doesintersect THEN ''Close''
 ELSE ''Far''
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 WHERE PointColumn.STIntersects(@referencePoint) = @doesintersect;';
 SET @params = N'@referencePoint geometry, @doesintersect float';
 EXEC sp_executesql @sql, @params, @referencePoint, @doesintersect;
@@ -840,9 +840,9 @@ go
 
 --Use in Multi-Part column name Statements
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
-SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
-SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in function.STIntersects(@point) Statements
@@ -856,7 +856,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @intersection_points BIT = 1;
 SELECT ROUND(PointColumn.STIntersects(@referencePoint) / @intersection_points, 0) * @intersection_points AS Intersectinggroup,
 COUNT(*) AS PointCount
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 GROUP BY ROUND(PointColumn.STIntersects(@referencePoint) / @intersection_points, 0) * @intersection_points
 ORDER BY Intersectinggroup;
 go
@@ -864,7 +864,7 @@ go
 DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
 SELECT ROUND(PointColumn.STIntersects(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS Intersectinggroup,
 COUNT(*) AS PointCount
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 GROUP BY ROUND(PointColumn.STIntersects(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
 ORDER BY Intersectinggroup;
 go
@@ -873,23 +873,23 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn1.STIntersects(PointColumn2) AS intersection_points,
 cast(PointColumn1.STIntersects(@referencePoint) as int) - LAG(PointColumn1.STIntersects(PointColumn2)) OVER (ORDER BY ID) AS Intersectinggroup 
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STIntersects(@referencePoint) AS intersection_points,
 cast(@referencePoint.STDisjoint(PointColumn) as int) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Intersectinggroup
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in an UPDATE Statement
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
+UPDATE TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
 WHERE @referencePoint.STIntersects(PointColumn) = 1;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
+UPDATE TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
 WHERE PointColumn.STIntersects(@referencePoint) != 1;
 go
 
@@ -938,48 +938,48 @@ SELECT @point1.STDisjoint(@point2);
 go
 
 --Use in an ORDER BY Clause
-SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, PointColumn1.STDisjoint(@point1) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT ID, PointColumn1.STDisjoint(@point1) AS disjoint FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, @point1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT ID, @point1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --Use in a WHERE Clause
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @disjoint BIT = 1;
-SELECT PointColumn.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) = @disjoint ORDER BY PointColumn.STX;
+SELECT PointColumn.STAsText() FROM TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) = @disjoint ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp WHERE @referencePoint.STDisjoint(PointColumn) = @referencePoint.STX ORDER BY PointColumn.STX;
+SELECT PointColumn.STAsText() FROM TestGeospatialMethods_YourTableTemp WHERE @referencePoint.STDisjoint(PointColumn) = @referencePoint.STX ORDER BY PointColumn.STX;
 go
 
-SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS disjoint FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) != @referencePoint.STX ORDER BY PointColumn.STX;
+SELECT PointColumn.STAsText() FROM TestGeospatialMethods_YourTableTemp WHERE PointColumn.STDisjoint(@referencePoint) != @referencePoint.STX ORDER BY PointColumn.STX;
 go
 
 --Use in a JOIN Operation
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON @referencePoint.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON @referencePoint.STDisjoint(TestGeospatialMethods_TableBTemp.PointB) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(@referencePoint) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON PointA.STDisjoint(@referencePoint) = 1 ORDER BY TestGeospatialMethods_TableBTemp.PointB.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableATemp JOIN TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_TableBTemp ON TestGeospatialMethods_TableBTemp.PointB.STDisjoint(@referencePoint) = 0 ORDER BY PointB.STX;
+SELECT PointA.STAsText(),PointB.STAsText() FROM TestGeospatialMethods_TableATemp JOIN TestGeospatialMethods_TableBTemp ON TestGeospatialMethods_TableBTemp.PointB.STDisjoint(@referencePoint) = 0 ORDER BY PointB.STX;
 go
 
 -- Use in a CASE Statement
@@ -987,24 +987,24 @@ DECLARE @disjoints BIT = 1 ;
 SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS dodisjoint,
 CASE WHEN PointColumn1.STDisjoint(PointColumn2) = @disjoints THEN 'Disjoints' ELSE 'Are_not_disjoint'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn1.STDisjoint(@referencePoint) AS disjoint,
 CASE WHEN @referencePoint.STDisjoint(PointColumn2) = @referencePoint.STX THEN 'Disjoints' ELSE 'Are_not_disjoint'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --Use in a CTE (Common Table Expression)
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH CTE AS ( SELECT ID, PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
+WITH CTE AS ( SELECT ID, PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
 SELECT * FROM CTE WHERE disjoint = 1 ORDER BY disjoint;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH CTE AS ( SELECT ID, @referencePoint.STDisjoint(PointColumn) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
+WITH CTE AS ( SELECT ID, @referencePoint.STDisjoint(PointColumn) AS disjoint FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX)
 SELECT * FROM CTE WHERE disjoint = 1 ORDER BY disjoint;
 go
 
@@ -1015,7 +1015,7 @@ SELECT ID, PointColumn.STDisjoint(@referencePoint) AS ReferencePoint,
 CASE WHEN PointColumn.STDisjoint(@referencePoint) = @disjoints THEN 'disjoint'
 ELSE 'are_not_disjoint'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -1023,7 +1023,7 @@ SELECT ID, @referencePoint.STDisjoint(PointColumn) AS ReferencePoint,
 CASE WHEN @referencePoint.STDisjoint(PointColumn) = @referencePoint.STY THEN 'disjoint'
 ELSE 'are_not_disjoint'
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in a Pivot Query
@@ -1033,7 +1033,7 @@ SELECT * FROM ( SELECT ID,
 CASE WHEN PointColumn1.STDisjoint(PointColumn2) BETWEEN 0 AND 1 THEN 'disjoint'
 ELSE 'do_not_disjoint'
 END AS Range
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX
 ) AS Source
 PIVOT ( COUNT(ID) FOR Range IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
 go
@@ -1046,17 +1046,17 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STDisjoint(@referencePoint) AS disjoint,
 JSON_QUERY('{"Disjoint":' + CAST(PointColumn.STDisjoint(@referencePoint) AS NVARCHAR(MAX)) + '}') AS Json
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, @referencePoint.STDisjoint(PointColumn) AS disjoint,
 JSON_QUERY('{"Disjoint":' + CAST(@referencePoint.STDisjoint(PointColumn) AS NVARCHAR(MAX)) + '}') Json
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 -- Using Square brackets '[]' identifier
-SELECT [PointColumn1].STDisjoint([PointColumn2]) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+SELECT [PointColumn1].STDisjoint([PointColumn2]) AS disjoint FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --Use in Prepared Statement
@@ -1069,7 +1069,7 @@ SELECT ID, PointColumn.STDisjoint(@referencePoint) AS IntersectingReferancePoint
 CASE WHEN PointColumn.STDisjoint(@referencePoint) = @disjoints THEN ''disjoints''
 ELSE ''do_not_disjoint''
 END AS Proximity
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 WHERE PointColumn.STDisjoint(@referencePoint) = @disjoints;';
 SET @params = N'@referencePoint geometry, @disjoints float';
 EXEC sp_executesql @sql, @params, @referencePoint, @disjoints;
@@ -1077,9 +1077,9 @@ go
 
 --Use in Multi-Part column name Statements
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
-SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
-SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+SELECT TestGeospatialMethods_YourTableTemp.PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in function.STDisjoint(@point) Statements
@@ -1092,7 +1092,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @disjoints BIT = 1;
 SELECT ROUND(PointColumn.STDisjoint(@referencePoint) / @disjoints, 0) * @disjoints AS Grp,
 COUNT(*) AS PointCount
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 GROUP BY ROUND(PointColumn.STDisjoint(@referencePoint) / @disjoints, 0) * @disjoints
 ORDER BY Grp;
 go
@@ -1100,7 +1100,7 @@ go
 DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
 SELECT ROUND(PointColumn.STDisjoint(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS GRP,
 COUNT(*) AS PointCount
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp
+FROM TestGeospatialMethods_YourTableTemp
 GROUP BY ROUND(PointColumn.STDisjoint(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
 ORDER BY Grp;
 go
@@ -1109,23 +1109,23 @@ go
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn1.STDisjoint(PointColumn2) AS disjoint,
 cast(PointColumn1.STDisjoint(@referencePoint) as int) - LAG(PointColumn1.STDisjoint(PointColumn2)) OVER (ORDER BY ID) AS Difference 
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+FROM TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STDisjoint(@referencePoint) AS disjoint,
 cast(@referencePoint.STDisjoint(PointColumn) as int) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS Difference
-FROM TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
+FROM TestGeospatialMethods_YourTableTemp ORDER BY PointColumn.STX;
 go
 
 --Use in an UPDATE Statement
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
+UPDATE TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
 WHERE @referencePoint.STDisjoint(PointColumn) = 1;
 go
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
-UPDATE TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
+UPDATE TestGeospatialMethods_YourTableTemp SET PointColumn = @referencePoint
 WHERE PointColumn.STDisjoint(@referencePoint) != 1;
 go
 
@@ -1224,10 +1224,10 @@ SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT @point . STDimension ( );
 go
 
-SELECT location.STDimension() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+SELECT location.STDimension() from TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 go
 
-SELECT location.STDimension() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+SELECT location.STDimension() from TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
 go
 
 DECLARE @point geometry;
@@ -1278,10 +1278,10 @@ SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT @point . STIsEmpty ( );
 go
 
-SELECT location.STIsEmpty() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+SELECT location.STIsEmpty() from TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 go
 
-SELECT location.STIsEmpty() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+SELECT location.STIsEmpty() from TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
 go
 
 DECLARE @point geometry;
@@ -1328,10 +1328,10 @@ SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT @point . STIsValid ( );
 go
 
-SELECT location.STIsValid() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+SELECT location.STIsValid() from TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 go
 
-SELECT location.STIsValid() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+SELECT location.STIsValid() from TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
 go
 
 DECLARE @point geometry;
@@ -1378,10 +1378,10 @@ SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT @point . STIsClosed ( );
 go
 
-SELECT location.STIsClosed() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+SELECT location.STIsClosed() from TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
 go
 
-SELECT location.STIsClosed() from TestGeospatialMethodstemp_DB.dbo.TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+SELECT location.STIsClosed() from TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
 go
 
 DECLARE @point geometry;
