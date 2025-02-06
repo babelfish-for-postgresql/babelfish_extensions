@@ -180,3 +180,38 @@ GO
 
 DROP TABLE #temp
 GO
+
+
+/************************************************************************************************/
+/************************** START OF TRANSACTION AND ERROR **************************************/
+/*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
+/************************************************************************************************/
+/*********** SAME DB ************/
+EXEC babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+EXEC babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+EXEC babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+
+/*********** CROSS DB ************/
+EXEC master.babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+EXEC master.babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+EXEC master.babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='

@@ -607,3 +607,176 @@ master.babel_5448_s1
 
 DROP TABLE #temp
 GO
+
+
+/************************************************************************************************/
+/************************** START OF TRANSACTION AND ERROR **************************************/
+/*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
+/************************************************************************************************/
+/*********** SAME DB ************/
+EXEC babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+
+EXEC babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+
+EXEC babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+/*********** CROSS DB ************/
+EXEC master.babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+

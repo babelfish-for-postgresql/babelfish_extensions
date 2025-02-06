@@ -356,3 +356,65 @@ CREATE PROC babel_5448_s1.babel_5448_p2 AS
         babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
+
+
+
+/************************************************************************************************/
+/************************** START OF TRANSACTION AND ERROR **************************************/
+/*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
+/************************************************************************************************/
+-- create procedures functions which will throw different levels of error
+-- and check if search path correctly updated
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p5 
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT 1/0;
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p6
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    CREATE TABLE #temp (id INT, id1 AS id*2);
+    ALTER TABLE #temp ADD CONSTRAINT def DEFAULT 1 FOR id1;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p7
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM non_existent_table;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p5 
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT 1/0;
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p6
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    CREATE TABLE #temp (id INT, id1 AS id*2);
+    ALTER TABLE #temp ADD CONSTRAINT def DEFAULT 1 FOR id1;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p7
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM non_existent_table;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
