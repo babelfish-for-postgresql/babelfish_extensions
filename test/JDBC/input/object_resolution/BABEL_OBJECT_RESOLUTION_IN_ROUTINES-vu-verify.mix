@@ -186,6 +186,7 @@ GO
 /************************** START OF TRANSACTION AND ERROR **************************************/
 /*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
 /************************************************************************************************/
+
 /*********** SAME DB ************/
 EXEC babel_5448_s1.babel_5448_p5
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
@@ -201,6 +202,33 @@ SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
 
+/*********** SAME DB ************/
+/*********** BUT INSIDE TRAN ************/
+
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+
+
 /*********** CROSS DB ************/
 EXEC master.babel_5448_s1.babel_5448_p5
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
@@ -215,3 +243,70 @@ EXEC master.babel_5448_s1.babel_5448_p7
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+
+/*********** CROSS DB ************/
+/*********** BUT INSIDE TRAN ************/
+
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+
+/************************************************************************************************/
+/************************** START OF TRY CATCH BLOCK TESTS **************************************/
+/************************************************************************************************/
+
+USE babel_5448_db
+GO
+
+BEGIN TRY
+    EXEC babel_5448_s1.babel_5448_p8
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE msdb
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+END CATCH
+GO
+
+SELECT db_name()
+GO
+
+USE babel_5448_db
+GO
+
+BEGIN TRY
+    EXEC babel_5448_s1.babel_5448_p8
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE msdb
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+END CATCH
+GO
+
+SELECT db_name()
+GO
+
+USE babel_5448_db
+GO

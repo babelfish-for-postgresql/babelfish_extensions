@@ -418,3 +418,44 @@ AS
     SELECT * FROM non_existent_table;
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
+
+
+
+/************************************************************************************************/
+/************************** START OF TRY CATCH BLOCK TESTS **************************************/
+/************************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p8
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ===================='
+    BEGIN TRY
+        SELECT '############ IN TRY BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+        SELECT 1/0;
+    END TRY
+    BEGIN CATCH
+        SELECT '############ IN CATCH BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    END CATCH
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p8
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ===================='
+    BEGIN TRY
+        SELECT '############ IN TRY BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+        SELECT 1/0;
+    END TRY
+    BEGIN CATCH
+        SELECT '############ IN CATCH BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    END CATCH
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+GO

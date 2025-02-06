@@ -875,7 +875,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 				/*
 				 * For sp_procedures set db name and search path if db_name
-				 * was specified and schema was dbo or empty conditions here
+				 * was specified and schema was dbo or empty. Conditions here
 				 * should match with set_search_path_for_pltsql_stmt()
 				 */
 				char *new_search_path;

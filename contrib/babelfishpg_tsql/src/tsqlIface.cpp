@@ -6853,17 +6853,24 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Note: previous code performed rewriting here for procedure names with leading dots (EXEC ..proc1)
 		// This is now performed in exitFunc_proc_name_server_database_schema() which is called via the mutator (previously, it wasn't).
-		
-		// For sp_* procs, truncate proc name to sp_* if the schema is "dbo" or "sys" or has leading dots
-		// ToDo: handle 'EXEC mydb..sp_proc' where sp_proc gets executed in the context of 'mydb', even when the current DB is not 'mydb'	
+
 		if ((!proc_name.empty() && pg_strncasecmp(proc_name.c_str(), "sp_", 3) == 0) &&
 			(schema_name.empty() || pg_strcasecmp(schema_name.c_str(), "dbo") == 0))
 		{
+			/*
+			 * For sp_ prefixed procedures remove database and schema portion if schema name is empty or dbo
+			 * We do this because db.dbo.sp_proc should be searched in sys and master.dbo schema as well
+			 */
 			name.replace(name.begin(), name.end(), proc_name);
 			name_length = proc_name.length();
 		}
 		else if (is_sp_proc(proc_name) && !schema_name.empty() && pg_strcasecmp(schema_name.c_str(), "sys") == 0)
 		{
+			/*
+			 * These sys.sp_procs do not actually exists in sys schema
+			 * We handle them as different statement in iterative executor
+			 * so only keep the proc name and discard everything else
+			 */
 			name.replace(name.begin(), name.end(), proc_name);
 			name_length = proc_name.length();
 		}
