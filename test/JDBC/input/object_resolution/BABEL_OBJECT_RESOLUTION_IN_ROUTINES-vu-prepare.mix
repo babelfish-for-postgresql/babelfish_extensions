@@ -40,6 +40,8 @@ CREATE SCHEMA babel_5448_user_default_schema
 GO
 CREATE SCHEMA babel_5448_s1
 GO
+CREATE SCHEMA babel_5448_s2
+GO
 
 -- Now create objects in all three schemas
 CREATE TABLE dbo.babel_5448_t (id NVARCHAR(max))
@@ -82,11 +84,31 @@ BEGIN
 END
 GO
 
-CREATE VIEW dbo.babel_5448_v AS SELECT 'master.dbo' AS col1
+CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN ' |--ignorable entry--master.babel_5448_s2--| ';
+END
 GO
-CREATE VIEW babel_5448_user_default_schema.babel_5448_v AS SELECT 'master.babel_5448_user_default_schema' AS col1
+
+-- Test declare statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f2() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @i NVARCHAR(MAX) = (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+    RETURN @i
+END
 GO
-CREATE VIEW babel_5448_s1.babel_5448_v AS SELECT 'master.babel_5448_s1' AS col1
+
+-- Test return statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+END
+GO
+
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |--ignorable entry--master.babel_5448_s2--| ' AS col1
 GO
 
 CREATE TRIGGER dbo.babel_5448_trigger
@@ -149,6 +171,21 @@ AS
     SELECT * FROM babel_5448_t;
 GO
 
+CREATE PROC dbo.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_s1.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
 /***************************************/
 /************** CROSS DB ***************/
 /***************************************/
@@ -160,6 +197,8 @@ GO
 CREATE SCHEMA babel_5448_user_default_schema
 GO
 CREATE SCHEMA babel_5448_s1
+GO
+CREATE SCHEMA babel_5448_s2
 GO
 
 -- Now create objects in all three schemas
@@ -203,11 +242,31 @@ BEGIN
 END
 GO
 
-CREATE VIEW dbo.babel_5448_v AS SELECT 'babel_5448_db.dbo' AS col1
+CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN ' |--ignorable entry--master.babel_5448_s2--| ';
+END
 GO
-CREATE VIEW babel_5448_user_default_schema.babel_5448_v AS SELECT 'babel_5448_db.babel_5448_user_default_schema' AS col1
+
+-- Test declare statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f2() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @i NVARCHAR(MAX) = (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+    RETURN @i
+END
 GO
-CREATE VIEW babel_5448_s1.babel_5448_v AS SELECT 'babel_5448_db.babel_5448_s1' AS col1
+
+-- Test return statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+END
+GO
+
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |--ignorable entry--master.babel_5448_s2--| ' AS col1
 GO
 
 CREATE TRIGGER dbo.babel_5448_trigger
@@ -269,3 +328,19 @@ AS
     -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
     SELECT * FROM babel_5448_t;
 GO
+
+CREATE PROC dbo.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_s1.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+

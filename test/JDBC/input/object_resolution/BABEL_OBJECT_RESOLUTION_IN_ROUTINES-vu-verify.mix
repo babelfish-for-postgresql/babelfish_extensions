@@ -14,11 +14,6 @@ GO
 EXEC dbo.babel_5448_p1
 GO
 
--- All objects should resolve to babel_5448_db.babel_5448_user_default_schema schema in this call
--- except EXEC call stmt
-EXEC babel_5448_user_default_schema.babel_5448_p1
-GO
-
 -- All objects should resolve to babel_5448_db.babel_5448_s1 schema in this call
 -- except EXEC call stmt
 EXEC babel_5448_s1.babel_5448_p1
@@ -26,7 +21,6 @@ GO
 
 -- Now we will run the same procedures again but this time we will references objects from other schema
 -- proc in dbo will reference objects from babel_5448_user_default_schema schema
--- proc in babel_5448_user_default_schema will reference objects from babel_5448_s1 schema
 -- proc in babel_5448_s1 will reference objects from dbo schema
 
 ALTER PROCEDURE dbo.babel_5448_p1
@@ -34,19 +28,9 @@ AS
     SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
-    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
     -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
     SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
-GO
-
-ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
-AS
-    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
-    EXEC babel_5448_s1.babel_5448_p;
-    INSERT INTO babel_5448_s1.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
-    DELETE FROM babel_5448_t WHERE length(id) > 50;
-    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
-    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
 GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
@@ -61,10 +45,6 @@ GO
 
 -- All objects should resolve to babel_5448_db.babel_5448_user_default_schema schema in this call
 EXEC dbo.babel_5448_p1
-GO
-
--- All objects should resolve to babel_5448_db.babel_5448_s1 schema in this call
-EXEC babel_5448_user_default_schema.babel_5448_p1
 GO
 
 -- All objects should resolve to babel_5448_db.dbo schema in this call
@@ -83,14 +63,6 @@ AS
     DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_user_default_schema'
 GO
 
-ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
-AS
-    INSERT INTO babel_5448_s1.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
-    -- trigger execution will tells use what the function resolved to
-    -- and what the objects inside triggers resolved to
-    DELETE FROM babel_5448_s1.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_s1'
-GO
-
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
 AS
     INSERT INTO dbo.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
@@ -103,14 +75,32 @@ GO
 EXEC dbo.babel_5448_p1
 GO
 
-
-EXEC babel_5448_user_default_schema.babel_5448_p1
-GO
-
-
 EXEC babel_5448_s1.babel_5448_p1
 GO
 
+-- Test INSERT EXEC
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+GO
+
+INSERT INTO #temp EXEC dbo.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+
+INSERT INTO #temp EXEC babel_5448_s1.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+
+DROP TABLE #temp
+GO
+
+-- Test declare statement inside function
+SELECT babel_5448_s1.babel_5448_f2();
+
+-- Test declare statement inside function
+SELECT babel_5448_s1.babel_5448_f3();
+GO
 
 /*********************************/
 /*********** CROSS DB ************/
@@ -121,11 +111,6 @@ GO
 
 -- All objects should resolve to master.dbo schema in this call
 EXEC master.dbo.babel_5448_p1
-GO
-
--- All objects should resolve to master.babel_5448_user_default_schema schema in this call
--- except EXEC call stmt
-EXEC master.babel_5448_user_default_schema.babel_5448_p1
 GO
 
 -- All objects should resolve to master.babel_5448_s1 schema in this call
@@ -144,19 +129,9 @@ AS
     SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
     EXEC babel_5448_user_default_schema.babel_5448_p;
     INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
-    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
     -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
     SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
-GO
-
-ALTER PROCEDURE babel_5448_user_default_schema.babel_5448_p1
-AS
-    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
-    EXEC babel_5448_s1.babel_5448_p;
-    INSERT INTO babel_5448_s1.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
-    DELETE FROM babel_5448_t WHERE length(id) > 50;
-    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
-    SELECT babel_5448_s1.babel_5448_f(), * FROM babel_5448_s1.babel_5448_t;
 GO
 
 ALTER PROCEDURE babel_5448_s1.babel_5448_p1
@@ -177,10 +152,31 @@ GO
 EXEC master.dbo.babel_5448_p1
 GO
 
--- All objects should resolve to master.babel_5448_s1 schema in this call
-EXEC master.babel_5448_user_default_schema.babel_5448_p1
-GO
-
 -- All objects should resolve to master.dbo schema in this call
 EXEC master.babel_5448_s1.babel_5448_p1
+GO
+
+-- Test INSERT EXEC
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+GO
+
+INSERT INTO #temp EXEC master.dbo.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+EXEC master.babel_5448_s1.babel_5448_p2
+GO
+INSERT INTO #temp EXEC master.babel_5448_s1.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+
+-- Test declare statement inside function
+SELECT master.babel_5448_s1.babel_5448_f2();
+
+-- Test declare statement inside function
+SELECT master.babel_5448_s1.babel_5448_f3();
+GO
+
+DROP TABLE #temp
 GO

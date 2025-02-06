@@ -8,18 +8,20 @@ GO
 DROP DATABASE babel_5448_db
 GO
 
-DROP PROC dbo.babel_5448_p, dbo.babel_5448_p1
+DROP PROC dbo.babel_5448_p, dbo.babel_5448_p1, dbo.babel_5448_p2
 GO
-DROP PROC babel_5448_user_default_schema.babel_5448_p, babel_5448_user_default_schema.babel_5448_p1
+DROP PROC babel_5448_user_default_schema.babel_5448_p, babel_5448_user_default_schema.babel_5448_p1, babel_5448_user_default_schema.babel_5448_p2
 GO
-DROP PROC babel_5448_s1.babel_5448_p, babel_5448_s1.babel_5448_p1
+DROP PROC babel_5448_s1.babel_5448_p, babel_5448_s1.babel_5448_p1, babel_5448_s1.babel_5448_p2
 GO
 
 DROP FUNCTION dbo.babel_5448_f
 GO
 DROP FUNCTION babel_5448_user_default_schema.babel_5448_f
 GO
-DROP FUNCTION babel_5448_s1.babel_5448_f
+DROP FUNCTION babel_5448_s1.babel_5448_f, babel_5448_s1.babel_5448_f2, babel_5448_s1.babel_5448_f3
+GO
+DROP FUNCTION babel_5448_s2.babel_5448_f
 GO
 
 DROP TABLE dbo.babel_5448_t
@@ -29,14 +31,12 @@ GO
 DROP TABLE babel_5448_s1.babel_5448_t
 GO
 
-DROP VIEW dbo.babel_5448_v
-GO
-DROP VIEW babel_5448_user_default_schema.babel_5448_v
-GO
-DROP VIEW babel_5448_s1.babel_5448_v
+DROP VIEW babel_5448_s2.babel_5448_v
 GO
 
 DROP SCHEMA babel_5448_user_default_schema
 GO
 DROP SCHEMA babel_5448_s1
+GO
+DROP SCHEMA babel_5448_s2
 GO
