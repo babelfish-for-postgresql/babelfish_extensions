@@ -596,18 +596,28 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				TargetEntry	*tle;
 				if (plan) outerplan = outerPlan(plan);
 
-				/* If we are in parallel mode or have a Sort node then
+				/* If we are in parallel mode or have a Sort or limit node,
      			 * find the original target list entry from the outer plan
 				 */
 				if (plan && outerplan && (
 					(IsA(plan, Agg) && IsA(outerplan, Gather)) ||
 					IsA(plan, Gather) ||
 					IsA(plan, Sort) ||
-					IsA(plan, GatherMerge)))
+					IsA(plan, GatherMerge) ||
+					IsA(plan, Limit)) &&
+					var->varno == OUTER_VAR)
 				{
 					Assert(plan);
 					Assert(outerplan);
-					tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+					if (IsA(outerplan, SubqueryScan))
+					{
+						outerplan = ((SubqueryScan *)outerplan)->subplan;
+						tle = get_tle_by_resno(outerplan->targetlist, var->varattnosyn);
+					}
+					else
+					{
+						tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+					}
 					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
 				return var->vartypmod;

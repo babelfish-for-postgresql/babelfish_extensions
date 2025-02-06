@@ -519,3 +519,7 @@ where id = 1
 ORDER BY a
 GO
 
+-- cte, limit, 5588
+WITH cte AS (SELECT TOP 10 (id+1) AS id FROM BABEL_5454_T9 WHERE id >50 ORDER BY id) SELECT TOP 1 1, id FROM cte
+GO
+
