@@ -538,6 +538,10 @@ ignore#!#trim-before-15_11-or-16_7-vu-prepare
 ignore#!#trim-before-15_11-or-16_7-vu-verify
 ignore#!#trim-before-15_11-or-16_7-vu-cleanup
 
+ignore#!#Test-spatial-functions_before_17_3-vu-prepare
+ignore#!#Test-spatial-functions_before_17_3-vu-verify
+ignore#!#Test-spatial-functions_before_17_3-vu-cleanup
+
 # getting timed out (TODO: BABEL-5353)
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 
