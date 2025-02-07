@@ -819,8 +819,8 @@ makeToTSVectorFuncCall(List *colId, core_yyscan_t yyscanner, Node *pgconfig)
 	int 	len = colId->length; 	
 
 	/* inititalize the list of columns as null as we are using lappend function to append column(s)
-		* so its necessary to have a null list to start with  
-		*/
+	 * so its necessary to have a null list to start with  
+	 */
 	replaceSpecialCharsArgs = NIL;
 
 	for(int i = 0; i < len; i++)
