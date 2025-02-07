@@ -490,3 +490,90 @@ GO
 
 DROP TABLE BINARY_dt
 GO
+
+-- UDF based on varbinary(max)
+CREATE TYPE udfvarbinarymax FROM varbinary(max);
+GO
+
+CREATE TABLE BINARY_dt(a udfvarbinarymax);
+GO
+
+INSERT INTO BINARY_dt(a) values (NULL);
+GO
+INSERT INTO BINARY_dt(a) values (123456);
+GO
+INSERT INTO BINARY_dt(a) values (0x);
+GO
+INSERT INTO BINARY_dt(a) values (' Abc   ');
+GO
+INSERT INTO BINARY_dt(a) values (cast(replicate(0x41, 8010) as varbinary(max)));
+GO
+
+SELECT * FROM BINARY_dt order by a;
+GO
+
+select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfvarbinarymax';
+
+DROP TABLE BINARY_dt
+GO
+
+DROP TYPE udfvarbinarymax
+GO
+
+-- UDF based on varbinary(n)
+CREATE TYPE udfvarbinary10 FROM varbinary(10);
+GO
+
+CREATE TABLE BINARY_dt(a udfvarbinary10);
+GO
+
+INSERT INTO BINARY_dt(a) values (NULL);
+GO
+INSERT INTO BINARY_dt(a) values (123456);
+GO
+INSERT INTO BINARY_dt(a) values (0x);
+GO
+INSERT INTO BINARY_dt(a) values (' Abc   ');
+GO
+INSERT INTO BINARY_dt(a) values (cast(replicate(0x41, 8010) as varbinary(max)));
+GO
+
+SELECT * FROM BINARY_dt order by a;
+GO
+
+select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfvarbinary10';
+
+DROP TABLE BINARY_dt
+GO
+
+DROP TYPE udfvarbinary10
+GO
+
+-- UDF based on binary(n)
+CREATE TYPE udfbinary10 FROM binary(10);
+GO
+
+CREATE TABLE BINARY_dt(a udfbinary10);
+GO
+
+INSERT INTO BINARY_dt(a) values (NULL);
+GO
+INSERT INTO BINARY_dt(a) values (123456);
+GO
+INSERT INTO BINARY_dt(a) values (0x);
+GO
+INSERT INTO BINARY_dt(a) values (' Abc   ');
+GO
+INSERT INTO BINARY_dt(a) values (cast(replicate(0x41, 8010) as varbinary(max)));
+GO
+
+SELECT * FROM BINARY_dt order by a;
+GO
+
+select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfbinary10';
+
+DROP TABLE BINARY_dt
+GO
+
+DROP TYPE udfbinary10
+GO
