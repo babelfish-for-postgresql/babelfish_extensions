@@ -90,6 +90,8 @@ Function sys.babelfish_cast_floor_bigint(text)
 Function sys.babelfish_cast_floor_int(text)
 Function sys.babelfish_cast_floor_smallint(text)
 Function sys.babelfish_collation_list()
+Function sys.fn_varbintohexsubstring(integer,sys.varbinary,integer,integer)
+Function sys.loginproperty(sys.sysname,sys.nvarchar)
 Function sys.babelfish_concat_wrapper(text,text)
 Function sys.babelfish_conv_date_to_string(text,date,numeric)
 Function sys.babelfish_conv_datetime_to_string(text,text,timestamp without time zone,numeric)
@@ -995,6 +997,9 @@ View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
 View sys.servers
+View sys.credentials
+View sys.server_permissions
+View sys.sql_logins
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view
