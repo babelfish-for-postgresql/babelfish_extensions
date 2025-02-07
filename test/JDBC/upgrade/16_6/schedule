@@ -574,7 +574,7 @@ xml_exist
 test_db_collation
 BABEL-5119
 BABEL-5129
-BABEL-CASE_EXPR
+BABEL-CASE_EXPR-before-16_6
 charindex_replace_patindex
 BABEL-5186
 BABEL-2736
@@ -586,4 +586,6 @@ datareader_datawriter
 dbcreator_role
 db_securityadmin
 db_ddladmin
-
+test_conv_money_to_varchar
+fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3

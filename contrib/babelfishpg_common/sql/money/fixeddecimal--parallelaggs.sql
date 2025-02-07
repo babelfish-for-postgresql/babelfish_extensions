@@ -80,3 +80,17 @@ CREATE AGGREGATE sys.max(sys.smallmoney) (
     COMBINEFUNC = sys.smallmoneylarger,
     PARALLEL = SAFE
 );
+
+CREATE AGGREGATE sys.min(sys.money) (
+    SFUNC = sys.moneysmaller,
+    STYPE = sys.money,
+    COMBINEFUNC = sys.moneysmaller,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE sys.max(sys.money) (
+    SFUNC = sys.moneylarger,
+    STYPE = sys.money,
+    COMBINEFUNC = sys.moneylarger,
+    PARALLEL = SAFE
+);

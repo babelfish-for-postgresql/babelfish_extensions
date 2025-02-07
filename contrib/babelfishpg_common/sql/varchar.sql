@@ -302,6 +302,28 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.VARCHAR AS pg_catalog.NUMERIC)
 WITH FUNCTION sys.varchar2numeric(sys.VARCHAR) AS IMPLICIT;
 
+CREATE OR REPLACE FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_common', 'fixeddecimal2varchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'fixeddecimal2bpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.FIXEDDECIMAL AS sys.VARCHAR)
+WITH FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+
+CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.VARCHAR)
+WITH FUNCTION sys.fixeddecimal2varchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+
+CREATE CAST (sys.FIXEDDECIMAL AS sys.BPCHAR)
+WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+
+CREATE CAST (sys.FIXEDDECIMAL AS pg_catalog.BPCHAR)
+WITH FUNCTION sys.fixeddecimal2bpchar(sys.FIXEDDECIMAL, integer, BOOLEAN) AS IMPLICIT;
+
 CREATE OR REPLACE FUNCTION sys.nvarchar_larger(sys.NVARCHAR, sys.NVARCHAR)
 RETURNS sys.NVARCHAR
 AS 'text_larger'
@@ -327,3 +349,19 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
   combinefunc = sys.nvarchar_smaller,
   parallel = safe
 );
+
+CREATE OR REPLACE FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_common', 'float82varchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN)
+RETURNS sys.BPCHAR
+AS 'babelfishpg_common', 'float82bpchar'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.float8 AS sys.VARCHAR)
+WITH FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT; 
+
+CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
+WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;

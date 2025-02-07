@@ -13,6 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
+money_aggregate
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -214,6 +215,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery
@@ -593,3 +595,6 @@ smalldatetime_date_cmp
 datareader_datawriter
 db_owner
 BABEL-2961
+test_conv_money_to_varchar
+fixeddecimal_modulo
+test_conv_float_to_varchar_char

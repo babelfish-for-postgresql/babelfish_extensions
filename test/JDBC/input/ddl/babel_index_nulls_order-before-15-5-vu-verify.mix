@@ -44,11 +44,11 @@ SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_i
 go
 SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_asc_idx_a)) WHERE a > 5 ORDER BY a
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b
 go
 SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b DESC
 go
@@ -113,11 +113,11 @@ SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_i
 go
 SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_asc_idx_a)) WHERE a > 5 ORDER BY a
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b <= 'sss' ORDER BY b DESC
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b ASC
 go
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (bel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_desc_idx_b)) WHERE b > 'sss' ORDER BY b
 go
 SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WITH (INDEX (babel_index_nulls_order_before_15_5_default_idx_ab)) WHERE (a = 3 AND b <= 'sss') ORDER BY b DESC
 go

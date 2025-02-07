@@ -17,6 +17,7 @@
 
 #include "access/hash.h"
 #include "collation.h"
+#include "common/shortest_dec.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "encoding/encoding.h"
@@ -50,6 +51,12 @@ void		TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen)
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
+
+/* Linkage to function in fixeddecimal module */
+typedef char *(*fixeddecimal2str_t) (int64 val, char *buffer,
+									 int64 fixeddecimal_multiplier,
+									 int64 fixeddecimal_scale);
+static fixeddecimal2str_t fixeddecimal2str_p = NULL;
 
 /*
  * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
@@ -554,6 +561,10 @@ PG_FUNCTION_INFO_V1(varchar2date);
 PG_FUNCTION_INFO_V1(varchar2time);
 PG_FUNCTION_INFO_V1(varchar2money);
 PG_FUNCTION_INFO_V1(varchar2numeric);
+PG_FUNCTION_INFO_V1(fixeddecimal2varchar);
+PG_FUNCTION_INFO_V1(fixeddecimal2bpchar);
+PG_FUNCTION_INFO_V1(float82varchar);
+PG_FUNCTION_INFO_V1(float82bpchar);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -1100,6 +1111,183 @@ varchar2numeric(PG_FUNCTION_ARGS)
 												 Int32GetDatum(-1)));
 	pfree(str);
 	PG_RETURN_NUMERIC(result);
+}
+
+#define FIXEDDECIMAL_2_VARCHAR_MULTIPLIER 100LL
+#define FIXEDDECIMAL_2_VARCHAR_SCALE 2
+Datum
+fixeddecimal2varchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	char		buf[MAXINT8LEN + 1];
+	char	   *end;
+	int32		len;
+	Datum		res;
+
+	/* fetch function pointer for cross-module calls. */
+	if (fixeddecimal2str_p == NULL)
+		fixeddecimal2str_p = (fixeddecimal2str_t)
+			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
+
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
+	len = (end - buf);
+
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
+	maxByteLen -= VARHDRSZ;
+	if (len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
+
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(buf),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
+
+	PG_RETURN_DATUM(res);
+}
+
+Datum
+fixeddecimal2bpchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	char		buf[MAXINT8LEN + 1];
+	char	   *buf_padded;
+	char	   *end;
+	int32		len;
+	Datum		res;
+
+	/* fetch function pointer for cross-module calls. */
+	if (fixeddecimal2str_p == NULL)
+		fixeddecimal2str_p = (fixeddecimal2str_t)
+			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
+
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
+	len = (end - buf);
+
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
+	maxByteLen -= VARHDRSZ;
+	if (len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
+
+	/* Left pad money value with the spaces */
+	buf_padded = (char *) palloc(maxByteLen + 1);
+	memset(buf_padded, ' ', maxByteLen - len);
+	memcpy(buf_padded + maxByteLen - len, buf, len);
+	buf_padded[maxByteLen] = '\0';
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
+
+	PG_RETURN_DATUM(res);
+}
+#undef FIXEDDECIMAL_2_VARCHAR_MULTIPLIER
+#undef FIXEDDECIMAL_2_VARCHAR_SCALE
+
+Datum
+float82varchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
+	char	   *ascii = (char *) palloc0(32);
+	
+	/* round to 6 decimal digits */
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		num = round(num * 1000000.0) / 1000000.0;
+	}
+
+	double_to_shortest_decimal_buf(num, ascii);
+
+	/* Check if the number fits within the specified length */
+	if (maxlen > 0) 
+	{
+		size_t str_len = strlen(ascii);
+		if (str_len > maxlen) 
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("There is insufficient result space to convert a float value to varchar/nvarchar.")));
+		}
+	}
+	
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(ascii),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
+}
+
+Datum
+float82bpchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
+	char	   *ascii = (char *) palloc0(32);
+	char	   *buf_padded;
+	int		   str_len = -1;
+	
+	/* Handle special cases */
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		num = round(num * 1000000.0) / 1000000.0;
+	}
+
+	double_to_shortest_decimal_buf(num, ascii);
+
+	/* Check if the number fits within the specified length */
+	if (maxlen > 0)
+	{
+		str_len = strlen(ascii);
+		if (str_len > maxlen) 
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("There is insufficient result space to convert a float value to char/nchar.")));
+		}
+	}
+
+	/* Left pad float value with the spaces */
+	buf_padded = (char *) palloc0(maxlen + 1);
+	memset(buf_padded, ' ', maxlen - str_len);
+	memcpy(buf_padded + maxlen - str_len, ascii, str_len);
+	
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
 }
 
 /*****************************************************************************

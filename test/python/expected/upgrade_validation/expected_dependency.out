@@ -192,7 +192,7 @@ Function sys.babelfish_try_cast_floor_bigint(text)
 Function sys.babelfish_try_conv_date_to_string(text,date,numeric)
 Function sys.babelfish_try_conv_datetime_to_string(text,text,timestamp without time zone,numeric)
 Function sys.babelfish_try_conv_float_to_string(text,double precision,numeric)
-Function sys.babelfish_try_conv_money_to_string(text,money,numeric)
+Function sys.babelfish_try_conv_money_to_string(text,numeric,numeric)
 Function sys.babelfish_try_conv_string_to_date(text,numeric)
 Function sys.babelfish_try_conv_string_to_datetime(text,text,numeric)
 Function sys.babelfish_try_conv_string_to_time(text,text,numeric)
@@ -407,6 +407,8 @@ Function sys.exp(double precision)
 Function sys.exp(numeric)
 Function sys.fetch_status()
 Function sys.fixeddecimal(sys.fixeddecimal,integer)
+Function sys.fixeddecimal2bpchar(sys.fixeddecimal,integer,boolean)
+Function sys.fixeddecimal2varchar(sys.fixeddecimal,integer,boolean)
 Function sys.fixeddecimal_avg(internal)
 Function sys.fixeddecimal_avg_accum(internal,sys.fixeddecimal)
 Function sys.fixeddecimal_cmp(sys.fixeddecimal,sys.fixeddecimal)
@@ -478,8 +480,6 @@ Function sys.get_icu_minor_version()
 Function sys.get_valid_srids()
 Function sys.has_dbaccess(sys.sysname)
 Function sys.hashbpchar(sys.bpchar)
-Function sys.hashbytes(character varying,character varying)
-Function sys.hashbytes(character varying,sys.bbf_varbinary)
 Function sys.hashvarchar(sys."varchar")
 Function sys.host_name()
 Function sys.ident_current(text)
@@ -538,6 +538,8 @@ Function sys.max_connections()
 Function sys.microsoftversion()
 Function sys.money_sqlvariant(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.money)
+Function sys.moneylarger(sys.money,sys.money)
+Function sys.moneysmaller(sys.money,sys.money)
 Function sys.month(anyelement)
 Function sys.nchar_larger(sys."nchar",sys."nchar")
 Function sys.nchar_smaller(sys."nchar",sys."nchar")
@@ -775,6 +777,8 @@ Operator =(text,sys.bpchar)
 Operator >(sys.bpchar,sys.bpchar)
 Operator >=(sys."varchar",sys."varchar")
 Operator >=(sys.bpchar,sys.bpchar)
+Operator sys.%(sys.money,sys.money)
+Operator sys.%(sys.smallmoney,sys.smallmoney)
 Operator sys.*(bigint,sys.fixeddecimal)
 Operator sys.*(bigint,sys.smallmoney)
 Operator sys.*(integer,sys.fixeddecimal)
@@ -960,7 +964,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."real"
-Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
@@ -976,6 +979,7 @@ View sys.change_tracking_tables
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
+View sys.database_role_members
 View sys.dm_hadr_cluster
 View sys.dm_hadr_database_replica_states
 View sys.dm_os_host_info

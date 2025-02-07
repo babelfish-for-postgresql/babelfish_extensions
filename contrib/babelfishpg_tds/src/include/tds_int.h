@@ -259,12 +259,6 @@ extern ProcessUtility_hook_type next_ProcessUtility;
 #define BABELFISH_SECURITYADMIN "securityadmin"
 #define BABELFISH_DBCREATOR "dbcreator"
 
-#define IS_DEFAULT_BBF_SERVER_ROLE(rolename) \
-	((strlen(rolename) == 13 && strncmp(rolename, BABELFISH_SECURITYADMIN, 13) == 0) || \
-	(strlen(rolename) == 14 && strncmp(rolename, BABELFISH_ROLE_ADMIN, 14) == 0) || \
-	(strlen(rolename) == 9 && strncmp(rolename, BABELFISH_DBCREATOR, 9) == 0) || \
-	(strlen(rolename) == 8 && strncmp(rolename, BABELFISH_SYSADMIN, 8) == 0))
-
 /* Functions in backend/tds/tdscomm.c */
 extern void TdsSetMessageType(uint8_t msgType);
 extern void TdsCommInit(uint32_t bufferSize,

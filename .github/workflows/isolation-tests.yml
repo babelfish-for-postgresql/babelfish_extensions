@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload Coverage Report for Babelfish Extensions
         if: always() && steps.code-coverage-summary.outcome == 'success'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-babelfish-extensions-isolation
           path: contrib/isolation-lcov.info

@@ -9849,9 +9849,9 @@ BEGIN
 		END IF;
 	WHEN 'sys.money'::regtype THEN
 		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4));
 		ELSE
-			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4), p_style);
 		END IF;
 	ELSE
 		RETURN CAST(arg AS sys.VARCHAR);
@@ -9939,7 +9939,7 @@ LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
-														IN p_moneyval PG_CATALOG.MONEY,
+														IN p_moneyval NUMERIC,
 														IN p_style NUMERIC DEFAULT 0)
 RETURNS TEXT
 AS
@@ -9953,8 +9953,6 @@ DECLARE
 	v_digits SMALLINT;
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
-	v_res_length SMALLINT;
-	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 	v_result TEXT;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
@@ -9966,26 +9964,22 @@ BEGIN
 		v_integral_digits := v_digits;
 	END IF;
 	IF (v_style = 0) THEN
-		v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D99';
-		v_result := to_char(v_moneyval, v_format);
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D99';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSIF (v_style = 1) THEN
-		IF (v_moneysign::SMALLINT = 1) THEN
-			v_result := substring(p_moneyval::TEXT, 2);
+		IF (v_moneysign::SMALLINT = -1) THEN
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 1, 1) || substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 3);
 		ELSE
-			v_result := substring(p_moneyval::TEXT, 1, 1) || substring(p_moneyval::TEXT, 3);
+			v_result := substring(p_moneyval::PG_CATALOG.MONEY::TEXT, 2);
 		END IF;
-	ELSIF (v_style = 2) THEN
-		v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D9999';
-		v_result := to_char(v_moneyval, v_format);
+	ELSIF (v_style = 2 OR v_style = 126) THEN
+		v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D9999';
+		v_result := pg_catalog.btrim(to_char(v_moneyval, v_format));
 	ELSE
 		RAISE invalid_parameter_value;
 	END IF;
-	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
-	IF v_res_length IS NULL THEN
-		RETURN v_result;
-	ELSE
-		RETURN rpad(v_result, v_res_length, ' ');
-	END IF;
+
+	RETURN v_result;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
 		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
@@ -10026,13 +10020,15 @@ BEGIN
 		END IF;
 		IF (v_floatval >= 999999.5) THEN
 			v_format := '9D99999EEEE';
-			v_result := to_char(v_sign * ceiling(v_floatval), v_format);
+			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
 			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
 		ELSE
-			if (6 - v_integral_digits < v_decimal_digits) THEN
-				v_decimal_digits := 6 - v_integral_digits;
-			END IF;
-			v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D';
+            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+                v_decimal_digits := 6 - v_integral_digits;
+            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+                v_decimal_digits := 6;
+            END IF;
+			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
 			IF (v_decimal_digits > 0) THEN
 				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
 			END IF;
