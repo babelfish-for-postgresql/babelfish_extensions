@@ -1,3 +1,4 @@
+--This file adds support for these functions: STDimension, STDisjoint, STIntersects, STIsClosed, STIsEmpty, STIsValid
 
 --STIntersects
 
