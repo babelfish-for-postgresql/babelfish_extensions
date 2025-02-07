@@ -1666,7 +1666,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.080000000000000
 ~~END~~
 
 
@@ -1682,7 +1682,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.080000000000000
 ~~END~~
 
 
@@ -1698,7 +1698,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.080000000000000
 ~~END~~
 
 
@@ -1714,7 +1714,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.080000000000000
 ~~END~~
 
 
