@@ -215,6 +215,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery

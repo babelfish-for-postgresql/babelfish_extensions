@@ -1,0 +1,248 @@
+USE MASTER;
+GO
+
+CREATE TABLE [order] (
+    pkorder INT IDENTITY(25001000,1) PRIMARY KEY,
+    screatedby sys.varchar(255)
+);
+GO
+
+CREATE TABLE orderitem (
+    pkorderitem INT IDENTITY(1,1) PRIMARY KEY,
+    fkorder integer,
+    screatedby sys.varchar(255)
+);
+GO
+
+ALTER TABLE [dbo].[OrderItem] ADD CONSTRAINT [FK_OrderItem_Order] FOREIGN KEY([fkOrder])REFERENCES [dbo].[Order] ([pkOrder]);
+GO
+
+
+
+
+
+
+
+CREATE TRIGGER [trg_i_COD] ON [dbo].[OrderItem]
+    AFTER INSERT
+AS
+BEGIN
+SET NOCOUNT ON ;
+        DECLARE @HasMoreRow BIT ,
+            @pkOrderItem INT ,
+            @IsExpedit BIT ,
+            @IsShippingItem BIT ,
+            @IsPackage BIT ,
+            @IsAddOn BIT ,
+            @IsCrossSell BIT ,
+            @ExpeditePackageBitValue INT ,
+            @PackageRelationshipType INT,
+            @ShippingRelationshipType INT ,
+            @AddOnRelationshipType INT ,
+            @CrossSellRelationshipType INT
+DECLARE @OrderItemList TABLE
+            (
+              pkOrderItem INT NOT NULL ,
+              IsUsed BIT DEFAULT ( 0 )/*REWRITTEN*/  ,  /**/ PRIMARY KEY ( pkOrderItem )
+            )
+        INSERT  INTO @OrderItemList
+                ( pkOrderItem )
+                SELECT  pkOrderItem
+                FROM    inserted
+        SELECT TOP 1
+                @pkOrderItem = pkOrderItem ,
+                @hasMoreRow = 1
+        FROM    @OrderItemList
+        WHERE   IsUsed = 0
+    END
+GO
+
+INSERT INTO [dbo].[order] (sCreatedBy) VALUES('test');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [dbo].[orderItem] (fkOrder, sCreatedBy) VALUES(25001000, 'test');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Create base tables
+CREATE TABLE GrandParent (ID INT PRIMARY KEY);
+GO
+
+CREATE TABLE Parent (
+    ID INT PRIMARY KEY,
+    GrandParentID INT
+);
+GO
+
+ALTER TABLE [dbo].[Parent] ADD CONSTRAINT [FK_Parent_GrandParent] FOREIGN KEY ([GrandParentID]) REFERENCES [dbo].[GrandParent] ([ID]);
+GO
+
+CREATE TABLE Child (
+    ID INT PRIMARY KEY,
+    ParentID INT
+);
+GO
+
+ALTER TABLE [dbo].[Child] ADD CONSTRAINT [FK_Child_Parent] FOREIGN KEY ([ParentID]) REFERENCES [dbo].[Parent] ([ID]);
+GO
+
+-- Create special character tables
+CREATE TABLE [Parent@Table] (ID INT PRIMARY KEY);
+GO
+
+CREATE TABLE [Child#Table] (
+    ID INT PRIMARY KEY,
+    ParentID INT
+);
+GO
+
+ALTER TABLE [dbo].[Child#Table] ADD CONSTRAINT [FK_ChildTable_ParentTable] FOREIGN KEY ([ParentID]) REFERENCES [dbo].[Parent@Table] ([ID]);
+GO
+
+-- Insert some initial data
+INSERT INTO GrandParent VALUES (1), (2);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO Parent VALUES (1, 1), (2, 2);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO [Parent@Table] VALUES (1), (2);
+GO
+~~ROW COUNT: 2~~
+
+
+-- Create multi-level tables for nesting tests
+CREATE TABLE Level1 (ID INT PRIMARY KEY);
+GO
+
+CREATE TABLE Level2 (
+    ID INT PRIMARY KEY,
+    Level1ID INT
+);
+GO
+
+ALTER TABLE [dbo].[Level2] ADD CONSTRAINT [FK_Level2_Level1] FOREIGN KEY ([Level1ID]) REFERENCES [dbo].[Level1] ([ID]);
+GO
+
+CREATE TABLE Level3 (
+    ID INT PRIMARY KEY,
+    Level2ID INT
+);
+GO
+
+ALTER TABLE [dbo].[Level3] ADD CONSTRAINT [FK_Level3_Level2] FOREIGN KEY ([Level2ID]) REFERENCES [dbo].[Level2] ([ID]);
+GO
+
+INSERT INTO Level1 VALUES (1), (2);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO Level2 VALUES (1, 1), (2, 2);
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE UniqueParent (
+    ID INT PRIMARY KEY,
+    UniqueValue VARCHAR(50) UNIQUE
+);
+GO
+
+CREATE TABLE UniqueChild (
+    ID INT PRIMARY KEY,
+    ParentID INT,
+    UniqueChildValue VARCHAR(50) UNIQUE
+);
+GO
+
+ALTER TABLE UniqueChild ADD CONSTRAINT FK_UniqueChild_UniqueParent FOREIGN KEY (ParentID) REFERENCES UniqueParent(ID);
+GO
+
+INSERT INTO UniqueParent (ID, UniqueValue) VALUES (1, 'Parent1'), (2, 'Parent2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE ParentNoAction (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentCascade (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentSetNull (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ParentSetDefault (ParentID INT PRIMARY KEY, ParentName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildNoAction (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildCascade (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildSetNull (ChildID INT PRIMARY KEY, ParentID INT, ChildName NVARCHAR(50));
+GO
+
+CREATE TABLE ChildSetDefault (ChildID INT PRIMARY KEY, ParentID INT DEFAULT 0, ChildName NVARCHAR(50));
+GO
+
+ALTER TABLE ChildNoAction ADD CONSTRAINT FK_ChildNoAction_Parent FOREIGN KEY (ParentID) REFERENCES ParentNoAction(ParentID);
+GO
+
+ALTER TABLE ChildCascade ADD CONSTRAINT FK_ChildCascade_Parent FOREIGN KEY (ParentID) REFERENCES ParentCascade(ParentID) ON DELETE CASCADE ON UPDATE CASCADE;
+GO
+
+ALTER TABLE ChildSetNull ADD CONSTRAINT FK_ChildSetNull_Parent FOREIGN KEY (ParentID) REFERENCES ParentSetNull(ParentID) ON DELETE SET NULL ON UPDATE SET NULL;
+GO
+
+ALTER TABLE ChildSetDefault ADD CONSTRAINT FK_ChildSetDefault_Parent FOREIGN KEY (ParentID) REFERENCES ParentSetDefault(ParentID) ON DELETE SET DEFAULT ON UPDATE SET DEFAULT;
+GO
+
+INSERT INTO ParentNoAction (ParentID, ParentName) VALUES (1, 'ParentNoAction1'), (2, 'ParentNoAction2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ParentCascade (ParentID, ParentName) VALUES (1, 'ParentCascade1'), (2, 'ParentCascade2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ParentSetNull (ParentID, ParentName) VALUES (1, 'ParentSetNull1'), (2, 'ParentSetNull2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ParentSetDefault (ParentID, ParentName) VALUES (1, 'ParentSetDefault1'), (2, 'ParentSetDefault2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ChildNoAction (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildNoAction1'), (2, 2, 'ChildNoAction2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ChildCascade (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildCascade1'), (2, 2, 'ChildCascade2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ChildSetNull (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildSetNull1'), (2, 2, 'ChildSetNull2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO ChildSetDefault (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildSetDefault1'), (2, 2, 'ChildSetDefault2');
+GO
+~~ROW COUNT: 2~~
+
