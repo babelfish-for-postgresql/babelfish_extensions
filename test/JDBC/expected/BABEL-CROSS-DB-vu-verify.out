@@ -1925,7 +1925,7 @@ GO
 USE my_babel_cross_db_vu_prepare_db1;
 GO
 
-EXECUTE dbo.babel_5448_p3;
+EXECUTE dbo.babel_5448_p03;
 GO
 ~~START~~
 varchar

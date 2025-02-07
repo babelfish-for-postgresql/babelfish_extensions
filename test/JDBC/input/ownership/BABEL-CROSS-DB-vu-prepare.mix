@@ -281,33 +281,33 @@ GO
 USE master;
 GO
 
-CREATE PROCEDURE dbo.babel_5448_p1 AS
+CREATE PROCEDURE dbo.babel_5448_p01 AS
 BEGIN
     SELECT 'This is correct datbase dbname = master';
 END;
 GO
 
-CREATE PROCEDURE dbo.babel_5448_p2 AS
+CREATE PROCEDURE dbo.babel_5448_p02 AS
 BEGIN
-    EXECUTE dbo.babel_5448_p1;           -- schema.proc
-    EXECUTE master.dbo.babel_5448_p1;    -- db.schema.proc
-    EXECUTE master..babel_5448_p1;       -- db..proc
-    EXECUTE babel_5448_p1;               -- proc
+    EXECUTE dbo.babel_5448_p01;           -- schema.proc
+    EXECUTE master.dbo.babel_5448_p01;    -- db.schema.proc
+    EXECUTE master..babel_5448_p01;       -- db..proc
+    EXECUTE babel_5448_p01;               -- proc
 END;
 GO
 
 USE my_babel_cross_db_vu_prepare_db1;
 GO
 
-CREATE PROCEDURE dbo.babel_5448_p1 AS
+CREATE PROCEDURE dbo.babel_5448_p01 AS
 BEGIN
     SELECT 'This is the incorrect database: dbname = my_babel_cross_db_vu_prepare_db1';
 END;
 GO
 
-CREATE PROCEDURE dbo.babel_5448_p3 AS
+CREATE PROCEDURE dbo.babel_5448_p03 AS
 BEGIN
-    EXECUTE master.dbo.babel_5448_p2;
+    EXECUTE master.dbo.babel_5448_p02;
 END;
 GO
 
