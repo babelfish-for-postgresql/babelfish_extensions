@@ -6719,7 +6719,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 			CAST(
 				COALESCE(
-					(SELECT string_agg(
+					(SELECT pg_catalog.string_agg(
 						CASE
 						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
 						ELSE NULL
@@ -6730,7 +6730,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 
 			CAST(
 				COALESCE(
-					(SELECT string_agg(
+					(SELECT pg_catalog.string_agg(
 						CASE
 						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
 						ELSE NULL
@@ -6836,7 +6836,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
 				COALESCE(
-					(SELECT string_agg(
+					(SELECT pg_catalog.string_agg(
 						CASE
 						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
 						ELSE NULL
