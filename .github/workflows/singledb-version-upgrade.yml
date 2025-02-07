@@ -7,7 +7,7 @@ jobs:
       env:
       OLD_INSTALL_DIR: psql_source
       NEW_INSTALL_DIR: psql_target
-      ENGINE_BRANCH_FROM: BABEL_4_5_STABLE__PG_16_6
+      ENGINE_BRANCH_FROM: BABEL_4_5_STABLE__PG_16_7
       EXTENSION_BRANCH_FROM: BABEL_4_5_STABLE
 
     runs-on: ubuntu-20.04
@@ -23,7 +23,7 @@ jobs:
           extension_branch: ${{ env.EXTENSION_BRANCH_FROM }}
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
-          antlr_version: 4.9.3
+          antlr_version: 4.13.2
 
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
