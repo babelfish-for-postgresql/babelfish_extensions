@@ -2199,16 +2199,15 @@ set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 	char		*cur_dbname;
 	char 		*new_search_path = NULL;
 	char 		*pltsql_func_search_path = NULL;
-	const char 	*current_db_search_path = get_current_db_search_path();
+	const char 	*current_db_search_path;
 
 	Assert(stmt != NULL);
 
 	if (!IS_TDS_CONN() || IsInParallelMode() || stmt->cmd_type == PLTSQL_STMT_USEDB)
 		return;
 
-	Assert(current_db_search_path != NULL);
-
 	cur_dbname = get_cur_db_name();
+	current_db_search_path = get_current_db_search_path();
 	pltsql_func_search_path = estate->func->fn_search_path;
 
 	if (stmt->cmd_type == PLTSQL_STMT_EXECSQL)

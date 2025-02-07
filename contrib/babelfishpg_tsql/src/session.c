@@ -74,7 +74,7 @@ get_current_pltsql_db_name(void)
 const char *
 get_current_db_search_path(void)
 {
-	Assert(IS_TDS_CONN());
+	Assert(IS_TDS_CONN() && current_db_search_path != NULL);
 	return current_db_search_path;
 }
 
