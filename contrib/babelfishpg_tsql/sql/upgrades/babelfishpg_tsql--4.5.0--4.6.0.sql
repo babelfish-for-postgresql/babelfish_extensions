@@ -4,6 +4,14 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Please add your SQLs here
+/*
+ * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
+ * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
+ * final behaviour.
+ */
+
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
