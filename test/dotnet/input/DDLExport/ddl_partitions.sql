@@ -1,4 +1,3 @@
-
 -- This test files will check for scripting of partition functions, partition schemes,
 -- partitioned tables and partitioned indexes.
 
@@ -559,12 +558,11 @@ CREATE INDEX partition_vu_prepare_uniqueidentifier_index
 ON partition_vu_prepare_uniqueidentifier_table(Id)
 ON UniqueIdentifierPartitionScheme (Id);
 GO
-ddlexport#!#0
-GO
+
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
-
+--DROP
 
 DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
 GO
