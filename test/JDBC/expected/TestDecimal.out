@@ -798,7 +798,7 @@ insert into testdecimal_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
 select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testdecimal_tab;
 ~~START~~
 numeric
-1879323.222200
+1879323.222200000000
 ~~END~~
 
 drop table testdecimal_tab;

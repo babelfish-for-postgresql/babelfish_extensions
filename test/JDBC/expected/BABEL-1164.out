@@ -43,7 +43,7 @@ SELECT * FROM t2;
 GO
 ~~START~~
 int#!#int#!#numeric#!#numeric
-1#!#1#!#2#!#2.00000000
+1#!#1#!#2#!#2
 ~~END~~
 
 

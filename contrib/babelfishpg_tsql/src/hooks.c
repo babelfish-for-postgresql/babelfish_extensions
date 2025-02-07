@@ -5961,7 +5961,24 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 static int32
 tsql_get_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
+	int32       result_typmod = -1;
+	uint8_t     scale,
+                precision;
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
-		return (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
-	return -1;
+		result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
+	if (result_typmod != -1)
+	{
+		/* 
+		* If we are unable to get correct precision and scale for overflow cases
+		* then return -1
+		*/
+		scale = (result_typmod - VARHDRSZ) & 0xffff;
+		precision = ((result_typmod - VARHDRSZ) >> 16) & 0xffff;
+		if (precision > TDS_NUMERIC_MAX_PRECISION)
+		{
+			if (!(precision - scale > 32 && scale > 6) && !(precision - scale <= TDS_NUMERIC_MAX_PRECISION))
+				return -1;
+		}
+	}
+	return result_typmod;
 }

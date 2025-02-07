@@ -140,6 +140,9 @@ static Oid tsql_int4_bit_oid = InvalidOid;
 static Oid sys_nspoid = InvalidOid;
 static Oid tsql_bit_oid = InvalidOid;
 static Oid tsql_fixeddecimal_oid = InvalidOid;
+static Oid tsql_tinyint_oid = InvalidOid;
+static Oid tsql_money_oid = InvalidOid;
+static Oid tsql_smallmoney_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -638,11 +641,57 @@ is_numeric_datatype(Oid typid)
 	return decimal_oid == typid;
 }
 
+/*
+ * is_exact_numeric_datatype - returns bool if given datatype is numeric, decimal, int, tinyint, smallint, bigint, bit, money and smallmoney.
+ */
+static bool
+is_exact_numeric_datatype(Oid typid)
+{
+	typid = getBaseType(typid);
+
+	if (typid == NUMERICOID || typid == INT2OID || typid == INT4OID || typid == INT8OID)
+	{
+		return true;
+	}
+	if (!OidIsValid(decimal_oid))
+	{
+		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("decimal")));
+		decimal_oid = LookupTypeNameOid(NULL, typename, false);
+	}
+	if (!OidIsValid(tsql_tinyint_oid))
+	{
+		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("tinyint")));
+		tsql_tinyint_oid = LookupTypeNameOid(NULL, typename, false);
+	}
+	if (!OidIsValid(tsql_money_oid))
+	{
+		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("money")));
+		tsql_money_oid = LookupTypeNameOid(NULL, typename, false);
+	}
+	if (!OidIsValid(tsql_smallmoney_oid))
+	{
+		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("smallmoney")));
+		tsql_smallmoney_oid = LookupTypeNameOid(NULL, typename, false);
+	}
+	if (!OidIsValid(tsql_bit_oid))
+	{
+		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("bit")));
+		tsql_bit_oid = LookupTypeNameOid(NULL, typename, false);
+	}
+	
+	return (decimal_oid == typid
+			|| tsql_tinyint_oid == typid
+			|| tsql_money_oid == typid
+			|| tsql_smallmoney_oid == typid
+			|| tsql_bit_oid == typid);
+}
+
+
 /* look for a typmod to return from a numeric expression */
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
-	if (expr == NULL)
+	if (expr == NULL || !is_exact_numeric_datatype(exprType(expr)))
 		return -1;
 	switch (nodeTag(expr))
 	{

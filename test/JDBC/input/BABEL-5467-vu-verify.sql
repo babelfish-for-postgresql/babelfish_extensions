@@ -77,22 +77,22 @@ go
 -- Precision and scale details should be stored correctly
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
-where TABLE_NAME = 'babel_5467_avgdata_1'
+where TABLE_NAME = 'babel_5467_avgdata_1' order by COLUMN_NAME
 go
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
-where TABLE_NAME = 'babel_5467_avgdata_2'
+where TABLE_NAME = 'babel_5467_avgdata_2' order by COLUMN_NAME
 go
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
-where TABLE_NAME = 'babel_5467_avgdata_3'
+where TABLE_NAME = 'babel_5467_avgdata_3' order by COLUMN_NAME
 go
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
-where TABLE_NAME = 'babel_5467_t1'
+where TABLE_NAME = 'babel_5467_t1' order by COLUMN_NAME
 go
 
 -- tables with computed columns having expression which results in numeric
