@@ -1,0 +1,461 @@
+-- tsql user=jdbc_user password=12345678
+-- Case 1: Original repro issue
+INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [dbo].[orderitem] (fkorder, screatedby) VALUES(25001000, 'test');
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Case 2: Trigger Functionality with Table Variables
+CREATE TRIGGER tr_Child_Insert ON Child AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempParents TABLE (ID INT);
+    INSERT INTO @TempParents (ID)
+    SELECT DISTINCT ParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @TempParents t
+        LEFT JOIN Parent p ON t.ID = p.ID
+        WHERE p.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('One or more parents do not exist', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Child VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Child VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+
+-- Case 3: Trigger Functionality with Temporary Tables
+CREATE TRIGGER tr_Child_Update ON Child AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(ParentID)
+    BEGIN
+        CREATE TABLE #UpdatedParents (ID INT);
+        INSERT INTO #UpdatedParents (ID)
+        SELECT DISTINCT ParentID FROM inserted;
+        IF EXISTS (
+            SELECT 1 FROM #UpdatedParents u
+            LEFT JOIN Parent p ON u.ID = p.ID
+            WHERE p.ID IS NULL
+        )
+        BEGIN
+            RAISERROR ('Invalid ParentID', 16, 1);
+            ROLLBACK TRANSACTION;
+        END
+        DROP TABLE #UpdatedParents;
+    END
+END;
+GO
+
+UPDATE Child SET ParentID = 2 WHERE ID = 1; -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE Child SET ParentID = 999 WHERE ID = 1; -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child" violates foreign key constraint "fk_child_parent")~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Case 4: Complex Trigger Scenarios
+CREATE TRIGGER tr_Parent_Insert ON Parent AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempGrandParents TABLE (ID INT);
+    INSERT INTO @TempGrandParents (ID)
+    SELECT DISTINCT GrandParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @TempGrandParents t
+        LEFT JOIN GrandParent gp ON t.ID = gp.ID
+        WHERE gp.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('GrandParent does not exist', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Parent VALUES (3, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Parent VALUES (4, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "parent" violates foreign key constraint "fk_parent_grandparent")~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Case 5: NULL test
+CREATE TRIGGER tr_Child_NullHandling ON Child AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @NullTemp TABLE (ID INT);
+    INSERT INTO @NullTemp (ID)
+    SELECT ParentID FROM inserted WHERE ParentID IS NOT NULL
+    UNION ALL
+    SELECT NULL;
+    IF EXISTS (
+        SELECT 1 FROM @NullTemp t
+        LEFT JOIN Parent p ON t.ID = p.ID
+        WHERE (p.ID IS NULL AND t.ID IS NOT NULL) OR t.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid or NULL ParentID', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Child VALUES (1000, NULL); -- Should fail
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: One or more parents do not exist)~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Case 6: Nesting test
+CREATE TRIGGER tr_Level3_Insert ON Level3 AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Temp3 TABLE (ID INT);
+    INSERT INTO @Temp3 (ID)
+    SELECT DISTINCT Level2ID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @Temp3 t
+        LEFT JOIN Level2 l2 ON t.ID = l2.ID
+        WHERE l2.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid Level2ID', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO Level3 VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO Level3 VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "level3" violates foreign key constraint "fk_level3_level2")~~
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Case 7: Special Characters support test
+CREATE TRIGGER tr_SpecialChar_Insert ON [Child#Table] AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @SpecialTemp TABLE (ID INT);
+    INSERT INTO @SpecialTemp (ID)
+    SELECT DISTINCT ParentID FROM inserted;
+    IF EXISTS (
+        SELECT 1 FROM @SpecialTemp t
+        LEFT JOIN [Parent@Table] p ON t.ID = p.ID
+        WHERE p.ID IS NULL
+    )
+    BEGIN
+        RAISERROR ('Invalid ParentID in special character tables', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+INSERT INTO [Child#Table] VALUES (1, 1); -- Should succeed
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [Child#Table] VALUES (2, 999); -- Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "child#table" violates foreign key constraint "fk_childtable_parenttable")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 8: Unique constraints
+-- Trigger with unique constraint check
+CREATE TRIGGER tr_UniqueChild_Insert ON UniqueChild AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempUnique TABLE (
+        ParentID INT,
+        UniqueValue VARCHAR(50)
+    );
+    
+    INSERT INTO @TempUnique (ParentID, UniqueValue)
+    SELECT i.ParentID, p.UniqueValue
+    FROM inserted i
+    JOIN UniqueParent p ON i.ParentID = p.ID;
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempUnique t
+        JOIN UniqueChild c ON t.UniqueValue = c.UniqueChildValue
+        WHERE c.ID NOT IN (SELECT ID FROM inserted)
+    )
+    BEGIN
+        RAISERROR ('Unique constraint violation', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (1, 1, 'Child1');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (unique constraint violation)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (2, 2, 'Child1');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (2, 2, 'Child2');
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Trigger with temporary table and unique constraint
+CREATE TRIGGER tr_UniqueChild_Update ON UniqueChild AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(UniqueChildValue)
+    BEGIN
+        CREATE TABLE #UpdatedUnique (
+            ID INT,
+            NewValue VARCHAR(50)
+        );
+        
+        INSERT INTO #UpdatedUnique (ID, NewValue)
+        SELECT i.ID, i.UniqueChildValue
+        FROM inserted i;
+        
+        IF EXISTS (
+            SELECT 1 FROM #UpdatedUnique u
+            JOIN UniqueChild c ON u.NewValue = c.UniqueChildValue
+            WHERE c.ID <> u.ID
+        )
+        BEGIN
+            RAISERROR ('Update violates unique constraint', 16, 1);
+            ROLLBACK TRANSACTION;
+        END
+        
+        DROP TABLE #UpdatedUnique;
+    END
+END;
+GO
+
+-- Should succeed
+UPDATE UniqueChild SET UniqueChildValue = 'UpdatedChild1' WHERE ID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (unique constraint violation)
+UPDATE UniqueChild SET UniqueChildValue = 'UpdatedChild1' WHERE ID = 2;
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Complex trigger with multiple unique constraints
+CREATE TRIGGER tr_UniqueChild_ComplexInsert ON UniqueChild AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @TempComplex TABLE (
+        ID INT,
+        ParentID INT,
+        ParentUniqueValue VARCHAR(50),
+        ChildUniqueValue VARCHAR(50)
+    );
+    
+    INSERT INTO @TempComplex (ID, ParentID, ParentUniqueValue, ChildUniqueValue)
+    SELECT i.ID, i.ParentID, p.UniqueValue, i.UniqueChildValue
+    FROM inserted i
+    JOIN UniqueParent p ON i.ParentID = p.ID;
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempComplex t
+        WHERE t.ParentUniqueValue = t.ChildUniqueValue
+    )
+    BEGIN
+        RAISERROR ('Child value cannot be the same as parent unique value', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+    
+    IF EXISTS (
+        SELECT 1 FROM @TempComplex t
+        GROUP BY t.ChildUniqueValue
+        HAVING COUNT(*) > 1
+    )
+    BEGIN
+        RAISERROR ('Duplicate child unique values in batch insert', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+-- Should succeed
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (3, 2, 'Child3');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Should fail (child value same as parent unique value)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) VALUES (4, 1, 'Parent1');
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Child value cannot be the same as parent unique value)~~
+
+
+-- Should fail (duplicate child unique values in batch insert)
+INSERT INTO UniqueChild (ID, ParentID, UniqueChildValue) 
+VALUES (5, 1, 'Child5'), (6, 2, 'Child5');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uniquechild_uniquechildvalue_key")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 9: DELETE/UPDATE NO ACTION
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentNoAction WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: update or delete on table "parentnoaction" violates foreign key constraint "fk_childnoaction_parent" on table "childnoaction")~~
+
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentNoAction SET ParentID = 3 WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: update or delete on table "parentnoaction" violates foreign key constraint "fk_childnoaction_parent" on table "childnoaction")~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 10: DELETE/UPDATE CASCADE
+DELETE FROM ParentCascade WHERE ParentID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (All child rows with ParentID = 1 should be deleted)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+UPDATE ParentCascade SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (The child row should have its ParentID updated from 2 to 3, matching the update in the parent table.)
+SELECT COUNT(*) FROM ChildCascade WHERE ParentID = 3
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 11: DELETE/UPDATE SET NULL
+DELETE FROM ParentSetNull WHERE ParentID = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (One child row should have its ParentID set to NULL after the corresponding parent row is deleted.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+UPDATE ParentSetNull SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- (Both child rows should now have NULL ParentIDs. One from the previous DELETE test, and one from this UPDATE test.)
+SELECT COUNT(*) FROM ChildSetNull WHERE ParentID IS NULL;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 12: DELETE/UPDATE SET DEFAULT
+-- should fail (operation conflicts with the REFERENCE constraint)
+DELETE FROM ParentSetDefault WHERE ParentID = 1;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "childsetdefault" violates foreign key constraint "fk_childsetdefault_parent")~~
+
+
+-- should fail (operation conflicts with the REFERENCE constraint)
+UPDATE ParentSetDefault SET ParentID = 3 WHERE ParentID = 2;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "childsetdefault" violates foreign key constraint "fk_childsetdefault_parent")~~
+
