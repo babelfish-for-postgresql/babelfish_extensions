@@ -8,8 +8,6 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-
-
 all
 
 #Ignoring fts-contains before files, that did not have the support for fulltext index validation

@@ -2847,7 +2847,7 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 	initStringInfo(&buf);
 
 	/* Deconstruct the array to extract elements and nulls from the array */
-	deconstruct_array(array, TEXTOID, -1, false, 'i', &elements, &nulls, &nelems);
+	deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT, &elements, &nulls, &nelems);
 
 	for(int i = 0; i < nelems; i++)
 	{	
@@ -2877,7 +2877,8 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 			appendStringInfoString(&buf, col_str);
 
 			/* append the concates if this is not the last column to be added  */
-			if(i<nelems-1){
+			if(i<nelems-1)
+			{
 				appendStringInfo(&buf, "||' '||");
 			}
 			pfree(col_str);
