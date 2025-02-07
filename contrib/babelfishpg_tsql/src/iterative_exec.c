@@ -26,7 +26,7 @@ static void restore_ctx_full(PLtsql_execstate *estate);
 static ErrorData *restore_ctx_partial1(PLtsql_execstate *estate);
 static void restore_ctx_partial2(PLtsql_execstate *estate);
 static void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow);
-static void set_search_path_for_pltsql_stmt(PLtsql_stmt *stmt);
+static void set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt);
 static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
@@ -47,8 +47,6 @@ extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 								  Datum *args, Oid *argtypes, bool *argisnull);
 
-char	   *pltsql_search_path = NULL;
-char	   *current_db_search_path = NULL;
 
 static int
 exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
@@ -649,7 +647,7 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 	/* reset number of tuple processed in previous command */
 	estate->eval_processed = 0;
 
-	set_search_path_for_pltsql_stmt(stmt);
+	set_search_path_for_pltsql_stmt(estate, stmt);
 
 	switch (stmt->cmd_type)
 	{
@@ -2196,10 +2194,12 @@ send_env_change_token_on_txn_abort(void)
  * before executing any pltsql statement
  */
 static void
-set_search_path_for_pltsql_stmt(PLtsql_stmt *stmt)
+set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 {
 	char		*cur_dbname;
 	char 		*new_search_path = NULL;
+	char 		*pltsql_func_search_path = NULL;
+	const char 	*current_db_search_path = get_current_db_search_path();
 
 	Assert(stmt != NULL);
 
@@ -2209,6 +2209,7 @@ set_search_path_for_pltsql_stmt(PLtsql_stmt *stmt)
 	Assert(current_db_search_path != NULL);
 
 	cur_dbname = get_cur_db_name();
+	pltsql_func_search_path = estate->func->fn_search_path;
 
 	if (stmt->cmd_type == PLTSQL_STMT_EXECSQL)
 	{
@@ -2252,8 +2253,8 @@ set_search_path_for_pltsql_stmt(PLtsql_stmt *stmt)
 
 	if (new_search_path == NULL)
 	{
-		if (pltsql_search_path)
-			new_search_path = pstrdup(pltsql_search_path);
+		if (pltsql_func_search_path)
+			new_search_path = pstrdup(pltsql_func_search_path);
 		else if (current_db_search_path)
 			new_search_path = pstrdup(current_db_search_path);
 	}

@@ -29,6 +29,8 @@
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND + 1] = {'\0'};
 static Oid	current_user_id = InvalidOid;
+/* search path for current active logical database */
+static char *current_db_search_path = NULL;
 void		reset_cached_batch(void);
 
 /* Session Context */
@@ -63,6 +65,17 @@ const char *
 get_current_pltsql_db_name(void)
 {
 	return current_db_name;
+}
+
+/*
+ * Get search path corresponding to current active logical database
+ * Only valid for TDS connections
+ */
+const char *
+get_current_db_search_path(void)
+{
+	Assert(IS_TDS_CONN());
+	return current_db_search_path;
 }
 
 void 

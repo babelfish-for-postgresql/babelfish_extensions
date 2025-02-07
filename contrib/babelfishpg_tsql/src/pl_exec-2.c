@@ -136,7 +136,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 
 /* Enclose a user-defined @@var or @var# name in delimiters */
 static char *delimit_tsql_atatuservar(const char *src);
-static char *get_search_path_for_sp_procs(void);
+static char *get_search_path_for_sp_procs(char *schema);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -884,11 +884,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				if (stmt->db_name != NULL)
 					set_cur_user_db_and_path(stmt->db_name, false);
 
-				/* When schema is dbo then do not consdier user default schema */
-				if (stmt->schema_name != NULL && strcmp(stmt->schema_name, "dbo") == 0)
-					new_search_path = get_search_path_for_sp_procs();
-				else
-					new_search_path = psprintf("%s, master_dbo", current_db_search_path);
+				new_search_path = get_search_path_for_sp_procs(stmt->schema_name);
 
 				SetConfigOption("search_path", new_search_path,
 								PGC_SUSET, PGC_S_SESSION);
@@ -4619,22 +4615,22 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
  * We do not consider user default schema in this case
  */
 static char*
-get_search_path_for_sp_procs()
+get_search_path_for_sp_procs(char *schema)
 {
 	List		*namelist;
-	char 		*rawname = pstrdup(current_db_search_path);
+	char 		*rawname = pstrdup((const char *)get_current_db_search_path());
 	bool		first = true;
 	ListCell       *lc;
 	StringInfoData res;
-
-	Assert(current_db_search_path != NULL);
 
 	if (!SplitIdentifierString(rawname, ',', &namelist))
 		elog(ERROR, "invalid list syntax");
 
 	Assert(list_length(namelist) == 4);
 
-	namelist = list_delete_first(namelist);
+	/* When schema is dbo then do not consdier user default schema */
+	if (schema != NULL && strcmp(schema, "dbo") == 0)
+		namelist = list_delete_first(namelist);
 	namelist = lappend(namelist, pstrdup("master_dbo"));
 
 	initStringInfo(&res);

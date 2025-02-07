@@ -5515,7 +5515,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
-	char 		*saved_pltsql_search_path = pltsql_search_path;
 	int16		saved_dbid = get_cur_db_id();
 
 	create_queryEnv2(CacheMemoryContext, false);
@@ -5578,8 +5577,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			if (DbidIsValid(func->fn_dbid) && get_cur_db_id() != func->fn_dbid)
 				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false);
 
-			pltsql_search_path = func->fn_search_path;
-
 			/*
 			 * Determine if called as function or trigger and call appropriate
 			 * subhandler
@@ -5623,8 +5620,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		func->use_count--;
 
 		func->cur_estate = save_cur_estate;
-		pltsql_search_path = saved_pltsql_search_path;
-		pltsql_check_search_path = true;
 
 		pltsql_remove_current_query_env();
 		pltsql_revert_guc(save_nestlevel);

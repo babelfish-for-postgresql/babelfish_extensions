@@ -8,6 +8,7 @@ extern int16 get_cur_db_id(void);
 extern void set_cur_db(int16 id, const char *name);
 extern char *get_cur_db_name(void);
 extern const char *get_current_pltsql_db_name(void);
+extern const char *get_current_db_search_path(void);
 extern void bbf_set_current_user(const char *user_name);
 extern void check_session_db_access(const char *dn_name);
 extern void set_cur_user_db_and_path(const char *db_name, bool check_db_id);
@@ -19,11 +20,6 @@ extern void set_cur_db_name_for_parallel_worker(const char* logical_db_name);
 /* Hooks for parallel workers for babelfish fixed state */
 extern void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate);
 extern void babelfixedparallelstate_restore(shm_toc *toc);
-
-/* search path when executing pltsql routines */
-extern char *pltsql_search_path;
-/* search path for current active logical database */
-extern char *current_db_search_path;
 
 /* Babelfish Fixed-size parallel state */
 typedef struct BabelfishFixedParallelState {
