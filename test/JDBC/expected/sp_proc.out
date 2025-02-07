@@ -1,3 +1,4 @@
+-- tsql
 create proc sp_hello as select 1
 go
 
@@ -501,5 +502,65 @@ go
 drop proc sp_hello
 go
 
+use db1
+go
+create schema s1
+go
+    create login non_default_schema_login with password = '12345678'
+go
+create user non_default_schema_login
+go
+alter user non_default_schema_login with default_schema = s1
+go
+create proc s1.sp_user_proc as select '--- S1 ---';
+go
+create proc dbo.sp_user_proc as select '--- DBO ---';
+go
+alter role db_owner add member non_default_schema_login
+go
+
+-- tsql user=non_default_schema_login password=12345678 database=db1
+select schema_name(), db_name()
+go
+~~START~~
+varchar#!#nvarchar
+s1#!#db1
+~~END~~
+
+-- should resolve to s1.sp_user_proc
+exec sp_user_proc
+exec db1..sp_user_proc
+go
+~~START~~
+varchar
+--- S1 ---
+~~END~~
+
+~~START~~
+varchar
+--- S1 ---
+~~END~~
+
+-- should resolve to dbo.sp_user_proc
+exec dbo.sp_user_proc
+exec db1.dbo.sp_user_proc
+go
+~~START~~
+varchar
+--- DBO ---
+~~END~~
+
+~~START~~
+varchar
+--- DBO ---
+~~END~~
+
+-- terminate-tsql-conn user=non_default_schema_login password=12345678 database=db1
+
+-- tsql
+use master
+go
+drop login non_default_schema_login
+go
 drop database db1
 go
