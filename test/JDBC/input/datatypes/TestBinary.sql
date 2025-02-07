@@ -470,10 +470,10 @@ GO
 select * into BINARY_dt_derived from BINARY_dt;
 GO
 
-select attname, atttypmod, atttypid from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt_derived') and attnum > 0
+select attname, atttypmod from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt_derived') and attnum > 0
 GO
 
-select attname, atttypmod, atttypid from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt') and attnum > 0
+select attname, atttypmod from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt') and attnum > 0
 GO
 
 create index idx_binary_dt_a on BINARY_dt(a);

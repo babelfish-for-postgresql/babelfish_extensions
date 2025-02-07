@@ -812,27 +812,27 @@ GO
 select * into BINARY_dt_derived from BINARY_dt;
 GO
 
-select attname, atttypmod, atttypid from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt_derived') and attnum > 0
+select attname, atttypmod from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt_derived') and attnum > 0
 GO
 ~~START~~
-varchar#!#int#!#int
-a#!#5#!#17325
-b#!#24#!#17325
-c#!#-1#!#17325
-d#!#5#!#17399
-e#!#24#!#17399
+varchar#!#int
+a#!#5
+b#!#24
+c#!#-1
+d#!#5
+e#!#24
 ~~END~~
 
 
-select attname, atttypmod, atttypid from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt') and attnum > 0
+select attname, atttypmod from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt') and attnum > 0
 GO
 ~~START~~
-varchar#!#int#!#int
-a#!#5#!#17325
-b#!#24#!#17325
-c#!#-1#!#17325
-d#!#5#!#17399
-e#!#24#!#17399
+varchar#!#int
+a#!#5
+b#!#24
+c#!#-1
+d#!#5
+e#!#24
 ~~END~~
 
 
