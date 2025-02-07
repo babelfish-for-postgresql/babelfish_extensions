@@ -509,3 +509,29 @@ AS
     DROP ROLE babel_5448_r1;
     DROP TABLE #temp;
 GO
+
+
+
+
+/*************************************************************************************/
+/************************** START OF DYNAMIC SQL *************************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p11
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p11
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO

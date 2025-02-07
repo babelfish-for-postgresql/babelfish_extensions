@@ -14,7 +14,9 @@ DROP PROC babel_5448_user_default_schema.babel_5448_p, babel_5448_user_default_s
 GO
 DROP PROC babel_5448_s1.babel_5448_p, babel_5448_s1.babel_5448_p1, babel_5448_s1.babel_5448_p2
 GO
-DROP PROC babel_5448_s1.babel_5448_p5, babel_5448_s1.babel_5448_p6, babel_5448_s1.babel_5448_p7, babel_5448_s1.babel_5448_p8, babel_5448_s1.babel_5448_p9, babel_5448_s1.babel_5448_p10
+DROP PROC babel_5448_s1.babel_5448_p5, babel_5448_s1.babel_5448_p6, babel_5448_s1.babel_5448_p7,
+          babel_5448_s1.babel_5448_p8, babel_5448_s1.babel_5448_p9, babel_5448_s1.babel_5448_p10,
+          babel_5448_s1.babel_5448_p11;
 GO
 
 DROP FUNCTION dbo.babel_5448_f

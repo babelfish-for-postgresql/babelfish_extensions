@@ -1199,3 +1199,53 @@ text
 babel_5448_r2
 ~~END~~
 
+
+
+/*************************************************************************************/
+/************************** START OF DYNAMIC SQL *************************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p11;
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p11;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+~~END~~
+
