@@ -436,6 +436,7 @@ TestSmallDatetime
 TestSmallInt
 TestSmallMoney
 TestSpatialPoint
+Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -602,4 +603,3 @@ BABEL-5031
 test_conv_money_to_varchar
 fixeddecimal_modulo
 test_conv_float_to_varchar_char
-Test-spatial-functions_before_17_3

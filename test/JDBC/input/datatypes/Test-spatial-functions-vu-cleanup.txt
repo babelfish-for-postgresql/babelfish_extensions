@@ -6,8 +6,6 @@ USE MASTER
 
 DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp2
 
-DROP TABLE IF EXISTS TestSpatialFunction_YourTable2Temp
-
 DROP TABLE IF EXISTS TestSpatialFunction_TableATemp
 
 DROP TABLE IF EXISTS TestSpatialFunction_TableBTemp
@@ -28,22 +26,10 @@ DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeom
 
 DROP VIEW IF EXISTS TestSpatialFunction_SRIDFromGeog
 
-DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp
-
-DROP VIEW IF EXISTS TestSpatialFunction_point_intersect1Temp
-
-DROP VIEW IF EXISTS TestSpatialFunction_disjointTemp
-
-DROP VIEW IF EXISTS TestSpatialFunction_ValFromGeom2Temp
-
-DROP VIEW IF EXISTS TestSpatialFunction_TextFromGeog2Temp
-
-DROP VIEW IF EXISTS TestSpatialFunction_point_intersectTemp
-
-DROP VIEW IF EXISTS TestSpatialFunction_point_disjointTemp
-
 DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOM_dttemp
 
 DROP TABLE IF EXISTS TestSpatialFunction_SPATIALPOINTGEOG_dttemp
+
+DROP TABLE IF EXISTS TestSpatialFunction_YourTableTemp
 
 DROP DATABASE TestSpatialFunction_DB
