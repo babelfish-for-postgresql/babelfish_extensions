@@ -304,7 +304,7 @@ GO
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| #!#babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -316,7 +316,7 @@ GO
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| #!#babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -566,14 +566,14 @@ GO
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master.dbo#!# |--ignorable entry--master.babel_5448_s2--| #!#master.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+master.dbo#!# |-- function in -- master.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 EXEC master.babel_5448_s1.babel_5448_p2
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| #!#master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 INSERT INTO #temp EXEC master.babel_5448_s1.babel_5448_p2
@@ -584,7 +584,7 @@ GO
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| #!#master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -625,7 +625,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 8134)~~
@@ -639,12 +639,12 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -659,7 +659,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 1752)~~
@@ -673,7 +673,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -687,25 +687,42 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "non_existent_table" does not exist)~~
 
-
-
 SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
-/*********** SAME DB ************/
-/*********** BUT INSIDE TRAN ************/
-BEGIN TRAN
 GO
 ~~START~~
 varchar
 ========= END OF TRANSACTION ABORTING ERROR ====================
 ~~END~~
 
+
+SELECT babel_5448_s1.babel_5448_f4();
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*********** SAME DB ************/
+/*********** BUT INSIDE TRAN ************/
+BEGIN TRAN
+GO
 EXEC babel_5448_s1.babel_5448_p5
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 COMMIT
@@ -717,7 +734,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 8134)~~
@@ -731,12 +748,12 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -754,7 +771,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 1752)~~
@@ -768,7 +785,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -784,7 +801,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -799,6 +816,25 @@ varchar
 ~~END~~
 
 
+BEGIN TRAN
+GO
+SELECT babel_5448_s1.babel_5448_f4();
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+COMMIT
+GO
 
 /*********** CROSS DB ************/
 EXEC master.babel_5448_s1.babel_5448_p5
@@ -811,7 +847,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 8134)~~
@@ -825,12 +861,12 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -845,7 +881,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 1752)~~
@@ -859,7 +895,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -873,25 +909,42 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "non_existent_table" does not exist)~~
 
-
-
 SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+
+SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
 /*********** CROSS DB ************/
 /*********** BUT INSIDE TRAN ************/
 BEGIN TRAN
 GO
-~~START~~
-varchar
-========= END OF TRANSACTION ABORTING ERROR ====================
-~~END~~
-
 EXEC master.babel_5448_s1.babel_5448_p5
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 COMMIT
@@ -903,7 +956,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 8134)~~
@@ -917,12 +970,12 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -940,7 +993,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 1752)~~
@@ -954,7 +1007,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -970,7 +1023,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -984,6 +1037,26 @@ varchar
 ========= END OF TRANSACTION ABORTING ERROR ====================
 ~~END~~
 
+
+BEGIN TRAN
+GO
+SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+COMMIT
+GO
 
 
 /************************************************************************************************/
@@ -1014,7 +1087,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1024,7 +1097,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1034,7 +1107,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -1075,7 +1148,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1085,7 +1158,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1095,7 +1168,7 @@ varchar
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
@@ -1174,7 +1247,7 @@ EXEC master.babel_5448_s1.babel_5448_p10;
 GO
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -1208,12 +1281,12 @@ EXEC babel_5448_s1.babel_5448_p11;
 GO
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1223,7 +1296,7 @@ babel_5448_db.babel_5448_s1
 
 ~~START~~
 nvarchar#!#varchar
-babel_5448_db.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
 ~~END~~
 
 
@@ -1231,12 +1304,12 @@ EXEC master.babel_5448_s1.babel_5448_p11;
 GO
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
 nvarchar#!#varchar
-master.dbo#!# |--ignorable entry--master.babel_5448_s2--| 
+master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
 ~~START~~
@@ -1246,6 +1319,160 @@ master.babel_5448_s1
 
 ~~START~~
 nvarchar#!#varchar
-master.babel_5448_s1#!# |--ignorable entry--master.babel_5448_s2--| 
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
+
+
+/*************************************************************************************/
+/************************* START OF SP_EXECUTE_SQL ***********************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p12;
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p12;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*************************************************************************************/
+/***************** VERIFY DEFAULT SCHEMA OF IN BUILT USERS ***************************/
+/*************************************************************************************/
+SELECT database_name, orig_username, default_schema_name FROM sys.babelfish_authid_user_ext
+WHERE database_name IN ('master', 'tempdb', 'msdb', 'babel_5448_db') AND
+      orig_username IN ('dbo', 'guest')
+ORDER BY database_name, orig_username;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db#!#dbo#!#dbo
+babel_5448_db#!#guest#!#guest
+master#!#dbo#!#dbo
+master#!#guest#!#guest
+msdb#!#dbo#!#dbo
+msdb#!#guest#!#guest
+tempdb#!#dbo#!#dbo
+tempdb#!#guest#!#guest
+~~END~~
+
+
+CREATE LOGIN babel_5448_login WITH PASSWORD = '12345678'
+GO
+GRANT CONNECT TO GUEST
+GO
+
+-- tsql user=babel_5448_login password=12345678 database=babel_5448_db
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+babel_5448_db_guest, babel_5448_db_dbo, sys, pg_catalog
+~~END~~
+
+-- tsql database=babel_5448_db
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+babel_5448_db_dbo, babel_5448_db_dbo, sys, pg_catalog
+~~END~~
+
+
+
+/*************************************************************************************/
+/************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
+/*************************************************************************************/
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+EXEC master.babel_5448_s1.babel_5448_p13
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+
+CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+EXEC master.babel_5448_s1.babel_5448_p14
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+DROP TABLE #temp_babel_5448;
+GO

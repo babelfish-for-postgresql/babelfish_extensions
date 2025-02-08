@@ -14,7 +14,6 @@ extern void check_session_db_access(const char *dn_name);
 extern void set_cur_user_db_and_path(const char *db_name, bool check_db_id);
 extern void restore_session_properties(void);
 extern void reset_session_properties(void);
-extern void set_search_path_for_user_schema(const char *db_name, const char *user);
 extern void set_cur_db_name_for_parallel_worker(const char* logical_db_name);
 
 /* Hooks for parallel workers for babelfish fixed state */

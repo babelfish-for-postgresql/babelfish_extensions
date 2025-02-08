@@ -20,10 +20,10 @@
 -- 3. Cross databases objects references
 -- 4. EXEC procedure call statements
 -- 5. Other tsql statements
--- Each tests will need to be repeated thrice since search path will have two schemas and on the third attemp we should get object does not exists errors
--- 1. Object exists in the first schema
--- 2. Object does not exists in the first schema but does exists in second schema
--- 3. We should error out now, if object is not a schema sys object and not schema qualified
+-- Easiest way to test both db_context and search path in a single query
+-- is to have both schema specified and non schema specified object references in the query
+-- We can skip three part names because they have very straight forward handling and not dependant
+-- upon current active logical database or current search path (sp_procs are exception to this and test cases are present elsewhere)
 -- Another important case to test is scope handling
 -- This means that search path and current logical database value should be set and reset correctly 
 -- and we do not leak any of these values in any case
@@ -93,7 +93,7 @@ GO
 CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
-    RETURN ' |--ignorable entry--master.babel_5448_s2--| ';
+    RETURN ' |-- function in -- master.babel_5448_s2 --| ';
 END
 GO
 
@@ -114,7 +114,7 @@ BEGIN
 END
 GO
 
-CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |--ignorable entry--master.babel_5448_s2--| ' AS col1
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- master.babel_5448_s2 --| ' AS col1
 GO
 
 CREATE TRIGGER dbo.babel_5448_trigger
@@ -257,7 +257,7 @@ GO
 CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
 AS
 BEGIN
-    RETURN ' |--ignorable entry--master.babel_5448_s2--| ';
+    RETURN ' |-- function in -- babel_5448_db.babel_5448_s2 --| ';
 END
 GO
 
@@ -278,7 +278,7 @@ BEGIN
 END
 GO
 
-CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |--ignorable entry--master.babel_5448_s2--| ' AS col1
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- babel_5448_db.babel_5448_s2 --| ' AS col1
 GO
 
 CREATE TRIGGER dbo.babel_5448_trigger
@@ -392,6 +392,15 @@ AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 
+CREATE FUNCTION babel_5448_s1.babel_5448_f4() RETURNS INT
+AS
+    BEGIN
+        DECLARE @table_var TABLE(id INT);
+        INSERT INTO @table_var VALUES (1), (255), (256);
+        RETURN (SELECT CAST(max(id) AS TINYINT) FROM @table_var);
+    END
+GO
+
 USE babel_5448_db
 GO
 
@@ -417,6 +426,15 @@ AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
     SELECT * FROM non_existent_table;
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f4() RETURNS INT
+AS
+    BEGIN
+        DECLARE @table_var TABLE(id INT);
+        INSERT INTO @table_var VALUES (1), (255), (256)
+        RETURN (SELECT CAST(max(id) AS TINYINT) FROM @table_var);
+    END
 GO
 
 
@@ -534,4 +552,55 @@ AS
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
     EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
     SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+
+/*************************************************************************************/
+/************************* START OF SP_EXECUTE_SQL ***********************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p12
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p12
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+/*************************************************************************************/
+/************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p13
+AS
+    CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+    DROP TABLE #temp_babel_5448;
+GO
+
+-- same as previous but temp table will be created in another database and used inside this proc
+CREATE PROCEDURE babel_5448_s1.babel_5448_p14
+AS
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
 GO

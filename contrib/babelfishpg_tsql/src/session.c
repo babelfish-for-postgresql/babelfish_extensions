@@ -31,6 +31,7 @@ static char current_db_name[MAX_BBF_NAMEDATALEND + 1] = {'\0'};
 static Oid	current_user_id = InvalidOid;
 /* search path for current active logical database */
 static char *current_db_search_path = NULL;
+static void set_search_path_for_user_schema(const char *db_name, const char *user);
 void		reset_cached_batch(void);
 
 /* Session Context */
@@ -188,7 +189,7 @@ set_cur_user_db_and_path(const char *db_name, bool check_db_id)
 	set_db_collation_internal(db_name);
 }
 
-void
+static void
 set_search_path_for_user_schema(const char *db_name, const char *user)
 {
 	char		*path;

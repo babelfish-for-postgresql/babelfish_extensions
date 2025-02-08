@@ -136,7 +136,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 
 /* Enclose a user-defined @@var or @var# name in delimiters */
 static char *delimit_tsql_atatuservar(const char *src);
-static char *get_search_path_for_sp_procs(char *schema);
+static void set_search_path_for_sp_procs(char *schema);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -875,20 +875,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				(stmt->schema_name == NULL || strcmp(stmt->schema_name, "dbo") == 0))
 			{
 
-				/*
-				 * For sp_procedures set db name and search path if db_name
-				 * was specified and schema was dbo or empty. Conditions here
-				 * should match with set_search_path_for_pltsql_stmt()
-				 */
-				char *new_search_path;
 				if (stmt->db_name != NULL)
 					set_cur_user_db_and_path(stmt->db_name, false);
 
-				new_search_path = get_search_path_for_sp_procs(stmt->schema_name);
-
-				SetConfigOption("search_path", new_search_path,
-								PGC_SUSET, PGC_S_SESSION);
-				pfree(new_search_path);
+				set_search_path_for_sp_procs(stmt->schema_name);
 			}
 			else if (stmt->db_name != NULL && strcmp(stmt->db_name, save_db_name) != 0 &&
 					 stmt->schema_name != NULL && strcmp(stmt->schema_name, "sys") == 0)
@@ -4609,44 +4599,22 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	return PLTSQL_RC_OK;
 }
 
-/*
- * For sp_proc called with three part name or schema is dbo search path
- * should always look like <current_db>_dbo, sys, pg_catalog, master_dbo
- * We do not consider user default schema in this case
- */
-static char*
-get_search_path_for_sp_procs(char *schema)
+static void
+set_search_path_for_sp_procs(char *schema)
 {
-	List		*namelist;
-	char 		*rawname = pstrdup((const char *)get_current_db_search_path());
-	bool		first = true;
-	ListCell       *lc;
-	StringInfoData res;
+	char 		*dbo_schema = get_dbo_schema_name(get_current_pltsql_db_name());
+	char 		*new_search_path;
 
-	if (!SplitIdentifierString(rawname, ',', &namelist))
-		elog(ERROR, "invalid list syntax");
-
-	Assert(list_length(namelist) == 4);
-
-	/* When schema is dbo then do not consdier user default schema */
 	if (schema != NULL && strcmp(schema, "dbo") == 0)
-		namelist = list_delete_first(namelist);
-	namelist = lappend(namelist, pstrdup("master_dbo"));
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						quote_identifier(dbo_schema), "master_dbo");
+	else
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						get_current_db_search_path(), "master_dbo");
 
-	initStringInfo(&res);
+	SetConfigOption("search_path", new_search_path,
+					PGC_SUSET, PGC_S_SESSION);
 
-	foreach(lc, namelist)
-	{
-		if (first)
-			first = false;
-		else
-			appendStringInfoChar(&res, ',');
-
-		appendStringInfoString(&res, (char *)lfirst(lc));
-	}
-
-	pfree(rawname);
-	pfree(namelist);
-
-	return res.data;
+	pfree(new_search_path);
+	pfree(dbo_schema);
 }
