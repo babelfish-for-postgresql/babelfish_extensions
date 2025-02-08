@@ -222,7 +222,7 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 	 * abort. Do not try to set_config since it will fail inside a parallel worker
 	 * This function is used in code path where error is never expected
 	 */
-	if (!(IsParallelWorker() && IsAbortedTransactionBlockState()))
+	if (!(IsInParallelMode() && IsAbortedTransactionBlockState()))
 		SetConfigOption("search_path", path,
 						PGC_SUSET, PGC_S_DATABASE_USER);
 	

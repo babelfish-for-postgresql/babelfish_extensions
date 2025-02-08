@@ -869,7 +869,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		Tuplestorestate *tss;
 		DestReceiver *dest;
 
-		if (IS_TDS_CONN() && strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
+		if (IS_TDS_CONN())
 		{
 			if (strncmp(stmt->proc_name, "sp_", 3) == 0 &&
 				(stmt->schema_name == NULL || strcmp(stmt->schema_name, "dbo") == 0))

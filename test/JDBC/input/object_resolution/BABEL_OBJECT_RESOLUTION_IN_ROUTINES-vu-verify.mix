@@ -385,15 +385,17 @@ WHERE database_name IN ('master', 'tempdb', 'msdb', 'babel_5448_db') AND
 ORDER BY database_name, orig_username;
 GO
 
+-- tsql
+USE master
+GO
 CREATE LOGIN babel_5448_login WITH PASSWORD = '12345678'
 GO
-GRANT CONNECT TO GUEST
+GRANT CONNECT TO guest
 GO
 
--- tsql user=babel_5448_login password=12345678 database=babel_5448_db
 SELECT current_setting('search_path')
 GO
--- tsql database=babel_5448_db
+-- tsql user=babel_5448_login password=12345678 database=master
 SELECT current_setting('search_path')
 GO
 
@@ -401,6 +403,7 @@ GO
 /************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
 /*************************************************************************************/
 
+-- tsql database=babel_5448_db
 SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 EXEC master.babel_5448_s1.babel_5448_p13
 GO

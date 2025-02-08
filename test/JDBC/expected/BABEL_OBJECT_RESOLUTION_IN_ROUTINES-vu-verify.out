@@ -1395,29 +1395,32 @@ tempdb#!#guest#!#guest
 ~~END~~
 
 
+-- tsql
+USE master
+GO
 CREATE LOGIN babel_5448_login WITH PASSWORD = '12345678'
 GO
-GRANT CONNECT TO GUEST
+GRANT CONNECT TO guest
 GO
 
--- tsql user=babel_5448_login password=12345678 database=babel_5448_db
 SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-babel_5448_db_guest, babel_5448_db_dbo, sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
+
+-- tsql user=babel_5448_login password=12345678 database=master
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_guest, master_dbo, sys, pg_catalog
+~~END~~
+
+
 
 -- tsql database=babel_5448_db
-SELECT current_setting('search_path')
-GO
-~~START~~
-text
-babel_5448_db_dbo, babel_5448_db_dbo, sys, pg_catalog
-~~END~~
-
-
-
 /*************************************************************************************/
 /************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
 /*************************************************************************************/
