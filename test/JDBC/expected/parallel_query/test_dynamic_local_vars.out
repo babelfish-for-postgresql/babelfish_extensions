@@ -1351,7 +1351,7 @@ text
 Query Text: select "@i", "@j"
 Gather  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 1
+  Workers Launched: 0
   Single Copy: true
   ->  Result  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
 ~~END~~
@@ -1379,7 +1379,7 @@ text
 Query Text: select "@i"
 Gather  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 1
+  Workers Launched: 0
   Single Copy: true
   ->  Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
 ~~END~~
@@ -1536,8 +1536,8 @@ text
 Query Text: select * from local_var_tst where id = "@a"
 Gather  (cost=0.00..20.28 rows=13 width=4) (actual rows=1 loops=1)
   Workers Planned: 3
-  Workers Launched: 3
-  ->  Parallel Seq Scan on local_var_tst  (cost=0.00..20.28 rows=4 width=4) (actual rows=0 loops=4)
+  Workers Launched: 0
+  ->  Parallel Seq Scan on local_var_tst  (cost=0.00..20.28 rows=4 width=4) (actual rows=1 loops=1)
         Filter: (id = 1)
 ~~END~~
 
