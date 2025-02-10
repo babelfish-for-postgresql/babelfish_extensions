@@ -1,0 +1,59 @@
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_5146_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_user_l2 WITH PASSWORD = 'abc';
+GO
+
+USE msdb
+GO
+
+ALTER LOGIN babel_5146_user_l3 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_user_l4 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=babel_5146_user_l2 password=abc
+-- should throw error
+EXEC dbo.babel_5146_prepare_p1;
+GO
+
+BEGIN TRANSACTION;
+EXEC dbo.babel_5146_prepare_p1;
+ROLLBACK;
+GO
+
+DROP PROCEDURE dbo.sp_addlinkedserver;
+GO
+
+-- tsql user=babel_5146_user_l4 password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+
+EXEC dbo.babel_5146_prepare_p4;
+GO
+
+-- psql user=babel_5146_user_l2 password=abc
+-- should throw error
+DROP PROCEDURE master_dbo.sp_addlinkedserver;
+GO
+
+-- psql user=babel_5146_user_l4 password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO

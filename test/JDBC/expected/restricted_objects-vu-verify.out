@@ -1,0 +1,103 @@
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_5146_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_user_l2 WITH PASSWORD = 'abc';
+GO
+
+USE msdb
+GO
+
+ALTER LOGIN babel_5146_user_l3 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_user_l4 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=babel_5146_user_l2 password=abc
+-- should throw error
+EXEC dbo.babel_5146_prepare_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+
+
+BEGIN TRANSACTION;
+EXEC dbo.babel_5146_prepare_p1;
+ROLLBACK;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+
+
+DROP PROCEDURE dbo.sp_addlinkedserver;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+
+
+-- tsql user=babel_5146_user_l4 password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function msdb_dbo.fn_syspolicy_is_automation_enabled)~~
+
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+EXEC dbo.babel_5146_prepare_p4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+-- psql user=babel_5146_user_l2 password=abc
+-- should throw error
+DROP PROCEDURE master_dbo.sp_addlinkedserver;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of procedure master_dbo.sp_addlinkedserver
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_5146_user_l4 password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of function msdb_dbo.fn_syspolicy_is_automation_enabled
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_system_health_state
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
+    Server SQLState: 42501)~~
+

@@ -2128,7 +2128,7 @@ extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
-extern void check_restricted_stored_procedure(Oid proc_id);
+extern void check_restricted_object(Oid object_id, ObjectType object_type);
 extern bool is_tsql_atatglobalvar(const char *varname);
 extern bool is_tsql_atatuservar(const char *varname);
 
@@ -2347,5 +2347,30 @@ extern bool validate_special_function(char *proc_nsname, char *proc_name, int na
  * Function in pltsql_ruleutils.c
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
+/* Restricted objects definition */
+typedef struct
+{
+	const char *name;
+	ObjectType type;
+} RestrictedObject;
+
+/* Separate arrays for each schema */
+static const RestrictedObject master_dbo_objects[] = {
+	{"xp_qv",					OBJECT_PROCEDURE},
+	{"xp_instance_regread",		OBJECT_PROCEDURE},
+	{"sp_addlinkedserver",		OBJECT_PROCEDURE},
+	{"sp_addlinkedsrvlogin",	OBJECT_PROCEDURE},
+	{"sp_droplinkedsrvlogin",	OBJECT_PROCEDURE},
+	{"sp_dropserver",			OBJECT_PROCEDURE},
+	{"sp_enum_oledb_providers",	OBJECT_PROCEDURE},
+	{"sp_testlinkedserver",		OBJECT_PROCEDURE}
+};
+
+static const RestrictedObject msdb_dbo_objects[] = {
+	{"syspolicy_configuration",				OBJECT_VIEW},
+	{"syspolicy_system_health_state",		OBJECT_VIEW},
+	{"fn_syspolicy_is_automation_enabled",	OBJECT_FUNCTION}
+};
 
 #endif							/* PLTSQL_H */
