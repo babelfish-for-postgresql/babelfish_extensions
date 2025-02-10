@@ -359,16 +359,23 @@ static bool
 is_object_restricted(const char *objname, ObjectType type, const char *schema_name)
 {
 	const RestrictedObject	*restricted_objects;
+	size_t num_restricted_objects;
 
 	/* Determine which array to check based on schema */
 	if (pg_strcasecmp(schema_name, "master_dbo") == 0)
+	{
 		restricted_objects = master_dbo_objects;
+		num_restricted_objects = sizeof(master_dbo_objects)/sizeof(master_dbo_objects[0]);
+	}
 	else if (pg_strcasecmp(schema_name, "msdb_dbo") == 0)
+	{
 		restricted_objects = msdb_dbo_objects;
+		num_restricted_objects = sizeof(msdb_dbo_objects)/sizeof(msdb_dbo_objects[0]);
+	}
 	else
 		return false;
 
-	for (int idx = 0; idx < sizeof(restricted_objects)/sizeof(restricted_objects[0]); idx++)
+	for (int idx = 0; idx < num_restricted_objects; idx++)
 	{
 		if (type == restricted_objects[idx].type &&
 			pg_strcasecmp(objname, restricted_objects[idx].name) == 0)
