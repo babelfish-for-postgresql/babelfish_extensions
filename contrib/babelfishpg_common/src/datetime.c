@@ -820,7 +820,7 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("data out of range for datetime")));
 
-	CheckDatetimeRange(result, fcinfo->context);
+	CheckDatetimeRange(result);
 
 	PG_RETURN_TIMESTAMP(result);
 }
