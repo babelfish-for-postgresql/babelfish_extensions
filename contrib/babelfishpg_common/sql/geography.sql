@@ -520,7 +520,36 @@ CREATE OPERATOR sys.<> (
     COMMUTATOR = <>
 );
 
+--STDimension
+-- Retrieves spatial dimension
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
+        RETURNS integer
+        AS $$ 
+        BEGIN
+	        -- Check if the geography is empty
+                IF STIsEmpty(geom) = 1 THEN  
+                        RETURN -1;
+                END IF;
+                RETURN sys.STDimension_helper($1);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--STDisjoint
+-- Checks if two geometries have no points in common
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS $$
+        BEGIN
+	        --Check if the SRIDs do not match
+                IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+                        RETURN NULL;
+                END IF;
+                RETURN sys.STDisjoint_helper($1, $2);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 --STIntersects
+-- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
         AS $$
@@ -533,72 +562,6 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGR
                 END IF;
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
-
---STDimension
-CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
-        RETURNS integer
-        AS $$ 
-        BEGIN
-	        -- Check if the geography is empty
-                IF STIsEmpty(geom) = 1 THEN  
-                        RETURN -1;
-                END IF;
-                        RETURN sys.STDimension_helper($1);
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','LWGEOM_isempty'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','isvalid'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
---STIsClosed
-CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS $$
-        DECLARE
-                geom_type text;
-        BEGIN
-                -- Check if the geography is empty
-                IF STIsEmpty(geom) = 1 THEN
-                        RETURN 0;
-                END IF;
-                -- Get the geography type
-                geom_type := ST_GeometryType(geom); 
-                -- Check if any figures of the geography instance are points
-                IF geom_type = 'ST_Point' OR geom_type = 'ST_MultiPoint' THEN
-                        RETURN 0;
-                END IF; 
-       
-                RETURN sys.STIsClosed_helper(geom);
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
---STDisjoint
-CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS $$
-        DECLARE
-                intersection_empty BOOLEAN;
-        BEGIN
-	        --Check if the SRIDs do not match
-                IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
-                        RETURN NULL;
-                ELSE
-                        -- Check if the intersection is empty       
-                        IF STIntersects(geom1, geom2) = 0 THEN
-                                RETURN 1::sys.BIT;  
-                        ELSE
-                                RETURN sys.STDisjoint_helper($1, $2);
-                        END IF;
-                END IF;
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
@@ -616,26 +579,6 @@ CREATE OR REPLACE FUNCTION sys.long(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_y_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
-	
-CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
-        RETURNS integer
-        AS '$libdir/postgis-3','LWGEOM_dimension'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','LWGEOM_isclosed'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','ST_Intersects'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','disjoint'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.lat(sys.GEOGRAPHY)
 	RETURNS float8
@@ -647,6 +590,27 @@ CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY, integer)
 	AS '$libdir/postgis-3','transform'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
+--STIsEmpty
+-- Checks if geometry is empty
+CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isempty'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIsValid
+-- Checks if geometry is valid 
+CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','isvalid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIsClosed
+-- Checks if geometry is closed
+CREATE OR REPLACE FUNCTION sys.STIsClosed(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
@@ -657,6 +621,21 @@ CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOGRAPHY, geom2 sys.
 	RETURNS sys.BIT
 	AS '$libdir/postgis-3','within'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
+        RETURNS integer
+        AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','geography_intersects'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)
 	RETURNS sys.GEOGRAPHY

@@ -1,4 +1,4 @@
-# This file adds support for these functions: STDimension, STDisjoint, STIntersects, STIsClosed, STIsEmpty, STIsValid
+# This file tests support for these functions: STDimension, STDisjoint, STIntersects, STIsClosed, STIsEmpty, STIsValid
 
 CREATE DATABASE TestGeospatialMethods_DB;
 
@@ -45,3 +45,15 @@ CREATE VIEW TestGeospatialMethods_TextFromGeogTemp AS SELECT  location.STDimensi
 CREATE VIEW TestGeospatialMethods_point_intersectTemp AS SELECT p1.location.STIntersects(p2.location) AS Intersection FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p2 ORDER BY p1.location.Lat;
 
 CREATE VIEW TestGeospatialMethods_point_disjointTemp AS SELECT p1.location.STDisjoint(p2.location) AS disjoint FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p1 CROSS JOIN TestGeospatialMethods_SPATIALPOINTGEOG_dttemp p2 ORDER BY  p1.location.Lat;
+
+CREATE VIEW TestGeospatialMethods_valid_ValFromGeomTemp AS SELECT location.STIsValid() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_valid_TextFromGeogTemp AS SELECT  location.STIsValid() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestGeospatialMethods_closed_ValFromGeomTemp AS SELECT location.STIsClosed() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_closed_TextFromGeogTemp AS SELECT  location.STIsClosed() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;
+
+CREATE VIEW TestGeospatialMethods_empty_ValFromGeomTemp AS SELECT location.STIsEmpty() FROM TestGeospatialMethods_SPATIALPOINTGEOM_dttemp ORDER BY location.STX;
+
+CREATE VIEW TestGeospatialMethods_empty_TextFromGeomTemp AS SELECT  location.STIsEmpty() AS Dimension FROM TestGeospatialMethods_SPATIALPOINTGEOG_dttemp ORDER BY location.Lat;

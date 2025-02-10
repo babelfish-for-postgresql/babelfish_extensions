@@ -18,10 +18,22 @@ DROP VIEW IF EXISTS TestGeospatialMethods_point_intersectTemp;
 
 DROP VIEW IF EXISTS TestGeospatialMethods_point_disjointTemp;
 
+DROP TABLE IF EXISTS TestGeospatialMethods_YourTableTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_valid_ValFromGeomTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_valid_TextFromGeogTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_closed_ValFromGeomTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_closed_TextFromGeogTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_empty_ValFromGeomTemp;
+
+DROP VIEW IF EXISTS TestGeospatialMethods_empty_TextFromGeomTemp;
+
 DROP TABLE IF EXISTS TestGeospatialMethods_SPATIALPOINTGEOM_dttemp;
 
 DROP TABLE IF EXISTS TestGeospatialMethods_SPATIALPOINTGEOG_dttemp;
-
-DROP TABLE IF EXISTS TestGeospatialMethods_YourTableTemp;
 
 DROP DATABASE TestGeospatialMethods_DB;
