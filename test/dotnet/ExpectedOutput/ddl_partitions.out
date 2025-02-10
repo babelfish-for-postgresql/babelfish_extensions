@@ -1026,3 +1026,4 @@ ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrs
 #Q#DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
 #Q#DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
+

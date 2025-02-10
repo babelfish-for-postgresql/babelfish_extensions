@@ -251,5 +251,5 @@ drop procedure IF EXISTS proc_more_than_4k;
 go
 drop procedure if exists storeoriginalquery_procedure;
 go
-drop function if exists storeOriginalQuery_function;
+drop function if exists storeOriginalQuery_function();
 go
