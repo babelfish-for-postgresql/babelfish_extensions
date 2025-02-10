@@ -206,12 +206,76 @@ numeric
 ~~END~~
 
 
+-- Testing on UDT
+CREATE TYPE DECIMALUDT_38_6 FROM decimal(38,6)
+GO
+
+CREATE TYPE DECIMALUDT FROM decimal
+GO
+
+select count_avg = avg(convert(DECIMALUDT_38_6, 10) + (convert(DECIMALUDT_38_6, 2)/convert(DECIMALUDT_38_6, 3)))
+ , count_val = avg(cast(18 as DECIMALUDT)) 
+into babel_5467_avgdata_udt_1
+go
+
+select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
+ ,PercentSpike = ((count_val-count_avg)/count_avg)*100
+from babel_5467_avgdata_udt_1
+go
+~~START~~
+numeric#!#numeric#!#numeric
+10.666666#!#18.000000#!#68.75
+~~END~~
+
+
+select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
+ ,PercentSpike = cast(((count_val-count_avg)/count_avg)*100 as DECIMALUDT_38_6)
+from babel_5467_avgdata_udt_1
+go
+~~START~~
+numeric#!#numeric#!#numeric
+10.666666#!#18.000000#!#68.750000
+~~END~~
+
+
+select count_avg = avg((convert(DECIMALUDT_38_6, 32)/convert(DECIMALUDT_38_6, 3)))
+ ,count_val = avg(cast(18 as DECIMALUDT))
+into babel_5467_avgdata_udt_2
+go
+
+select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
+ ,PercentSpike = ((count_val-count_avg)/count_avg)*100
+from babel_5467_avgdata_udt_2
+go
+~~START~~
+numeric#!#numeric#!#numeric
+10.666666#!#18.000000#!#68.75
+~~END~~
+
+
+select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
+ ,PercentSpike = cast(((count_val-count_avg)/count_avg)*100 as DECIMALUDT_38_6)
+from babel_5467_avgdata_udt_2
+go
+~~START~~
+numeric#!#numeric#!#numeric
+10.666666#!#18.000000#!#68.750000
+~~END~~
+
+
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
+drop table babel_5467_avgdata_udt_1
+drop table babel_5467_avgdata_udt_2
 drop table babel_5467_avgdata_3_setup
 drop table babel_5467_avgdata_3
 drop table babel_5467_t1
 drop table babel_5467_t2
 drop table babel_5467_t3
 go
+
+drop type DECIMALUDT_38_6
+drop type DECIMALUDT
+GO
