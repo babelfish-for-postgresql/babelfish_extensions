@@ -356,32 +356,14 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
  * Check if the given object is in the restricted list
  */
 static bool
-is_object_restricted(const char *objname, ObjectType type, const char *schema_name)
+is_object_restricted(const char *objname, const char *schema_name)
 {
-	const RestrictedObject	*restricted_objects;
-	size_t num_restricted_objects;
-
-	/* Determine which array to check based on schema */
-	if (pg_strcasecmp(schema_name, "master_dbo") == 0)
+	for (int idx = 0; idx < NUM_DB_OBJECTS; idx++)
 	{
-		restricted_objects = master_dbo_objects;
-		num_restricted_objects = sizeof(master_dbo_objects)/sizeof(master_dbo_objects[0]);
-	}
-	else if (pg_strcasecmp(schema_name, "msdb_dbo") == 0)
-	{
-		restricted_objects = msdb_dbo_objects;
-		num_restricted_objects = sizeof(msdb_dbo_objects)/sizeof(msdb_dbo_objects[0]);
-	}
-	else
-		return false;
-
-	for (int idx = 0; idx < num_restricted_objects; idx++)
-	{
-		if (type == restricted_objects[idx].type &&
-			pg_strcasecmp(objname, restricted_objects[idx].name) == 0)
+		if (pg_strcasecmp(shipped_objects_not_in_sys_db[idx][0], objname) == 0 &&
+			pg_strcasecmp(shipped_objects_not_in_sys_db[idx][1], schema_name) == 0)
 			return true;
 	}
-
 	return false;
 }
 
@@ -397,23 +379,10 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	Oid			schema_oid;
 
 	/* Get object information */
-	switch (object_type)
-	{
-		case OBJECT_PROCEDURE:
-			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
-			break;
-		case OBJECT_VIEW:
-			tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
-			break;
-		case OBJECT_FUNCTION:
-			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
-			break;
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unsupported object type")));
-			return;
-	}
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+	else
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
 
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -444,9 +413,8 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	}
 
 	/* Check if object is restricted and error out if it is */
-	if (is_object_restricted(objname, object_type, schema_name))
+	if (is_object_restricted(objname, schema_name))
 	{
-		ReleaseSysCache(tuple);
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be owner of %s %s",
@@ -455,7 +423,6 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 						 "function",
 						 objname)));
 	}
-
 	ReleaseSysCache(tuple);
 }
 

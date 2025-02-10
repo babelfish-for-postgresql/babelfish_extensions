@@ -2348,29 +2348,8 @@ extern bool validate_special_function(char *proc_nsname, char *proc_name, int na
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
-/* Restricted objects definition */
-typedef struct
-{
-	const char *name;
-	ObjectType type;
-} RestrictedObject;
+#define NUM_DB_OBJECTS 11
 
-/* Separate arrays for each schema */
-static const RestrictedObject master_dbo_objects[] = {
-	{"xp_qv",					OBJECT_PROCEDURE},
-	{"xp_instance_regread",		OBJECT_PROCEDURE},
-	{"sp_addlinkedserver",		OBJECT_PROCEDURE},
-	{"sp_addlinkedsrvlogin",	OBJECT_PROCEDURE},
-	{"sp_droplinkedsrvlogin",	OBJECT_PROCEDURE},
-	{"sp_dropserver",			OBJECT_PROCEDURE},
-	{"sp_enum_oledb_providers",	OBJECT_PROCEDURE},
-	{"sp_testlinkedserver",		OBJECT_PROCEDURE}
-};
-
-static const RestrictedObject msdb_dbo_objects[] = {
-	{"syspolicy_configuration",				OBJECT_VIEW},
-	{"syspolicy_system_health_state",		OBJECT_VIEW},
-	{"fn_syspolicy_is_automation_enabled",	OBJECT_FUNCTION}
-};
+extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
 
 #endif							/* PLTSQL_H */

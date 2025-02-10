@@ -62,7 +62,7 @@ GO
 DROP LOGIN babel_5146_user_l2;
 GO
 
--- tsql user=babel_5146_user_l3 WITH PASSWORD = '12345678'
+-- tsql user=babel_5146_user_l3 password=abc
 USE msdb;
 GO
 

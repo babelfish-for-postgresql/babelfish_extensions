@@ -6978,8 +6978,11 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 			if (!relation)
 				continue;
+
+			if (!OidIsValid(address.objectId))
+				continue;
 			
-			/* Restrict dropping of extended stored procedures for non-superuser roles */
+			/* Restrict dropping of system views for non-superuser roles */
 			if (stmt->removeType == OBJECT_VIEW && !superuser())
 				check_restricted_object(address.objectId, OBJECT_VIEW);
 
@@ -7042,7 +7045,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures for non-superuser roles */
+			/* Restrict dropping of system procedures and functions for non-superuser roles */
 			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION) && !superuser())
 				check_restricted_object(address.objectId, stmt->removeType);
 
