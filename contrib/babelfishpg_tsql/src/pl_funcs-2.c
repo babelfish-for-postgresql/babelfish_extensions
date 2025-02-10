@@ -374,8 +374,8 @@ void
 check_restricted_object(Oid object_id, ObjectType object_type)
 {
 	HeapTuple	tuple;
-	const char	*objname;
-	const char	*schema_name;
+	char		*objname;
+	char		*schema_name;
 	Oid			schema_oid;
 
 	/* Get object information */
@@ -393,13 +393,13 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
 	{
 		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-		objname = NameStr(procform->proname);
+		objname = pstrdup(NameStr(procform->proname));
 		schema_oid = procform->pronamespace;
 	}
 	else
 	{
 		Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
-		objname = NameStr(classform->relname);
+		objname = pstrdup(NameStr(classform->relname));
 		schema_oid = classform->relnamespace;
 	}
 
@@ -415,6 +415,8 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	/* Check if object is restricted and error out if it is */
 	if (is_object_restricted(objname, schema_name))
 	{
+		if (schema_name)
+			pfree(schema_name);
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be owner of %s %s",
@@ -423,6 +425,10 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 						 "function",
 						 objname)));
 	}
+	if (schema_name)
+		pfree(schema_name);
+	if (objname)
+		pfree(objname);
 	ReleaseSysCache(tuple);
 }
 
