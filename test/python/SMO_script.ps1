@@ -37,31 +37,23 @@ foreach ($Login in $Logins)
 {
     try 
     {
-        $LoginScripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
+        $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
         
-        $LoginScripter.Options.IncludeHeaders = $true
-        $LoginScripter.Options.LoginSid = $true
+        $Scripter.Options.IncludeHeaders = $true
+        $Scripter.Options.LoginSid = $true
         
-        $LoginScript = $LoginScripter.Script($Login) -join "`n"
-
-        $LoginScript = $LoginScript -replace '(?m)^\s*/\*.*?\*/\s*$', '' -replace '(?m)^\s*--.*$', ''
-
-        $LoginScript = $LoginScript -replace ',\s*SID=0x[0-9A-F]+', ''
-
-        $LoginScript = $LoginScript -replace "PASSWORD=N?'[^']+'", {
+        $Scripter = $Scripter.Script($Login) -join "`n"
+        # To remove comments and replace password with asterisks in the output.
+        $Scripter = $Scripter -replace '(?m)^\s*/\*.*?\*/\s*$', '' -replace '(?m)^\s*--.*$', ''
+        $Scripter = $Scripter -replace ',\s*SID=0x[0-9A-F]+', ''
+        $Scripter = $Scripter -replace "PASSWORD=N?'[^']+'", {
             $match = $_.Value
             $hashLength = $match.SubString($match.IndexOf("'") + 1, $match.LastIndexOf("'") - $match.IndexOf("'") - 1).Length
             "PASSWORD='$('*' * $hashLength)'"
         }
 
-        Write-Output $LoginScript
+        Write-Output $Scripter
         Write-Output "GO`n"
-        # $ServerRoles = $Login.ListMembers()
-        # foreach ($Role in $ServerRoles)
-        # {
-        #     Write-Output "ALTER SERVER ROLE [$Role] ADD MEMBER [$($Login.Name)]"
-        #     Write-Output "GO`n"
-        # }
     }
     catch 
     {
