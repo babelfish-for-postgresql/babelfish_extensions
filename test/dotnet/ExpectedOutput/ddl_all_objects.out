@@ -1,0 +1,335 @@
+#Q#DROP VIEW IF EXISTS sys_all_views_select_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_select_chk_option_vu_prepare
+
+#Q#DROP TABLE IF EXISTS sys_all_views_table_vu_prepare
+
+#Q#DROP TRIGGER IF EXISTS babel_1654_vu_prepare_trig_t
+
+#Q#DROP TABLE IF EXISTS babel_1654_vu_prepare_t 
+
+#Q#drop  procedure IF EXISTS routines_test_nvar;
+
+#Q#drop  function  IF EXISTS routines_fc1;
+
+#Q#drop  function  IF EXISTS routines_fc2;
+
+#Q#drop  function  IF EXISTS routines_fc3;
+
+#Q#drop  function  IF EXISTS routines_fc4;
+
+#Q#drop  function  IF EXISTS routines_fc5;
+
+#Q#drop  function  IF EXISTS routines_fc6;
+
+#Q#DROP TABLE IF EXISTS test_tsql_const
+
+#Q#DROP TABLE IF EXISTS test_datetime
+
+#Q#DROP TABLE IF EXISTS test_tsql_collate
+
+#Q#
+Create table test_tsql_const(
+    c_int int primary key,
+    c_bit sys.bit check(c_bit <> cast(1 as sys.bit)),
+    check(c_int < 10),
+    c_smallint smallint check(c_smallint < cast(cast(CAST('20' AS smallint) as sql_variant) as smallint)),
+    c_binary binary(8) check(c_binary > cast(0xfe as binary(8))),
+    c_varbinary varbinary(8) check(c_varbinary > cast(0xfe as varbinary(8)))
+)
+
+#Q#Create table test_datetime(
+    c_time time check(cast(c_time as pg_catalog.time) < cast('09:00:00' as time) and c_time < cast('09:00:00' as time(6))),
+    c_date date check(c_date < cast('2001-01-01' as date)),
+    c_datetime datetime check(c_datetime < cast('2020-10-20 09:00:00' as datetime)),
+    c_datetime2 datetime2 check(c_datetime2 < cast('2020-10-20 09:00:00' as datetime2) and c_datetime2 < cast('2020-10-20 09:00:00' as datetime2(6)) ),
+    c_datetimeoffset datetimeoffset check(c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as sys.datetimeoffset) and c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset(4))),
+    c_smalldatetime smalldatetime check(c_smalldatetime < cast('2007-05-08 12:35:29.123' AS smalldatetime)),
+)
+
+#Q#create table test_tsql_collate(
+	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE latin1_general_ci_as),
+	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE japanese_ci_as),
+	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
+)
+
+#Q#
+create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)
+AS
+BEGIN
+        SELECT @test_nvar_b=8;
+END
+
+#Q#create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
+
+#Q#create function routines_fc2(@fc2_a varchar) RETURNS varchar AS BEGIN return @fc2_a END;
+
+#Q#create function routines_fc3(@fc3_a nchar) RETURNS nchar AS BEGIN return @fc3_a END;
+
+#Q#create function routines_fc4(@fc4_a binary, @fc4_b tinyint, @fc4_c BIGINT, @fc4_d float) RETURNS binary AS BEGIN return @fc4_a END;
+
+#Q#create function routines_fc5(@fc5_a varbinary) RETURNS varbinary AS BEGIN return @fc5_a END;
+
+#Q#create function routines_fc6(@fc6_a char) RETURNS char AS BEGIN return @fc6_a END;
+
+#Q#
+create table babel_1654_vu_prepare_t ( ID INT IDENTITY (1,1) PRIMARY KEY , a varchar(50), b varchar(50))
+
+#Q#
+CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
+	select COLUMNS_UPDATED();
+
+#Q#
+CREATE TABLE sys_all_views_table_vu_prepare(a int)
+
+#Q#CREATE VIEW sys_all_views_select_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+
+#Q#CREATE VIEW sys_all_views_select_chk_option_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+WITH CHECK OPTION
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_1654_vu_prepare_t](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[a] [varchar](50) NULL,
+	[b] [varchar](50) NULL,
+ CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS OFF
+GO
+SET QUOTED_IDENTIFIER OFF
+GO
+
+CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
+	select COLUMNS_UPDATED();
+
+GO
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[sys_all_views_table_vu_prepare](
+	[a] [int] NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_datetime](
+	[c_time] [time](6) NULL,
+	[c_date] [date] NULL,
+	[c_datetime] [datetime] NULL,
+	[c_datetime2] [datetime2](6) NULL,
+	[c_datetimeoffset] [datetimeoffset](6) NULL,
+	[c_smalldatetime] [smalldatetime] NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_date_check] CHECK  (((c_date < '2001-01-01')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_date_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime_check] CHECK  (((c_datetime < '2020-10-20 09:00:00')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime2_check] CHECK  ((((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime2_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetimeoffset_check] CHECK  ((((c_datetimeoffset < '2025-12-10 12:32:10 +01:00') AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetimeoffset_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_smalldatetime_check] CHECK  (((c_smalldatetime < '2007-05-08 12:35:00')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_smalldatetime_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_time_check] CHECK  ((((c_time < '09:00:00') AND (c_time < CAST('09:00:00' AS time(6))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_time_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_tsql_collate](
+	[c_varchar] [varchar](1) NULL,
+	[c_char] [char](1) NULL,
+	[c_nchar] [nchar](1) NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_char_check] CHECK  (((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE japanese_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_char_check]
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_nchar_check] CHECK  (((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf') AS nchar(7)) COLLATE latin1_general_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_nchar_check]
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_varchar_check] CHECK  (((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE latin1_general_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_varchar_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_tsql_const](
+	[c_int] [int] NOT NULL,
+	[c_bit] [bit] NULL,
+	[c_smallint] [smallint] NULL,
+	[c_binary] [binary](8) NULL,
+	[c_varbinary] [varbinary](8) NULL,
+ CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[c_int] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_binary_check] CHECK  (((c_binary > CAST(('0xfe') AS binary(8)))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_binary_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_bit_check] CHECK  (((c_bit <> CAST((1) AS bit))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_bit_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_int_check] CHECK  (((c_int < 10)))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_int_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_smallint_check] CHECK  (((c_smallint < CAST((CAST(('20') AS sql_variant)) AS smallint))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_smallint_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_varbinary_check] CHECK  (((c_varbinary > CAST('0xfe' AS varbinary(8)))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_varbinary_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const] ADD  CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[c_int] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW sys_all_views_select_chk_option_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+WITH CHECK OPTION
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW sys_all_views_select_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)
+AS
+BEGIN
+        SELECT @test_nvar_b=8;
+END
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc2(@fc2_a varchar) RETURNS varchar AS BEGIN return @fc2_a END;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc3(@fc3_a nchar) RETURNS nchar AS BEGIN return @fc3_a END;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc4(@fc4_a binary, @fc4_b tinyint, @fc4_c BIGINT, @fc4_d float) RETURNS binary AS BEGIN return @fc4_a END;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc5(@fc5_a varbinary) RETURNS varbinary AS BEGIN return @fc5_a END;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create function routines_fc6(@fc6_a char) RETURNS char AS BEGIN return @fc6_a END;
+
+GO
+#Q#DROP VIEW IF EXISTS sys_all_views_select_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_select_chk_option_vu_prepare
+
+#Q#DROP TABLE IF EXISTS sys_all_views_table_vu_prepare
+
+#Q#DROP TRIGGER IF EXISTS babel_1654_vu_prepare_trig_t
+
+#Q#DROP TABLE IF EXISTS babel_1654_vu_prepare_t 
+
+#Q#drop  procedure IF EXISTS routines_test_nvar;
+
+#Q#drop  function  IF EXISTS routines_fc1;
+
+#Q#drop  function  IF EXISTS routines_fc2;
+
+#Q#drop  function  IF EXISTS routines_fc3;
+
+#Q#drop  function  IF EXISTS routines_fc4;
+
+#Q#drop  function  IF EXISTS routines_fc5;
+
+#Q#drop  function  IF EXISTS routines_fc6;
+
+#Q#DROP TABLE IF EXISTS test_tsql_const
+
+#Q#DROP TABLE IF EXISTS test_datetime
+
+#Q#DROP TABLE IF EXISTS test_tsql_collate
+
