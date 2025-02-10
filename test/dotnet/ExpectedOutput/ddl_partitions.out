@@ -200,6 +200,8 @@ ALL TO ([PRIMARY]);
 ON [PARTITION_TABLE  유니코드스키마👻  ](Value)
 ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
 
+#Q#SET QUOTED_IDENTIFIER ON;^M
+
 #Q#CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  " (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 
@@ -215,6 +217,8 @@ ALL TO ([PRIMARY]);
 #Q#CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  "
 ON "PARTITION_TABLE 😎$@ #123 🌍rder  " (Value)
 ON "PARTITION_SCHEME 😎$@ #123 🌍rder  "("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
+
+#Q#SET QUOTED_IDENTIFIER OFF;^M
 
 #Q#CREATE TABLE partition_vu_prepare_int_table (
     Id INT UNIQUE,
@@ -871,7 +875,11 @@ GO
 
 #Q#DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
 
+#Q#SET QUOTED_IDENTIFIER ON;^M
+
 #Q#DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  " ON "PARTITION_TABLE 😎$@ #123 🌍rder  "
+
+#Q#SET QUOTED_IDENTIFIER OFF;^M
 
 #Q#DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
@@ -921,7 +929,11 @@ ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrs
 
 #Q#DROP TABLE [PARTITION_TABLE  유니코드스키마👻  ]
 
+#Q#SET QUOTED_IDENTIFIER ON;^M
+
 #Q#DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  "
+
+#Q#SET QUOTED_IDENTIFIER OFF;^M
 
 #Q#DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 
@@ -973,7 +985,11 @@ ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrs
 
 #Q#DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ]
 
+#Q#SET QUOTED_IDENTIFIER ON;^M
+
 #Q#DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  "
+
+#Q#SET QUOTED_IDENTIFIER OFF;^M
 
 #Q#DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
@@ -1025,5 +1041,9 @@ ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrs
 
 #Q#DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
+#Q#SET QUOTED_IDENTIFIER ON;^M
+
 #Q#DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
+
+#Q#SET QUOTED_IDENTIFIER OFF;^M
 
