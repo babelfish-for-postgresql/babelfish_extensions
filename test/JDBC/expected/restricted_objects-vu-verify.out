@@ -21,7 +21,7 @@ EXEC dbo.babel_5146_prepare_p1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+~~ERROR (Message: must be owner of procedure sp_addlinkedserver)~~
 
 
 BEGIN TRANSACTION;
@@ -30,14 +30,14 @@ ROLLBACK;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+~~ERROR (Message: must be owner of procedure sp_addlinkedserver)~~
 
 
 DROP PROCEDURE dbo.sp_addlinkedserver;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of procedure master_dbo.sp_addlinkedserver)~~
+~~ERROR (Message: must be owner of procedure sp_addlinkedserver)~~
 
 
 -- tsql user=babel_5146_user_l4 password=abc
@@ -49,7 +49,7 @@ EXEC dbo.babel_5146_prepare_p2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of function msdb_dbo.fn_syspolicy_is_automation_enabled)~~
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
 
 
 EXEC dbo.babel_5146_prepare_p3;
@@ -72,7 +72,7 @@ DROP PROCEDURE master_dbo.sp_addlinkedserver;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be owner of procedure master_dbo.sp_addlinkedserver
+~~ERROR (Message: ERROR: must be owner of procedure sp_addlinkedserver
     Server SQLState: 42501)~~
 
 
@@ -82,7 +82,7 @@ DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must be owner of function msdb_dbo.fn_syspolicy_is_automation_enabled
+~~ERROR (Message: ERROR: must be owner of function fn_syspolicy_is_automation_enabled
     Server SQLState: 42501)~~
 
 

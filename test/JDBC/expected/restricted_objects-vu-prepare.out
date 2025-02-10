@@ -11,6 +11,9 @@ GO
 CREATE LOGIN babel_5146_user_l2 WITH PASSWORD = '12345678';
 GO
 
+GRANT CONNECT TO guest;
+GO
+
 USE msdb
 GO
 
@@ -21,6 +24,9 @@ CREATE USER babel_5146_user_u3 FOR LOGIN babel_5146_user_l3;
 GO
 
 CREATE SCHEMA babel_5146_test_schema_s2 AUTHORIZATION babel_5146_user_u3;
+GO
+
+GRANT CONNECT TO guest;
 GO
 
 -- test login for msdb

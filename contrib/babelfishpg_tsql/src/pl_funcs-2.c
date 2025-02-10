@@ -397,7 +397,23 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	Oid			schema_oid;
 
 	/* Get object information */
-	tuple = SearchSysCache1(object_type == OBJECT_PROCEDURE ? PROCOID : RELOID, ObjectIdGetDatum(object_id));
+	switch (object_type)
+	{
+		case OBJECT_PROCEDURE:
+			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+			break;
+		case OBJECT_VIEW:
+			tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+			break;
+		case OBJECT_FUNCTION:
+			tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported object type")));
+			return;
+	}
 
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -405,7 +421,7 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 				 errmsg("object with OID %u does not exist", object_id)));
 
 	/* Get object name and schema */
-	if (object_type == OBJECT_PROCEDURE)
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
 	{
 		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
 		objname = NameStr(procform->proname);
@@ -434,7 +450,9 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be owner of %s %s",
-				 		 object_type == OBJECT_PROCEDURE ? "procedure" : "view",
+				 		 object_type == OBJECT_PROCEDURE ? "procedure" :
+						 object_type == OBJECT_VIEW ? "view" :
+						 "function",
 						 objname)));
 	}
 

@@ -7043,8 +7043,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				continue;
 				
 			/* Restrict dropping of extended stored procedures for non-superuser roles */
-			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
-				check_restricted_object(address.objectId, OBJECT_PROCEDURE);
+			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION) && !superuser())
+				check_restricted_object(address.objectId, stmt->removeType);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
