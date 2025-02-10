@@ -45,28 +45,6 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.suser_name() RENAME TO suser_name_deprecated_4_6_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'suser_name_deprecated_4_6_0');
-
-CREATE OR REPLACE FUNCTION sys.suser_name()
-RETURNS sys.NVARCHAR(128)
-AS $$
-    SELECT sys.suser_name_internal(suser_id());
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
     ALTER FUNCTION sys.hashbytes(IN alg pg_catalog.VARCHAR, IN data pg_catalog.VARCHAR) RENAME TO hashbytes_varchar_deprecated_4_5_0;
 
 EXCEPTION WHEN OTHERS THEN
