@@ -40,6 +40,21 @@ $$;
  * final behaviour.
  */
 
+ -- recreate deprecated function to use it for deprecated C function
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts_deprecated_5_2_0(IN phrase TEXT) RETURNS TEXT AS 
+'babelfishpg_tsql', 'replace_special_chars_fts_deprecated_5_2_0'
+LANGUAGE C IMMUTABLE STRICT;
+GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts_deprecated_5_2_0 TO PUBLIC;
+
+-- This function performs replacing special characters to their corresponding unique hashes
+-- in the search condition or the full text search CONTAINS predicate
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) RETURNS TEXT AS 
+'babelfishpg_tsql', 'replace_special_chars_fts'
+LANGUAGE C IMMUTABLE STRICT;
+GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_special_chars_fts_deprecated_5_2_0');
+
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
