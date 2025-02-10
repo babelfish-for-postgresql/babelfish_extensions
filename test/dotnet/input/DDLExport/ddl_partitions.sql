@@ -1,10 +1,10 @@
-CREATE PARTITION FUNCTION IntPartitionFunction (int) 
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
 AS RANGE RIGHT FOR VALUES (0, 1000, 500);
 GO
 CREATE PARTITION FUNCTION BigIntPartitionFunction (sys.bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 GO
-CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint) 
+CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint)
 AS RANGE RIGHT FOR VALUES (cast(32767 as bigint), -32768, 0);
 GO
 CREATE PARTITION FUNCTION TinyIntPartitionFunction (sys.tinyint)
@@ -22,7 +22,7 @@ GO
 CREATE PARTITION FUNCTION SmallMoneyPartitionFunction (SMALLMONEY)
 AS RANGE RIGHT FOR VALUES ($2.56789, ¥4.91, $3.56789);
 GO
-CREATE PARTITION FUNCTION DatePartitionFunction (date) 
+CREATE PARTITION FUNCTION DatePartitionFunction (date)
 AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01');
 GO
 CREATE PARTITION FUNCTION DateTimePartitionFunction (datetime)
@@ -71,83 +71,83 @@ FOR VALUES (
 );
 GO
 CREATE PARTITION SCHEME IntPartitionScheme AS
-PARTITION IntPartitionFunction 
+PARTITION IntPartitionFunction
 TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 GO
 CREATE PARTITION SCHEME BigIntPartitionScheme AS
-PARTITION BigIntPartitionFunction 
+PARTITION BigIntPartitionFunction
 TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 GO
 CREATE PARTITION SCHEME SmallIntPartitionScheme AS
-PARTITION SmallIntPartitionFunction 
+PARTITION SmallIntPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME TinyIntPartitionScheme AS
-PARTITION TinyIntPartitionFunction 
+PARTITION TinyIntPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME DecimalPartitionScheme AS
-PARTITION DecimalPartitionFunction 
+PARTITION DecimalPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME NumericPartitionScheme AS
-PARTITION NumericPartitionFunction 
+PARTITION NumericPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME MoneyPartitionScheme AS
-PARTITION MoneyPartitionFunction 
+PARTITION MoneyPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME SmallMoneyPartitionScheme AS
-PARTITION SmallMoneyPartitionFunction 
+PARTITION SmallMoneyPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME DatePartitionScheme AS
-PARTITION DatePartitionFunction 
+PARTITION DatePartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME DateTimePartitionScheme AS
-PARTITION DateTimePartitionFunction 
+PARTITION DateTimePartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME DateTime2PartitionScheme AS
-PARTITION DateTime2PartitionFunction 
+PARTITION DateTime2PartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME SmallDateTimePartitionScheme AS
-PARTITION SmallDateTimePartitionFunction 
+PARTITION SmallDateTimePartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME CharPartitionScheme AS
-PARTITION CharPartitionFunction 
+PARTITION CharPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME VarCharPartitionScheme AS
-PARTITION VarCharPartitionFunction 
+PARTITION VarCharPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME NVarCharPartitionScheme AS
-PARTITION NVarCharPartitionFunction 
+PARTITION NVarCharPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME NCharPartitionScheme AS
-PARTITION NCharPartitionFunction 
+PARTITION NCharPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME BinaryPartitionScheme AS
-PARTITION BinaryPartitionFunction 
+PARTITION BinaryPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME VarBinaryPartitionScheme AS
-PARTITION VarBinaryPartitionFunction 
+PARTITION VarBinaryPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME UniqueIdentifierPartitionScheme AS
-PARTITION UniqueIdentifierPartitionFunction 
+PARTITION UniqueIdentifierPartitionFunction
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz AS
-PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz 
+PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 ALL TO ([PRIMARY]);
 GO
 CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder AS
@@ -169,12 +169,12 @@ GO
 CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (
     PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz BIGINT,
     Value sys.varchar(50)
-) ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder   
+) ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 GO
 CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder(Value)
-ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder 
+ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 GO
 CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
@@ -559,43 +559,43 @@ SET QUOTED_IDENTIFIER OFF;
 GO
 DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 GO
-DROP PARTITION FUNCTION IntPartitionFunction 
+DROP PARTITION FUNCTION IntPartitionFunction
 GO
-DROP PARTITION FUNCTION BigIntPartitionFunction 
+DROP PARTITION FUNCTION BigIntPartitionFunction
 GO
-DROP PARTITION FUNCTION SmallIntPartitionFunction 
+DROP PARTITION FUNCTION SmallIntPartitionFunction
 GO
-DROP PARTITION FUNCTION TinyIntPartitionFunction 
+DROP PARTITION FUNCTION TinyIntPartitionFunction
 GO
-DROP PARTITION FUNCTION DecimalPartitionFunction 
+DROP PARTITION FUNCTION DecimalPartitionFunction
 GO
-DROP PARTITION FUNCTION NumericPartitionFunction 
+DROP PARTITION FUNCTION NumericPartitionFunction
 GO
-DROP PARTITION FUNCTION MoneyPartitionFunction 
+DROP PARTITION FUNCTION MoneyPartitionFunction
 GO
-DROP PARTITION FUNCTION SmallMoneyPartitionFunction 
+DROP PARTITION FUNCTION SmallMoneyPartitionFunction
 GO
-DROP PARTITION FUNCTION DatePartitionFunction 
+DROP PARTITION FUNCTION DatePartitionFunction
 GO
-DROP PARTITION FUNCTION DateTimePartitionFunction 
+DROP PARTITION FUNCTION DateTimePartitionFunction
 GO
-DROP PARTITION FUNCTION DateTime2PartitionFunction 
+DROP PARTITION FUNCTION DateTime2PartitionFunction
 GO
-DROP PARTITION FUNCTION SmallDateTimePartitionFunction 
+DROP PARTITION FUNCTION SmallDateTimePartitionFunction
 GO
-DROP PARTITION FUNCTION CharPartitionFunction 
+DROP PARTITION FUNCTION CharPartitionFunction
 GO
-DROP PARTITION FUNCTION VarCharPartitionFunction 
+DROP PARTITION FUNCTION VarCharPartitionFunction
 GO
-DROP PARTITION FUNCTION NVarCharPartitionFunction 
+DROP PARTITION FUNCTION NVarCharPartitionFunction
 GO
-DROP PARTITION FUNCTION NCharPartitionFunction 
+DROP PARTITION FUNCTION NCharPartitionFunction
 GO
-DROP PARTITION FUNCTION BinaryPartitionFunction 
+DROP PARTITION FUNCTION BinaryPartitionFunction
 GO
-DROP PARTITION FUNCTION VarBinaryPartitionFunction 
+DROP PARTITION FUNCTION VarBinaryPartitionFunction
 GO
-DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
+DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction
 GO
 DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 GO
