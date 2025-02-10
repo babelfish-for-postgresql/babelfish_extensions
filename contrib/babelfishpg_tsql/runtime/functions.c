@@ -196,7 +196,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
-PG_FUNCTION_INFO_V1(replace_special_chars_fts_deprecated_5_1_0);
+PG_FUNCTION_INFO_V1(replace_special_chars_fts_deprecated_5_2_0);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2811,7 +2811,7 @@ type_name(PG_FUNCTION_ARGS)
  * This function is for the deprecated SQL function that accepts only one column as an input and 
  */
 Datum
-replace_special_chars_fts_deprecated_5_1_0(PG_FUNCTION_ARGS)
+replace_special_chars_fts_deprecated_5_2_0(PG_FUNCTION_ARGS)
 {
 	text		*input_text = PG_GETARG_TEXT_P(0);
 	char		*input_str = text_to_cstring(input_text);

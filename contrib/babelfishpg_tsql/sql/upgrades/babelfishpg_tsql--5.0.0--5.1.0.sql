@@ -100,21 +100,6 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'hashbytes_varbinary_deprecated_4_5_0');
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.replace_special_chars_fts(IN phrase text) RENAME TO replace_special_chars_fts_deprecated_5_1_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_special_chars_fts_deprecated_5_1_0');
-
 CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.VARCHAR) RETURNS sys.bbf_varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
@@ -126,15 +111,6 @@ GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.NVARCHAR) TO 
 CREATE OR REPLACE FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN data sys.bbf_varbinary) RETURNS sys.bbf_varbinary
 AS 'babelfishpg_tsql', 'hashbytes' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.hashbytes(IN alg sys.VARCHAR, IN sys.bbf_varbinary) TO PUBLIC;
-
--- This function performs replacing special characters to their corresponding unique hashes
--- in the search condition or the full text search CONTAINS predicate
-CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(VARIADIC texts text[]) RETURNS TEXT AS 
-'babelfishpg_tsql', 'replace_special_chars_fts'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'replace_special_chars_fts_deprecated_5_1_0');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
