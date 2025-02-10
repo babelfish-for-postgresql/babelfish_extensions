@@ -40,7 +40,8 @@ public class DatabaseScripter
 					DriAll = true,
 					ScriptSchema = true,
 					ScriptData = false,
-					NoCollation = true
+					NoCollation = true,
+					Encoding = System.Text.Encoding.UTF8
 				}
 			};
 
@@ -48,7 +49,13 @@ public class DatabaseScripter
 		}
 		catch (Exception ex)
 		{
-			testUtils.PrintToLogsOrConsole("An error occurred: " + ex.Message, logger, "information");
+			testUtils.PrintToLogsOrConsole(
+				$"An error occurred:\n" + 
+				$"Message: {ex.Message}\n" +
+				$"Stack Trace: {ex.StackTrace}\n" +
+				$"Source: {ex.Source}", 
+				logger, 
+				"information");
 		}
 	}
 
@@ -58,6 +65,7 @@ public class DatabaseScripter
 		const string dbo_user = "dbo";
 		const string guest_user = "guest";
 		const string sysdtb = "sysdatabases";
+
 
 		Action<SqlSmoObject> scriptObject = obj =>
 		{
@@ -69,16 +77,38 @@ public class DatabaseScripter
 		Func<SqlSmoObject, bool> filterObject = obj =>
 		{
 			string schema = GetSchema(obj);
-			return (flag == "0" && schema != sysdtb && schema != null && schema != sys_schema && !IsSystemObject(obj)) ||
-				   (flag == "1" && schema != sys_schema && !IsSystemObject(obj));
+			if (schema == null) return false;
+			return (schema != sys_schema && !IsSystemObject(obj));
 		};
 
 		// Script Tables and their child objects
-		foreach (Table table in database.Tables.Cast<Table>().Where(filterObject))
+		if (database.Tables != null)
 		{
-			scriptObject(table);
-			table.Indexes.Cast<Microsoft.SqlServer.Management.Smo.Index>().Where(idx => !idx.IsSystemObject).ToList().ForEach(scriptObject);
-			table.Triggers.Cast<Trigger>().Where(trg => !trg.IsSystemObject).ToList().ForEach(scriptObject);
+			foreach (Table table in database.Tables.Cast<Table>().Where(filterObject))
+			{
+				try
+				{
+					scriptObject(table);
+
+					if (table.Indexes != null)
+						table.Indexes.Cast<Microsoft.SqlServer.Management.Smo.Index>()
+							.Where(idx => !idx.IsSystemObject)
+							.ToList()
+							.ForEach(scriptObject);
+							
+					if (table.Triggers != null)
+						table.Triggers.Cast<Microsoft.SqlServer.Management.Smo.Trigger>()
+							.Where(trg => !trg.IsSystemObject)
+							.ToList()
+							.ForEach(scriptObject);
+				}
+				catch (Exception ex)
+				{
+					// Log the error and continue with next table
+					testUtils.PrintToLogsOrConsole($"\nFailed to script table {table.Schema}.{table.Name}: {ex.Message}", logger, "information");
+					continue;
+				}
+			}
 		}
 
 		// Script other database objects
@@ -90,17 +120,15 @@ public class DatabaseScripter
 		database.PartitionFunctions.Cast<PartitionFunction>().ToList().ForEach(scriptObject);
 		database.PartitionSchemes.Cast<PartitionScheme>().ToList().ForEach(scriptObject);
 
-		if (flag == "0")
-		{
-			database.Users.Cast<User>()
+		database.Users.Cast<User>()
 				.Where(ur => ur.Name != dbo_user && ur.Name != guest_user && !ur.IsSystemObject)
 				.ToList()
 				.ForEach(scriptObject);
-		}
 	}
 
 	private static string GetSchema(SqlSmoObject obj)
 	{
+		if (obj == null) return null;
 		return obj switch
 		{
 			Table table => table.Schema,
@@ -113,17 +141,27 @@ public class DatabaseScripter
 
 	private static bool IsSystemObject(SqlSmoObject obj)
 	{
-		return obj switch
+		try
 		{
-			Table table => table.IsSystemObject,
-			View view => view.IsSystemObject,
-			StoredProcedure sp => sp.IsSystemObject,
-			UserDefinedFunction udf => udf.IsSystemObject,
-			Microsoft.SqlServer.Management.Smo.Index index => index.IsSystemObject,
-			Trigger trigger => trigger.IsSystemObject,
-			User user => user.IsSystemObject,
-			_ => false
-		};
+			if (obj == null) return false;
+
+			return obj switch
+			{
+				Table table => table?.IsSystemObject ?? false,
+				View view => view?.IsSystemObject ?? false,
+				StoredProcedure sp => sp?.IsSystemObject ?? false,
+				UserDefinedFunction udf => udf?.IsSystemObject ?? false,
+				Microsoft.SqlServer.Management.Smo.Index index => index?.IsSystemObject ?? false,
+				Trigger trigger => trigger?.IsSystemObject ?? false,
+				User user => user?.IsSystemObject ?? false,
+				_ => false
+			};
+		}
+		catch
+		{
+			// Fallback in case of any property access issues
+			return false;
+		}
 	}
 }
 
