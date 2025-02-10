@@ -1,0 +1,39 @@
+#Q#DROP USER IF EXISTS test_usr1
+
+#Q#DROP USER IF EXISTS test_usr2
+
+#Q#DROP USER IF EXISTS test_usr3
+
+#Q#CREATE LOGIN test_pwd1   
+    WITH PASSWORD = '340$Uuxwp7Mcxo7Khy'; 
+
+#Q#CREATE LOGIN test_pwd2   
+    WITH PASSWORD = '340$UuxwpMcxo7Khy';  
+
+#Q#CREATE LOGIN test_pwd3   
+    WITH PASSWORD = '340$Uuxwp7Mco7Khy'; 
+
+#Q#CREATE USER test_usr1 FOR LOGIN test_pwd1;  
+
+#Q#CREATE USER test_usr2 FOR LOGIN test_pwd2;  
+
+#Q#CREATE USER test_usr3 FOR LOGIN test_pwd3;  
+
+CREATE USER [test_usr1] FOR LOGIN [test_pwd1] WITH DEFAULT_SCHEMA=[dbo]
+GO
+CREATE USER [test_usr2] FOR LOGIN [test_pwd2] WITH DEFAULT_SCHEMA=[dbo]
+GO
+CREATE USER [test_usr3] FOR LOGIN [test_pwd3] WITH DEFAULT_SCHEMA=[dbo]
+GO
+#Q#DROP LOGIN  test_pwd1
+
+#Q#DROP LOGIN  test_pwd2
+
+#Q#DROP LOGIN  test_pwd3
+
+#Q#DROP USER IF EXISTS test_usr1
+
+#Q#DROP USER IF EXISTS test_usr2
+
+#Q#DROP USER IF EXISTS test_usr3
+

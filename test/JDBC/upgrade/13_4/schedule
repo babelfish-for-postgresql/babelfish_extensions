@@ -254,3 +254,4 @@ BABEL-5059-before-14_7-or-15_2
 smalldatetime_date_cmp-before-15_5-16_1
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char_before_17_3

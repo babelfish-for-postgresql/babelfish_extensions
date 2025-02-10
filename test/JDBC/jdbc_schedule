@@ -495,3 +495,6 @@ ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
 ignore#!#trim-before-15_11-or-16_7-vu-prepare
 ignore#!#trim-before-15_11-or-16_7-vu-verify
 ignore#!#trim-before-15_11-or-16_7-vu-cleanup
+ignore#!#test_conv_float_to_varchar_char_before_17_3-vu-prepare
+ignore#!#test_conv_float_to_varchar_char_before_17_3-vu-verify
+ignore#!#test_conv_float_to_varchar_char_before_17_3-vu-cleanup

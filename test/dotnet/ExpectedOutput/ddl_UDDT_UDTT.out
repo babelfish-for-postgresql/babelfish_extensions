@@ -1,0 +1,112 @@
+#Q#DROP TYPE IF EXISTS test1
+
+#Q#DROP TYPE IF EXISTS test2
+
+#Q#DROP TYPE IF EXISTS test4
+
+#Q#DROP TYPE IF EXISTS LocationTableType
+
+#Q#DROP TYPE IF EXISTS InventoryItem
+
+#Q#DROP TYPE IF EXISTS shc_test.LocationTableType
+
+#Q#DROP TABLE IF EXISTS t_udd
+
+#Q#DROP TYPE IF EXISTS shc_test.test3
+
+#Q#DROP SCHEMA IF EXISTS shc_test
+
+#Q#
+CREATE TYPE test1 FROM varchar(11) NOT NULL ;
+
+#Q#
+CREATE TYPE test2 FROM int NULL ;
+
+#Q#
+CREATE SCHEMA shc_test
+
+#Q#
+Create type shc_test.test3 FROM int NOT NULL ;
+
+#Q#
+Create type test4 from numeric(15,4)
+
+#Q#
+create table t_udd( a shc_test.test3);
+
+#Q#
+CREATE TYPE LocationTableType AS TABLE   
+    ( LocationName VARCHAR(50)  
+    , CostRate INT );  
+
+#Q#
+CREATE TYPE InventoryItem AS TABLE
+(
+    [Name] NVARCHAR(50) NOT NULL,
+    SupplierId BIGINT NOT NULL,
+    Price DECIMAL (18, 4) NULL,
+    PRIMARY KEY (
+        Name
+    )
+)
+
+#Q#
+CREATE TYPE shc_test.LocationTableType AS TABLE   
+    ( LocationName VARCHAR(50)  
+    , CostRate INT );  
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[t_udd](
+	[a] [shc_test].[test3] NULL
+) ON [PRIMARY]
+
+GO
+CREATE TYPE [dbo].[test1] FROM [varchar](11) NOT NULL
+GO
+CREATE TYPE [dbo].[test2] FROM [int] NULL
+GO
+CREATE TYPE [dbo].[test4] FROM [numeric](15, 4) NULL
+GO
+CREATE TYPE [shc_test].[test3] FROM [int] NOT NULL
+GO
+CREATE TYPE [dbo].[inventoryitem] AS TABLE(
+	[name] [nvarchar](50) NOT NULL,
+	[supplierid] [bigint] NOT NULL,
+	[price] [decimal](18, 4) NULL,
+	PRIMARY KEY NONCLUSTERED 
+(
+	[name] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+GO
+CREATE TYPE [dbo].[locationtabletype] AS TABLE(
+	[locationname] [varchar](50) NULL,
+	[costrate] [int] NULL
+)
+GO
+CREATE TYPE [shc_test].[locationtabletype] AS TABLE(
+	[locationname] [varchar](50) NULL,
+	[costrate] [int] NULL
+)
+GO
+#Q#DROP TYPE IF EXISTS test1
+
+#Q#DROP TYPE IF EXISTS test2
+
+#Q#DROP TYPE IF EXISTS test4
+
+#Q#DROP TYPE IF EXISTS LocationTableType
+
+#Q#DROP TYPE IF EXISTS InventoryItem
+
+#Q#DROP TYPE IF EXISTS shc_test.LocationTableType
+
+#Q#DROP TABLE IF EXISTS t_udd
+
+#Q#DROP TYPE IF EXISTS shc_test.test3
+
+#Q#DROP SCHEMA IF EXISTS shc_test
+
