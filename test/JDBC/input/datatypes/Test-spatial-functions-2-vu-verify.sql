@@ -282,8 +282,8 @@ SELECT @point1 . STDisjoint ( @point2 );
 go
 
 DECLARE @point1 geography, @point2 geography;
-SET @point1 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 999999);
-SET @point2 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 999999);
+SET @point1 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
+SET @point2 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
 SELECT @point1.STDisjoint(@point2);
 go
 
@@ -831,8 +831,30 @@ SELECT 'STDisjoint (null second)' AS Test, @validGeom.STDisjoint(@nullGeom) AS R
 SELECT 'STIntersects (null second)' AS Test, @validGeom.STIntersects(@nullGeom) AS Result;
 go
 
+DECLARE @nullGeom geography;
+DECLARE @validGeom geography = geography::STGeomFromText('POINT(0 0)', 4326);
+
+-- Tests
+SELECT 'STDimension' AS Test, @nullGeom.STDimension() AS Result;
+SELECT 'STDisjoint' AS Test, @nullGeom.STDisjoint(@validGeom) AS Result;
+SELECT 'STIntersects' AS Test, @nullGeom.STIntersects(@validGeom) AS Result;
+SELECT 'STIsClosed' AS Test, @nullGeom.STIsClosed() AS Result;
+SELECT 'STIsEmpty' AS Test, @nullGeom.STIsEmpty() AS Result;
+SELECT 'STIsValid' AS Test, @nullGeom.STIsValid() AS Result;
+
+-- Test with null as second argument for binary operations
+SELECT 'STDisjoint (null second)' AS Test, @validGeom.STDisjoint(@nullGeom) AS Result;
+SELECT 'STIntersects (null second)' AS Test, @validGeom.STIntersects(@nullGeom) AS Result;
+go
+
 --Nested Functions
 SELECT ID, PointColumn1.STDisjoint(PointColumn2).STIsEmpty() AS disjoint FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+go
+
+SELECT ID, PointColumn1.STDisjoint(PointColumn2).STIsValid() AS disjoint FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+go
+
+SELECT ID, PointColumn1.STDisjoint(PointColumn2).STIsClosed() AS disjoint FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
 go
 
 --EMPTY Cases
@@ -866,4 +888,41 @@ DECLARE @g1 geometry, @g2 geometry;
 SET @g1 = geometry::STGeomFromText('POINT EMPTY', 0);  
 SET @g2 = geometry::STGeomFromText('POINT EMPTY', 0);  
 SELECT @g1.STDisjoint(@g2) AS Disjoint;
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STIsValid();
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STIsClosed();
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STDimension();
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STIsEmpty();
+go
+
+DECLARE @g1 geography, @g2 geography;
+SET @g1 = geography::STGeomFromText('POINT EMPTY', 4326);  
+SET @g2 = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g1.STIntersects(@g2) AS Intersecting;
+go
+
+DECLARE @g1 geography, @g2 geography;
+SET @g1 = geography::STGeomFromText('POINT EMPTY', 4326);  
+SET @g2 = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g1.STDisjoint(@g2) AS Disjoint;
+go
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT EMPTY', 4326);
+SELECT STIsClosed(@point);
 go

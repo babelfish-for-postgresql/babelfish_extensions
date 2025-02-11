@@ -305,6 +305,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		valid_srids integer[];
 		lat float8;
 		Zmflag smallint;
+		wkt_upper text;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
@@ -316,7 +317,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
+			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
 				-- Call the underlying function after preprocessing
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
@@ -331,7 +332,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'Inavalid SRID';
+				RAISE EXCEPTION 'Invalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;
@@ -399,6 +400,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		valid_srids integer[];
 		lat float8;
 		Zmflag smallint;
+		wkt_upper text;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
@@ -410,7 +412,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
+			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
 				-- Call the underlying function after preprocessing
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
@@ -425,7 +427,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'Inavalid SRID';
+				RAISE EXCEPTION 'Invalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;
@@ -563,6 +565,25 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGR
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
+--STIsClosed
+-- Checks if geometry is closed
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS $$
+        DECLARE
+                geom_type text;
+        BEGIN
+                -- Get the geography type
+                geom_type := ST_GeometryType(geom); 
+                -- Check if any figures of the geography instance are points
+                IF geom_type = 'ST_Point' THEN
+                        RETURN 0;
+                END IF; 
+       
+                RETURN sys.STIsClosed_helper(geom);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Minimum distance
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
 	RETURNS float8
@@ -604,13 +625,6 @@ CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
         AS '$libdir/postgis-3','isvalid'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---STIsClosed
--- Checks if geometry is closed
-CREATE OR REPLACE FUNCTION sys.STIsClosed(sys.GEOGRAPHY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','LWGEOM_isclosed'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
@@ -629,12 +643,17 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
-        AS '$libdir/postgis-3','geography_intersects'
+        AS '$libdir/postgis-3','ST_Intersects'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)

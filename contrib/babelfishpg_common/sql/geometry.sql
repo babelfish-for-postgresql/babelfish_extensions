@@ -458,6 +458,25 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMET
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
+--STIsClosed
+-- Checks if geometry is closed
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS $$
+        DECLARE
+                geom_type text;
+        BEGIN
+                -- Get the geometry type
+                geom_type := ST_GeometryType(geom); 
+                -- Check if any figures of the geometry instance are points
+                IF geom_type = 'ST_Point' THEN
+                        RETURN 0;
+                END IF; 
+       
+                RETURN sys.STIsClosed_helper(geom);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Minimum distance. 2D only.
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
@@ -488,13 +507,6 @@ CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
         AS '$libdir/postgis-3','isvalid'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---STIsClosed
--- Checks if geometry is closed
-CREATE OR REPLACE FUNCTION sys.STIsClosed(sys.GEOMETRY)
-        RETURNS sys.BIT
-        AS '$libdir/postgis-3','LWGEOM_isclosed'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
@@ -519,6 +531,11 @@ CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys
 CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.stgeomfromtext_helper(text, integer)
