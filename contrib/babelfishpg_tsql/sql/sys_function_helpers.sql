@@ -9734,20 +9734,6 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-    RETURN CAST(arg AS TIMESTAMP);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
 STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
