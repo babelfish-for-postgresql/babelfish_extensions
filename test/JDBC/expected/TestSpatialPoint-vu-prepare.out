@@ -298,7 +298,7 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('P
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
@@ -329,14 +329,14 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.651
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText with SRID < 0
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 
 #Negative Test for STGeomFromText when a coordinate is missing

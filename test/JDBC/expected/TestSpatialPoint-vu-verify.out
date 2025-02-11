@@ -3031,25 +3031,25 @@ Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
 GO
@@ -3069,25 +3069,25 @@ Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.651
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0)))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Inavalid SRID)~~
+~~ERROR (Message: Invalid SRID)~~
 
 Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
 GO
