@@ -95,31 +95,23 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sql_logins 
-AS
+CREATE VIEW sys.sql_logins AS
 SELECT
-  CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
-  CAST(Base.oid As INT) AS principal_id,
-  CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
-  CAST(Ext.type AS CHAR(1)) as type,
-  CAST(
-    CASE
-      WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
-      WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
-      WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
-      ELSE NULL
-    END
-    AS NVARCHAR(60)) AS type_desc,
-  CAST(Ext.is_disabled AS INT) AS is_disabled,
-  CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
-  CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
-  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
-  CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
-  CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
-  CAST(0 as sys.BIT) AS is_policy_checked,
-  CAST(0 as sys.BIT) AS is_expiration_checked,
-  CAST(NULL as sys.varbinary(256)) AS password_hash
+    CAST(NULL as sys.sysname) AS name,
+    CAST(NULL as INT) AS principal_id,
+    CAST(NULL as sys.VARBINARY(85)) AS sid,
+    CAST(NULL as sys.BPCHAR(1)) AS type,
+    CAST(NULL as sys.nvarchar(60)) AS type_desc,
+    CAST(NULL as INT) AS is_disabled,
+    CAST(NULL as sys.DATETIME) AS create_date,
+    CAST(NULL as sys.DATETIME) AS modify_date,
+    CAST(NULL as sys.sysname) AS default_database_name,
+    CAST(NULL as sys.sysname) AS default_language_name,
+    CAST(NULL as INT) AS credential_id,
+    CAST(NULL as INT) AS owning_principal_id,
+    CAST(0 as sys.BIT) AS is_fixed_role,
+    CAST(0 as sys.BIT) AS is_policy_checked,
+    CAST(0 as sys.BIT) AS is_expiration_checked,
+    CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
