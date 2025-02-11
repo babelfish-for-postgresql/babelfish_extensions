@@ -1,6 +1,7 @@
 CREATE VIEW babelfish_inconsistent_metadata_vu_prepare_view
 AS
-SELECT * FROM sys.babelfish_inconsistent_metadata()
+SELECT object_type, schema_name, object_name 
+FROM sys.babelfish_inconsistent_metadata()
 GO
 
 CREATE PROC babelfish_inconsistent_metadata_vu_prepare_proc
