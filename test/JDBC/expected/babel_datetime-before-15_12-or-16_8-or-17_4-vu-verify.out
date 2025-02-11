@@ -620,9 +620,8 @@ SELECT CONVERT(DateTime, 0xFFFF2E4600000000);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1753-01-01 00:00:00.0
+~~END~~
 
 
 -- Max value
@@ -630,9 +629,8 @@ SELECT CONVERT(DateTime, 0x002D247F018B81FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+9999-12-31 23:59:59.997
+~~END~~
 
 
 -- One tick after min value
@@ -640,9 +638,8 @@ SELECT CONVERT(DateTime, 0xFFFF2E4600000001);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1753-01-01 00:00:00.003
+~~END~~
 
 
 -- One tick before max value
@@ -650,9 +647,8 @@ SELECT CONVERT(DateTime, 0x002D247F018B81FE);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+9999-12-31 23:59:59.993
+~~END~~
 
 
 -- Early date
@@ -660,9 +656,8 @@ SELECT CONVERT(DateTime, 0x00000C8F00000000);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1908-10-21 00:00:00.0
+~~END~~
 
 
 -- Late date
@@ -670,9 +665,8 @@ SELECT CONVERT(DateTime, 0x0000BC1E00000000);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2031-11-08 00:00:00.0
+~~END~~
 
 
 -- FractionalSecond
@@ -680,27 +674,24 @@ SELECT CONVERT(DateTime, 0x0000B02200000001);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 00:00:00.003
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x0000B0220000007F);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 00:00:00.423
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x0000B022000000FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 00:00:00.85
+~~END~~
 
 
 -- 4-byte varbinary
@@ -708,39 +699,32 @@ SELECT CONVERT(DateTime, 0x0000B022);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1900-01-01 00:02:30.3
+~~END~~
 
 
 -- 12-byte varbinary
 SELECT CONVERT(DateTime, 0x0000B022018B81FF0000B022);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+~~ERROR (Message: invalid binary size for datetime conversion)~~
 
 
 -- Before min value
 SELECT CONVERT(DateTime, 0xFFFF2E4500000000);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
 
 
 -- After max value
 SELECT CONVERT(DateTime, 0x002D247F018B8200);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
 
 
 -- February 28th on a leap year
@@ -748,9 +732,8 @@ SELECT CONVERT(DateTime, 0x00008EE600C5C100);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2000-02-28 12:00:00.0
+~~END~~
 
 
 -- February 29th on a leap year
@@ -758,9 +741,8 @@ SELECT CONVERT(DateTime, 0x00008EE700C5C100);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2000-02-29 12:00:00.0
+~~END~~
 
 
 -- March 1st on a leap year
@@ -768,9 +750,8 @@ SELECT CONVERT(DateTime, 0x00008F0600C5C100);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2000-03-31 12:00:00.0
+~~END~~
 
 
 -- Last moment of 1999
@@ -778,9 +759,8 @@ SELECT CONVERT(DateTime, 0x00008EAB018B81FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1999-12-31 23:59:59.997
+~~END~~
 
 
 -- First moment of 2000
@@ -788,9 +768,8 @@ SELECT CONVERT(DateTime, 0x00008EAC00000001);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2000-01-01 00:00:00.003
+~~END~~
 
 
 -- time precision
@@ -798,27 +777,24 @@ SELECT CONVERT(DateTime, 0x0000B02200EF28C1);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 14:30:45.123
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x0000B02200EF28C0);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 14:30:45.12
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x00008EE700C5C100);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2000-02-29 12:00:00.0
+~~END~~
 
 
 -- basic tests
@@ -826,27 +802,24 @@ SELECT CONVERT(DateTime, 0x002D247F018B81FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+9999-12-31 23:59:59.997
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x0000B022018B81FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-06-15 23:59:59.997
+~~END~~
 
 
 SELECT CONVERT(DateTime, 0x0000B0E9018B81FF);
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+2023-12-31 23:59:59.997
+~~END~~
 
 
 -- NULL tests
