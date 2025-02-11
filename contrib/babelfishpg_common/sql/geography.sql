@@ -305,7 +305,6 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		valid_srids integer[];
 		lat float8;
 		Zmflag smallint;
-		wkt_upper text;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
@@ -374,7 +373,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 		ELSE
-			RAISE EXCEPTION 'Inavalid SRID';
+			RAISE EXCEPTION 'Invalid SRID';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -400,7 +399,6 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		valid_srids integer[];
 		lat float8;
 		Zmflag smallint;
-		wkt_upper text;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
