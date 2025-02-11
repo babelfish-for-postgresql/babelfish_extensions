@@ -3346,6 +3346,7 @@ SELECT
   CAST(0 as sys.BIT) AS is_policy_checked,
   CAST(0 as sys.BIT) AS is_expiration_checked,
   CAST(NULL as sys.varbinary(256)) AS password_hash
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 

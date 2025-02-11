@@ -13,6 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
+money_aggregate
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -213,6 +214,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery
@@ -597,3 +599,19 @@ BABEL-2961
 BABEL-5031
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char
+sys_credentials-vu-prepare.sql
+sys_credentials-vu-verify.sql
+sys_credentials-vu-cleanup.sql
+sys_server_permissions-vu-prepare.sql
+sys_server_permissions-vu-verify.sql
+sys_server_permissions-vu-cleanup.sql
+sys_sql_logins-vu-prepare.sql
+sys_sql_logins-vu-verify.sql
+sys_sql_logins-vu-cleanup.sql
+sys-login-property-vu-prepare.sql
+sys-login-property-vu-verify.sql
+sys-login-property-vu-cleanup.sql
+sys-fn-varbintohexsubstring-vu-prepare.sql
+sys-fn-varbintohexsubstring-vu-verify.sql
+sys-fn-varbintohexsubstring-vu-cleanup.sql

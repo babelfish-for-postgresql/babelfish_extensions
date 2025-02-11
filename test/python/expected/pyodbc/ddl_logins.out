@@ -1,18 +1,17 @@
 
+CREATE LOGIN [ad\Aduser] FROM WINDOWS WITH DEFAULT_DATABASE=[tempdb], DEFAULT_LANGUAGE=[English]
+GO
+
+
 
 CREATE LOGIN [login_pwd1] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
 ALTER LOGIN [login_pwd1] DISABLE
+ALTER SERVER ROLE [sysadmin] ADD MEMBER [login_pwd1]
 GO
 
 
 
-CREATE LOGIN [login_pwd2] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+CREATE LOGIN [login_pwd2] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[tempdb], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
 ALTER LOGIN [login_pwd2] DISABLE
-GO
-
-
-
-CREATE LOGIN [login_pwd3] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
-ALTER LOGIN [login_pwd3] DISABLE
 GO
 
