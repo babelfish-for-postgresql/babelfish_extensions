@@ -74,6 +74,7 @@ jobs:
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
           dump_restore: 'true'
+          antlr_version: ${{ (steps.read-base-and-final-version.outputs.base-version == 'source.latest' || fromJSON(steps.read-base-and-final-version.outputs.base-version) >= 16.6 ) && '4.13.2' || '4.9.3' }}
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca
