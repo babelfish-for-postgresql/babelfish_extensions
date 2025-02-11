@@ -34,7 +34,7 @@ end
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
+CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID 
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
 
