@@ -229,7 +229,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'Invalid SRID';
+				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;
@@ -273,7 +273,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'Invalid SRID';
+				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;
@@ -286,25 +286,35 @@ CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
-		srid integer;
+		Geomtype text;
+		geog sys.GEOGRAPHY;
 		lat float8;
-		valid_srids integer[];
+		Zmflag smallint;
 	BEGIN
-		-- Call the function to retrieve the valid SRIDs
-		SELECT sys.get_valid_srids() INTO valid_srids;
-		srid := $3;
-		lat := $1;
-		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
-			-- Call the underlying function after preprocessing
-			RETURN (SELECT sys.GeogPoint_helper($1, $2, $3));
-		ELSEIF lat < -90.0 OR lat > 90.0 THEN
-			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+		geog = (SELECT sys.bpcharToGeography_helper($1, 4326));
+		Geomtype = (SELECT sys.ST_GeometryType(geog));
+		Zmflag = (SELECT sys.ST_Zmflag(geog));
+		IF Geomtype = 'ST_Point' THEN
+			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
+			IF (lat >= -90.0 AND lat <= 90.0) OR lat is NULL THEN
+				-- Call the underlying function after preprocessing
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
+					RETURN geog;
+				END IF;
+			ELSEIF lat < -90.0 OR lat > 90.0 THEN
+				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+			END IF;
 		ELSE
-			RAISE EXCEPTION 'Invalid SRID';
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
