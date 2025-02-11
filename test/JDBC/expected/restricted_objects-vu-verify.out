@@ -104,3 +104,26 @@ GO
 ~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
     Server SQLState: 42501)~~
 
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_5146_user_l2', 'babel_5146_user_l4') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+t
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
