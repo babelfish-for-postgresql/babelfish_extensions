@@ -34,57 +34,12 @@ end
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID 
-LANGUAGE C
-AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
-
-DO
-LANGUAGE plpgsql
-$$
-BEGIN
-    -- Check if the GUC is empty
-    IF current_setting('babelfishpg_tsql.restored_server_collation_name', true) <> '' THEN
-        -- Call the function to update the collation
-        EXECUTE 'SELECT sys.babelfish_update_server_collation_name()';
-    END IF;
-END;
-$$;
-
-DROP FUNCTION sys.babelfish_update_server_collation_name();
-
--- reset babelfishpg_tsql.restored_server_collation_name GUC
-do
-language plpgsql
-$$
-    declare
-        query text;
-    begin
-        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
-        execute query;
-    end;
-$$;
-
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
-
- DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.suser_name() RENAME TO suser_name_deprecated_4_6_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'suser_name_deprecated_4_6_0');
 
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
