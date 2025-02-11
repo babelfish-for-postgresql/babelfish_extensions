@@ -281,11 +281,6 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)
-	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','LWGEOM_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	RETURNS sys.GEOGRAPHY
 	AS $$

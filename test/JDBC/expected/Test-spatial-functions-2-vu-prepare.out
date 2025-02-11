@@ -9,6 +9,11 @@ INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, ge
 ~~ROW COUNT: 3~~
 
 
+CREATE TABLE TestGeospatialMethods_YourTable3Temp ( ID INT PRIMARY KEY, PointColumn geography ); 
+INSERT INTO TestGeospatialMethods_YourTable3Temp (ID, PointColumn) VALUES (1, geography::Point(3.0, 4.0, 4326)), (2, geography::Point(5.0, 6.0, 4326)), (3, geography::Point(3.0, 4.0, 4120));
+~~ROW COUNT: 3~~
+
+
 USE MASTER
 
 CREATE TABLE TestGeospatialMethods_YourTableTemp ( ID INT PRIMARY KEY, PointColumn geometry ); 

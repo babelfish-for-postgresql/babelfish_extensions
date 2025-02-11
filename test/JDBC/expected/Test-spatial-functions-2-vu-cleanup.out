@@ -1,5 +1,7 @@
 DROP TABLE IF EXISTS TestGeospatialMethods_YourTable1Temp;
 
+DROP TABLE IF EXISTS TestGeospatialMethods_YourTable3Temp;
+
 DROP TABLE IF EXISTS TestGeospatialMethods_YourTable2Temp;
 
 DROP TABLE IF EXISTS TestGeospatialMethods_TableATemp;

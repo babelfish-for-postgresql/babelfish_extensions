@@ -37,12 +37,12 @@ bit
 
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SET @point2 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point2 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4120);
 SELECT @point1 . STIntersects(@point2) AS Intersecting;
 go
 ~~START~~
 bit
-1
+<NULL>
 ~~END~~
 
 
@@ -59,8 +59,8 @@ bit
 
 
 DECLARE @point1 geography, @point2 geography;
-SET @point1 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
-SET @point2 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
+SET @point1 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4120);
+SET @point2 = geography::STGeomFromText('POINT(-122.354657658684900 47.658678768678100)', 4120);
 SELECT @point1.STIntersects(@point2) AS Intersecting;
 go
 ~~START~~
@@ -70,8 +70,8 @@ bit
 
 
 DECLARE @point1 geometry, @point2 geometry;
-SET @point1 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
-SET @point2 = geometry::STPointFromText('POINT(-122.354657658684000 47.658678768678100)', 4326);
+SET @point1 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 0);
+SET @point2 = geometry::STPointFromText('POINT(-122.354657658684000 47.658678768678100)', 0);
 SELECT STIntersects(@point1, @point2);
 go
 ~~START~~
@@ -434,7 +434,18 @@ go
 
 --Cross-database query to retrieve intersects
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STIntersects(@referencePoint) AS Disjoint FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable1Temp;
+SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersects FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable1Temp;
+go
+~~START~~
+int#!#bit
+1#!#0
+2#!#0
+3#!#<NULL>
+~~END~~
+
+
+DECLARE @referencePoint geography = geography::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersects FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable3Temp;
 go
 ~~START~~
 int#!#bit
@@ -488,8 +499,8 @@ bit
 
 
 DECLARE @point1 geography, @point2 geography;
-SET @point1 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SET @point2 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point1 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4204);
+SET @point2 = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT @point1 . STDisjoint(@point2) AS disjoint;
 go
 ~~START~~
@@ -522,8 +533,8 @@ bit
 
 
 DECLARE @point1 geometry, @point2 geometry;
-SET @point1 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
-SET @point2 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 4326);
+SET @point1 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 0);
+SET @point2 = geometry::STPointFromText('POINT(-122.354657658684900 47.658678768678100)', 0);
 SELECT @point1 . STDisjoint ( @point2 );
 go
 ~~START~~
@@ -909,18 +920,8 @@ go
 ~~ROW COUNT: 2~~
 
 
+
 --Cross-database query to retrieve disjoints
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn.STDisjoint(@referencePoint) AS Disjoint FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable1Temp;
-go
-~~START~~
-int#!#bit
-1#!#1
-2#!#1
-3#!#<NULL>
-~~END~~
-
-
 SELECT 
     a.id AS id1, 
     b.id AS id2, 
@@ -940,6 +941,28 @@ int#!#int#!#bit
 3#!#3#!#0
 3#!#1#!#<NULL>
 3#!#2#!#<NULL>
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDisjoint(@referencePoint) AS Disjoint FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable1Temp;
+go
+~~START~~
+int#!#bit
+1#!#1
+2#!#1
+3#!#<NULL>
+~~END~~
+
+
+DECLARE @referencePoint geography = geography::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDisjoint(@referencePoint) AS Disjoint FROM TestGeospatialMethods_DB.dbo.TestGeospatialMethods_YourTable3Temp;
+go
+~~START~~
+int#!#bit
+1#!#1
+2#!#1
+3#!#<NULL>
 ~~END~~
 
 
@@ -1129,7 +1152,7 @@ int
 
 
 DECLARE @point geography;
-SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT STDimension(@point);
 go
 ~~START~~
@@ -1276,7 +1299,7 @@ bit
 
 
 DECLARE @point geography;
-SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT STIsEmpty(@point);
 go
 ~~START~~
@@ -1383,7 +1406,7 @@ bit
 
 --STIsValid
 DECLARE @point geometry;
-SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT STIsValid(@point);
 go
 ~~START~~
@@ -1413,7 +1436,7 @@ bit
 
 
 DECLARE @point geography;
-SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT STIsValid(@point);
 go
 ~~START~~
@@ -1550,7 +1573,7 @@ bit
 
 
 DECLARE @point geography;
-SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4204);
 SELECT STIsClosed(@point);
 go
 ~~START~~
@@ -1789,6 +1812,27 @@ go
 ~~ERROR (Message: The function stisclosed is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
+SELECT ID, PointColumn1.STIntersects(PointColumn2).STIsEmpty() AS Intersects FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stisempty is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT ID, PointColumn1.STIntersects(PointColumn2).STIsValid() AS Intersects FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stisvalid is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT ID, PointColumn1.STIntersects(PointColumn2).STIsClosed() AS Intersects FROM  TestGeospatialMethods_YourTable2Temp ORDER BY PointColumn1.STX;
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stisclosed is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
 --EMPTY Cases
 DECLARE @g geometry;  
 SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
@@ -1921,5 +1965,24 @@ go
 ~~START~~
 bit
 0
+~~END~~
+
+
+--Tests for CAST from CHAR/VARCHAR with EMPTY instances
+DECLARE @p2 GEOGRAPHY = GEOGRAPHY::STPointFromText('POINT EMPTY', 4326);
+SELECT CAST(CAST(@p2 AS CHAR(100)) AS GEOGRAPHY).STAsText() AS result, CAST(CAST(@p2 AS CHAR(100)) AS GEOGRAPHY).STSrid AS srid;
+go
+~~START~~
+text#!#int
+POINT EMPTY#!#4326
+~~END~~
+
+
+DECLARE @p2 GEOGRAPHY = GEOGRAPHY::STPointFromText('POINT EMPTY', 4326);
+SELECT CAST(CAST(@p2 AS VARCHAR(100)) AS GEOGRAPHY).STAsText() AS result, CAST(CAST(@p2 AS VARCHAR(100)) AS GEOGRAPHY).STSrid AS srid;
+go
+~~START~~
+text#!#int
+POINT EMPTY#!#4326
 ~~END~~
 
