@@ -642,7 +642,8 @@ is_numeric_datatype(Oid typid)
 }
 
 /*
- * is_exact_numeric_datatype - returns bool if given datatype is numeric, decimal, int, tinyint, smallint, bigint, bit, money and smallmoney.
+ * is_exact_numeric_datatype
+ *  returns bool if given datatype is numeric, decimal, int, tinyint, smallint, bigint, bit, money and smallmoney.
  */
 static bool
 is_exact_numeric_datatype(Oid typid)
@@ -658,32 +659,42 @@ is_exact_numeric_datatype(Oid typid)
 		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("decimal")));
 		decimal_oid = LookupTypeNameOid(NULL, typename, false);
 	}
+	if (decimal_oid == typid)
+		return true;
+
 	if (!OidIsValid(tsql_tinyint_oid))
 	{
 		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("tinyint")));
 		tsql_tinyint_oid = LookupTypeNameOid(NULL, typename, false);
 	}
+	if (tsql_tinyint_oid == typid)
+		return true;
+
 	if (!OidIsValid(tsql_money_oid))
 	{
 		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("money")));
 		tsql_money_oid = LookupTypeNameOid(NULL, typename, false);
 	}
+	if (tsql_money_oid == typid)
+		return true;
+
 	if (!OidIsValid(tsql_smallmoney_oid))
 	{
 		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("smallmoney")));
 		tsql_smallmoney_oid = LookupTypeNameOid(NULL, typename, false);
 	}
+	if (tsql_smallmoney_oid == typid)
+		return true;
+
 	if (!OidIsValid(tsql_bit_oid))
 	{
 		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("bit")));
 		tsql_bit_oid = LookupTypeNameOid(NULL, typename, false);
 	}
+	if (tsql_bit_oid == typid)
+		return true;
 	
-	return (decimal_oid == typid
-			|| tsql_tinyint_oid == typid
-			|| tsql_money_oid == typid
-			|| tsql_smallmoney_oid == typid
-			|| tsql_bit_oid == typid);
+	return false;
 }
 
 

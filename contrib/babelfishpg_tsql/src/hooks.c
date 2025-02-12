@@ -1183,6 +1183,11 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 	return false;
 }
 
+/*
+ * bbf_trunc_numeric_result
+ *  truncates the result value to the correct scale based on result_typmod.
+ *  for result_typmod = -1, computes the result_typmod using tsql_get_numeric_typmod_from_exp function.
+ */
 static Datum
 bbf_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 result_typmod)
 {
@@ -5958,20 +5963,25 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 	return (const char *)pstrdup(object_name + prefix_len);
 }
 
+/*
+ * tsql_get_numeric_typmod_from_exp
+ *  wrapper function which uses get_numeric_typmod_from_exp function to get
+ *  the typmod from the expression node, when the expression type is exact numeric.
+ */
 static int32
 tsql_get_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	int32       result_typmod = -1;
 	uint8_t     scale,
                 precision;
-	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
 		result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
 	if (result_typmod != -1)
 	{
 		/* 
-		* If we are unable to get correct precision and scale for overflow cases
-		* then return -1
-		*/
+         * If we are unable to get correct precision and scale for overflow cases
+         * then return -1
+         */
 		scale = (result_typmod - VARHDRSZ) & 0xffff;
 		precision = ((result_typmod - VARHDRSZ) >> 16) & 0xffff;
 		if (precision > TDS_NUMERIC_MAX_PRECISION)
