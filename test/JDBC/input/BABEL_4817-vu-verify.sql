@@ -4,6 +4,15 @@ GO
 ALTER TABLE babel_4817_t3 ADD col4 INT
 GO
 
+sp_rename 'babel_4817_t1.babel_4817_t1_idx_1', 'babel_4817_t1_idx_2', 'INDEX'
+GO
+
+sp_rename 'babel_4817_t2.babel_4817_t2_unique_index', 'babel_4817_t2_unique_index_2', 'INDEX'
+GO
+
+sp_rename 'babel_4817_t2.babel_4817_t2_idx', 'babel_4817_t2_idx_2', 'INDEX'
+GO
+
 SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
 SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
     FROM
