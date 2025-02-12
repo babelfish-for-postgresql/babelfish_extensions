@@ -131,6 +131,7 @@ SELECT ID, PointColumn.STIntersects(@referencePoint) AS Intersection FROM TestGe
 go
 ~~START~~
 int#!#bit
+4#!#<NULL>
 1#!#0
 3#!#<NULL>
 2#!#0
@@ -441,6 +442,7 @@ int#!#bit
 1#!#0
 2#!#0
 3#!#<NULL>
+4#!#<NULL>
 ~~END~~
 
 
@@ -450,8 +452,9 @@ go
 ~~START~~
 int#!#bit
 1#!#0
-2#!#0
+2#!#<NULL>
 3#!#<NULL>
+4#!#<NULL>
 ~~END~~
 
 
@@ -474,6 +477,9 @@ int#!#int#!#bit
 3#!#3#!#1
 3#!#1#!#<NULL>
 3#!#2#!#<NULL>
+4#!#3#!#<NULL>
+4#!#1#!#<NULL>
+4#!#2#!#<NULL>
 ~~END~~
 
 
@@ -752,6 +758,7 @@ SELECT ID, PointColumn.STDisjoint(@referencePoint) AS disjoint FROM TestGeospati
 go
 ~~START~~
 int#!#bit
+4#!#<NULL>
 1#!#1
 3#!#<NULL>
 2#!#1
@@ -941,6 +948,9 @@ int#!#int#!#bit
 3#!#3#!#0
 3#!#1#!#<NULL>
 3#!#2#!#<NULL>
+4#!#3#!#<NULL>
+4#!#1#!#<NULL>
+4#!#2#!#<NULL>
 ~~END~~
 
 
@@ -952,6 +962,7 @@ int#!#bit
 1#!#1
 2#!#1
 3#!#<NULL>
+4#!#<NULL>
 ~~END~~
 
 
@@ -961,8 +972,9 @@ go
 ~~START~~
 int#!#bit
 1#!#1
-2#!#1
+2#!#<NULL>
 3#!#<NULL>
+4#!#<NULL>
 ~~END~~
 
 

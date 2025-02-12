@@ -5,10 +5,10 @@ CREATE DATABASE TestGeospatialMethods_DB;
 USE TestGeospatialMethods_DB;
 
 CREATE TABLE TestGeospatialMethods_YourTable1Temp ( ID INT PRIMARY KEY, PointColumn geometry ); 
-INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0));
+INSERT INTO TestGeospatialMethods_YourTable1Temp (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326)), (3, geometry::Point(3.0, 4.0, 0)), (4, geometry::STPointFromText('POINT EMPTY', 4123));
 
 CREATE TABLE TestGeospatialMethods_YourTable3Temp ( ID INT PRIMARY KEY, PointColumn geography ); 
-INSERT INTO TestGeospatialMethods_YourTable3Temp (ID, PointColumn) VALUES (1, geography::Point(3.0, 4.0, 4326)), (2, geography::Point(5.0, 6.0, 4326)), (3, geography::Point(3.0, 4.0, 4120));
+INSERT INTO TestGeospatialMethods_YourTable3Temp (ID, PointColumn) VALUES (1, geography::Point(3.0, 4.0, 4326)), (2, geography::Point(5.0, 6.0, 4121)), (3, geography::Point(3.0, 4.0, 4122)), (4, geography::STPointFromText('POINT EMPTY', 4123));
 
 USE MASTER
 
