@@ -1,9 +1,13 @@
---Basic UNPIVOT Tests
+-- Basic UNPIVOT Tests
 
     -- Basic column unpivoting
-SELECT customer_id, turnover, quarter 
-FROM customer_turnover 
+SELECT customer_id, turnover, quarter FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+
+    -- Order preservation of unpivot source columns
+SELECT customer_id, turnover, quarter FROM customer_turnover ct
+UNPIVOT (turnover FOR quarter IN (q4, q3, q2, q1)) AS unpvt;
 GO
 
     -- With square brackets notation
@@ -41,6 +45,20 @@ FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 
+    -- CASE
+SELECT 
+    unpvt.customer_id AS [ID],
+    [unpvt].[turnover],
+    [unpvt].[quarter],
+    CASE [unpvt].[quarter]
+        WHEN 'q1' THEN 'First'
+        WHEN 'q2' THEN 'Second'
+        WHEN 'q3' THEN 'Third'
+        WHEN 'q4' THEN 'Fourth'
+    END AS [Quarter Name]
+FROM customer_turnover
+UNPIVOT ([turnover] FOR [quarter] IN ([q1], [q2], [q3], [q4])) AS unpvt;
+GO
 
 -- CONSECUTIVE UNPIVOTS
 
@@ -60,34 +78,41 @@ GO
     -- NUMERIC
         -- 1. BIT type UNPIVOT
 SELECT id, bit_value, bit_name
-FROM all_numeric_types
+FROM numeric_types
 UNPIVOT ( bit_value FOR bit_name IN (bit_val1, bit_val2, bit_val3)) AS bit_unpvt;
+GO
 
         -- 2. DECIMAL and NUMERIC UNPIVOT
 SELECT id, decimal_value, decimal_name, numeric_value, numeric_name
-FROM all_numeric_types
+FROM numeric_types
 UNPIVOT ( decimal_value FOR decimal_name IN (decimal_val1, decimal_val2)) AS decimal_unpvt
 UNPIVOT ( numeric_value FOR numeric_name IN (numeric_val1, numeric_val2)) AS numeric_unpvt;
+GO
 
         -- 3. FLOAT and REAL UNPIVOT
 SELECT * FROM (
     SELECT id, float_value, float_name 
-    FROM all_numeric_types
+    FROM numeric_types
     UNPIVOT ( float_value FOR float_name IN (float_val1, float_val2)) AS float_unpvt
 ) t1
 CROSS JOIN (
     SELECT id, real_value, real_name
-    FROM all_numeric_types
+    FROM numeric_types
     UNPIVOT ( real_value FOR real_name IN (real_val1, real_val2)) AS real_unpvt
 ) t2;
+GO
 
         -- 4. BIGINT, INT, SMALLINT UNPIVOT
 SELECT id, bigint_value, bigint_name, int_value, int_name, smallint_value, smallint_name, tinyint_value, tinyint_name 
-FROM all_numeric_types
+FROM numeric_types
 UNPIVOT ( bigint_value FOR bigint_name IN (bigint_val1, bigint_val2)) AS bigint_unpvt 
 UNPIVOT ( int_value FOR int_name IN (int_val1, int_val2)) AS int_unpvt 
 UNPIVOT ( smallint_value FOR smallint_name IN (smallint_val1,smallint_val2)) AS smallint_unpvt 
-UNPIVOT ( tinyint_value FOR tinyint_name IN (tinyint_val1, tinyint_val2)) AS tinyint_unpvt;
+UNPIVOT ( tinyint_value FOR tinyint_name IN (tinyint_val1, tinyint_val2)) AS tinyint_unpvt
+WHERE RIGHT(bigint_name, 1) = RIGHT(int_name, 1)
+    AND RIGHT(int_name, 1) = RIGHT(smallint_name, 1)
+    AND RIGHT(smallint_name, 1) = RIGHT(tinyint_name, 1);
+GO
 
         -- 5. MONEY and SMALLMONEY UNPIVOT
 SELECT 
@@ -97,14 +122,15 @@ SELECT
     s.name as smallmoney_name,
     s.smallmoney_value 
 FROM 
-    (SELECT * FROM all_numeric_types
+    (SELECT * FROM numeric_types
      UNPIVOT (money_value FOR name IN (money_val1, money_val2)) AS money_unpvt) m 
 JOIN 
-    (SELECT * FROM all_numeric_types 
+    (SELECT * FROM numeric_types 
      UNPIVOT (smallmoney_value FOR name IN (smallmoney_val1, smallmoney_val2)) AS smallmoney_unpvt) s 
 ON m.id = s.id 
     AND RIGHT(m.name, 1) = RIGHT(s.name, 1) 
     ORDER BY m.id, s.name;
+GO
 
     -- STRING TYPES
         -- 1. CHAR (fixed-length), VARCHAR (variable-length) (non-Unicode)
@@ -112,6 +138,7 @@ SELECT id, char_value, char_name, varchar_value, varchar_name
 FROM string_types
 UNPIVOT ( char_value FOR char_name IN (char_val1, char_val2, char_val3)) AS char_unpvt 
 UNPIVOT ( varchar_value FOR varchar_name IN (varchar_val1, varchar_val2, varchar_val3)) AS varchar_unpvt;
+GO
 
         -- 2. NCHAR (fixed-length), NVARCHAR (variable-length)  (Unicode)
 SELECT 
@@ -128,8 +155,9 @@ SELECT
     nvarchar_name 
 FROM string_types 
 UNPIVOT ( nchar_value FOR nchar_name IN (nchar_val1, nchar_val2, nchar_val3)) AS nchar_unpvt 
-UNPIVOT ( nvarchar_value FOR nvarchar_name IN (nvarchar_val1, nvarchar_val2, nvarchar_val3)) AS nvarchar_unpvt;
-
+UNPIVOT ( nvarchar_value FOR nvarchar_name IN (nvarchar_val1, nvarchar_val2, nvarchar_val3)) AS nvarchar_unpvt
+WHERE RIGHT(nchar_name, 1) = RIGHT(nvarchar_name, 1);
+GO
 
         -- 3. TEXT UNPIVOT (large non-Unicode), NTEXT UNPIVOT (large Unicode)
 SELECT 
@@ -144,9 +172,122 @@ FROM
 JOIN 
     (SELECT * FROM string_types 
      UNPIVOT (ntext_value FOR name IN (ntext_val1, ntext_val2)) AS ntext_unpvt) nt 
-ON t.id = nt.id 
-AND RIGHT(t.name, 1) = RIGHT(nt.name, 1) 
+ON t.id = nt.id AND RIGHT(t.name, 1) = RIGHT(nt.name, 1) 
 ORDER BY t.id, nt.name;
+GO
+
+    -- DATE AND TIME TYPES UNPIVOT with UNION
+SELECT id, 'DATE' as data_type, date_name as column_name, CAST(date_value AS VARCHAR(50)) as date_value 
+FROM datetime_types 
+UNPIVOT ( date_value FOR date_name IN (date_val1, date_val2)) AS date_unpvt 
+
+UNION ALL 
+
+SELECT id, 'DATETIME' as data_type, datetime_name, CAST(datetime_value AS VARCHAR(50)) 
+FROM datetime_types 
+UNPIVOT ( datetime_value FOR datetime_name IN (datetime_val1, datetime_val2)) AS datetime_unpvt 
+
+UNION ALL 
+
+SELECT id, 'DATETIME2' as data_type, datetime2_name, CAST(datetime2_value AS VARCHAR(50)) 
+FROM datetime_types 
+UNPIVOT ( datetime2_value FOR datetime2_name IN (datetime2_val1, datetime2_val2)) AS datetime2_unpvt 
+
+UNION ALL 
+
+SELECT id, 'DATETIMEOFFSET' as data_type, datetimeoffset_name, CAST(datetimeoffset_value AS VARCHAR(50)) 
+FROM datetime_types 
+UNPIVOT ( datetimeoffset_value FOR datetimeoffset_name IN (datetimeoffset_val1, datetimeoffset_val2)) AS datetimeoffset_unpvt 
+
+UNION ALL 
+
+SELECT id, 'SMALLDATETIME' as data_type, smalldatetime_name, CAST(smalldatetime_value AS VARCHAR(50)) 
+FROM datetime_types 
+UNPIVOT ( smalldatetime_value FOR smalldatetime_name IN (smalldatetime_val1, smalldatetime_val2) ) AS smalldatetime_unpvt 
+
+UNION ALL 
+
+SELECT id, 'TIME' as data_type, time_name, CAST(time_value AS VARCHAR(50)) 
+FROM datetime_types 
+UNPIVOT ( time_value FOR time_name IN (time_val1, time_val2)) AS time_unpvt 
+
+ORDER BY id, data_type, column_name;
+
+
+-- JOIN Operations
+    -- 1. INNER JOIN
+SELECT c.customer_name, u.turnover, u.quarter 
+FROM customer_info c 
+JOIN customer_turnover t 
+UNPIVOT (turnover FOR quarter IN (q4, q3, q1, q2)) AS u 
+ON c.customer_id = u.customer_id;
+GO
+
+    -- 2. LEFT JOIN
+SELECT u.customer_id, u.customer_name, u.turnover, u.quarter, c2.customer_segment 
+FROM (
+    SELECT t.*, c.customer_name, c.customer_segment
+    FROM customer_turnover t
+    LEFT JOIN customer_info c ON t.customer_id = c.customer_id 
+) AS ct 
+UNPIVOT ( turnover FOR quarter IN (q3, q1, q2, q4)) AS u 
+LEFT JOIN customer_info c2 ON u.customer_id = c2.customer_id;
+GO
+
+    -- 3. CROSS JOIN
+SELECT c.customer_name, u.customer_desc, u.turnover, u.quarter
+FROM customer_info c
+CROSS JOIN (
+    SELECT customer_id, customer_desc, turnover, quarter
+    FROM customer_turnover
+    UNPIVOT (turnover FOR quarter IN (q2, q4, q3, q1)) AS unpvt
+) u
+WHERE u.customer_id = c.customer_id and u.customer_id = 2;
+GO
+
+    -- 4. CROSS APPLY (Equivalent to Postgres’ CROSS JOIN LATERAL)
+SELECT c.customer_name, u.customer_desc, u.turnover, u.quarter 
+FROM customer_info c 
+CROSS APPLY (
+    SELECT customer_id, customer_desc, turnover, quarter
+    FROM customer_turnover
+    UNPIVOT (turnover FOR quarter IN (q3, q4, q2, q1)) AS unpvt
+    WHERE customer_id = c.customer_id
+) u 
+WHERE c.customer_id = 1;
+GO
+
+    -- 5. Multiple Joins
+SELECT c.customer_name, u1.turnover as quarterly_turnover, u2.quarter as revenue_quarter 
+FROM customer_turnover t1 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS u1 
+JOIN customer_info c ON c.customer_id = u1.customer_id and c.customer_segment = 'Premium' 
+JOIN customer_turnover t2 
+UNPIVOT (revenue FOR quarter IN (q1, q2, q3, q4)) AS u2
+    ON u1.customer_id = u2.customer_id
+    AND RIGHT(u1.quarter, 1) = RIGHT(u2.quarter, 1)
+    AND turnover > 100;
+GO
+
+    -- 6. UNPIVOT Subquery in JOIN
+SELECT * FROM product_info p 
+JOIN (
+    SELECT product_id, sales, quarter
+    FROM sales_data
+    UNPIVOT (
+        sales FOR quarter IN (q1_sales, q2_sales)
+    ) AS inner_unpvt 
+) u ON p.product_id = u.product_id;
+
+-- CTE
+    -- 1. Basic CTE
+WITH QuarterlyData AS (
+    SELECT * FROM customer_turnover
+    UNPIVOT (sales FOR month IN (q1, q2, q3, q4)) AS t2
+    WHERE customer_type = 'P'
+)
+SELECT * FROM QuarterlyData;
+
 
 
 -- BASIC CLAUSES
@@ -202,7 +343,7 @@ HAVING COUNT(*) > 1 AND SUM(turnover) > 500;
 SELECT customer_id, turnover, quarter
 FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
-ORDER BY customer_id ASC, quarter DESC, turnover;
+ORDER BY customer_id ASC, turnover, quarter DESC;
 
         -- ORDER BY with expressions
 SELECT customer_id, turnover, quarter 
@@ -225,4 +366,297 @@ ORDER BY turnover DESC
 OFFSET 5 ROWS FETCH NEXT 5 ROWS ONLY;
 
 
+-- SOURCE OBJECT TYPES
+    -- 1. Temporary Objects
+        -- 1.1 TEMP TABLE
+CREATE TABLE #temp_sales ( 
+    id INT, 
+    product_name VARCHAR(50), 
+    q1_sales DECIMAL(10,2), 
+    q2_sales DECIMAL(10,2));
+GO 
+
+INSERT INTO #temp_sales VALUES
+(1, 'Product A', 100.50, 0),
+(2, 'Product B', NULL, 300.00),
+(3, 'Product C', NULL, NULL);
+GO 
+
+SELECT id, product_name, sales_amount, quarter 
+FROM #temp_sales 
+UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
+
+        -- 1.2 TEMPORARY VARIABLES
+DECLARE @sales_data TABLE (
+    id INT,
+    region VARCHAR(20),
+    jan_rev MONEY,
+    feb_rev MONEY
+);
+INSERT INTO @sales_data VALUES
+(1, 'North', $1000.00, 0),
+(2, 'South', $800, NULL);
+
+SELECT id, region, revenue, month 
+FROM @sales_data 
+UNPIVOT ( revenue FOR month IN (jan_rev, feb_rev)) AS unpvt;
+GO
+
+    -- 2. Schema Objects
+
+        -- 2.1 UNPIVOT on schema-qualified table
+SELECT product_id, product_name, sales_amount, quarter 
+FROM sales.quarterly_data 
+UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales, q4_sales, q3_sales)) AS unpvt 
+WHERE quarter = 'q3_sales' OR quarter = 'q4_sales'; 
+GO
+
+        -- 2.2 Views - Create view with UNPIVOT
+CREATE VIEW sales.sales_analysis_view AS
+SELECT 
+    product_id, 
+    product_name,
+    CAST(sales_amount * 1.1 AS DECIMAL(10,2)) as adjusted_sales,
+    quarter,
+    CASE 
+        WHEN quarter = 'q1_sales' THEN 'First'
+        WHEN quarter = 'q2_sales' THEN 'Second'
+        WHEN quarter = 'q3_sales' THEN 'Third'
+        WHEN quarter = 'q4_sales' THEN 'Fourth'
+    END as quarter_name
+FROM sales.quarterly_data
+UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales, q3_sales, q4_sales)) AS unpvt;
+GO
+
+
+-- SUBQURIES
+    -- 1. IN/EXISTS
+SELECT * FROM customer_turnover 
+WHERE customer_id IN (
+    SELECT customer_id FROM customer_turnover
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE sales > 300
+);
+
+SELECT * FROM customer_turnover ct 
+WHERE EXISTS (
+    SELECT 1
+    FROM customer_turnover
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE unpvt.customer_id = ct.customer_id
+    AND sales = 0
+);
+
+    -- 2. Correlated Subqueries
+SELECT ct.customer_id,
+    (SELECT TOP 1 sales
+     FROM (SELECT customer_id, sales
+           FROM customer_turnover
+           UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS u
+           WHERE customer_id = ct.customer_id) AS sub
+     ORDER BY sales DESC) as highest_quarterly_sales 
+FROM customer_turnover ct;
+GO
+
+    -- 3. Derived Tables
+SELECT * FROM (
+    SELECT 
+        customer_id,
+        customer_type,
+        q1 * 1.1 as q1_adj,
+        q2 * 1.1 as q2_adj,
+        q3 * 1.1 as [q3 adj]
+    FROM customer_turnover
+    WHERE customer_type = 'R'
+) AS source 
+UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
+
+
+-- DML
+    
+    -- 1. INSERT
+        -- INSERT INTO SELECT
+INSERT INTO customer_quarterly_sales 
+SELECT customer_id, customer_desc, customer_type, quarter, sales 
+FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt WHERE sales < 200;
+GO
+
+SELECT * from customer_quarterly_sales;
+GO
+        -- SELECT INTO
+SELECT customer_id, customer_desc, customer_type, quarter, sales 
+INTO #new_quarterly_sales 
+FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2)) AS unpvt;
+
+SELECT * from #new_quarterly_sales;
+GO
+
+    -- 2. UPDATE
+        -- Basic UPDATE
+UPDATE customer_quarterly_sales 
+SET sales = sales * 1.1 
+FROM (
+    SELECT customer_id, quarter, turnover FROM customer_turnover
+    UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE turnover BETWEEN 100 AND 200
+) AS source 
+WHERE customer_quarterly_sales.customer_id = source.customer_id 
+AND customer_quarterly_sales.quarter = source.quarter 
+AND customer_quarterly_sales.sales = source.turnover;
+GO
+
+SELECT * FROM customer_quarterly_sales;
+GO
+
+        -- UPDATE with join
+UPDATE cqs 
+SET cqs.sales = cqs.sales * 1.2 
+FROM customer_quarterly_sales cqs 
+JOIN (
+    SELECT customer_id, quarter, sales FROM customer_turnover
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+) AS source 
+ON cqs.customer_id = source.customer_id 
+AND cqs.quarter = source.quarter 
+AND cqs.sales > 150;
+GO
+
+SELECT * FROM customer_quarterly_sales;
+GO
+
+        -- UPDATE with Subquery
+UPDATE customer_quarterly_sales 
+SET sales = sales * 1.5 
+WHERE customer_id IN (
+    SELECT DISTINCT customer_id 
+    FROM customer_turnover 
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE sales > 300
+);
+GO
+
+SELECT * FROM customer_quarterly_sales;
+GO
+
+    -- 3. DELETE
+
+        -- DELETE with Subquery
+DELETE FROM customer_quarterly_sales 
+WHERE customer_id IN (
+    SELECT DISTINCT customer_id
+    FROM customer_turnover
+    UNPIVOT (
+        sales FOR quarter IN (q1, q2, q3, q4)
+    ) AS unpvt
+    WHERE sales = 0
+);
+
+        -- DELETE with JOIN
+DELETE cqs 
+FROM customer_quarterly_sales cqs 
+JOIN (
+    SELECT customer_id, quarter, sales
+    FROM customer_turnover
+    UNPIVOT (
+        sales FOR quarter IN (q1, q2, q3, q4)
+    ) AS unpvt
+    WHERE sales < 120
+) AS source 
+ON cqs.customer_id = source.customer_id 
+AND cqs.quarter = source.quarter;
+
+
+-- SET Operations
+    -- 1. UNION
+        -- UNION: Combines quarterly sales from both years, removing duplicates
+SELECT customer_id, customer_desc, quarter, sales FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+UNION 
+SELECT customer_id, customer_desc, quarter, sales FROM customer_turnover_2024 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+ORDER BY customer_id, quarter;
+GO
+
+        -- UNION ALL (keeps duplicates)
+SELECT customer_id, customer_desc, quarter, sales FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+UNION ALL 
+SELECT customer_id, customer_desc, quarter, sales FROM customer_turnover_2024 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+ORDER BY customer_id, quarter;
+GO
+
+    -- 2. INTERSECT
+        -- Shows quarterly sales that are identical in both years
+SELECT customer_id, quarter, sales FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+INTERSECT 
+SELECT customer_id, quarter, sales FROM customer_turnover_2024 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+ORDER BY customer_id, quarter;
+GO
+
+    -- 3. EXCEPT
+        -- Shows quarterly sales that exist in first table but not in second
+SELECT customer_id, quarter, sales FROM customer_turnover 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+EXCEPT 
+SELECT customer_id, quarter, sales FROM customer_turnover_2024 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+ORDER BY customer_id, quarter;
+GO
+
+-- Table-Valued Function Test
+CREATE FUNCTION dbo.fn_UnpivotSales() 
+RETURNS TABLE 
+AS 
+RETURN 
+(
+    SELECT product_id, sales, quarter FROM sales_data
+    UNPIVOT (sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt 
+    WHERE product_id = 1
+);
+GO
+
+SELECT * FROM dbo.fn_UnpivotSales();
+
+
+
 -- ERROR CONDITIONS
+
+    -- Column names clashing (ambiguous usage)
+        -- Test: Basic join with SELECT *
+SELECT * 
+FROM customer_turnover 
+UNPIVOT (
+    turnover FOR quarter IN (q1, q2, q3, q4)
+) AS unpvt 
+JOIN customer_history t2 ON unpvt.customer_id = t2.customer_id;
+
+        -- Test: Join with specific columns but still potential conflict
+SELECT t1.customer_id, t2.history_id, turnover, quarter 
+FROM customer_turnover t1 
+JOIN customer_history t2 ON t1.customer_id = t2.customer_id 
+UNPIVOT (
+    turnover FOR quarter IN (q1, q2, q3, q4)
+) AS unpvt;
+
+
+-- UNHANDLED QUERIES
+SELECT unpvt.* FROM customer_turnover 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+
+SELECT customer_id, turnover, quarter FROM customer_turnover c 
+UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, q3, q4)) AS unpvt;
+
+    -- 1. Unpivot with CTE as source (current behaviour: connection failure)
+WITH QuarterlyData AS (
+    SELECT customer_id, q1, q2, q3, q4
+    FROM customer_turnover
+    WHERE customer_type = 'R'
+) 
+SELECT * FROM QuarterlyData 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+

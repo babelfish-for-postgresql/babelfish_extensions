@@ -7,13 +7,12 @@ CREATE TABLE customer_turnover (
 GO
     
 INSERT INTO customer_turnover VALUES
-    (2, 'Cust B', 'P', 150, 250, 350, 450),
-    (1, 'Cust A', 'R', 100, 200, 300, 400),
-    (3, 'Cust C', 'R', NULL, 0, 400, 500);
+    (3, 'Cust C', 'R', NULL, 0, 400, 150),
+    (1, 'Cust A', 'R', 100, 200, 100, 400),
+    (2, 'Cust B', 'P', 150, 250, 200, NULL);
 GO
 
--- table with all numeric types
-CREATE TABLE all_numeric_types (
+CREATE TABLE numeric_types (
     id INT,
     -- Bit values
     bit_val1 BIT,
@@ -48,8 +47,9 @@ CREATE TABLE all_numeric_types (
     smallmoney_val1 SMALLMONEY,
     smallmoney_val2 SMALLMONEY
 );
+GO
 
-INSERT INTO all_numeric_types VALUES (
+INSERT INTO numeric_types VALUES (
     1,                          -- id
     1, 0, 1,                   -- bit
     123456.78, 98765.43,       -- decimal
@@ -63,8 +63,8 @@ INSERT INTO all_numeric_types VALUES (
     214748.3647, 107374.1824,  -- money
     214748.3647, 107374.1824   -- smallmoney
 );
+GO
 
--- table with all string types
 CREATE TABLE string_types (
     id INT,
     -- CHAR types (fixed-length, non-Unicode)
@@ -95,6 +95,7 @@ CREATE TABLE string_types (
     ntext_val1 NTEXT,
     ntext_val2 NTEXT
 );
+GO
 
 INSERT INTO string_types VALUES (1,
     'ABC',
@@ -119,6 +120,46 @@ INSERT INTO string_types VALUES (1,
     N'علم',
     N'שלום'
 );
+GO
+
+CREATE TABLE datetime_types (
+    id INT,
+    -- Date values
+    date_val1 DATE,
+    date_val2 DATE,
+    
+    -- DateTime values
+    datetime_val1 DATETIME,
+    datetime_val2 DATETIME,
+    
+    -- DateTime2 values
+    datetime2_val1 DATETIME2,
+    datetime2_val2 DATETIME2,
+    
+    -- DateTimeOffset values
+    datetimeoffset_val1 DATETIMEOFFSET,
+    datetimeoffset_val2 DATETIMEOFFSET,
+    
+    -- SmallDateTime values
+    smalldatetime_val1 SMALLDATETIME,
+    smalldatetime_val2 SMALLDATETIME,
+    
+    -- Time values
+    time_val1 TIME,
+    time_val2 TIME
+);
+GO
+
+INSERT INTO datetime_types VALUES (
+    1, -- id
+    '2023-01-01', '2023-02-01', -- date
+    '2023-01-01 12:30:45', '2023-02-01 14:45:30', -- datetime
+    '2023-01-01 12:30:45.1234567', '2023-02-01 14:45:30.7654321', -- datetime2
+    '2023-01-01 12:30:45.1234567 +01:00', '2023-02-01 14:45:30.7654321 -08:00', -- datetimeoffset
+    '2023-01-01 12:30:00', '2023-02-01 14:45:00', -- smalldatetime
+    '12:30:45.1234567', '14:45:30.7654321' -- time
+);
+GO
 
 CREATE TABLE mixed_types (
     id INT,
@@ -127,7 +168,7 @@ CREATE TABLE mixed_types (
     val3 MONEY,
     val4 FLOAT
 );
-
+GO
 
 CREATE TABLE sales_data (
     product_id INT,
@@ -201,42 +242,64 @@ INSERT INTO product_performance VALUES
     (4, 'Phone', NULL, 0, NULL, 0, 'West');
 GO
 
-
-
-CREATE TABLE sales_data1 (
-    product_id INT,
-    q1_sales INT,
-    q2_sales INT,
-    q3_sales INT
-);
+CREATE SCHEMA sales;
 GO
-CREATE TABLE inventory_data (
+
+CREATE TABLE sales.quarterly_data (
     product_id INT,
-    q1_stock INT,
-    q2_stock INT,
-    q3_stock INT
+    product_name VARCHAR(50),
+    q1_sales DECIMAL(10,2),
+    q2_sales DECIMAL(10,2),
+    q3_sales DECIMAL(10,2),
+    q4_sales DECIMAL(10,2)
 );
 GO
 
--- Insert sample data
-INSERT INTO sales_data1 VALUES 
-    (1, 100, 200, 300),
-    (2, 150, 250, 350),
-    (3, 120, 220, NULL);
+INSERT INTO sales.quarterly_data VALUES
+(1, 'Product A', 0.50, 150.75, 200.25, 175.50),
+(2, 'Product B', 200.00, 300.00, 0, NULL),
+(3, 'Product C', 175.25, 225.75, NULL, 250.00);
 GO
 
-INSERT INTO inventory_data VALUES
-    (1, 500, 400, 300),
-    (2, 600, 500, 400),
-    (3, 550, 450, 350);
+CREATE TABLE customer_history (
+    customer_id INT, 
+    q1 INT,  
+    q2 INT,  
+    q3 VARCHAR(10), 
+    q4 DATE,
+    turnover FLOAT,
+    time_period VARCHAR(10),
+    history_id INT PRIMARY KEY
+);
 GO
 
--- for insert unpivot
-CREATE TABLE quarterly_sales
-(
+INSERT INTO customer_history (customer_id, q1, q2, q3, q4, turnover, time_period, history_id) VALUES
+    (1, 90, 180, 'Q3-A', '2023-01-01', 150.0, 'q2', 1),
+    (1, 95, 190, 'Q3-B', '2023-04-01', 150.0, 'q2', 2),
+    (2, 140, 110, 'Q3-C', '2023-07-01', 0.0, 'q3', 3),
+    (3, 200, 300, 'Q3-D', '2023-10-01', 1000.01, 'q4', 4);
+GO
+
+-- FOR DML statements with unpivot
+CREATE TABLE customer_quarterly_sales (
     customer_id INT,
     customer_desc VARCHAR(50),
+    customer_type CHAR(1),
     quarter VARCHAR(2),
-    sales_value INT
+    sales INT
 );
+GO
+
+-- Create and populate second table for set operations
+CREATE TABLE customer_turnover_2024 (
+    customer_id INT,
+    customer_desc VARCHAR(50),
+    customer_type CHAR(1),
+    q1 INT, q2 INT, q3 INT, q4 INT
+);
+GO
+INSERT INTO customer_turnover_2024 VALUES
+    (3, 'Cust C', 'R', 120, 0, 400, 150),
+    (1, 'Cust A', 'R', 100, 200, 100, 400),
+    (4, 'Cust D', 'P', 180, 220, 300, NULL);
 GO
