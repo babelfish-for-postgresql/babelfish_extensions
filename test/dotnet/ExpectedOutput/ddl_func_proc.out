@@ -226,15 +226,6 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[sp_reset_connection_test_table](
-	[id] [int] NULL
-) ON [PRIMARY]
-
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 -- Create procedure with more than 4K characters
 CREATE PROCEDURE proc_more_than_4k
 AS
@@ -486,12 +477,6 @@ GO
 -- multiline comment  with bracket around datatype
 CREATE FUNCTION [dbo].[storeoriginalquery_function]() RETURNS [VARCHAR](8000) AS BEGIN DECLARE @storeOriginalQuery_var [VARCHAR](8000) RETURN @storeOriginalQuery_var END
 
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE FUNCTION tests.multiply (@a int, @b int) RETURNS int AS BEGIN RETURN @a * @b; END;
 GO
 CREATE TYPE [dbo].[@myrettable_routines_fc7] AS TABLE(
 	[a] [int] NOT NULL,
