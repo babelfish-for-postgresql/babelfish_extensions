@@ -76,12 +76,6 @@ X.indislive
 -- filter to get all the objects that belong to sys or babelfish schemas
 and (nsp.nspname = 'sys' or ext.nspname is not null)
 
-CREATE OR REPLACE FUNCTION sys.suser_name()
-RETURNS sys.NVARCHAR(128)
-AS $$
-    SELECT sys.suser_name_internal(suser_id());
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 union all 
 -- Create HEAP entries for each system and user table
 select
