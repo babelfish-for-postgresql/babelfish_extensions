@@ -2985,11 +2985,18 @@ BEGIN
 	DECLARE @row_count INT;
 	SELECT @row_count = COUNT(*) FROM #sp_rename_temptable2;
 
-	IF @objtype = 'COLUMN'
+	IF @objtype = 'COLUMN' OR @objtype = 'INDEX'
 		BEGIN
 			IF @row_count = 1
 				BEGIN
-					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+					IF @objtype = 'COLUMN'
+						BEGIN
+							THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+						END;
+					ELSE
+						BEGIN
+							THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (INDEX) is wrong.', 1;
+						END
 				END
 			ELSE IF @row_count > 4
 				BEGIN
@@ -3071,10 +3078,6 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
-	ELSE IF @objtype = 'INDEX'
-		BEGIN
-			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
-		END
 	ELSE IF @objtype = 'STATISTICS'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
@@ -3103,6 +3106,24 @@ BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SET @currtype = 'CO';
+				END
+			ELSE IF @objtype = 'INDEX'
+				BEGIN
+					DECLARE @relid INT = 0;
+					DECLARE @index_count INT;
+					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+						WHERE s1.name = @schemaname AND o1.name = @curr_relname;
+					IF @relid = 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(@subname, @curr_relname);
+					IF @index_count < 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'IX';
 				END
 			ELSE IF @objtype = 'USERDATATYPE'
 				BEGIN
