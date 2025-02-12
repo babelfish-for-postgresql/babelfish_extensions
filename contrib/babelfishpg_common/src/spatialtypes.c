@@ -150,12 +150,14 @@ geography_in(PG_FUNCTION_ARGS)
 
     fcinfo_local->args[0].value = geom_datum;
     geom_type = geometry_type_p(fcinfo_local);
-    /*Set SRID to 4326 in case of non-binary strings */
-    if(!isBinary){
+    
+    /*For type: '0101000000000000000000F03F000000000000004', predefined SRID is set by default*/
+    /*For type: 'POINT(0 0)', set default SRID to be 4326 for geography datatype*/
+    if(!isBinary)
+    {
     fcinfo_local->args[0].value = geom_datum;
     fcinfo_local->args[1].value = Int32GetDatum(4326);
 
-    /* Setting deafault SRID for geography datatype = 4326 */
     geom_datum = gserialized_set_srid_p(fcinfo_local);
     }
     geometry_name = text_to_cstring(PG_DETOAST_DATUM(geom_type));
