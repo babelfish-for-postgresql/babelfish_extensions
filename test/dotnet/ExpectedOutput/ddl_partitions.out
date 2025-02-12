@@ -1,67 +1,104 @@
-#Q#CREATE PARTITION FUNCTION IntPartitionFunction (int)
+#Q#
+-- This test files will check for scripting of partition functions, partition schemes,
+-- partitioned tables and partitioned indexes.
+
+-----------------------------------------------------
+--- Partition Function with All supported datatypes
+-----------------------------------------------------
+-- all datatypes should sort and store the values in ascending order by itself
+-- and input values should be implicit casted into specified type
+
+-- using local variable in args
+CREATE PARTITION FUNCTION IntPartitionFunction (int) 
 AS RANGE RIGHT FOR VALUES (0, 1000, 500);
 
-#Q#CREATE PARTITION FUNCTION BigIntPartitionFunction (sys.bigint)
+#Q#
+
+-- explicit schema can also be specified with paramater type
+CREATE PARTITION FUNCTION BigIntPartitionFunction (sys.bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 
-#Q#CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint)
+#Q#
+CREATE PARTITION FUNCTION SmallIntPartitionFunction (smallint) 
 AS RANGE RIGHT FOR VALUES (cast(32767 as bigint), -32768, 0);
 
-#Q#CREATE PARTITION FUNCTION TinyIntPartitionFunction (sys.tinyint)
+#Q#
+-- explicit schema can also be specified with paramater type
+CREATE PARTITION FUNCTION TinyIntPartitionFunction (sys.tinyint)
 AS RANGE RIGHT FOR VALUES (0, cast(255 as varchar), 128);
 
-#Q#CREATE PARTITION FUNCTION DecimalPartitionFunction (decimal(10, 5))
+#Q#
+CREATE PARTITION FUNCTION DecimalPartitionFunction (decimal(10, 5))
 AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0);
 
-#Q#CREATE PARTITION FUNCTION NumericPartitionFunction (numeric(5, 2))
+#Q#
+CREATE PARTITION FUNCTION NumericPartitionFunction (numeric(5, 2))
 AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0);
 
-#Q#CREATE PARTITION FUNCTION MoneyPartitionFunction (MONEY)
+#Q#
+CREATE PARTITION FUNCTION MoneyPartitionFunction (MONEY)
 AS RANGE RIGHT FOR VALUES ($2.56789, ¥4.91, $3.56789);
 
-#Q#CREATE PARTITION FUNCTION SmallMoneyPartitionFunction (SMALLMONEY)
+#Q#
+CREATE PARTITION FUNCTION SmallMoneyPartitionFunction (SMALLMONEY)
 AS RANGE RIGHT FOR VALUES ($2.56789, ¥4.91, $3.56789);
 
-#Q#CREATE PARTITION FUNCTION DatePartitionFunction (date)
+#Q#
+CREATE PARTITION FUNCTION DatePartitionFunction (date) 
 AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01');
 
-#Q#CREATE PARTITION FUNCTION DateTimePartitionFunction (datetime)
+#Q#
+-- should implicity cast it to input type
+CREATE PARTITION FUNCTION DateTimePartitionFunction (datetime)
 AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00');
 
-#Q#CREATE PARTITION FUNCTION DateTime2PartitionFunction (datetime2(3))
+#Q#
+CREATE PARTITION FUNCTION DateTime2PartitionFunction (datetime2(3))
 AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000');
 
-#Q#CREATE PARTITION FUNCTION SmallDateTimePartitionFunction (smalldatetime)
+#Q#
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunction (smalldatetime)
 AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01');
 
-#Q#CREATE PARTITION FUNCTION CharPartitionFunction (char(5))
+#Q#
+CREATE PARTITION FUNCTION CharPartitionFunction (char(5))
 AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D');
 
-#Q#CREATE PARTITION FUNCTION VarCharPartitionFunction (varchar(10))
+#Q#
+CREATE PARTITION FUNCTION VarCharPartitionFunction (varchar(10))
 AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date');
 
-#Q#CREATE PARTITION FUNCTION NVarCharPartitionFunction (nvarchar(10))
+#Q#
+CREATE PARTITION FUNCTION NVarCharPartitionFunction (nvarchar(10))
 AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date');
 
-#Q#CREATE PARTITION FUNCTION NCharPartitionFunction (nchar(5))
+#Q#
+CREATE PARTITION FUNCTION NCharPartitionFunction (nchar(5))
 AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B');
 
-#Q#CREATE PARTITION FUNCTION BinaryPartitionFunction (binary(4))
+#Q#
+CREATE PARTITION FUNCTION BinaryPartitionFunction (binary(4))
 AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
 
-#Q#CREATE PARTITION FUNCTION VarBinaryPartitionFunction (varbinary(8))
+#Q#
+CREATE PARTITION FUNCTION VarBinaryPartitionFunction (varbinary(8))
 AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000);
 
-#Q#CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunction (uniqueidentifier)
+#Q#
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunction (uniqueidentifier)
 AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
 
-#Q#CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
+#Q#
+-- identifier length greater than 64
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 
-#Q#CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (bigint)
+#Q#
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (bigint)
 AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
 
-#Q#CREATE PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput (NVARCHAR(50))
+#Q#
+CREATE PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput (NVARCHAR(50))
 AS RANGE RIGHT
 FOR VALUES (
     N'John Doe',
@@ -70,995 +107,785 @@ FOR VALUES (
     N'Müller GmbH' COLLATE Traditional_Spanish_CI_AS
 );
 
-#Q#CREATE PARTITION SCHEME IntPartitionScheme AS
-PARTITION IntPartitionFunction
+#Q#
+--------------------------------------------------
+--- Partition Scheme
+--------------------------------------------------
+
+-- without all option
+-- filegroups are equal to partition that will generated by function
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION IntPartitionFunction 
 TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME BigIntPartitionScheme AS
-PARTITION BigIntPartitionFunction
+#Q#
+-- filgroups are more than partition that will generated by function
+CREATE PARTITION SCHEME BigIntPartitionScheme AS
+PARTITION BigIntPartitionFunction 
 TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME SmallIntPartitionScheme AS
-PARTITION SmallIntPartitionFunction
+#Q#
+-- with all option
+CREATE PARTITION SCHEME SmallIntPartitionScheme AS
+PARTITION SmallIntPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME TinyIntPartitionScheme AS
-PARTITION TinyIntPartitionFunction
+#Q#
+CREATE PARTITION SCHEME TinyIntPartitionScheme AS
+PARTITION TinyIntPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME DecimalPartitionScheme AS
-PARTITION DecimalPartitionFunction
+#Q#
+CREATE PARTITION SCHEME DecimalPartitionScheme AS
+PARTITION DecimalPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME NumericPartitionScheme AS
-PARTITION NumericPartitionFunction
+#Q#
+CREATE PARTITION SCHEME NumericPartitionScheme AS
+PARTITION NumericPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME MoneyPartitionScheme AS
-PARTITION MoneyPartitionFunction
+#Q#
+CREATE PARTITION SCHEME MoneyPartitionScheme AS
+PARTITION MoneyPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME SmallMoneyPartitionScheme AS
-PARTITION SmallMoneyPartitionFunction
+#Q#
+CREATE PARTITION SCHEME SmallMoneyPartitionScheme AS
+PARTITION SmallMoneyPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME DatePartitionScheme AS
-PARTITION DatePartitionFunction
+#Q#
+CREATE PARTITION SCHEME DatePartitionScheme AS
+PARTITION DatePartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME DateTimePartitionScheme AS
-PARTITION DateTimePartitionFunction
+#Q#
+CREATE PARTITION SCHEME DateTimePartitionScheme AS
+PARTITION DateTimePartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME DateTime2PartitionScheme AS
-PARTITION DateTime2PartitionFunction
+#Q#
+CREATE PARTITION SCHEME DateTime2PartitionScheme AS
+PARTITION DateTime2PartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME SmallDateTimePartitionScheme AS
-PARTITION SmallDateTimePartitionFunction
+#Q#
+CREATE PARTITION SCHEME SmallDateTimePartitionScheme AS
+PARTITION SmallDateTimePartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME CharPartitionScheme AS
-PARTITION CharPartitionFunction
+#Q#
+CREATE PARTITION SCHEME CharPartitionScheme AS
+PARTITION CharPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME VarCharPartitionScheme AS
-PARTITION VarCharPartitionFunction
+#Q#
+CREATE PARTITION SCHEME VarCharPartitionScheme AS
+PARTITION VarCharPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME NVarCharPartitionScheme AS
-PARTITION NVarCharPartitionFunction
+#Q#
+CREATE PARTITION SCHEME NVarCharPartitionScheme AS
+PARTITION NVarCharPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME NCharPartitionScheme AS
-PARTITION NCharPartitionFunction
+#Q#
+CREATE PARTITION SCHEME NCharPartitionScheme AS
+PARTITION NCharPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME BinaryPartitionScheme AS
-PARTITION BinaryPartitionFunction
+#Q#
+CREATE PARTITION SCHEME BinaryPartitionScheme AS
+PARTITION BinaryPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME VarBinaryPartitionScheme AS
-PARTITION VarBinaryPartitionFunction
+#Q#
+CREATE PARTITION SCHEME VarBinaryPartitionScheme AS
+PARTITION VarBinaryPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME UniqueIdentifierPartitionScheme AS
-PARTITION UniqueIdentifierPartitionFunction
+#Q#
+CREATE PARTITION SCHEME UniqueIdentifierPartitionScheme AS
+PARTITION UniqueIdentifierPartitionFunction 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz AS
-PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+#Q#
+-- identifier length greater than 64
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz 
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder AS
+#Q#
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder AS
 PARTITION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 ALL TO ([PRIMARY]);
 
-#Q#CREATE SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+#Q#
+CREATE SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
 
-#Q#CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz (
+#Q#
+CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz (
     PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz BIGINT,
     Value sys.varchar(50)
 ) ON   PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz    (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 
-#Q#CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+#Q#
+CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz(Value)
 ON PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 
-#Q#CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (
+#Q#
+CREATE TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder (
     PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz BIGINT,
     Value sys.varchar(50)
-) ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+) ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder   
 (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 
-#Q#CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+#Q#
+CREATE INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder(Value)
-ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+ON PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder 
 (PartitionColumnNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz);
 
-#Q#CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
+#Q#
+--------------------------------------------------
+--- name identifiers test
+--------------------------------------------------
+CREATE PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 
-#Q#CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
+#Q#
+CREATE PARTITION SCHEME PARTITION_SCHEMEログインαιώνια AS
 PARTITION PARTITION_FUNCTIONログインαιώνια
 ALL TO ([PRIMARY]);
 
-#Q#CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ] (int)
+#Q#
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ] (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 
-#Q#CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS
+#Q#
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS
 PARTITION [PARTITION_FUNCTION  유니코드스키마👻  ]
 ALL TO ([PRIMARY]);
 
-#Q#CREATE TABLE [PARTITION_TABLE  유니코드스키마👻  ](
+#Q#
+CREATE TABLE [PARTITION_TABLE  유니코드스키마👻  ](
     [PARTITION_COLUMN  유니코드스키마👻  ] INT,
     Value sys.varchar(50)
 ) ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
 
-#Q#CREATE INDEX [PARTITION_INDEX 유니코드스키마👻  ]
+#Q#
+CREATE INDEX [PARTITION_INDEX 유니코드스키마👻  ]
 ON [PARTITION_TABLE  유니코드스키마👻  ](Value)
 ON [PARTITION_SCHEME  유니코드스키마👻  ]([PARTITION_COLUMN  유니코드스키마👻  ]);
 
-#Q#SET QUOTED_IDENTIFIER ON;
+#Q#
+-- qouted identifer
+SET QUOTED_IDENTIFIER ON;
 
-#Q#CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  " (int)
+#Q#
+CREATE PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  " (int)
 AS RANGE RIGHT FOR VALUES (0, 500, 1000);
 
-#Q#CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  " AS
+#Q#
+CREATE PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  " AS
 PARTITION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
 ALL TO ([PRIMARY]);
 
-#Q#CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  " (
+#Q#
+
+CREATE TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  " (
     "PARTITION_COLUMN 😎$@ #123 🌍rder  " INT,
     Value sys.varchar(50)
 ) ON "PARTITION_SCHEME 😎$@ #123 🌍rder  " ("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
 
-#Q#CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  "
+#Q#
+CREATE INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  "
 ON "PARTITION_TABLE 😎$@ #123 🌍rder  " (Value)
 ON "PARTITION_SCHEME 😎$@ #123 🌍rder  "("PARTITION_COLUMN 😎$@ #123 🌍rder  ");
 
-#Q#SET QUOTED_IDENTIFIER OFF;
+#Q#
+SET QUOTED_IDENTIFIER OFF;
 
-#Q#CREATE TABLE partition_vu_prepare_int_table (
+#Q#
+
+---------------------------------------------------------------------------
+--- CREATE PARTITIONED TABLES with PARTITION SCHEME for different datatypes
+---------------------------------------------------------------------------
+-- int data type
+CREATE TABLE partition_vu_prepare_int_table (
     Id INT UNIQUE,
     Value sys.varchar(50)
 ) ON IntPartitionScheme(Id);
 
-#Q#ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT check_value_not_null CHECK(value IS NOT NULL);
+#Q#
+-- add constraint
+ALTER TABLE partition_vu_prepare_int_table ADD CONSTRAINT check_value_not_null CHECK(value IS NOT NULL);
 
-#Q#CREATE TABLE partition_vu_prepare_bigint_table (
+#Q#
+-- bigint data type
+CREATE TABLE partition_vu_prepare_bigint_table (
     Id BIGINT,
     Value sys.varchar(50)
 ) ON BigIntPartitionScheme--this is comment should get ignored
 (Id);
 
-#Q#CREATE TABLE partition_vu_prepare_smallint_table (
+#Q#
+-- smallint data type
+CREATE TABLE partition_vu_prepare_smallint_table (
     Id SMALLINT,
     Value sys.varchar(50)
 ) ON SmallIntPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_tinyint_table (
+#Q#
+-- tinyint data type
+CREATE TABLE partition_vu_prepare_tinyint_table (
     Id TINYINT,
     Value sys.varchar(50)
 ) ON TinyIntPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_decimal_table (
+#Q#
+-- decimal data type
+CREATE TABLE partition_vu_prepare_decimal_table (
     Id DECIMAL(10, 5),
     Value sys.varchar(50)
 ) ON DecimalPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_numeric_table (
+#Q#
+-- numeric data type
+CREATE TABLE partition_vu_prepare_numeric_table (
     Id NUMERIC(5, 2),
     Value sys.varchar(50)
 ) ON NumericPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_money_table (
+#Q#
+-- money data type
+CREATE TABLE partition_vu_prepare_money_table (
     Id MONEY,
     Value sys.varchar(50)
 ) ON MoneyPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_smallmoney_table (
+#Q#
+-- smallmoney data type
+CREATE TABLE partition_vu_prepare_smallmoney_table (
     Id SMALLMONEY,
     Value sys.varchar(50)
 ) ON SmallMoneyPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_date_table (
+#Q#
+-- date data type
+CREATE TABLE partition_vu_prepare_date_table (
     Id DATE,
     Value sys.varchar(50)
 ) ON DatePartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_datetime_table (
+#Q#
+-- datetime data type
+CREATE TABLE partition_vu_prepare_datetime_table (
     Id DATETIME,
     Value sys.varchar(50)
 ) ON DateTimePartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_datetime2_table (
+#Q#
+-- datetime2 data type
+CREATE TABLE partition_vu_prepare_datetime2_table (
     Id DATETIME2(3),
     Value sys.varchar(50)
 ) ON DateTime2PartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_smalldatetime_table (
+#Q#
+-- smalldatetime data type
+CREATE TABLE partition_vu_prepare_smalldatetime_table (
     Id SMALLDATETIME,
     Value sys.varchar(50)
 ) ON SmallDateTimePartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_char_table (
+#Q#
+-- char data type
+CREATE TABLE partition_vu_prepare_char_table (
     Id CHAR(5),
     Value sys.varchar(50)
 ) ON CharPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_varchar_table (
+#Q#
+-- varchar data type
+CREATE TABLE partition_vu_prepare_varchar_table (
     Id VARCHAR(10),
     Value sys.varchar(50)
 ) ON VarCharPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_nvarchar_table (
+#Q#
+-- nvarchar data type
+CREATE TABLE partition_vu_prepare_nvarchar_table (
     Id NVARCHAR(10),
     Value sys.varchar(50)
 ) ON NVarCharPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_nchar_table (
+#Q#
+-- nchar data type
+CREATE TABLE partition_vu_prepare_nchar_table (
     Id NCHAR(5),
     Value sys.varchar(50)
 ) ON NCharPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_binary_table (
+#Q#
+-- binary data type
+CREATE TABLE partition_vu_prepare_binary_table (
     Id BINARY(4),
     Value sys.varchar(50)
 ) ON BinaryPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_varbinary_table (
+#Q#
+-- varbinary data type
+CREATE TABLE partition_vu_prepare_varbinary_table (
     Id VARBINARY(8),
     Value sys.varchar(50)
 ) ON VarBinaryPartitionScheme(Id);
 
-#Q#CREATE TABLE partition_vu_prepare_uniqueidentifier_table (
+#Q#
+-- uniqueidentifier data type
+CREATE TABLE partition_vu_prepare_uniqueidentifier_table (
     Id UNIQUEIDENTIFIER,
     Value sys.varchar(50)
 ) ON UniqueIdentifierPartitionScheme(Id);
 
-#Q#CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
+#Q#
+-- identifier length greater than 64
+CREATE TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz (
     Id INT,
     Value sys.varchar(50)
 ) ON IntPartitionScheme(Id);
 
-#Q#CREATE INDEX partition_vu_prepare_int_index
+#Q#
+---------------------------------------------------------------------------
+--- CREATE ALIGNED PARTITIONED INDEX with PARTITION SCHEME
+---------------------------------------------------------------------------
+-- using schema name
+CREATE INDEX partition_vu_prepare_int_index
 ON dbo.partition_vu_prepare_int_table(Value)
 ON IntPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_bigint_index
+#Q#
+-- without explicit schema name
+CREATE INDEX partition_vu_prepare_bigint_index
 ON partition_vu_prepare_bigint_table(Id)
 ON BigIntPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_smallint_index
-ON partition_vu_prepare_smallint_table
+#Q#
+-- without partition scheme should also work
+CREATE INDEX partition_vu_prepare_smallint_index
+ON partition_vu_prepare_smallint_table--this is comment should get ignored
 (Id)
 
-#Q#CREATE INDEX partition_vu_prepare_tinyint_index
+#Q#
+CREATE INDEX partition_vu_prepare_tinyint_index
 ON partition_vu_prepare_tinyint_table(Id)
 ON TinyIntPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_decimal_index
+#Q#
+CREATE INDEX partition_vu_prepare_decimal_index
 ON partition_vu_prepare_decimal_table(Id)
 ON DecimalPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_numeric_index
+#Q#
+CREATE INDEX partition_vu_prepare_numeric_index
 ON partition_vu_prepare_numeric_table(Id)
 ON NumericPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_money_index
+#Q#
+CREATE INDEX partition_vu_prepare_money_index
 ON partition_vu_prepare_money_table(Id)
 ON MoneyPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_smallmoney_index
+#Q#
+CREATE INDEX partition_vu_prepare_smallmoney_index
 ON partition_vu_prepare_smallmoney_table(Id)
 ON SmallMoneyPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_date_index
+#Q#
+CREATE INDEX partition_vu_prepare_date_index
 ON partition_vu_prepare_date_table(Id)
 ON DatePartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_datetime_index
+#Q#
+CREATE INDEX partition_vu_prepare_datetime_index
 ON partition_vu_prepare_datetime_table(Id)
 ON DateTimePartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_datetime2_index
+#Q#
+CREATE INDEX partition_vu_prepare_datetime2_index
 ON partition_vu_prepare_datetime2_table(Id)
 ON DateTime2PartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_smalldatetime_index
+#Q#
+CREATE INDEX partition_vu_prepare_smalldatetime_index
 ON partition_vu_prepare_smalldatetime_table(Id)
 ON SmallDateTimePartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_char_index
+#Q#
+CREATE INDEX partition_vu_prepare_char_index
 ON partition_vu_prepare_char_table(Id)
 ON CharPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_varchar_index
+#Q#
+CREATE INDEX partition_vu_prepare_varchar_index
 ON partition_vu_prepare_varchar_table(Id)
 ON VarCharPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_nvarchar_index
+#Q#
+CREATE INDEX partition_vu_prepare_nvarchar_index
 ON partition_vu_prepare_nvarchar_table(Id)
 ON NVarCharPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_nchar_index
+#Q#
+CREATE INDEX partition_vu_prepare_nchar_index
 ON partition_vu_prepare_nchar_table(Id)
 ON NCharPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_binary_index
+#Q#
+CREATE INDEX partition_vu_prepare_binary_index
 ON partition_vu_prepare_binary_table(Id)
 ON BinaryPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_varbinary_index
+#Q#
+CREATE INDEX partition_vu_prepare_varbinary_index
 ON partition_vu_prepare_varbinary_table(Id)
 ON VarBinaryPartitionScheme (Id);
 
-#Q#CREATE INDEX partition_vu_prepare_uniqueidentifier_index
+#Q#
+CREATE INDEX partition_vu_prepare_uniqueidentifier_index
 ON partition_vu_prepare_uniqueidentifier_table(Id)
 ON UniqueIdentifierPartitionScheme (Id);
 
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_bigint_table](
-	[id] [bigint] NULL,
-	[value] [varchar](50) NULL
-) ON [BigIntPartitionScheme]([id])
+#Q#--------------------------------------------------
+--- DROP Partitioned Index
+--------------------------------------------------
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63] ON [dbo].[partition_vu_prepare_bigint_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BigIntPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_binary_table](
-	[id] [binary](4) NULL,
-	[value] [varchar](50) NULL
-) ON [BinaryPartitionScheme]([id])
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503] ON [dbo].[partition_vu_prepare_binary_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BinaryPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_char_table](
-	[id] [char](5) NULL,
-	[value] [varchar](50) NULL
-) ON [CharPartitionScheme]([id])
+DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f] ON [dbo].[partition_vu_prepare_char_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [CharPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_date_table](
-	[id] [date] NULL,
-	[value] [varchar](50) NULL
-) ON [DatePartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_varbinary_index ON partition_vu_prepare_varbinary_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844] ON [dbo].[partition_vu_prepare_date_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DatePartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_datetime_table](
-	[id] [datetime] NULL,
-	[value] [varchar](50) NULL
-) ON [DateTimePartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_binary_index ON partition_vu_prepare_binary_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e] ON [dbo].[partition_vu_prepare_datetime_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTimePartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_datetime2_table](
-	[id] [datetime2](3) NULL,
-	[value] [varchar](50) NULL
-) ON [DateTime2PartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_nchar_index ON partition_vu_prepare_nchar_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6] ON [dbo].[partition_vu_prepare_datetime2_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTime2PartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_decimal_table](
-	[id] [decimal](10, 5) NULL,
-	[value] [varchar](50) NULL
-) ON [DecimalPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_nvarchar_index ON partition_vu_prepare_nvarchar_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9] ON [dbo].[partition_vu_prepare_decimal_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DecimalPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_int_table](
-	[id] [int] NULL,
-	[value] [varchar](50) NULL,
- CONSTRAINT [partition_vu_prepare_int_table_id_key] UNIQUE NONCLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
-) ON [IntPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_varchar_index ON partition_vu_prepare_varchar_table;
 
-GO
-ALTER TABLE [dbo].[partition_vu_prepare_int_table]  WITH CHECK ADD  CONSTRAINT [check_value_not_null] CHECK  (((value IS NOT NULL)))
-GO
-ALTER TABLE [dbo].[partition_vu_prepare_int_table] CHECK CONSTRAINT [check_value_not_null]
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046] ON [dbo].[partition_vu_prepare_int_table]
-(
-	[value] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
-GO
-ALTER TABLE [dbo].[partition_vu_prepare_int_table] ADD  CONSTRAINT [partition_vu_prepare_int_table_id_key] UNIQUE NONCLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_money_table](
-	[id] [money] NULL,
-	[value] [varchar](50) NULL
-) ON [MoneyPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_char_index ON partition_vu_prepare_char_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee] ON [dbo].[partition_vu_prepare_money_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [MoneyPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_nchar_table](
-	[id] [nchar](5) NULL,
-	[value] [varchar](50) NULL
-) ON [NCharPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_smalldatetime_index ON partition_vu_prepare_smalldatetime_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1] ON [dbo].[partition_vu_prepare_nchar_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NCharPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_numeric_table](
-	[id] [numeric](5, 2) NULL,
-	[value] [varchar](50) NULL
-) ON [NumericPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_datetime2_index ON partition_vu_prepare_datetime2_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963] ON [dbo].[partition_vu_prepare_numeric_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NumericPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_nvarchar_table](
-	[id] [nvarchar](10) NULL,
-	[value] [varchar](50) NULL
-) ON [NVarCharPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_datetime_index ON partition_vu_prepare_datetime_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec] ON [dbo].[partition_vu_prepare_nvarchar_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NVarCharPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_smalldatetime_table](
-	[id] [smalldatetime] NULL,
-	[value] [varchar](50) NULL
-) ON [SmallDateTimePartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_date_index ON partition_vu_prepare_date_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8] ON [dbo].[partition_vu_prepare_smalldatetime_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallDateTimePartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_smallint_table](
-	[id] [smallint] NULL,
-	[value] [varchar](50) NULL
-) ON [SmallIntPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_smallmoney_index ON partition_vu_prepare_smallmoney_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579] ON [dbo].[partition_vu_prepare_smallint_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallIntPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_smallmoney_table](
-	[id] [smallmoney] NULL,
-	[value] [varchar](50) NULL
-) ON [SmallMoneyPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_money_index ON partition_vu_prepare_money_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8] ON [dbo].[partition_vu_prepare_smallmoney_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallMoneyPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_tinyint_table](
-	[id] [tinyint] NULL,
-	[value] [varchar](50) NULL
-) ON [TinyIntPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_numeric_index ON partition_vu_prepare_numeric_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb] ON [dbo].[partition_vu_prepare_tinyint_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [TinyIntPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_uniqueidentifier_table](
-	[id] [uniqueidentifier] NULL,
-	[value] [varchar](50) NULL
-) ON [UniqueIdentifierPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_decimal_index ON partition_vu_prepare_decimal_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf] ON [dbo].[partition_vu_prepare_uniqueidentifier_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [UniqueIdentifierPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_varbinary_table](
-	[id] [varbinary](8) NULL,
-	[value] [varchar](50) NULL
-) ON [VarBinaryPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_tinyint_index ON partition_vu_prepare_tinyint_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386] ON [dbo].[partition_vu_prepare_varbinary_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarBinaryPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partition_vu_prepare_varchar_table](
-	[id] [varchar](10) NULL,
-	[value] [varchar](50) NULL
-) ON [VarCharPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_smallint_index ON partition_vu_prepare_smallint_table;
 
-GO
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08] ON [dbo].[partition_vu_prepare_varchar_table]
-(
-	[id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarCharPartitionScheme]([id])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[partitiontablenamegreaterthan64d92cad082de128dbac3bc1a7d749bf53](
-	[id] [int] NULL,
-	[value] [varchar](50) NULL
-) ON [IntPartitionScheme]([id])
+#Q#
+DROP INDEX partition_vu_prepare_bigint_index ON partition_vu_prepare_bigint_table;
 
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[sp_reset_connection_test_table](
-	[id] [int] NULL
-) ON [PRIMARY]
+#Q#
+DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
 
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a](
-	[partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88] [bigint] NULL,
-	[value] [varchar](50) NULL
-) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+#Q#
+DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
 
-GO
-CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12281d566faf52196dfe6d853f777a92e5] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a]
-(
-	[value] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80](
-	[partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88] [bigint] NULL,
-	[value] [varchar](50) NULL
-) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+#Q#
+SET QUOTED_IDENTIFIER ON;
 
-GO
-CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12b72a1deb0a1d64b3cc262360a8eb4a59] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
-(
-	[value] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE FUNCTION tests.multiply (@a int, @b int) RETURNS int AS BEGIN RETURN @a * @b; END;
-GO
-CREATE PARTITION FUNCTION [BigIntPartitionFunction](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
-GO
-CREATE PARTITION FUNCTION [BinaryPartitionFunction](binary(8000)) AS RANGE RIGHT FOR VALUES (0x00000000, 0x04000000, 0x08000000, 0xC0000000)
-GO
-CREATE PARTITION FUNCTION [CharPartitionFunction](char(8000)) AS RANGE RIGHT FOR VALUES (N'A    ', N'D    ', N'F    ', N'K    ', N'P    ', N'U    ', N'Z    ')
-GO
-CREATE PARTITION FUNCTION [DatePartitionFunction](date) AS RANGE RIGHT FOR VALUES (N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000', N'2023-01-01T00:00:00.000')
-GO
-CREATE PARTITION FUNCTION [DateTime2PartitionFunction](datetime2(6)) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
-GO
-CREATE PARTITION FUNCTION [DateTimePartitionFunction](datetime) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
-GO
-CREATE PARTITION FUNCTION [DecimalPartitionFunction](decimal(38,38)) AS RANGE RIGHT FOR VALUES (0.00000, 100.00000, 200.00000, 300.00000)
-GO
-CREATE PARTITION FUNCTION [IntPartitionFunction](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
-GO
-CREATE PARTITION FUNCTION [MoneyPartitionFunction](money) AS RANGE RIGHT FOR VALUES (2.5679, 3.5679, 4.9100)
-GO
-CREATE PARTITION FUNCTION [NCharPartitionFunction](nchar(4000)) AS RANGE RIGHT FOR VALUES (N'A    ', N'B    ', N'F    ', N'K    ', N'P    ', N'U    ', N'Z    ')
-GO
-CREATE PARTITION FUNCTION [NumericPartitionFunction](numeric(38,38)) AS RANGE RIGHT FOR VALUES (0.00, 10.00, 20.00, 30.00)
-GO
-CREATE PARTITION FUNCTION [NVarCharPartitionFunction](nvarchar(4000)) AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Cherry', N'Date', N'Mango')
-GO
-CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
-GO
-CREATE PARTITION FUNCTION [PARTITION_FUNCTION 😎$@ #123 🌍rder  ](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
-GO
-CREATE PARTITION FUNCTION [PARTITION_FUNCTIONログインαιώνια](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
-GO
-CREATE PARTITION FUNCTION [PartitionFunctionHavingDifferentCollationInput](nvarchar(4000)) AS RANGE RIGHT FOR VALUES (N'châu phố', N'Jane Smith', N'John Doe', N'Müller GmbH')
-GO
-CREATE PARTITION FUNCTION [PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
-GO
-CREATE PARTITION FUNCTION [PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
-GO
-CREATE PARTITION FUNCTION [SmallDateTimePartitionFunction](smalldatetime) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
-GO
-CREATE PARTITION FUNCTION [SmallIntPartitionFunction](smallint) AS RANGE RIGHT FOR VALUES (-32768, 0, 32767)
-GO
-CREATE PARTITION FUNCTION [SmallMoneyPartitionFunction](smallmoney) AS RANGE RIGHT FOR VALUES (2.5679, 3.5679, 4.9100)
-GO
-CREATE PARTITION FUNCTION [TinyIntPartitionFunction](tinyint) AS RANGE RIGHT FOR VALUES (0x00, 0x80, 0xFF)
-GO
-CREATE PARTITION FUNCTION [UniqueIdentifierPartitionFunction](uniqueidentifier) AS RANGE RIGHT FOR VALUES (N'00000000-0000-0000-0000-000000000000', N'6f9619ff-8b86-d011-b42d-00c04fc964ff', N'ffffffff-ffff-ffff-ffff-ffffffffffff')
-GO
-CREATE PARTITION FUNCTION [VarBinaryPartitionFunction](varbinary(8000)) AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x4000000000000000, 0x8000000000000000, 0xC000000000000000)
-GO
-CREATE PARTITION FUNCTION [VarCharPartitionFunction](varchar(8000)) AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Cherry', N'Date', N'Mango')
-GO
-CREATE PARTITION SCHEME [BigIntPartitionScheme] AS PARTITION [BigIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [BinaryPartitionScheme] AS PARTITION [BinaryPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [CharPartitionScheme] AS PARTITION [CharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [DatePartitionScheme] AS PARTITION [DatePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [DateTime2PartitionScheme] AS PARTITION [DateTime2PartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [DateTimePartitionScheme] AS PARTITION [DateTimePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [DecimalPartitionScheme] AS PARTITION [DecimalPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [IntPartitionScheme] AS PARTITION [IntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [MoneyPartitionScheme] AS PARTITION [MoneyPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [NCharPartitionScheme] AS PARTITION [NCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [NumericPartitionScheme] AS PARTITION [NumericPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [NVarCharPartitionScheme] AS PARTITION [NVarCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS PARTITION [PARTITION_FUNCTION  유니코드스키마👻  ] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [PARTITION_SCHEME 😎$@ #123 🌍rder  ] AS PARTITION [PARTITION_FUNCTION 😎$@ #123 🌍rder  ] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [PARTITION_SCHEMEログインαιώνια] AS PARTITION [PARTITION_FUNCTIONログインαιώνια] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz] AS PARTITION [PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder] AS PARTITION [PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [SmallDateTimePartitionScheme] AS PARTITION [SmallDateTimePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [SmallIntPartitionScheme] AS PARTITION [SmallIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [SmallMoneyPartitionScheme] AS PARTITION [SmallMoneyPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [TinyIntPartitionScheme] AS PARTITION [TinyIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [UniqueIdentifierPartitionScheme] AS PARTITION [UniqueIdentifierPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [VarBinaryPartitionScheme] AS PARTITION [VarBinaryPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-CREATE PARTITION SCHEME [VarCharPartitionScheme] AS PARTITION [VarCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
-GO
-#Q#DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
+#Q#
+DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  " ON "PARTITION_TABLE 😎$@ #123 🌍rder  "
 
-#Q#DROP INDEX partition_vu_prepare_varbinary_index ON partition_vu_prepare_varbinary_table;
+#Q#
+SET QUOTED_IDENTIFIER OFF;
 
-#Q#DROP INDEX partition_vu_prepare_binary_index ON partition_vu_prepare_binary_table;
-
-#Q#DROP INDEX partition_vu_prepare_nchar_index ON partition_vu_prepare_nchar_table;
-
-#Q#DROP INDEX partition_vu_prepare_nvarchar_index ON partition_vu_prepare_nvarchar_table;
-
-#Q#DROP INDEX partition_vu_prepare_varchar_index ON partition_vu_prepare_varchar_table;
-
-#Q#DROP INDEX partition_vu_prepare_char_index ON partition_vu_prepare_char_table;
-
-#Q#DROP INDEX partition_vu_prepare_smalldatetime_index ON partition_vu_prepare_smalldatetime_table;
-
-#Q#DROP INDEX partition_vu_prepare_datetime2_index ON partition_vu_prepare_datetime2_table;
-
-#Q#DROP INDEX partition_vu_prepare_datetime_index ON partition_vu_prepare_datetime_table;
-
-#Q#DROP INDEX partition_vu_prepare_date_index ON partition_vu_prepare_date_table;
-
-#Q#DROP INDEX partition_vu_prepare_smallmoney_index ON partition_vu_prepare_smallmoney_table;
-
-#Q#DROP INDEX partition_vu_prepare_money_index ON partition_vu_prepare_money_table;
-
-#Q#DROP INDEX partition_vu_prepare_numeric_index ON partition_vu_prepare_numeric_table;
-
-#Q#DROP INDEX partition_vu_prepare_decimal_index ON partition_vu_prepare_decimal_table;
-
-#Q#DROP INDEX partition_vu_prepare_tinyint_index ON partition_vu_prepare_tinyint_table;
-
-#Q#DROP INDEX partition_vu_prepare_smallint_index ON partition_vu_prepare_smallint_table;
-
-#Q#DROP INDEX partition_vu_prepare_bigint_index ON partition_vu_prepare_bigint_table;
-
-#Q#DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
-
-#Q#DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
-
-#Q#SET QUOTED_IDENTIFIER ON;
-
-#Q#DROP INDEX "PARTITION_INDEX 😎$@ #123 🌍rder  " ON "PARTITION_TABLE 😎$@ #123 🌍rder  "
-
-#Q#SET QUOTED_IDENTIFIER OFF;
-
-#Q#DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+#Q#
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 
-#Q#DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+#Q#
+DROP INDEX PartitionIndexNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 ON PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
-#Q#DROP TABLE partition_vu_prepare_uniqueidentifier_table;
+#Q#--------------------------------------------------
+--- DROP Partitioned Table
+--------------------------------------------------
 
-#Q#DROP TABLE partition_vu_prepare_varbinary_table;
+DROP TABLE partition_vu_prepare_uniqueidentifier_table;
 
-#Q#DROP TABLE partition_vu_prepare_binary_table;
+#Q#
+DROP TABLE partition_vu_prepare_varbinary_table;
 
-#Q#DROP TABLE partition_vu_prepare_nchar_table;
+#Q#
+DROP TABLE partition_vu_prepare_binary_table;
 
-#Q#DROP TABLE partition_vu_prepare_nvarchar_table;
+#Q#
+DROP TABLE partition_vu_prepare_nchar_table;
 
-#Q#DROP TABLE partition_vu_prepare_varchar_table;
+#Q#
+DROP TABLE partition_vu_prepare_nvarchar_table;
 
-#Q#DROP TABLE partition_vu_prepare_char_table;
+#Q#
+DROP TABLE partition_vu_prepare_varchar_table;
 
-#Q#DROP TABLE partition_vu_prepare_smalldatetime_table;
+#Q#
+DROP TABLE partition_vu_prepare_char_table;
 
-#Q#DROP TABLE partition_vu_prepare_datetime2_table;
+#Q#
+DROP TABLE partition_vu_prepare_smalldatetime_table;
 
-#Q#DROP TABLE partition_vu_prepare_datetime_table;
+#Q#
+DROP TABLE partition_vu_prepare_datetime2_table;
 
-#Q#DROP TABLE partition_vu_prepare_date_table;
+#Q#
+DROP TABLE partition_vu_prepare_datetime_table;
 
-#Q#DROP TABLE partition_vu_prepare_smallmoney_table;
+#Q#
+DROP TABLE partition_vu_prepare_date_table;
 
-#Q#DROP TABLE partition_vu_prepare_money_table;
+#Q#
+DROP TABLE partition_vu_prepare_smallmoney_table;
 
-#Q#DROP TABLE partition_vu_prepare_numeric_table;
+#Q#
+DROP TABLE partition_vu_prepare_money_table;
 
-#Q#DROP TABLE partition_vu_prepare_decimal_table;
+#Q#
+DROP TABLE partition_vu_prepare_numeric_table;
 
-#Q#DROP TABLE partition_vu_prepare_tinyint_table;
+#Q#
+DROP TABLE partition_vu_prepare_decimal_table;
 
-#Q#DROP TABLE partition_vu_prepare_smallint_table;
+#Q#
+DROP TABLE partition_vu_prepare_tinyint_table;
 
-#Q#DROP TABLE partition_vu_prepare_bigint_table;
+#Q#
+DROP TABLE partition_vu_prepare_smallint_table;
 
-#Q#DROP TABLE partition_vu_prepare_int_table;
+#Q#
+DROP TABLE partition_vu_prepare_bigint_table;
 
-#Q#DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+#Q#
+DROP TABLE partition_vu_prepare_int_table;
 
-#Q#DROP TABLE [PARTITION_TABLE  유니코드스키마👻  ]
+#Q#
+DROP TABLE PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 
-#Q#SET QUOTED_IDENTIFIER ON;
+#Q#
 
-#Q#DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  "
+DROP TABLE [PARTITION_TABLE  유니코드스키마👻  ]
 
-#Q#SET QUOTED_IDENTIFIER OFF;
+#Q#
+SET QUOTED_IDENTIFIER ON;
 
-#Q#DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
+#Q#
+DROP TABLE "PARTITION_TABLE 😎$@ #123 🌍rder  "
 
-#Q#DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+#Q#
+SET QUOTED_IDENTIFIER OFF;
 
-#Q#DROP SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+#Q#
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqrstuvwxyz
 
-#Q#DROP PARTITION SCHEME IntPartitionScheme
+#Q#
+DROP TABLE PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz.PartitionTableNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
-#Q#DROP PARTITION SCHEME BigIntPartitionScheme
+#Q#
+DROP SCHEMA PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
 
-#Q#DROP PARTITION SCHEME SmallIntPartitionScheme
+#Q#--------------------------------------------------
+--- DROP Partition Scheme
+--------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
 
-#Q#DROP PARTITION SCHEME TinyIntPartitionScheme
+#Q#
+DROP PARTITION SCHEME BigIntPartitionScheme
 
-#Q#DROP PARTITION SCHEME DecimalPartitionScheme
+#Q#
+DROP PARTITION SCHEME SmallIntPartitionScheme
 
-#Q#DROP PARTITION SCHEME NumericPartitionScheme
+#Q#
+DROP PARTITION SCHEME TinyIntPartitionScheme
 
-#Q#DROP PARTITION SCHEME MoneyPartitionScheme
+#Q#
+DROP PARTITION SCHEME DecimalPartitionScheme
 
-#Q#DROP PARTITION SCHEME SmallMoneyPartitionScheme
+#Q#
+DROP PARTITION SCHEME NumericPartitionScheme
 
-#Q#DROP PARTITION SCHEME DatePartitionScheme
+#Q#
+DROP PARTITION SCHEME MoneyPartitionScheme
 
-#Q#DROP PARTITION SCHEME DateTimePartitionScheme
+#Q#
+DROP PARTITION SCHEME SmallMoneyPartitionScheme
 
-#Q#DROP PARTITION SCHEME DateTime2PartitionScheme
+#Q#
+DROP PARTITION SCHEME DatePartitionScheme
 
-#Q#DROP PARTITION SCHEME SmallDateTimePartitionScheme
+#Q#
+DROP PARTITION SCHEME DateTimePartitionScheme
 
-#Q#DROP PARTITION SCHEME CharPartitionScheme
+#Q#
+DROP PARTITION SCHEME DateTime2PartitionScheme
 
-#Q#DROP PARTITION SCHEME VarCharPartitionScheme
+#Q#
+DROP PARTITION SCHEME SmallDateTimePartitionScheme
 
-#Q#DROP PARTITION SCHEME NVarCharPartitionScheme
+#Q#
+DROP PARTITION SCHEME CharPartitionScheme
 
-#Q#DROP PARTITION SCHEME NCharPartitionScheme
+#Q#
+DROP PARTITION SCHEME VarCharPartitionScheme
 
-#Q#DROP PARTITION SCHEME BinaryPartitionScheme
+#Q#
+DROP PARTITION SCHEME NVarCharPartitionScheme
 
-#Q#DROP PARTITION SCHEME VarBinaryPartitionScheme
+#Q#
+DROP PARTITION SCHEME NCharPartitionScheme
 
-#Q#DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
+#Q#
+DROP PARTITION SCHEME BinaryPartitionScheme
 
-#Q#DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+#Q#
+DROP PARTITION SCHEME VarBinaryPartitionScheme
 
-#Q#DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
+#Q#
+DROP PARTITION SCHEME UniqueIdentifierPartitionScheme
 
-#Q#DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ]
+#Q#
+DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 
-#Q#SET QUOTED_IDENTIFIER ON;
+#Q#
+DROP PARTITION SCHEME PARTITION_SCHEMEログインαιώνια
 
-#Q#DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  "
+#Q#
+DROP PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ]
 
-#Q#SET QUOTED_IDENTIFIER OFF;
+#Q#
+SET QUOTED_IDENTIFIER ON;
 
-#Q#DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+#Q#
+DROP PARTITION SCHEME "PARTITION_SCHEME 😎$@ #123 🌍rder  "
 
-#Q#DROP PARTITION FUNCTION IntPartitionFunction
+#Q#
+SET QUOTED_IDENTIFIER OFF;
 
-#Q#DROP PARTITION FUNCTION BigIntPartitionFunction
+#Q#
+DROP PARTITION SCHEME PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
-#Q#DROP PARTITION FUNCTION SmallIntPartitionFunction
+#Q#
+-------------------------------------------
+--- DROP Partition Function
+-------------------------------------------
+DROP PARTITION FUNCTION IntPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION TinyIntPartitionFunction
+#Q#
+DROP PARTITION FUNCTION BigIntPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION DecimalPartitionFunction
+#Q#
+DROP PARTITION FUNCTION SmallIntPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION NumericPartitionFunction
+#Q#
+DROP PARTITION FUNCTION TinyIntPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION MoneyPartitionFunction
+#Q#
+DROP PARTITION FUNCTION DecimalPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION SmallMoneyPartitionFunction
+#Q#
+DROP PARTITION FUNCTION NumericPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION DatePartitionFunction
+#Q#
+DROP PARTITION FUNCTION MoneyPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION DateTimePartitionFunction
+#Q#
+DROP PARTITION FUNCTION SmallMoneyPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION DateTime2PartitionFunction
+#Q#
+DROP PARTITION FUNCTION DatePartitionFunction 
 
-#Q#DROP PARTITION FUNCTION SmallDateTimePartitionFunction
+#Q#
+DROP PARTITION FUNCTION DateTimePartitionFunction 
 
-#Q#DROP PARTITION FUNCTION CharPartitionFunction
+#Q#
+DROP PARTITION FUNCTION DateTime2PartitionFunction 
 
-#Q#DROP PARTITION FUNCTION VarCharPartitionFunction
+#Q#
+DROP PARTITION FUNCTION SmallDateTimePartitionFunction 
 
-#Q#DROP PARTITION FUNCTION NVarCharPartitionFunction
+#Q#
+DROP PARTITION FUNCTION CharPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION NCharPartitionFunction
+#Q#
+DROP PARTITION FUNCTION VarCharPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION BinaryPartitionFunction
+#Q#
+DROP PARTITION FUNCTION NVarCharPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION VarBinaryPartitionFunction
+#Q#
+DROP PARTITION FUNCTION NCharPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction
+#Q#
+DROP PARTITION FUNCTION BinaryPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
+#Q#
+DROP PARTITION FUNCTION VarBinaryPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput
+#Q#
+DROP PARTITION FUNCTION UniqueIdentifierPartitionFunction 
 
-#Q#DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
+#Q#
+DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz
 
-#Q#DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ]
+#Q#
+DROP PARTITION FUNCTION PartitionFunctionHavingDifferentCollationInput
 
-#Q#DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
+#Q#
+DROP PARTITION FUNCTION PARTITION_FUNCTIONログインαιώνια
 
-#Q#SET QUOTED_IDENTIFIER ON;
+#Q#
+DROP PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ]
 
-#Q#DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
+#Q#
+DROP PARTITION FUNCTION PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder
 
-#Q#SET QUOTED_IDENTIFIER OFF;
+#Q#
+SET QUOTED_IDENTIFIER ON;
+
+#Q#
+DROP PARTITION FUNCTION "PARTITION_FUNCTION 😎$@ #123 🌍rder  "
+
+#Q#
+SET QUOTED_IDENTIFIER OFF;
 
