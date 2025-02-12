@@ -1,41 +1,45 @@
-DROP TABLE IF EXISTS TestGeospatialMethods_YourTable1Temp;
+USE TestGeospatialMethods_DB 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_YourTable3Temp;
+DROP TABLE TestGeospatialMethods_YourTable1Temp 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_YourTable2Temp;
+DROP TABLE TestGeospatialMethods_YourTable3Temp 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_TableATemp;
+USE MASTER 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_TableBTemp;
+DROP TABLE TestGeospatialMethods_YourTable2Temp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_ValFromGeomTemp;
+DROP TABLE TestGeospatialMethods_TableATemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_TextFromGeogTemp;
+DROP TABLE TestGeospatialMethods_TableBTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_point_intersect1Temp;
+DROP VIEW TestGeospatialMethods_ValFromGeomTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_disjointTemp;
+DROP VIEW TestGeospatialMethods_TextFromGeogTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_point_intersectTemp;
+DROP VIEW TestGeospatialMethods_point_intersect1Temp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_point_disjointTemp;
+DROP VIEW TestGeospatialMethods_disjointTemp 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_YourTableTemp;
+DROP VIEW TestGeospatialMethods_point_intersectTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_valid_ValFromGeomTemp;
+DROP VIEW TestGeospatialMethods_point_disjointTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_valid_TextFromGeogTemp;
+DROP TABLE TestGeospatialMethods_YourTableTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_closed_ValFromGeomTemp;
+DROP VIEW TestGeospatialMethods_valid_ValFromGeomTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_closed_TextFromGeogTemp;
+DROP VIEW TestGeospatialMethods_valid_TextFromGeogTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_empty_ValFromGeomTemp;
+DROP VIEW TestGeospatialMethods_closed_ValFromGeomTemp 
 
-DROP VIEW IF EXISTS TestGeospatialMethods_empty_TextFromGeomTemp;
+DROP VIEW TestGeospatialMethods_closed_TextFromGeogTemp 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_SPATIALPOINTGEOM_dttemp;
+DROP VIEW TestGeospatialMethods_empty_ValFromGeomTemp 
 
-DROP TABLE IF EXISTS TestGeospatialMethods_SPATIALPOINTGEOG_dttemp;
+DROP VIEW TestGeospatialMethods_empty_TextFromGeomTemp 
 
-DROP DATABASE TestGeospatialMethods_DB;
+DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp 
+
+DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
+
+DROP DATABASE TestGeospatialMethods_DB 

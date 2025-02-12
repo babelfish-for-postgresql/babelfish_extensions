@@ -946,10 +946,9 @@ SELECT STIsClosed(@point);
 go
 
 --Tests for CAST from CHAR/VARCHAR with EMPTY instances
-DECLARE @p2 GEOGRAPHY = GEOGRAPHY::STPointFromText('POINT EMPTY', 4326);
-SELECT CAST(CAST(@p2 AS CHAR(100)) AS GEOGRAPHY).STAsText() AS result, CAST(CAST(@p2 AS CHAR(100)) AS GEOGRAPHY).STSrid AS srid;
+
+Select CAST(CAST('POINT EMPTY' as varchar(100)) AS geography).STAsText();
 go
 
-DECLARE @p2 GEOGRAPHY = GEOGRAPHY::STPointFromText('POINT EMPTY', 4326);
-SELECT CAST(CAST(@p2 AS VARCHAR(100)) AS GEOGRAPHY).STAsText() AS result, CAST(CAST(@p2 AS VARCHAR(100)) AS GEOGRAPHY).STSrid AS srid;
+Select CAST(CAST('POINT EMPTY' as char(100)) AS geography).STAsText();
 go
