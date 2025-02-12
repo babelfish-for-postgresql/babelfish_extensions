@@ -471,7 +471,7 @@ namespace BabelfishDotnetFramework
                 return new  ProcessStartInfo
                 {
                     FileName = @"powershell.exe",
-                    Arguments = $"-c \"diff -u -w (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
+                    Arguments = $"-c \"diff -u -a (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
                     UseShellExecute = false,
                     CreateNoWindow = false,
                     RedirectStandardError = true
@@ -479,7 +479,7 @@ namespace BabelfishDotnetFramework
             return new  ProcessStartInfo
             {
                 FileName = @"bash",
-                Arguments = $"-c \"diff -u -w {output} {expectedOutput} > {diffFile}\"",
+                Arguments = $"-c \"diff -u -a {output} {expectedOutput} > {diffFile}\"",
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 RedirectStandardError = true
