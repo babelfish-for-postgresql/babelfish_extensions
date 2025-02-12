@@ -11,7 +11,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 
@@ -23,8 +23,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 
@@ -34,7 +34,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 drop index guest.t1_drop_index.ix1
@@ -87,8 +87,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 
@@ -98,7 +98,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 drop index t1_drop_index.ix1
@@ -117,8 +117,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 execute('drop index guest.t1_drop_index.ix1')
@@ -127,7 +127,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 execute('drop index guest.t1_drop_index.ix1')
@@ -165,7 +165,7 @@ execute p1_drop_index
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 execute p1_drop_index
@@ -178,7 +178,7 @@ execute p1_drop_index 1
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 
@@ -220,8 +220,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-tempdb#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-tempdb#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+tempdb#!#t1_drop_index#!#dbo#!#ix1
+tempdb#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 drop index guest.t1_drop_index.ix1
@@ -230,7 +230,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-tempdb#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+tempdb#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 use master
@@ -239,8 +239,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 drop index dbo.t1_drop_index.ix1
@@ -249,7 +249,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 use tempdb
@@ -258,7 +258,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-tempdb#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+tempdb#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 use master
@@ -277,7 +277,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-tempdb#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+tempdb#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 
@@ -314,7 +314,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 
@@ -326,8 +326,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 
@@ -337,7 +337,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 drop index ix1 on guest.t1_drop_index
@@ -390,8 +390,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 
@@ -401,7 +401,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 drop index ix1 on t1_drop_index
@@ -420,8 +420,8 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
-master#!#t1_drop_index#!#guest#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
+master#!#t1_drop_index#!#guest#!#ix1
 ~~END~~
 
 execute('drop index ix1 on guest.t1_drop_index')
@@ -430,7 +430,7 @@ select db_name(), object_name(id), object_schema_name(id), name from sysindexes 
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 execute('drop index ix1 on guest.t1_drop_index')
@@ -468,7 +468,7 @@ execute p2_drop_index
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 execute p2_drop_index
@@ -481,7 +481,7 @@ execute p2_drop_index 1
 go
 ~~START~~
 nvarchar#!#varchar#!#varchar#!#varchar
-master#!#t1_drop_index#!#dbo#!#ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019
+master#!#t1_drop_index#!#dbo#!#ix1
 ~~END~~
 
 

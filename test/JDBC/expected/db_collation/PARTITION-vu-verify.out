@@ -854,51 +854,111 @@ int
 ~~END~~
 
 
+sp_rename 'dbo.partition_vu_prepare_normal_table.partition_vu_prepare_normal_index', 'partition_vu_prepare_normal_index_new', 'INDEX';
+GO
+
+sp_rename 'dbo.partition_vu_prepare_int_table.partition_vu_prepare_int_index', 'partition_vu_prepare_int_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_bigint_table.partition_vu_prepare_bigint_index', 'partition_vu_prepare_bigint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallint_table.partition_vu_prepare_smallint_index', 'partition_vu_prepare_smallint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_tinyint_table.partition_vu_prepare_tinyint_index', 'partition_vu_prepare_tinyint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_decimal_table.partition_vu_prepare_decimal_index', 'partition_vu_prepare_decimal_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_numeric_table.partition_vu_prepare_numeric_index', 'partition_vu_prepare_numeric_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_money_table.partition_vu_prepare_money_index', 'partition_vu_prepare_money_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallmoney_table.partition_vu_prepare_smallmoney_index', 'partition_vu_prepare_smallmoney_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_date_table.partition_vu_prepare_date_index', 'partition_vu_prepare_date_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime_table.partition_vu_prepare_datetime_index', 'partition_vu_prepare_datetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime2_table.partition_vu_prepare_datetime2_index', 'partition_vu_prepare_datetime2_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smalldatetime_table.partition_vu_prepare_smalldatetime_index', 'partition_vu_prepare_smalldatetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_char_table.partition_vu_prepare_char_index', 'partition_vu_prepare_char_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varchar_table.partition_vu_prepare_varchar_index', 'partition_vu_prepare_varchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nvarchar_table.partition_vu_prepare_nvarchar_index', 'partition_vu_prepare_nvarchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nchar_table.partition_vu_prepare_nchar_index', 'partition_vu_prepare_nchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_binary_table.partition_vu_prepare_binary_index', 'partition_vu_prepare_binary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varbinary_table.partition_vu_prepare_varbinary_index', 'partition_vu_prepare_varbinary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_uniqueidentifier_table.partition_vu_prepare_uniqueidentifier_index', 'partition_vu_prepare_uniqueidentifier_index_new', 'INDEX';
+GO
+
 SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar
 partition_vu_prepare_bigint_table#!#<NULL>#!#BigIntPartitionScheme
-partition_vu_prepare_bigint_table#!#partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#BigIntPartitionScheme
+partition_vu_prepare_bigint_table#!#partition_vu_prepare_bigint_index_new#!#BigIntPartitionScheme
 partition_vu_prepare_binary_table#!#<NULL>#!#BinaryPartitionScheme
-partition_vu_prepare_binary_table#!#partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#BinaryPartitionScheme
+partition_vu_prepare_binary_table#!#partition_vu_prepare_binary_index_new#!#BinaryPartitionScheme
 partition_vu_prepare_char_table#!#<NULL>#!#CharPartitionScheme
-partition_vu_prepare_char_table#!#partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#CharPartitionScheme
+partition_vu_prepare_char_table#!#partition_vu_prepare_char_index_new#!#CharPartitionScheme
 partition_vu_prepare_date_table#!#<NULL>#!#DatePartitionScheme
-partition_vu_prepare_date_table#!#partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#DatePartitionScheme
+partition_vu_prepare_date_table#!#partition_vu_prepare_date_index_new#!#DatePartitionScheme
 partition_vu_prepare_datetime_table#!#<NULL>#!#DateTimePartitionScheme
-partition_vu_prepare_datetime_table#!#partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#DateTimePartitionScheme
+partition_vu_prepare_datetime_table#!#partition_vu_prepare_datetime_index_new#!#DateTimePartitionScheme
 partition_vu_prepare_datetime2_table#!#<NULL>#!#DateTime2PartitionScheme
-partition_vu_prepare_datetime2_table#!#partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#DateTime2PartitionScheme
+partition_vu_prepare_datetime2_table#!#partition_vu_prepare_datetime2_index_new#!#DateTime2PartitionScheme
 partition_vu_prepare_decimal_table#!#<NULL>#!#DecimalPartitionScheme
-partition_vu_prepare_decimal_table#!#partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#DecimalPartitionScheme
+partition_vu_prepare_decimal_table#!#partition_vu_prepare_decimal_index_new#!#DecimalPartitionScheme
 partition_vu_prepare_int_table#!#<NULL>#!#IntPartitionScheme
-partition_vu_prepare_int_table#!#partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#IntPartitionScheme
+partition_vu_prepare_int_table#!#partition_vu_prepare_int_index_new#!#IntPartitionScheme
 partition_vu_prepare_int_table#!#partition_vu_prepare_int_table_id_key#!#IntPartitionScheme
 partition_vu_prepare_money_table#!#<NULL>#!#MoneyPartitionScheme
-partition_vu_prepare_money_table#!#partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#MoneyPartitionScheme
+partition_vu_prepare_money_table#!#partition_vu_prepare_money_index_new#!#MoneyPartitionScheme
 partition_vu_prepare_nchar_table#!#<NULL>#!#NCharPartitionScheme
-partition_vu_prepare_nchar_table#!#partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#NCharPartitionScheme
+partition_vu_prepare_nchar_table#!#partition_vu_prepare_nchar_index_new#!#NCharPartitionScheme
 partition_vu_prepare_normal_table#!#<NULL>#!#PRIMARY
-partition_vu_prepare_normal_table#!#partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f#!#PRIMARY
+partition_vu_prepare_normal_table#!#partition_vu_prepare_normal_index_new#!#PRIMARY
 partition_vu_prepare_numeric_table#!#<NULL>#!#NumericPartitionScheme
-partition_vu_prepare_numeric_table#!#partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#NumericPartitionScheme
+partition_vu_prepare_numeric_table#!#partition_vu_prepare_numeric_index_new#!#NumericPartitionScheme
 partition_vu_prepare_nvarchar_table#!#<NULL>#!#NVarCharPartitionScheme
-partition_vu_prepare_nvarchar_table#!#partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#NVarCharPartitionScheme
+partition_vu_prepare_nvarchar_table#!#partition_vu_prepare_nvarchar_index_new#!#NVarCharPartitionScheme
 partition_vu_prepare_smalldatetime_table#!#<NULL>#!#SmallDateTimePartitionScheme
-partition_vu_prepare_smalldatetime_table#!#partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#SmallDateTimePartitionScheme
+partition_vu_prepare_smalldatetime_table#!#partition_vu_prepare_smalldatetime_index_new#!#SmallDateTimePartitionScheme
 partition_vu_prepare_smallint_table#!#<NULL>#!#SmallIntPartitionScheme
-partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#SmallIntPartitionScheme
+partition_vu_prepare_smallint_table#!#partition_vu_prepare_smallint_index_new#!#SmallIntPartitionScheme
 partition_vu_prepare_smallmoney_table#!#<NULL>#!#SmallMoneyPartitionScheme
-partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#SmallMoneyPartitionScheme
+partition_vu_prepare_smallmoney_table#!#partition_vu_prepare_smallmoney_index_new#!#SmallMoneyPartitionScheme
 partition_vu_prepare_tinyint_table#!#<NULL>#!#TinyIntPartitionScheme
-partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#TinyIntPartitionScheme
+partition_vu_prepare_tinyint_table#!#partition_vu_prepare_tinyint_index_new#!#TinyIntPartitionScheme
 partition_vu_prepare_uniqueidentifier_table#!#<NULL>#!#UniqueIdentifierPartitionScheme
-partition_vu_prepare_uniqueidentifier_table#!#partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#UniqueIdentifierPartitionScheme
+partition_vu_prepare_uniqueidentifier_table#!#partition_vu_prepare_uniqueidentifier_index_new#!#UniqueIdentifierPartitionScheme
 partition_vu_prepare_varbinary_table#!#<NULL>#!#VarBinaryPartitionScheme
-partition_vu_prepare_varbinary_table#!#partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#VarBinaryPartitionScheme
+partition_vu_prepare_varbinary_table#!#partition_vu_prepare_varbinary_index_new#!#VarBinaryPartitionScheme
 partition_vu_prepare_varchar_table#!#<NULL>#!#VarCharPartitionScheme
-partition_vu_prepare_varchar_table#!#partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#VarCharPartitionScheme
+partition_vu_prepare_varchar_table#!#partition_vu_prepare_varchar_index_new#!#VarCharPartitionScheme
 ~~END~~
 
 
@@ -948,48 +1008,48 @@ SELECT * FROM GetPartitionedIndexPartitioningColumn
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint
-partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#partition_vu_prepare_bigint_table#!#id#!#1
-partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63#!#partition_vu_prepare_bigint_table#!#id#!#1
-partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#partition_vu_prepare_binary_table#!#id#!#1
-partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503#!#partition_vu_prepare_binary_table#!#id#!#1
-partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#partition_vu_prepare_char_table#!#id#!#1
-partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f#!#partition_vu_prepare_char_table#!#id#!#1
-partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#partition_vu_prepare_date_table#!#id#!#1
-partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844#!#partition_vu_prepare_date_table#!#id#!#1
-partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#partition_vu_prepare_datetime_table#!#id#!#1
-partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e#!#partition_vu_prepare_datetime_table#!#id#!#1
-partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#partition_vu_prepare_datetime2_table#!#id#!#1
-partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6#!#partition_vu_prepare_datetime2_table#!#id#!#1
-partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#partition_vu_prepare_decimal_table#!#id#!#1
-partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9#!#partition_vu_prepare_decimal_table#!#id#!#1
-partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
-partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
-partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_bigint_index_new#!#partition_vu_prepare_bigint_table#!#id#!#1
+partition_vu_prepare_bigint_index_new#!#partition_vu_prepare_bigint_table#!#id#!#1
+partition_vu_prepare_binary_index_new#!#partition_vu_prepare_binary_table#!#id#!#1
+partition_vu_prepare_binary_index_new#!#partition_vu_prepare_binary_table#!#id#!#1
+partition_vu_prepare_char_index_new#!#partition_vu_prepare_char_table#!#id#!#1
+partition_vu_prepare_char_index_new#!#partition_vu_prepare_char_table#!#id#!#1
+partition_vu_prepare_date_index_new#!#partition_vu_prepare_date_table#!#id#!#1
+partition_vu_prepare_date_index_new#!#partition_vu_prepare_date_table#!#id#!#1
+partition_vu_prepare_datetime_index_new#!#partition_vu_prepare_datetime_table#!#id#!#1
+partition_vu_prepare_datetime_index_new#!#partition_vu_prepare_datetime_table#!#id#!#1
+partition_vu_prepare_datetime2_index_new#!#partition_vu_prepare_datetime2_table#!#id#!#1
+partition_vu_prepare_datetime2_index_new#!#partition_vu_prepare_datetime2_table#!#id#!#1
+partition_vu_prepare_decimal_index_new#!#partition_vu_prepare_decimal_table#!#id#!#1
+partition_vu_prepare_decimal_index_new#!#partition_vu_prepare_decimal_table#!#id#!#1
+partition_vu_prepare_int_index_new#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_index_new#!#partition_vu_prepare_int_table#!#id#!#1
+partition_vu_prepare_int_index_new#!#partition_vu_prepare_int_table#!#id#!#1
 partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
 partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
 partition_vu_prepare_int_table_id_key#!#partition_vu_prepare_int_table#!#id#!#1
-partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#partition_vu_prepare_money_table#!#id#!#1
-partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee#!#partition_vu_prepare_money_table#!#id#!#1
-partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#partition_vu_prepare_nchar_table#!#id#!#1
-partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1#!#partition_vu_prepare_nchar_table#!#id#!#1
-partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#partition_vu_prepare_numeric_table#!#id#!#1
-partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963#!#partition_vu_prepare_numeric_table#!#id#!#1
-partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#partition_vu_prepare_nvarchar_table#!#id#!#1
-partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec#!#partition_vu_prepare_nvarchar_table#!#id#!#1
-partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
-partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
-partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
-partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579#!#partition_vu_prepare_smallint_table#!#id#!#1
-partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8#!#partition_vu_prepare_smallmoney_table#!#id#!#1
-partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
-partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb#!#partition_vu_prepare_tinyint_table#!#id#!#1
-partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
-partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
-partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#partition_vu_prepare_varbinary_table#!#id#!#1
-partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386#!#partition_vu_prepare_varbinary_table#!#id#!#1
-partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#partition_vu_prepare_varchar_table#!#id#!#1
-partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08#!#partition_vu_prepare_varchar_table#!#id#!#1
+partition_vu_prepare_money_index_new#!#partition_vu_prepare_money_table#!#id#!#1
+partition_vu_prepare_money_index_new#!#partition_vu_prepare_money_table#!#id#!#1
+partition_vu_prepare_nchar_index_new#!#partition_vu_prepare_nchar_table#!#id#!#1
+partition_vu_prepare_nchar_index_new#!#partition_vu_prepare_nchar_table#!#id#!#1
+partition_vu_prepare_numeric_index_new#!#partition_vu_prepare_numeric_table#!#id#!#1
+partition_vu_prepare_numeric_index_new#!#partition_vu_prepare_numeric_table#!#id#!#1
+partition_vu_prepare_nvarchar_index_new#!#partition_vu_prepare_nvarchar_table#!#id#!#1
+partition_vu_prepare_nvarchar_index_new#!#partition_vu_prepare_nvarchar_table#!#id#!#1
+partition_vu_prepare_smalldatetime_index_new#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
+partition_vu_prepare_smalldatetime_index_new#!#partition_vu_prepare_smalldatetime_table#!#id#!#1
+partition_vu_prepare_smallint_index_new#!#partition_vu_prepare_smallint_table#!#id#!#1
+partition_vu_prepare_smallint_index_new#!#partition_vu_prepare_smallint_table#!#id#!#1
+partition_vu_prepare_smallmoney_index_new#!#partition_vu_prepare_smallmoney_table#!#id#!#1
+partition_vu_prepare_smallmoney_index_new#!#partition_vu_prepare_smallmoney_table#!#id#!#1
+partition_vu_prepare_tinyint_index_new#!#partition_vu_prepare_tinyint_table#!#id#!#1
+partition_vu_prepare_tinyint_index_new#!#partition_vu_prepare_tinyint_table#!#id#!#1
+partition_vu_prepare_uniqueidentifier_index_new#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
+partition_vu_prepare_uniqueidentifier_index_new#!#partition_vu_prepare_uniqueidentifier_table#!#id#!#1
+partition_vu_prepare_varbinary_index_new#!#partition_vu_prepare_varbinary_table#!#id#!#1
+partition_vu_prepare_varbinary_index_new#!#partition_vu_prepare_varbinary_table#!#id#!#1
+partition_vu_prepare_varchar_index_new#!#partition_vu_prepare_varchar_table#!#id#!#1
+partition_vu_prepare_varchar_index_new#!#partition_vu_prepare_varchar_table#!#id#!#1
 ~~END~~
 
 
@@ -1009,7 +1069,7 @@ varchar#!#int#!#int
 363863941f079adaa9aa733200e57c9f_partition_3_value_idx#!#4#!#3
 363863941f079adaa9aa733200e57c9f_partition_3#!#4#!#0
 363863941f079adaa9aa733200e57c9f_partition_3_id_key#!#4#!#2
-partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f#!#1#!#2
+partition_vu_prepare_normal_ind5f5fcd81a18b69e8a21aef69ce61f7b6#!#1#!#2
 partition_vu_prepare_normal_table#!#1#!#0
 ~~END~~
 
@@ -1462,27 +1522,27 @@ SELECT * FROM GetPartitionedIndexListFromSysIndexesView
 GO
 ~~START~~
 varchar
-partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63
-partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503
-partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f
-partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844
-partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e
-partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6
-partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9
-partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046
+partition_vu_prepare_bigint_index_new
+partition_vu_prepare_binary_index_new
+partition_vu_prepare_char_index_new
+partition_vu_prepare_date_index_new
+partition_vu_prepare_datetime_index_new
+partition_vu_prepare_datetime2_index_new
+partition_vu_prepare_decimal_index_new
+partition_vu_prepare_int_index_new
 partition_vu_prepare_int_table_id_key
-partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee
-partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1
-partition_vu_prepare_normal_inded6315af14d88f45711ba24e46851b8f
-partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963
-partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec
-partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8
-partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579
-partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8
-partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb
-partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf
-partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386
-partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08
+partition_vu_prepare_money_index_new
+partition_vu_prepare_nchar_index_new
+partition_vu_prepare_normal_index_new
+partition_vu_prepare_numeric_index_new
+partition_vu_prepare_nvarchar_index_new
+partition_vu_prepare_smalldatetime_index_new
+partition_vu_prepare_smallint_index_new
+partition_vu_prepare_smallmoney_index_new
+partition_vu_prepare_tinyint_index_new
+partition_vu_prepare_uniqueidentifier_index_new
+partition_vu_prepare_varbinary_index_new
+partition_vu_prepare_varchar_index_new
 ~~END~~
 
 

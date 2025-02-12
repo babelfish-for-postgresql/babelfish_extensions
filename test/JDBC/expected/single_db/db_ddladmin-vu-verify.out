@@ -1006,14 +1006,11 @@ GO
 sp_rename 'babel_5116_tabletype1', 'babel_5116_tabletype1_new_name', 'OBJECT'
 GO
 
-/********** UNSUPPORTED RENAMING IN BABELFISH **********/
-/********** SHOULD BE ALLOWED WHENEVER SUPPORTED **********/
-sp_rename 'babel_5116_t1.babel_5116_idx1', 'babel_5116_idx1_new_name', 'INDEX'
+sp_rename 'babel_5116_t2_new_name', 'babel_5116_t2', 'OBJECT'
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Feature not supported: renaming object type Index)~~
-
+sp_rename 'babel_5116_t2.babel_5116_idx1', 'babel_5116_idx1_new_name', 'INDEX'
+GO
 
 /********** NOT ALLOWED RENAMING TO DB_DDLADMIN **********/
 sp_rename 'babel_5116_db', 'babel_5116_db_new_name', 'DATABASE'
@@ -1050,11 +1047,11 @@ DROP SEQUENCE babel_5116_s1_new_name
 GO
 DROP SEQUENCE babel_5116_s2_new_name
 GO
-DROP INDEX babel_5116_idx1 ON babel_5116_t1
+DROP INDEX babel_5116_idx1_new_name ON babel_5116_t2
 GO
 DROP TABLE babel_5116_t3
 GO
-DROP TABLE babel_5116_t2_new_name
+DROP TABLE babel_5116_t2
 GO
 DROP TABLE babel_5116_t1_new_name
 GO

@@ -1382,13 +1382,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 					}
 				}
 				break;
-			case T_IndexStmt:
-				{
-					IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-				}
-				break;
 			case T_CreateTableAsStmt:
 				{
 					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
@@ -4397,30 +4390,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_IndexStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL)
-				{
-					IndexStmt *stmt = (IndexStmt *) parsetree;
+				IndexStmt	*stmt = (IndexStmt *) parsetree;
 
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
+				{
+					char    	*original_name = stmt->idxname != NULL ? pstrdup(stmt->idxname) : NULL;
+					List    	*partition_schemes = stmt->excludeOpNames;
+
+					stmt->excludeOpNames = NIL;
+					if (stmt->idxname && !stmt->isconstraint)
+						stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
+					/*
+					 * Create the index first so that columns and table name
+					 * checks get done before index alignment check.
+					 */
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					/*
 					 * Create partitioned index if partition scheme is specified.
 					 * Allow only aligned-index.
 					 */
-					if (stmt->excludeOpNames != NIL)
-					{
-						List *partition_schemes = stmt->excludeOpNames;
-						stmt->excludeOpNames = NIL;
-
-						/*
-						 * Create the index first so that columns and table name
-						 * checks get done before index alignment check.
-						 */
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-											queryEnv, dest, qc);
-						
+					if (partition_schemes != NIL)
+					{	
 						stmt->excludeOpNames = partition_schemes;
 
 						/* Validate that index is aligned-index. */
@@ -4430,8 +4421,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
-						return;
 					}
+					if (original_name && !stmt->isconstraint)
+						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+					return;
 				}
 				break;
 			}

@@ -29,8 +29,6 @@ go
 alter table table_4 drop constraint uniq_table_4;
 go
 
--- Test that `sp_rename` is NOT available. If it is available, we need more tests with index/constraints renames
--- We expect this test to break when `sp_rename` will be implemented
 go
 exec sp_rename N'table_4.uniq_table_4', N'uniq_table_4_a', N'INDEX';
 go

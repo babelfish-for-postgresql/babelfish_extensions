@@ -353,49 +353,49 @@ CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefgh
 
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_bigint_ind877afb285426cec9d46b047e3cf96f63] ON [dbo].[partition_vu_prepare_bigint_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_bigint_index] ON [dbo].[partition_vu_prepare_bigint_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BigIntPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_binary_ind48a88b3c8178211af1ed1dcf4cfbe503] ON [dbo].[partition_vu_prepare_binary_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_binary_index] ON [dbo].[partition_vu_prepare_binary_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BinaryPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_char_index32fed8129381de1b5745e90cd811516f] ON [dbo].[partition_vu_prepare_char_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_char_index] ON [dbo].[partition_vu_prepare_char_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [CharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_date_indexf571a291edad587ba646fc34c4566844] ON [dbo].[partition_vu_prepare_date_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_date_index] ON [dbo].[partition_vu_prepare_date_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DatePartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime_i364577d0a406eee6e806be980ac15d2e] ON [dbo].[partition_vu_prepare_datetime_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime_index] ON [dbo].[partition_vu_prepare_datetime_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTimePartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime2_4cad7647322c234b34b97cddb3cd1ad6] ON [dbo].[partition_vu_prepare_datetime2_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime2_index] ON [dbo].[partition_vu_prepare_datetime2_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTime2PartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_decimal_infc7570aeccbb040dde39974c476a7ec9] ON [dbo].[partition_vu_prepare_decimal_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_decimal_index] ON [dbo].[partition_vu_prepare_decimal_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DecimalPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_int_indexpbbe9a6f0ef5edf6e63fa853dac4ed046] ON [dbo].[partition_vu_prepare_int_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_int_index] ON [dbo].[partition_vu_prepare_int_table]
 (
 	[value] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
@@ -407,79 +407,79 @@ ALTER TABLE [dbo].[partition_vu_prepare_int_table] ADD  CONSTRAINT [partition_vu
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_money_inde9b6a61ad06c0883c6d0f95b2fec9eeee] ON [dbo].[partition_vu_prepare_money_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_money_index] ON [dbo].[partition_vu_prepare_money_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [MoneyPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_nchar_indecdc4872501ea902494c8f710f4e9dbb1] ON [dbo].[partition_vu_prepare_nchar_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_nchar_index] ON [dbo].[partition_vu_prepare_nchar_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NCharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_numeric_inf04f315c86929345e23bee80713cf963] ON [dbo].[partition_vu_prepare_numeric_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_numeric_index] ON [dbo].[partition_vu_prepare_numeric_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NumericPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_nvarchar_if89fa8cc46282fa6dc23e9f5b834f3ec] ON [dbo].[partition_vu_prepare_nvarchar_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_nvarchar_index] ON [dbo].[partition_vu_prepare_nvarchar_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NVarCharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smalldatetfe8f8bfb8c766f9a1bcd804238ff35d8] ON [dbo].[partition_vu_prepare_smalldatetime_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smalldatetime_index] ON [dbo].[partition_vu_prepare_smalldatetime_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallDateTimePartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallint_i3eae48e3a131ed23416aa2891b58d579] ON [dbo].[partition_vu_prepare_smallint_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallint_index] ON [dbo].[partition_vu_prepare_smallint_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallIntPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallmoney68389bf5dc5c581b33c4dbb8a3dc1dc8] ON [dbo].[partition_vu_prepare_smallmoney_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallmoney_index] ON [dbo].[partition_vu_prepare_smallmoney_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallMoneyPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_tinyint_in02b271c73e639954190c6a45bd5dd1bb] ON [dbo].[partition_vu_prepare_tinyint_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_tinyint_index] ON [dbo].[partition_vu_prepare_tinyint_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [TinyIntPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_uniqueidend39220cd3f46c5b2cea8c338a387aedf] ON [dbo].[partition_vu_prepare_uniqueidentifier_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_uniqueidentifier_index] ON [dbo].[partition_vu_prepare_uniqueidentifier_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [UniqueIdentifierPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_varbinary_26e1223f68c4186a96126a57446ac386] ON [dbo].[partition_vu_prepare_varbinary_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_varbinary_index] ON [dbo].[partition_vu_prepare_varbinary_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarBinaryPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_inc528f397ba573964de161e03035b8f08] ON [dbo].[partition_vu_prepare_varchar_table]
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_index] ON [dbo].[partition_vu_prepare_varchar_table]
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarCharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12281d566faf52196dfe6d853f777a92e5] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a]
+CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12d923846bd8a05b68f3b8643b0449516c] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a]
 (
 	[value] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
 GO
 
-CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12b72a1deb0a1d64b3cc262360a8eb4a59] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
+CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12d923846bd8a05b68f3b8643b0449516c] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
 (
 	[value] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
