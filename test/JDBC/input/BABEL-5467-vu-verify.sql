@@ -146,17 +146,105 @@ select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
 from babel_5467_avgdata_udt_2
 go
 
+select avg(convert(DECIMALUDT, CountData)) as count_avg
+ ,avg(cast(18 as DECIMALUDT)) as count_val 
+into babel_5467_avgdata_udt_3 
+from babel_5467_avgdata_3_setup
+go
+
+select cast(count_avg as DECIMALUDT), cast(count_val as DECIMALUDT)
+ ,PercentSpike = ((count_val-count_avg)/count_avg)*100
+from babel_5467_avgdata_udt_3
+go
+
+select cast(count_avg as DECIMALUDT), cast(count_val as DECIMALUDT)
+ ,PercentSpike = cast(((count_val-count_avg)/count_avg)*100 as DECIMALUDT) 
+from babel_5467_avgdata_udt_3
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_udt_3' order by COLUMN_NAME
+go
+
+create table babel_5467_t4(a decimal(10,2), b decimal(15, 6), c decimal(8, 5))
+go
+
+insert into babel_5467_t4 values(12345678.12, 123456789.666666, 123.66666), (11111111.33, 123456789.666666, 321.444444)
+go
+
+select avg(a) as p, avg(b) as q, avg(c) as r, avg(a+c) as s into babel_5467_avgdata_4 from babel_5467_t4
+go
+
+select min(a) as p, min(b) as q, min(c) as r, min(a+c) as s into babel_5467_avgdata_5 from babel_5467_t4
+go
+
+select max(a) as p, max(b) as q, max(c) as r, max(a+c) as s into babel_5467_avgdata_6 from babel_5467_t4
+go
+
+select sum(a) as p, sum(b) as q, sum(c) as r, sum(a+c) as s into babel_5467_avgdata_7 from babel_5467_t4
+go
+
+select count(a) as p, count(b) as q, count(c) as r, count(a+c) as s into babel_5467_avgdata_8 from babel_5467_t4
+go
+
+select * from babel_5467_avgdata_4
+go
+
+select * from babel_5467_avgdata_5
+go
+
+select * from babel_5467_avgdata_6
+go
+
+select * from babel_5467_avgdata_7
+go
+
+select * from babel_5467_avgdata_8
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_4' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_5' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_6' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_7' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_8' order by COLUMN_NAME
+go
 
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
 drop table babel_5467_avgdata_udt_1
 drop table babel_5467_avgdata_udt_2
+drop table babel_5467_avgdata_udt_3
 drop table babel_5467_avgdata_3_setup
 drop table babel_5467_avgdata_3
+drop table babel_5467_avgdata_4
+drop table babel_5467_avgdata_5
+drop table babel_5467_avgdata_6
+drop table babel_5467_avgdata_7
+drop table babel_5467_avgdata_8
 drop table babel_5467_t1
 drop table babel_5467_t2
 drop table babel_5467_t3
+drop table babel_5467_t4
 go
 
 drop type DECIMALUDT_38_6
