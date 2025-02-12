@@ -2246,7 +2246,8 @@ object_id(PG_FUNCTION_ARGS)
 	 */
 	schema_oid = get_namespace_oid(physical_schema_name, true);
 	/* search in sys when proc name is sp_ prefixed and schema name is empty or dbo */
-	search_in_sys_for_sp_procs = (strncmp(object_name, "sp_", 3) == 0 && (strcmp(schema_name, "dbo") == 0 || strlen(schema_name) == 0));
+	search_in_sys_for_sp_procs = (OidIsValid(sys_schema_oid) && strncmp(object_name, "sp_", 3) == 0 &&
+								 (strcmp(schema_name, "dbo") == 0 || strlen(schema_name) == 0));
 
 	/* free unnecessary pointers */
 	pfree(db_name);
@@ -2332,7 +2333,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 
-				if (!OidIsValid(result) && search_in_sys_for_sp_procs && OidIsValid(sys_schema_oid))
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
 					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
@@ -2391,7 +2392,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 
-				if (!OidIsValid(result) && search_in_sys_for_sp_procs && OidIsValid(sys_schema_oid))
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
 					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 
