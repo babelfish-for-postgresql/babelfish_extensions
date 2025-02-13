@@ -1,0 +1,35 @@
+CREATE TABLE object_id_conflict_t (
+    id INT,
+    name VARCHAR(100),
+    age INT,
+    parent_id INT
+);
+GO
+
+CREATE TABLE object_id_conflict_parent_t (
+    id INT PRIMARY KEY
+);
+GO
+
+-- Case 1: Primary Key constraint
+ALTER TABLE object_id_conflict_t ADD CONSTRAINT pk_id PRIMARY KEY (id);
+GO
+
+-- Case 2: Foreign key constraint
+ALTER TABLE object_id_conflict_t ADD CONSTRAINT fk_constraint FOREIGN KEY (parent_id) REFERENCES object_id_conflict_parent_t(id);
+GO
+
+-- Case 3: Check constraint
+ALTER TABLE object_id_conflict_t ADD CONSTRAINT chk_age CHECK (age >= 0);
+GO
+
+-- Case 4: Unique constraint
+ALTER TABLE object_id_conflict_t ADD CONSTRAINT unq_name UNIQUE (name);
+GO
+
+-- Case 5: Different kinds of index
+CREATE INDEX object_id_idx_name ON object_id_conflict_t (name);
+GO
+
+CREATE INDEX object_id_idx_parent_id ON object_id_conflict_t (parent_id);
+GO

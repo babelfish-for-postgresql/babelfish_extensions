@@ -2361,13 +2361,39 @@ object_id(PG_FUNCTION_ARGS)
 			} 
 			else if (enr == NULL)
 			{
-				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				Oid temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+				if (OidIsValid(temp_nsp_oid))
+				{
+					result = get_relname_relid((const char *) object_name, temp_nsp_oid);
+				}
 			}
 		}
 		else
 		{
-			/* search in pg_class by name and schema oid */
-			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
+			HeapTuple	class_tuple;
+			Oid			relid = InvalidOid;
+
+			/* Perform a single lookup in pg_class by name and schema oid */
+			class_tuple = SearchSysCache2(RELNAMENSP, CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
+
+			if (HeapTupleIsValid(class_tuple))
+			{
+				Form_pg_class classform = (Form_pg_class) GETSTRUCT(class_tuple);
+
+				/* Check if the relation is not an index */
+				if (classform->relkind != RELKIND_INDEX)
+				{
+					relid = classform->oid;
+
+					/* Perform ACL check */
+					if (pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					{
+						result = relid;
+					}
+				}
+
+				ReleaseSysCache(class_tuple);
+			}
 
 			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{

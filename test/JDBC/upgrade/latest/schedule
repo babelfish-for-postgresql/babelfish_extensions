@@ -255,6 +255,7 @@ newid
 objectpropertyex
 openjson
 orderby
+object_id_index_conflict
 routines_definition
 rowcount
 schema_resolution_func
