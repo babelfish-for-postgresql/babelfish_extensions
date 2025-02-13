@@ -3925,12 +3925,18 @@ geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
     | STAREA
+    | STDIMENSION
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     ;
 
 geospatial_func_arg
     : STDISTANCE
     | STEQUALS
     | STCONTAINS
+    | STDISJOINT 
+    | STINTERSECTS
     ;
 
 hierarchyid_methods
@@ -5024,8 +5030,14 @@ keyword
     | STCONTAINS
     | STDEV
     | STDEVP
+    | STDIMENSION
+    | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STINTERSECTS
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     | STOP
     | STOPAT
     | STOPATMARK
