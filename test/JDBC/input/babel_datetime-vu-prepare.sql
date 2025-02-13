@@ -56,3 +56,11 @@ BEGIN
 	select cast(0x00008EE700C5C100 as datetime)
 END;
 GO
+
+CREATE FUNCTION babel_datetime_vu_function1 (@inputdate DATETIME)
+RETURNS varchar(50)
+AS
+BEGIN
+	RETURN @inputdate
+END
+GO

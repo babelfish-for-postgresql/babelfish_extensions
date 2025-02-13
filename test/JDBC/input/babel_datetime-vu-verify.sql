@@ -340,3 +340,6 @@ GO
 
 EXEC babel_datetime_vu_procedure
 GO
+
+SELECT babel_datetime_vu_function1(0x0000B02200EF28C1)
+GO
