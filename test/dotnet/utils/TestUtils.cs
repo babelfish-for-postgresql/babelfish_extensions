@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient.Server;
 using Serilog;
 using Serilog.Core;
 using Xunit;
+using System.Collections.Specialized;
 
 namespace BabelfishDotnetFramework
 {
@@ -220,6 +221,16 @@ namespace BabelfishDotnetFramework
 			finally
 			{
 				rdr?.Close();
+			}
+		}
+		public void ResultSetWriter(StringCollection sc, string fileName)
+		{
+			using var file =
+				new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, fileName + ".out"), true);
+			foreach (string script in sc)
+			{
+				file.WriteLine(script);
+				file.WriteLine("GO");
 			}
 		}
 
@@ -460,7 +471,7 @@ namespace BabelfishDotnetFramework
                 return new  ProcessStartInfo
                 {
                     FileName = @"powershell.exe",
-                    Arguments = $"-c \"diff (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
+                    Arguments = $"-c \"diff -u --strip-trailing-cr (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
                     UseShellExecute = false,
                     CreateNoWindow = false,
                     RedirectStandardError = true
@@ -468,7 +479,7 @@ namespace BabelfishDotnetFramework
             return new  ProcessStartInfo
             {
                 FileName = @"bash",
-                Arguments = $"-c \"diff {output} {expectedOutput} > {diffFile}\"",
+                Arguments = $"-c \"diff -u --strip-trailing-cr {output} {expectedOutput} > {diffFile}\"",
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 RedirectStandardError = true
