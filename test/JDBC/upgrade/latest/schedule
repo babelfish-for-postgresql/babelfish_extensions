@@ -215,6 +215,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery
@@ -596,3 +597,4 @@ db_owner
 BABEL-2961
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char

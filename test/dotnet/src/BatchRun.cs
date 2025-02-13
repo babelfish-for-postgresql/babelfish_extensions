@@ -283,6 +283,13 @@ namespace BabelfishDotnetFramework
 							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
 							testUtils.bcp(result[1].Trim(), result[2].Trim(), result[3].Trim(), result[0].Trim(), logger);
 						}
+						else if(strLine.ToLowerInvariant().StartsWith("ddlexport"))
+						{
+							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
+							testUtils.PrintToLogsOrConsole("############################# DDLEXPORT ##############################", logger, "information");
+							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
+							DatabaseScripter.ScriptDatabase(strLine, testName, testUtils, logger);
+						}
 						else
 						{
 							/*
@@ -319,6 +326,18 @@ namespace BabelfishDotnetFramework
 
 								testUtils.ResultSetWriter(bblCmd, testName, ref stCount);
 								bblCmd.Dispose();								
+							}
+							else if (isSql)
+							{
+								bblCmd?.Dispose();
+								bblCmd = testUtils.CreateDbCommand(null, bblCnn);
+								if (bblTransaction != null)
+								{
+									bblCmd.Transaction = bblTransaction;
+								}
+								bblCmd.CommandText = query;
+
+								testUtils.ResultSetWriter(bblCmd, testName, ref stCount);
 							}
 							else
 							{

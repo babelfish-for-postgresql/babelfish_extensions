@@ -72,61 +72,61 @@ GO
 --------------------------------------------------
 --- DROP Partitioned Index
 --------------------------------------------------
-DROP INDEX partition_vu_prepare_uniqueidentifier_index ON partition_vu_prepare_uniqueidentifier_table;
+DROP INDEX partition_vu_prepare_uniqueidentifier_index_new ON partition_vu_prepare_uniqueidentifier_table;
 GO
 
-DROP INDEX partition_vu_prepare_varbinary_index ON partition_vu_prepare_varbinary_table;
+DROP INDEX partition_vu_prepare_varbinary_index_new ON partition_vu_prepare_varbinary_table;
 GO
 
-DROP INDEX partition_vu_prepare_binary_index ON partition_vu_prepare_binary_table;
+DROP INDEX partition_vu_prepare_binary_index_new ON partition_vu_prepare_binary_table;
 GO
 
-DROP INDEX partition_vu_prepare_nchar_index ON partition_vu_prepare_nchar_table;
+DROP INDEX partition_vu_prepare_nchar_index_new ON partition_vu_prepare_nchar_table;
 GO
 
-DROP INDEX partition_vu_prepare_nvarchar_index ON partition_vu_prepare_nvarchar_table;
+DROP INDEX partition_vu_prepare_nvarchar_index_new ON partition_vu_prepare_nvarchar_table;
 GO
 
-DROP INDEX partition_vu_prepare_varchar_index ON partition_vu_prepare_varchar_table;
+DROP INDEX partition_vu_prepare_varchar_index_new ON partition_vu_prepare_varchar_table;
 GO
 
-DROP INDEX partition_vu_prepare_char_index ON partition_vu_prepare_char_table;
+DROP INDEX partition_vu_prepare_char_index_new ON partition_vu_prepare_char_table;
 GO
 
-DROP INDEX partition_vu_prepare_smalldatetime_index ON partition_vu_prepare_smalldatetime_table;
+DROP INDEX partition_vu_prepare_smalldatetime_index_new ON partition_vu_prepare_smalldatetime_table;
 GO
 
-DROP INDEX partition_vu_prepare_datetime2_index ON partition_vu_prepare_datetime2_table;
+DROP INDEX partition_vu_prepare_datetime2_index_new ON partition_vu_prepare_datetime2_table;
 GO
 
-DROP INDEX partition_vu_prepare_datetime_index ON partition_vu_prepare_datetime_table;
+DROP INDEX partition_vu_prepare_datetime_index_new ON partition_vu_prepare_datetime_table;
 GO
 
-DROP INDEX partition_vu_prepare_date_index ON partition_vu_prepare_date_table;
+DROP INDEX partition_vu_prepare_date_index_new ON partition_vu_prepare_date_table;
 GO
 
-DROP INDEX partition_vu_prepare_smallmoney_index ON partition_vu_prepare_smallmoney_table;
+DROP INDEX partition_vu_prepare_smallmoney_index_new ON partition_vu_prepare_smallmoney_table;
 GO
 
-DROP INDEX partition_vu_prepare_money_index ON partition_vu_prepare_money_table;
+DROP INDEX partition_vu_prepare_money_index_new ON partition_vu_prepare_money_table;
 GO
 
-DROP INDEX partition_vu_prepare_numeric_index ON partition_vu_prepare_numeric_table;
+DROP INDEX partition_vu_prepare_numeric_index_new ON partition_vu_prepare_numeric_table;
 GO
 
-DROP INDEX partition_vu_prepare_decimal_index ON partition_vu_prepare_decimal_table;
+DROP INDEX partition_vu_prepare_decimal_index_new ON partition_vu_prepare_decimal_table;
 GO
 
-DROP INDEX partition_vu_prepare_tinyint_index ON partition_vu_prepare_tinyint_table;
+DROP INDEX partition_vu_prepare_tinyint_index_new ON partition_vu_prepare_tinyint_table;
 GO
 
-DROP INDEX partition_vu_prepare_smallint_index ON partition_vu_prepare_smallint_table;
+DROP INDEX partition_vu_prepare_smallint_index_new ON partition_vu_prepare_smallint_table;
 GO
 
-DROP INDEX partition_vu_prepare_bigint_index ON partition_vu_prepare_bigint_table;
+DROP INDEX partition_vu_prepare_bigint_index_new ON partition_vu_prepare_bigint_table;
 GO
 
-DROP INDEX partition_vu_prepare_int_index ON partition_vu_prepare_int_table;
+DROP INDEX partition_vu_prepare_int_index_new ON partition_vu_prepare_int_table;
 GO
 
 DROP INDEX PARTITION_INDEXログインαιώνια ON PARTITION_TABLEログインαιώνια
@@ -135,7 +135,7 @@ GO
 DROP INDEX [PARTITION_INDEX 유니코드스키마👻  ] ON [PARTITION_TABLE  유니코드스키마👻  ]
 GO
 
-DROP INDEX partition_vu_prepare_normal_index ON partition_vu_prepare_normal_table
+DROP INDEX partition_vu_prepare_normal_index_new ON partition_vu_prepare_normal_table
 GO
 
 
