@@ -1479,3 +1479,49 @@ master.babel_5448_s1#!#<-------- temp table --------->
 
 DROP TABLE #temp_babel_5448;
 GO
+
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN 	
+        DROP TABLE #temp;
+    END; SELECT TOP 111 * 
+    INTO #temp
+    FROM ( SELECT col1 AS col1_cross_db FROM master.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM #temp;
+END;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar
+ |-- view in -- master.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN
+        DROP TABLE #temp;
+    END;
+    USE master;
+    SELECT TOP 111 * 
+    INTO #temp
+    FROM (SELECT col1 AS col1_cross_db FROM babel_5448_db.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE babel_5448_db;
+    SELECT * FROM #temp;
+END;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~~~WARNING (Message: Changed database context to 'babel_5448_db'.  Server SQLState: S0001)~~
+
+~~START~~
+varchar#!#nvarchar#!#varchar
+ |-- view in -- babel_5448_db.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+

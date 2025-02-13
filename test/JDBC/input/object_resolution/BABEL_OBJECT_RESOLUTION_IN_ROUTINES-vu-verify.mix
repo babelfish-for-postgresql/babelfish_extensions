@@ -415,3 +415,35 @@ EXEC master.babel_5448_s1.babel_5448_p14
 GO
 DROP TABLE #temp_babel_5448;
 GO
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN 	
+        DROP TABLE #temp;
+    END; SELECT TOP 111 * 
+    INTO #temp
+    FROM ( SELECT col1 AS col1_cross_db FROM master.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+
+    SELECT * FROM #temp;
+END;
+GO
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN
+        DROP TABLE #temp;
+    END;
+    USE master;
+    SELECT TOP 111 * 
+    INTO #temp
+    FROM (SELECT col1 AS col1_cross_db FROM babel_5448_db.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+
+    USE babel_5448_db;
+
+    SELECT * FROM #temp;
+END;
+GO
