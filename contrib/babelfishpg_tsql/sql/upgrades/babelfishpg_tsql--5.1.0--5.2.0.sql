@@ -40,7 +40,7 @@ $$;
  * final behaviour.
  */
 
-CREATE OR REPLACE FUNCTION sys.suser_name()
+CREATE OR REPLACE FUNCTION sys.suser_name() 
 RETURNS sys.NVARCHAR(128)
 AS $$
     SELECT sys.suser_name_internal(suser_id());
