@@ -738,7 +738,6 @@ int#!#int
 
 
 
-
     -- 3. Derived Tables
 SELECT * FROM (
     SELECT 
@@ -751,6 +750,57 @@ SELECT * FROM (
     WHERE customer_type = 'R'
 ) AS source 
 UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
+-- Different source types
+    -- 1. Using a table-valued function as source
+CREATE FUNCTION dbo.GetSalesData()
+RETURNS TABLE
+AS
+RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'FUNCTION' at line 15 and character position 7)~~
+
+
+SELECT product_id, quarter, sales FROM dbo.GetSalesData()
+UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.getsalesdata() does not exist)~~
+
+
+
+    -- 2. Using OPENJSON as source
+DECLARE @json NVARCHAR(MAX) = N'{
+    "product_id": 1,
+    "q1_sales": 100,
+    "q2_sales": 200,
+    "q3_sales": 300,
+    "q4_sales": 400
+}';
+SELECT product_id, quarter, sales
+FROM OPENJSON(@json) WITH (
+    product_id INT,
+    q1_sales INT,
+    q2_sales INT,
+    q3_sales INT,
+    q4_sales INT
+)
+UNPIVOT (
+    sales FOR quarter IN (q1_sales, q2_sales, q3_sales, q4_sales)
+) AS unpvt;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#q1_sales#!#100
+1#!#q2_sales#!#200
+1#!#q3_sales#!#300
+1#!#q4_sales#!#400
+~~END~~
+
+
+
 -- DML
     
     -- 1. INSERT
@@ -760,13 +810,6 @@ SELECT customer_id, customer_desc, customer_type, quarter, sales
 FROM customer_turnover 
 UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt WHERE sales < 200;
 GO
-~~START~~
-int#!#char#!#numeric#!#numeric#!#varchar
-3#!#R#!#0.00#!#440.00000000#!#q3 adj
-1#!#R#!#220.00#!#110.00000000#!#q1_adj
-1#!#R#!#220.00#!#110.00000000#!#q3 adj
-~~END~~
-
 ~~ROW COUNT: 5~~
 
 

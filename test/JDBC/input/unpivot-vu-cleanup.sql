@@ -44,8 +44,12 @@ GO
 
 -- Drop functions
 DROP FUNCTION IF EXISTS dbo.fn_UnpivotSales;
+GO
+DROP FUNCTION IF EXISTS dbo.GetSalesData;
+GO
 
 -- Drop user-defined types
 
 -- Drop schema
 DROP SCHEMA IF EXISTS sales;
+GO

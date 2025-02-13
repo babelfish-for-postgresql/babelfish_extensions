@@ -42,5 +42,14 @@ IF OBJECT_ID('tempdb..#new_quarterly_sales') IS NOT NULL
     DROP TABLE #new_quarterly_sales;
 GO
 
+-- Drop functions
+DROP FUNCTION IF EXISTS dbo.fn_UnpivotSales;
+GO
+DROP FUNCTION IF EXISTS dbo.GetSalesData;
+GO
 
 
+-- Drop user-defined types
+-- Drop schema
+DROP SCHEMA IF EXISTS sales;
+GO

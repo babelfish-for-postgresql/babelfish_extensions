@@ -2101,6 +2101,84 @@ generate_unpivot_source_table_alias(const char *base)
 	return result;
 }
 
+/* Helper function to get the alias of the unpivot source
+ * Handles: Table, Subquery, Join, Function Call, json, another unpivot
+ * Returns: new alias of the unpivot source/NULL if unexpected object
+ */
+char *
+get_unpivot_source_alias(Node *table_ref) {
+    if (IsA(table_ref, RangeVar))
+	{
+		/* Source is a table */
+		RangeVar *larg = (RangeVar *)table_ref;
+		if (larg->alias == NULL)
+		{
+			larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
+		}
+		return larg->alias->aliasname;
+	}
+	else if (IsA(table_ref, RangeSubselect))
+	{
+		/* Source is a subquery */
+		RangeSubselect *rsq = (RangeSubselect *)table_ref;
+		if (rsq->alias == NULL)
+		{
+			rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
+		}
+		return rsq->alias->aliasname;
+	}
+	else if (IsA(table_ref, JoinExpr))
+	{
+		/* For JOIN, we need to ensure the last joined table has an alias */
+		/* TODO: First extract Join Alias if present else rarg */
+		JoinExpr *join = (JoinExpr *)table_ref;
+
+		// if (join->alias != NULL)
+        //     return join->alias->aliasname;
+
+        /* No join alias, recurse on right arg */
+        if (join->rarg != NULL)
+            return get_unpivot_source_alias(join->rarg);
+        
+        ereport(ERROR,
+                (errcode(ERRCODE_SYNTAX_ERROR),
+                 errmsg("Invalid JOIN expression in UNPIVOT source")));
+	}
+    else if (IsA(table_ref, RangeFunction))
+	{
+		/* Source is a function call */
+		RangeFunction *rf = (RangeFunction *)table_ref;
+		if (rf->alias == NULL)
+		{
+			rf->alias = makeAlias(generate_unpivot_source_table_alias("func"), NIL);
+		}
+		return rf->alias->aliasname;
+	}
+	else if (IsA(table_ref, RangeTableFunc))
+	{
+    	RangeTableFunc *rtf = (RangeTableFunc *)table_ref;
+		if (rtf->alias == NULL)
+		{
+			rtf->alias = makeAlias(generate_unpivot_source_table_alias("json"), NIL);
+		}
+		return rtf->alias->aliasname;
+	}
+	else if (IsA(table_ref, List))
+	{
+		/* Handle case where table_ref is an UNPIVOT node */
+		List *prev_unpivot = (List *)table_ref;
+		if (list_length(prev_unpivot) == 7 &&
+			IsA(linitial(prev_unpivot), String) &&
+			strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
+		{
+			/* Use the alias from previous UNPIVOT */
+			return strVal(list_nth(prev_unpivot, 1));
+		}
+
+	}
+	return NULL;
+}
+
 /*
  * Transform TSQL UNPIVOT operation into equivalent CROSS JOIN LATERAL structure.
  * Builds a JoinExpr node representing the transformation and returns additional
@@ -2156,77 +2234,14 @@ tsql_unpivot_debug_transformation(List *components)
 	
 	n->jointype = JOIN_INNER;
 	n->isNatural = false;
-	
+	//source_alias = "invalid_default_alias"; /* Will be overwritten or error thrown */ 
 	/* Set up left side with alias if not present */
-	if (IsA(table_ref, RangeVar))
-	{
-		/* Source is a table */
-		RangeVar *larg = (RangeVar *)table_ref;
-		if (larg->alias == NULL)
-		{
-			larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
-		}
-		source_alias = larg->alias->aliasname;
-	}
-	else if (IsA(table_ref, RangeSubselect))
-	{
-		/* Source is a subquery */
-		RangeSubselect *rsq = (RangeSubselect *)table_ref;
-		if (rsq->alias == NULL)
-		{
-			rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
-		}
-		source_alias = rsq->alias->aliasname;
-	}
-	else if (IsA(table_ref, JoinExpr))
-	{
-		/* For JOIN, we need to ensure the last joined table has an alias */
-		/* TODO: First extract Join Alias if present else rarg */
-		JoinExpr *join = (JoinExpr *)table_ref;
-		Node *last_table = join->rarg;
-		
-		if (IsA(last_table, RangeVar))
-		{
-			RangeVar *rv = (RangeVar *)last_table;
-			if (rv->alias == NULL) {
-				rv->alias = makeAlias(generate_unpivot_source_table_alias(rv->relname), NIL);
-			}
-			source_alias = rv->alias->aliasname;
-		}
-		else if (IsA(last_table, RangeSubselect))
-		{
-			RangeSubselect *rsq = (RangeSubselect *)last_table;
-			if (rsq->alias == NULL) {
-				rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
-			}
-			source_alias = rsq->alias->aliasname;
-		}
-	}
-	else if (IsA(table_ref, List))
-	{
-		/* Handle case where table_ref is an UNPIVOT node */
-		List *prev_unpivot = (List *)table_ref;
-		if (list_length(prev_unpivot) == 7 &&
-			IsA(linitial(prev_unpivot), String) &&
-			strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
-		{
-			/* Use the alias from previous UNPIVOT */
-			source_alias = strVal(list_nth(prev_unpivot, 1));
-			/* Use the transformed node as our left arg */
-			//n->larg = (Node *)list_nth(prev_unpivot, 6);
-		}
-		else
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("Invalid source structure for UNPIVOT operation")));
-		}
-	}
-	else
-	{
+	source_alias = get_unpivot_source_alias(table_ref);
+
+	if(source_alias == NULL){
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Invalid source structure for UNPIVOT operation")));
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			errmsg("Invalid source structure for UNPIVOT operation")));
 	}
 	n->larg = table_ref;
 	

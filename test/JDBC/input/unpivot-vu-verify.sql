@@ -471,6 +471,40 @@ SELECT * FROM (
 ) AS source 
 UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
 
+-- Different source types
+    -- 1. Using a table-valued function as source
+CREATE FUNCTION dbo.GetSalesData()
+RETURNS TABLE
+AS
+RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
+GO
+
+SELECT product_id, quarter, sales FROM dbo.GetSalesData()
+UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
+GO
+
+    -- 2. Using OPENJSON as source
+DECLARE @json NVARCHAR(MAX) = N'{
+    "product_id": 1,
+    "q1_sales": 100,
+    "q2_sales": 200,
+    "q3_sales": 300,
+    "q4_sales": 400
+}';
+
+SELECT product_id, quarter, sales
+FROM OPENJSON(@json) WITH (
+    product_id INT,
+    q1_sales INT,
+    q2_sales INT,
+    q3_sales INT,
+    q4_sales INT
+)
+UNPIVOT (
+    sales FOR quarter IN (q1_sales, q2_sales, q3_sales, q4_sales)
+) AS unpvt;
+GO
+
 
 -- DML
     
