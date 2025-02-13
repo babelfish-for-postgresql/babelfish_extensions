@@ -440,7 +440,6 @@ Function sys.floor(sys."bit")
 Function sys.floor(sys.tinyint)
 Function sys.fn_helpcollations()
 Function sys.fn_mapped_system_error_list()
-Function sys.fn_varbintohexsubstring(integer,sys.varbinary,integer,integer)
 Function sys.formatmessage(character varying)
 Function sys.formatmessage(character varying,"any")
 Function sys.formatmessage(text)
@@ -536,7 +535,6 @@ Function sys.language()
 Function sys.len(sys.bbf_varbinary)
 Function sys.len(text)
 Function sys.lock_timeout()
-Function sys.loginproperty(sys.sysname,sys.nvarchar)
 Function sys.max_connections()
 Function sys.microsoftversion()
 Function sys.money_sqlvariant(sys.fixeddecimal)
@@ -980,7 +978,6 @@ View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
 View sys.change_tracking_databases
 View sys.change_tracking_tables
-View sys.credentials
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
@@ -999,7 +996,6 @@ View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
-View sys.server_permissions
 View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
@@ -1014,7 +1010,6 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
-View sys.sql_logins
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
