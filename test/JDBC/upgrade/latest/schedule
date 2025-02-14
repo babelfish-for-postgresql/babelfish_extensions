@@ -215,6 +215,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery
@@ -437,6 +438,7 @@ TestSmallInt
 TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
+Test-spatial-functions-2
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -596,3 +598,4 @@ db_owner
 BABEL-2961
 test_conv_money_to_varchar
 fixeddecimal_modulo
+test_conv_float_to_varchar_char

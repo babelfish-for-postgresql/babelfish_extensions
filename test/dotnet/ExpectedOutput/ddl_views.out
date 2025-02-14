@@ -1,0 +1,62 @@
+#Q#DROP VIEW IF EXISTS sys_all_views_select_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_select_chk_option_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_dep_view_vu_prepare 
+
+#Q#DROP TABLE IF EXISTS sys_all_views_table_vu_prepare
+
+#Q#CREATE TABLE sys_all_views_table_vu_prepare(a int)
+
+#Q#CREATE VIEW sys_all_views_select_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+
+#Q#CREATE VIEW sys_all_views_select_chk_option_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+WITH CHECK OPTION
+
+#Q#CREATE VIEW sys_all_views_dep_view_vu_prepare AS
+SELECT name, type, with_check_option FROM sys.all_views where object_id = object_id('sys_all_views_select_vu_prepare')
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[sys_all_views_table_vu_prepare](
+	[a] [int] NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW sys_all_views_dep_view_vu_prepare AS
+SELECT name, type, with_check_option FROM sys.all_views where object_id = object_id('sys_all_views_select_vu_prepare')
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW sys_all_views_select_chk_option_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+WITH CHECK OPTION
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW sys_all_views_select_vu_prepare AS
+SELECT * FROM sys_all_views_table_vu_prepare
+
+GO
+#Q#DROP VIEW IF EXISTS sys_all_views_select_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_select_chk_option_vu_prepare
+
+#Q#DROP VIEW IF EXISTS sys_all_views_dep_view_vu_prepare 
+
+#Q#DROP TABLE IF EXISTS sys_all_views_table_vu_prepare
+

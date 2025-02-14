@@ -10020,13 +10020,15 @@ BEGIN
 		END IF;
 		IF (v_floatval >= 999999.5) THEN
 			v_format := '9D99999EEEE';
-			v_result := to_char(v_sign * ceiling(v_floatval), v_format);
+			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
 			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
 		ELSE
-			if (6 - v_integral_digits < v_decimal_digits) THEN
-				v_decimal_digits := 6 - v_integral_digits;
-			END IF;
-			v_format := (pow(10, v_integral_digits)-1)::TEXT || 'D';
+            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+                v_decimal_digits := 6 - v_integral_digits;
+            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+                v_decimal_digits := 6;
+            END IF;
+			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
 			IF (v_decimal_digits > 0) THEN
 				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
 			END IF;
@@ -10473,4 +10475,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
 RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
+RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

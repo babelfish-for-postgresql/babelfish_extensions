@@ -113,6 +113,18 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
+      version: '14.17',
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: major
+    }
+  ],
+},
+{
+  upgrade-path: [
+    {
       version: 15.2,
       upgrade-type: null
     },
@@ -125,7 +137,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '15.10',
+      version: '15.12',
       upgrade-type: null
     },
     { 
@@ -161,7 +173,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 16.6,
+      version: 16.7,
       upgrade-type: null
     },
     { 
