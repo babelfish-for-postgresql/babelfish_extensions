@@ -705,7 +705,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_OpExpr:
 			{
 				OpExpr	   *op = (OpExpr *) expr;
-				Node	   *arg1,
+				Node	   *arg1 = NULL,
 						   *arg2 = NULL;
 				Oid	        arg1type = InvalidOid,
 							arg2type = InvalidOid;
