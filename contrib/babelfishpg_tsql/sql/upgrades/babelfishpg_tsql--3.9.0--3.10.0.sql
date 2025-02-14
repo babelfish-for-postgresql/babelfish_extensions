@@ -88,7 +88,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
 RETURNS sys.DATETIME
