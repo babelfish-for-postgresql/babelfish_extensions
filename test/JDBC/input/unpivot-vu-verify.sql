@@ -61,8 +61,6 @@ UNPIVOT ([turnover] FOR [quarter] IN ([q1], [q2], [q3], [q4])) AS unpvt;
 GO
 
 -- CONSECUTIVE UNPIVOTS
-
-    -- two consecutive unpivots
 SELECT r.product_id AS PID,
        RIGHT(r.col_name, 2) as [Time Period],
        r.quantity,
@@ -212,7 +210,7 @@ FROM datetime_types
 UNPIVOT ( time_value FOR time_name IN (time_val1, time_val2)) AS time_unpvt 
 
 ORDER BY id, data_type, column_name;
-
+GO
 
 -- JOIN Operations
     -- 1. INNER JOIN
@@ -278,17 +276,82 @@ JOIN (
         sales FOR quarter IN (q1_sales, q2_sales)
     ) AS inner_unpvt 
 ) u ON p.product_id = u.product_id;
+GO
 
 -- CTE
-    -- 1. Basic CTE
+    -- 1. CTE as unpivot source
+WITH QuarterlyData AS (
+    SELECT customer_id, q1, q2, q3, q4
+    FROM customer_turnover
+    WHERE customer_type = 'R'
+) 
+SELECT * FROM QuarterlyData 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+
+    -- 2. Unpivot within CTE
 WITH QuarterlyData AS (
     SELECT * FROM customer_turnover
     UNPIVOT (sales FOR month IN (q1, q2, q3, q4)) AS t2
     WHERE customer_type = 'P'
 )
 SELECT * FROM QuarterlyData;
+GO
 
+    -- 3. Recursive CTE
+WITH RecursiveSales AS (
+    SELECT 
+        id,
+        parent_id,
+        q1, q2, q3, q4,
+        0 as level,
+        CAST(id AS VARCHAR(100)) as path
+    FROM SalesHierarchy
+    WHERE parent_id IS NULL
 
+    UNION ALL
+
+    SELECT 
+        s.id,
+        s.parent_id,
+        s.q1, s.q2, s.q3, s.q4,
+        r.level + 1,
+        CAST(r.path + '->' + CAST(s.id AS VARCHAR(10)) AS VARCHAR(100))
+    FROM SalesHierarchy s
+    INNER JOIN RecursiveSales r ON s.parent_id = r.id
+) 
+SELECT path, level, quarter, sales 
+FROM RecursiveSales 
+UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
+ORDER BY path, quarter;
+GO
+
+    -- 4. Multiple CTEs, multiple unpivots
+WITH QuantityCTE AS (
+    SELECT product_id, quarter, quantity FROM cte_product_sales
+    UNPIVOT (quantity FOR quarter IN (q1_quantity, q2_quantity, q3_quantity, q4_quantity)) AS unpvt_qty
+),
+RevenueCTE AS (
+    SELECT product_id, quarter, revenue FROM cte_product_revenue
+    UNPIVOT (revenue FOR quarter IN (q1_revenue, q2_revenue, q3_revenue, q4_revenue)) AS unpvt_rev
+),
+CombinedCTE AS (
+    SELECT 
+        q.product_id,
+        p.product_name,
+        SUBSTRING(q.quarter, 2, 1) as quarter_num,
+        CAST(q.quantity AS DECIMAL(10,2)) as quantity,
+        CAST(r.revenue AS DECIMAL(10,2)) as revenue,
+        CAST((CAST(r.revenue AS DECIMAL(10,2)) / CAST(q.quantity AS DECIMAL(10,2))) AS DECIMAL(10,2)) as price_per_unit
+    FROM QuantityCTE q
+    JOIN cte_product_sales p ON q.product_id = p.product_id
+    JOIN RevenueCTE r ON q.product_id = r.product_id 
+        AND SUBSTRING(q.quarter, 2, 1) = SUBSTRING(r.quarter, 2, 1)
+)
+SELECT * FROM CombinedCTE 
+UNPIVOT (metric_value FOR metric_type IN (quantity, revenue, price_per_unit)) AS final_unpvt 
+ORDER BY product_id, quarter_num, metric_type;
+GO
 
 -- BASIC CLAUSES
 
@@ -473,9 +536,9 @@ UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
 
 -- Different source types
     -- 1. Using a table-valued function as source
-CREATE FUNCTION dbo.GetSalesData()
-RETURNS TABLE
-AS
+CREATE FUNCTION dbo.GetSalesData() 
+RETURNS TABLE 
+AS 
 RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
 GO
 
@@ -586,6 +649,7 @@ WHERE customer_id IN (
     ) AS unpvt
     WHERE sales = 0
 );
+GO
 
         -- DELETE with JOIN
 DELETE cqs 
@@ -600,7 +664,7 @@ JOIN (
 ) AS source 
 ON cqs.customer_id = source.customer_id 
 AND cqs.quarter = source.quarter;
-
+GO
 
 -- SET Operations
     -- 1. UNION
@@ -655,8 +719,7 @@ RETURN
 GO
 
 SELECT * FROM dbo.fn_UnpivotSales();
-
-
+GO
 
 -- ERROR CONDITIONS
 
@@ -668,6 +731,7 @@ UNPIVOT (
     turnover FOR quarter IN (q1, q2, q3, q4)
 ) AS unpvt 
 JOIN customer_history t2 ON unpvt.customer_id = t2.customer_id;
+GO
 
         -- Test: Join with specific columns but still potential conflict
 SELECT t1.customer_id, t2.history_id, turnover, quarter 
@@ -676,21 +740,42 @@ JOIN customer_history t2 ON t1.customer_id = t2.customer_id
 UNPIVOT (
     turnover FOR quarter IN (q1, q2, q3, q4)
 ) AS unpvt;
+GO
 
-
--- UNHANDLED QUERIES
-SELECT unpvt.* FROM customer_turnover 
+-- Edge Cases
+    -- Unpivot on empty table
+SELECT customer_id, turnover, quarter FROM empty_table 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
 
-SELECT customer_id, turnover, quarter FROM customer_turnover c 
-UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, q3, q4)) AS unpvt;
+    -- Maximum length regular identifier (128 characters), col_identifier (63 characters)
+SELECT * FROM very_long_table_name_12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567 
+UNPIVOT (value FOR column_name IN (
+    very_long_column_name_q1_12345678901234567890123456789012345678, 
+    very_long_column_name_q2_12345678901234567890123456789012345678
+    )
+) AS unpvt;
+GO
 
-    -- 1. Unpivot with CTE as source (current behaviour: connection failure)
-WITH QuarterlyData AS (
-    SELECT customer_id, q1, q2, q3, q4
-    FROM customer_turnover
-    WHERE customer_type = 'R'
-) 
-SELECT * FROM QuarterlyData 
-UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+    -- Test UNPIVOT with allowed special characters in identifiers
+SELECT [Customer#ID], [Sales $ Amount], [Quarter@Period]
+FROM [Sales$Data@2024]
+UNPIVOT (
+    [Sales $ Amount] FOR [Quarter@Period] IN (
+        [Q1$Sales],
+        [Q2$Sales],
+        [Q3$Sales]
+    )
+) AS [Sales@Analysis];
+GO
 
+    -- Test UNPIVOT with Unicode characters
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO

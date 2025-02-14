@@ -303,3 +303,95 @@ INSERT INTO customer_turnover_2024 VALUES
     (1, 'Cust A', 'R', 100, 200, 100, 400),
     (4, 'Cust D', 'P', 180, 220, 300, NULL);
 GO
+
+-- For recursive CTE
+CREATE TABLE SalesHierarchy (
+    id INT PRIMARY KEY,
+    parent_id INT,
+    q1 INT,
+    q2 INT,
+    q3 INT,
+    q4 INT
+);
+GO
+
+INSERT INTO SalesHierarchy (id, parent_id, q1, q2, q3, q4) VALUES
+(1, NULL, 100, 200, 300, 400),  -- Root node
+(2, 1, 150, 250, 350, 450),     -- Child of 1
+(3, 1, 200, 300, 400, 500),     -- Child of 1
+(4, 2, 125, 225, 325, 425),     -- Child of 2
+(5, 2, 175, 275, 375, 475);     -- Child of 2
+GO
+
+-- For multiple CTEs
+CREATE TABLE cte_product_sales (
+    product_id INT,
+    product_name VARCHAR(50),
+    q1_quantity INT,
+    q2_quantity INT,
+    q3_quantity INT,
+    q4_quantity INT
+);
+GO
+
+CREATE TABLE cte_product_revenue (
+    product_id INT,
+    q1_revenue DECIMAL(10,2),
+    q2_revenue DECIMAL(10,2),
+    q3_revenue DECIMAL(10,2),
+    q4_revenue DECIMAL(10,2)
+);
+GO
+
+INSERT INTO cte_product_sales VALUES
+(1, 'ProductA', 100, 200, 300, 400),
+(2, 'ProductB', 150, 250, 350, 450),
+(3, 'ProductC', 200, 300, 400, 500);
+GO
+
+INSERT INTO cte_product_revenue VALUES
+(1, 1000.00, 2000.00, 3000.00, 4000.00),
+(2, 1500.00, 2500.00, 3500.00, 4500.00),
+(3, 2000.00, 3000.00, 4000.00, 5000.00);
+GO
+
+-- Error Scenarios
+CREATE TABLE empty_table (
+    customer_id INT,
+    customer_desc VARCHAR(50),
+    customer_type CHAR(1),
+    q1 INT, q2 INT, q3 INT, q4 INT
+);
+GO
+
+CREATE TABLE very_long_table_name_12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567 (
+    id INT,
+    very_long_column_name_q1_12345678901234567890123456789012345678 INT,
+    very_long_column_name_q2_12345678901234567890123456789012345678 INT
+);
+GO
+
+INSERT INTO very_long_table_name_12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567 
+VALUES (1, 10, 20);
+GO
+
+CREATE TABLE [Sales$Data@2024] (
+    [Customer#ID] INT,
+    [Q1$Sales] DECIMAL(10,2),
+    [Q2$Sales] DECIMAL(10,2),
+    [Q3$Sales] DECIMAL(10,2)
+);
+GO
+
+INSERT INTO [Sales$Data@2024] VALUES (1,10,20,30);
+GO
+
+CREATE TABLE [Global_データ_Sales] (
+    [ID_番号] INT,
+    [Q1_売上] DECIMAL(10,2),
+    [Q2_売上] DECIMAL(10,2)
+);
+GO
+
+INSERT INTO [Global_データ_Sales] VALUES (1,2,3);
+GO

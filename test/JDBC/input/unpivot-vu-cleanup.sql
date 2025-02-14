@@ -1,37 +1,49 @@
 -- Drop views
-DROP VIEW IF EXISTS vw_customer_quarterly_sales;
-GO
-DROP VIEW IF EXISTS sales.sales_analysis_view;
+DROP VIEW sales.sales_analysis_view;
 GO
 
 -- Drop tables
-DROP TABLE IF EXISTS customer_quarterly_sales;
+DROP TABLE customer_quarterly_sales;
 GO
-DROP TABLE IF EXISTS customer_turnover;
+DROP TABLE customer_turnover;
 GO
-DROP TABLE IF EXISTS customer_turnover_2024;
+DROP TABLE customer_turnover_2024;
 GO
-DROP TABLE IF EXISTS customer_info;
+DROP TABLE customer_info;
 GO
-DROP TABLE IF EXISTS product_info;
+DROP TABLE product_info;
 GO
-DROP TABLE IF EXISTS sales_data;
+DROP TABLE sales_data;
 GO
-DROP TABLE IF EXISTS product_sales;
+DROP TABLE product_sales;
 GO
-DROP TABLE IF EXISTS product_performance;
+DROP TABLE product_performance;
 GO
-DROP TABLE IF EXISTS customer_history;
+DROP TABLE customer_history;
 GO
-DROP TABLE IF EXISTS numeric_types;
+DROP TABLE numeric_types;
 GO
-DROP TABLE IF EXISTS string_types;
+DROP TABLE string_types;
 GO
-DROP TABLE IF EXISTS datetime_types;
+DROP TABLE datetime_types;
 GO
-DROP TABLE IF EXISTS mixed_types;
+DROP TABLE mixed_types;
 GO
-DROP TABLE IF EXISTS sales.quarterly_data;
+DROP TABLE sales.quarterly_data;
+GO
+DROP TABLE SalesHierarchy;
+GO
+DROP TABLE cte_product_sales;
+GO
+DROP TABLE cte_product_revenue;
+GO
+DROP TABLE empty_table;
+GO
+DROP TABLE very_long_table_name_12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567;
+GO
+DROP TABLE [Sales$Data@2024];
+GO
+DROP TABLE [Global_データ_Sales];
 GO
 
 -- Drop temporary tables (if they still exist)
@@ -51,5 +63,5 @@ GO
 -- Drop user-defined types
 
 -- Drop schema
-DROP SCHEMA IF EXISTS sales;
+DROP SCHEMA sales;
 GO

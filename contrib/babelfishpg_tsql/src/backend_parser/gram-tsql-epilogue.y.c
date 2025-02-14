@@ -2206,7 +2206,7 @@ get_unpivot_source_alias(Node *table_ref) {
  * - Builds complete JOIN structure with proper aliases
  */
 static Node *
-tsql_unpivot_debug_transformation(List *components)
+tsql_unpivot_transformation(List *components)
 {
 	Node *table_ref;
 	List *unpivot_info;
