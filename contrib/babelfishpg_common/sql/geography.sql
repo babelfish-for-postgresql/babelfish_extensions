@@ -321,13 +321,13 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
+				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+				-- 	RAISE EXCEPTION 'Unsupported flags';
+				-- ELSE
 					-- Here we are flipping the coordinates 
 					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				END IF;
+				-- END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
@@ -415,13 +415,13 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
+				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+				-- 	RAISE EXCEPTION 'Unsupported flags';
+				-- ELSE
 					-- Here we are flipping the coordinates 
 					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				END IF;
+				-- END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
@@ -520,7 +520,7 @@ CREATE OPERATOR sys.<> (
     COMMUTATOR = <>
 );
 
---STDimension
+-- STDimension
 -- Retrieves spatial dimension
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
         RETURNS integer
@@ -534,7 +534,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STDisjoint
+-- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
@@ -548,7 +548,7 @@ CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAP
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STIntersects
+-- STIntersects
 -- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
@@ -563,7 +563,7 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGR
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
---STIsClosed
+-- STIsClosed
 -- Checks if geometry is closed
 CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
         RETURNS sys.BIT
@@ -609,14 +609,14 @@ CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY, integer)
 	AS '$libdir/postgis-3','transform'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
---STIsEmpty
+-- STIsEmpty
 -- Checks if geometry is empty
 CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOGRAPHY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','LWGEOM_isempty'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---STIsValid
+-- STIsValid
 -- Checks if geometry is valid 
 CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
         RETURNS sys.BIT

@@ -87,11 +87,11 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
+				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+				-- 	RAISE EXCEPTION 'Unsupported flags';
+				-- ELSE
 					RETURN geom;
-				END IF;
+				-- END IF;
 			ELSE
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
@@ -314,11 +314,11 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
+				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+				-- 	RAISE EXCEPTION 'Unsupported flags';
+				-- ELSE
 					RETURN geom;
-				END IF;
+				-- END IF;
 			ELSE
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
@@ -415,7 +415,7 @@ CREATE OPERATOR sys.<> (
     COMMUTATOR = <>
 );
 
---STDimension
+-- STDimension
 -- Retrieves spatial dimension
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
         RETURNS integer
@@ -429,7 +429,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STDisjoint
+-- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
@@ -443,7 +443,7 @@ CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STIntersects
+-- STIntersects
 -- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
@@ -458,7 +458,7 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMET
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
---STIsClosed
+-- STIsClosed
 -- Checks if geometry is closed
 CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
         RETURNS sys.BIT
@@ -493,14 +493,14 @@ CREATE OR REPLACE FUNCTION sys.sty(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_y_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
---STIsEmpty
+-- STIsEmpty
 -- Checks if geometry is empty
 CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','LWGEOM_isempty'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---STIsValid
+-- STIsValid
 -- Checks if geometry is valid 
 CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
         RETURNS sys.BIT

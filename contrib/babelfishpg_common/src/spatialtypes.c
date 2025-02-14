@@ -151,8 +151,8 @@ geography_in(PG_FUNCTION_ARGS)
     fcinfo_local->args[0].value = geom_datum;
     geom_type = geometry_type_p(fcinfo_local);
     /*
-    *For binary string, such as '0101000000000000000000F03F000000000000004', predefined SRID is set by default
-    *For character string, such as 'POINT(0 0)', set default SRID to be 4326 for geography datatype
+    * For binary string, such as '0101000000000000000000F03F000000000000004', predefined SRID is set by default
+    * For character string, such as 'POINT(0 0)', set default SRID to be 4326 for geography datatype
     */
     if (!isBinary)
     {
