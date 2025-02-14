@@ -132,7 +132,6 @@ static List *relMetaDataInfoList = NULL;
 static Oid sys_vector_oid = InvalidOid;
 static Oid sys_sparsevec_oid = InvalidOid;
 static Oid sys_halfvec_oid = InvalidOid;
-static Oid decimal_oid = InvalidOid;
 static Oid tsql_fixeddecimal_numeric_oid = InvalidOid;
 static Oid tsql_numeric_fixeddecimal_oid = InvalidOid;
 static Oid tsql_bit_numeric_oid = InvalidOid;
@@ -140,9 +139,6 @@ static Oid tsql_int4_bit_oid = InvalidOid;
 static Oid sys_nspoid = InvalidOid;
 static Oid tsql_bit_oid = InvalidOid;
 static Oid tsql_fixeddecimal_oid = InvalidOid;
-static Oid tsql_tinyint_oid = InvalidOid;
-static Oid tsql_money_oid = InvalidOid;
-static Oid tsql_smallmoney_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -624,76 +620,14 @@ is_numeric_cast(Oid func_oid)
 }
 
 /*
- * is_numeric_datatype - returns bool if given datatype is numeric or decimal.
+ * is_numeric_datatype - returns bool if given datatype is numeric, decimal, UDT on numeric or decimal.
  */
 static bool
 is_numeric_datatype(Oid typid)
 {
-	if (typid == NUMERICOID)
-	{
-		return true;
-	}
-	if (!OidIsValid(decimal_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("decimal")));
-		decimal_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	return decimal_oid == typid;
-}
-
-/*
- * is_exact_numeric_datatype
- *  returns bool if given datatype is numeric, decimal, int, tinyint, smallint, bigint, bit, money and smallmoney.
- */
-static bool
-is_exact_numeric_datatype(Oid typid)
-{
-	typid = getBaseType(typid);
-
-	if (typid == NUMERICOID || typid == INT2OID || typid == INT4OID || typid == INT8OID)
-	{
-		return true;
-	}
-	if (!OidIsValid(decimal_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("decimal")));
-		decimal_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	if (decimal_oid == typid)
+	if (OidIsValid(typid) && getBaseType(typid) == NUMERICOID)
 		return true;
 
-	if (!OidIsValid(tsql_tinyint_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("tinyint")));
-		tsql_tinyint_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	if (tsql_tinyint_oid == typid)
-		return true;
-
-	if (!OidIsValid(tsql_money_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("money")));
-		tsql_money_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	if (tsql_money_oid == typid)
-		return true;
-
-	if (!OidIsValid(tsql_smallmoney_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("smallmoney")));
-		tsql_smallmoney_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	if (tsql_smallmoney_oid == typid)
-		return true;
-
-	if (!OidIsValid(tsql_bit_oid))
-	{
-		TypeName *typename = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("bit")));
-		tsql_bit_oid = LookupTypeNameOid(NULL, typename, false);
-	}
-	if (tsql_bit_oid == typid)
-		return true;
-	
 	return false;
 }
 
@@ -702,7 +636,7 @@ is_exact_numeric_datatype(Oid typid)
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
-	if (expr == NULL || !is_exact_numeric_datatype(exprType(expr)))
+	if (expr == NULL)
 		return -1;
 	switch (nodeTag(expr))
 	{
@@ -773,6 +707,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				OpExpr	   *op = (OpExpr *) expr;
 				Node	   *arg1,
 						   *arg2 = NULL;
+				Oid	        arg1type = InvalidOid,
+							arg2type = InvalidOid;
 				int32		typmod1 = -1,
 							typmod2 = -1;
 				uint8_t		scale1,
@@ -836,9 +772,19 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				 */
 				if (typmod1 == -1 && typmod2 == -1)
 				{
-					precision = tds_default_numeric_precision;
-					scale = tds_default_numeric_scale;
-					return ((precision << 16) | scale) + VARHDRSZ;
+					/*
+					 * if either of the expression is of type numeric then we can use default precision and scale
+					 * else when both expressions are non-numeric the typmod should be -1.
+					 */
+					arg1type = exprType(arg1);
+					arg2type = exprType(arg2);
+					if (is_numeric_datatype(arg1type) || is_numeric_datatype(arg2type))
+					{
+						precision = tds_default_numeric_precision;
+						scale = tds_default_numeric_scale;
+						return ((precision << 16) | scale) + VARHDRSZ;
+					}
+					return -1;
 				}
 				else if (typmod1 == -1)
 				{
