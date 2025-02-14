@@ -87,11 +87,11 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-				-- 	RAISE EXCEPTION 'Unsupported flags';
-				-- ELSE
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
 					RETURN geom;
-				-- END IF;
+				END IF;
 			ELSE
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
@@ -314,11 +314,11 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-				-- 	RAISE EXCEPTION 'Unsupported flags';
-				-- ELSE
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
 					RETURN geom;
-				-- END IF;
+				END IF;
 			ELSE
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;

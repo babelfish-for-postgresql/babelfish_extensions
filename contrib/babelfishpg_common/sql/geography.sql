@@ -321,13 +321,13 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-				-- 	RAISE EXCEPTION 'Unsupported flags';
-				-- ELSE
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
 					-- Here we are flipping the coordinates 
 					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				-- END IF;
+				END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
@@ -415,13 +415,13 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
 				-- if the point instance has both z and m flags then Zmflag = 3
-				-- IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-				-- 	RAISE EXCEPTION 'Unsupported flags';
-				-- ELSE
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
 					-- Here we are flipping the coordinates 
 					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				-- END IF;
+				END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
