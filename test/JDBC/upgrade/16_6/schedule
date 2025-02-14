@@ -513,7 +513,7 @@ pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
-babel_index_nulls_order
+babel_index_nulls_order-before-16_8-or-17_4
 BABEL-2999
 BABEL-4606
 BABEL-4672
