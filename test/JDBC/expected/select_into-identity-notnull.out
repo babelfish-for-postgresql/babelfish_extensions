@@ -1,0 +1,221 @@
+create database db_select_into
+go
+
+use db_select_into
+go
+
+create schema sch_select_into
+go
+
+create table t1_select_into ([Col1] INT IDENTITY(1, 1), [Col2] [Varchar](20) NOT NULL)
+go
+
+insert into t1_select_into([Col2]) values ('First')
+go
+~~ROW COUNT: 1~~
+
+
+create table sch_select_into.t1_select_into ([Col3] TINYINT IDENTITY(2, 2), [Col4] numeric(4,3) NOT NULL)
+go
+
+insert into sch_select_into.t1_select_into([Col4]) values (2.222)
+go
+~~ROW COUNT: 1~~
+
+
+use master
+go
+
+create schema sch_select_into_master
+go
+
+create table sch_select_into_master.t1_select_into_master ([Col5] SMALLINT IDENTITY(3, 3), [Col6] [Nvarchar](20) NOT NULL)
+go
+
+insert into sch_select_into_master.t1_select_into_master([Col6]) values ('Third')
+go
+~~ROW COUNT: 1~~
+
+
+create table t1_select_into_master ([Col7] BIGINT IDENTITY(4, 4), [Col8] float NOT NULL)
+go
+
+insert into t1_select_into_master([Col8]) values (4.4)
+go
+~~ROW COUNT: 1~~
+
+
+create table t1_select_into_master_dec ([Col9] DECIMAL(10,0) IDENTITY(5, 5) PRIMARY KEY, [Col10] real NOT NULL)
+go
+
+insert into t1_select_into_master_dec([Col10]) values (5.567)
+go
+~~ROW COUNT: 1~~
+
+
+use db_select_into
+go
+
+select * into dest_table_1 from t1_select_into
+go
+
+select * into dest_table_2 from sch_select_into.t1_select_into
+go
+
+select * into dest_table_3 from master.sch_select_into_master.t1_select_into_master
+go
+
+select * into dest_table_4 from master..t1_select_into_master
+go
+
+select * into dest_table_5 from master.dbo.t1_select_into_master_dec
+go
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_1 ([Col2]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col2" of relation "dest_table_1" violates not-null constraint)~~
+
+
+insert into dest_table_1 ([Col2]) values ('Second')
+go
+~~ROW COUNT: 1~~
+
+
+-- Identity column should be populated by default
+select * from dest_table_1 order by [Col1]
+go
+~~START~~
+varchar#!#int
+First#!#1
+Second#!#3
+~~END~~
+
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_2 ([Col4]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col4" of relation "dest_table_2" violates not-null constraint)~~
+
+
+insert into dest_table_2 ([Col4]) values (3.333)
+go
+~~ROW COUNT: 1~~
+
+
+-- Identity column should be populated by default
+select * from dest_table_2 order by [Col3]
+go
+~~START~~
+numeric#!#smallint
+2.222#!#2
+3.333#!#6
+~~END~~
+
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_3 ([Col6]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col6" of relation "dest_table_3" violates not-null constraint)~~
+
+
+insert into dest_table_3 ([Col6]) values ('Fourth')
+go
+~~ROW COUNT: 1~~
+
+
+-- Identity column should be populated by default
+select * from dest_table_3 order by [Col5]
+go
+~~START~~
+nvarchar#!#smallint
+Third#!#3
+Fourth#!#9
+~~END~~
+
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_4 ([Col8]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col8" of relation "dest_table_4" violates not-null constraint)~~
+
+
+insert into dest_table_4 ([Col8]) values (5.5)
+go
+~~ROW COUNT: 1~~
+
+
+-- Identity column should be populated by default
+select * from dest_table_4 order by [Col7]
+go
+~~START~~
+float#!#bigint
+4.4#!#4
+5.5#!#12
+~~END~~
+
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_5 ([Col10]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col10" of relation "dest_table_5" violates not-null constraint)~~
+
+
+insert into dest_table_5 ([Col10]) values (6.789)
+go
+~~ROW COUNT: 1~~
+
+
+-- Identity column should be populated by default
+select * from dest_table_5 order by [Col9]
+go
+~~START~~
+real#!#bigint
+5.567#!#5
+6.789#!#15
+~~END~~
+
+
+drop table dest_table_1
+drop table dest_table_2
+drop table dest_table_3
+drop table dest_table_4
+drop table dest_table_5
+go
+
+drop table t1_select_into
+go
+
+drop table sch_select_into.t1_select_into
+go
+
+drop schema sch_select_into
+go
+
+use master
+go
+
+drop database db_select_into
+go
+
+drop table t1_select_into_master
+go
+
+drop table t1_select_into_master_dec
+go
+
+drop table sch_select_into_master.t1_select_into_master
+go
+
+drop schema sch_select_into_master
+go
