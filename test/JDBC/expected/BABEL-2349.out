@@ -9,7 +9,7 @@ go
 ~~START~~
 smallint#!#varchar
 0#!#<NULL>
-2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+2#!#i1_t1
 ~~END~~
 
 
@@ -18,7 +18,7 @@ go
 ~~START~~
 smallint#!#varchar
 0#!#<NULL>
-2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+2#!#i1_t1
 ~~END~~
 
 

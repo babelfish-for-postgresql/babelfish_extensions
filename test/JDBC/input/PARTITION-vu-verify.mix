@@ -393,6 +393,66 @@ GO
 SELECT * FROM PartitionSchemeContainsDuplicateIDs()
 GO
 
+sp_rename 'dbo.partition_vu_prepare_normal_table.partition_vu_prepare_normal_index', 'partition_vu_prepare_normal_index_new', 'INDEX';
+GO
+
+sp_rename 'dbo.partition_vu_prepare_int_table.partition_vu_prepare_int_index', 'partition_vu_prepare_int_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_bigint_table.partition_vu_prepare_bigint_index', 'partition_vu_prepare_bigint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallint_table.partition_vu_prepare_smallint_index', 'partition_vu_prepare_smallint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_tinyint_table.partition_vu_prepare_tinyint_index', 'partition_vu_prepare_tinyint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_decimal_table.partition_vu_prepare_decimal_index', 'partition_vu_prepare_decimal_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_numeric_table.partition_vu_prepare_numeric_index', 'partition_vu_prepare_numeric_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_money_table.partition_vu_prepare_money_index', 'partition_vu_prepare_money_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallmoney_table.partition_vu_prepare_smallmoney_index', 'partition_vu_prepare_smallmoney_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_date_table.partition_vu_prepare_date_index', 'partition_vu_prepare_date_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime_table.partition_vu_prepare_datetime_index', 'partition_vu_prepare_datetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime2_table.partition_vu_prepare_datetime2_index', 'partition_vu_prepare_datetime2_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smalldatetime_table.partition_vu_prepare_smalldatetime_index', 'partition_vu_prepare_smalldatetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_char_table.partition_vu_prepare_char_index', 'partition_vu_prepare_char_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varchar_table.partition_vu_prepare_varchar_index', 'partition_vu_prepare_varchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nvarchar_table.partition_vu_prepare_nvarchar_index', 'partition_vu_prepare_nvarchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nchar_table.partition_vu_prepare_nchar_index', 'partition_vu_prepare_nchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_binary_table.partition_vu_prepare_binary_index', 'partition_vu_prepare_binary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varbinary_table.partition_vu_prepare_varbinary_index', 'partition_vu_prepare_varbinary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_uniqueidentifier_table.partition_vu_prepare_uniqueidentifier_index', 'partition_vu_prepare_uniqueidentifier_index_new', 'INDEX';
+GO
+
 SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
 GO
 

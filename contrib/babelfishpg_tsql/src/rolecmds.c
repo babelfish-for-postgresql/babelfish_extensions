@@ -979,7 +979,7 @@ suser_name(PG_FUNCTION_ARGS)
 	server_user_id = PG_ARGISNULL(0) ? InvalidOid : PG_GETARG_OID(0);
 
 	if (server_user_id == InvalidOid)
-		server_user_id = GetSessionUserId();
+		PG_RETURN_NULL();
 
 	ret = GetUserNameFromId(server_user_id, true);
 

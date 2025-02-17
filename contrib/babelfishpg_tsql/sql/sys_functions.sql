@@ -295,7 +295,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
 AS $$
-    SELECT sys.suser_name_internal(NULL);
+    SELECT sys.suser_name_internal(suser_id());
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 

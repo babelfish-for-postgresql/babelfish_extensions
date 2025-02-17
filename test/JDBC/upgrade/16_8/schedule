@@ -437,6 +437,7 @@ TestSmallInt
 TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
+Test-spatial-functions-2
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
