@@ -6805,7 +6805,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			}
 			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
-				HeapTuple	attrtup = SearchSysCacheAttName(tle->resorigtbl, tle->resname);
+				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
 
 				if (HeapTupleIsValid(attrtup))
 				{
