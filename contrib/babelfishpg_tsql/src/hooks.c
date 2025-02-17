@@ -175,7 +175,7 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
-static Datum pltsql_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 result_typmod);
+static Datum pltsql_trunc_numeric_result(Plan *plan, Node *fn_expr, Datum result, Oid result_type, int32 result_typmod);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -1189,14 +1189,14 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
  *  for result_typmod = -1, computes the result_typmod using pltsql_exprTypmod function.
  */
 static Datum
-pltsql_trunc_numeric_result(Node *fn_expr, Datum result, Oid result_type, int32 result_typmod)
+pltsql_trunc_numeric_result(Plan *plan, Node *fn_expr, Datum result, Oid result_type, int32 result_typmod)
 {
 	int32       scale;
 
 	if (result && OidIsValid(result_type) && getBaseType(result_type) == NUMERICOID)
 	{
 		if (fn_expr != NULL && result_typmod == -1)
-			result_typmod = pltsql_exprTypmod(NULL, fn_expr);
+			result_typmod = pltsql_exprTypmod(plan, fn_expr);
 
 		if (result_typmod != -1)
 		{
@@ -5981,6 +5981,8 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 
 	if (getBaseType(expr_type) == NUMERICOID)
 	{
+		if (plan == NULL && IsA(expr, Aggref) && ((Aggref *)expr)->aggsplit == AGGSPLIT_FINAL_DESERIAL)
+			return -1;
 		/*
 		 * use get_numeric_typmod_from_exp function to get the typmod
  		 * from the expression node, when the expression type is numeric.
