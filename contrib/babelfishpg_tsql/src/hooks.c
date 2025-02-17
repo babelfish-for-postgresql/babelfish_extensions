@@ -5718,7 +5718,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
 	 *    This means already the best grantor has been selected using select_best_grantor().
 	 */
-	if (!MyProcPort->is_tds_conn ||
+	if (!IS_TDS_CONN() ||
 		sql_dialect != SQL_DIALECT_TSQL ||
 		*grantorId == ownerId ||
 		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
@@ -5756,7 +5756,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		schema_oid = get_object_namespace(&address);
 	}
 
-	if (OidIsValid(schema_oid))
+	if (OidIsValid(schema_oid) && !isTempNamespace(schema_oid))
 	{
 		/*
 		 * Don't allow if object's schema is not from current database OR
