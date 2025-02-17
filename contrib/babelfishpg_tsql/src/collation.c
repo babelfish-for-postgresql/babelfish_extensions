@@ -305,6 +305,15 @@ transform_funcexpr(Node *node)
 	return node;
 }
 
+static CollateExpr*
+create_collate_expr(Node *arg, Oid collid)
+{
+	CollateExpr *expr = makeNode(CollateExpr);
+	expr->arg = (Expr *) arg;
+	expr->collOid = collid;
+	return expr;
+}
+
 /*
  * If the node is OpExpr and the colaltion is ci_as, then
  * transform the LIKE OpExpr to ILIKE OpExpr:
@@ -333,7 +342,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 	CollateExpr *new_leftop = makeNode(CollateExpr);
-	CollateExpr *new_rightop = makeNode(CollateExpr);
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -390,16 +398,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 	{
-		/* update the leftop */
-		new_leftop->arg = linitial(op->args);
-		new_leftop->collOid = op->inputcollid;
-		linitial(op->args) = (Node*) new_leftop;
-
-		/* update the rightop */
-		new_rightop->arg = lsecond(op->args);
-		new_rightop->collOid = op->inputcollid;
-		lsecond(op->args) = (Node*) new_rightop;
-
+		/* update the collation of left and right node*/
+		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
 
@@ -416,16 +417,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
 	{
-		/* update the leftop */
-		new_leftop->arg = linitial(op->args);
-		new_leftop->collOid = op->inputcollid;
-		linitial(op->args) = (Node*) new_leftop;
-
-		/* update the rightop */
-		new_rightop->arg = lsecond(op->args);
-		new_rightop->collOid = op->inputcollid;
-		lsecond(op->args) = (Node*) new_rightop;
-
+		/* update the collation of left and right node*/
+		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
 
@@ -791,7 +785,6 @@ convert_node_to_funcexpr_for_like(Node *node, Oid colloid_of_cs_as)
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
 	newFuncExpr->funcresulttype = get_sys_varcharoid();
-	newFuncExpr->funccollid = colloid_of_cs_as;
 
 	if (node == NULL)
 		return node;
