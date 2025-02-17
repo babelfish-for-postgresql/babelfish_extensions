@@ -13,6 +13,9 @@ extract_and_classify_warnings() {
             *"snapshot"*"still active"*)
                 echo "SNAPSHOT_ACTIVE_WARNING: $line"
                 ;;
+            *"resource was not closed"*)
+                echo "LEAK_WARNING: $line"
+                ;;                
             *"leak"*)
                 echo "LEAK_WARNING: $line"
                 ;;
