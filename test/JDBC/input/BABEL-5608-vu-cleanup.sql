@@ -1,0 +1,77 @@
+-- Fix me: will be fixed with BABEL-5155
+-- -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
+-- DROP TABLE BABEL_5608_vu_prepare_t1;
+-- GO
+
+-- -- CASE 2: T_CollateExpr(T_Const) LIKE T_Const
+-- DROP TABLE BABEL_5608_vu_prepare_t2;
+-- GO
+
+-- -- CASE 3: T_CollateExpr(T_Const) LIKE T_CollateExpr(T_Const)
+-- DROP TABLE BABEL_5608_vu_prepare_t3;
+-- GO
+
+-- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
+DROP TABLE BABEL_5608_vu_prepare_t4_1;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t4_2;
+GO
+
+-- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
+DROP TABLE BABEL_5608_vu_prepare_t5_1;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t5_2;
+GO
+
+-- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
+DROP TABLE BABEL_5608_vu_prepare_t6;
+GO
+
+-- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
+DROP TABLE BABEL_5608_vu_prepare_t7_1;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t7_2;
+GO
+
+-- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
+DROP TABLE BABEL_5608_vu_prepare_t8_1;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t8_2;
+GO
+
+-- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const) AND COMBINATIONS
+DROP TABLE BABEL_5608_vu_prepare_t9_1;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_2;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_3;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_4;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_5;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_6;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_7;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t9_8;
+GO
+
+-- CASE 10: ESCAPE WITH LIKE
+DROP TABLE BABEL_5608_vu_prepare_t10;
+GO
+
+-- CASE 11: T_CoerceViaIO
+DROP TABLE BABEL_5608_vu_prepare_t11;
+GO

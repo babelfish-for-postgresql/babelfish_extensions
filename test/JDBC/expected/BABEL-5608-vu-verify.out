@@ -1,0 +1,115 @@
+
+
+
+-- Fix me: will be fixed with BABEL-5155
+-- -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
+-- INSERT INTO BABEL_5608_vu_prepare_t1 VALUES('Abc');
+-- GO
+-- -- CASE 2: T_CollateExpr(T_Const) LIKE T_Const
+-- INSERT INTO BABEL_5608_vu_prepare_t2 VALUES('Abc');
+-- GO
+-- -- CASE 3: T_CollateExpr(T_Const) LIKE T_CollateExpr(T_Const)
+-- INSERT INTO BABEL_5608_vu_prepare_t3 VALUES('Abc');
+-- GO
+-- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t4_1 VALUES ('Abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t4_2 VALUES ('Abc');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 5: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t5_1 VALUES ('Abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t5_2 VALUES ('Abc');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 6: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
+INSERT INTO BABEL_5608_vu_prepare_t6 VALUES('abc', 'ABC');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 7: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t7_1 VALUES('ABC');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t7_2 VALUES('ABC');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 8: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
+INSERT INTO BABEL_5608_vu_prepare_t8_1 VALUES('ABC');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t8_2 VALUES('ABC');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 9: T_FuncExpr LIKE T_CollateExpr(T_Const) AND COMBINATIONS
+INSERT INTO BABEL_5608_vu_prepare_t9_1 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_2 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_3 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_4 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_5 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_6 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_7 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BABEL_5608_vu_prepare_t9_8 VALUES('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 10: ESCAPE WITH LIKE
+INSERT INTO BABEL_5608_vu_prepare_t10 values('15% off');
+GO
+~~ROW COUNT: 1~~
+
+
+-- CASE 11: T_CoerceViaIO
+INSERT INTO BABEL_5608_vu_prepare_t11 values('abc');
+GO
+~~ROW COUNT: 1~~
+
