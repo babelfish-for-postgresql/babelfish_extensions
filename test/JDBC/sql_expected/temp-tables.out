@@ -478,6 +478,8 @@ GO
 SELECT * INTO #babel_5569_temp_table2 FROM babel_5569_table
 GO
 -- terminate-tsql-conn user=babel_5569_l1 password=12345678
+-- terminate-tsql-conn
+-- terminate-psql-conn
 
 -- tsql
 -- cleanup
