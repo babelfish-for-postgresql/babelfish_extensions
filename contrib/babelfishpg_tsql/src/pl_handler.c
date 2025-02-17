@@ -6724,78 +6724,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			if(tle->resname != NULL && !tle->resjunk)
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
-			if (tle->expr && IsA(tle->expr, Var))
-			{
-				HeapTuple	attrtup = SearchSysCacheAttName(tle->resorigtbl, tle->resname);
-
-				if (HeapTupleIsValid(attrtup))
-				{
-					AlterTableCmd *lcmd;
-					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
-
-					if (attrStruct->attidentity)
-					{
-						Constraint *constraint;
-						ColumnDef * def;
-
-						if (seen_identity)
-							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
-
-						seen_identity = true;
-						identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
-
-						constraint = makeNode(Constraint);
-						constraint->contype = CONSTR_IDENTITY;
-						constraint->generated_when = attrStruct->attidentity;
-						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
-
-						def = makeNode(ColumnDef);
-						def->colname = tle->resname;
-						def->typeName = typeStringToTypeName(get_oid_type_string(attrStruct->atttypid), NULL);
-						def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
-						def->is_not_null = true;
-						def->constraints = lappend(def->constraints, constraint);
-
-						/* Add alter table alter column set identity after Select Into statement */
-						if (altstmt == NULL)
-						{
-							altstmt = makeNode(AlterTableStmt);
-							altstmt->relation = into->rel;
-							altstmt->objtype = OBJECT_TABLE;
-							altstmt->cmds = NIL;
-						}
-
-						lcmd = makeNode(AlterTableCmd);
-						lcmd->subtype = AT_AddColumn;
-						lcmd->name = tle->resname;
-						lcmd->def = (Node *) def;
-						altstmt->cmds = lappend(altstmt->cmds, lcmd);
-					}
-					else if (attrStruct->attnotnull)
-					{
-						if (altstmt == NULL)
-						{
-							altstmt = makeNode(AlterTableStmt);
-							altstmt->relation = into->rel;
-							altstmt->objtype = OBJECT_TABLE;
-							altstmt->cmds = NIL;
-						}
-
-						lcmd = makeNode(AlterTableCmd);
-						lcmd->subtype = AT_SetNotNull;
-						lcmd->name = tle->resname;
-						altstmt->cmds = lappend(altstmt->cmds, lcmd);
-
-						current_resno += 1;
-						tle->resno = current_resno;
-						modifiedTargetList = lappend(modifiedTargetList, tle);
-					}
-
-					ReleaseSysCache(attrtup);
-				}
-			}
-			else if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
 				List *seqoptions = NIL;
@@ -6873,6 +6802,83 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->missing_ok = false;
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
+			}
+			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			{
+				HeapTuple	attrtup = SearchSysCacheAttName(tle->resorigtbl, tle->resname);
+
+				if (HeapTupleIsValid(attrtup))
+				{
+					AlterTableCmd *lcmd;
+					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
+					if (attrStruct->attidentity)
+					{
+						Constraint *constraint;
+						ColumnDef * def;
+
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						seen_identity = true;
+						identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_IDENTITY;
+						constraint->generated_when = attrStruct->attidentity;
+						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+
+						def = makeNode(ColumnDef);
+						def->colname = tle->resname;
+						def->typeName = typeStringToTypeName(get_oid_type_string(attrStruct->atttypid), NULL);
+						def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+						def->is_not_null = true;
+						def->constraints = lappend(def->constraints, constraint);
+
+						/* Add alter table alter column set identity after Select Into statement */
+						if (altstmt == NULL)
+						{
+							altstmt = makeNode(AlterTableStmt);
+							altstmt->relation = into->rel;
+							altstmt->objtype = OBJECT_TABLE;
+							altstmt->cmds = NIL;
+						}
+
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_AddColumn;
+						lcmd->name = tle->resname;
+						lcmd->def = (Node *) def;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+					else if (attrStruct->attnotnull)
+					{
+						if (altstmt == NULL)
+						{
+							altstmt = makeNode(AlterTableStmt);
+							altstmt->relation = into->rel;
+							altstmt->objtype = OBJECT_TABLE;
+							altstmt->cmds = NIL;
+						}
+
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_SetNotNull;
+						lcmd->name = tle->resname;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+
+						current_resno += 1;
+						tle->resno = current_resno;
+						modifiedTargetList = lappend(modifiedTargetList, tle);
+					}
+					else
+					{
+						current_resno += 1;
+						tle->resno = current_resno;
+						modifiedTargetList = lappend(modifiedTargetList, tle);
+					}
+
+					ReleaseSysCache(attrtup);
+				}
 			}
 			else
 			{
