@@ -2386,18 +2386,13 @@ object_id(PG_FUNCTION_ARGS)
 					relid = classform->oid;
 
 					/* Perform ACL check */
-					if (pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 					{
 						result = relid;
 					}
 				}
 
 				ReleaseSysCache(class_tuple);
-			}
-
-			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
-			{
-				result = relid;
 			}
 
 			if (!OidIsValid(result))	/* search only if not found earlier */
