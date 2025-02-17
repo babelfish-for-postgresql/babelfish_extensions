@@ -8,7 +8,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24247
+1
 ~~END~~
 
 
@@ -20,7 +20,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24249
+3
 ~~END~~
 
 
@@ -32,7 +32,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24251
+5
 ~~END~~
 
 
@@ -55,7 +55,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24253
+7
 ~~END~~
 
 
@@ -100,7 +100,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24255
+9
 ~~END~~
 
 
@@ -123,7 +123,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24257
+11
 ~~END~~
 
 
@@ -135,7 +135,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24259
+13
 ~~END~~
 
 
@@ -147,7 +147,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-24261
+15
 ~~END~~
 
 
@@ -163,7 +163,7 @@ SELECT @hdoc as handle;
 GO
 ~~START~~
 int
-28261
+4015
 ~~END~~
 
 
@@ -186,7 +186,7 @@ INSERT INTO sp_xml_preparedocument_HandleStore (handle_value) VALUES (@handle1);
 GO
 ~~START~~
 int
-28263
+4017
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -211,7 +211,7 @@ END CATCH;
 GO
 ~~START~~
 int
-28263
+4017
 ~~END~~
 
 
@@ -234,7 +234,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28265
+4019
 ~~END~~
 
 
@@ -261,7 +261,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28267
+4021
 ~~END~~
 
 
@@ -288,7 +288,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28269
+4023
 ~~END~~
 
 
@@ -310,7 +310,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28271
+4025
 ~~END~~
 
 
@@ -360,7 +360,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28273
+4027
 ~~END~~
 
 
@@ -372,7 +372,7 @@ EXEC sp_xml_removedocument @z;
 GO
 ~~START~~
 int
-28275
+4029
 ~~END~~
 
 
@@ -385,7 +385,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28277
+4031
 ~~END~~
 
 
@@ -397,7 +397,7 @@ EXEC sp_xml_removedocument @hdoc;
 GO
 ~~START~~
 int
-28279
+4033
 ~~END~~
 
 
