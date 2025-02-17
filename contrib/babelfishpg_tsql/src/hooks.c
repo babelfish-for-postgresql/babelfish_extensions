@@ -5756,7 +5756,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		schema_oid = get_object_namespace(&address);
 	}
 
-	if (OidIsValid(schema_oid) && !isTempNamespace(schema_oid))
+	if (OidIsValid(schema_oid) && !isTempOrTempToastNamespace(schema_oid))
 	{
 		/*
 		 * Don't allow if object's schema is not from current database OR
@@ -5801,7 +5801,7 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempNamespace(namespaceId))
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return ownerId;
 
 	if (!OidIsValid(ownerId))
@@ -5868,7 +5868,7 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempNamespace(namespaceId))
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return false;
 
 	nspname = get_namespace_name(namespaceId);
