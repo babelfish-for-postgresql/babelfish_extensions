@@ -39,6 +39,14 @@ $$;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+CREATE OR REPLACE FUNCTION sys.suser_name() 
+RETURNS sys.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name_internal(suser_id());
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
 create or replace view sys.indexes as
 -- Get all indexes from all system and user tables
 with index_id_map as MATERIALIZED(
