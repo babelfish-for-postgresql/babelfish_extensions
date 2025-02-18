@@ -1,3 +1,4 @@
+-- parallel_query_expected
 CREATE TABLE decimal_table(num decimal(5, 2));
 
 prepst#!#INSERT INTO decimal_table(num) VALUES(@a) #!#decimal|-|a|-|3|-|5|-|2

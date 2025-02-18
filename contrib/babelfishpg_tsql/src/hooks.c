@@ -185,6 +185,7 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 static Datum pltsql_trunc_numeric_result(Plan *plan, Node *fn_expr, Datum result, Oid result_type, int32 result_typmod);
+static void pltsql_ExecInitResultTypeTL(PlanState *planstate);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -273,6 +274,7 @@ static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static pltsql_trunc_numeric_result_hook_type prev_pltsql_trunc_numeric_result_hook = NULL;
+static pltsql_ExecInitResultTypeTL_hook_type prev_pltsql_ExecInitResultTypeTL_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -419,6 +421,9 @@ InstallExtendedHooks(void)
 
 	prev_pltsql_trunc_numeric_result_hook = pltsql_trunc_numeric_result_hook;
 	pltsql_trunc_numeric_result_hook = pltsql_trunc_numeric_result;
+
+	prev_pltsql_ExecInitResultTypeTL_hook = pltsql_ExecInitResultTypeTL_hook;
+	pltsql_ExecInitResultTypeTL_hook = pltsql_ExecInitResultTypeTL;
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -580,6 +585,7 @@ UninstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	pltsql_trunc_numeric_result_hook = prev_pltsql_trunc_numeric_result_hook;
+	pltsql_ExecInitResultTypeTL_hook = prev_pltsql_ExecInitResultTypeTL_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -6102,7 +6108,7 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
  		 * from the expression node, when the expression type is numeric.
 		 */ 
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
-			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr);
+			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, NULL);
 		if (result_typmod != -1)
 		{
 			/* 
@@ -6119,4 +6125,43 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 		}
 	}
 	return result_typmod;
+}
+
+void
+pltsql_ExecInitResultTypeTL(PlanState *planstate)
+{
+	TupleDesc	typeInfo;
+	ListCell   *l;
+	int			len;
+	int			cur_resno = 1;
+	List       *targetList = planstate->plan->targetlist;
+	Oid         expr_type = InvalidOid;
+	int32       expr_typmod = -1;
+
+	len = ExecTargetListLength(targetList);
+	typeInfo = CreateTemplateTupleDesc(len);
+
+	foreach(l, targetList)
+	{
+		TargetEntry *tle = lfirst(l);
+
+		expr_type = exprType((Node *) tle->expr);
+		if (getBaseType(expr_type) == NUMERICOID)
+			expr_typmod = pltsql_exprTypmod(planstate->plan, (Node *) tle->expr);
+		else
+			expr_typmod = exprTypmod((Node *) tle->expr);
+
+		TupleDescInitEntry(typeInfo,
+						   cur_resno,
+						   tle->resname,
+						   expr_type,
+						   expr_typmod,
+						   0);
+		TupleDescInitEntryCollation(typeInfo,
+									cur_resno,
+									exprCollation((Node *) tle->expr));
+		cur_resno++;
+	}
+
+	planstate->ps_ResultTupleDesc = typeInfo;
 }

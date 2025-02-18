@@ -171,7 +171,7 @@ where TABLE_NAME = 'babel_5467_t1' order by COLUMN_NAME
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_5467_t1#!#a#!#10#!#10#!#8
+master#!#dbo#!#babel_5467_t1#!#a#!#<NULL>#!#10#!#<NULL>
 master#!#dbo#!#babel_5467_t1#!#b#!#9#!#10#!#6
 master#!#dbo#!#babel_5467_t1#!#c#!#38#!#<NULL>#!#6
 master#!#dbo#!#babel_5467_t1#!#d#!#38#!#10#!#6

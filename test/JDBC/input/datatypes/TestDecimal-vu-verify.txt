@@ -1,3 +1,4 @@
+-- parallel_query_expected
 SELECT * FROM testdecimal_table1;
 
 SELECT * FROM testdecimal_table2;

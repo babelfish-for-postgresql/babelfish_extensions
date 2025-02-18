@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- Client Tests
 select count_avg = avg(convert(decimal(38,6), 10) + (convert(decimal(38,6), 2)/convert(decimal(38,6), 3)))
  , count_val = avg(cast(18 as decimal)) 
@@ -228,6 +229,36 @@ from information_schema.columns
 where TABLE_NAME = 'babel_5467_avgdata_8' order by COLUMN_NAME
 go
 
+-- Tests for aggregates
+CREATE TABLE babel_5467_t5 (id integer PRIMARY KEY, amount decimal(38,6));
+GO
+
+INSERT INTO babel_5467_t5 VALUES (1, 10);
+INSERT INTO babel_5467_t5 VALUES (2, 11);
+INSERT INTO babel_5467_t5 VALUES (3, 11);
+GO
+
+SELECT count(*), avg(amount) FROM babel_5467_t5;
+GO
+
+SELECT count(*), avg(amount) + 100 FROM babel_5467_t5;
+GO
+
+SELECT count(*), avg(amount) - 100 FROM babel_5467_t5;
+GO
+
+SELECT count(*), avg(amount) * 100 FROM babel_5467_t5;
+GO
+
+SELECT count(*), avg(amount) / 100 FROM babel_5467_t5;
+GO
+
+SELECT count(*), avg(amount) % 100 FROM babel_5467_t5;
+GO
+
+SELECT ((avg(cast(18 as decimal)) - avg(amount))/avg(amount))*100 FROM babel_5467_t5;
+GO
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -245,6 +276,7 @@ drop table babel_5467_t1
 drop table babel_5467_t2
 drop table babel_5467_t3
 drop table babel_5467_t4
+drop table babel_5467_t5
 go
 
 drop type DECIMALUDT_38_6

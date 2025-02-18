@@ -146,7 +146,7 @@ static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static bool is_numeric_cast(Oid func_oid);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
+static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno, bool *found);
 static bool is_this_a_vector_datatype(Oid oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
 static bool is_tsql_numeric_fixeddecimal(Oid oid);
@@ -427,7 +427,7 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 }
 
 static int32
-resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
+resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno, bool *found)
 {
 	ListCell	*lc;
 	int32		max_precision = 0,
@@ -438,6 +438,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 				typmod = -1,
 				result_typmod = -1;
 	List		*planlist = NIL;
+	bool        found_typmod;
 	if (IsA(plan, Append))
 	{
 		planlist = ((Append *) plan)->appendplans;
@@ -446,6 +447,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 	{
 		planlist = ((MergeAppend *) plan)->mergeplans; 
 	}
+	if (found != NULL) *found = true;
 
 	Assert(planlist != NIL);
 	foreach(lc, planlist)
@@ -463,16 +465,31 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 			Var *var = (Var *)tle->expr;
 			if (var->varno == OUTER_VAR)
 			{
-				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
+				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
 			}
 			else
 			{
-				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
 			}
 		}
 		else
 		{
-			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
+			if (!found_typmod)
+			{
+				if (found != NULL) *found = false;
+				return -1;
+			}
 		}
 		if (typmod == -1)
 			continue;
@@ -501,13 +518,25 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 }
 
 static int32
-resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
+resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno, bool *found)
 {
 	TargetEntry	*tle;
 	Plan		*outerplan = NULL;
+	int          rettypmod;
+	bool         found_typmod;
+
+	if (found != NULL) *found = true;
 
 	if (IsA(plan, Append) || IsA(plan, MergeAppend))
-		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
+	{
+		rettypmod = resolve_numeric_typmod_from_append_or_mergeappend(plan, attno, &found_typmod);
+		if (!found_typmod)
+		{
+			if (found != NULL) *found = false;
+			return -1;
+		}
+		return rettypmod;
+	}
 	else
 		outerplan = outerPlan(plan);
 
@@ -523,10 +552,22 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 		Var *var = (Var *)tle->expr;
 		if (var->varno == OUTER_VAR)
 		{
-			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
+			rettypmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno, &found_typmod);
+			if (!found_typmod)
+			{
+				if (found != NULL) *found = false;
+				return -1;
+			}
+			return rettypmod;
 		}
 	}
-	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+	rettypmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
+	if (!found_typmod)
+	{
+		if (found != NULL) *found = false;
+		return -1;
+	}
+	return rettypmod;
 }
 
 static Oid
@@ -632,10 +673,20 @@ is_numeric_datatype(Oid typid)
 }
 
 
-/* look for a typmod to return from a numeric expression */
+/* 
+ * look for a typmod to return from a numeric expression,
+ * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
+ */
 int32
-resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
+resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 {
+	/*
+	 * set found value as true by default, if we are unable to 
+	 * find the expression typmod found will be set to false.
+	 */
+	if (found != NULL)
+		*found = true;
+
 	if (expr == NULL)
 		return -1;
 	switch (nodeTag(expr))
@@ -693,12 +744,29 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_Var:
 			{
 				Var		   *var = (Var *) expr;
+				int         rettypmod;
+				bool        found_typmod;
 
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (plan != NULL && var->varno == OUTER_VAR)
+				if (var->varno == OUTER_VAR)
 				{
-					Assert(plan);
-					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+					if (plan != NULL)
+					{
+						Assert(plan);
+						rettypmod = resolve_numeric_typmod_outer_var(plan, var->varattno, &found_typmod);
+						if (!found_typmod)
+						{
+							if (found != NULL) *found = false;
+							return -1;
+						}
+						return rettypmod;
+					}
+					else
+					{
+						if (found != NULL)
+							*found = false;
+						return -1;
+					}
 				}
 				return var->vartypmod;
 			}
@@ -718,6 +786,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				uint8_t		scale,
 							precision;
 				uint8_t		integralDigitCount = 0;
+				bool        found_typmod;
 
 				/*
 				 * If one of the operands is part of aggregate function SUM()
@@ -732,8 +801,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
-					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
+					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
@@ -742,7 +821,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				else if (list_length(op->args) == 1)
 				{
 					arg1 = linitial(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = 0;
@@ -899,6 +983,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				FuncExpr   *func = (FuncExpr *) expr;
 				Oid			func_oid = InvalidOid;
 				int			rettypmod = -1;
+				bool        found_typmod;
 				Node	   *arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
@@ -928,7 +1013,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					is_numeric_cast(func_oid))
 				{
 					arg = linitial(func->args);
-					return resolve_numeric_typmod_from_exp(plan, arg);
+					rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
+					return rettypmod;
 				}
 				return rettypmod;
 			}
@@ -941,11 +1032,19 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				 */
 				NullIfExpr *nullif = (NullIfExpr *) expr;
 				Node	   *arg1;
+				bool        found_typmod;
+				int         rettypmod;
 
 				Assert(nullif->args != NIL);
 
 				arg1 = linitial(nullif->args);
-				return resolve_numeric_typmod_from_exp(plan, arg1);
+				rettypmod = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
+				return rettypmod;
 			}
 		case T_CoalesceExpr:
 			{
@@ -961,6 +1060,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 							max_integral_precision = 0,
 							scale,
 							max_scale = 0;
+				bool        found_typmod;
 
 				Assert(coale->args != NIL);
 
@@ -968,7 +1068,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				foreach(lc, coale->args)
 				{
 					arg = lfirst(lc);
-					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg);
+					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
 					/* return -1 if we fail to resolve one of the arg's typmod */
 					if (arg_typmod == -1)
 						return -1;
@@ -1001,6 +1106,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 							max_integral_precision = 0,
 							scale,
 							max_scale = 0;
+				bool        found_typmod;
 
 				Assert(case_expr->args != NIL);
 
@@ -1009,7 +1115,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
-					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result);
+					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
 
 					/*
 					 * return -1 if we fail to resolve one of the result's
@@ -1040,6 +1151,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				int32		typmod;
 				uint8_t		precision,
 							scale;
+				bool        found_typmod;
 
 				if (aggref->aggstar)
 					typmod = -1;
@@ -1048,7 +1160,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					Assert(aggref->args != NIL);
 
 					te = (TargetEntry *) linitial(aggref->args);
-					typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
+					typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
 
 					scale = (typmod - VARHDRSZ) & 0xffff;
 					precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
@@ -1095,32 +1212,62 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_PlaceHolderVar:
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
+				int             rettypmod;
+				bool            found_typmod;
 
-				return resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr);
+				rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
+				return rettypmod;
 			}
 		case T_RelabelType:
 			{
 				RelabelType *rlt = (RelabelType *) expr;
+				int          rettypmod;
+				bool         found_typmod;
 
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
 				else
-					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+				{
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
+					return rettypmod;
+				}
 			}
 		case T_CoerceToDomain:
 			{
 				/* Copied from exprTypmod. */
 				CoerceToDomain *rlt = (CoerceToDomain *) expr;
+				int          rettypmod;
+				bool         found_typmod;
 
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
 				else
-					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+				{
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
+					return rettypmod;
+				}
 			}
 		case T_SubLink:
 			{
 				/* Copied from exprTypmod. */
 				const SubLink *sublink = (const SubLink *) expr;
+				int            rettypmod;
+				bool           found_typmod;
 
 				if (sublink->subLinkType == EXPR_SUBLINK ||
 					sublink->subLinkType == ARRAY_SUBLINK)
@@ -1132,8 +1279,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
 					tent = linitial_node(TargetEntry, qtree->targetList);
-					Assert(!tent->resjunk);
-					return resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr);
+					Assert(!tent->resjunk);					
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+						return -1;
+					}
+					return rettypmod;
 					/* note we don't need to care if it's an array */
 				}
 				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
@@ -2136,7 +2289,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 									 errmsg("Internal error detected while calculating the precision of numeric expression"),
 									 errhint("plannedstmt is NULL while calculating the precision of numeric expression when it contains outer var")));
 						}
-						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr);
+						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr, NULL);
 					}
 
 					/*
