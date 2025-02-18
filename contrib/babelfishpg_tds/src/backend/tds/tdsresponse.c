@@ -723,9 +723,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				{
 					/*
 					 * This function calculates the typmod for INT4
-					 * constants. It 
-					 * converts the INT4 value to NUMERIC and then determines 
-					 * the appropriate typmod. This process ensures correct 
+					 * constants. It converts the INT4 value to NUMERIC and then
+					 * determines the appropriate typmod. This process ensures correct 
 					 * numeric precision handling in Babelfish TSQL operations.
 					 */
 					if (con->consttype == INT4OID)
@@ -734,8 +733,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						num = int64_to_numeric(val);
 						return numeric_get_typmod(num);
 					}
-					else if (plan != NULL && con->consttype == INT4OID)
-						return -1;
+
 					num = (Numeric) con->constvalue;
 					return numeric_get_typmod(num);
 				}

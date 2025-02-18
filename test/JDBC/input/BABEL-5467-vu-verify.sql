@@ -1,4 +1,3 @@
--- parallel_query_expected
 -- Client Tests
 select count_avg = avg(convert(decimal(38,6), 10) + (convert(decimal(38,6), 2)/convert(decimal(38,6), 3)))
  , count_val = avg(cast(18 as decimal)) 
