@@ -6822,7 +6822,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 						seen_identity = true;
-						identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
+						identity_ressortgroupref = tle->ressortgroupref; /* Save this Index to modify sortClause and distinctClause */
 
 						constraint = makeNode(Constraint);
 						constraint->contype = CONSTR_IDENTITY;
@@ -6836,7 +6836,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						def->is_not_null = true;
 						def->constraints = lappend(def->constraints, constraint);
 
-						/* Add alter table alter column set identity after Select Into statement */
+						/*
+						 * Add ALTER TABLE ... ADD COLUMN ... after SELECT INTO
+						 * statement where the column added is an IDENTITY column
+						 */
 						if (altstmt == NULL)
 						{
 							altstmt = makeNode(AlterTableStmt);
@@ -6853,6 +6856,10 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					}
 					else if (attrStruct->attnotnull)
 					{
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
+						 * after SELECT INTO statement
+						 */
 						if (altstmt == NULL)
 						{
 							altstmt = makeNode(AlterTableStmt);
@@ -6865,12 +6872,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						lcmd->subtype = AT_SetNotNull;
 						lcmd->name = tle->resname;
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
-
-						current_resno += 1;
-						tle->resno = current_resno;
-						modifiedTargetList = lappend(modifiedTargetList, tle);
 					}
-					else
+
+					if (!attrStruct->attidentity)
 					{
 						current_resno += 1;
 						tle->resno = current_resno;
