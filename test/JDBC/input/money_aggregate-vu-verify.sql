@@ -1,4 +1,3 @@
--- parallel_query_expected
 -- MAX()
 EXEC get_column_info_p1 'ResultTable1';
 GO
