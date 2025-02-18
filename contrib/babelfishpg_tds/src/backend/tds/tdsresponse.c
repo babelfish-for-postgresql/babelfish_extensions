@@ -723,13 +723,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				{
 					/*
 					 * This function calculates the typmod for INT4
-					 * constants when called from the babelfishpg_tsql 
-					 * extension (referred to as non-plan context). It 
+					 * constants. It 
 					 * converts the INT4 value to NUMERIC and then determines 
 					 * the appropriate typmod. This process ensures correct 
 					 * numeric precision handling in Babelfish TSQL operations.
 					 */
-					if (plan == NULL && con->consttype == INT4OID)
+					if (con->consttype == INT4OID)
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
@@ -1003,12 +1002,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				/*
 				 * If the following conditions are met then we will recursively find typmod from arg.
-				 * 1) plan == NULL means we are invoking this function during parsing phase.
-				 * 2) rettypmod == -1 means unable to find typmod till now.
-				 * 3) check if only one args and then is that castable to numeric.
+				 * 1) rettypmod == -1 means unable to find typmod till now.
+				 * 2) check if only one args and then is that castable to numeric.
 				 */
-				if (plan == NULL &&
-					rettypmod == -1 &&
+				if (rettypmod == -1 &&
 					list_length(func->args) == 1 &&
 					is_numeric_cast(func_oid))
 				{

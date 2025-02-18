@@ -6127,6 +6127,13 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	return result_typmod;
 }
 
+/*
+ * pltsql_ExecInitResultTypeTL -
+ *  Initialize result type, using the plan node's targetlist.
+ *  Following function is same as PostgreSQL ExecInitResultTypeTL() function, 
+ *  only difference is for computation of typmod for numeric expression type 
+ *  used pltsql_exprTypmod instead of exprTypmod function.
+ */
 void
 pltsql_ExecInitResultTypeTL(PlanState *planstate)
 {
@@ -6165,3 +6172,4 @@ pltsql_ExecInitResultTypeTL(PlanState *planstate)
 
 	planstate->ps_ResultTupleDesc = typeInfo;
 }
+
