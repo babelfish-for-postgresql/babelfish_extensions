@@ -1255,3 +1255,300 @@ GO
 
 Drop function exactnumeric_cast_test_bigint
 GO
+
+-- Create a UDT for each exact numeric type
+CREATE TYPE UDT_TinyInt FROM TINYINT;
+GO
+
+CREATE TYPE UDT_SmallInt FROM SMALLINT;
+GO
+
+CREATE TYPE UDT_Int FROM INT;
+GO
+
+CREATE TYPE UDT_BigInt FROM BIGINT;
+GO
+
+-- Test case function
+CREATE FUNCTION TestExactNumericUDT()
+RETURNS TABLE
+AS
+RETURN
+(
+    -- Basic Range Tests
+    SELECT 'TinyInt Min' AS Test, CAST(0 AS UDT_TinyInt) AS Result
+    UNION ALL
+    SELECT 'TinyInt Max', CAST(255 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Min', CAST(-32768 AS UDT_SmallInt)
+    UNION ALL
+    SELECT 'SmallInt Max', CAST(32767 AS UDT_SmallInt)
+    UNION ALL
+    SELECT 'Int Min', CAST(-2147483648 AS UDT_Int)
+    UNION ALL
+    SELECT 'Int Max', CAST(2147483647 AS UDT_Int)
+    UNION ALL
+    SELECT 'BigInt Min', CAST(-9223372036854775808 AS UDT_BigInt)
+    UNION ALL
+    SELECT 'BigInt Max', CAST(9223372036854775807 AS UDT_BigInt)
+
+    -- Overflow Tests
+    UNION ALL
+    SELECT 'TinyInt Overflow', TRY_CAST(256 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Overflow', TRY_CAST(32768 AS UDT_SmallInt)
+
+    -- Conversion Tests
+    UNION ALL
+    SELECT 'String to TinyInt', CAST('123' AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'Int to SmallInt', CAST(CAST(12345 AS INT) AS UDT_SmallInt)
+
+    -- Mathematical Operation Tests
+    UNION ALL
+    SELECT 'TinyInt Addition', CAST(200 AS UDT_TinyInt) + CAST(55 AS UDT_TinyInt)
+    UNION ALL
+    SELECT 'SmallInt Multiplication', CAST(100 AS UDT_SmallInt) * CAST(100 AS UDT_SmallInt)
+    UNION ALL
+	SELECT 'SmallInt Subtraction', CAST(1000 AS UDT_SmallInt) - CAST(2000 AS UDT_SmallInt)
+    UNION ALL
+	SELECT 'Int Multiplication', CAST(10000 AS UDT_Int) * CAST(10000 AS UDT_Int)
+    UNION ALL
+	SELECT 'BigInt Division', CAST(9223372036854775807 AS UDT_BigInt) / CAST(2 AS UDT_BigInt)
+
+    -- NULL Value Tests
+    UNION ALL
+    SELECT 'NULL TinyInt', CAST(NULL AS UDT_TinyInt)
+
+    -- Precision Tests
+    UNION ALL
+    SELECT 'Decimal to Int', CAST(CAST(123.45 AS DECIMAL(5,2)) AS UDT_Int)
+)
+GO
+
+-- overflow tests: error
+SELECT CAST(256 AS UDT_TinyInt);
+GO
+
+SELECT CAST(32768 AS UDT_SmallInt);
+GO
+
+SELECT CAST(2147483648 AS UDT_Int);
+GO
+
+SELECT CAST(9223372036854775808 AS UDT_BigInt);
+GO
+
+
+-- Execute the test cases
+SELECT * FROM TestExactNumericUDT();
+GO
+
+DROP FUNCTION TestExactNumericUDT;
+GO
+
+-- Assuming UDTs are already created as in the previous example
+CREATE FUNCTION ExtendedTestExactNumericUDT()
+RETURNS TABLE
+AS
+RETURN
+(
+	-- 1. Boundary Value Tests
+	SELECT 'TinyInt Boundary Low' AS Test, CAST(0 AS UDT_TinyInt) AS Result
+	UNION ALL SELECT 'TinyInt Boundary High', CAST(255 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Boundary Low', CAST(-32768 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Boundary High', CAST(32767 AS UDT_SmallInt)
+	UNION ALL SELECT 'Int Boundary Low', CAST(-2147483648 AS UDT_Int)
+	UNION ALL SELECT 'Int Boundary High', CAST(2147483647 AS UDT_Int)
+	UNION ALL SELECT 'BigInt Boundary Low', CAST(-9223372036854775808 AS UDT_BigInt)
+	UNION ALL SELECT 'BigInt Boundary High', CAST(9223372036854775807 AS UDT_BigInt)
+
+	-- 2. Just Inside Boundary Tests
+	UNION ALL SELECT 'TinyInt Just Inside Low', CAST(1 AS UDT_TinyInt)
+	UNION ALL SELECT 'TinyInt Just Inside High', CAST(254 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Just Inside Low', CAST(-32767 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Just Inside High', CAST(32766 AS UDT_SmallInt)
+
+	-- 3. Overflow Tests
+	UNION ALL SELECT 'TinyInt Overflow High', TRY_CAST(256 AS UDT_TinyInt)
+	UNION ALL SELECT 'TinyInt Overflow Low', TRY_CAST(-1 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Overflow High', TRY_CAST(32768 AS UDT_SmallInt)
+	UNION ALL SELECT 'SmallInt Overflow Low', TRY_CAST(-32769 AS UDT_SmallInt)
+
+	-- 4. Type Conversion Tests
+	UNION ALL SELECT 'String to TinyInt', TRY_CAST('123' AS UDT_TinyInt)
+	UNION ALL SELECT 'String to SmallInt', TRY_CAST('-12345' AS UDT_SmallInt)
+	UNION ALL SELECT 'String to Int', TRY_CAST('2147483647' AS UDT_Int)
+	UNION ALL SELECT 'String to BigInt', TRY_CAST('-9223372036854775808' AS UDT_BigInt)
+	UNION ALL SELECT 'Decimal to TinyInt', TRY_CAST(123.45 AS UDT_TinyInt)
+	UNION ALL SELECT 'Float to SmallInt', TRY_CAST(12345.67 AS UDT_SmallInt)
+
+	-- 5. Invalid Conversion Tests
+	UNION ALL SELECT 'Invalid String to TinyInt', TRY_CAST('ABC' AS UDT_TinyInt)
+	UNION ALL SELECT 'Invalid String to SmallInt', TRY_CAST('12345.67' AS UDT_SmallInt)
+
+	-- 6. Mathematical Operations
+	UNION ALL SELECT 'TinyInt Addition', CAST(200 AS UDT_TinyInt) + CAST(55 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Subtraction', CAST(1000 AS UDT_SmallInt) - CAST(2000 AS UDT_SmallInt)
+	UNION ALL SELECT 'Int Multiplication', CAST(10000 AS UDT_Int) * CAST(10000 AS UDT_Int)
+	UNION ALL SELECT 'BigInt Division', CAST(9223372036854775807 AS UDT_BigInt) / CAST(2 AS UDT_BigInt)
+
+	-- 7. Mathematical Operation Overflow Tests
+	UNION ALL SELECT 'TinyInt Addition Overflow', TRY_CAST((CAST(200 AS UDT_TinyInt) + CAST(100 AS UDT_TinyInt)) AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Multiplication Overflow', TRY_CAST((CAST(1000 AS UDT_Int) * CAST(1000 AS UDT_Int)) AS UDT_SmallInt)
+
+	-- 8. NULL Value Tests
+	UNION ALL SELECT 'NULL TinyInt', CAST(NULL AS UDT_TinyInt)
+	UNION ALL SELECT 'NULL SmallInt', CAST(NULL AS UDT_SmallInt)
+	UNION ALL SELECT 'NULL Int', CAST(NULL AS UDT_Int)
+	UNION ALL SELECT 'NULL BigInt', CAST(NULL AS UDT_BigInt)
+
+	-- 9. NULL in Mathematical Operations
+	UNION ALL SELECT 'TinyInt Plus NULL', CAST(100 AS UDT_TinyInt) + CAST(NULL AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Multiply NULL', CAST(100 AS UDT_SmallInt) * CAST(NULL AS UDT_SmallInt)
+
+	-- 10. Precision Tests
+	UNION ALL SELECT 'Decimal to Int Rounding', CAST(CAST(123.45 AS DECIMAL(5,2)) AS UDT_Int)
+	UNION ALL SELECT 'Decimal to SmallInt Rounding', CAST(CAST(123.55 AS DECIMAL(5,2)) AS UDT_SmallInt)
+
+	-- 11. Comparison Tests
+	UNION ALL SELECT 'SmallInt Comparison', CASE WHEN CAST(-1000 AS UDT_SmallInt) < CAST(1000 AS UDT_SmallInt) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'TinyInt Comparison', CASE WHEN CAST(100 AS UDT_TinyInt) > CAST(50 AS UDT_TinyInt) THEN 1 ELSE 0 END
+
+	-- 12. Bitwise Operation Tests
+	UNION ALL SELECT 'TinyInt Bitwise AND', CAST(240 AS UDT_TinyInt) & CAST(15 AS UDT_TinyInt)
+	UNION ALL SELECT 'SmallInt Bitwise OR', CAST(240 AS UDT_SmallInt) | CAST(15 AS UDT_SmallInt)
+
+	-- 13. Aggregate Function Tests
+	UNION ALL SELECT 'TinyInt SUM', (SELECT SUM(CAST(n AS UDT_TinyInt)) FROM (VALUES(1),(2),(3)) AS T(n))
+	UNION ALL SELECT 'SmallInt AVG', (SELECT AVG(CAST(n AS UDT_SmallInt)) FROM (VALUES(1000),(-1000),(0)) AS T(n))
+)
+GO
+
+-- Execute the extended test cases
+SELECT * FROM ExtendedTestExactNumericUDT();
+GO
+
+drop function ExtendedTestExactNumericUDT;
+GO
+
+-- Drop the UDTs
+DROP TYPE UDT_TinyInt;
+GO
+
+DROP TYPE UDT_SmallInt;
+GO
+
+DROP TYPE UDT_Int;
+GO
+
+DROP TYPE UDT_BigInt;
+GO
+
+CREATE FUNCTION ExtendedOperationTestsExactNumeric()
+RETURNS TABLE
+AS
+RETURN
+(
+	-- 1. Arithmetic Operators
+	SELECT 'TinyInt + SmallInt' AS Test, CAST(254 AS TINYINT) -+CAST(1 AS SMALLINT) AS Result
+	UNION ALL SELECT 'SmallInt - Int', CAST(32767 AS SMALLINT) - CAST(1 AS INT)
+	UNION ALL SELECT 'Int * BigInt', CAST(2147483647 AS INT) * CAST(2 AS BIGINT)
+	UNION ALL SELECT 'BigInt / TinyInt', CAST(9223372036854775807 AS BIGINT) / CAST(255 AS TINYINT)
+	UNION ALL SELECT 'TinyInt % SmallInt', CAST(255 AS TINYINT) % CAST(100 AS SMALLINT)
+
+	-- 2. Bitwise Operators
+	UNION ALL SELECT 'TinyInt & SmallInt', CAST(255 AS TINYINT) & CAST(15 AS SMALLINT)
+	UNION ALL SELECT 'SmallInt | Int', CAST(32767 AS SMALLINT) | CAST(1 AS INT)
+	UNION ALL SELECT 'Int ^ BigInt', CAST(2147483647 AS INT) ^ CAST(1 AS BIGINT)
+	UNION ALL SELECT 'BigInt ~ (Bitwise NOT)', ~CAST(9223372036854775807 AS BIGINT)
+
+	-- 3. Comparison Operators
+	UNION ALL SELECT 'TinyInt = SmallInt', CASE WHEN CAST(255 AS TINYINT) = CAST(255 AS SMALLINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt <> Int', CASE WHEN CAST(32767 AS SMALLINT) <> CAST(32767 AS INT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'Int < BigInt', CASE WHEN CAST(2147483647 AS INT) < CAST(9223372036854775807 AS BIGINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'BigInt > TinyInt', CASE WHEN CAST(9223372036854775807 AS BIGINT) > CAST(255 AS TINYINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'TinyInt <= SmallInt', CASE WHEN CAST(255 AS TINYINT) <= CAST(32767 AS SMALLINT) THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt >= Int', CASE WHEN CAST(32767 AS SMALLINT) >= CAST(-2147483648 AS INT) THEN 1 ELSE 0 END
+
+	-- 4. Logical Operators
+	UNION ALL SELECT 'TinyInt AND SmallInt', CASE WHEN CAST(255 AS TINYINT) > 0 AND CAST(32767 AS SMALLINT) > 0 THEN 1 ELSE 0 END
+	UNION ALL SELECT 'SmallInt OR Int', CASE WHEN CAST(0 AS SMALLINT) > 0 OR CAST(2147483647 AS INT) > 0 THEN 1 ELSE 0 END
+	UNION ALL SELECT 'Int NOT', CASE WHEN NOT (CAST(0 AS INT) > 0) THEN 1 ELSE 0 END
+
+	-- 5. Unary Operators
+	UNION ALL SELECT 'TinyInt +', +CAST(255 AS TINYINT)
+	UNION ALL SELECT 'SmallInt -', -CAST(32767 AS SMALLINT)
+	UNION ALL SELECT 'Int ~', ~CAST(2147483647 AS INT)
+	UNION ALL SELECT 'BigInt Unary -', -CAST(9223372036854775807 AS BIGINT)
+
+	-- 6. Overflow Tests
+	UNION ALL SELECT 'Overflow TinyInt + SmallInt', TRY_CAST((CAST(255 AS TINYINT) + CAST(1 AS SMALLINT)) AS TINYINT)
+	UNION ALL SELECT 'Overflow SmallInt * Int', TRY_CAST((CAST(32767 AS SMALLINT) * CAST(2 AS INT)) AS SMALLINT)
+	UNION ALL SELECT 'Overflow Int + BigInt', TRY_CAST((CAST(2147483647 AS INT) + CAST(1 AS BIGINT)) AS INT)
+
+	-- 7. NULL Handling
+	UNION ALL SELECT 'NULL TinyInt + SmallInt', CAST(NULL AS TINYINT) + CAST(1 AS SMALLINT)
+	UNION ALL SELECT 'SmallInt * NULL Int', CAST(32767 AS SMALLINT) * CAST(NULL AS INT)
+	UNION ALL SELECT 'NULL BigInt / TinyInt', CAST(NULL AS BIGINT) / CAST(255 AS TINYINT)
+)
+GO
+
+-- Execute the extended operation tests
+SELECT * FROM ExtendedOperationTestsExactNumeric();
+GO
+
+DROP function ExtendedOperationTestsExactNumeric;
+GO
+
+
+-- Compound Operators
+-- TinyInt += SmallInt
+DECLARE @t TINYINT = 254;
+SET @t += CAST(1 AS SMALLINT);
+SELECT 'TinyInt += SmallInt' AS Test, @t AS Result;
+GO
+
+-- SmallInt -= Int
+DECLARE @s SMALLINT = 32767;
+SET @s -= CAST(1 AS INT);
+SELECT 'SmallInt -= Int' AS Test, @s AS Result;
+GO
+
+-- Int *= BigInt
+DECLARE @i INT = 1073741824;
+SET @i *= CAST(2 AS BIGINT);
+SELECT 'Int *= BigInt' AS Test, @i AS Result;
+GO
+
+-- BigInt /= TinyInt
+DECLARE @b BIGINT = 9223372036854775807;
+SET @b /= CAST(2 AS TINYINT);
+SELECT 'BigInt /= TinyInt' AS Test, @b AS Result;
+GO
+
+-- TinyInt %= SmallInt
+DECLARE @t2 TINYINT = 255;
+SET @t2 %= CAST(100 AS SMALLINT);
+SELECT 'TinyInt %= SmallInt' AS Test, @t2 AS Result;
+GO
+
+-- Logical Operators
+SELECT 'BigInt XOR TinyInt' AS Test,
+	CASE 
+		WHEN ((CAST(1 AS BIGINT) > 0) AND NOT (CAST(0 AS TINYINT) > 0)) 
+			OR (NOT (CAST(1 AS BIGINT) > 0) AND (CAST(0 AS TINYINT) > 0))
+		THEN 1 
+		ELSE 0 
+	END AS Result;
+GO
+
+SELECT (CAST(255 AS TINYINT) + CAST(32767 AS SMALLINT)) * CAST(2 AS INT);
+GO
+
+SELECT (CAST(2147483647 AS INT) / CAST(255 AS TINYINT)) - CAST(32767 AS SMALLINT);
+GO
+
+SELECT CAST(9223372036854775807 AS BIGINT) % (CAST(32767 AS SMALLINT) * CAST(255 AS TINYINT))
+GO
+
