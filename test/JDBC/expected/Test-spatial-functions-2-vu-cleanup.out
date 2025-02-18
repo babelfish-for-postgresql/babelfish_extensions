@@ -1,0 +1,45 @@
+USE TestGeospatialMethods_DB 
+
+DROP TABLE TestGeospatialMethods_YourTable1Temp 
+
+DROP TABLE TestGeospatialMethods_YourTable3Temp 
+
+USE MASTER 
+
+DROP TABLE TestGeospatialMethods_YourTable2Temp 
+
+DROP TABLE TestGeospatialMethods_TableATemp 
+
+DROP TABLE TestGeospatialMethods_TableBTemp 
+
+DROP VIEW TestGeospatialMethods_ValFromGeomTemp 
+
+DROP VIEW TestGeospatialMethods_TextFromGeogTemp 
+
+DROP VIEW TestGeospatialMethods_point_intersect1Temp 
+
+DROP VIEW TestGeospatialMethods_disjointTemp 
+
+DROP VIEW TestGeospatialMethods_point_intersectTemp 
+
+DROP VIEW TestGeospatialMethods_point_disjointTemp 
+
+DROP TABLE TestGeospatialMethods_YourTableTemp 
+
+DROP VIEW TestGeospatialMethods_valid_ValFromGeomTemp 
+
+DROP VIEW TestGeospatialMethods_valid_TextFromGeogTemp 
+
+DROP VIEW TestGeospatialMethods_closed_ValFromGeomTemp 
+
+DROP VIEW TestGeospatialMethods_closed_TextFromGeogTemp 
+
+DROP VIEW TestGeospatialMethods_empty_ValFromGeomTemp 
+
+DROP VIEW TestGeospatialMethods_empty_TextFromGeomTemp 
+
+DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp 
+
+DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
+
+DROP DATABASE TestGeospatialMethods_DB 

@@ -51,8 +51,8 @@ isdbCollationMode = false
 # Where to find the input, output, expected, etc.
 testFileRoot = ./
 
-# WHETHER TEST RUN MODE IS UPGRADE TEST RUN
-isUpgradeTestMode = false
-
 # Default SLA in milliseconds
 defaultSLA = 40000
+
+# WHETHER THE CONNECTION SHOULD BE ALLOWED TO RESET AFTER EACH TEST OR CLOSED AFTER EACH TEST
+allowConnectionReset = true
