@@ -130,8 +130,11 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
     sql/$(EXTENSION)--4.3.0--4.4.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=4.3.0 -D CUR_VERSION=4.4.0 $< | sed 's/^# /-- /g' > $@
 
-    sql/$(EXTENSION)--4.4.0--5.0.0.sql: sql/upgrades/babelfishpg_upgrades.in
-		cpp -D PREV_VERSION=4.4.0 -D CUR_VERSION=5.0.0 $< | sed 's/^# /-- /g' > $@
+    sql/$(EXTENSION)--4.4.0--4.5.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=4.4.0 -D CUR_VERSION=4.5.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--4.5.0--5.0.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=4.5.0 -D CUR_VERSION=5.0.0 $< | sed 's/^# /-- /g' > $@
 
     sql/$(EXTENSION)--5.0.0--5.1.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=5.0.0 -D CUR_VERSION=5.1.0 $< | sed 's/^# /-- /g' > $@
@@ -162,8 +165,11 @@ else
     sql/$(EXTENSION)--4.3.0--4.4.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.3.0 -D CUR_VERSION=4.4.0 $< | sed 's/^# /-- /g' > $@
 
-    sql/$(EXTENSION)--4.4.0--5.0.0.sql: sql/upgrades/babelfishpg_upgrades.in
-		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.4.0 -D CUR_VERSION=5.0.0 $< | sed 's/^# /-- /g' > $@
+    sql/$(EXTENSION)--4.4.0--4.5.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.4.0 -D CUR_VERSION=4.5.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--4.5.0--5.0.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.5.0 -D CUR_VERSION=5.0.0 $< | sed 's/^# /-- /g' > $@
 
     sql/$(EXTENSION)--5.0.0--5.1.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=5.0.0 -D CUR_VERSION=5.1.0 $< | sed 's/^# /-- /g' > $@
