@@ -513,6 +513,7 @@ SELECT * FROM BINARY_dt order by a;
 GO
 
 select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfvarbinarymax';
+GO
 
 DROP TABLE BINARY_dt
 GO
@@ -542,6 +543,7 @@ SELECT * FROM BINARY_dt order by a;
 GO
 
 select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfvarbinary10';
+GO
 
 DROP TABLE BINARY_dt
 GO
@@ -571,9 +573,520 @@ SELECT * FROM BINARY_dt order by a;
 GO
 
 select typtypmod, (select typname from pg_type where oid = t.typbasetype) from pg_type t where typname = 'udfbinary10';
+GO
 
 DROP TABLE BINARY_dt
 GO
 
 DROP TYPE udfbinary10
+GO
+
+-- Create a test table
+CREATE TABLE BinaryCastingDemo (
+    ID INT IDENTITY(1,1),
+    Description VARCHAR(100),
+    SourceType VARCHAR(50),
+    BinaryValue VARBINARY(MAX),
+    BinaryFixed BINARY(10),
+    BinarySmall VARBINARY(10)
+);
+GO
+
+-- CHAR and VARCHAR to Binary
+INSERT INTO BinaryCastingDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall)
+VALUES
+    ('Empty string', 'VARCHAR', CAST('' AS VARBINARY(MAX)), CAST('' AS BINARY(10)), CAST('' AS VARBINARY(10))),
+    ('NULL value', 'VARCHAR', CAST(NULL AS VARBINARY(MAX)), CAST(NULL AS BINARY(10)), CAST(NULL AS VARBINARY(10))),
+    ('Simple text', 'VARCHAR', CAST('Hello' AS VARBINARY(MAX)), CAST('Hello' AS BINARY(10)), CAST('Hello' AS VARBINARY(10))),
+    ('Long text', 'VARCHAR', CAST('ThisIsALongText' AS VARBINARY(MAX)), CAST('ThisIsALong' AS BINARY(10)), CAST('ThisIsALong' AS VARBINARY(10)));
+GO
+
+-- NCHAR and NVARCHAR to Binary
+INSERT INTO BinaryCastingDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall)
+VALUES
+    ('Unicode text', 'NVARCHAR', CAST(N'Hello文' AS VARBINARY(MAX)), CAST(N'Hello文' AS BINARY(10)), CAST(N'Hello文' AS VARBINARY(10))),
+    ('Unicode null', 'NVARCHAR', CAST(NULL AS VARBINARY(MAX)), CAST(NULL AS BINARY(10)), CAST(NULL AS VARBINARY(10)));
+GO
+
+-- Direct Binary Input
+INSERT INTO BinaryCastingDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall)
+VALUES
+    ('Hex input', 'image', cast(0x48656C6C6F as image), cast(0x48656C6C6F as image), cast(0x48656C6C6F as image)),
+    ('Empty binary', 'image', cast(0x as image), cast(0x as image), cast(0x as image));
+GO
+
+-- Query results
+SELECT 
+    ID,
+    Description,
+    SourceType,
+    BinaryValue,
+    BinaryFixed,
+    BinarySmall,
+    DATALENGTH(BinaryValue) AS BinaryValueLength,
+    DATALENGTH(BinaryFixed) AS BinaryFixedLength,
+    DATALENGTH(BinarySmall) AS BinarySmallLength
+FROM BinaryCastingDemo;
+GO
+
+-- Cleanup
+DROP TABLE BinaryCastingDemo;
+GO
+
+-- Create test table
+CREATE TABLE DateTimeToBinaryDemo (
+    ID INT IDENTITY(1,1),
+    Description VARCHAR(100),
+    SourceType VARCHAR(50),
+    BinaryValue VARBINARY(MAX),
+    BinaryFixed BINARY(10),
+    BinarySmall VARBINARY(8),
+    OriginalValue VARCHAR(50)
+);
+GO
+
+-- DATETIME conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('DateTime Regular', 'DATETIME', 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(8)),
+    '2024-01-15 14:30:00'),
+
+    ('DateTime NULL', 'DATETIME', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    'NULL'),
+
+    ('DateTime Min', 'DATETIME', 
+    CAST('1753-01-01 00:00:00' AS VARBINARY(MAX)), 
+    CAST('1753-01-01 00:00:00' AS BINARY(10)), 
+    CAST('1753-01-01 00:00:00' AS VARBINARY(8)),
+    '1753-01-01 00:00:00'),
+
+    ('DateTime Max', 'DATETIME', 
+    CAST('9999-12-31 23:59:59.997' AS VARBINARY(MAX)), 
+    CAST('9999-12-31 23:59:59.997' AS BINARY(10)), 
+    CAST('9999-12-31 23:59:59.997' AS VARBINARY(8)),
+    '9999-12-31 23:59:59.997');
+GO
+
+-- SMALLDATETIME conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('SmallDateTime Regular', 'SMALLDATETIME', 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(8)),
+    '2024-01-15 14:30:00'),
+
+    ('SmallDateTime Min', 'SMALLDATETIME', 
+    CAST('1900-01-01 00:00:00' AS VARBINARY(MAX)), 
+    CAST('1900-01-01 00:00:00' AS BINARY(10)), 
+    CAST('1900-01-01 00:00:00' AS VARBINARY(8)),
+    '1900-01-01 00:00:00');
+GO
+
+-- DATE conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Date Regular', 'DATE', 
+    CAST('2024-01-15' AS VARBINARY(MAX)), 
+    CAST('2024-01-15' AS BINARY(10)), 
+    CAST('2024-01-15' AS VARBINARY(8)),
+    '2024-01-15'),
+
+    ('Date Min', 'DATE', 
+    CAST('0001-01-01' AS VARBINARY(MAX)), 
+    CAST('0001-01-01' AS BINARY(10)), 
+    CAST('0001-01-01' AS VARBINARY(8)),
+    '0001-01-01');
+GO
+
+-- TIME conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Time Regular', 'TIME', 
+    CAST('14:30:00' AS VARBINARY(MAX)), 
+    CAST('14:30:00' AS BINARY(10)), 
+    CAST('14:30:00' AS VARBINARY(8)),
+    '14:30:00'),
+
+    ('Time With Milliseconds', 'TIME', 
+    CAST('14:30:00.1234567' AS VARBINARY(MAX)), 
+    CAST('14:30:00.1234567' AS BINARY(10)), 
+    CAST('14:30:00.1234567' AS VARBINARY(8)),
+    '14:30:00.1234567');
+GO
+
+-- DATETIMEOFFSET conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('DateTimeOffset Regular', 'DATETIMEOFFSET', 
+    CAST('2024-01-15 14:30:00 +00:00' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00 +00:00' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00 +00:00' AS VARBINARY(8)),
+    '2024-01-15 14:30:00 +00:00'),
+
+    ('DateTimeOffset With TZ', 'DATETIMEOFFSET', 
+    CAST('2024-01-15 14:30:00 -08:00' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00 -08:00' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00 -08:00' AS VARBINARY(8)),
+    '2024-01-15 14:30:00 -08:00');
+GO
+
+-- DATETIME2 conversions
+INSERT INTO DateTimeToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('DateTime2 Regular', 'DATETIME2', 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00' AS VARBINARY(8)),
+    '2024-01-15 14:30:00'),
+
+    ('DateTime2 With Precision', 'DATETIME2', 
+    CAST('2024-01-15 14:30:00.1234567' AS VARBINARY(MAX)), 
+    CAST('2024-01-15 14:30:00.1234567' AS BINARY(10)), 
+    CAST('2024-01-15 14:30:00.1234567' AS VARBINARY(8)),
+    '2024-01-15 14:30:00.1234567');
+GO
+
+-- Query results
+SELECT 
+    ID,
+    Description,
+    SourceType,
+    BinaryValue,
+    CONVERT(VARCHAR(100), BinaryValue, 1) AS BinaryValueHex,
+    BinaryFixed,
+    CONVERT(VARCHAR(100), BinaryFixed, 1) AS BinaryFixedHex,
+    BinarySmall,
+    CONVERT(VARCHAR(100), BinarySmall, 1) AS BinarySmallHex,
+    OriginalValue,
+    DATALENGTH(BinaryValue) AS BinaryValueLength,
+    DATALENGTH(BinaryFixed) AS BinaryFixedLength,
+    DATALENGTH(BinarySmall) AS BinarySmallLength
+FROM DateTimeToBinaryDemo
+ORDER BY ID;
+GO
+
+-- Cleanup
+DROP TABLE DateTimeToBinaryDemo;
+GO
+
+-- Create test table
+CREATE TABLE NumericToBinaryDemo (
+    ID INT IDENTITY(1,1),
+    Description VARCHAR(100),
+    SourceType VARCHAR(50),
+    BinaryValue VARBINARY(MAX),
+    BinaryFixed BINARY(10),
+    BinarySmall VARBINARY(8),
+    OriginalValue VARCHAR(50)
+);
+GO
+
+-- DECIMAL/NUMERIC conversions
+INSERT INTO NumericToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Decimal Regular', 'DECIMAL(18,2)', 
+    CAST(123456.78 AS VARBINARY(MAX)), 
+    CAST(123456.78 AS BINARY(10)), 
+    CAST(123456.78 AS VARBINARY(8)),
+    cast('123456.78' as DECIMAL(18,2))),
+
+    ('Decimal Zero', 'DECIMAL(18,2)', 
+    CAST(0.00 AS VARBINARY(MAX)), 
+    CAST(0.00 AS BINARY(10)), 
+    CAST(0.00 AS VARBINARY(8)),
+    cast('0.00' as DECIMAL(18,2))),
+
+    ('Decimal NULL', 'DECIMAL(18,2)', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    cast('NULL' as DECIMAL(18,2))),
+
+    ('Decimal Large', 'DECIMAL(18,2)', 
+    CAST(999999999999.99 AS VARBINARY(MAX)), 
+    CAST(999999999999.99 AS BINARY(10)), 
+    CAST(999999999999.99 AS VARBINARY(8)),
+    cast('999999999999.99' as DECIMAL(18,2)));
+
+    ('Decimal Regular', 'NUMERIC(18,2)', 
+    CAST(123456.78 AS VARBINARY(MAX)), 
+    CAST(123456.78 AS BINARY(10)), 
+    CAST(123456.78 AS VARBINARY(8)),
+    cast('123456.78' as NUMERIC(18,2))),
+
+    ('Decimal Zero', 'NUMERIC(18,2)', 
+    CAST(0.00 AS VARBINARY(MAX)), 
+    CAST(0.00 AS BINARY(10)), 
+    CAST(0.00 AS VARBINARY(8)),
+    cast('0.00' as NUMERIC(18,2))),
+
+    ('Decimal NULL', 'NUMERIC(18,2)', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    cast('NULL' as NUMERIC(18,2))),
+
+    ('Decimal Large', 'NUMERIC(18,2)', 
+    CAST(999999999999.99 AS VARBINARY(MAX)), 
+    CAST(999999999999.99 AS BINARY(10)), 
+    CAST(999999999999.99 AS VARBINARY(8)),
+    cast('999999999999.99' as NUMERIC(18,2)));
+GO
+
+-- FLOAT/REAL conversions
+INSERT INTO NumericToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Float Regular', 'FLOAT', 
+    CAST(CAST(123.456 AS FLOAT) AS VARBINARY(MAX)), 
+    CAST(CAST(123.456 AS FLOAT) AS BINARY(10)), 
+    CAST(CAST(123.456 AS FLOAT) AS VARBINARY(8)),
+    '123.456'),
+
+    ('Real Regular', 'REAL', 
+    CAST(CAST(123.456 AS REAL) AS VARBINARY(MAX)), 
+    CAST(CAST(123.456 AS REAL) AS BINARY(10)), 
+    CAST(CAST(123.456 AS REAL) AS VARBINARY(8)),
+    '123.456'),
+
+    ('Float Scientific', 'FLOAT', 
+    CAST(CAST(1.23456E+10 AS FLOAT) AS VARBINARY(MAX)), 
+    CAST(CAST(1.23456E+10 AS FLOAT) AS BINARY(10)), 
+    CAST(CAST(1.23456E+10 AS FLOAT) AS VARBINARY(8)),
+    '1.23456E+10');
+GO
+
+-- Integer types conversions
+INSERT INTO NumericToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('BigInt Max', 'BIGINT', 
+    CAST(9223372036854775807 AS VARBINARY(MAX)), 
+    CAST(9223372036854775807 AS BINARY(10)), 
+    CAST(9223372036854775807 AS VARBINARY(8)),
+    '9223372036854775807'),
+
+    ('Int Regular', 'INT', 
+    CAST(2147483647 AS VARBINARY(MAX)), 
+    CAST(2147483647 AS BINARY(10)), 
+    CAST(2147483647 AS VARBINARY(8)),
+    '2147483647'),
+
+    ('SmallInt Regular', 'SMALLINT', 
+    CAST(32767 AS VARBINARY(MAX)), 
+    CAST(32767 AS BINARY(10)), 
+    CAST(32767 AS VARBINARY(8)),
+    '32767'),
+
+    ('TinyInt Regular', 'TINYINT', 
+    CAST(255 AS VARBINARY(MAX)), 
+    CAST(255 AS BINARY(10)), 
+    CAST(255 AS VARBINARY(8)),
+    '255'),
+
+    ('Integer Zero', 'INT', 
+    CAST(0 AS VARBINARY(MAX)), 
+    CAST(0 AS BINARY(10)), 
+    CAST(0 AS VARBINARY(8)),
+    '0'),
+
+    ('Integer Negative', 'INT', 
+    CAST(-12345 AS VARBINARY(MAX)), 
+    CAST(-12345 AS BINARY(10)), 
+    CAST(-12345 AS VARBINARY(8)),
+    '-12345');
+GO
+
+-- MONEY/SMALLMONEY conversions
+INSERT INTO NumericToBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Money Regular', 'MONEY', 
+    CAST(CAST(123456.78 AS MONEY) AS VARBINARY(MAX)), 
+    CAST(CAST(123456.78 AS MONEY) AS BINARY(10)), 
+    CAST(CAST(123456.78 AS MONEY) AS VARBINARY(8)),
+    '$123456.78'),
+
+    ('Money Regular', 'MONEY', 
+    CAST(CAST($123456.78 AS MONEY) AS VARBINARY(MAX)), 
+    CAST(CAST($123456.78 AS MONEY) AS BINARY(10)), 
+    CAST(CAST($123456.78 AS MONEY) AS VARBINARY(8)),
+    '$123456.78'),
+
+    ('SmallMoney Regular', 'SMALLMONEY', 
+    CAST(CAST(123456.78 AS SMALLMONEY) AS VARBINARY(MAX)), 
+    CAST(CAST(123456.78 AS SMALLMONEY) AS BINARY(10)), 
+    CAST(CAST(123456.78 AS SMALLMONEY) AS VARBINARY(8)),
+    '$123456.78'),
+
+    ('SmallMoney Regular', 'SMALLMONEY', 
+    CAST(CAST($123456.78 AS SMALLMONEY) AS VARBINARY(MAX)), 
+    CAST(CAST($123456.78 AS SMALLMONEY) AS BINARY(10)), 
+    CAST(CAST($123456.78 AS SMALLMONEY) AS VARBINARY(8)),
+    '$123456.78'),
+
+    ('Money Zero', 'MONEY', 
+    CAST(CAST(0.00 AS MONEY) AS VARBINARY(MAX)), 
+    CAST(CAST(0.00 AS MONEY) AS BINARY(10)), 
+    CAST(CAST(0.00 AS MONEY) AS VARBINARY(8)),
+    '$0.00'),
+
+    ('Money Negative', 'MONEY', 
+    CAST(CAST(-123456.78 AS MONEY) AS VARBINARY(MAX)), 
+    CAST(CAST(-123456.78 AS MONEY) AS BINARY(10)), 
+    CAST(CAST(-123456.78 AS MONEY) AS VARBINARY(8)),
+    '-$123456.78');
+GO
+
+-- Query results
+SELECT *
+FROM NumericToBinaryDemo
+ORDER BY ID;
+GO
+
+-- Cleanup
+DROP TABLE NumericToBinaryDemo;
+GO
+
+-- Create test table
+CREATE TABLE SpecialTypesBinaryDemo (
+    ID INT IDENTITY(1,1),
+    Description VARCHAR(100),
+    SourceType VARCHAR(50),
+    BinaryValue VARBINARY(MAX),
+    BinaryFixed BINARY(10),
+    BinarySmall VARBINARY(8),
+    OriginalValue VARCHAR(MAX)
+);
+GO
+
+-- BIT conversions
+INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('Bit True', 'BIT', 
+    CAST(1 AS VARBINARY(MAX)), 
+    CAST(1 AS BINARY(10)), 
+    CAST(1 AS VARBINARY(8)),
+    '1'),
+
+    ('Bit False', 'BIT', 
+    CAST(0 AS VARBINARY(MAX)), 
+    CAST(0 AS BINARY(10)), 
+    CAST(0 AS VARBINARY(8)),
+    '0'),
+
+    ('Bit NULL', 'BIT', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    'NULL');
+GO
+
+-- UNIQUEIDENTIFIER conversions
+INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('GUID Regular', 'UNIQUEIDENTIFIER', 
+    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(MAX)), 
+    CAST('12345678-1234-1234-1234-123456789012' AS BINARY(10)), 
+    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(8)),
+    '12345678-1234-1234-1234-123456789012'),
+
+    ('GUID NULL', 'UNIQUEIDENTIFIER', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    'NULL'),
+
+    ('GUID Zero', 'UNIQUEIDENTIFIER', 
+    CAST('00000000-0000-0000-0000-000000000000' AS VARBINARY(MAX)), 
+    CAST('00000000-0000-0000-0000-000000000000' AS BINARY(10)), 
+    CAST('00000000-0000-0000-0000-000000000000' AS VARBINARY(8)),
+    '00000000-0000-0000-0000-000000000000');
+GO
+
+-- SQL_VARIANT conversions
+INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('SQL_VARIANT with INT', 'SQL_VARIANT', 
+    CAST(CAST(12345 AS SQL_VARIANT) AS VARBINARY(MAX)), 
+    CAST(CAST(12345 AS SQL_VARIANT) AS BINARY(10)), 
+    CAST(CAST(12345 AS SQL_VARIANT) AS VARBINARY(8)),
+    '12345'),
+
+    ('SQL_VARIANT with VARCHAR', 'SQL_VARIANT', 
+    CAST(CAST('Test String' AS SQL_VARIANT) AS VARBINARY(MAX)), 
+    CAST(CAST('Test String' AS SQL_VARIANT) AS BINARY(10)), 
+    CAST(CAST('Test String' AS SQL_VARIANT) AS VARBINARY(8)),
+    'Test String'),
+
+    ('SQL_VARIANT NULL', 'SQL_VARIANT', 
+    CAST(CAST(NULL AS SQL_VARIANT) AS VARBINARY(MAX)), 
+    CAST(CAST(NULL AS SQL_VARIANT) AS BINARY(10)), 
+    CAST(CAST(NULL AS SQL_VARIANT) AS VARBINARY(8)),
+    'NULL');
+GO
+
+-- XML conversions
+DECLARE @xml XML = '<root><item>Test XML Data</item></root>';
+DECLARE @xmlLarge XML = '<root>' + REPLICATE('<item>Large XML Data</item>', 10) + '</root>';
+
+INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('XML Simple', 'XML', 
+    CAST(@xml AS VARBINARY(MAX)), 
+    CAST(@xml AS BINARY(10)), 
+    CAST(@xml AS VARBINARY(8)),
+    CAST(@xml AS NVARCHAR(MAX))),
+
+    ('XML Large', 'XML', 
+    CAST(@xmlLarge AS VARBINARY(MAX)), 
+    CAST(@xmlLarge AS BINARY(10)), 
+    CAST(@xmlLarge AS VARBINARY(8)),
+    CAST(@xmlLarge AS NVARCHAR(MAX))),
+
+    ('XML NULL', 'XML', 
+    CAST(CAST(NULL AS XML) AS VARBINARY(MAX)), 
+    CAST(CAST(NULL AS XML) AS BINARY(10)), 
+    CAST(CAST(NULL AS XML) AS VARBINARY(8)),
+    'NULL');
+GO
+
+-- JSON conversions (note: JSON is stored as NVARCHAR)
+DECLARE @json NVARCHAR(MAX) = N'{"id": 1, "name": "Test JSON"}';
+DECLARE @jsonLarge NVARCHAR(MAX) = N'{"items": [' + 
+    REPLICATE('{"id": 1, "value": "Large JSON Data"},', 10) + 
+    '{"id": 2, "value": "Last Item"}]}';
+
+INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
+VALUES
+    ('JSON Simple', 'JSON', 
+    CAST(@json AS VARBINARY(MAX)), 
+    CAST(@json AS BINARY(10)), 
+    CAST(@json AS VARBINARY(8)),
+    @json),
+
+    ('JSON Large', 'JSON', 
+    CAST(@jsonLarge AS VARBINARY(MAX)), 
+    CAST(@jsonLarge AS BINARY(10)), 
+    CAST(@jsonLarge AS VARBINARY(8)),
+    @jsonLarge),
+
+    ('JSON NULL', 'JSON', 
+    CAST(NULL AS VARBINARY(MAX)), 
+    CAST(NULL AS BINARY(10)), 
+    CAST(NULL AS VARBINARY(8)),
+    'NULL');
+GO
+
+-- Query results
+SELECT *
+FROM SpecialTypesBinaryDemo
+ORDER BY ID;
+
+-- Cleanup
+DROP TABLE SpecialTypesBinaryDemo;
 GO
