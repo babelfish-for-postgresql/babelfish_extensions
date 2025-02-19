@@ -1,0 +1,123 @@
+GO
+
+-- tsql
+SELECT * INTO t FROM generate_series(1,1000000)
+go
+
+-- psql
+ANALYZE master_dbo.t
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+-- tsql
+set BABELFISH_STATISTICS PROFILE on
+GO
+
+-- tsql
+SELECT COUNT(*) FROM t
+go
+~~START~~
+int
+1000000
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM t
+Finalize Aggregate (actual rows=1 loops=1)
+  ->  Gather (actual rows=5 loops=1)
+        Workers Planned: 4
+        Workers Launched: 4
+        ->  Partial Aggregate (actual rows=1 loops=5)
+              ->  Parallel Seq Scan on t (actual rows=200000 loops=5)
+~~END~~
+
+
+-- tsql
+SET ROWCOUNT 20
+GO
+
+-- tsql
+SELECT COUNT(*) FROM t
+go
+~~START~~
+int
+1000000
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) FROM t
+Finalize Aggregate (actual rows=1 loops=1)
+  ->  Gather (actual rows=5 loops=1)
+        Workers Planned: 4
+        Workers Launched: 4
+        ->  Partial Aggregate (actual rows=1 loops=5)
+              ->  Parallel Seq Scan on t (actual rows=200000 loops=5)
+~~END~~
+
+
+-- tsql
+SELECT * FROM t
+go
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM t
+Gather (actual rows=20 loops=1)
+  Workers Planned: 4
+  Workers Launched: 4
+  ->  Parallel Seq Scan on t (actual rows=5 loops=5)
+~~END~~
+
+
+-- tsql
+set BABELFISH_STATISTICS PROFILE off
+GO
+
+-- tsql
+DROP TABLE t;
+go

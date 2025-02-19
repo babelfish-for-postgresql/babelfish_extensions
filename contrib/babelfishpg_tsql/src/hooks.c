@@ -181,6 +181,7 @@ static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid o
  *****************************************/
 static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
+static void pltsql_ExecutePlan(QueryDesc *queryDesc, bool use_parallel_mode, uint64 *numberTuples);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
@@ -261,6 +262,7 @@ static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutePlan_hook_type prev_ExecutePlan = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
@@ -384,6 +386,9 @@ InstallExtendedHooks(void)
 
 	prev_ExecutorRun = ExecutorRun_hook;
 	ExecutorRun_hook = pltsql_ExecutorRun;
+
+	prev_ExecutePlan = ExecutePlan_hook;
+	ExecutePlan_hook = pltsql_ExecutePlan;
 
 	prev_ExecutorFinish = ExecutorFinish_hook;
 	ExecutorFinish_hook = pltsql_ExecutorFinish;
@@ -1050,15 +1055,23 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		return;
 	}
 
-	if ((count == 0 || (count > pltsql_rowcount && pltsql_rowcount != 0))
-		 && queryDesc->operation == CMD_SELECT
-		 && sql_dialect == SQL_DIALECT_TSQL)
-		count = pltsql_rowcount;
+	// if ((count == 0 || (count > pltsql_rowcount && pltsql_rowcount != 0))
+	// 	 && queryDesc->operation == CMD_SELECT
+	// 	 && sql_dialect == SQL_DIALECT_TSQL)
+	// 	count = pltsql_rowcount;
 
 	if (prev_ExecutorRun)
 		prev_ExecutorRun(queryDesc, direction, count, execute_once);
 	else
 		standard_ExecutorRun(queryDesc, direction, count, execute_once);
+}
+
+static void
+pltsql_ExecutePlan(QueryDesc *queryDesc, bool use_parallel_mode, uint64 *numberTuples)
+{
+		if ((*numberTuples == 0 || (*numberTuples > pltsql_rowcount && pltsql_rowcount != 0)) &&
+			queryDesc->operation == CMD_SELECT)
+		*numberTuples = pltsql_rowcount;
 }
 
 static void

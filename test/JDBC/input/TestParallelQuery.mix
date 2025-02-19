@@ -1,0 +1,44 @@
+-- parallel_query_expected
+GO
+
+-- tsql
+SELECT * INTO t FROM generate_series(1,1000000)
+go
+
+-- psql
+ANALYZE master_dbo.t
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+GO
+
+-- tsql
+set BABELFISH_STATISTICS PROFILE on
+GO
+
+-- tsql
+SELECT COUNT(*) FROM t
+go
+
+-- tsql
+SET ROWCOUNT 20
+GO
+
+-- tsql
+SELECT COUNT(*) FROM t
+go
+
+-- tsql
+SELECT * FROM t
+go
+
+-- tsql
+set BABELFISH_STATISTICS PROFILE off
+GO
+
+-- tsql
+DROP TABLE t;
+go
