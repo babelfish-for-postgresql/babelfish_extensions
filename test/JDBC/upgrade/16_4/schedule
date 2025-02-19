@@ -531,7 +531,7 @@ BABEL-4707
 BABEL_4817
 upper_lower
 BABEL-4641-before-16_5-or-15_9
-trim-before-15_11-or-16_7
+trim-before-15_12-or-16_8
 ltrim
 rtrim
 left
@@ -585,4 +585,4 @@ securityadmin_role
 datareader_datawriter
 test_conv_money_to_varchar
 fixeddecimal_modulo
-test_conv_float_to_varchar_char_before_17_3
+test_conv_float_to_varchar_char_before_17_4

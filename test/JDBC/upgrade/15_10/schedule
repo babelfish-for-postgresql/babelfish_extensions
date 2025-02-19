@@ -524,7 +524,7 @@ babel_4328_datetimeoffset
 BABEL-3401
 babel_726
 upper_lower
-trim-before-15_11-or-16_7
+trim-before-15_12-or-16_8
 ltrim
 rtrim
 left
@@ -559,4 +559,4 @@ smalldatetime_date_cmp
 cast_nvarchar_test_before_16_5
 test_conv_money_to_varchar
 fixeddecimal_modulo
-test_conv_float_to_varchar_char_before_17_3
+test_conv_float_to_varchar_char_before_17_4
