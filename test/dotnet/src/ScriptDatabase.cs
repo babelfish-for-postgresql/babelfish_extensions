@@ -4,6 +4,7 @@ using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Common;
 using System.Collections.Specialized;
 using Microsoft.SqlServer.Management.Sdk.Sfc;
+using System.Text.RegularExpressions;
 
 namespace BabelfishDotnetFramework
 {
@@ -43,7 +44,8 @@ public class DatabaseScripter
 					NoCollation = true
 				}
 			};
-
+			testUtils.PrintToLogsOrConsole("Calling ScriptLogins...", logger, "debug");
+            ScriptLogins(server, scripter, testName, testUtils, logger);
 			ScriptDatabaseObjects(database, scripter, flag, testName, testUtils, logger);
 		}
 		catch (Exception ex)
@@ -52,6 +54,51 @@ public class DatabaseScripter
 		}
 	}
 
+	private static void ScriptLogins(Server server, Scripter scripter, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
+	{
+		const string loginFileName = "LoginScripts_";
+		string currentUser = server.ConnectionContext.TrueLogin;
+		var logins = server.Logins.Cast<Login>()
+			.Where(l => !l.IsSystemObject && l.Name != currentUser)
+			.ToList();
+
+		if (!logins.Any())
+		{
+			testUtils.PrintToLogsOrConsole("No user-defined logins found.", logger, "information");
+			return;
+		}
+
+		foreach (Login login in logins)
+		{
+			try
+			{
+				testUtils.PrintToLogsOrConsole($"\nScripting Login: {login.Name}", logger, "information");
+				StringCollection loginScripts = scripter.Script(new Urn[] { login.Urn });
+
+				for (int i = 0; i < loginScripts.Count; i++)
+				{
+					loginScripts[i] = Regex.Replace(loginScripts[i], @"PASSWORD=N?'[^']+'", m =>
+					{
+						string passwordValue = m.Value.Substring(m.Value.IndexOf("'") + 1, m.Value.LastIndexOf("'") - m.Value.IndexOf("'") - 1);
+						return "PASSWORD='" + new string('*', passwordValue.Length) + "'";
+					});
+
+					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*/\*.*?\*/\s*$", "");
+					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*--.*$", "");
+					loginScripts[i] = Regex.Replace(loginScripts[i], @",\s*SID=0x[0-9A-F]+", "");
+				}
+
+				// **Write login scripts to a separate output file**
+				testUtils.ResultSetWriter(loginScripts, testName);
+			}
+			catch (Exception ex)
+			{
+				testUtils.PrintToLogsOrConsole($"Could not script login {login.Name}: {ex.Message}", logger, "warning");
+			}
+		}
+	}
+
+	
 	private static void ScriptDatabaseObjects(Database database, Scripter scripter, string flag, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
 		const string sys_schema = "sys";
