@@ -162,7 +162,8 @@ WITH ColumnLengths AS (
 )
 SELECT COLUMN_NAME, ColumnLength
 FROM ColumnLengths
-WHERE ColumnLength % 2 = 0;
+WHERE ColumnLength % 2 = 0
+ORDER BY 1;
 GO
 
 -- Using COL_LENGTH() in expressions
