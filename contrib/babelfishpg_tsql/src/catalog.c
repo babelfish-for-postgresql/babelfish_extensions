@@ -3817,7 +3817,8 @@ update_privileges_of_object(const char *schema_name,
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
-							const char *grantee)
+							const char *grantee,
+							const char *object_type)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3831,7 +3832,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 
 	if (grantee != NULL)
 	{
-		ScanKeyData	scanKey[4];
+		ScanKeyData	scanKey[5];
 		/* Immediately return false, if grantee is PUBLIC. */
 		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 			return false;
@@ -3863,13 +3864,20 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(grantee));
+		ScanKeyEntryInitialize(&scanKey[4], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 4, scanKey);
+					true, NULL, 5, scanKey);
 	}
 	else
 	{
-		ScanKeyData	scanKey[3];
+		ScanKeyData	scanKey[4];
 		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 										AccessShareLock);
 		ScanKeyInit(&scanKey[0],
@@ -3890,10 +3898,17 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&scanKey[3], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 3, scanKey);
+					true, NULL, 4, scanKey);
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
@@ -4056,7 +4071,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
