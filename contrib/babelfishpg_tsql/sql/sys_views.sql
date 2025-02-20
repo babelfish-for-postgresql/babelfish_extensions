@@ -3299,7 +3299,6 @@ JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLAT
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
 
-
 CREATE OR REPLACE VIEW sys.server_permissions 
 AS
 SELECT
@@ -3309,7 +3308,7 @@ SELECT
   CAST(NULL as INT) AS minor_id,
   CAST(NULL as INT) AS grantee_principal_id,
   CAST(NULL as INT) AS grantor_principal_id,
-  CAST('a' as CHAR(4)) AS type,
+  CAST(NULL as CHAR(4)) AS type,
   CAST(NULL as nvarchar(128)) AS permission_name,
   CAST(NULL as CHAR(1)) AS state,
   CAST(NULL as nvarchar(60)) AS state_desc
@@ -3349,7 +3348,6 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
-
 
 CREATE OR REPLACE VIEW sys.trigger_events
 AS

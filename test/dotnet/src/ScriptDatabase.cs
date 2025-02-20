@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace BabelfishDotnetFramework
 {
-public class DatabaseScripter
+public class LoginDatabaseScripter
 {
 	public static void ScriptDatabase(string strLine, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
@@ -44,8 +44,7 @@ public class DatabaseScripter
 					NoCollation = true
 				}
 			};
-			testUtils.PrintToLogsOrConsole("Calling ScriptLogins...", logger, "debug");
-            ScriptLogins(server, scripter, testName, testUtils, logger);
+
 			ScriptDatabaseObjects(database, scripter, flag, testName, testUtils, logger);
 		}
 		catch (Exception ex)
@@ -54,9 +53,24 @@ public class DatabaseScripter
 		}
 	}
 
-	private static void ScriptLogins(Server server, Scripter scripter, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
+	public static void ScriptLogins(string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
-		const string loginFileName = "LoginScripts_";
+		ServerConnection serverConnection = new ServerConnection(ConfigSetup.BblUrl);
+		serverConnection.LoginSecure = false;
+		serverConnection.Login = ConfigSetup.BblUser;
+		serverConnection.Password = ConfigSetup.BblPasswd;
+
+		// Create a Server object
+		Server server = new Server(serverConnection);
+		Scripter scripter = new Scripter(server)
+		{
+			Options = {
+				DriAll = true,
+				ScriptSchema = true,
+				ScriptData = false,
+				NoCollation = true
+			}
+		};
 		string currentUser = server.ConnectionContext.TrueLogin;
 		var logins = server.Logins.Cast<Login>()
 			.Where(l => !l.IsSystemObject && l.Name != currentUser)
@@ -79,16 +93,15 @@ public class DatabaseScripter
 				{
 					loginScripts[i] = Regex.Replace(loginScripts[i], @"PASSWORD=N?'[^']+'", m =>
 					{
+						// Replace password with asterisks
 						string passwordValue = m.Value.Substring(m.Value.IndexOf("'") + 1, m.Value.LastIndexOf("'") - m.Value.IndexOf("'") - 1);
 						return "PASSWORD='" + new string('*', passwordValue.Length) + "'";
 					});
-
+					// Remove comments
 					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*/\*.*?\*/\s*$", "");
 					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*--.*$", "");
 					loginScripts[i] = Regex.Replace(loginScripts[i], @",\s*SID=0x[0-9A-F]+", "");
 				}
-
-				// **Write login scripts to a separate output file**
 				testUtils.ResultSetWriter(loginScripts, testName);
 			}
 			catch (Exception ex)
@@ -97,7 +110,6 @@ public class DatabaseScripter
 			}
 		}
 	}
-
 	
 	private static void ScriptDatabaseObjects(Database database, Scripter scripter, string flag, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
