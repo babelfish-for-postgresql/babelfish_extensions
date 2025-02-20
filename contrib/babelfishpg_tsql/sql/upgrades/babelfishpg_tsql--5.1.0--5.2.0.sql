@@ -402,7 +402,7 @@ $$ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE VIEW sys.server_permissions 
 AS
 SELECT
-  CAST(0 as tinyint) AS class,
+  CAST(0 as sys.tinyint) AS class,
   CAST(NULL as nvarchar(60)) AS class_desc,
   CAST(NULL as INT) AS major_id,
   CAST(NULL as INT) AS minor_id,
