@@ -3303,15 +3303,15 @@ CREATE OR REPLACE VIEW sys.server_permissions
 AS
 SELECT
   CAST(0 as sys.tinyint) AS class,
-  CAST(NULL as nvarchar(60)) AS class_desc,
+  CAST(NULL as sys.nvarchar(60)) AS class_desc,
   CAST(NULL as INT) AS major_id,
   CAST(NULL as INT) AS minor_id,
   CAST(NULL as INT) AS grantee_principal_id,
   CAST(NULL as INT) AS grantor_principal_id,
   CAST(NULL as CHAR(4)) AS type,
-  CAST(NULL as nvarchar(128)) AS permission_name,
+  CAST(NULL as sys.nvarchar(128)) AS permission_name,
   CAST(NULL as CHAR(1)) AS state,
-  CAST(NULL as nvarchar(60)) AS state_desc
+  CAST(NULL as sys.nvarchar(60)) AS state_desc
 WHERE FALSE;
 GRANT SELECT ON sys.server_permissions TO PUBLIC;
 
@@ -3320,10 +3320,10 @@ AS
 SELECT
   CAST(NULL as INT) AS credential_id,
   CAST(NULL as sys.sysname) AS name,
-  CAST(NULL as nvarchar(4000)) AS credential_identity,
+  CAST(NULL as sys.nvarchar(4000)) AS credential_identity,
   CAST(NULL as sys.datetime) AS create_date,
   CAST(NULL as sys.datetime) AS modify_date,
-  CAST(NULL as nvarchar(100)) AS target_type,
+  CAST(NULL as sys.nvarchar(100)) AS target_type,
   CAST(NULL as INT) AS target_id
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
@@ -3334,7 +3334,7 @@ SELECT
     CAST(NULL as INT) AS principal_id,
     CAST(NULL as sys.VARBINARY(85)) AS sid,
     CAST(NULL as CHAR(1)) AS type,
-    CAST(NULL as nvarchar(60)) AS type_desc,
+    CAST(NULL as sys.nvarchar(60)) AS type_desc,
     CAST(NULL as INT) AS is_disabled,
     CAST(NULL as sys.DATETIME) AS create_date,
     CAST(NULL as sys.DATETIME) AS modify_date,
