@@ -2538,6 +2538,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool 				with_recompile = false;
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
+					HeapTuple 			proctup;
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2619,13 +2620,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectId = oldoid;
 						originalFunc.classId = ProcedureRelationId;
 						originalFunc.objectSubId = 0;
-						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
+						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
+						if (!HeapTupleIsValid(proctup))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+										errmsg("cache lookup failed for procedure %u", oldoid)));
+						}
+						if (get_bbf_function_tuple_from_proctuple(proctup) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-									errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
+									(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+										errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
 						}
+						ReleaseSysCache(proctup);
+
 						if(!cfs->is_procedure)
 						{
 							/*
