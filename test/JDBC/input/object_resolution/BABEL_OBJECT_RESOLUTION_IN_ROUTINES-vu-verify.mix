@@ -447,3 +447,35 @@ BEGIN
     SELECT * FROM #temp;
 END;
 GO
+
+/*************************************************************************************/
+/******************************** INTEROPERABILITY ***********************************/
+/*************************************************************************************/
+
+-- tsql
+USE master
+GO
+
+-- plpgsql function call outside any procedure or function
+SELECT babel_5448_plpgsql_func();
+GO
+
+-- tsql database=babel_5448_db
+USE babel_5448_db
+GO
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+EXEC master.babel_5448_s1.babel_5448_p15
+GO
+
+SELECT master.babel_5448_s1.babel_5448_f5();
+
+CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+EXEC babel_5448_s1.babel_5448_p15
+GO
+DROP TABLE #temp_babel_5448;
+GO
+
+SELECT babel_5448_s1.babel_5448_f5();
+GO

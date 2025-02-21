@@ -604,3 +604,56 @@ AS
     SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
     SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
 GO
+
+
+-- psql
+/*************************************************************************************/
+/******************************** INTEROPERABILITY ***********************************/
+/*************************************************************************************/
+CREATE FUNCTION master_dbo.babel_5448_plpgsql_func()
+RETURNS TEXT
+AS
+$$ BEGIN return current_setting('search_path'); END; $$
+LANGUAGE plpgsql;
+GO
+
+-- tsql
+CREATE PROCEDURE babel_5448_s1.babel_5448_p15
+AS
+    CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+    DROP TABLE #temp_babel_5448;
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f5() RETURNS NVARCHAR(MAX) AS
+BEGIN
+    return (SELECT babel_5448_plpgsql_func())
+END;
+GO
+
+-- same as previous but temp table will be created in another database and used inside this proc
+USE babel_5448_db
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p15
+AS
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT master.dbo.babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f5() RETURNS NVARCHAR(MAX) AS
+BEGIN
+    return (SELECT master.dbo.babel_5448_plpgsql_func())
+END;
+GO

@@ -1525,3 +1525,129 @@ varchar#!#nvarchar#!#varchar
  |-- view in -- babel_5448_db.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
 ~~END~~
 
+
+
+-- tsql
+/*************************************************************************************/
+/******************************** INTEROPERABILITY ***********************************/
+/*************************************************************************************/
+USE master
+GO
+
+-- plpgsql function call outside any procedure or function
+SELECT babel_5448_plpgsql_func();
+GO
+~~START~~
+text
+master_dbo, master_dbo, sys, pg_catalog
+~~END~~
+
+
+-- tsql database=babel_5448_db
+USE babel_5448_db
+GO
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+EXEC master.babel_5448_s1.babel_5448_p15
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+master_babel_5448_s1, master_dbo, sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+master_babel_5448_s1, master_dbo, sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+
+
+SELECT master.babel_5448_s1.babel_5448_f5();
+CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar
+master_babel_5448_s1, master_dbo, sys, pg_catalog
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+EXEC babel_5448_s1.babel_5448_p15
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+babel_5448_db_babel_5448_s1, babel_5448_db_dbo, sys, pg_catalog
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- babel_5448_db.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+DROP TABLE #temp_babel_5448;
+GO
+
+SELECT babel_5448_s1.babel_5448_f5();
+GO
+~~START~~
+nvarchar
+babel_5448_db_babel_5448_s1, babel_5448_db_dbo, sys, pg_catalog
+~~END~~
+
