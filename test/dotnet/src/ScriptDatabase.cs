@@ -82,6 +82,13 @@ public class LoginDatabaseScripter
 			return;
 		}
 
+		
+		// Precompile regex patterns
+		Regex passwordRegex = new Regex(@"N?'(.*?)'", RegexOptions.Compiled);
+		Regex commentBlockRegex = new Regex(@"(?m)^\s*/\*.*?\*/\s*$", RegexOptions.Compiled);
+		Regex singleLineCommentRegex = new Regex(@"(?m)^\s*--.*$", RegexOptions.Compiled);
+		Regex sidRegex = new Regex(@",\s*SID=0x[0-9A-F]+", RegexOptions.Compiled);
+
 		foreach (Login login in logins)
 		{
 			try
@@ -91,16 +98,13 @@ public class LoginDatabaseScripter
 
 				for (int i = 0; i < loginScripts.Count; i++)
 				{
-					loginScripts[i] = Regex.Replace(loginScripts[i], @"PASSWORD=N?'[^']+'", m =>
-					{
-						// Replace password with asterisks
-						string passwordValue = m.Value.Substring(m.Value.IndexOf("'") + 1, m.Value.LastIndexOf("'") - m.Value.IndexOf("'") - 1);
-						return "PASSWORD='" + new string('*', passwordValue.Length) + "'";
-					});
-					// Remove comments
-					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*/\*.*?\*/\s*$", "");
-					loginScripts[i] = Regex.Replace(loginScripts[i], @"(?m)^\s*--.*$", "");
-					loginScripts[i] = Regex.Replace(loginScripts[i], @",\s*SID=0x[0-9A-F]+", "");
+					// replace password with equal length * 
+					loginScripts[i] = passwordRegex.Replace(loginScripts[i], match => 
+                    "'" + new string('*', match.Groups[1].Value.Length) + "'");
+					// remove comments
+					loginScripts[i] = commentBlockRegex.Replace(loginScripts[i], "");
+					loginScripts[i] = singleLineCommentRegex.Replace(loginScripts[i], "");
+					loginScripts[i] = sidRegex.Replace(loginScripts[i], "");
 				}
 				testUtils.ResultSetWriter(loginScripts, testName);
 			}
