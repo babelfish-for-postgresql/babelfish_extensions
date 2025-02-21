@@ -5515,6 +5515,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
+	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
 	int16		saved_dbid = get_cur_db_id();
 
 	create_queryEnv2(CacheMemoryContext, false);
@@ -5628,6 +5629,10 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		/* reset db context must always be the last line in this block */
 		if (get_cur_db_id() != saved_dbid)
 			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
+		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
+			&& !IsAbortedTransactionBlockState())
+			SetConfigOption("search_path", saved_search_path,
+							PGC_SUSET, PGC_S_SESSION);
 	}
 	PG_FINALLY();
 	{
