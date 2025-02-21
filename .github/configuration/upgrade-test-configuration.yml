@@ -189,7 +189,7 @@ upgrade-version: [{
       upgrade-type: major
     },
     {
-      version: '15.11',
+      version: '15.12',
       upgrade-type: major
     },
     { 
