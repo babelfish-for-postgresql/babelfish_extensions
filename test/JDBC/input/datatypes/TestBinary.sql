@@ -813,7 +813,7 @@ VALUES
     CAST(999999999999.99 AS VARBINARY(MAX)), 
     CAST(999999999999.99 AS BINARY(10)), 
     CAST(999999999999.99 AS VARBINARY(8)),
-    cast('999999999999.99' as DECIMAL(18,2)));
+    cast('999999999999.99' as DECIMAL(18,2))),
 
     ('Decimal Regular', 'NUMERIC(18,2)', 
     CAST(123456.78 AS VARBINARY(MAX)), 
@@ -968,21 +968,21 @@ GO
 INSERT INTO SpecialTypesBinaryDemo (Description, SourceType, BinaryValue, BinaryFixed, BinarySmall, OriginalValue)
 VALUES
     ('Bit True', 'BIT', 
-    CAST(1 AS VARBINARY(MAX)), 
-    CAST(1 AS BINARY(10)), 
-    CAST(1 AS VARBINARY(8)),
+    CAST(cast(1 as bit) AS VARBINARY(MAX)), 
+    CAST(cast(1 as bit) AS BINARY(10)), 
+    CAST(cast(1 as bit) AS VARBINARY(8)),
     '1'),
 
     ('Bit False', 'BIT', 
-    CAST(0 AS VARBINARY(MAX)), 
-    CAST(0 AS BINARY(10)), 
-    CAST(0 AS VARBINARY(8)),
+    CAST(cast(0 as bit) AS VARBINARY(MAX)), 
+    CAST(cast(0 as bit) AS BINARY(10)), 
+    CAST(cast(0 as bit) AS VARBINARY(8)),
     '0'),
 
     ('Bit NULL', 'BIT', 
-    CAST(NULL AS VARBINARY(MAX)), 
-    CAST(NULL AS BINARY(10)), 
-    CAST(NULL AS VARBINARY(8)),
+    CAST(cast(NULL as bit) AS VARBINARY(MAX)), 
+    CAST(cast(NULL as bit) AS BINARY(10)), 
+    CAST(cast(NULL as bit) AS VARBINARY(8)),
     'NULL');
 GO
 
@@ -1089,4 +1089,980 @@ ORDER BY ID;
 
 -- Cleanup
 DROP TABLE SpecialTypesBinaryDemo;
+GO
+
+-- Create table to store test results
+CREATE TABLE BinaryOperatorTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    LeftOperand VARBINARY(100),
+    RightOperand VARBINARY(100),
+    EqualResult BIT,
+    NotEqualResult BIT,
+    GreaterThanResult BIT,
+    LessThanResult BIT,
+    GreaterEqualResult BIT,
+    LessEqualResult BIT
+);
+GO
+
+-- Test Case 1: Simple binary values
+DECLARE @bin1 VARBINARY(10) = 0x0A;
+DECLARE @bin2 VARBINARY(10) = 0x0B;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'Simple Binary Compare (0x0A vs 0x0B)',
+    @bin1,
+    @bin2,
+    CASE WHEN @bin1 = @bin2 THEN 1 ELSE 0 END,
+    CASE WHEN @bin1 <> @bin2 THEN 1 ELSE 0 END,
+    CASE WHEN @bin1 > @bin2 THEN 1 ELSE 0 END,
+    CASE WHEN @bin1 < @bin2 THEN 1 ELSE 0 END,
+    CASE WHEN @bin1 >= @bin2 THEN 1 ELSE 0 END,
+    CASE WHEN @bin1 <= @bin2 THEN 1 ELSE 0 END;
+GO
+
+-- Test Case 2: Equal values
+DECLARE @bin3 VARBINARY(10) = 0x0A;
+DECLARE @bin4 VARBINARY(10) = 0x0A;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'Equal Binary Values (0x0A vs 0x0A)',
+    @bin3,
+    @bin4,
+    CASE WHEN @bin3 = @bin4 THEN 1 ELSE 0 END,
+    CASE WHEN @bin3 <> @bin4 THEN 1 ELSE 0 END,
+    CASE WHEN @bin3 > @bin4 THEN 1 ELSE 0 END,
+    CASE WHEN @bin3 < @bin4 THEN 1 ELSE 0 END,
+    CASE WHEN @bin3 >= @bin4 THEN 1 ELSE 0 END,
+    CASE WHEN @bin3 <= @bin4 THEN 1 ELSE 0 END;
+GO
+
+-- Test Case 3: Different lengths
+DECLARE @bin5 VARBINARY(10) = 0x0A0B;
+DECLARE @bin6 VARBINARY(10) = 0x0A;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'Different Lengths (0x0A0B vs 0x0A)',
+    @bin5,
+    @bin6,
+    CASE WHEN @bin5 = @bin6 THEN 1 ELSE 0 END,
+    CASE WHEN @bin5 <> @bin6 THEN 1 ELSE 0 END,
+    CASE WHEN @bin5 > @bin6 THEN 1 ELSE 0 END,
+    CASE WHEN @bin5 < @bin6 THEN 1 ELSE 0 END,
+    CASE WHEN @bin5 >= @bin6 THEN 1 ELSE 0 END,
+    CASE WHEN @bin5 <= @bin6 THEN 1 ELSE 0 END;
+GO
+
+-- Test Case 4: Zero and non-zero
+DECLARE @bin7 VARBINARY(10) = 0x00;
+DECLARE @bin8 VARBINARY(10) = 0x01;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'Zero vs Non-Zero (0x00 vs 0x01)',
+    @bin7,
+    @bin8,
+    CASE WHEN @bin7 = @bin8 THEN 1 ELSE 0 END,
+    CASE WHEN @bin7 <> @bin8 THEN 1 ELSE 0 END,
+    CASE WHEN @bin7 > @bin8 THEN 1 ELSE 0 END,
+    CASE WHEN @bin7 < @bin8 THEN 1 ELSE 0 END,
+    CASE WHEN @bin7 >= @bin8 THEN 1 ELSE 0 END,
+    CASE WHEN @bin7 <= @bin8 THEN 1 ELSE 0 END;
+GO
+
+-- Test Case 5: NULL comparison
+DECLARE @bin9 VARBINARY(10) = 0x0A;
+DECLARE @bin10 VARBINARY(10) = NULL;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'NULL Comparison (0x0A vs NULL)',
+    @bin9,
+    @bin10,
+    CASE WHEN @bin9 = @bin10 THEN 1 WHEN @bin9 <> @bin10 THEN 0 ELSE NULL END,
+    CASE WHEN @bin9 <> @bin10 THEN 1 WHEN @bin9 = @bin10 THEN 0 ELSE NULL END,
+    CASE WHEN @bin9 > @bin10 THEN 1 WHEN @bin9 <= @bin10 THEN 0 ELSE NULL END,
+    CASE WHEN @bin9 < @bin10 THEN 1 WHEN @bin9 >= @bin10 THEN 0 ELSE NULL END,
+    CASE WHEN @bin9 >= @bin10 THEN 1 WHEN @bin9 < @bin10 THEN 0 ELSE NULL END,
+    CASE WHEN @bin9 <= @bin10 THEN 1 WHEN @bin9 > @bin10 THEN 0 ELSE NULL END;
+GO
+
+-- Test Case 6: Larger values
+DECLARE @bin11 VARBINARY(10) = 0xFFFF;
+DECLARE @bin12 VARBINARY(10) = 0x0001;
+
+INSERT INTO BinaryOperatorTests (
+    TestDescription, 
+    LeftOperand, 
+    RightOperand,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult,
+    GreaterEqualResult,
+    LessEqualResult
+)
+SELECT 
+    'Large Value Compare (0xFFFF vs 0x0001)',
+    @bin11,
+    @bin12,
+    CASE WHEN @bin11 = @bin12 THEN 1 ELSE 0 END,
+    CASE WHEN @bin11 <> @bin12 THEN 1 ELSE 0 END,
+    CASE WHEN @bin11 > @bin12 THEN 1 ELSE 0 END,
+    CASE WHEN @bin11 < @bin12 THEN 1 ELSE 0 END,
+    CASE WHEN @bin11 >= @bin12 THEN 1 ELSE 0 END,
+    CASE WHEN @bin11 <= @bin12 THEN 1 ELSE 0 END;
+GO
+
+-- Display results
+SELECT 
+    TestID,
+    TestDescription,
+    LeftOperand,
+    RightOperand,
+    CASE WHEN EqualResult = 1 THEN 'True' 
+         WHEN EqualResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS Equal,
+    CASE WHEN NotEqualResult = 1 THEN 'True' 
+         WHEN NotEqualResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS NotEqual,
+    CASE WHEN GreaterThanResult = 1 THEN 'True' 
+         WHEN GreaterThanResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS GreaterThan,
+    CASE WHEN LessThanResult = 1 THEN 'True' 
+         WHEN LessThanResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS LessThan,
+    CASE WHEN GreaterEqualResult = 1 THEN 'True' 
+         WHEN GreaterEqualResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS GreaterEqual,
+    CASE WHEN LessEqualResult = 1 THEN 'True' 
+         WHEN LessEqualResult = 0 THEN 'False' 
+         ELSE 'NULL' END AS LessEqual
+FROM BinaryOperatorTests
+ORDER BY TestID;
+GO
+
+-- Direct comparison examples
+SELECT 'Direct Comparisons' AS TestType;
+GO
+
+SELECT 'Compare 0x0A = 0x0A' AS Test, 
+    CASE WHEN 0x0A = 0x0A THEN 'True' ELSE 'False' END AS Result;
+GO
+
+SELECT 'Compare 0x0A > 0x0B' AS Test, 
+    CASE WHEN 0x0A > 0x0B THEN 'True' ELSE 'False' END AS Result;
+GO
+
+SELECT 'Compare 0x0A < 0x0B' AS Test, 
+    CASE WHEN 0x0A < 0x0B THEN 'True' ELSE 'False' END AS Result;
+GO
+
+SELECT 'Compare 0xFFFF > 0x0001' AS Test, 
+    CASE WHEN 0xFFFF > 0x0001 THEN 'True' ELSE 'False' END AS Result;
+GO
+
+-- Cleanup
+DROP TABLE BinaryOperatorTests;
+GO
+
+-- Create test table
+CREATE TABLE BinaryMixedTypeComparisons (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    BinaryValue VARBINARY(100),
+    OtherValue SQL_VARIANT,
+    OtherValueType VARCHAR(50),
+    EqualResult VARCHAR(10),
+    NotEqualResult VARCHAR(10),
+    GreaterThanResult VARCHAR(10),
+    LessThanResult VARCHAR(10)
+);
+GO
+
+-- String comparisons
+INSERT INTO BinaryMixedTypeComparisons
+SELECT 
+    'Binary vs VARCHAR', 
+    CAST('Test' AS VARBINARY(100)),
+    CAST('Test' AS VARCHAR(100)),
+    'VARCHAR',
+    CASE WHEN CAST('Test' AS VARBINARY(100)) = CAST('Test' AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('Test' AS VARBINARY(100)) <> CAST('Test' AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('Test' AS VARBINARY(100)) > CAST('Test' AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('Test' AS VARBINARY(100)) < CAST('Test' AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Integer comparisons
+INSERT INTO BinaryMixedTypeComparisons
+SELECT 
+    'Binary vs INTEGER', 
+    CAST(12345 AS VARBINARY(100)),
+    12345,
+    'INTEGER',
+    CASE WHEN CAST(12345 AS VARBINARY(100)) = CAST(12345 AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST(12345 AS VARBINARY(100)) <> CAST(12345 AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST(12345 AS VARBINARY(100)) > CAST(12345 AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST(12345 AS VARBINARY(100)) < CAST(12345 AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Date comparisons
+INSERT INTO BinaryMixedTypeComparisons
+SELECT 
+    'Binary vs DATE', 
+    CAST('2024-01-15' AS VARBINARY(100)),
+    CAST('2024-01-15' AS DATE),
+    'DATE',
+    CASE WHEN CAST('2024-01-15' AS VARBINARY(100)) = CAST(CAST('2024-01-15' AS DATE) AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('2024-01-15' AS VARBINARY(100)) <> CAST(CAST('2024-01-15' AS DATE) AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('2024-01-15' AS VARBINARY(100)) > CAST(CAST('2024-01-15' AS DATE) AS VARBINARY(100)) THEN 'True' ELSE 'False' END,
+    CASE WHEN CAST('2024-01-15' AS VARBINARY(100)) < CAST(CAST('2024-01-15' AS DATE) AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Direct comparison examples
+SELECT 'Direct Comparisons' AS TestType;
+GO
+
+-- Binary vs String
+SELECT 'Binary = String' AS Test,
+CASE WHEN CAST('Test' AS VARBINARY(100)) = CAST('Test' AS VARCHAR(100)) THEN 'True' ELSE 'False' END AS Result
+UNION ALL
+SELECT 'Binary > String',
+CASE WHEN CAST('Test2' AS VARBINARY(100)) > CAST('Test1' AS VARCHAR(100)) THEN 'True' ELSE 'False' END
+UNION ALL
+SELECT 'Binary < String',
+CASE WHEN CAST('Test1' AS VARBINARY(100)) < CAST('Test2' AS VARCHAR(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Binary vs Integer
+SELECT 'Binary vs Integer Comparisons' AS TestType;
+DECLARE @binInt VARBINARY(100) = CAST(100 AS VARBINARY(100));
+DECLARE @regularInt INT = 100;
+
+SELECT 'Binary = Integer' AS Test,
+CASE WHEN @binInt = CAST(@regularInt AS VARBINARY(100)) THEN 'True' ELSE 'False' END AS Result
+UNION ALL
+SELECT 'Binary > Integer',
+CASE WHEN @binInt > CAST(@regularInt-1 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+UNION ALL
+SELECT 'Binary < Integer',
+CASE WHEN @binInt < CAST(@regularInt+1 AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Binary vs DateTime
+SELECT 'Binary vs DateTime Comparisons' AS TestType;
+DECLARE @binDate VARBINARY(100) = CAST('2024-01-15' AS VARBINARY(100));
+DECLARE @regularDate DATETIME = '2024-01-15';
+
+SELECT 'Binary = DateTime' AS Test,
+CASE WHEN @binDate = CAST(@regularDate AS VARBINARY(100)) THEN 'True' ELSE 'False' END AS Result
+UNION ALL
+SELECT 'Binary > Earlier DateTime',
+CASE WHEN @binDate > CAST('2024-01-14' AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+UNION ALL
+SELECT 'Binary < Later DateTime',
+CASE WHEN @binDate < CAST('2024-01-16' AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Binary vs Decimal
+SELECT 'Binary vs Decimal Comparisons' AS TestType;
+DECLARE @binDecimal VARBINARY(100) = CAST(123.45 AS VARBINARY(100));
+DECLARE @regularDecimal DECIMAL(10,2) = 123.45;
+
+SELECT 'Binary = Decimal' AS Test,
+CASE WHEN @binDecimal = CAST(@regularDecimal AS VARBINARY(100)) THEN 'True' ELSE 'False' END AS Result
+UNION ALL
+SELECT 'Binary > Smaller Decimal',
+CASE WHEN @binDecimal > CAST(123.44 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+UNION ALL
+SELECT 'Binary < Larger Decimal',
+CASE WHEN @binDecimal < CAST(123.46 AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+GO
+
+-- Binary vs UNIQUEIDENTIFIER
+SELECT 'Binary vs UNIQUEIDENTIFIER Comparisons' AS TestType;
+DECLARE @binGuid VARBINARY(100) = CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(100));
+DECLARE @regularGuid UNIQUEIDENTIFIER = '12345678-1234-1234-1234-123456789012';
+
+SELECT 'Binary = GUID' AS Test,
+CASE WHEN @binGuid = CAST(@regularGuid AS VARBINARY(100)) THEN 'True' ELSE 'False' END AS Result;
+GO
+
+-- Binary vs BIT
+SELECT 'Binary vs BIT Comparisons' AS TestType;
+DECLARE @binBit VARBINARY(100) = CAST(1 AS VARBINARY(100));
+DECLARE @regularBit BIT = 1;
+
+SELECT 'Binary = Bit' AS Test,
+CASE WHEN @binBit = CAST(@regularBit AS VARBINARY(100)) THEN 'True' ELSE 'False' END AS Result;
+GO
+
+-- Display all results
+SELECT 
+    TestID,
+    TestDescription,
+    BinaryValue,
+    CAST(OtherValue AS VARCHAR(100)) AS OtherValue,
+    OtherValueType,
+    EqualResult,
+    NotEqualResult,
+    GreaterThanResult,
+    LessThanResult
+FROM BinaryMixedTypeComparisons
+ORDER BY TestID;
+GO
+
+-- Cleanup
+DROP TABLE BinaryMixedTypeComparisons;
+GO
+
+
+-- Create table for bitwise operation tests
+CREATE TABLE BitwiseOperationTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    Value1 VARBINARY(10),
+    Value2 VARBINARY(10),
+    BitwiseAND VARBINARY(10),
+    BitwiseOR VARBINARY(10),
+    BitwiseXOR VARBINARY(10),
+    BitwiseNOT VARBINARY(10)
+);
+GO
+
+-- Test Case 1: Simple values
+DECLARE @val1 VARBINARY(10) = 0x0F; -- 00001111
+DECLARE @val2 VARBINARY(10) = 0xF0; -- 11110000
+
+INSERT INTO BitwiseOperationTests (
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+)
+SELECT 
+    'Simple Binary Values (0x0F AND 0xF0)',
+    @val1,
+    @val2,
+    @val1 & @val2,                -- AND
+    @val1 | @val2,                -- OR
+    @val1 ^ @val2,                -- XOR
+    ~@val1;                       -- NOT
+GO
+
+-- Test Case 2: All bits set vs all bits clear
+DECLARE @allSet VARBINARY(10) = 0xFF;    -- 11111111
+DECLARE @allClear VARBINARY(10) = 0x00;  -- 00000000
+
+INSERT INTO BitwiseOperationTests (
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+)
+SELECT 
+    'All Bits Set vs Clear (0xFF AND 0x00)',
+    @allSet,
+    @allClear,
+    @allSet & @allClear,
+    @allSet | @allClear,
+    @allSet ^ @allClear,
+    ~@allSet;
+GO
+
+-- Test Case 3: Alternating bits
+DECLARE @alternating1 VARBINARY(10) = 0xAA; -- 10101010
+DECLARE @alternating2 VARBINARY(10) = 0x55; -- 01010101
+
+INSERT INTO BitwiseOperationTests (
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+)
+SELECT 
+    'Alternating Bits (0xAA AND 0x55)',
+    @alternating1,
+    @alternating2,
+    @alternating1 & @alternating2,
+    @alternating1 | @alternating2,
+    @alternating1 ^ @alternating2,
+    ~@alternating1;
+GO
+
+-- Test Case 4: Same values
+DECLARE @sameVal VARBINARY(10) = 0x55;
+
+INSERT INTO BitwiseOperationTests (
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+)
+SELECT 
+    'Same Values (0x55 AND 0x55)',
+    @sameVal,
+    @sameVal,
+    @sameVal & @sameVal,
+    @sameVal | @sameVal,
+    @sameVal ^ @sameVal,
+    ~@sameVal;
+GO
+
+-- Test Case 5: Multiple bytes
+DECLARE @multiByte1 VARBINARY(10) = 0x1234;
+DECLARE @multiByte2 VARBINARY(10) = 0x5678;
+
+INSERT INTO BitwiseOperationTests (
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+)
+SELECT 
+    'Multiple Bytes (0x1234 AND 0x5678)',
+    @multiByte1,
+    @multiByte2,
+    @multiByte1 & @multiByte2,
+    @multiByte1 | @multiByte2,
+    @multiByte1 ^ @multiByte2,
+    ~@multiByte1;
+GO
+
+-- Display results for regular bitwise operations
+SELECT 
+    TestID,
+    TestDescription,
+    Value1,
+    Value2,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR,
+    BitwiseNOT
+FROM BitwiseOperationTests
+ORDER BY TestID;
+GO
+
+-- Test assignment operators
+DECLARE @assignTest TABLE (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    OriginalValue VARBINARY(10),
+    AssignmentResult VARBINARY(10)
+);
+
+-- AND Assignment (&=)
+DECLARE @andAssign VARBINARY(10) = 0xFF;
+SET @andAssign &= 0x0F;
+
+INSERT INTO @assignTest (TestDescription, OriginalValue, AssignmentResult)
+VALUES ('AND Assignment (0xFF &= 0x0F)', 0xFF, @andAssign);
+
+-- OR Assignment (|=)
+DECLARE @orAssign VARBINARY(10) = 0x0F;
+SET @orAssign |= 0xF0;
+
+INSERT INTO @assignTest (TestDescription, OriginalValue, AssignmentResult)
+VALUES ('OR Assignment (0x0F |= 0xF0)', 0x0F, @orAssign);
+
+-- XOR Assignment (^=)
+DECLARE @xorAssign VARBINARY(10) = 0xFF;
+SET @xorAssign ^= 0x0F;
+
+INSERT INTO @assignTest (TestDescription, OriginalValue, AssignmentResult)
+VALUES ('XOR Assignment (0xFF ^= 0x0F)', 0xFF, @xorAssign);
+
+-- Display results for assignment operators
+SELECT 
+    TestID,
+    TestDescription,
+    OriginalValue,
+    AssignmentResult
+FROM @assignTest
+ORDER BY TestID;
+GO
+
+-- Cleanup
+DROP TABLE BitwiseOperationTests;
+GO
+
+-- Create table for bitwise operation tests
+CREATE TABLE BitwiseTypeTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    LeftOperandType VARCHAR(20),
+    RightOperandType VARCHAR(20),
+    LeftOperandValue VARBINARY(20),
+    RightOperandValue VARBINARY(20),
+    BitwiseAND VARBINARY(20),
+    BitwiseOR VARBINARY(20),
+    BitwiseXOR VARBINARY(20)
+);
+GO
+
+-- 1. BINARY with integer types
+INSERT INTO BitwiseTypeTests
+SELECT 
+    'BINARY & INT', 
+    'BINARY(4)', 'INT',
+    CAST(0x0F AS BINARY(4)),
+    CAST(15 AS VARBINARY(4)),
+    CAST(0x0F AS BINARY(4)) & 15,
+    CAST(0x0F AS BINARY(4)) | 15,
+    CAST(0x0F AS BINARY(4)) ^ 15
+UNION ALL
+SELECT 
+    'BINARY & SMALLINT', 
+    'BINARY(4)', 'SMALLINT',
+    CAST(0x0F AS BINARY(4)),
+    CAST(CAST(15 AS SMALLINT) AS VARBINARY(4)),
+    CAST(0x0F AS BINARY(4)) & CAST(15 AS SMALLINT),
+    CAST(0x0F AS BINARY(4)) | CAST(15 AS SMALLINT),
+    CAST(0x0F AS BINARY(4)) ^ CAST(15 AS SMALLINT)
+UNION ALL
+SELECT 
+    'BINARY & TINYINT', 
+    'BINARY(4)', 'TINYINT',
+    CAST(0x0F AS BINARY(4)),
+    CAST(CAST(15 AS TINYINT) AS VARBINARY(4)),
+    CAST(0x0F AS BINARY(4)) & CAST(15 AS TINYINT),
+    CAST(0x0F AS BINARY(4)) | CAST(15 AS TINYINT),
+    CAST(0x0F AS BINARY(4)) ^ CAST(15 AS TINYINT);
+GO
+
+-- 2. BIGINT with all supported types
+INSERT INTO BitwiseTypeTests
+SELECT 
+    'BIGINT & BINARY', 
+    'BIGINT', 'BINARY(4)',
+    CAST(CAST(255 AS BIGINT) AS VARBINARY(8)),
+    CAST(0x0F AS VARBINARY(4)),
+    CAST(CAST(255 AS BIGINT) & CAST(0x0F AS BINARY(4)) AS VARBINARY(8)),
+    CAST(CAST(255 AS BIGINT) | CAST(0x0F AS BINARY(4)) AS VARBINARY(8)),
+    CAST(CAST(255 AS BIGINT) ^ CAST(0x0F AS BINARY(4)) AS VARBINARY(8));
+GO
+
+-- 3. INT with supported types
+INSERT INTO BitwiseTypeTests
+SELECT 
+    'INT & BINARY', 
+    'INT', 'BINARY(4)',
+    CAST(255 AS VARBINARY(4)),
+    CAST(0x0F AS VARBINARY(4)),
+    CAST(255 & CAST(0x0F AS BINARY(4)) AS VARBINARY(4)),
+    CAST(255 | CAST(0x0F AS BINARY(4)) AS VARBINARY(4)),
+    CAST(255 ^ CAST(0x0F AS BINARY(4)) AS VARBINARY(4));
+GO
+
+-- 4. VARBINARY with integer types
+INSERT INTO BitwiseTypeTests
+SELECT 
+    'VARBINARY & INT', 
+    'VARBINARY(4)', 'INT',
+    CAST(0x0F AS VARBINARY(4)),
+    CAST(15 AS VARBINARY(4)),
+    CAST(0x0F AS VARBINARY(4)) & 15,
+    CAST(0x0F AS VARBINARY(4)) | 15,
+    CAST(0x0F AS VARBINARY(4)) ^ 15
+UNION ALL
+SELECT 
+    'VARBINARY & SMALLINT', 
+    'VARBINARY(4)', 'SMALLINT',
+    CAST(0x0F AS VARBINARY(4)),
+    CAST(CAST(15 AS SMALLINT) AS VARBINARY(4)),
+    CAST(0x0F AS VARBINARY(4)) & CAST(15 AS SMALLINT),
+    CAST(0x0F AS VARBINARY(4)) | CAST(15 AS SMALLINT),
+    CAST(0x0F AS VARBINARY(4)) ^ CAST(15 AS SMALLINT);
+GO
+
+-- Test NOT operator
+CREATE TABLE BitwiseNOTTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    OperandType VARCHAR(20),
+    OperandValue VARBINARY(20),
+    NOTResult VARBINARY(20)
+);
+
+INSERT INTO BitwiseNOTTests (TestDescription, OperandType, OperandValue, NOTResult)
+VALUES
+    ('NOT BINARY', 'BINARY(4)', 
+     CAST(0x0F AS VARBINARY(4)),
+     CAST(~CAST(0x0F AS BINARY(4)) AS VARBINARY(4))),
+    
+    ('NOT BIGINT', 'BIGINT',
+     CAST(CAST(255 AS BIGINT) AS VARBINARY(8)),
+     CAST(~CAST(255 AS BIGINT) AS VARBINARY(8))),
+    
+    ('NOT INT', 'INT',
+     CAST(255 AS VARBINARY(4)),
+     CAST(~255 AS VARBINARY(4))),
+    
+    ('NOT VARBINARY', 'VARBINARY(4)',
+     CAST(0x0F AS VARBINARY(4)),
+     CAST(~CAST(0x0F AS VARBINARY(4)) AS VARBINARY(4)));
+GO
+
+SELECT 
+    TestID,
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperandValue,
+    RightOperandValue,
+    BitwiseAND,
+    BitwiseOR,
+    BitwiseXOR
+FROM BitwiseTypeTests
+ORDER BY TestID;
+GO
+
+SELECT 
+    TestID,
+    TestDescription,
+    OperandType,
+    OperandValue,
+    NOTResult
+FROM BitwiseNOTTests
+ORDER BY TestID;
+GO
+
+-- Cleanup
+DROP TABLE BitwiseTypeTests;
+DROP TABLE BitwiseNOTTests;
+GO
+
+-- Create table for concatenation tests
+CREATE TABLE BinaryConcatTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    LeftOperandType VARCHAR(20),
+    RightOperandType VARCHAR(20),
+    LeftOperand VARBINARY(100),
+    RightOperand VARBINARY(100),
+    ConcatResult VARBINARY(200),
+    ResultType VARCHAR(20),
+    ResultLength INT
+);
+GO
+
+-- Test Case 1: Basic concatenation with same types
+INSERT INTO BinaryConcatTests (
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+)
+VALUES
+-- BINARY + BINARY
+(
+    'BINARY(4) + BINARY(4)',
+    'BINARY(4)',
+    'BINARY(4)',
+    CAST(0x1234 AS BINARY(4)),
+    CAST(0x5678 AS BINARY(4)),
+    CAST(0x1234 AS BINARY(4)) + CAST(0x5678 AS BINARY(4)),
+    'BINARY(8)',
+    DATALENGTH(CAST(0x1234 AS BINARY(4)) + CAST(0x5678 AS BINARY(4)))
+),
+-- VARBINARY + VARBINARY
+(
+    'VARBINARY(4) + VARBINARY(4)',
+    'VARBINARY(4)',
+    'VARBINARY(4)',
+    CAST(0x1234 AS VARBINARY(4)),
+    CAST(0x5678 AS VARBINARY(4)),
+    CAST(0x1234 AS VARBINARY(4)) + CAST(0x5678 AS VARBINARY(4)),
+    'VARBINARY(8)',
+    DATALENGTH(CAST(0x1234 AS VARBINARY(4)) + CAST(0x5678 AS VARBINARY(4)))
+);
+GO
+
+-- Test Case 2: Mixed type concatenation
+INSERT INTO BinaryConcatTests (
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+)
+VALUES
+-- BINARY + VARBINARY
+(
+    'BINARY(4) + VARBINARY(4)',
+    'BINARY(4)',
+    'VARBINARY(4)',
+    CAST(0x1234 AS BINARY(4)),
+    CAST(0x5678 AS VARBINARY(4)),
+    CAST(0x1234 AS BINARY(4)) + CAST(0x5678 AS VARBINARY(4)),
+    'VARBINARY(8)',
+    DATALENGTH(CAST(0x1234 AS BINARY(4)) + CAST(0x5678 AS VARBINARY(4)))
+),
+-- VARBINARY + BINARY
+(
+    'VARBINARY(4) + BINARY(4)',
+    'VARBINARY(4)',
+    'BINARY(4)',
+    CAST(0x1234 AS VARBINARY(4)),
+    CAST(0x5678 AS BINARY(4)),
+    CAST(0x1234 AS VARBINARY(4)) + CAST(0x5678 AS BINARY(4)),
+    'VARBINARY(8)',
+    DATALENGTH(CAST(0x1234 AS VARBINARY(4)) + CAST(0x5678 AS BINARY(4)))
+);
+GO
+
+-- Test Case 3: NULL value concatenation
+INSERT INTO BinaryConcatTests (
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+)
+VALUES
+-- NULL + BINARY
+(
+    'NULL + BINARY(4)',
+    'NULL',
+    'BINARY(4)',
+    NULL,
+    CAST(0x5678 AS BINARY(4)),
+    NULL + CAST(0x5678 AS BINARY(4)),
+    'VARBINARY',
+    DATALENGTH(NULL + CAST(0x5678 AS BINARY(4)))
+),
+-- BINARY + NULL
+(
+    'BINARY(4) + NULL',
+    'BINARY(4)',
+    'NULL',
+    CAST(0x1234 AS BINARY(4)),
+    NULL,
+    CAST(0x1234 AS BINARY(4)) + NULL,
+    'VARBINARY',
+    DATALENGTH(CAST(0x1234 AS BINARY(4)) + NULL)
+),
+-- NULL + NULL
+(
+    'NULL + NULL',
+    'NULL',
+    'NULL',
+    NULL,
+    NULL,
+    NULL + NULL,
+    'VARBINARY',
+    DATALENGTH(NULL + NULL)
+);
+GO
+
+-- Test Case 4: Zero length value concatenation
+INSERT INTO BinaryConcatTests (
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+)
+VALUES
+-- Empty VARBINARY + BINARY
+(
+    'Empty VARBINARY + BINARY(4)',
+    'VARBINARY(4)',
+    'BINARY(4)',
+    CAST(0x AS VARBINARY(4)),
+    CAST(0x5678 AS BINARY(4)),
+    CAST(0x AS VARBINARY(4)) + CAST(0x5678 AS BINARY(4)),
+    'VARBINARY',
+    DATALENGTH(CAST(0x AS VARBINARY(4)) + CAST(0x5678 AS BINARY(4)))
+),
+-- BINARY + Empty VARBINARY
+(
+    'BINARY(4) + Empty VARBINARY',
+    'BINARY(4)',
+    'VARBINARY(4)',
+    CAST(0x1234 AS BINARY(4)),
+    CAST(0x AS VARBINARY(4)),
+    CAST(0x1234 AS BINARY(4)) + CAST(0x AS VARBINARY(4)),
+    'VARBINARY',
+    DATALENGTH(CAST(0x1234 AS BINARY(4)) + CAST(0x AS VARBINARY(4)))
+),
+-- Empty VARBINARY + Empty VARBINARY
+(
+    'Empty VARBINARY + Empty VARBINARY',
+    'VARBINARY(4)',
+    'VARBINARY(4)',
+    CAST(0x AS VARBINARY(4)),
+    CAST(0x AS VARBINARY(4)),
+    CAST(0x AS VARBINARY(4)) + CAST(0x AS VARBINARY(4)),
+    'VARBINARY',
+    DATALENGTH(CAST(0x AS VARBINARY(4)) + CAST(0x AS VARBINARY(4)))
+);
+GO
+
+-- Test Case 5: Different length concatenation
+INSERT INTO BinaryConcatTests (
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+)
+VALUES
+(
+    'BINARY(2) + BINARY(4)',
+    'BINARY(2)',
+    'BINARY(4)',
+    CAST(0x12 AS BINARY(2)),
+    CAST(0x5678 AS BINARY(4)),
+    CAST(0x12 AS BINARY(2)) + CAST(0x5678 AS BINARY(4)),
+    'BINARY(6)',
+    DATALENGTH(CAST(0x12 AS BINARY(2)) + CAST(0x5678 AS BINARY(4)))
+),
+(
+    'VARBINARY(2) + VARBINARY(4)',
+    'VARBINARY(2)',
+    'VARBINARY(4)',
+    CAST(0x12 AS VARBINARY(2)),
+    CAST(0x5678 AS VARBINARY(4)),
+    CAST(0x12 AS VARBINARY(2)) + CAST(0x5678 AS VARBINARY(4)),
+    'VARBINARY(6)',
+    DATALENGTH(CAST(0x12 AS VARBINARY(2)) + CAST(0x5678 AS VARBINARY(4)))
+);
+GO
+
+-- Display results
+SELECT 
+    TestID,
+    TestDescription,
+    LeftOperandType,
+    RightOperandType,
+    LeftOperand,
+    RightOperand,
+    ConcatResult,
+    ResultType,
+    ResultLength
+FROM BinaryConcatTests
+ORDER BY TestID;
+GO
+
+-- Additional verification queries
+SELECT 'Type Precedence Tests' AS TestType;
+GO
+
+-- Test BINARY + VARBINARY type precedence
+SELECT 
+    'BINARY + VARBINARY Results in: ' + 
+    CASE 
+        WHEN SQL_VARIANT_PROPERTY(
+            CAST(0x12 AS BINARY(2)) + CAST(0x34 AS VARBINARY(2)), 'BaseType'
+        ) = 'varbinary' 
+        THEN 'VARBINARY (Higher Precedence)'
+        ELSE 'Other'
+    END AS TypePrecedenceTest;
+GO
+
+-- Test NULL handling
+SELECT 'NULL Handling Tests' AS TestType;
+SELECT 
+    CASE 
+        WHEN (CAST(0x12 AS BINARY(2)) + NULL) IS NULL THEN 'NULL'
+        ELSE 'Not NULL'
+    END AS BinaryPlusNULL,
+    CASE 
+        WHEN (NULL + CAST(0x12 AS BINARY(2))) IS NULL THEN 'NULL'
+        ELSE 'Not NULL'
+    END AS NULLPlusBinary,
+    CASE 
+        WHEN (NULL + NULL) IS NULL THEN 'NULL'
+        ELSE 'Not NULL'
+    END AS NULLPlusNULL;
+GO
+
+-- Cleanup
+DROP TABLE BinaryConcatTests;
 GO
