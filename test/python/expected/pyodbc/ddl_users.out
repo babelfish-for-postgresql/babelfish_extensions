@@ -6,3 +6,4 @@ GO
 
 CREATE USER [test_usr3] FOR LOGIN [test_pwd3] WITH DEFAULT_SCHEMA=[dbo]
 GO
+
