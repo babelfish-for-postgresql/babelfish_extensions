@@ -2066,3 +2066,118 @@ GO
 -- Cleanup
 DROP TABLE BinaryConcatTests;
 GO
+
+-- Create a test table
+CREATE TABLE BinaryFunctionTests (
+    TestID INT IDENTITY(1,1),
+    TestDescription VARCHAR(100),
+    InputValue VARBINARY(MAX),
+    OutputValue SQL_VARIANT,
+    FunctionUsed VARCHAR(50)
+);
+GO
+
+-- 1. Aggregate Functions
+INSERT INTO BinaryFunctionTests VALUES
+-- MAX
+('MAX Function', 0x1234, 
+ CAST((SELECT MAX(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ 'MAX'),
+-- MIN
+('MIN Function', 0x1234, 
+ CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ 'MIN');
+GO
+
+-- 2. String/Binary Functions
+INSERT INTO BinaryFunctionTests VALUES
+('DATALENGTH', 0x1234, 
+ DATALENGTH(0x1234),
+ 'DATALENGTH'),
+
+('LEN', 0x1234, 
+ LEN(0x1234),
+ 'LEN'),
+
+('SUBSTRING', 0x123456, 
+ SUBSTRING(0x123456, 2, 2),
+ 'SUBSTRING'),
+
+('LEFT', 0x123456, 
+ LEFT(0x123456, 2),
+ 'LEFT'),
+
+('RIGHT', 0x123456, 
+ RIGHT(0x123456, 2),
+ 'RIGHT');
+GO
+
+-- 3. Cryptographic Functions
+INSERT INTO BinaryFunctionTests VALUES
+-- HASHBYTES
+('HASHBYTES SHA2_256', CAST('Test' AS VARBINARY(100)), 
+ HASHBYTES('SHA2_256', 'Test'),
+ 'HASHBYTES');
+GO
+
+-- 4. Mathematical Functions that work with binary
+INSERT INTO BinaryFunctionTests VALUES
+('AVG Function', 0x1234, 
+ CAST((SELECT AVG(CAST(0x12 AS INT)) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ 'AVG');
+GO
+
+-- 5. System Metadata Functions
+-- INSERT INTO BinaryFunctionTests VALUES
+-- -- DATABASEPROPERTYEX
+-- ('DATABASEPROPERTYEX', NULL, 
+--  CAST(DATABASEPROPERTYEX(DB_NAME(), 'Collation') AS VARCHAR(100)) IS NOT NULL,
+--  'DATABASEPROPERTYEX');
+GO
+
+-- Display results
+SELECT 
+    TestID,
+    TestDescription,
+    CASE 
+        WHEN InputValue IS NULL THEN NULL
+        ELSE InputValue
+    END AS InputValueHex,
+    OutputValue,
+    FunctionUsed
+FROM BinaryFunctionTests
+ORDER BY TestID;
+GO
+
+-- Additional examples with explanations
+
+-- 1. String Manipulation with Binary Data
+SELECT 
+    'Original' AS Operation, CAST(0x123456 AS VARCHAR(100)) AS Result
+UNION ALL
+SELECT 'SUBSTRING', CAST(SUBSTRING(0x123456, 2, 2) AS VARCHAR(100))
+UNION ALL
+SELECT 'LEFT', CAST(LEFT(0x123456, 2) AS VARCHAR(100))
+UNION ALL
+SELECT 'RIGHT', CAST(RIGHT(0x123456, 2) AS VARCHAR(100));
+GO
+
+-- 2. Conversion Examples
+SELECT 
+    'HEX' AS ConversionType, CONVERT(VARCHAR(100), 0x1234, 1) AS Result
+UNION ALL
+SELECT 'CHARACTER', CONVERT(VARCHAR(100), 0x1234, 0)
+UNION ALL
+SELECT 'BINARY', CAST(CONVERT(VARBINARY(10), '1234', 1) AS VARCHAR(100));
+GO
+
+-- 3. Cryptographic Function Examples
+SELECT 
+    'SHA2_256' AS HashType, HASHBYTES('SHA2_256', 'Test') AS HashResult
+UNION ALL
+SELECT 'SHA2_512', HASHBYTES('SHA2_512', 'Test');
+GO
+
+-- Cleanup
+DROP TABLE BinaryFunctionTests;
+GO
