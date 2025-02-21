@@ -84,7 +84,7 @@ text
 Query Text: select 1
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Result (actual rows=1 loops=1)
 ~~END~~
