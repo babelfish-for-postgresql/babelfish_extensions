@@ -1539,7 +1539,7 @@ SELECT babel_5448_plpgsql_func();
 GO
 ~~START~~
 text
-master_dbo, master_dbo, sys, pg_catalog
+master.dbo
 ~~END~~
 
 
@@ -1561,7 +1561,7 @@ varchar
 
 ~~START~~
 text
-master_babel_5448_s1, master_dbo, sys, pg_catalog
+master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1578,7 +1578,7 @@ varchar
 
 ~~START~~
 text
-master_babel_5448_s1, master_dbo, sys, pg_catalog
+master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1599,7 +1599,7 @@ SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
 GO
 ~~START~~
 nvarchar
-master_babel_5448_s1, master_dbo, sys, pg_catalog
+master.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1623,7 +1623,7 @@ varchar
 
 ~~START~~
 text
-babel_5448_db_babel_5448_s1, babel_5448_db_dbo, sys, pg_catalog
+babel_5448_db.babel_5448_s1
 ~~END~~
 
 ~~START~~
@@ -1648,6 +1648,6 @@ SELECT babel_5448_s1.babel_5448_f5();
 GO
 ~~START~~
 nvarchar
-babel_5448_db_babel_5448_s1, babel_5448_db_dbo, sys, pg_catalog
+babel_5448_db.babel_5448_s1
 ~~END~~
 

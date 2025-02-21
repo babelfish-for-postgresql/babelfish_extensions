@@ -601,7 +601,7 @@ GO
 CREATE FUNCTION master_dbo.babel_5448_plpgsql_func()
 RETURNS TEXT
 AS
-$$ BEGIN return current_setting('search_path'); END; $$
+$$ BEGIN return (SELECT id FROM babel_5448_t); END; $$
 LANGUAGE plpgsql;
 GO
 
