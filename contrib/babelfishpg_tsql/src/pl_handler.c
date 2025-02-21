@@ -4073,7 +4073,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * For more details, please refer revoke_func_permission_from_public().
 						 * If schema entry exists in the catalog, implicitly grant permission on the new object to the user.
 						 */
-						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL))
+						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, OBJ_SCHEMA))
 						{
 							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 							exec_internal_grant_on_function(logicalschema, funcname, obj_type);
