@@ -3295,7 +3295,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_object_type,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_database_or_server_collation_oid_internal(false),
+					tsql_get_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_type));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3329,7 +3329,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_object_type,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_database_or_server_collation_oid_internal(false),
+					tsql_get_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_type));
 
