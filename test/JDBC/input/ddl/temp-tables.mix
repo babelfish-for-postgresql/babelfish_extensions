@@ -7,6 +7,7 @@ GO
 
 -- Basic temp table create/insert/select using tsql dialect
 
+-- tsql
 CREATE TABLE #local_tempt(col int);
 GO
 
@@ -281,8 +282,68 @@ go
 drop table #tt_1637
 go
 
--- cleanup
+-- BABEL-5569
+CREATE LOGIN babel_5569_l1 WITH PASSWORD = '12345678'
+GO
+CREATE USER babel_5569_l1
+GO
+ALTER ROLE db_ddladmin ADD MEMBER babel_5569_l1
+GO
+CREATE TABLE babel_5569_table(a INT)
+GO
+GRANT SELECT ON babel_5569_table TO babel_5569_l1
+GO
 
+-- tsql user=babel_5569_l1 password=12345678
+CREATE TABLE #babel_5569_temp_table (a INT)
+GO
+
+-- psql
+CREATE OR REPLACE FUNCTION drop_orphaned_temp_schemas() RETURNS void AS $$
+DECLARE
+    schema_record RECORD;
+    v_state text;
+    v_msg text;
+    v_detail text;
+    v_hint text;
+    v_context text;
+BEGIN
+    FOR schema_record IN 
+        SELECT nspname 
+        FROM pg_namespace 
+        WHERE nspname LIKE 'pg_temp%' 
+           OR nspname LIKE 'pg_toast_temp%'
+    LOOP
+        BEGIN
+            EXECUTE 'DROP SCHEMA IF EXISTS ' || quote_ident(schema_record.nspname) || ' CASCADE';
+        EXCEPTION
+            WHEN insufficient_privilege THEN
+                RAISE EXCEPTION 'Permission denied: must be owner of schema';
+        END;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+GO
+SET ROLE sysadmin;
+GO
+SELECT drop_orphaned_temp_schemas();
+GO
+RESET ROLE;
+GO
+SELECT drop_orphaned_temp_schemas();
+GO
+DROP FUNCTION drop_orphaned_temp_schemas();
+GO
+
+-- tsql user=babel_5569_l1 password=12345678
+SELECT * INTO #babel_5569_temp_table2 FROM babel_5569_table
+GO
+-- terminate-tsql-conn user=babel_5569_l1 password=12345678
+-- terminate-tsql-conn
+-- terminate-psql-conn
+
+-- cleanup
+-- tsql
 DROP PROCEDURE temp_table_sp;
 GO
 DROP PROCEDURE babel903;
@@ -302,4 +363,10 @@ GO
 DROP PROCEDURE sp_babel1637
 GO
 DROP TABLE tt_test_t1;
+GO
+DROP TABLE babel_5569_table;
+GO
+DROP USER babel_5569_l1
+GO
+DROP LOGIN babel_5569_l1
 GO

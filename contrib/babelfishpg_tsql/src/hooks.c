@@ -5712,7 +5712,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
 	 *    This means already the best grantor has been selected using select_best_grantor().
 	 */
-	if (!MyProcPort->is_tds_conn ||
+	if (!IS_TDS_CONN() ||
 		sql_dialect != SQL_DIALECT_TSQL ||
 		*grantorId == ownerId ||
 		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
@@ -5750,7 +5750,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		schema_oid = get_object_namespace(&address);
 	}
 
-	if (OidIsValid(schema_oid))
+	if (OidIsValid(schema_oid) && !isTempOrTempToastNamespace(schema_oid))
 	{
 		/*
 		 * Don't allow if object's schema is not from current database OR
@@ -5795,13 +5795,19 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return ownerId;
 
 	if (!OidIsValid(ownerId))
 		ownerId = GetUserId();
 
 	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema with OID %u does not exist", namespaceId)));
+
 	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
 
 	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
@@ -5856,10 +5862,14 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return false;
 
 	nspname = get_namespace_name(namespaceId);
+
+	if (nspname == NULL)
+		return false;
+
 	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
 	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
 
