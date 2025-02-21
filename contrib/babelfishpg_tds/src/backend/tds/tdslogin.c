@@ -1088,7 +1088,6 @@ ProcessLoginFlags(LoginRequest loginInfo)
 	{
 		char	   *textSize = psprintf("%d", (loginInfo->tdsVersion <= TDS_VERSION_7_2) ?
 										TEXT_SIZE_2GB : TEXT_SIZE_INFINITE);
-		char	   *rowCount = psprintf("%d", INT_MAX);
 
 		set_config_option("babelfishpg_tsql.ansi_defaults",
 						  "ON",
@@ -1124,7 +1123,7 @@ ProcessLoginFlags(LoginRequest loginInfo)
 						  0,
 						  false);
 		set_config_option("babelfishpg_tsql.rowcount",
-						  rowCount,
+						  0,
 						  PGC_USERSET,
 						  PGC_S_OVERRIDE,
 						  GUC_ACTION_SET,
