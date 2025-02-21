@@ -5633,6 +5633,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			&& !IsAbortedTransactionBlockState())
 			SetConfigOption("search_path", saved_search_path,
 							PGC_SUSET, PGC_S_SESSION);
+		pfree(saved_search_path);
 	}
 	PG_FINALLY();
 	{
