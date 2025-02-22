@@ -73,6 +73,7 @@ Oid			bbf_authid_login_ext_idx_oid;
  *****************************************/
 Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
+Oid			bbf_authid_user_ext_login_dbname_idx_oid;
 
 /*****************************************
  *			VIEW_DEF
@@ -912,6 +913,16 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
+Oid
+get_bbf_authid_user_ext_login_dbname_idx_oid(void)
+{
+	if (!OidIsValid(bbf_authid_user_ext_login_dbname_idx_oid))
+		bbf_authid_user_ext_login_dbname_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME,
+														get_namespace_oid("sys", false));
+
+	return bbf_authid_user_ext_login_dbname_idx_oid;
+}
+
 /* Returns palloc'd original name given the physical name of the db principal */
 char *
 get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error)
@@ -960,7 +971,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	TableScanDesc scan;
+	SysScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
 	ScanKeyData key[2];
@@ -978,13 +989,20 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 			Anum_bbf_authid_user_ext_login_name,
 			BTEqualStrategyNumber, F_NAMEEQ,
 			NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-			Anum_bbf_authid_user_ext_database_name,
-			BTEqualStrategyNumber, F_TEXTEQ,
-			CStringGetTextDatum(db_name));
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	ScanKeyEntryInitialize(&key[1],
+							0,
+							Anum_bbf_authid_user_ext_database_name,
+							BTEqualStrategyNumber,
+							InvalidOid,
+							tsql_get_database_or_server_collation_oid_internal(false),
+							F_TEXTEQ,
+							CStringGetTextDatum(db_name));
 
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_bbf_authid_user_ext_login_dbname_idx_oid(),
+							  true, NULL, 2, key);
+
+	tuple_user_ext = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Form_authid_user_ext userform;
@@ -993,7 +1011,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 		user_name = pstrdup(NameStr(userform->rolname));
 	}
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return user_name;
