@@ -214,6 +214,7 @@ datediff
 dateadd
 datepart
 datetime2fromparts-after-15-2
+fk_trigger_temp
 forjson
 forjson-datatypes
 forjson-subquery
@@ -434,6 +435,7 @@ TestSmallInt
 TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
+Test-spatial-functions-2
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility

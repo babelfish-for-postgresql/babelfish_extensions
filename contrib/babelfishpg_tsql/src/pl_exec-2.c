@@ -4035,7 +4035,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		else
 		{
 			/* For REVOKE statement, update privileges in the catalog. */
-			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
+			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, OBJ_SCHEMA))
 			{
 				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 				for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
@@ -4267,7 +4267,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
+				is_create ? CREATE_FULLTEXT_INDEX : DELETE_FULLTEXT_INDEX,
 				false,
 				PROCESS_UTILITY_QUERY,
 				NULL,

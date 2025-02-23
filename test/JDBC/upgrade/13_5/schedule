@@ -308,10 +308,10 @@ smalldatetime_date_cmp-before-15_5-16_1
 test_conv_string_to_date-before-13_6
 test_conv_string_to_datetime-before-14_6
 test_conv_string_to_datetime2-before-14_5
-test_conv_string_to_datetimeoffset-before-17_3
+test_conv_string_to_datetimeoffset-before-17_4
 test_conv_string_to_smalldatetime-before-14_6
 test_conv_string_to_time-before-13_6
 BABEL-5031
 test_conv_money_to_varchar
 fixeddecimal_modulo
-test_conv_float_to_varchar_char_before_17_3
+test_conv_float_to_varchar_char_before_17_4
