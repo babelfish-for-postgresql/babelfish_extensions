@@ -5631,13 +5631,17 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
 		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
 			&& !IsAbortedTransactionBlockState())
+		{
+			pltsql_check_search_path = false;
 			SetConfigOption("search_path", saved_search_path,
 							PGC_SUSET, PGC_S_SESSION);
+		}
 		pfree(saved_search_path);
 	}
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+		pltsql_check_search_path = true;
 
 		/* If func is NULL then we have encountered a parser error. */
 		if (!func)
