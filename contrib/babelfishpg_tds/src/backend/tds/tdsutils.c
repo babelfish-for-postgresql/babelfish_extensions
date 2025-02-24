@@ -56,7 +56,6 @@ static void check_babelfish_renamedb_restrictions(Oid target_db_id);
 static void check_babelfish_dropdb_restrictions(Oid target_db_id);
 static bool is_babelfish_ownership_enabled(ArrayType *array);
 static bool is_babelfish_role(const char *role);
-static bool is_babelfish_login(const char *role);
 
 /* Role specific handlers */
 static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
@@ -919,7 +918,7 @@ check_babelfish_droprole_restrictions(char *role)
 	if (get_bbf_role_admin_oid() == GetUserId())
 		return;
 
-	if (is_babelfish_role(role) || is_babelfish_login(role))
+	if (is_babelfish_role(role))
 	{
 		pfree(role);			/* avoid mem leak */
 		ereport(ERROR,
@@ -931,7 +930,7 @@ check_babelfish_droprole_restrictions(char *role)
 /*
  * is_babelfish_role
  *
- * Helper function to check if a given role is babelfish user or role
+ * Helper function to check if a given role is babelfish user or role or login
  *
  * Notes:
  * 	Direct evidence of babelfish membership is stored in babelfish catalog,
@@ -940,86 +939,63 @@ check_babelfish_droprole_restrictions(char *role)
  * 	This function check the underlying assumption on the membership chain instead
  * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
  *
+ * A Babelfish login is a member of babelfish created user/role i.e., dbo, guest or user created user.
+ *
  * actual dbo and db_owner name varies across different babelfish logical databases
  */
+
 static bool
 is_babelfish_role(const char *role)
 {
-	Oid			sysadmin_oid;
-	Oid			role_oid;
-	Oid			securityadmin;
-	Oid			dbcreator;
+    Oid         sysadmin_oid;
+    Oid         role_oid;
+    Oid         securityadmin;
+    Oid         dbcreator;
+    CatCList    *memlist;
+    int         i;
+    bool        is_babelfish_login = false;
 
-	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
-	role_oid = get_role_oid(role, true);	/* missing OK */
-	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
-	dbcreator = get_role_oid(BABELFISH_DBCREATOR, true);  /* missing OK */
+    sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);    /* missing OK */
+    role_oid = get_role_oid(role, true);    /* missing OK */
+    securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
+    dbcreator = get_role_oid(BABELFISH_DBCREATOR, true);  /* missing OK */
 
-	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) 
-			|| !OidIsValid(securityadmin) || !OidIsValid(dbcreator))
-		return false;
+    if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid) 
+            || !OidIsValid(securityadmin) || !OidIsValid(dbcreator))
+        return false;
 
-	if (is_member_of_role(sysadmin_oid, role_oid) ||
-		is_member_of_role(securityadmin, role_oid) ||
-		is_member_of_role(dbcreator, role_oid) ||
-		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
-		return true;
+    // Check if it's a Babelfish role/user
+    if (is_member_of_role(sysadmin_oid, role_oid) ||
+        is_member_of_role(securityadmin, role_oid) ||
+        is_member_of_role(dbcreator, role_oid) ||
+        pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
+    {
+        return true;
+    }
 
-	return false;
-}
-/*
- * get_role_name_from_oid
- * Description: This function is used to get the role name from the given role OID
- */
-static char *
-get_role_name_from_oid(Oid role_oid)
-{
-	HeapTuple	tp;
-	Form_pg_authid authForm;
-	char	   *rolename;
+    // Check if it's a Babelfish login
+    memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
+                                  ObjectIdGetDatum(role_oid));
+    for (i = 0; i < memlist->n_members; i++)
+    {
+        HeapTuple   tup = &memlist->members[i]->tuple;
+        Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+        Oid         parent_role_oid = form->roleid;
+        const char *parent_role_name = GetUserNameFromId(parent_role_oid, false);
 
-	tp = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(tp))
-		return NULL;
+        /* Check if the parent role is a Babelfish role */
+        if (is_member_of_role(sysadmin_oid, parent_role_oid) ||
+            is_member_of_role(securityadmin, parent_role_oid) ||
+            is_member_of_role(dbcreator, parent_role_oid) ||
+            pg_strcasecmp(parent_role_name, BABELFISH_ROLE_ADMIN) == 0)
+        {
+            is_babelfish_login = true;
+            break;
+        }
+    }
+    ReleaseSysCacheList(memlist);
 
-	authForm = (Form_pg_authid) GETSTRUCT(tp);
-	rolename = pstrdup(NameStr(authForm->rolname));
-	ReleaseSysCache(tp);
-
-	return rolename;
-}
-
-/*
- * is_babelfish_login
- * Helper function to check if a given role is Babelfish login.
- * Notes: A Babelfish login is a member of babelfish created role i.e., dbo, guest or user created user.
- */
-static bool
-is_babelfish_login(const char *member)
-{
-	CatCList	*memlist;
-	Oid			member_oid;
-	int			i;
-
-	member_oid = get_role_oid(member, true);
-
-	/* Find roles that member_oid is directly a member of. */
-	memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
-								  ObjectIdGetDatum(member_oid));
-	for (i = 0; i < memlist->n_members; i++)
-	{
-		HeapTuple	tup = &memlist->members[i]->tuple;
-		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
-
-		/* If any parent role is a Babelfish role, it is a Babelfish login. */
-		if (is_babelfish_role(get_role_name_from_oid(form->roleid)))
-		{
-			ReleaseSysCacheList(memlist);
-			return true;
-		}
-	}
-	ReleaseSysCacheList(memlist);
-	return false;
+    return is_babelfish_login;
 }
 
 /*
@@ -1044,7 +1020,7 @@ handle_rename(RenameStmt *rename_stmt)
 	if (OBJECT_ROLE == rename_stmt->renameType)
 	{
 		if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
-			 (is_babelfish_role(rename_stmt->subname) || is_babelfish_login(rename_stmt->subname)))
+			 is_babelfish_role(rename_stmt->subname))
 		{
 			/*
 			 * Renaming of an babelfish role/user/login
@@ -1126,7 +1102,7 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
     }
 
     if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
-	     (is_babelfish_role(name) || is_babelfish_login(name)))
+	     is_babelfish_role(name))
     {
 	    /* Quick check, directly disallow alter role for bbf_role_admin */
 	    if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
@@ -1236,7 +1212,7 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
     }
 
     if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
-	     (is_babelfish_role(name) || is_babelfish_login(name)))
+	     is_babelfish_role(name))
     {
 	    check_babelfish_alterrole_restictions(false);
     }
@@ -1285,7 +1261,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			continue;
 
 		roleid = get_role_oid(rolename, false);
-		if (OidIsValid(roleid) && (is_babelfish_role(rolename) || is_babelfish_login(rolename)))
+		if (OidIsValid(roleid) && is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
@@ -1297,7 +1273,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 		Oid			roleid;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && (is_babelfish_role(rolespec->rolename) || is_babelfish_login(rolespec->rolename)))
+		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
 			check_babelfish_alterrole_restictions(false);
 	}
 
