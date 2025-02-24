@@ -2487,23 +2487,6 @@ GO
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
--- psql
-CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_relation_err_pg_proc()
-AS $$
-BEGIN
-	SELECT * FROM non_existent_table;
-END;
-$$ LANGUAGE plpgsql;
-GO
-
-CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_column_err_pg_proc()
-AS $$
-BEGIN
-	SELECT * FROM non_existent_table;
-END;
-$$ LANGUAGE plpgsql;
-GO
-
 -- tsql
 -- Error: relation \"%s\" does not exist
 -- plpgsql procedure inside try-catch
@@ -2520,6 +2503,8 @@ BEGIN CATCH
 END CATCH;
 GO
 
+-- Error: column \"%s\" does not exist
+-- plpgsql procedure inside try-catch
 BEGIN TRY
     EXEC dbo.babel_5186_column_err_pg_proc;
 END TRY
