@@ -7,10 +7,19 @@ go
 create schema sch_select_into
 go
 
-create table t1_select_into ([Col1] INT IDENTITY(1, 1), [Col2] [Varchar](20) NOT NULL)
+create table t1_select_into ([Col1] INT IDENTITY(1, 1), [Col2] [NVarchar](20) NOT NULL)
 go
 
 insert into t1_select_into([Col2]) values ('First')
+go
+
+set identity_insert t1_select_into on
+go
+
+insert into t1_select_into([Col1], [Col2]) values (1, 'First_dup')
+go
+
+set identity_insert t1_select_into off
 go
 
 create table sch_select_into.t1_select_into ([Col3] TINYINT IDENTITY(2, 2), [Col4] numeric(4,3) NOT NULL)
@@ -116,11 +125,65 @@ go
 select * from dest_table_5 order by [Col9]
 go
 
+-- FROM clause contains joins from multiple tables
+-- Should not fail as identity should not be persisted but nullability should
+select *
+into dest_table_join
+from dest_table_1 t1
+inner join dest_table_2 t2
+on t1.[Col1] * 2 = t2.[Col3]
+go
+
+select * from dest_table_join order by [Col1]
+go
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_join ([Col2]) values (NULL)
+go
+
+-- Should fail. Violate NOT NULL constraint on other column
+insert into dest_table_join ([Col2]) values ('Join')
+go
+
+insert into dest_table_join ([Col1], [Col2], [Col3], [Col4]) values (99, 'Join', 88, 9.867)
+go
+
+select * from dest_table_join order by [Col1]
+go
+
+-- FROM clause contains subquery
+select *
+into dest_table_union
+from
+(
+    select * from dest_table_1
+    union all
+    select * from dest_table_3
+) as combined_tables
+go
+
+select * from dest_table_union order by [Col1]
+go
+
+-- Ideally should fail as it violates NOT NULL constraint
+-- Currently NOT NULL constraint won't get carried over
+-- to destination table in case of subquery
+insert into dest_table_union ([Col2]) values (NULL)
+go
+
+insert into dest_table_union ([Col2]) values ('Union')
+go
+
+select * from dest_table_union order by [Col1]
+go
+
 drop table dest_table_1
 drop table dest_table_2
 drop table dest_table_3
 drop table dest_table_4
 drop table dest_table_5
+drop table dest_table_join
+drop table dest_table_union
 go
 
 drop table t1_select_into

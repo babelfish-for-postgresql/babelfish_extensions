@@ -6718,6 +6718,26 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
 
+		bool persist_identity = true;
+
+		/*
+		 * In T-SQL, identity property of column in destination
+		 * table is not persisted if the SELECT ... INTO statement
+		 * does not contain a single base relation
+		 */
+		if (q->jointree && q->jointree->fromlist != NIL)
+		{
+			if (list_length(q->jointree->fromlist) > 1)
+				persist_identity = false;
+			else
+			{
+				Node *n_from = (Node *) linitial(q->jointree->fromlist);
+
+				if (!IsA(n_from, RangeTblRef))
+					persist_identity = false;
+			}
+		}
+
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
@@ -6812,49 +6832,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					AlterTableCmd *lcmd;
 					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
-					if (attrStruct->attidentity)
-					{
-						Constraint *constraint;
-						ColumnDef * def;
-
-						if (seen_identity)
-							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
-
-						seen_identity = true;
-						identity_ressortgroupref = tle->ressortgroupref; /* Save this Index to modify sortClause and distinctClause */
-
-						constraint = makeNode(Constraint);
-						constraint->contype = CONSTR_IDENTITY;
-						constraint->generated_when = attrStruct->attidentity;
-						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
-
-						def = makeNode(ColumnDef);
-						def->colname = tle->resname;
-						def->typeName = typeStringToTypeName(get_oid_type_string(attrStruct->atttypid), NULL);
-						def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
-						def->is_not_null = true;
-						def->constraints = lappend(def->constraints, constraint);
-
-						/*
-						 * Add ALTER TABLE ... ADD COLUMN ... after SELECT INTO
-						 * statement where the column added is an IDENTITY column
-						 */
-						if (altstmt == NULL)
-						{
-							altstmt = makeNode(AlterTableStmt);
-							altstmt->relation = into->rel;
-							altstmt->objtype = OBJECT_TABLE;
-							altstmt->cmds = NIL;
-						}
-
-						lcmd = makeNode(AlterTableCmd);
-						lcmd->subtype = AT_AddColumn;
-						lcmd->name = tle->resname;
-						lcmd->def = (Node *) def;
-						altstmt->cmds = lappend(altstmt->cmds, lcmd);
-					}
-					else if (attrStruct->attnotnull)
+					if (attrStruct->attnotnull)
 					{
 						/*
 						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
@@ -6874,12 +6852,44 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
-					if (!attrStruct->attidentity)
+					if (attrStruct->attidentity && persist_identity)
 					{
-						current_resno += 1;
-						tle->resno = current_resno;
-						modifiedTargetList = lappend(modifiedTargetList, tle);
+						Constraint *constraint;
+
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						seen_identity = true;
+						identity_ressortgroupref = tle->ressortgroupref; /* Save this Index to modify sortClause and distinctClause */
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_IDENTITY;
+						constraint->generated_when = attrStruct->attidentity;
+						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+
+						/*
+						 * Add ALTER TABLE ... ADD COLUMN ... after SELECT INTO
+						 * statement where the column added is an IDENTITY column
+						 */
+						if (altstmt == NULL)
+						{
+							altstmt = makeNode(AlterTableStmt);
+							altstmt->relation = into->rel;
+							altstmt->objtype = OBJECT_TABLE;
+							altstmt->cmds = NIL;
+						}
+
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_AddIdentity;
+						lcmd->name = tle->resname;
+						lcmd->def = (Node *) constraint;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
+
+					current_resno += 1;
+					tle->resno = current_resno;
+					modifiedTargetList = lappend(modifiedTargetList, tle);
 
 					ReleaseSysCache(attrtup);
 				}
