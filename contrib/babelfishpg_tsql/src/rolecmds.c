@@ -816,6 +816,9 @@ user_name(PG_FUNCTION_ARGS)
 
 	id = PG_ARGISNULL(0) ? InvalidOid : PG_GETARG_OID(0);
 
+	if(id == 0)
+		PG_RETURN_TEXT_P(cstring_to_text("public")); 
+
 	if (id == InvalidOid)
 		id = GetUserId();
 
@@ -869,6 +872,7 @@ user_id(PG_FUNCTION_ARGS)
 	Form_pg_authid authform;
 	Oid			ret;
 	size_t  	len;
+	int			i;
 
 	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	db_name = get_cur_db_name();
@@ -881,6 +885,19 @@ user_id(PG_FUNCTION_ARGS)
         if (!user_name)
             PG_RETURN_NULL();
 
+		i = strlen(user_input);
+		while (i > 0 && isspace((unsigned char) user_input[i - 1]))
+		user_input[--i] = '\0';
+
+		/* Convert login to lower-case */
+		for (i = 0; user_input[i]; i++)
+		{
+			user_input[i] = tolower(user_input[i]);
+		}
+		if (strcmp(user_input, "public") == 0)
+		{
+			PG_RETURN_OID(0);
+		}
         len = strlen(user_name);
         while (len > 0 && isspace(user_name[len-1]))
         user_name[--len] = '\0';

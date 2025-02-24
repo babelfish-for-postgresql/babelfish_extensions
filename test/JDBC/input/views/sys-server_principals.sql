@@ -62,3 +62,9 @@ GO
 
 select suser_sid('PuBlIC')
 GO
+
+select user_name(0)
+GO
+
+select user_id('public')
+GO
