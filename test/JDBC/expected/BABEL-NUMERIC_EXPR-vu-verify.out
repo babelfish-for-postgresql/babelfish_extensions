@@ -308,15 +308,15 @@ SELECT
     COL2_T1 AS cr,
     COL2_T1
 FROM BABEL_5454_T1
-ORDER BY value1;
+ORDER BY value1, value2, COL2_T1;
 GO
 ~~START~~
 numeric#!#nvarchar#!#nvarchar
-1.00000000#!#Ca#!#Ca
-1.00000000#!#US#!#US
-1.00000000#!#Eu#!#Eu
 1.00000000#!#Br#!#Br
+1.00000000#!#Ca#!#Ca
+1.00000000#!#Eu#!#Eu
 1.00000000#!#Ja#!#Ja
+1.00000000#!#US#!#US
 1.24345678#!#Eu#!#Eu
 5.37345678#!#Ca#!#Ca
 6.12345678#!#US#!#US
@@ -336,20 +336,21 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY sum_num
 GO
 ~~START~~
 nvarchar#!#numeric
 Eu#!#1.24345678
-Br#!#25.99345678
-Ja#!#113.62345678
-Ca#!#5.37345678
-US#!#6.12345678
-US#!#3.10000000
 Eu#!#2.10000000
+US#!#3.10000000
 Br#!#4.10000000
 Ja#!#5.10000000
+Ca#!#5.37345678
 Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -365,12 +366,13 @@ FROM (
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-WHERE value2 = 'US';
+WHERE value2 = 'US'
+ORDER BY sum_num;
 GO
 ~~START~~
 nvarchar#!#numeric
-US#!#6.12345678
 US#!#3.10000000
+US#!#6.12345678
 ~~END~~
 
 
@@ -385,20 +387,21 @@ FROM (
     UNION ALL
     SELECT COL2_T1 AS cr, 1 AS aw, COL3_T1 AS aw1, COL2_T1
     FROM BABEL_5454_T1
-) a;
+) a
+ORDER BY sum_numeric;
 GO
 ~~START~~
 nvarchar#!#numeric
 Eu#!#1.24345678
-Br#!#25.99345678
-Ja#!#113.62345678
-Ca#!#5.37345678
-US#!#6.12345678
-US#!#3.10000000
 Eu#!#2.10000000
+US#!#3.10000000
 Br#!#4.10000000
 Ja#!#5.10000000
+Ca#!#5.37345678
 Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -413,20 +416,21 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL2_T1 AS cr3, COL3_T1 AS aw1
     FROM BABEL_5454_T1
-) a;
+) a
+ORDER BY sum_numeric;
 GO
 ~~START~~
 nvarchar#!#numeric
 Eu#!#1.24345678
-Br#!#25.99345678
-Ja#!#113.62345678
-Ca#!#5.37345678
-US#!#6.12345678
-US#!#3.10000000
 Eu#!#2.10000000
+US#!#3.10000000
 Br#!#4.10000000
 Ja#!#5.10000000
+Ca#!#5.37345678
 Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
 ~~END~~
 
 
@@ -509,16 +513,16 @@ FROM (
         FROM BABEL_5454_T1
     ) a
 )
-ORDER BY test1;
+ORDER BY test1, d1;
 GO
 ~~START~~
 nvarchar#!#numeric
 Eu#!#1.24345678
-Ca#!#2.00000000
-US#!#2.00000000
-Eu#!#2.00000000
 Br#!#2.00000000
+Ca#!#2.00000000
+Eu#!#2.00000000
 Ja#!#2.00000000
+US#!#2.00000000
 Ca#!#5.37345678
 US#!#6.12345678
 Br#!#25.99345678
@@ -537,20 +541,21 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY description, sum_num;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#2.2
 Br#!#6.2
-Ja#!#8.2
+Br#!#6.2
 Ca#!#10.2
+Ca#!#10.2
+Eu#!#2.2
+Eu#!#2.2
+Ja#!#8.2
+Ja#!#8.2
 US#!#4.2
 US#!#4.2
-Eu#!#2.2
-Br#!#6.2
-Ja#!#8.2
-Ca#!#10.2
 ~~END~~
 
 
@@ -565,20 +570,21 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY description, sum_num;
 GO
 ~~START~~
 nvarchar#!#numeric
-Eu#!#6.3
 Br#!#8.3
-Ja#!#9.3
+Br#!#8.3
 Ca#!#10.3
+Ca#!#10.3
+Eu#!#6.3
+Eu#!#6.3
+Ja#!#9.3
+Ja#!#9.3
 US#!#7.3
 US#!#7.3
-Eu#!#6.3
-Br#!#8.3
-Ja#!#9.3
-Ca#!#10.3
 ~~END~~
 
 

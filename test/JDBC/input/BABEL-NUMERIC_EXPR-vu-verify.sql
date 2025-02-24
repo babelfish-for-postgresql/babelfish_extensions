@@ -179,7 +179,7 @@ SELECT
     COL2_T1 AS cr,
     COL2_T1
 FROM BABEL_5454_T1
-ORDER BY value1;
+ORDER BY value1, value2, COL2_T1;
 GO
 
 -- Testing with different order of inner columns in union
@@ -193,7 +193,8 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY sum_num
 GO
 
 -- Testing with where clause
@@ -208,7 +209,8 @@ FROM (
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-WHERE value2 = 'US';
+WHERE value2 = 'US'
+ORDER BY sum_num;
 GO
 
 -- Testing with different order of inner columns in union
@@ -222,7 +224,8 @@ FROM (
     UNION ALL
     SELECT COL2_T1 AS cr, 1 AS aw, COL3_T1 AS aw1, COL2_T1
     FROM BABEL_5454_T1
-) a;
+) a
+ORDER BY sum_numeric;
 GO
 
 -- Testing with more columns in unions
@@ -236,7 +239,8 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL2_T1 AS cr3, COL3_T1 AS aw1
     FROM BABEL_5454_T1
-) a;
+) a
+ORDER BY sum_numeric;
 GO
 
 -- Multiple alias and t_const in union
@@ -290,7 +294,7 @@ FROM (
         FROM BABEL_5454_T1
     ) a
 )
-ORDER BY test1;
+ORDER BY test1, d1;
 GO
 
 -- Selecting same column without alias in inner query
@@ -304,7 +308,8 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY description, sum_num;
 GO
 
 -- Operator with a constant value
@@ -318,7 +323,8 @@ FROM (
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
     FROM BABEL_5454_T1
-);
+)
+ORDER BY description, sum_num;
 GO
 
 -- Nested query
