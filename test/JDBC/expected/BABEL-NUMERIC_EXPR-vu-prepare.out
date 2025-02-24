@@ -85,6 +85,12 @@ GO
 ~~ROW COUNT: 100~~
 
 
+CREATE TABLE BABEL_5454_T10 (id NUMERIC(4, 2));
+GO
+INSERT INTO BABEL_5454_T10 VALUES (1.0)
+GO
+~~ROW COUNT: 1~~
+
 
 -- edge cases for scale precision
 CREATE TABLE BABEL_5454_T12 (
@@ -105,5 +111,58 @@ INSERT INTO BABEL_5454_T12 (COL1_T12, COL2_T12, COL3_T12, COL4_T12, COL5_T12, CO
 (4, 1.000000000000001, 1234567890123456789, 0.1234567, 0.5679, 1234567.34)
 GO
 ~~ROW COUNT: 4~~
+
+
+CREATE VIEW BABEL_5454_V1 AS
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a;
+GO
+
+CREATE VIEW BABEL_5454_V2 AS
+WITH CTE AS (
+    SELECT TOP 10 (id+1) AS id
+    FROM BABEL_5454_T9
+    WHERE id > 50
+    ORDER BY id
+)
+SELECT TOP 1 1 AS constant, id
+FROM CTE;
+GO
+
+CREATE VIEW BABEL_5454_V3 AS
+WITH CTE AS (
+    SELECT id + 1.0 AS id_cte
+    FROM BABEL_5454_T10
+)
+SELECT
+    CTE.id_cte + 10 AS id_result,
+    BABEL_5454_T10.id1 + 10 AS id1_result
+FROM CTE
+JOIN (
+    SELECT TOP 5
+        ROW_NUMBER() OVER (ORDER BY id) AS srNo,
+        id + 1.0 AS id1
+    FROM BABEL_5454_T10
+) AS BABEL_5454_T10
+ON (1=1);
+GO
 
 

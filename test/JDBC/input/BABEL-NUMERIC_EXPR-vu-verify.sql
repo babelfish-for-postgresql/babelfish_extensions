@@ -21,27 +21,7 @@ go
 
 
 -- Selecting varchar and numeric, JIRA QUERY
-SELECT
-    value2 AS description,
-    value1 + COL3_T2 AS sum_num
-FROM (
-    SELECT
-        COL2_T2 AS value1,
-        COL2_T1 AS value2,
-        COL2_T1,
-        COL3_T2
-    FROM BABEL_5454_T1
-    INNER JOIN BABEL_5454_T2
-        ON COL1_T2 = COL1_T1
-    UNION ALL
-    SELECT
-        1 AS aw,
-        COL2_T1 AS cr,
-        COL2_T1,
-        COL3_T1 AS aw1
-    FROM BABEL_5454_T1
-) a
-ORDER BY sum_num;
+SELECT * FROM BABEL_5454_V1 ORDER BY sum_num;
 GO
 
 -- Selecting only numeric
@@ -517,7 +497,7 @@ FROM
 ORDER BY result2;
 GO
 
--- test
+-- test union all
 SELECT a FROM BABEL_5454_T7
 UNION All
 SELECT amount + 100 FROM BABEL_5454_T8
@@ -525,16 +505,23 @@ where id = 1
 ORDER BY a
 GO
 
--- cte and limit node, BABEL-5588
-WITH cte AS (SELECT TOP 10 (id+1) AS id FROM BABEL_5454_T9 WHERE id >50 ORDER BY id) SELECT TOP 1 1, id FROM cte
-GO
-
 -- multiple union all, same column on top
-select sum_num + sum_num from
-(SELECT value1 + COL3_T2 AS sum_num FROM (SELECT COL2_T2 AS value1,COL3_T2 FROM BABEL_5454_T1 INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1 UNION ALL SELECT 1 AS aw, COL3_T1 AS aw1 FROM BABEL_5454_T1) a
-union all
-select COL2_T2 from BABEL_5454_T2)
-Order by sum_num
+SELECT sum_num + sum_num
+FROM (
+    SELECT value1 + COL3_T2 AS sum_num
+    FROM (
+        SELECT COL2_T2 AS value1, COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+    UNION ALL
+    SELECT COL2_T2
+    FROM BABEL_5454_T2
+)
+ORDER BY sum_num;
 GO
 
 
@@ -567,7 +554,7 @@ FROM (
 ORDER BY IntCol;
 
 
--- selecting limit and windowAgg on top 
+-- selecting limit and windowAgg on top
 SELECT TOP 1
     description,
     sum_num,
@@ -668,37 +655,376 @@ GROUP BY value2
 ORDER BY sum_num;
 Go
 
--- edge case of scake and precision
--- multiply
+-- edge case of scale and precision
+
+-- multiply and divide
 -- the integral part is less than 32, The result might be rounded in this case.
-SELECT COL4_T12 * COL5_T12 FROM BABEL_5454_T12
+-- (10, 7) * (4, 0)
+SELECT COL4_T12 * COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+GO
+-- (10, 7) / (4,0)
+SELECT COL4_T12 / COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
 -- The scale isn't changed if it's less than 6 and if the integral part is greater than 32.
-SELECT COL6_T12 * COL5_T12 FROM BABEL_5454_T12
+-- (30, 5) * (4, 0)
+SELECT COL6_T12 * COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+GO
+-- (30, 5) / (4, 0)
+SELECT COL6_T12 / COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
 -- The scale is set to 6 if it's greater than 6 and if the integral part is greater than 32.
-SELECT COL4_T12 * COL6_T12 FROM BABEL_5454_T12
+-- (38,5) * (10, 7)
+SELECT COL6_T12 * COL4_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+GO
+-- (38,5) / (10, 7)
+SELECT COL6_T12 / COL4_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
 
-
---  (38,6) + (38, 0) -- existing issue 
-SELECT COL2_T12 + COL3_T12 FROM BABEL_5454_T12
-GO
-SELECT COL2_T12 - COL3_T12 FROM BABEL_5454_T12
-GO
--- (38, 0) + (38, 0) -- correct
-SELECT COL3_T12 + COL3_T12 FROM BABEL_5454_T12
-GO
-SELECT COL3_T12 - COL3_T12 FROM BABEL_5454_T12
+-- (38,6) / (38,6)
+SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
 
-SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T12
+-- addition and subtraction
+--  (38,6) + (38, 0)
+SELECT COL2_T12 + COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
-SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T12
+--  (38,6) - (38, 0)
+SELECT COL2_T12 - COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
-SELECT COL5_T12 * COL5_T12 AS Result FROM BABEL_5454_T12
+-- (38, 0) + (38, 0)
+SELECT COL3_T12 + COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
-SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T12
+-- (38, 0) + (38, 0)
+SELECT COL3_T12 - COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
 GO
 
+-- (38,6) + (38,6)
+SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+GO
+-- (38,6) - (38,6)
+SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+GO
+
+-- edge case with union
+-- (38,5) * (10, 7)
+SELECT COL6_T12 * COL4_T12 AS RESULT FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+GO
+
+-- (38,6) / (38,6)
+SELECT COL2_T12 / COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+GO
+
+-- (38,6) + (38,6)
+SELECT COL2_T12 + COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+GO
+
+-- (38,6) - (38,6)
+SELECT COL2_T12 - COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+GO
+
+-- view with CTE and limit node, BABEL-5588
+SELECT * FROM BABEL_5454_V2;
+GO
+
+-- SubqueryScan on top
+SELECT id + 10 FROM (SELECT TOP 5 ROW_NUMBER() OVER(ORDER BY id) AS srNo, id + 1.0 AS id FROM BABEL_5454_T10) AS BABEL_5454_T10
+GO
+
+-- INNER_VAR with CTE
+SELECT * FROM BABEL_5454_V3;
+GO
+
+-- CTE with window function and self-join
+WITH CTE AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS row_num 
+    FROM BABEL_5454_T9 
+    WHERE id <= 50
+)
+SELECT c1.id, c1.row_num, c2.id AS next_id 
+FROM CTE c1 
+LEFT JOIN CTE c2 ON c1.row_num = c2.row_num - 1
+ORDER BY c1.row_num
+GO
+
+-- CTE with aggregation and outer join
+WITH CTE AS (
+    SELECT FLOOR(id/10) AS group_id, AVG(id) AS avg_id 
+    FROM BABEL_5454_T9 
+    GROUP BY FLOOR(id/10)
+)
+SELECT t.id, c.avg_id 
+FROM BABEL_5454_T9 t 
+LEFT JOIN CTE c ON FLOOR(t.id/10) = c.group_id
+WHERE t.id % 10 = 0
+ORDER BY t.id
+GO
+
+-- Nested CTEs with UNION ALL
+WITH cte1 AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id <= 50
+),
+cte2 AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id > 50
+),
+combined AS (
+    SELECT id, 'Lower' AS category FROM cte1
+    UNION ALL
+    SELECT id, 'Upper' AS category FROM cte2
+)
+SELECT category, AVG(id) AS avg_id 
+FROM combined 
+GROUP BY category
+GO
+
+-- CTE with subquery and CROSS APPLY
+WITH CTE AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id % 10 = 0
+)
+SELECT c.id, t.multiplied_id 
+FROM CTE c
+CROSS APPLY (SELECT c.id * 2 AS multiplied_id) t
+ORDER BY c.id
+GO
+
+-- CTE with PIVOT-like operation
+WITH CTE AS (
+    SELECT id, 
+           CASE WHEN id % 3 = 0 THEN 'Fizz'
+                WHEN id % 5 = 0 THEN 'Buzz'
+                ELSE 'Other' END AS category
+    FROM BABEL_5454_T9
+    WHERE id <= 30
+)
+SELECT 
+    category,
+    COUNT(*) AS count,
+    STRING_AGG(CAST(id AS VARCHAR), ',') AS ids
+FROM CTE
+GROUP BY category
+GO
+
+-- CTE with self-join and arithmetic operations
+WITH CTE AS (
+    SELECT id, id * 2 AS double_id, id * id AS squared_id
+    FROM BABEL_5454_T10
+)
+SELECT 
+    t1.id AS original_id,
+    t1.double_id,
+    t1.squared_id,
+    t2.id AS next_id,
+    t1.id + t2.id AS sum_ids
+FROM CTE t1
+LEFT JOIN CTE t2 ON t1.id < t2.id
+ORDER BY t1.id
+GO
+
+-- CTE with running total
+WITH CTE AS (
+    SELECT id,
+           SUM(id) OVER (ORDER BY id) AS running_total
+    FROM BABEL_5454_T10
+)
+SELECT 
+    id,
+    running_total,
+    running_total - id AS previous_total
+FROM CTE
+ORDER BY id
+GO
+
+-- CTE with multiple levels and cross join
+WITH 
+cte1 AS (
+    SELECT id, FLOOR(id) AS floor_id
+    FROM BABEL_5454_T10
+),
+cte2 AS (
+    SELECT DISTINCT floor_id
+    FROM cte1
+)
+SELECT 
+    c1.id,
+    c2.floor_id,
+    c1.id * c2.floor_id AS product
+FROM cte1 c1
+CROSS JOIN cte2 c2
+ORDER BY c1.id, c2.floor_id
+GO
+
+-- CTE with pivoting (simulated)
+WITH CTE AS (
+    SELECT 
+        id,
+        CASE 
+            WHEN id < 1 THEN 'Low'
+            WHEN id >= 1 AND id < 2 THEN 'Medium'
+            ELSE 'High'
+        END AS category
+    FROM BABEL_5454_T10
+)
+SELECT 
+    SUM(CASE WHEN category = 'Low' THEN id ELSE 0 END) AS Low_Total,
+    SUM(CASE WHEN category = 'Medium' THEN id ELSE 0 END) AS Medium_Total,
+    SUM(CASE WHEN category = 'High' THEN id ELSE 0 END) AS High_Total
+FROM CTE
+GO
+
+-- CTE with window functions
+WITH CTE AS (
+    SELECT 
+        id,
+        ROW_NUMBER() OVER (ORDER BY id) AS row_num,
+        NTILE(3) OVER (ORDER BY id) AS ntile,
+        LAG(id) OVER (ORDER BY id) AS prev_id,
+        LEAD(id) OVER (ORDER BY id) AS next_id
+    FROM BABEL_5454_T10
+)
+SELECT *
+FROM CTE
+ORDER BY id
+GO
+
+-- CTE with UNION, LIMIT, and window aggregation
+WITH number_categories AS (
+    SELECT id, 
+           id % 10 AS category,
+           CASE 
+               WHEN id <= 33 THEN 'Low'
+               WHEN id <= 66 THEN 'Medium'
+               ELSE 'High'
+           END AS range_category
+    FROM BABEL_5454_T9
+),
+ranked_data AS (
+    SELECT 
+        id, 
+        category,
+        range_category,
+        ROW_NUMBER() OVER (PARTITION BY category ORDER BY id DESC) AS rank_in_category,
+        SUM(id) OVER (PARTITION BY category) AS category_total,
+        AVG(id) OVER (PARTITION BY range_category) AS range_avg
+    FROM number_categories
+)
+SELECT TOP 20
+    id,
+    category,
+    range_category,
+    rank_in_category,
+    category_total,
+    range_avg,
+    CAST(id AS FLOAT) / NULLIF(category_total, 0) * 100 AS percent_of_category
+FROM ranked_data
+WHERE rank_in_category <= 3  -- Top 3 values in each category
+UNION ALL
+SELECT 
+    NULL AS id,
+    category,
+    'Total' AS range_category,
+    NULL AS rank_in_category,
+    category_total,
+    NULL AS range_avg,
+    100 AS percent_of_category
+FROM ranked_data
+WHERE rank_in_category = 1  -- To get one row per category for totals
+ORDER BY category, rank_in_category;
+GO
+
+-- CTE and edge case of precision/scale
+-- CTE with multiplication and division operations
+WITH cte_mult_div AS (
+    SELECT 
+        COL1_T12,
+        COL4_T12 * COL5_T12 AS mult_result_1, -- (10, 7) * (4, 0)
+        COL4_T12 / COL5_T12 AS div_result_1,  -- (10, 7) / (4, 0)
+        COL6_T12 * COL5_T12 AS mult_result_2, -- (30, 5) * (4, 0)
+        COL6_T12 / COL5_T12 AS div_result_2,  -- (30, 5) / (4, 0)
+        COL6_T12 * COL4_T12 AS mult_result_3, -- (30, 5) * (10, 7)
+        COL6_T12 / COL4_T12 AS div_result_3,  -- (30, 5) / (10, 7)
+        COL2_T12 / COL2_T12 AS div_result_4   -- (38, 6) / (38, 6)
+    FROM BABEL_5454_T12
+)
+SELECT 
+    COL1_T12,
+    mult_result_1, div_result_1,
+    mult_result_2, div_result_2,
+    mult_result_3, div_result_3,
+    div_result_4
+FROM cte_mult_div
+ORDER BY COL1_T12;
+GO
+
+-- CTE with addition and subtraction operations
+WITH cte_add_sub AS (
+    SELECT 
+        COL1_T12,
+        COL2_T12 + COL3_T12 AS add_result_1,  -- (38, 6) + (38, 0)
+        COL2_T12 - COL3_T12 AS sub_result_1,  -- (38, 6) - (38, 0)
+        COL3_T12 + COL3_T12 AS add_result_2,  -- (38, 0) + (38, 0)
+        COL3_T12 - COL3_T12 AS sub_result_2,  -- (38, 0) - (38, 0)
+        COL2_T12 + COL2_T12 AS add_result_3,  -- (38, 6) + (38, 6)
+        COL2_T12 - COL2_T12 AS sub_result_3   -- (38, 6) - (38, 6)
+    FROM BABEL_5454_T12
+)
+SELECT 
+    COL1_T12,
+    add_result_1, sub_result_1,
+    add_result_2, sub_result_2,
+    add_result_3, sub_result_3
+FROM cte_add_sub
+ORDER BY COL1_T12;
+GO
+
+-- CTE with edge cases using UNION ALL
+WITH cte_union AS (
+    SELECT * FROM BABEL_5454_T12
+    UNION ALL
+    SELECT * FROM BABEL_5454_T12
+)
+SELECT 
+    COL1_T12,
+    COL6_T12 * COL4_T12 AS mult_result,  -- (30, 5) * (10, 7)
+    COL2_T12 / COL2_T12 AS div_result,   -- (38, 6) / (38, 6)
+    COL2_T12 + COL2_T12 AS add_result,   -- (38, 6) + (38, 6)
+    COL2_T12 - COL2_T12 AS sub_result    -- (38, 6) - (38, 6)
+FROM cte_union
+ORDER BY COL1_T12, mult_result;
+GO
+
+-- CTE with complex calculations breaching precision/scale limits
+WITH cte_complex AS (
+    SELECT 
+        COL1_T12,
+        (COL2_T12 * COL3_T12) / (COL4_T12 + COL5_T12) AS complex_result_1,
+        (COL6_T12 * COL6_T12) + (COL2_T12 * COL2_T12) AS complex_result_2,
+        (COL3_T12 / COL4_T12) * (COL5_T12 + COL6_T12) AS complex_result_3
+    FROM BABEL_5454_T12
+)
+SELECT 
+    COL1_T12,
+    complex_result_1,
+    complex_result_2,
+    complex_result_3
+FROM cte_complex
+ORDER BY COL1_T12;
+GO
+
+-- CTE with window , aggerate and operations breaching precision/scale
+WITH cte_window AS (
+    SELECT 
+        COL1_T12,
+        COL2_T12,
+        COL3_T12,
+        SUM(COL2_T12) OVER (ORDER BY COL1_T12) AS running_sum,
+        AVG(COL3_T12) OVER (ORDER BY COL1_T12) AS running_avg
+    FROM BABEL_5454_T12
+)
+SELECT 
+    COL1_T12,
+    running_sum / COL2_T12 AS ratio_1,
+    running_avg * COL3_T12 AS product_1,
+    running_sum + running_avg AS sum_1
+FROM cte_window
+ORDER BY COL1_T12;
+GO
 
