@@ -133,7 +133,7 @@ varbinary
 ~~END~~
 
 
-select user_name(0)
+select user_name(1)
 GO
 ~~START~~
 nvarchar
@@ -145,6 +145,6 @@ select user_id('public')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
