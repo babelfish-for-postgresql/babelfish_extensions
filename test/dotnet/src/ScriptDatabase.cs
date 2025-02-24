@@ -99,8 +99,7 @@ public class LoginDatabaseScripter
 				for (int i = 0; i < loginScripts.Count; i++)
 				{
 					// replace password with equal length * 
-					loginScripts[i] = passwordRegex.Replace(loginScripts[i], match => 
-                    "'" + new string('*', match.Groups[1].Value.Length) + "'");
+					loginScripts[i] = passwordRegex.Replace(loginScripts[i], match => "'" + new string('*', match.Groups[1].Value.Length) + "'");
 					// remove comments
 					loginScripts[i] = commentBlockRegex.Replace(loginScripts[i], "");
 					loginScripts[i] = singleLineCommentRegex.Replace(loginScripts[i], "");
