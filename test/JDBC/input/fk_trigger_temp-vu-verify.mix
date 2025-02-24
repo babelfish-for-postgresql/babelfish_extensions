@@ -377,3 +377,16 @@ GO
 -- Should Pass
 Update Cascade_Update_TransitionTbl5 set id = 2 where id=1;
 GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 15: Delete Cascade with search path changing
+DELETE FROM Del_Cascade_parent WHERE a = 1
+GO
+USE tempdb
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 2
+GO
+USE master
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 3
+GO

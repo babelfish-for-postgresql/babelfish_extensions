@@ -16,6 +16,7 @@ DROP TRIGGER IF EXISTS Cascade_Delete_TransitionTbl_Trig3;
 DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig1;
 DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig2;
 DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig3;
+DROP TRIGGER IF EXISTS Del_Cascade_trig1;
 GO
 
 -- constraints
@@ -65,4 +66,6 @@ DROP TABLE IF EXISTS Cascade_Update_TransitionTbl4;
 DROP TABLE IF EXISTS Cascade_Update_TransitionTbl3;
 DROP TABLE IF EXISTS Cascade_Update_TransitionTbl2;
 DROP TABLE IF EXISTS Cascade_Update_TransitionTbl1;
+DROP TABLE IF EXISTS Del_Cascade_child;
+DROP TABLE IF EXISTS Del_Cascade_parent;
 GO

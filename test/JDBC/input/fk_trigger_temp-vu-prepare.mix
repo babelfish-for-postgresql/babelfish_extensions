@@ -294,3 +294,30 @@ GO
 INSERT INTO Cascade_Update_TransitionTbl5 VALUES (1)
 INSERT INTO Cascade_Update_TransitionTbl6 VALUES (1)
 GO
+
+create table Del_Cascade_parent(a int primary key)
+go
+
+create table Del_Cascade_child(b int, foreign key (b) REFERENCES Del_Cascade_parent(a) ON DELETE CASCADE)
+GO
+
+create trigger Del_Cascade_trig1 on Del_Cascade_child AFTER DELETE AS BEGIN
+DECLARE @test TABLE
+(
+    pkOrderItem INT NOT NULL ,  /**/ PRIMARY KEY ( pkOrderItem )
+)
+
+
+        INSERT  INTO @test
+                ( pkOrderItem )
+                SELECT  b
+                FROM    deleted
+
+        SELECT TOP 1 * from @test
+END
+GO
+
+INSERT INTO Del_Cascade_parent VALUES (generate_series(1,10))
+GO
+INSERT INTO Del_Cascade_child VALUES (generate_series(1,10))
+GO

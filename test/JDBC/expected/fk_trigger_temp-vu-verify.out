@@ -534,3 +534,43 @@ int
 
 ~~ROW COUNT: 1~~
 
+
+-- tsql user=jdbc_user password=12345678
+-- Case 15: Delete Cascade with search path changing
+DELETE FROM Del_Cascade_parent WHERE a = 1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+USE tempdb
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 2
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+USE master
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 3
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 1~~
+
