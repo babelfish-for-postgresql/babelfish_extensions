@@ -207,7 +207,7 @@ inner join dest_table_2 t2
 on t1.[Col1] * 2 = t2.[Col3]
 go
 
-select * from dest_table_join order by [Col1]
+select * from dest_table_join order by [Col1], [Col2]
 go
 ~~START~~
 int#!#nvarchar#!#smallint#!#numeric
@@ -238,7 +238,7 @@ go
 ~~ROW COUNT: 1~~
 
 
-select * from dest_table_join order by [Col1]
+select * from dest_table_join order by [Col1], [Col2]
 go
 ~~START~~
 int#!#nvarchar#!#smallint#!#numeric

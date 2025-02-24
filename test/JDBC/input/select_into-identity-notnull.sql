@@ -134,7 +134,7 @@ inner join dest_table_2 t2
 on t1.[Col1] * 2 = t2.[Col3]
 go
 
-select * from dest_table_join order by [Col1]
+select * from dest_table_join order by [Col1], [Col2]
 go
 
 -- Should fail. Violate NOT NULL constraint
@@ -148,7 +148,7 @@ go
 insert into dest_table_join ([Col1], [Col2], [Col3], [Col4]) values (99, 'Join', 88, 9.867)
 go
 
-select * from dest_table_join order by [Col1]
+select * from dest_table_join order by [Col1], [Col2]
 go
 
 -- FROM clause contains subquery
