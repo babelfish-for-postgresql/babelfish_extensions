@@ -22,12 +22,12 @@ go
 
 -- Selecting varchar and numeric, JIRA QUERY
 SELECT
-    cr1 AS description,
-    ex + COL3_T2 AS sum_num
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
 FROM (
     SELECT
-        COL2_T2 AS ex,
-        COL2_T1 AS cr1,
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
         COL2_T1,
         COL3_T2
     FROM BABEL_5454_T1
@@ -51,7 +51,7 @@ FROM (
     SELECT
         COL3_T1,
         COL2_T2 + COL3_T2,
-        COL2_T1 AS cr1,
+        COL2_T1 AS value2,
         COL2_T1,
         COL3_T2
     FROM BABEL_5454_T1
@@ -76,7 +76,7 @@ FROM (
     SELECT
         COL3_T1,
         COL2_T2 + COL3_T2 AS sum,
-        COL2_T1 AS cr1,
+        COL2_T1 AS value2,
         COL2_T1,
         COL3_T2
     FROM BABEL_5454_T1
@@ -104,7 +104,7 @@ FROM (
         SELECT
             COL3_T1,
             COL2_T2 + COL3_T2 AS sum,
-            COL2_T1 AS cr1,
+            COL2_T1 AS value2,
             COL2_T1,
             COL3_T2
         FROM BABEL_5454_T1
@@ -125,12 +125,12 @@ GO
 -- selecting 1
 SELECT
     1,
-    cr1 AS description,
-    ex + COL3_T2 AS ex1
+    value2 AS description,
+    value1 + COL3_T2 AS value1
 FROM (
     SELECT
-        COL2_T2 AS ex,
-        COL2_T1 AS cr1,
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
         COL2_T1,
         COL3_T2
     FROM BABEL_5454_T1
@@ -144,14 +144,14 @@ FROM (
         COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-ORDER BY ex1
+ORDER BY value1
 GO
 
 -- Testing inner query with operator
 -- union of decimal
 SELECT
-    COL2_T2 + COL3_T2 AS ex,
-    COL2_T1 AS cr1,
+    COL2_T2 + COL3_T2 AS value1,
+    COL2_T1 AS value2,
     COL2_T1
 FROM BABEL_5454_T1
 INNER JOIN BABEL_5454_T2
@@ -162,13 +162,13 @@ SELECT
     COL2_T1 AS cr,
     COL2_T1
 FROM BABEL_5454_T1
-ORDER BY ex;
+ORDER BY value1;
 GO
 
 -- union with t_const
 SELECT
-    COL2_T2 + COL3_T2 AS ex,
-    COL2_T1 AS cr1,
+    COL2_T2 + COL3_T2 AS value1,
+    COL2_T1 AS value2,
     COL2_T1
 FROM BABEL_5454_T1
 INNER JOIN BABEL_5454_T2
@@ -179,15 +179,15 @@ SELECT
     COL2_T1 AS cr,
     COL2_T1
 FROM BABEL_5454_T1
-ORDER BY ex;
+ORDER BY value1;
 GO
 
 -- Testing with different order of inner columns in union
 SELECT
-    cr1 AS description,
-    ex + COL3_T2 AS sum_num
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
 FROM (
-    SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T2 AS ex
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
@@ -198,25 +198,25 @@ GO
 
 -- Testing with where clause
 SELECT
-    cr1 AS description,
-    ex + COL3_T2 AS sum_num
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
 FROM (
-    SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T2 AS ex
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
     SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
     FROM BABEL_5454_T1
 ) a
-WHERE cr1 = 'US';
+WHERE value2 = 'US';
 GO
 
 -- Testing with different order of inner columns in union
 SELECT
-    cr1 AS description,
-    ex + COL3_T2 AS sum_numeric
+    value2 AS description,
+    value1 + COL3_T2 AS sum_numeric
 FROM (
-    SELECT COL2_T1 AS cr1, COL2_T2 AS ex, COL3_T2, COL2_T1
+    SELECT COL2_T1 AS value2, COL2_T2 AS value1, COL3_T2, COL2_T1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
@@ -227,10 +227,10 @@ GO
 
 -- Testing with more columns in unions
 SELECT
-    cr1 AS description,
-    ex + COL3_T2 AS sum_numeric
+    value2 AS description,
+    value1 + COL3_T2 AS sum_numeric
 FROM (
-    SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T1 AS cr2, COL2_T2 AS ex
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T1 AS cr2, COL2_T2 AS value1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
@@ -242,11 +242,11 @@ GO
 -- Multiple alias and t_const in union
 SELECT
     description AS d1,
-    ex2 + h2 AS test1
+    value2 + h2 AS test1
 FROM (
-    SELECT COL2_T1 AS description, ex AS ex2, h1 AS h2
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
     FROM (
-        SELECT COL2_T2 AS ex, COL2_T1 AS cr1, COL2_T1, COL3_T2 AS h1
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
         FROM BABEL_5454_T1
         INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
         UNION ALL
@@ -260,11 +260,11 @@ GO
 -- Multiple alias and decimal in union
 SELECT
     description AS d1,
-    ex2 + h2 AS test1
+    value2 + h2 AS test1
 FROM (
-    SELECT COL2_T1 AS description, ex AS ex2, h1 AS h2
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
     FROM (
-        SELECT COL2_T2 AS ex, COL2_T1 AS cr1, COL2_T1, COL3_T2 AS h1
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
         FROM BABEL_5454_T1
         INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
         UNION ALL
@@ -278,11 +278,11 @@ GO
 -- Nested query and alias
 SELECT
     description AS d1,
-    ex2 + h2 AS test1
+    value2 + h2 AS test1
 FROM (
-    SELECT COL2_T1 AS description, ex AS ex2, h1 AS h2
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
     FROM (
-        SELECT COL2_T2 AS ex, COL2_T1 AS cr1, COL2_T1, COL3_T2 AS h1
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
         FROM BABEL_5454_T1
         INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
         UNION ALL
@@ -295,10 +295,10 @@ GO
 
 -- Selecting same column without alias in inner query
 SELECT
-    cr1 AS description,
+    value2 AS description,
     COL3_T1 + COL3_T1 AS sum_num
 FROM (
-    SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T2 AS ex, COL3_T1
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
@@ -309,10 +309,10 @@ GO
 
 -- Operator with a constant value
 SELECT
-    cr1 AS description,
+    value2 AS description,
     COL3_T1 + 5.2 AS sum_num
 FROM (
-    SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T2 AS ex, COL3_T1
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
     FROM BABEL_5454_T1
     INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
     UNION ALL
@@ -326,9 +326,9 @@ SELECT
     description,
     sum_num + sum_num AS result
 FROM (
-    SELECT cr1 AS description, COL3_T1 + COL3_T1 AS sum_num
+    SELECT value2 AS description, COL3_T1 + COL3_T1 AS sum_num
     FROM (
-        SELECT COL3_T2, COL2_T1 AS cr1, COL2_T1, COL2_T2 AS ex, COL3_T1
+        SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
         FROM BABEL_5454_T1
         INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
         UNION ALL
@@ -343,9 +343,9 @@ GO
 SELECT
     sum_num + sum_num AS result
 FROM (
-    SELECT cr1 AS description, ex + COL3_T2 AS sum_num
+    SELECT value2 AS description, value1 + COL3_T2 AS sum_num
     FROM (
-        SELECT COL2_T2 AS ex, COL2_T1 AS cr1, COL2_T1, COL3_T2
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2
         FROM BABEL_5454_T1
         INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
         UNION ALL
@@ -373,17 +373,17 @@ GO
 
 -- Multiple UNION ALL query
 SELECT
-    ex5 + ex5 AS ex_result
+    value5 + value5 AS value_result
 FROM (
-    SELECT COL1_T2, COL2_T2 AS ex5
+    SELECT COL1_T2, COL2_T2 AS value5
     FROM BABEL_5454_T2
     UNION ALL
     (
         SELECT
-            cr1 AS description,
-            ex + COL3_T2 AS ex1
+            value2 AS description,
+            value1 + COL3_T2 AS value1
         FROM (
-            SELECT COL2_T2 AS ex, COL2_T1 AS cr1, COL2_T1, COL3_T2
+            SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2
             FROM BABEL_5454_T1
             INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
             UNION ALL
@@ -392,7 +392,7 @@ FROM (
         ) a
     )
 ) AS subquery
-ORDER BY ex_result
+ORDER BY value_result
 GO
 
 -- UDT
@@ -519,7 +519,180 @@ where id = 1
 ORDER BY a
 GO
 
--- cte, limit, 5588
+-- cte and limit node, BABEL-5588
 WITH cte AS (SELECT TOP 10 (id+1) AS id FROM BABEL_5454_T9 WHERE id >50 ORDER BY id) SELECT TOP 1 1, id FROM cte
 GO
+
+-- multiple union all, same column on top
+select sum_num + sum_num from
+(SELECT value1 + COL3_T2 AS sum_num FROM (SELECT COL2_T2 AS value1,COL3_T2 FROM BABEL_5454_T1 INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1 UNION ALL SELECT 1 AS aw, COL3_T1 AS aw1 FROM BABEL_5454_T1) a
+union all
+select COL2_T2 from BABEL_5454_T2)
+Order by sum_num
+GO
+
+
+-- random node test - windowAGG
+SELECT 
+    IntCol,
+    FloatCol,
+    SmallIntCol,
+    NumericCol,
+    UDTCol,
+    AVG(NumericCol) OVER (ORDER BY IntCol ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
+FROM TestTypes
+ORDER BY IntCol;
+
+-- windowAGG and union
+SELECT 
+    IntCol,
+    FloatCol,
+    SmallIntCol,
+    NumericCol,
+    UDTCol,
+    AVG(NumericCol) OVER (ORDER BY IntCol ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
+FROM (
+    SELECT IntCol, FloatCol, SmallIntCol, NumericCol, UDTCol
+    FROM TestTypes
+    UNION ALL
+    SELECT IntCol + 1000, FloatCol + 1000, SmallIntCol + 100, NumericCol + 1000, UDTCol + 1000
+    FROM TestTypes
+) AS combined_data
+ORDER BY IntCol;
+
+
+-- selecting limit and windowAgg on top 
+SELECT TOP 1
+    description,
+    sum_num,
+    ROW_NUMBER() OVER (ORDER BY sum_num) AS row_num
+FROM (
+    SELECT
+        value2 AS description,
+        value1 + COL3_T2 AS sum_num
+    FROM (
+        SELECT
+            COL2_T2 AS value1,
+            COL2_T1 AS value2,
+            COL2_T1,
+            COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT
+            1 AS aw,
+            COL2_T1 AS cr,
+            COL2_T1,
+            COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+) b
+ORDER BY sum_num;
+GO
+
+-- limit, and windowAgg togther with operator
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num,
+    ROW_NUMBER() OVER (ORDER BY COL3_T2) AS row_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY sum_num;
+Go
+
+-- columns having agg and column operator
+SELECT
+    value2 AS description,
+    SUM(value1) AS sum_value,
+    value1 + COL3_T2 AS sum_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+GROUP BY value2, value1, COL3_T2
+ORDER BY sum_num;
+GO
+-- combination of agg and addition
+SELECT
+    value2 AS description,
+    SUM(value1) + MAX(COL3_T2) AS sum_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+GROUP BY value2
+ORDER BY sum_num;
+Go
+
+-- edge case of scake and precision
+-- multiply
+-- the integral part is less than 32, The result might be rounded in this case.
+SELECT COL4_T12 * COL5_T12 FROM BABEL_5454_T12
+GO
+-- The scale isn't changed if it's less than 6 and if the integral part is greater than 32.
+SELECT COL6_T12 * COL5_T12 FROM BABEL_5454_T12
+GO
+-- The scale is set to 6 if it's greater than 6 and if the integral part is greater than 32.
+SELECT COL4_T12 * COL6_T12 FROM BABEL_5454_T12
+GO
+
+
+--  (38,6) + (38, 0) -- existing issue 
+SELECT COL2_T12 + COL3_T12 FROM BABEL_5454_T12
+GO
+SELECT COL2_T12 - COL3_T12 FROM BABEL_5454_T12
+GO
+-- (38, 0) + (38, 0) -- correct
+SELECT COL3_T12 + COL3_T12 FROM BABEL_5454_T12
+GO
+SELECT COL3_T12 - COL3_T12 FROM BABEL_5454_T12
+GO
+
+SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T12
+GO
+SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T12
+GO
+SELECT COL5_T12 * COL5_T12 AS Result FROM BABEL_5454_T12
+GO
+SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T12
+GO
+
 

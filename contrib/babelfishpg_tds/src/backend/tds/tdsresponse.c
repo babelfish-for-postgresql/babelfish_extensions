@@ -592,33 +592,41 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_Var:
 			{
 				Var		    *var = (Var *) expr;
-				Plan		*outerplan = NULL;
+				Plan		*outerplan;
+				Plan		*innerplan;
 				TargetEntry	*tle;
-				if (plan) outerplan = outerPlan(plan);
 
-				/* If we are in parallel mode or have a Sort or limit node,
-     			 * find the original target list entry from the outer plan
+				/* If the current node is a subqueryscan,
+				 * find the original target list entry from subplan
 				 */
-				if (plan && outerplan && (
-					(IsA(plan, Agg) && IsA(outerplan, Gather)) ||
-					IsA(plan, Gather) ||
-					IsA(plan, Sort) ||
-					IsA(plan, GatherMerge) ||
-					IsA(plan, Limit)) &&
-					var->varno == OUTER_VAR)
+				if (plan && IsA(plan, SubqueryScan))
 				{
 					Assert(plan);
-					Assert(outerplan);
-					if (IsA(outerplan, SubqueryScan))
-					{
-						outerplan = ((SubqueryScan *)outerplan)->subplan;
-						tle = get_tle_by_resno(outerplan->targetlist, var->varattnosyn);
-					}
-					else
-					{
-						tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
-					}
+					outerplan = ((SubqueryScan *)plan)->subplan;
+					tle = get_tle_by_resno(outerplan->targetlist, var->varattnosyn);
 					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+				}
+				/* If the current node is a not UNION node and it has either
+				 * Outer/Inner query,find the original target list entry from
+				 * Outer/Inner plan
+				 */
+				if (plan && (!IsA(plan, Append) && !IsA(plan, MergeAppend)))
+				{
+					Assert(plan);
+					if (var->varno == OUTER_VAR)
+					{
+						outerplan = outerPlan(plan);
+						Assert(outerplan);
+						tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+						return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+					}
+					else if (var->varno == INNER_VAR)
+					{
+						innerplan = innerPlan(plan);
+						Assert(innerplan);
+						tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
+						return resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr);
+					}
 				}
 				return var->vartypmod;
 			}
