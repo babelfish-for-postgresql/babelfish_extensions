@@ -570,7 +570,6 @@ cast_nvarchar_test_before_16_5
 dbcreator_role
 securityadmin_role
 datareader_datawriter
-BABEL-5186
 smalldatetime_date_cmp
 test_conv_string_to_date-before-17_4
 test_conv_string_to_datetime-before-17_4
