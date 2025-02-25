@@ -343,6 +343,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 	CollateExpr *new_leftop;
+	CollateExpr *prefix_collate;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -406,14 +407,10 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	}
 
 	patt = (Const *) rightop;
-	patt->constcollid = op->inputcollid;
 
 	/* extract pattern */
 	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
 											&prefix, NULL);
-
-	/* update the collation for the prefix as well */
-	prefix->constcollid = coll_info_of_inputcollid.oid;
 
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
@@ -423,6 +420,20 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
+
+	/* 
+	 * We need to do this because the dump considers rightop as Const with COLLATE being added
+	 * whereas during restore, that is considered as CollateExpr while building new expression tree
+	 * which is adding extra parenthesis on rightop when we invoke pg_get_constraintdef() from PG
+	 * We update the righop to equivalent CollateExpr to pick correct collation
+	 * We are clearing collation or else we observe multiple redundant COLLATE
+	 * clause in pg_get_constraintdef(), which will result in error during upgrade/restore
+	 * We also set InvalidOid for highest_sort_key during creation for the same reason,
+	 * later we enclose it withing CollateExpr
+	 */
+	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
+	
+	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
@@ -436,8 +447,11 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 			return node;
 
 		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
+									(Expr *) leftop,
+									(Expr *) prefix_collate,
+									InvalidOid,
+									coll_info_of_inputcollid.oid,
+									oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
 	}
@@ -452,6 +466,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		/* Always create a CollateExpr on top to match with op->inputcollid */
 		new_leftop = create_collate_expr(linitial(op->args), op->inputcollid);
 		linitial(op->args) = (Node*) new_leftop;
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 
 		/* construct leftop >= pattern */
 		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
@@ -461,19 +476,24 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 		/* Use the original node to create the operator */
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+											(Expr *) leftop, 
+											(Expr *) prefix_collate,
+											InvalidOid,
+											coll_info_of_inputcollid.oid,
+											oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
+		highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
+
 		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-										(Expr *) prefix, (Expr *) highest_sort_key,
+										(Expr *) prefix_collate,
+										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
 										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
