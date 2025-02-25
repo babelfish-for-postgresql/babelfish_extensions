@@ -4271,23 +4271,6 @@ int
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
 
--- psql
-CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_relation_err_pg_proc()
-AS $$
-BEGIN
-	SELECT * FROM non_existent_table;
-END;
-$$ LANGUAGE plpgsql;
-GO
-
-CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_column_err_pg_proc()
-AS $$
-BEGIN
-	SELECT * FROM non_existent_table;
-END;
-$$ LANGUAGE plpgsql;
-GO
-
 -- tsql
 -- Error: relation \"%s\" does not exist
 -- plpgsql procedure inside try-catch
@@ -4309,6 +4292,8 @@ Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_3
 ~~END~~
 
 
+-- Error: column \"%s\" does not exist
+-- plpgsql procedure inside try-catch
 BEGIN TRY
     EXEC dbo.babel_5186_column_err_pg_proc;
 END TRY
@@ -4323,6 +4308,6 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_3 Error message_relation "non_existent_table" does not exist
+Severity_16 Error State_1 Xact State_0 Error number_33557097 Error Line number_3 Error message_column "non_existent_column" does not exist
 ~~END~~
 
