@@ -951,9 +951,9 @@ is_babelfish_role(const char *role)
 	Oid			role_oid;
 	Oid			securityadmin;
 	Oid			dbcreator;
-	CatCList	*memlist;
+	CatCList		*memlist;
 	int			i;
-	bool		is_babelfish_login = false;
+	bool			is_babelfish_login = false;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
