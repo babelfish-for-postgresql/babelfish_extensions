@@ -73,6 +73,16 @@ go
 select * into dest_table_5 from master.dbo.t1_select_into_master_dec
 go
 
+exec sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
+go
+
+-- Should throw error because there are 2 identity columns
+select identity(int, 1, 1) as identity_col, * into dest_table_error from t1_select_into
+go
+
+exec sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'strict';
+go
+
 -- Should fail. Violate NOT NULL constraint
 insert into dest_table_1 ([Col2]) values (NULL)
 go
@@ -221,6 +231,7 @@ drop table dest_table_5
 drop table dest_table_join
 drop table dest_table_union
 drop table dest_table_sub_join
+drop view v1_select_into
 drop table dest_table_view
 go
 
