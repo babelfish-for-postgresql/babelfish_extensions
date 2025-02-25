@@ -401,7 +401,7 @@ text
 Query Text: SELECT * FROM vector_table WHERE val = '[1,2,3]'
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=1 loops=1)
         Index Cond: (val = '[1,2,3]'::vector)
@@ -421,7 +421,7 @@ text
 Query Text: SELECT TOP 1 * FROM vector_table ORDER BY val
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=1 loops=1)
         ->  Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=1 loops=1)
@@ -478,7 +478,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=2 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -497,7 +497,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
@@ -516,7 +516,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
@@ -576,7 +576,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <#> '[3,3,3]'::vector)
@@ -595,7 +595,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -614,7 +614,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -674,7 +674,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <-> '[3,3,3]'::vector)
@@ -693,7 +693,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -712,7 +712,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -845,7 +845,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -864,7 +864,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -884,7 +884,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -950,7 +950,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]' NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
         Order By: (val <#> '[3,3,3]'::vector)
@@ -969,7 +969,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
@@ -989,7 +989,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
@@ -1055,7 +1055,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::vector)
@@ -1074,7 +1074,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
@@ -1094,7 +1094,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
@@ -1375,7 +1375,7 @@ text
 Query Text: SELECT * FROM vector_table1 ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table17f9bec28bc8902d45d905788d7aa59a1 on vector_table1 (actual rows=0 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -1394,7 +1394,7 @@ text
 Query Text: SELECT t1.*, t2.* FROM vector_table1 as t1 JOIN vector_table2 as t2 ON t1.a = t2.a ORDER BY t1.val <=> '[0,0,0]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Nested Loop (actual rows=0 loops=1)
         Join Filter: (t1.a = t2.a)
@@ -1417,15 +1417,19 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN vector_table2 as t2 ON t1.a = t2.a ORDER BY t1.val <=> '[0,0,0]', t2.val <=> '[1,1,1]'
 Gather Merge (actual rows=0 loops=1)
   Workers Planned: 3
-  Workers Launched: 0
-  ->  Sort (actual rows=0 loops=1)
+  Workers Launched: 3
+  ->  Sort (actual rows=0 loops=4)
         Sort Key: ((t1.val <=> '[0,0,0]'::vector)) NULLS FIRST, ((t2.val <=> '[1,1,1]'::vector)) NULLS FIRST
         Sort Method: quicksort  Memory: 25kB
-        ->  Parallel Hash Join (actual rows=0 loops=1)
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
+        Worker 1:  Sort Method: quicksort  Memory: 25kB
+        Worker 2:  Sort Method: quicksort  Memory: 25kB
+        ->  Parallel Hash Join (actual rows=0 loops=4)
               Hash Cond: (t1.a = t2.a)
-              ->  Parallel Seq Scan on vector_table1 t1 (actual rows=0 loops=1)
-              ->  Parallel Hash (never executed)
-                    ->  Parallel Seq Scan on vector_table2 t2 (never executed)
+              ->  Parallel Seq Scan on vector_table1 t1 (never executed)
+              ->  Parallel Hash (actual rows=0 loops=4)
+                    Buckets: 2048  Batches: 1  Memory Usage: 0kB
+                    ->  Parallel Seq Scan on vector_table2 t2 (actual rows=0 loops=1)
 ~~END~~
 
 
@@ -1440,7 +1444,7 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN table3 as t2 ON t1.a = t2.a ORDER BY val <=> '[0,0,0]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Nested Loop (actual rows=0 loops=1)
         Join Filter: (t1.a = t2.a)
@@ -1462,16 +1466,16 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN table3 as t2 ON t1.a = t2.a ORDER BY val <=> '[0,0,0]', t2.a
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Sort (actual rows=0 loops=1)
         Sort Key: ((t1.val <=> '[0,0,0]'::vector)) NULLS FIRST, t1.a NULLS FIRST
-        Sort Method: quicksort  Memory: 25kB
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
         ->  Merge Join (actual rows=0 loops=1)
               Merge Cond: (t1.a = t2.a)
               ->  Sort (actual rows=0 loops=1)
                     Sort Key: t1.a
-                    Sort Method: quicksort  Memory: 25kB
+                    Worker 0:  Sort Method: quicksort  Memory: 25kB
                     ->  Seq Scan on vector_table1 t1 (actual rows=0 loops=1)
               ->  Sort (never executed)
                     Sort Key: t2.a
@@ -2068,7 +2072,7 @@ text
 Query Text: SELECT * FROM vector_table WHERE val = '[1,2,3]'
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=1 loops=1)
         Index Cond: (val = '[1,2,3]'::vector)
@@ -2088,7 +2092,7 @@ text
 Query Text: SELECT TOP 1 * FROM vector_table ORDER BY val
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Limit (actual rows=1 loops=1)
         ->  Index Only Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=1 loops=1)
@@ -2145,7 +2149,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=2 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -2164,7 +2168,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
@@ -2183,7 +2187,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=2 loops=1)
@@ -2243,7 +2247,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <#> '[3,3,3]'::vector)
@@ -2262,7 +2266,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2281,7 +2285,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2341,7 +2345,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <-> '[3,3,3]'::vector)
@@ -2360,7 +2364,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2379,7 +2383,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2512,7 +2516,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -2531,7 +2535,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2551,7 +2555,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <=> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=3 loops=1)
@@ -2617,7 +2621,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <#> '[3,3,3]' NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
         Order By: (val <#> '[3,3,3]'::vector)
@@ -2636,7 +2640,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
@@ -2656,7 +2660,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <#> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idx2vector_table8408d573e4ed8cfc5bc30f15b5393f14 on vector_table (actual rows=4 loops=1)
@@ -2722,7 +2726,7 @@ text
 Query Text: SELECT * FROM vector_table ORDER BY val <-> '[3,3,3]' NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::vector)
@@ -2741,7 +2745,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> '[0,0,0]' NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
@@ -2761,7 +2765,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM vector_table ORDER BY val <-> (SELECT CAST(NULL as vector)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxvector_table7f9bec28bc8902d45d905788d7aa59a1 on vector_table (actual rows=4 loops=1)
@@ -3042,7 +3046,7 @@ text
 Query Text: SELECT * FROM vector_table1 ORDER BY val <=> '[3,3,3]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxvector_table17f9bec28bc8902d45d905788d7aa59a1 on vector_table1 (actual rows=0 loops=1)
         Order By: (val <=> '[3,3,3]'::vector)
@@ -3061,7 +3065,7 @@ text
 Query Text: SELECT t1.*, t2.* FROM vector_table1 as t1 JOIN vector_table2 as t2 ON t1.a = t2.a ORDER BY t1.val <=> '[0,0,0]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Nested Loop (actual rows=0 loops=1)
         Join Filter: (t1.a = t2.a)
@@ -3084,15 +3088,19 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN vector_table2 as t2 ON t1.a = t2.a ORDER BY t1.val <=> '[0,0,0]', t2.val <=> '[1,1,1]'
 Gather Merge (actual rows=0 loops=1)
   Workers Planned: 3
-  Workers Launched: 0
-  ->  Sort (actual rows=0 loops=1)
+  Workers Launched: 3
+  ->  Sort (actual rows=0 loops=4)
         Sort Key: ((t1.val <=> '[0,0,0]'::vector)) NULLS FIRST, ((t2.val <=> '[1,1,1]'::vector)) NULLS FIRST
         Sort Method: quicksort  Memory: 25kB
-        ->  Parallel Hash Join (actual rows=0 loops=1)
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
+        Worker 1:  Sort Method: quicksort  Memory: 25kB
+        Worker 2:  Sort Method: quicksort  Memory: 25kB
+        ->  Parallel Hash Join (actual rows=0 loops=4)
               Hash Cond: (t1.a = t2.a)
-              ->  Parallel Seq Scan on vector_table1 t1 (actual rows=0 loops=1)
-              ->  Parallel Hash (never executed)
-                    ->  Parallel Seq Scan on vector_table2 t2 (never executed)
+              ->  Parallel Seq Scan on vector_table1 t1 (never executed)
+              ->  Parallel Hash (actual rows=0 loops=4)
+                    Buckets: 2048  Batches: 1  Memory Usage: 0kB
+                    ->  Parallel Seq Scan on vector_table2 t2 (actual rows=0 loops=1)
 ~~END~~
 
 
@@ -3107,7 +3115,7 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN table3 as t2 ON t1.a = t2.a ORDER BY val <=> '[0,0,0]' NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Nested Loop (actual rows=0 loops=1)
         Join Filter: (t1.a = t2.a)
@@ -3129,16 +3137,16 @@ text
 Query Text: SELECT t1.* FROM vector_table1 as t1 JOIN table3 as t2 ON t1.a = t2.a ORDER BY val <=> '[0,0,0]', t2.a
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Sort (actual rows=0 loops=1)
         Sort Key: ((t1.val <=> '[0,0,0]'::vector)) NULLS FIRST, t1.a NULLS FIRST
-        Sort Method: quicksort  Memory: 25kB
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
         ->  Merge Join (actual rows=0 loops=1)
               Merge Cond: (t1.a = t2.a)
               ->  Sort (actual rows=0 loops=1)
                     Sort Key: t1.a
-                    Sort Method: quicksort  Memory: 25kB
+                    Worker 0:  Sort Method: quicksort  Memory: 25kB
                     ->  Seq Scan on vector_table1 t1 (actual rows=0 loops=1)
               ->  Sort (never executed)
                     Sort Key: t2.a

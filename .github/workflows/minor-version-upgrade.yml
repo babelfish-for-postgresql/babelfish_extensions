@@ -4,8 +4,8 @@ on: [push, pull_request]
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_5_0_STABLE__PG_17_2
-      EXTENSION_VER_FROM: BABEL_5_0_STABLE
+      ENGINE_VER_FROM: BABEL_5_1_STABLE__PG_17_4
+      EXTENSION_VER_FROM: BABEL_5_1_STABLE
       INSTALL_DIR: psql
 
     name: Build and test

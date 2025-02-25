@@ -2538,6 +2538,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool 				with_recompile = false;
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
+					HeapTuple 			proctup;
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2619,13 +2620,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectId = oldoid;
 						originalFunc.classId = ProcedureRelationId;
 						originalFunc.objectSubId = 0;
-						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
+						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
+						if (!HeapTupleIsValid(proctup))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+										errmsg("cache lookup failed for procedure %u", oldoid)));
+						}
+						if (get_bbf_function_tuple_from_proctuple(proctup) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-									errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
+									(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+										errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
 						}
+						ReleaseSysCache(proctup);
+
 						if(!cfs->is_procedure)
 						{
 							/*
@@ -4521,7 +4531,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4559,7 +4569,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 										exec_pg_command = true;
 
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
@@ -4629,7 +4639,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4667,7 +4677,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									exec_pg_command = true;
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
@@ -5349,7 +5359,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 	
 	if (current_spi_stack_depth > SPI_depth)
-		elog(WARNING, "SPI connection leak found, expected count:%d, current count:%d",
+		elog(LOG, "SPI connection leak found, expected count:%d, current count:%d",
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
