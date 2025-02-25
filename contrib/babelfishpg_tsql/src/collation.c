@@ -311,6 +311,7 @@ create_collate_expr(Node *arg, Oid collid)
 	CollateExpr *expr = makeNode(CollateExpr);
 	expr->arg = (Expr *) arg;
 	expr->collOid = collid;
+	expr->location = -1;
 	return expr;
 }
 
@@ -341,7 +342,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
-	CollateExpr *new_leftop = makeNode(CollateExpr);
+	CollateExpr *new_leftop;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -400,7 +401,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	{
 		/* update the collation of left and right node*/
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
 
@@ -449,8 +450,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Const	   *highest_sort_key;
 
 		/* Always create a CollateExpr on top to match with op->inputcollid */
-		new_leftop->arg = linitial(op->args);
-		new_leftop->collOid = op->inputcollid;
+		new_leftop = create_collate_expr(linitial(op->args), op->inputcollid);
 		linitial(op->args) = (Node*) new_leftop;
 
 		/* construct leftop >= pattern */
@@ -779,7 +779,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node, Oid colloid_of_cs_as)
+convert_node_to_funcexpr_for_like(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
@@ -812,7 +812,6 @@ convert_node_to_funcexpr_for_like(Node *node, Oid colloid_of_cs_as)
 					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
-					con->constcollid = colloid_of_cs_as;
 					return (Node *) con;
 				}
 				else
@@ -879,30 +878,16 @@ transform_likenode_for_AI(Node *node, OpExpr *op, coll_info_t coll_info_of_input
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
-	Oid			colloid_of_cs_as;
-
-	/* Find the CS_AS collation corresponding to the CS_AI collation */
-	int collidx_of_cs_as =
-		tsql_find_cs_as_collation_internal(
-											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
-
-	if (NOT_FOUND == collidx_of_cs_as)
-	{
-		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
-		return node;
-	}
-
-	colloid_of_cs_as = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop, colloid_of_cs_as),
+												convert_node_to_funcexpr_for_like(leftop),
 												get_sys_varcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop, colloid_of_cs_as),
+												convert_node_to_funcexpr_for_like(rightop),
 												get_sys_varcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
