@@ -13,6 +13,10 @@ namespace BabelfishDotnetFramework
 		public static readonly string TestName = Dictionary["testName"];
 		public static readonly bool RunInParallel = bool.Parse(Dictionary["runInParallel"]);
 		public static readonly bool PrintToConsole = bool.Parse(Dictionary["printToConsole"]);
+		public static readonly string BblUrl = Dictionary["babel_URL"];
+		public static readonly string BblDb = Dictionary["babel_databaseName"];
+		public static readonly string BblUser = Dictionary["babel_user"];
+		public static readonly string BblPasswd = Dictionary["babel_password"];
 		public static bool RunInRegression;
 		public static string Database;
 		public static string Provider = Dictionary["provider"];
