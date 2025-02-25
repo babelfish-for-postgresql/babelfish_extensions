@@ -604,6 +604,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					Assert(plan);
 					outerplan = ((SubqueryScan *)plan)->subplan;
 					tle = get_tle_by_resno(outerplan->targetlist, var->varattnosyn);
+					if (!tle)
+						elog(ERROR, "bogus varattnosyn for SubqueryScan's subplan: %d", var->varattno);
 					return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 				}
 				/* If the current node is a not UNION node and it has either
@@ -618,6 +620,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						outerplan = outerPlan(plan);
 						Assert(outerplan);
 						tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+						if (!tle)
+							elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
 						return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 					}
 					else if (var->varno == INNER_VAR)
@@ -625,6 +629,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						innerplan = innerPlan(plan);
 						Assert(innerplan);
 						tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
+						if (!tle)
+							elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
 						return resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr);
 					}
 				}

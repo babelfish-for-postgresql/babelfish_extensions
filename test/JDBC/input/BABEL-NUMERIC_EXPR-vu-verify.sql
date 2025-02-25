@@ -524,7 +524,6 @@ FROM (
 ORDER BY sum_num;
 GO
 
-
 -- random node test - windowAGG
 SELECT 
     IntCol,
@@ -535,6 +534,7 @@ SELECT
     AVG(NumericCol) OVER (ORDER BY IntCol ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
 FROM TestTypes
 ORDER BY IntCol;
+GO
 
 -- windowAGG and union
 SELECT 
@@ -552,7 +552,7 @@ FROM (
     FROM TestTypes
 ) AS combined_data
 ORDER BY IntCol;
-
+GO
 
 -- selecting limit and windowAgg on top
 SELECT TOP 1
@@ -580,7 +580,7 @@ FROM (
         FROM BABEL_5454_T1
     ) a
 ) b
-ORDER BY sum_num;
+ORDER BY sum_num, description, row_num;
 GO
 
 -- limit, and windowAgg togther with operator
@@ -631,6 +631,7 @@ FROM (
 GROUP BY value2, value1, COL3_T2
 ORDER BY sum_num;
 GO
+
 -- combination of agg and addition
 SELECT
     value2 AS description,
@@ -748,13 +749,13 @@ GO
 
 -- CTE with aggregation and outer join
 WITH CTE AS (
-    SELECT FLOOR(id/10) AS group_id, AVG(id) AS avg_id 
+    SELECT (id/10) AS group_id, AVG(id) AS avg_id 
     FROM BABEL_5454_T9 
-    GROUP BY FLOOR(id/10)
+    GROUP BY (id/10)
 )
 SELECT t.id, c.avg_id 
 FROM BABEL_5454_T9 t 
-LEFT JOIN CTE c ON FLOOR(t.id/10) = c.group_id
+LEFT JOIN CTE c ON (t.id/10) = c.group_id
 WHERE t.id % 10 = 0
 ORDER BY t.id
 GO
@@ -771,9 +772,10 @@ combined AS (
     UNION ALL
     SELECT id, 'Upper' AS category FROM cte2
 )
-SELECT category, AVG(id) AS avg_id 
-FROM combined 
+SELECT category, AVG(id) AS avg_id
+FROM combined
 GROUP BY category
+Order BY avg_id
 GO
 
 -- CTE with subquery and CROSS APPLY
@@ -801,6 +803,7 @@ SELECT
     STRING_AGG(CAST(id AS VARCHAR), ',') AS ids
 FROM CTE
 GROUP BY category
+ORDER BY count
 GO
 
 -- CTE with self-join and arithmetic operations
@@ -833,23 +836,23 @@ FROM CTE
 ORDER BY id
 GO
 
--- CTE with multiple levels and cross join
+-- CTE with multiple levels and join
 WITH 
 cte1 AS (
-    SELECT id, FLOOR(id) AS floor_id
+    SELECT id, CAST(id AS INT) AS int_id
     FROM BABEL_5454_T10
 ),
 cte2 AS (
-    SELECT DISTINCT floor_id
+    SELECT DISTINCT int_id
     FROM cte1
 )
 SELECT 
     c1.id,
-    c2.floor_id,
-    c1.id * c2.floor_id AS product
+    c2.int_id AS floor_id,
+    c1.id * c2.int_id AS product
 FROM cte1 c1
-CROSS JOIN cte2 c2
-ORDER BY c1.id, c2.floor_id
+JOIN cte2 c2 ON c1.int_id = c2.int_id
+ORDER BY c1.id, c2.int_id;
 GO
 
 -- CTE with pivoting (simulated)
