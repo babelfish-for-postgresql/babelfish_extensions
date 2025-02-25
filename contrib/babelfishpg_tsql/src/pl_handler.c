@@ -6935,7 +6935,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	if (list_length(altstmt->cmds) > 0)
+	if (altstmt && list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
 	return result;
