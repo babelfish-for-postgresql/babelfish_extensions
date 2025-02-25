@@ -26,6 +26,9 @@ go
 set identity_insert t1_select_into off
 go
 
+create view v1_select_into as select * from t1_select_into
+go
+
 create table sch_select_into.t1_select_into ([Col3] TINYINT IDENTITY(2, 2), [Col4] numeric(4,3) NOT NULL)
 go
 
@@ -48,10 +51,10 @@ go
 ~~ROW COUNT: 1~~
 
 
-create table t1_select_into_master ([Col7] BIGINT IDENTITY(4, 4), [Col8] float NOT NULL)
+create table t1_select_into_master ([Col7] float NOT NULL, [Col8] BIGINT IDENTITY(4, 4))
 go
 
-insert into t1_select_into_master([Col8]) values (4.4)
+insert into t1_select_into_master([Col7]) values (4.4)
 go
 ~~ROW COUNT: 1~~
 
@@ -67,10 +70,10 @@ go
 use db_select_into
 go
 
-select * into dest_table_1 from t1_select_into
+select * into dest_table_1 from t1_select_into order by [Col1]
 go
 
-select * into dest_table_2 from sch_select_into.t1_select_into
+select * into dest_table_2 from sch_select_into.t1_select_into group by [Col3], [Col4]
 go
 
 select * into dest_table_3 from master.sch_select_into_master.t1_select_into_master
@@ -153,25 +156,25 @@ smallint#!#nvarchar
 
 
 -- Should fail. Violate NOT NULL constraint
-insert into dest_table_4 ([Col8]) values (NULL)
+insert into dest_table_4 ([Col7]) values (NULL)
 go
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "col8" of relation "dest_table_4" violates not-null constraint)~~
+~~ERROR (Message: null value in column "col7" of relation "dest_table_4" violates not-null constraint)~~
 
 
-insert into dest_table_4 ([Col8]) values (5.5)
+insert into dest_table_4 ([Col7]) values (5.5)
 go
 ~~ROW COUNT: 1~~
 
 
 -- Identity column should be populated by default
-select * from dest_table_4 order by [Col7]
+select * from dest_table_4 order by [Col8]
 go
 ~~START~~
-bigint#!#float
-4#!#4.4
-8#!#5.5
+float#!#bigint
+4.4#!#4
+5.5#!#8
 ~~END~~
 
 
@@ -299,6 +302,70 @@ int#!#nvarchar
 ~~END~~
 
 
+select *
+into dest_table_sub_join
+from
+(
+    select * from dest_table_1 t1
+    inner join dest_table_2 t2
+    on t1.[Col1] * 2 = t2.[Col3]
+) as combined_tables
+go
+
+select * from dest_table_sub_join order by [Col1], [Col2]
+go
+~~START~~
+int#!#nvarchar#!#smallint#!#numeric
+1#!#First#!#2#!#2.222
+1#!#First_dup#!#2#!#2.222
+2#!#Second#!#4#!#3.333
+~~END~~
+
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_sub_join ([Col1]) values (NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col1" of relation "dest_table_sub_join" violates not-null constraint)~~
+
+
+-- Should fail. Violate NOT NULL constraint on other column
+insert into dest_table_sub_join ([Col1]) values (200)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "col2" of relation "dest_table_sub_join" violates not-null constraint)~~
+
+
+insert into dest_table_sub_join ([Col1], [Col2], [Col3], [Col4]) values (209, 'Sub-Join', 78, 8.567)
+go
+~~ROW COUNT: 1~~
+
+
+select * from dest_table_sub_join order by [Col1], [Col2]
+go
+~~START~~
+int#!#nvarchar#!#smallint#!#numeric
+1#!#First#!#2#!#2.222
+1#!#First_dup#!#2#!#2.222
+2#!#Second#!#4#!#3.333
+209#!#Sub-Join#!#78#!#8.567
+~~END~~
+
+
+select * into dest_table_view from v1_select_into
+go
+
+select * from dest_table_view order by [Col1], [Col2]
+go
+~~START~~
+int#!#nvarchar
+1#!#First
+1#!#First_dup
+~~END~~
+
+
 drop table dest_table_1
 drop table dest_table_2
 drop table dest_table_3
@@ -306,10 +373,16 @@ drop table dest_table_4
 drop table dest_table_5
 drop table dest_table_join
 drop table dest_table_union
+drop table dest_table_sub_join
+drop table dest_table_view
 go
 
 drop table t1_select_into
 go
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop table t1_select_into because other objects depend on it)~~
+
 
 drop table sch_select_into.t1_select_into
 go

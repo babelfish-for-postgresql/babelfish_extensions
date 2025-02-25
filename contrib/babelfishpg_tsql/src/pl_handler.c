@@ -48,6 +48,7 @@
 #include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -6724,6 +6725,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		bool ordinality_changed = false;
 		AttrNumber current_resno = 0;
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
@@ -6745,8 +6747,22 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 
 				if (!IsA(n_from, RangeTblRef))
 					persist_identity = false;
+				else
+				{
+					RangeTblRef		*rtr = (RangeTblRef *) n_from;
+					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+
+					/* Do not persist identity if not an ordinary relation */
+					if (rte->rtekind != RTE_RELATION)
+						persist_identity = false;
+				}
 			}
 		}
+
+		altstmt = makeNode(AlterTableStmt);
+		altstmt->relation = into->rel;
+		altstmt->objtype = OBJECT_TABLE;
+		altstmt->cmds = NIL;
 
 		foreach (elements, q->targetList)
 		{
@@ -6807,18 +6823,15 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 
 				seen_identity = true;
+				ordinality_changed = true;
 				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
 				/** Add alter table add identity node after Select Into statement */
-				altstmt = makeNode(AlterTableStmt);
-				altstmt->relation = into->rel;
-				altstmt->objtype = OBJECT_TABLE;
-				altstmt->cmds = NIL;
-
 				constraint = makeNode(Constraint);
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
+				constraint->location = -1;
 
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
@@ -6848,14 +6861,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
 						 * after SELECT INTO statement
 						 */
-						if (altstmt == NULL)
-						{
-							altstmt = makeNode(AlterTableStmt);
-							altstmt->relation = into->rel;
-							altstmt->objtype = OBJECT_TABLE;
-							altstmt->cmds = NIL;
-						}
-
 						lcmd = makeNode(AlterTableCmd);
 						lcmd->subtype = AT_SetNotNull;
 						lcmd->name = tle->resname;
@@ -6871,25 +6876,17 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 						seen_identity = true;
-						identity_ressortgroupref = tle->ressortgroupref; /* Save this Index to modify sortClause and distinctClause */
 
 						constraint = makeNode(Constraint);
 						constraint->contype = CONSTR_IDENTITY;
 						constraint->generated_when = attrStruct->attidentity;
 						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+						constraint->location = -1;
 
 						/*
-						 * Add ALTER TABLE ... ADD COLUMN ... after SELECT INTO
-						 * statement where the column added is an IDENTITY column
+						 * Add ALTER TABLE ... ALTER COLUMN ... after SELECT INTO
+						 * statement where the column is made an IDENTITY column
 						 */
-						if (altstmt == NULL)
-						{
-							altstmt = makeNode(AlterTableStmt);
-							altstmt->relation = into->rel;
-							altstmt->objtype = OBJECT_TABLE;
-							altstmt->cmds = NIL;
-						}
-
 						lcmd = makeNode(AlterTableCmd);
 						lcmd->subtype = AT_AddIdentity;
 						lcmd->name = tle->resname;
@@ -6913,7 +6910,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		}
 		q->targetList = modifiedTargetList;
 
-		if (seen_identity)
+		if (ordinality_changed)
 		{
 			if (q->sortClause)
 			{
@@ -6938,7 +6935,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	if (altstmt)
+	if (list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
 	return result;

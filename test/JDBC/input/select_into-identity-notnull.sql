@@ -22,6 +22,9 @@ go
 set identity_insert t1_select_into off
 go
 
+create view v1_select_into as select * from t1_select_into
+go
+
 create table sch_select_into.t1_select_into ([Col3] TINYINT IDENTITY(2, 2), [Col4] numeric(4,3) NOT NULL)
 go
 
@@ -40,10 +43,10 @@ go
 insert into sch_select_into_master.t1_select_into_master([Col6]) values ('Third')
 go
 
-create table t1_select_into_master ([Col7] BIGINT IDENTITY(4, 4), [Col8] float NOT NULL)
+create table t1_select_into_master ([Col7] float NOT NULL, [Col8] BIGINT IDENTITY(4, 4))
 go
 
-insert into t1_select_into_master([Col8]) values (4.4)
+insert into t1_select_into_master([Col7]) values (4.4)
 go
 
 create table t1_select_into_master_dec ([Col9] DECIMAL(10,0) IDENTITY(5, 5) PRIMARY KEY, [Col10] real NOT NULL)
@@ -55,10 +58,10 @@ go
 use db_select_into
 go
 
-select * into dest_table_1 from t1_select_into
+select * into dest_table_1 from t1_select_into order by [Col1]
 go
 
-select * into dest_table_2 from sch_select_into.t1_select_into
+select * into dest_table_2 from sch_select_into.t1_select_into group by [Col3], [Col4]
 go
 
 select * into dest_table_3 from master.sch_select_into_master.t1_select_into_master
@@ -104,14 +107,14 @@ select * from dest_table_3 order by [Col5]
 go
 
 -- Should fail. Violate NOT NULL constraint
-insert into dest_table_4 ([Col8]) values (NULL)
+insert into dest_table_4 ([Col7]) values (NULL)
 go
 
-insert into dest_table_4 ([Col8]) values (5.5)
+insert into dest_table_4 ([Col7]) values (5.5)
 go
 
 -- Identity column should be populated by default
-select * from dest_table_4 order by [Col7]
+select * from dest_table_4 order by [Col8]
 go
 
 -- Should fail. Violate NOT NULL constraint
@@ -177,6 +180,39 @@ go
 select * from dest_table_union order by [Col1]
 go
 
+select *
+into dest_table_sub_join
+from
+(
+    select * from dest_table_1 t1
+    inner join dest_table_2 t2
+    on t1.[Col1] * 2 = t2.[Col3]
+) as combined_tables
+go
+
+select * from dest_table_sub_join order by [Col1], [Col2]
+go
+
+-- Should fail. Violate NOT NULL constraint
+insert into dest_table_sub_join ([Col1]) values (NULL)
+go
+
+-- Should fail. Violate NOT NULL constraint on other column
+insert into dest_table_sub_join ([Col1]) values (200)
+go
+
+insert into dest_table_sub_join ([Col1], [Col2], [Col3], [Col4]) values (209, 'Sub-Join', 78, 8.567)
+go
+
+select * from dest_table_sub_join order by [Col1], [Col2]
+go
+
+select * into dest_table_view from v1_select_into
+go
+
+select * from dest_table_view order by [Col1], [Col2]
+go
+
 drop table dest_table_1
 drop table dest_table_2
 drop table dest_table_3
@@ -184,6 +220,8 @@ drop table dest_table_4
 drop table dest_table_5
 drop table dest_table_join
 drop table dest_table_union
+drop table dest_table_sub_join
+drop table dest_table_view
 go
 
 drop table t1_select_into
