@@ -1,3 +1,4 @@
+-- tsql
 CREATE PROCEDURE babel_5186_try_catch_relation_err_proc1
 AS
     SELECT * FROM non_existent_table;
@@ -770,4 +771,21 @@ INSERT INTO babel_5186_1_table_errTable VALUES (4);
 EXEC babel_5186_1_errProc3_4;
 INSERT INTO babel_5186_1_table_errTable VALUES (5);
 COMMIT TRAN;
+GO
+
+-- psql
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_relation_err_pg_proc()
+AS $$
+BEGIN
+	SELECT * FROM non_existent_table;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5186_column_err_pg_proc()
+AS $$
+BEGIN
+	SELECT non_existent_column FROM master_dbo.babel_5186_try_catch_table;
+END;
+$$ LANGUAGE plpgsql;
 GO
