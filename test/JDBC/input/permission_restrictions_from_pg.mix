@@ -30,6 +30,10 @@ go
 use master
 go
 
+-- create a login with no mapped user
+create login permission_restrictions_tsql_login3 with password = '123';
+go
+
 -- psql
 create user permission_restrictions_psql_user with password '123';
 go
@@ -72,6 +76,9 @@ drop user permission_restrictions_tsql_login1;
 go
 
 drop user permission_restrictions_tsql_login2;
+go
+
+drop user permission_restrictions_tsql_login3;
 go
 
 drop user master_permission_restrictions_tsql_user1;
@@ -136,6 +143,9 @@ drop user permission_restrictions_tsql_login1;
 go
 
 drop user permission_restrictions_tsql_login2;
+go
+
+drop user permission_restrictions_tsql_login3;
 go
 
 drop user master_permission_restrictions_tsql_user1;
@@ -214,4 +224,7 @@ drop login permission_restrictions_tsql_login2;
 go
 
 drop login permission_restrictions_tsql_login
+go
+
+drop login permission_restrictions_tsql_login3;
 go

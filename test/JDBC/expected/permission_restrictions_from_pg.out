@@ -30,6 +30,10 @@ go
 use master
 go
 
+-- create a login with no mapped user
+create login permission_restrictions_tsql_login3 with password = '123';
+go
+
 -- psql
 create user permission_restrictions_psql_user with password '123';
 go
@@ -124,6 +128,14 @@ go
 
 
 drop user permission_restrictions_tsql_login2;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+drop user permission_restrictions_tsql_login3;
 go
 ~~ERROR (Code: 0)~~
 
@@ -269,6 +281,14 @@ go
     Server SQLState: 42501)~~
 
 
+drop user permission_restrictions_tsql_login3;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
 drop user master_permission_restrictions_tsql_user1;
 go
 ~~ERROR (Code: 0)~~
@@ -379,4 +399,7 @@ drop login permission_restrictions_tsql_login2;
 go
 
 drop login permission_restrictions_tsql_login
+go
+
+drop login permission_restrictions_tsql_login3;
 go
