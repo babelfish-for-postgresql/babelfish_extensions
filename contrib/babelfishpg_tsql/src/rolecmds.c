@@ -897,9 +897,9 @@ user_id(PG_FUNCTION_ARGS)
 	{
 		PG_RETURN_OID(1);
 	}
-    len = strlen(user_name);
-    while (len > 0 && isspace(user_name[len-1]))
-    user_name[--len] = '\0';
+	len = strlen(user_name);
+	while (len > 0 && isspace(user_name[len-1]))
+	user_name[--len] = '\0';
 
     if (pltsql_case_insensitive_identifiers)
     {

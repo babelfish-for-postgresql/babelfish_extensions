@@ -492,7 +492,7 @@ SELECT
 CAST(name AS SYS.SYSNAME) AS name,
 CAST(
   CASE name
-    WHEN 'public' THEN 0
+    WHEN 'public' THEN 1
     WHEN 'INFORMATION_SCHEMA' THEN 3
     WHEN 'sys' THEN 4
   END AS INT) AS principal_id,
