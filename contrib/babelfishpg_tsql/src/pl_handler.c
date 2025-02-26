@@ -48,6 +48,7 @@
 #include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -6724,15 +6725,51 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		bool ordinality_changed = false;
 		AttrNumber current_resno = 0;
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
+
+		bool persist_identity = true;
+
+		/*
+		 * In T-SQL, identity property of column in destination
+		 * table is not persisted if the SELECT ... INTO statement
+		 * does not contain a single base relation
+		 */
+		if (q->jointree && q->jointree->fromlist != NIL)
+		{
+			if (list_length(q->jointree->fromlist) > 1)
+				persist_identity = false;
+			else
+			{
+				Node *n_from = (Node *) linitial(q->jointree->fromlist);
+
+				if (!IsA(n_from, RangeTblRef))
+					persist_identity = false;
+				else
+				{
+					RangeTblRef		*rtr = (RangeTblRef *) n_from;
+					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+
+					/* Do not persist identity if not an ordinary relation */
+					if (rte->rtekind != RTE_RELATION)
+						persist_identity = false;
+				}
+			}
+		}
+
+		altstmt = makeNode(AlterTableStmt);
+		altstmt->relation = into->rel;
+		altstmt->objtype = OBJECT_TABLE;
+		altstmt->cmds = NIL;
 
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			if(tle->resname != NULL && !tle->resjunk)
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -6786,18 +6823,15 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 
 				seen_identity = true;
+				ordinality_changed = true;
 				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
 				/** Add alter table add identity node after Select Into statement */
-				altstmt = makeNode(AlterTableStmt);
-				altstmt->relation = into->rel;
-				altstmt->objtype = OBJECT_TABLE;
-				altstmt->cmds = NIL;
-
 				constraint = makeNode(Constraint);
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
+				constraint->location = -1;
 
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
@@ -6812,6 +6846,61 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			{
+				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+
+				if (HeapTupleIsValid(attrtup))
+				{
+					AlterTableCmd *lcmd;
+					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
+					if (attrStruct->attnotnull)
+					{
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
+						 * after SELECT INTO statement
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_SetNotNull;
+						lcmd->name = tle->resname;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					if (attrStruct->attidentity && persist_identity)
+					{
+						Constraint *constraint;
+
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						seen_identity = true;
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_IDENTITY;
+						constraint->generated_when = attrStruct->attidentity;
+						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+						constraint->location = -1;
+
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... after SELECT INTO
+						 * statement where the column is made an IDENTITY column
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_AddIdentity;
+						lcmd->name = tle->resname;
+						lcmd->def = (Node *) constraint;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					current_resno += 1;
+					tle->resno = current_resno;
+					modifiedTargetList = lappend(modifiedTargetList, tle);
+
+					ReleaseSysCache(attrtup);
+				}
+			}
 			else
 			{
 				current_resno += 1;
@@ -6821,7 +6910,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		}
 		q->targetList = modifiedTargetList;
 
-		if (seen_identity)
+		if (ordinality_changed)
 		{
 			if (q->sortClause)
 			{
@@ -6846,7 +6935,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	if (altstmt)
+	if (altstmt && list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
 	return result;
