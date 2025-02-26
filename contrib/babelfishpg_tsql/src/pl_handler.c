@@ -72,6 +72,7 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/guc.h"
+#include "storage/ipc.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -180,6 +181,7 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
+static void clean_xml_handles(int code, Datum arg);
 
 typedef struct {
 	int oid;
@@ -5285,7 +5287,8 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
-	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+	check_pltsql_support_tsql_transactions_hook =  pltsql_support_tsql_transactions;
+    before_shmem_exit(clean_xml_handles, 0);
 
 	inited = true;
 }
@@ -7188,4 +7191,19 @@ gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 				(revoke_createrole ? "nocreaterole" : ""), grant_createdb ? "createdb" : 
 					(revoke_createdb ? "nocreatedb" : ""));
 
+}
+
+/* Clean up function which removes all the entries from the catalog corresponding to a given session id automatically
+   when a session is closed.
+*/
+static void
+clean_xml_handles(int code, Datum arg)
+{
+    
+	AbortOutOfAnyTransaction();
+	StartTransactionCommand();
+	PushActiveSnapshot(GetTransactionSnapshot());	
+    clean_up_babelfish_xml_handles(MyProcPid);
+	PopActiveSnapshot();
+	CommitTransactionCommand();
 }

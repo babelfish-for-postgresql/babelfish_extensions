@@ -505,6 +505,50 @@ extern char	*get_partition_scheme_for_partitioned_table(int16 dbid, char *schema
 extern void	rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, char *logical_schema_name, int16 dbid);
 
 
+/*****************************************
+ *			XML_HANDLES
+ *****************************************/
+
+ #define BBF_XML_HANDLES_TABLE_NAME "babelfish_xml_handles"
+ #define BBF_XML_HANDLES_IDX_NAME "babelfish_xml_handles_pkey"
+ #define BBF_XML_HANDLES_SEQ_NAME "babelfish_xml_handles_seq"
+ #define BBF_XML_HANDLES_ID_IDX_NAME "babelfish_babelfish_xml_handles_id_key"
+
+ #define Anum_bbf_xml_handles_session_id 1
+ #define Anum_bbf_xml_handles_document_id 2
+ #define Anum_bbf_xml_handles_namespace_document_id 3
+ #define Anum_bbf_xml_handles_xml_content 4
+ #define Anum_bbf_xml_handles_namespace_definitions 5
+ #define Anum_bbf_xml_handles_original_document_size_bytes 6
+ #define Anum_bbf_xml_handles_original_namespace_document_size_bytes 7
+ #define Anum_bbf_xml_handles_sql_handle 8
+ #define Anum_bbf_xml_handles_statement_start_offset 9
+ #define Anum_bbf_xml_handles_statement_end_offset 10
+ #define Anum_bbf_xml_handles_num_openxml_calls 11
+ #define Anum_bbf_xml_handles_row_count 12
+ #define Anum_bbf_xml_handles_creation_time 13
+ #define Anum_bbf_xml_handles_openxml_last_calltime 14
+ #define BBF_XML_HANDLES_NUM_COLS 14
+
+ extern Oid	babelfish_xml_handles_oid;
+ extern Oid	babelfish_xml_handles_idx_oid;
+ extern Oid	babelfish_xml_handles_id_idx_oid;
+ extern Oid	babelfish_xml_handles_seq_oid;
+
+ extern Oid	get_babelfish_xml_handles_oid(void);
+ extern Oid	get_babelfish_xml_handles_idx_oid(void);
+ extern Oid	get_babelfish_xml_handles_seq_oid(void);
+ extern Oid	get_babelfish_xml_handles_id_idx_oid(void);
+
+ extern void clean_up_babelfish_xml_handles(int32 session_id);
+ extern int32	get_available_xml_handles_id(void);
+ extern void add_entry_to_bbf_xml_handles(int32 document_id, Datum xml_data, Datum ns_data, 
+	                                      const char *xml_text, const char *xpath_namespaces);
+ extern void remove_entry_from_bbf_xml_handles(int32_t doc_handle, int32_t session_id);
+ extern bool	partition_function_exists(int16 dbid, const char *partition_function_name);
+ extern Datum sysutcdatetime(PG_FUNCTION_ARGS);
+ 
+ 
 typedef struct FormData_bbf_extended_properties
 {
 	int16		dbid;

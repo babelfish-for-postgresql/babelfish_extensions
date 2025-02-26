@@ -134,6 +134,13 @@ Oid	bbf_partition_scheme_seq_oid = InvalidOid;
 Oid	bbf_partition_depend_oid = InvalidOid;
 Oid	bbf_partition_depend_idx_oid = InvalidOid;
 
+/*****************************************
+ *			XML_HANDLES
+ *****************************************/
+Oid			babelfish_xml_handles_oid;
+Oid			babelfish_xml_handles_idx_oid;
+Oid         babelfish_xml_handles_id_idx_oid;
+Oid	        babelfish_xml_handles_seq_oid = InvalidOid;
 
 /*****************************************
  * 			Catalog General
@@ -300,6 +307,12 @@ init_catalog(PG_FUNCTION_ARGS)
 	/* bbf_partition_depend */
 	bbf_partition_depend_oid = get_bbf_partition_depend_oid();
 	bbf_partition_depend_idx_oid = get_bbf_partition_depend_idx_oid();
+
+	/* xml_handles */
+	babelfish_xml_handles_oid = get_relname_relid(BBF_XML_HANDLES_TABLE_NAME, sys_schema_oid);
+	babelfish_xml_handles_idx_oid = get_relname_relid(BBF_XML_HANDLES_IDX_NAME, sys_schema_oid);
+	babelfish_xml_handles_id_idx_oid= get_babelfish_xml_handles_id_idx_oid();
+    babelfish_xml_handles_seq_oid = get_babelfish_xml_handles_seq_oid();
 
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
@@ -1875,6 +1888,53 @@ get_bbf_partition_depend_idx_oid()
 	return bbf_partition_depend_idx_oid;
 }
 
+
+/*****************************************
+ *			XML_HANDLES
+ *****************************************/
+
+ Oid
+ get_babelfish_xml_handles_oid()
+ {
+	 if (!OidIsValid(babelfish_xml_handles_oid))
+		 babelfish_xml_handles_oid = get_relname_relid(BBF_XML_HANDLES_TABLE_NAME,
+											  get_namespace_oid("sys", false));
+ 
+	 return babelfish_xml_handles_oid;
+ }
+ 
+ Oid
+ get_babelfish_xml_handles_idx_oid()
+ {
+	 if (!OidIsValid(babelfish_xml_handles_idx_oid))
+		 babelfish_xml_handles_idx_oid = get_relname_relid(BBF_XML_HANDLES_IDX_NAME,
+												  get_namespace_oid("sys", false));
+ 
+	 return babelfish_xml_handles_idx_oid;
+ }
+ 
+ Oid
+ get_babelfish_xml_handles_id_idx_oid()
+ {
+	 if (!OidIsValid(babelfish_xml_handles_id_idx_oid))
+	 babelfish_xml_handles_id_idx_oid = get_relname_relid(BBF_XML_HANDLES_ID_IDX_NAME,
+									 get_namespace_oid("sys", false));
+ 
+	 return babelfish_xml_handles_id_idx_oid;
+ }
+ 
+ Oid
+ get_babelfish_xml_handles_seq_oid()
+ {
+	 if (!OidIsValid(babelfish_xml_handles_seq_oid))
+	 {
+		 babelfish_xml_handles_seq_oid = get_relname_relid(BBF_XML_HANDLES_SEQ_NAME,
+									 get_namespace_oid("sys", false));
+	 }
+ 
+	 return babelfish_xml_handles_seq_oid;
+ }
+ 
 /*****************************************
  * 			Metadata Check
  * ---------------------------------------
@@ -6334,3 +6394,260 @@ bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role)
 	ReleaseSysCacheList(memlist);
 	return false;
 }
+
+/*
+ * xml_handles_id_exists
+ *		Returns true if provided handle id is in use, false otherwise.
+ *
+ * 	This is helper function to find new id for xml handles it checks
+ * 	if provided id is already in use by looking up in sys.babelfish_xml_handles catalog.
+ */
+
+ static bool
+ xml_handles_id_exists(int32 id)
+ {
+	 Relation	rel;
+	 HeapTuple	tuple;
+	 SysScanDesc	scan;
+	 ScanKeyData	scanKey;
+	 bool		exists = false;
+ 
+	 /* open the relation */
+	 rel = table_open(get_babelfish_xml_handles_oid(), AccessShareLock);
+	 
+	 ScanKeyInit(&scanKey,
+			 Anum_bbf_xml_handles_document_id,
+			 BTEqualStrategyNumber, F_INT4EQ,
+			 Int32GetDatum(id));
+ 
+	 /* scan using index */
+	 scan = systable_beginscan(rel,
+			 get_babelfish_xml_handles_id_idx_oid(),
+			 false, NULL, 1, &scanKey);
+	 
+	 tuple = systable_getnext(scan);
+	 if (HeapTupleIsValid(tuple))
+		 exists = true;
+ 
+	 systable_endscan(scan);
+	 table_close(rel, AccessShareLock);
+	 return exists;
+ }
+
+/*
+ * get_available_xml_handles_id
+ * 		Returns available id for xml handles.
+*/ 
+
+int32
+get_available_xml_handles_id(void)
+{
+	int32		id;
+	int32		start = 0;
+
+	do
+	{
+		id = nextval_internal(get_babelfish_xml_handles_seq_oid(), false);
+		if (start == 0)
+			start = id;
+		else if (start == id) /* loop completed */
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot find an available ID for new xml handle.")));
+
+		}
+	} while (xml_handles_id_exists(id));
+
+	return id;
+}
+
+/*
+ * add_entry_to_bbf_xml_handles:
+ *	Inserts a new entry into the sys.babelfish_xml_handles catalog
+ *	to track the handles created using sp_xml_preparedocument procedure
+ */
+
+void
+add_entry_to_bbf_xml_handles(int32 document_id, Datum xml_data, Datum ns_data, const char *xml_text, const char *xpath_namespaces)
+{
+    Relation    rel;
+    TupleDesc   dsc;
+    HeapTuple   tuple;
+    Datum       new_record[BBF_XML_HANDLES_NUM_COLS];
+    bool        new_record_nulls[BBF_XML_HANDLES_NUM_COLS];
+
+    int32       session_id = MyProcPid;  /* Get the session ID using backend PID */
+    int64       xml_size = 0;
+    int64       ns_size = 0;
+	Datum       creation_time;
+	int32       namespace_document_id;
+
+	
+	if (xpath_namespaces != NULL && strlen(xpath_namespaces) > 0) {
+		namespace_document_id = document_id + 1;
+	} 
+	else {
+		 namespace_document_id = InvalidOid;  
+	}								
+
+    /* Open the table with an exclusive lock */
+    rel = table_open(get_babelfish_xml_handles_oid(), RowExclusiveLock);
+    dsc = RelationGetDescr(rel);
+
+    /* Initialize the new record array */
+    MemSet(new_record, 0, sizeof(new_record));
+    MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+    /* Set the values for the record */
+    new_record[Anum_bbf_xml_handles_session_id - 1] = Int32GetDatum(session_id);
+	new_record[Anum_bbf_xml_handles_document_id - 1] = Int32GetDatum(document_id);
+	if(namespace_document_id == InvalidOid){
+		new_record_nulls[Anum_bbf_xml_handles_namespace_document_id - 1]= true;
+	}
+	else{
+		new_record[Anum_bbf_xml_handles_namespace_document_id - 1] = Int32GetDatum(namespace_document_id);
+	}
+
+	/* Setting the null values */
+	new_record_nulls[Anum_bbf_xml_handles_sql_handle - 1]= true;
+	new_record_nulls[Anum_bbf_xml_handles_statement_start_offset - 1]= true;
+	new_record_nulls[Anum_bbf_xml_handles_statement_end_offset - 1]= true;
+
+	new_record[Anum_bbf_xml_handles_num_openxml_calls - 1]= Int64GetDatum(0);
+	new_record[Anum_bbf_xml_handles_row_count - 1]= Int64GetDatum(0);
+
+	creation_time = DirectFunctionCall1(sysutcdatetime, (Datum) 0); // creation time
+	new_record[Anum_bbf_xml_handles_creation_time - 1] = creation_time;
+	new_record[Anum_bbf_xml_handles_openxml_last_calltime - 1]= creation_time;
+
+
+    /* Handle xml_data */
+    if (xml_text && *xml_text)
+    {
+        new_record[Anum_bbf_xml_handles_xml_content - 1] = xml_data;
+        xml_size = strlen(xml_text);  // Direct size calculation from string
+        new_record[Anum_bbf_xml_handles_original_document_size_bytes - 1] = Int64GetDatum(xml_size);
+    }
+    else
+    {
+        new_record_nulls[Anum_bbf_xml_handles_xml_content - 1] = true;
+		new_record_nulls[Anum_bbf_xml_handles_original_document_size_bytes - 1] = true;
+	}    
+
+    /* Handle ns_data */
+    if (xpath_namespaces && *xpath_namespaces)
+    {
+        new_record[Anum_bbf_xml_handles_namespace_definitions - 1] = ns_data;
+        ns_size = strlen(xpath_namespaces);  // Direct size calculation from string
+        new_record[Anum_bbf_xml_handles_original_namespace_document_size_bytes - 1] = Int64GetDatum(ns_size);
+    }
+    else
+    {
+        new_record_nulls[Anum_bbf_xml_handles_namespace_definitions - 1] = true;
+        new_record_nulls[Anum_bbf_xml_handles_original_namespace_document_size_bytes - 1] = true;
+    }
+
+    /* Create the tuple */
+    tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+    /* Insert the tuple into the table */
+    CatalogTupleInsert(rel, tuple);
+	CommandCounterIncrement();
+
+    /* Cleanup */
+    heap_freetuple(tuple);
+    table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * remove_entry_from_bbf_xml_handles
+ * 		Tries to remove an entry from the sys.babelfish_xml_handles catalog table.
+ * 
+ * 	It raises error if the handle doesn't exist in that session
+ */
+
+ void
+ remove_entry_from_bbf_xml_handles(int32_t doc_handle, int32_t session_id)
+ {
+	 Relation    rel;
+	 HeapTuple   tuple;
+	 ScanKeyData scanKey[2];
+	 SysScanDesc scan;
+	 bool        doc_exists = false;
+ 
+	 /* open the relation */
+	 rel = table_open(get_babelfish_xml_handles_oid(), RowExclusiveLock);
+	 
+	 /* Initialize scan keys */
+	 ScanKeyInit(&scanKey[0],
+				 Anum_bbf_xml_handles_document_id,  
+				 BTEqualStrategyNumber, F_INT4EQ,
+				 Int32GetDatum(doc_handle));
+ 
+	 ScanKeyInit(&scanKey[1],
+				 Anum_bbf_xml_handles_session_id,
+				 BTEqualStrategyNumber, F_INT4EQ,
+				 Int32GetDatum(session_id));
+ 
+	 /* scan using index */
+	 scan = systable_beginscan(rel, get_babelfish_xml_handles_idx_oid(),
+					 false, NULL, 2, scanKey);
+	 
+	 tuple = systable_getnext(scan);
+	 if (HeapTupleIsValid(tuple))
+	 {
+		 doc_exists = true;
+		 /* Delete the tuple */
+		 CatalogTupleDelete(rel, &tuple->t_self);
+	 }
+ 
+	 systable_endscan(scan);
+	 /* close the relation */
+	 table_close(rel, RowExclusiveLock);
+ 
+	 /* raise error if it doesn't exist in session */
+	 if (!doc_exists)
+	 {
+		 ereport(ERROR, 
+			 (errcode(ERRCODE_UNDEFINED_OBJECT), 
+			  errmsg("Could not find prepared statement with handle %d", doc_handle)));
+	 }
+ }
+
+ /* 
+ * Clean up function to remove all the entries from the catalog table 
+ * corresponding to a given session id
+ */
+
+ void
+ clean_up_babelfish_xml_handles(int32 session_id)
+ {
+	 Relation	babelfish_xml_handles_rel;
+	 HeapTuple	scantup;
+	 ScanKeyData scanKey[1];
+	 SysScanDesc scan;
+ 
+	 /* Fetch the relation */
+	 babelfish_xml_handles_rel = table_open(get_babelfish_xml_handles_oid(), RowExclusiveLock);
+ 
+	 /* Search and drop the definition */
+	 ScanKeyInit(&scanKey[0],
+				 Anum_bbf_xml_handles_session_id,
+				 BTEqualStrategyNumber, F_INT4EQ,
+				 Int32GetDatum(session_id));
+ 
+	 scan = systable_beginscan(babelfish_xml_handles_rel,
+							   get_babelfish_xml_handles_idx_oid(),
+							   true, NULL, 1, scanKey);
+ 
+	 while ((scantup = systable_getnext(scan)) != NULL)
+	 {
+		 if (HeapTupleIsValid(scantup))
+			 CatalogTupleDelete(babelfish_xml_handles_rel,
+								&scantup->t_self);
+	 }
+ 
+	 systable_endscan(scan);
+	 table_close(babelfish_xml_handles_rel, RowExclusiveLock);
+ }

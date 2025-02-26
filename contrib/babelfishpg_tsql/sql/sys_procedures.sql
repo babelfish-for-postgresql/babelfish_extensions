@@ -339,56 +339,17 @@ CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
     IN "@xmltext" sys.VARCHAR DEFAULT NULL,    
     IN "@xpath_namespaces" sys.VARCHAR DEFAULT NULL 
 ) 
-AS $$
-DECLARE
-    xml_data XML; 
-    ns_data XML;  
-BEGIN
-    IF "@xmltext" IS NULL OR pg_catalog.length("@xmltext")=0 OR pg_catalog.xml_is_well_formed_document("@xmltext") THEN
-        xml_data := "@xmltext"::XML; 
-    ELSE
-        RAISE EXCEPTION 'The XML input is not well-formed.';
-    END IF;
-
-    IF "@xpath_namespaces" IS NULL OR pg_catalog.length("@xpath_namespaces")=0 OR pg_catalog.xml_is_well_formed_document("@xpath_namespaces") THEN
-        ns_data := "@xpath_namespaces"::XML; 
-    ELSE
-        RAISE EXCEPTION 'The XPath namespace declarations are not well-formed.';
-    END IF;
-
-    INSERT INTO sys.babelfish_xml_handles(Xml_content, NamespaceDefinitions, session_id, original_document_size_bytes, original_namespace_document_size_bytes)
-    VALUES (xml_data, ns_data, pg_backend_pid(), pg_catalog.length("@xmltext"), pg_catalog.length("@xpath_namespaces"))
-    RETURNING document_id INTO "@hdoc"; 
-END;
-$$ 
-LANGUAGE plpgsql;
-
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(INTEGER,sys.VARCHAR, sys.VARCHAR) TO PUBLIC;
+AS 'babelfishpg_tsql', 'sp_xml_preparedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_preparedocument(
+	INOUT INTEGER, IN sys.varchar, IN sys.varchar
+) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_xml_removedocument(
     IN "@hdoc" INTEGER
 ) 
-AS
-$BODY$
-DECLARE
-    error_text TEXT := 'Could not find prepared statement with handle ' || 
-                      CASE 
-                          WHEN "@hdoc" IS NULL THEN 'NULL' 
-                          ELSE "@hdoc"::TEXT 
-                      END;
-BEGIN
-    DELETE FROM sys.babelfish_xml_handles
-    WHERE document_id = "@hdoc" AND session_id= pg_backend_pid();
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION '%', error_text;
-    END IF;
-
-EXCEPTION 
-    WHEN undefined_table OR SQLSTATE '42P01' THEN  
-        RAISE EXCEPTION '%', error_text;
-END;
-$BODY$
-LANGUAGE plpgsql;
-
-GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(INTEGER) TO PUBLIC;
+AS 'babelfishpg_tsql', 'sp_xml_removedocument'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_xml_removedocument(
+	IN INTEGER
+) TO PUBLIC;

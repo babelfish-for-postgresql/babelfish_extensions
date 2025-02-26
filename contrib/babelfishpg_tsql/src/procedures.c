@@ -78,6 +78,8 @@ PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
 PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
+PG_FUNCTION_INFO_V1(sp_xml_preparedocument);
+PG_FUNCTION_INFO_V1(sp_xml_removedocument);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -4290,4 +4292,107 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_VOID();
+}
+
+Datum
+sp_xml_preparedocument(PG_FUNCTION_ARGS)
+{
+	char	   *xml_text = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *xpath_namespaces = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool 	   is_xml_text_well_formed;
+	bool       is_xpath_namespaces_well_formed;
+	Datum      xml_data;
+	Datum      ns_data;
+	int32      document_id;
+	
+	HeapTuple	tuple;
+	HeapTupleHeader result;
+	TupleDesc	tupdesc;
+	bool		isnull = false;
+	Datum		values[1];
+
+	/* Validating the given xml text string */
+	if (xml_text == NULL) {
+		xml_data = (Datum) 0;  // Handle NULL case
+	} else if (strlen(xml_text) == 0) {
+		xml_data = (Datum) 0;  // Handle empty string case
+	} else {
+		is_xml_text_well_formed = DatumGetBool(
+			DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(1))
+		);
+	
+		if (is_xml_text_well_formed) {
+			xml_data = DirectFunctionCall1(xml_in, CStringGetDatum(xml_text)); 
+		} else {
+			ereport(ERROR, 
+				(errcode(ERRCODE_INVALID_XML_DOCUMENT),
+				 errmsg("The XML input is not well-formed.")));
+		}
+	}
+	
+	/* Validating the given namespaces */
+	if (xpath_namespaces == NULL) {
+		ns_data = (Datum) 0;  // Handle NULL case
+	} else if (strlen(xpath_namespaces) == 0) {
+		ns_data = (Datum) 0;  // Handle empty string case
+	} else {
+		is_xpath_namespaces_well_formed = DatumGetBool(
+			DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(2))
+		);
+	
+		if (is_xpath_namespaces_well_formed) {
+			ns_data = DirectFunctionCall1(xml_in, CStringGetDatum(xpath_namespaces));
+		} else {
+			ereport(ERROR, 
+				(errcode(ERRCODE_INVALID_XML_DOCUMENT),
+				 errmsg("The XPath namespace declarations are not well-formed.")));
+		}
+	}
+	
+    /* Fetch the document_id(handle) and then insert the values into the xml_handles catalog table */
+	document_id = get_available_xml_handles_id();
+	add_entry_to_bbf_xml_handles(document_id,xml_data,ns_data ,xml_text, xpath_namespaces);
+     
+	/* Return back the handle */
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+	values[0] = Int32GetDatum(document_id);
+	tuple = heap_form_tuple(tupdesc, values, &isnull);
+
+	result = (HeapTupleHeader) palloc(tuple->t_len);
+
+	memcpy(result, tuple->t_data, tuple->t_len);
+
+	heap_freetuple(tuple);
+	ReleaseTupleDesc(tupdesc);
+
+	PG_RETURN_HEAPTUPLEHEADER(result);
+}
+
+Datum
+sp_xml_removedocument(PG_FUNCTION_ARGS)
+{
+    int32_t doc_handle;
+    int32_t session_id;
+
+	TSQLInstrumentation(INSTR_TSQL_SP_XML_REMOVEDOCUMENT);
+    /* Check if document handle argument is NULL */
+    if (PG_ARGISNULL(0))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("Could not find prepared statement with handle NULL")));
+    }
+
+    /* Get the document handle */
+    doc_handle = PG_GETARG_INT32(0);
+    
+    /* Get the session ID */
+    session_id = MyProcPid;
+
+    /* Remove the entry */
+    remove_entry_from_bbf_xml_handles(doc_handle, session_id);
+
+    PG_RETURN_VOID();
 }

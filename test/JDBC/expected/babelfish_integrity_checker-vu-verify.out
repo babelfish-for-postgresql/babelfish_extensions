@@ -46,5 +46,6 @@ babelfish_server_options
 babelfish_sysdatabases
 babelfish_view_def
 babelfish_xml_handles
+babelfish_xml_handles_seq
 ~~END~~
 
