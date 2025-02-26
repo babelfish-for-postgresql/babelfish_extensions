@@ -949,6 +949,9 @@ is_babelfish_role(const char *role)
 {
 	Oid			sysadmin_oid;
 	Oid			role_oid;
+	Oid			bbf_master_guest_oid;
+	Oid			bbf_tempdb_guest_oid;
+	Oid			bbf_msdb_guest_oid;
 	Oid			securityadmin;
 	Oid			dbcreator;
 	CatCList		*memlist;
@@ -970,7 +973,16 @@ is_babelfish_role(const char *role)
 		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
 		return true;
 
-	// Check if it's a Babelfish login
+	/* Most of the Babelfish logins would be a member of one of these guest roles.*/
+	bbf_master_guest_oid = get_role_oid("master_guest", true);
+	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
+	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
+	if ((OidIsValid(bbf_master_guest_oid) && is_member_of_role(role_oid, bbf_master_guest_oid))
+		|| (OidIsValid(bbf_tempdb_guest_oid) && is_member_of_role(role_oid, bbf_tempdb_guest_oid))
+		|| (OidIsValid(bbf_msdb_guest_oid) && is_member_of_role(role_oid, bbf_msdb_guest_oid)))
+		return true;
+
+	/* Check if it's a Babelfish login, if it's not a member of any guest role.*/
 	memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
 								ObjectIdGetDatum(role_oid));
 	for (i = 0; i < memlist->n_members; i++)
