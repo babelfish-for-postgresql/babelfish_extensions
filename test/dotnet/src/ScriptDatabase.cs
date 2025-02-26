@@ -10,7 +10,7 @@ namespace BabelfishDotnetFramework
 {
 public class LoginDatabaseScripter
 {
-public static ServerConnection serverConnection;
+	public static ServerConnection serverConnection;
     public static Server server;
     public static Scripter scripter;
 
