@@ -55,7 +55,7 @@ static HTAB *seqhashtabidentity = NULL;
 
 static SeqTableIdentityData *last_used_seq_identity = NULL;
 
-static Oid	get_table_identity(Oid tableOid);
+Oid	get_table_identity(Oid tableOid);
 
 static ScopeIdentityStack *last_used_scope_seq_identity = NULL;
 static int	PltsqlScopeIdentityNestLevel = 0;
@@ -217,7 +217,7 @@ get_identity_current(PG_FUNCTION_ARGS)
 /*
  * Get the table's identity sequence OID.
  */
-static Oid
+Oid
 get_table_identity(Oid tableOid)
 {
 	Relation	rel;
