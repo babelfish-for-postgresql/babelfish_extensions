@@ -2137,6 +2137,7 @@ object_id(PG_FUNCTION_ARGS)
 	Oid			user_id = GetUserId();
 	Oid result = InvalidOid;
 	bool		is_temp_object;
+	bool		search_in_sys_for_sp_procs;
 	int			i;
 
 	if (PG_ARGISNULL(0))
@@ -2244,6 +2245,9 @@ object_id(PG_FUNCTION_ARGS)
 	 * user don't have lookup access
 	 */
 	schema_oid = get_namespace_oid(physical_schema_name, true);
+	/* search in sys when proc name is sp_ prefixed and schema name is empty or dbo */
+	search_in_sys_for_sp_procs = (OidIsValid(sys_schema_oid) && strncmp(object_name, "sp_", 3) == 0 &&
+								 (strcmp(schema_name, "dbo") == 0 || strlen(schema_name) == 0));
 
 	/* free unnecessary pointers */
 	pfree(db_name);
@@ -2328,6 +2332,9 @@ object_id(PG_FUNCTION_ARGS)
 				
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
+					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
 			{
@@ -2384,6 +2391,9 @@ object_id(PG_FUNCTION_ARGS)
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
+					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 
 			if (!OidIsValid(result))

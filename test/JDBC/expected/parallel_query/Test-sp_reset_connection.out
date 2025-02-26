@@ -656,7 +656,7 @@ Gather  (cost=0.00..0.01 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
 ~~END~~
 
 
@@ -683,7 +683,7 @@ SELECT CURRENT_SETTING('role', true)
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
@@ -717,7 +717,7 @@ SELECT CURRENT_SETTING('role', true)
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
