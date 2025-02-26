@@ -4135,7 +4135,7 @@ BEGIN
 END; 
 $$ LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(start_position INT, binary_input sys.varbinary(128), output_start_char INT, length_to_return INT) 
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
 RETURNS sys.nvarchar(128) 
 AS $$ 
 DECLARE 
