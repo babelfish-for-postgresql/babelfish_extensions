@@ -22,6 +22,3 @@ CREATE TABLE sys.babelfish_xml_handles (
 CREATE SEQUENCE sys.babelfish_xml_handles_seq START 1 INCREMENT 2 MAXVALUE 2147483647 CYCLE;
 
 GRANT SELECT ON sys.babelfish_xml_handles TO PUBLIC;
-
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_xml_handles', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_xml_handles_seq', '');

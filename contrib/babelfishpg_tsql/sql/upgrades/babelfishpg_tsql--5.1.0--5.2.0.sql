@@ -401,9 +401,6 @@ CREATE SEQUENCE sys.babelfish_xml_handles_seq START 1 INCREMENT 2 MAXVALUE 21474
 
 GRANT SELECT ON sys.babelfish_xml_handles TO PUBLIC;
 
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_xml_handles', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_xml_handles_seq', '');
-
 CREATE OR REPLACE PROCEDURE sys.sp_xml_preparedocument(
     INOUT "@hdoc"  INTEGER,                 
     IN "@xmltext" sys.VARCHAR DEFAULT NULL,    

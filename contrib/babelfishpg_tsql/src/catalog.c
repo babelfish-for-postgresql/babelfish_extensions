@@ -353,6 +353,7 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
 		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
 		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
+		relationId == babelfish_xml_handles_oid ||
 		relationId == bbf_partition_depend_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
