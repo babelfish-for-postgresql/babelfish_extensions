@@ -466,7 +466,6 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
-static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -4625,42 +4624,22 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
-	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
-	bool		reset_session_properties = false;
-	bool		inside_trigger = false;
-
-	/* fetch current search_path */
-	char	   *old_search_path = NULL;
+	bool		is_cross_db = stmt->is_cross_db && stmt->db_name && strcmp(cur_dbname, stmt->db_name) != 0;
 	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
 						  (estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
 						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
 	original_query_string = stmt->original_query ? stmt->original_query : NULL;
 
-	if (stmt->is_cross_db)
+	if (is_cross_db)
 	{
-		if (stmt->insert_exec)
-		{
-			estate->db_name = stmt->db_name;
-		}
-
 		/*
 		 * When there is cross db reference to sys or information_schema
 		 * schemas, Change the session property.
 		 */
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-			set_session_properties(stmt->db_name);
-	}
-	if (stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
-	{
-		if (stmt->is_schema_specified)
-			estate->schema_name = stmt->schema_name;
-		else
-			estate->schema_name = NULL;
-		if (estate->trigdata)
-			inside_trigger = true;
-		need_path_reset = reset_search_path(stmt, &old_search_path, &reset_session_properties, inside_trigger);
+			set_cur_user_db_and_path(stmt->db_name, true);
 	}
 
 	PG_TRY();
@@ -4670,14 +4649,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
-			if (reset_session_properties)
-			{
-				set_session_properties(cur_dbname);
-			}
-			else if (stmt->is_cross_db)
+			if (is_cross_db)
 			{
 				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_session_properties(cur_dbname);
+					set_cur_user_db_and_path(cur_dbname, true);
 			}
 			return ret;
 		}
@@ -5076,18 +5051,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		original_query_string = NULL;
 
-		if (need_path_reset)
-			(void) set_config_option("search_path", old_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-		if (reset_session_properties)
-		{
-			set_session_properties(cur_dbname);
-		}
-		else if (stmt->is_cross_db)
+		if (is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-				set_session_properties(cur_dbname);
+				set_cur_user_db_and_path(cur_dbname, true);
 		}
 
 		pfree(cur_dbname);
@@ -10278,175 +10245,6 @@ pltsql_clone_estate_err(PLtsql_estate_err *err)
 
 	memcpy(clone, err, sizeof(PLtsql_estate_err));
 	return clone;
-}
-
-static bool
-reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger)
-{
-	PLExecStateCallStack *top_es_entry;
-	char	   *cur_dbname = get_cur_db_name();
-	char	   *new_search_path;
-	char	   *physical_schema;
-	char	   *dbo_schema = NULL;
-
-	top_es_entry = exec_state_call_stack->next;
-
-	while (top_es_entry != NULL)
-	{
-		/*
-		 * Traverse through the estate stack. If the occurrence of exec in the
-		 * call stack, update the search path accordingly.
-		 */
-		if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC || 
-			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL && 
-			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->insert_exec &&
-			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->is_cross_db)
-			))
-		{
-			if (top_es_entry->estate->schema_name != NULL && stmt->is_dml)
-			{
-				if (top_es_entry->estate->db_name == NULL)
-				{
-					/*
-					 * Don't change the search path, if the statement inside
-					 * the procedure is a function or schema qualified.
-					 */
-					if (stmt->func_call || stmt->is_schema_specified)
-						break;
-					else
-					{
-						physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(cur_dbname);
-					}
-				}
-				else
-				{
-					if (stmt->func_call || stmt->is_schema_specified)
-					{
-						set_session_properties(top_es_entry->estate->db_name);
-						*reset_session_properties = true;
-						break;
-					}
-					else
-					{
-						physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
-					}
-				}
-				if (!*old_search_path)
-				{
-					List	   *path_oids = fetch_search_path(false);
-
-					*old_search_path = flatten_search_path(path_oids);
-					list_free(path_oids);
-				}
-				new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
-
-				pfree(physical_schema);
-				/*
-				 * Add the schema where the object is referenced and dbo
-				 * schema to the new search path
-				 */
-				(void) set_config_option("search_path", new_search_path,
-										 PGC_USERSET, PGC_S_SESSION,
-										 GUC_ACTION_SAVE, true, 0, false);
-										 
-				pfree(new_search_path);
-				pfree(dbo_schema);
-					
-				return true;
-			}
-			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
-			{
-				set_session_properties(top_es_entry->estate->db_name);
-				*reset_session_properties = true;
-				break;
-			}
-		}
-		/* if the stmt is inside an exec_batch, return false */
-		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-			return false;
-
-		/*
-		 * Traverse through the estate stack, if the stmt is inside trigger we
-		 * set the search path accordingly.
-		 */
-		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
-		{
-			if (inside_trigger && top_es_entry->estate->schema_name)
-			{
-				/*
-				 * If the object in the stmt is schema qualified or it's a ddl
-				 * we don't need to update the searh path.
-				 */
-				if (stmt->is_schema_specified || stmt->is_ddl)
-					return false;
-				else
-				{
-					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-					dbo_schema = get_dbo_schema_name(cur_dbname);
-					if (!*old_search_path)
-					{
-						List	   *path_oids = fetch_search_path(false);
-
-						*old_search_path = flatten_search_path(path_oids);
-						list_free(path_oids);
-					}
-					new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
-
-					pfree(physical_schema);
-					/*
-					 * Add the schema where the object is referenced and dbo
-					 * schema to the new search path
-					 */
-					(void) set_config_option("search_path", new_search_path,
-											 PGC_USERSET, PGC_S_SESSION,
-											 GUC_ACTION_SAVE, true, 0, false);
-					pfree(new_search_path);
-					pfree(dbo_schema);
-					
-					return true;
-				}
-			}
-		}
-		top_es_entry = top_es_entry->next;
-	}
-
-	if (stmt->is_create_view && stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") != 0 
-			&& strcmp(stmt->schema_name, "pg_catalog") != 0))
-	{
-		cur_dbname = get_cur_db_name();
-		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
-		dbo_schema = get_dbo_schema_name(cur_dbname);
-		if (!*old_search_path)
-		{
-			List	   *path_oids = fetch_search_path(false);
-
-			*old_search_path = flatten_search_path(path_oids);
-			list_free(path_oids);
-		}
-		new_search_path = psprintf("%s, %s, %s", quote_identifier(physical_schema), quote_identifier(dbo_schema), *old_search_path);
-
-		pfree(physical_schema);
-		/*
-		 * Add the schema where the object is referenced and dbo schema to the
-		 * new search path
-		 */
-		(void) set_config_option("search_path", new_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-		pfree(new_search_path);
-		pfree(dbo_schema);
-			
-		return true;
-	}
-	
-	pfree(cur_dbname);
-	
-	return false;
 }
 
 /*
