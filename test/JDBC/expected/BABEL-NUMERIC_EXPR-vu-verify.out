@@ -75,7 +75,7 @@ numeric
 
 
 -- Selecting varchar and numeric, JIRA QUERY
-SELECT * FROM BABEL_5454_V1 ORDER BY sum_num;
+SELECT * FROM BABEL_5454_V2 ORDER BY sum_num;
 GO
 ~~START~~
 nvarchar#!#numeric
@@ -975,6 +975,38 @@ int#!#float#!#int#!#numeric#!#numeric#!#numeric
 ~~END~~
 
 
+-- limit
+SELECT
+    TOP 2
+    COL3_T1 + COL3_T2 AS val
+FROM (
+    SELECT
+        COL3_T1,
+        COL2_T2 + COL3_T2,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        1 AS aw1,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY val;
+GO
+~~START~~
+numeric
+2.10000000
+2.22345678
+~~END~~
+
+
 -- selecting limit and windowAgg on top
 SELECT TOP 1
     description,
@@ -1011,6 +1043,7 @@ Eu#!#1.24345678#!#1
 
 -- limit, and windowAgg togther with operator
 SELECT
+    TOP 5
     value2 AS description,
     value1 + COL3_T2 AS sum_num,
     ROW_NUMBER() OVER (ORDER BY COL3_T2) AS row_num
@@ -1039,11 +1072,6 @@ Eu#!#2.10000000#!#1
 US#!#3.10000000#!#3
 Br#!#4.10000000#!#5
 Ja#!#5.10000000#!#7
-Ca#!#5.37345678#!#8
-Ca#!#6.10000000#!#9
-US#!#6.12345678#!#10
-Br#!#25.99345678#!#4
-Ja#!#113.62345678#!#6
 ~~END~~
 
 
@@ -1124,7 +1152,7 @@ Ja#!#115.60000000
 -- multiply and divide
 -- the integral part is less than 32, The result might be rounded in this case.
 -- (10, 7) * (4, 0)
-SELECT COL4_T12 * COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL4_T12 * COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1135,7 +1163,7 @@ numeric
 ~~END~~
 
 -- (10, 7) / (4,0)
-SELECT COL4_T12 / COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL4_T12 / COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1147,7 +1175,7 @@ numeric
 
 -- The scale isn't changed if it's less than 6 and if the integral part is greater than 32.
 -- (30, 5) * (4, 0)
-SELECT COL6_T12 * COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL6_T12 * COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1158,7 +1186,7 @@ numeric
 ~~END~~
 
 -- (30, 5) / (4, 0)
-SELECT COL6_T12 / COL5_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL6_T12 / COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1170,7 +1198,7 @@ numeric
 
 -- The scale is set to 6 if it's greater than 6 and if the integral part is greater than 32.
 -- (38,5) * (10, 7)
-SELECT COL6_T12 * COL4_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL6_T12 * COL4_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1181,7 +1209,7 @@ numeric
 ~~END~~
 
 -- (38,5) / (10, 7)
-SELECT COL6_T12 / COL4_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL6_T12 / COL4_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1193,7 +1221,7 @@ numeric
 
 
 -- (38,6) / (38,6)
-SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1206,7 +1234,7 @@ numeric
 
 -- addition and subtraction
 --  (38,6) + (38, 0)
-SELECT COL2_T12 + COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL2_T12 + COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1217,7 +1245,7 @@ numeric
 ~~END~~
 
 --  (38,6) - (38, 0)
-SELECT COL2_T12 - COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL2_T12 - COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1228,7 +1256,7 @@ numeric
 ~~END~~
 
 -- (38, 0) + (38, 0)
-SELECT COL3_T12 + COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL3_T12 + COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1239,7 +1267,7 @@ numeric
 ~~END~~
 
 -- (38, 0) + (38, 0)
-SELECT COL3_T12 - COL3_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL3_T12 - COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1251,7 +1279,7 @@ numeric
 
 
 -- (38,6) + (38,6)
-SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1262,7 +1290,7 @@ numeric
 ~~END~~
 
 -- (38,6) - (38,6)
-SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T12 ORDER BY RESULT
+SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1275,7 +1303,7 @@ numeric
 
 -- edge case with union
 -- (38,5) * (10, 7)
-SELECT COL6_T12 * COL4_T12 AS RESULT FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+SELECT COL6_T12 * COL4_T12 AS RESULT FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1291,7 +1319,7 @@ numeric
 
 
 -- (38,6) / (38,6)
-SELECT COL2_T12 / COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+SELECT COL2_T12 / COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1307,7 +1335,7 @@ numeric
 
 
 -- (38,6) + (38,6)
-SELECT COL2_T12 + COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+SELECT COL2_T12 + COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1323,7 +1351,7 @@ numeric
 
 
 -- (38,6) - (38,6)
-SELECT COL2_T12 - COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T12 UNION ALL SELECT * FROM BABEL_5454_T12) ORDER BY RESULT
+SELECT COL2_T12 - COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
 GO
 ~~START~~
 numeric
@@ -1339,11 +1367,21 @@ numeric
 
 
 -- view with CTE and limit node, BABEL-5588
-SELECT * FROM BABEL_5454_V2;
+SELECT * FROM BABEL_5454_V3;
 GO
 ~~START~~
 int#!#numeric
 1#!#52
+~~END~~
+
+
+-- BABEL-5588
+SELECT * FROM BABEL_5454_V1 ORDER BY volume;
+GO
+~~START~~
+bigint#!#text#!#numeric
+1#!#Thursday#!#1875
+2#!#Friday#!#2815
 ~~END~~
 
 
@@ -1357,7 +1395,7 @@ numeric
 
 
 -- INNER_VAR with CTE
-SELECT * FROM BABEL_5454_V3;
+SELECT * FROM BABEL_5454_V4;
 GO
 ~~START~~
 numeric#!#numeric
@@ -1729,7 +1767,7 @@ WITH cte_mult_div AS (
         COL6_T12 * COL4_T12 AS mult_result_3, -- (30, 5) * (10, 7)
         COL6_T12 / COL4_T12 AS div_result_3,  -- (30, 5) / (10, 7)
         COL2_T12 / COL2_T12 AS div_result_4   -- (38, 6) / (38, 6)
-    FROM BABEL_5454_T12
+    FROM BABEL_5454_T11
 )
 SELECT 
     COL1_T12,
@@ -1759,7 +1797,7 @@ WITH cte_add_sub AS (
         COL3_T12 - COL3_T12 AS sub_result_2,  -- (38, 0) - (38, 0)
         COL2_T12 + COL2_T12 AS add_result_3,  -- (38, 6) + (38, 6)
         COL2_T12 - COL2_T12 AS sub_result_3   -- (38, 6) - (38, 6)
-    FROM BABEL_5454_T12
+    FROM BABEL_5454_T11
 )
 SELECT 
     COL1_T12,
@@ -1780,9 +1818,9 @@ int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 
 -- CTE with edge cases using UNION ALL
 WITH cte_union AS (
-    SELECT * FROM BABEL_5454_T12
+    SELECT * FROM BABEL_5454_T11
     UNION ALL
-    SELECT * FROM BABEL_5454_T12
+    SELECT * FROM BABEL_5454_T11
 )
 SELECT 
     COL1_T12,
@@ -1813,7 +1851,7 @@ WITH cte_complex AS (
         (COL2_T12 * COL3_T12) / (COL4_T12 + COL5_T12) AS complex_result_1,
         (COL6_T12 * COL6_T12) + (COL2_T12 * COL2_T12) AS complex_result_2,
         (COL3_T12 / COL4_T12) * (COL5_T12 + COL6_T12) AS complex_result_3
-    FROM BABEL_5454_T12
+    FROM BABEL_5454_T11
 )
 SELECT 
     COL1_T12,
@@ -1838,7 +1876,7 @@ WITH cte_window AS (
         COL3_T12,
         SUM(COL2_T12) OVER (ORDER BY COL1_T12) AS running_sum,
         AVG(COL3_T12) OVER (ORDER BY COL1_T12) AS running_avg
-    FROM BABEL_5454_T12
+    FROM BABEL_5454_T11
 )
 SELECT 
     COL1_T12,
