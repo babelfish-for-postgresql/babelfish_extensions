@@ -6043,7 +6043,7 @@ pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
 
-		if (!OverrideSearchPathMatchesCurrent(plansource->search_path))
+		if (!SearchPathMatchesCurrentEnvironment(plansource->search_path))
 			return false;
 	}
 	return true;
