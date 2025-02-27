@@ -459,3 +459,118 @@ GO
 
 ~~ERROR (Message: insert or update on table "childsetdefault" violates foreign key constraint "fk_childsetdefault_parent")~~
 
+
+-- tsql user=jdbc_user password=12345678
+-- Case 13: DELETE CASCADE/SET NULL/SET DEFAULT
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~ROW COUNT: 1~~
+
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl3;
+GO
+~~ROW COUNT: 1~~
+
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl5;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 14: UPDATE CASCADE/SET NULL/SET DEFAULT
+-- Should Pass
+Update Cascade_Update_TransitionTbl1 set id = 2 where id=1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+-- Should Pass
+Update Cascade_Update_TransitionTbl3 set id = 2 where id=1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+~~ROW COUNT: 1~~
+
+-- Should Pass
+Update Cascade_Update_TransitionTbl5 set id = 2 where id=1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Case 15: Delete Cascade with search path changing
+DELETE FROM Del_Cascade_parent WHERE a = 1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+USE tempdb
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 2
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+USE master
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 3
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 1~~
+
