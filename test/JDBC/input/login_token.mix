@@ -21,6 +21,8 @@ alter server role sysadmin add member login_token3;
 go
 create login login_token4 with password = '123'
 go
+CREATE USER login_token4 FOR LOGIN login_token4;
+go
 -- tsql
 select name, type, usage from sys.login_token order by name;
 go
@@ -101,5 +103,7 @@ drop login login_token2;
 go
 drop login login_token3;
 go
+DROP USER login_token4;
+GO
 drop login login_token4;
 go
