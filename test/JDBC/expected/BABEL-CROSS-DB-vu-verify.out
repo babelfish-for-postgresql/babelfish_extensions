@@ -1921,3 +1921,59 @@ GO
 -- [TESTCASE GROUP END] Batches for testing default_database and default_schema setting
 USE master
 GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+EXECUTE dbo.babel_5448_p03;
+GO
+~~START~~
+varchar
+This is correct datbase dbname = master
+~~END~~
+
+~~START~~
+varchar
+This is correct datbase dbname = master
+~~END~~
+
+~~START~~
+varchar
+This is correct datbase dbname = master
+~~END~~
+
+~~START~~
+varchar
+This is correct datbase dbname = master
+~~END~~
+
+
+SELECT db_name()
+GO
+~~START~~
+nvarchar
+my_babel_cross_db_vu_prepare_db1
+~~END~~
+
+EXECUTE dbo.sp_test_babel_5448_3;
+GO
+~~START~~
+nvarchar
+This is correct: master.dbo.sp_test_babel_5448_1
+~~END~~
+
+~~START~~
+nvarchar
+This is correct: master.dbo.sp_test_babel_5448_1
+~~END~~
+
+~~START~~
+nvarchar
+This is correct: master.dbo.sp_test_babel_5448_1
+~~END~~
+
+~~START~~
+nvarchar
+This is correct: master.dbo.sp_test_babel_5448_1
+~~END~~
+
