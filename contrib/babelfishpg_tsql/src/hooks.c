@@ -614,6 +614,7 @@ UninstallExtendedHooks(void)
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 
+	ri_FetchPreparedPlan_hook = prev_ri_FetchPreparedPlan_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
