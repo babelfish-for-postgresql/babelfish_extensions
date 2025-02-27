@@ -203,7 +203,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
-static bool pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan);
+static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -312,7 +312,7 @@ static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_p
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
-static ri_FetchPreparedPlan_hook_type prev_ri_FetchPreparedPlan_hook = NULL;
+static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -540,9 +540,9 @@ InstallExtendedHooks(void)
 
 	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
 
+	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
+	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
-	prev_ri_FetchPreparedPlan_hook = ri_FetchPreparedPlan_hook;
-	ri_FetchPreparedPlan_hook = pltsql_ri_FetchPreparedPlan;
 }
 
 void
@@ -613,8 +613,7 @@ UninstallExtendedHooks(void)
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
-
-	ri_FetchPreparedPlan_hook = prev_ri_FetchPreparedPlan_hook;
+	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -6036,7 +6035,7 @@ is_bbf_tds_connection(void)
 	return IS_TDS_CONN();
 }
 static bool
-pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan)
+pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
 {
 	ListCell   *lc;
 
