@@ -6080,11 +6080,16 @@ static int32
 pltsql_exprTypmod(Plan *plan, Node *expr)
 {
 	int32       result_typmod = -1;
-	uint8_t     scale,
-                precision;
-	Oid         expr_type = exprType(expr);
+	uint8_t     scale;
+	uint8_t     precision;
+	Oid         expr_type;
 	
-	if (sql_dialect != SQL_DIALECT_TSQL || !OidIsValid(expr_type))
+	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
+		return -1;
+
+	expr_type = exprType(expr);
+
+	if (!OidIsValid(expr_type))
 		return -1;
 
 	if (getBaseType(expr_type) == NUMERICOID)
@@ -6123,14 +6128,20 @@ void
 pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc)
 {
 	ListCell   *l;
-	int			cur_resno = 1;
-	List       *targetList = planstate->plan->targetlist;
+	int         cur_resno = 1;
+	List       *targetList;
 
 	/*
 	 * sanity checks
 	 */
-	if (sql_dialect != SQL_DIALECT_TSQL || !PointerIsValid(desc) || !PointerIsValid(planstate))
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!PointerIsValid(desc) ||
+		!PointerIsValid(planstate) ||
+		!PointerIsValid(planstate->plan) ||
+		!PointerIsValid(planstate->plan->targetlist))
 		return;
+
+	targetList = planstate->plan->targetlist;
 
 	foreach(l, targetList)
 	{
