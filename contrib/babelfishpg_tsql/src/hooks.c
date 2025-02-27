@@ -35,6 +35,8 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "executor/execExpr.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -201,6 +203,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
+static bool pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -309,6 +312,7 @@ static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_p
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
+static ri_FetchPreparedPlan_hook_type prev_ri_FetchPreparedPlan_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -537,6 +541,8 @@ InstallExtendedHooks(void)
 	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
 
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
+	prev_ri_FetchPreparedPlan_hook = ri_FetchPreparedPlan_hook;
+	ri_FetchPreparedPlan_hook = pltsql_ri_FetchPreparedPlan;
 }
 
 void
@@ -6027,4 +6033,19 @@ static bool
 is_bbf_tds_connection(void)
 {
 	return IS_TDS_CONN();
+}
+static bool
+pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan)
+{
+	ListCell   *lc;
+
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		if (!OverrideSearchPathMatchesCurrent(plansource->search_path))
+			return false;
+	}
+	return true;
+	
 }
