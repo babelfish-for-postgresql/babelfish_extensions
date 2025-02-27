@@ -193,7 +193,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
-static bool pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan);
+static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -301,7 +301,7 @@ static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determi
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
-static ri_FetchPreparedPlan_hook_type prev_ri_FetchPreparedPlan_hook = NULL;
+static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -524,8 +524,8 @@ InstallExtendedHooks(void)
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
 
-	prev_ri_FetchPreparedPlan_hook = ri_FetchPreparedPlan_hook;
-	ri_FetchPreparedPlan_hook = pltsql_ri_FetchPreparedPlan;
+	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
+	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
 }
 
@@ -596,7 +596,7 @@ UninstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
-	ri_FetchPreparedPlan_hook = prev_ri_FetchPreparedPlan_hook;
+	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -5916,7 +5916,7 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 }
 
 static bool
-pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan)
+pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
 {
 	ListCell   *lc;
 
