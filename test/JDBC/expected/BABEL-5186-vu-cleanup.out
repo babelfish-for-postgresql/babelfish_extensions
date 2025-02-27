@@ -1,3 +1,9 @@
+-- psql
+DROP PROCEDURE master_dbo.babel_5186_relation_err_pg_proc;
+DROP PROCEDURE master_dbo.babel_5186_column_err_pg_proc;
+GO
+
+-- tsql
 DROP PROCEDURE babel_5186_1_errProc3_41
 DROP PROCEDURE babel_5186_1_errProc3_4
 DROP PROCEDURE babel_5186_1_errProc3_31

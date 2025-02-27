@@ -26,6 +26,7 @@ static void restore_ctx_full(PLtsql_execstate *estate);
 static ErrorData *restore_ctx_partial1(PLtsql_execstate *estate);
 static void restore_ctx_partial2(PLtsql_execstate *estate);
 static void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow);
+static void set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt);
 static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
@@ -45,6 +46,7 @@ static void process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_p
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 								  Datum *args, Oid *argtypes, bool *argisnull);
+
 
 static int
 exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
@@ -644,6 +646,8 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 
 	/* reset number of tuple processed in previous command */
 	estate->eval_processed = 0;
+
+	set_search_path_for_pltsql_stmt(estate, stmt);
 
 	switch (stmt->cmd_type)
 	{
@@ -2183,4 +2187,92 @@ send_env_change_token_on_txn_abort(void)
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change_binary)
 		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (ENVCHANGE_ROLLBACKTXN, NULL, 0, &txnId, sizeof(uint64_t));
+}
+
+/*
+ * We will keep verifying the search path is correct
+ * before executing any pltsql statement
+ */
+static void
+set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
+{
+	char		*cur_dbname;
+	char 		*new_search_path = NULL;
+	char 		*pltsql_func_search_path = NULL;
+	const char 	*current_db_search_path;
+
+	Assert(stmt != NULL);
+
+	if (!IS_TDS_CONN() || IsInParallelMode() || stmt->cmd_type == PLTSQL_STMT_USEDB)
+		return;
+
+	cur_dbname = get_cur_db_name();
+	current_db_search_path = get_current_db_search_path();
+	pltsql_func_search_path = estate->func->fn_search_path;
+
+	if (stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+	{
+		PLtsql_stmt_execsql *execsqlstmt = (PLtsql_stmt_execsql *)stmt;
+
+		if (execsqlstmt->is_create_view && execsqlstmt->schema_name != NULL && strcmp(execsqlstmt->schema_name, "sys") != 0
+			&& strcmp(execsqlstmt->schema_name, "pg_catalog") != 0)
+		{
+			char *physical_schema = get_physical_schema_name(cur_dbname, execsqlstmt->schema_name);
+			char *dbo_schema = get_dbo_schema_name(cur_dbname);
+
+			new_search_path = psprintf(PLTSQL_SEARCH_PATH_BUFFER, quote_identifier(physical_schema), quote_identifier(dbo_schema));
+
+			pfree(physical_schema);
+			pfree(dbo_schema);
+		}
+		else if (execsqlstmt->is_ddl)
+		{
+			new_search_path = pstrdup(current_db_search_path);
+		}
+	}
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+	{
+		PLtsql_stmt_exec *execstmt = (PLtsql_stmt_exec *)stmt;
+
+		if (strncmp(execstmt->proc_name, "sp_", 3) == 0 &&
+			(execstmt->schema_name == NULL || strcmp(execstmt->schema_name, "dbo") == 0))
+		{
+			/* handled in exec_stmt_exec() */
+		}
+		else if (execstmt->db_name != NULL && strcmp(execstmt->db_name, cur_dbname) != 0 &&
+				execstmt->schema_name != NULL && strcmp(execstmt->schema_name, "sys") == 0)
+		{
+			/* handled in exec_stmt_exec() */
+		}
+		else
+		{
+			new_search_path = pstrdup(current_db_search_path);
+		}
+	}
+
+	if (new_search_path == NULL)
+	{
+		if (pltsql_func_search_path)
+			new_search_path = pstrdup(pltsql_func_search_path);
+		else if (current_db_search_path)
+			new_search_path = pstrdup(current_db_search_path);
+	}
+
+	PG_TRY();
+	{
+		pltsql_check_search_path = false;
+
+		if (new_search_path && strcmp(new_search_path, namespace_search_path) != 0)
+		{
+			SetConfigOption("search_path", new_search_path,
+							PGC_SUSET, PGC_S_SESSION);
+			pfree(new_search_path);
+		}
+	}
+	PG_FINALLY();
+	{
+		pltsql_check_search_path = true;
+		pfree(cur_dbname);
+	}
+	PG_END_TRY();
 }
