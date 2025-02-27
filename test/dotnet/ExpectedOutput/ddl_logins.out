@@ -1,0 +1,33 @@
+#Q#CREATE LOGIN login_1   
+    WITH PASSWORD = '891$RtQ73nJ#k8';  
+   ALTER SERVER ROLE [sysadmin] ADD MEMBER [login_1]
+
+#Q#
+CREATE LOGIN login_2   
+    WITH PASSWORD = '673$WpM45hB#j4',
+    default_database = tempdb; 
+
+#Q#CREATE LOGIN [ad\Aduser] from windows with default_database=[tempdb];
+
+CREATE LOGIN [ad\Aduser] FROM WINDOWS WITH DEFAULT_DATABASE=[tempdb], DEFAULT_LANGUAGE=[English]
+GO
+
+CREATE LOGIN [login_1] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+GO
+ALTER LOGIN [login_1] DISABLE
+GO
+ALTER SERVER ROLE [sysadmin] ADD MEMBER [login_1]
+GO
+
+CREATE LOGIN [login_2] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[tempdb], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+GO
+ALTER LOGIN [login_2] DISABLE
+GO
+#Q#DROP LOGIN  login_1
+
+#Q#DROP LOGIN  login_2
+
+#Q#DROP LOGIN  [ad\Aduser]
+
+#Q#
+
