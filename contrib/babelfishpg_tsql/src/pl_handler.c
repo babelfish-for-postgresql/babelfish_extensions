@@ -3612,7 +3612,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						PG_END_TRY();
 
-						set_session_properties(db_name);
+						set_cur_user_db_and_path(db_name, true);
 						pfree(db_name);
 
 						return;
@@ -5519,6 +5519,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
+	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
+	int16		saved_dbid = get_cur_db_id();
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -5576,6 +5578,10 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(func->fn_oid);
 
+			/* for cross db func/proc calls switch to that db */
+			if (DbidIsValid(func->fn_dbid) && get_cur_db_id() != func->fn_dbid)
+				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false);
+
 			/*
 			 * Determine if called as function or trigger and call appropriate
 			 * subhandler
@@ -5610,7 +5616,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
-			
+
 			send_error = true;
 		}
 		PG_END_TRY(2);
@@ -5623,10 +5629,23 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		pltsql_remove_current_query_env();
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
+
+		/* reset db context must always be the last line in this block */
+		if (get_cur_db_id() != saved_dbid)
+			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
+		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
+			&& !IsAbortedTransactionBlockState())
+		{
+			pltsql_check_search_path = false;
+			SetConfigOption("search_path", saved_search_path,
+							PGC_SUSET, PGC_S_SESSION);
+		}
+		pfree(saved_search_path);
 	}
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+		pltsql_check_search_path = true;
 
 		/* If func is NULL then we have encountered a parser error. */
 		if (!func)
