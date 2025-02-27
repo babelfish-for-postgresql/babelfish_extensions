@@ -19,6 +19,7 @@ go
 
 alter server role sysadmin add member login_token3;
 go
+
 -- tsql
 select name, type, usage from sys.login_token order by name;
 go
