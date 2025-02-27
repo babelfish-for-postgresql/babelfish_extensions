@@ -19,6 +19,7 @@
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_db_role_setting.h"
 #include "commands/dbcommands.h"
@@ -34,6 +35,7 @@
 #include "utils/syscache.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 
 static int	FindMatchingParam(List *params, const char *name);
 static Node *TransformParamRef(ParseState *pstate, ParamRef *pref);
@@ -916,8 +918,11 @@ check_babelfish_droprole_restrictions(char *role)
  * 	This function check the underlying assumption on the membership chain instead
  * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
  *
+ * A Babelfish login is a member of babelfish created user/role i.e., dbo, guest or user created user.
+ *
  * actual dbo and db_owner name varies across different babelfish logical databases
  */
+
 static bool
 is_babelfish_role(const char *role)
 {
@@ -926,28 +931,49 @@ is_babelfish_role(const char *role)
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
+	CatCList	*memlist;
+	int			i;
+	bool		is_babelfish_login = false;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 
-	if (sysadmin_oid == InvalidOid || role_oid == InvalidOid)
+	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid))
 		return false;
 
 	if (is_member_of_role(sysadmin_oid, role_oid))
 		return true;
 
+	/* Most of the Babelfish logins would be a member of one of these guest roles.*/
 	bbf_master_guest_oid = get_role_oid("master_guest", true);
 	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
 	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
-	if (OidIsValid(bbf_master_guest_oid)
-		&& OidIsValid(bbf_tempdb_guest_oid)
-		&& OidIsValid(bbf_msdb_guest_oid)
-		&& (is_member_of_role(role_oid, bbf_master_guest_oid)
-		|| is_member_of_role(role_oid, bbf_tempdb_guest_oid)
-		|| is_member_of_role(role_oid, bbf_msdb_guest_oid)))
+	if ((OidIsValid(bbf_master_guest_oid) && is_member_of_role(role_oid, bbf_master_guest_oid))
+		|| (OidIsValid(bbf_tempdb_guest_oid) && is_member_of_role(role_oid, bbf_tempdb_guest_oid))
+		|| (OidIsValid(bbf_msdb_guest_oid) && is_member_of_role(role_oid, bbf_msdb_guest_oid)))
 		return true;
 
-	return false;
+	/* Check if it's a Babelfish login, if it's not a member of any guest role.*/
+	memlist = SearchSysCacheList1(AUTHMEMMEMROLE,
+								ObjectIdGetDatum(role_oid));
+	for (i = 0; i < memlist->n_members; i++)
+	{
+		HeapTuple   tup = &memlist->members[i]->tuple;
+		Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
+		Oid         parent_role_oid = form->roleid;
+		const char *parent_role_name = GetUserNameFromId(parent_role_oid, false);
+
+		/* Check if the parent role is a Babelfish role */
+		if (is_member_of_role(sysadmin_oid, parent_role_oid) ||
+			is_member_of_role(securityadmin, parent_role_oid) ||
+			is_member_of_role(dbcreator, parent_role_oid))
+		{
+			is_babelfish_login = true;
+			break;
+		}
+	}
+	ReleaseSysCacheList(memlist);
+	return is_babelfish_login;
 }
 
 /*
@@ -1184,7 +1210,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
-	/* Restrict roles to added as a member of bbf_role_admin */
+	/* Restrict roles to added as a member of babelfish roles */
 	foreach(item, grant_stmt->granted_roles)
 	{
 		AccessPriv *priv = (AccessPriv *) lfirst(item);
@@ -1199,7 +1225,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 			check_babelfish_alterrole_restictions(false);
 	}
 
-	/* Restrict grant to/from bbf_role_admin role */
+	/* Restrict grant to/from babelfish role */
 	foreach(item, grant_stmt->grantee_roles)
 	{
 		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
