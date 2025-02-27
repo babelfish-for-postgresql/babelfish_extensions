@@ -520,7 +520,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno, 
 static int32
 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno, bool *found)
 {
-	TargetEntry *tle;
+	TargetEntry	*tle;
 	Plan		*outerplan = NULL;
 	int		 rettypmod;
 	bool		 found_typmod;
