@@ -73,7 +73,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -105,7 +105,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-db1_dbo, "$user", sys, pg_catalog
+db1_dbo, db1_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -142,7 +142,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-db1_dbo, "$user", sys, pg_catalog
+db1_dbo, db1_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -175,7 +175,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -207,7 +207,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -240,7 +240,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -278,7 +278,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -310,7 +310,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-db1_dbo, "$user", sys, pg_catalog
+db1_dbo, db1_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -347,7 +347,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-db1_dbo, "$user", sys, pg_catalog
+db1_dbo, db1_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -380,7 +380,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -412,7 +412,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -445,7 +445,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
