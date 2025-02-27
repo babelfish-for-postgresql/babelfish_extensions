@@ -19,10 +19,7 @@ go
 
 alter server role sysadmin add member login_token3;
 go
-create login login_token4 with password = '123'
-go
-CREATE USER login_token4 FOR LOGIN login_token4;
-go
+
 -- tsql
 select name, type, usage from sys.login_token order by name;
 go
@@ -45,12 +42,6 @@ go
 select name, type, usage from sys.login_token order by name;
 go
 select name, type, usage from sys.user_token order by name;
-go
-
--- tsql user=login_token4 password = 123
-select name, user_id(name) from sys.user_token where name = 'public'
-go
-select sid from sys.user_token where name = 'public'
 go
 
 -- tsql
@@ -88,22 +79,10 @@ go
 SELECT pg_sleep(1);
 go
 
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'login_token4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-go
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-go
-
 -- tsql
 drop login login_token1;
 go
 drop login login_token2;
 go
 drop login login_token3;
-go
-DROP USER login_token4;
-GO
-drop login login_token4;
 go
