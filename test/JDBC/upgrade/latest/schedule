@@ -604,6 +604,11 @@ fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
 BABEL-5467
+sys_credentials
+sys_server_permissions
+sys_sql_logins
+sys-login-property
+sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like

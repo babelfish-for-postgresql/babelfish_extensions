@@ -1,0 +1,18 @@
+USE master
+GO
+
+CREATE VIEW sys_sql_logins_vu_prepare_view AS
+SELECT * FROM sys.sql_logins
+GO
+
+CREATE PROC sys_sql_logins_vu_prepare_proc AS
+SELECT * FROM sys.sql_logins
+GO
+
+CREATE FUNCTION sys_sql_logins_vu_prepare_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sql_logins)
+END
+GO
