@@ -595,6 +595,7 @@ UninstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
+	ri_FetchPreparedPlan_hook = prev_ri_FetchPreparedPlan_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
