@@ -601,4 +601,9 @@ BABEL-5031
 test_conv_money_to_varchar
 fixeddecimal_modulo
 test_conv_float_to_varchar_char
+sys_credentials
+sys_server_permissions
+sys_sql_logins
+sys-login-property
+sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
