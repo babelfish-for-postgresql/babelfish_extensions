@@ -93,6 +93,12 @@ extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
 /*****************************************
+ * 			General Hooks
+ *****************************************/
+
+static bool is_bbf_tds_connection(void);
+
+/*****************************************
  * 			Catalog Hooks
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
@@ -181,7 +187,6 @@ static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 extern bool called_from_tsql_insert_exec();
 extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
@@ -283,7 +288,6 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
@@ -467,9 +471,6 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
-	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
-
 	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
 	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 
@@ -525,6 +526,7 @@ InstallExtendedHooks(void)
 
 	prev_ri_FetchPreparedPlan_hook = ri_FetchPreparedPlan_hook;
 	ri_FetchPreparedPlan_hook = pltsql_ri_FetchPreparedPlan;
+	is_bbf_tds_connection_hook = is_bbf_tds_connection;
 }
 
 void
@@ -581,7 +583,6 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
@@ -602,6 +603,7 @@ UninstallExtendedHooks(void)
 	handle_param_collation_hook = NULL;
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
+	is_bbf_tds_connection_hook = NULL;
 }
 
 /*****************************************
@@ -5088,37 +5090,6 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-
-static char *
-get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
-{
-	HeapTuple 	 	tuple;
-	char 			*func_schema_name = NULL,
-					*new_search_path = NULL;
-	char  			*func_dbo_schema;
-	const char		*cur_dbname = get_cur_db_name();
-	
-	tuple = SearchSysCache1(NAMESPACEOID,
-						ObjectIdGetDatum(proc_nsp_oid));
-	if(HeapTupleIsValid(tuple))
-	{
-		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
-		func_dbo_schema = get_dbo_schema_name(cur_dbname);
-
-		if(strcmp(func_schema_name, func_dbo_schema) != 0
-			&& strcmp(func_schema_name, "sys") != 0)
-			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
-										quote_identifier(func_schema_name),
-										quote_identifier(func_dbo_schema));
-		
-		ReleaseSysCache(tuple);
-		
-		pfree(func_dbo_schema);
-	}
-
-	return new_search_path;
-}
-
 static ResTarget *
 make_restarget_from_cstr_list(List * l)
 {
@@ -5958,4 +5929,11 @@ pltsql_ri_FetchPreparedPlan(SPIPlanPtr plan)
 	}
 	return true;
 	
+}
+
+/* Check if current connection is a tds connection */
+static bool
+is_bbf_tds_connection(void)
+{
+	return IS_TDS_CONN();
 }

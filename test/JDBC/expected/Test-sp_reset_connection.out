@@ -680,7 +680,7 @@ SELECT CURRENT_SETTING('role', true)
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
@@ -714,7 +714,7 @@ SELECT CURRENT_SETTING('role', true)
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
