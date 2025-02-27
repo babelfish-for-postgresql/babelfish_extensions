@@ -153,8 +153,8 @@ GO
 INSERT INTO [BABEL_5454_T13]
 ([creation_date],[new_biz], [mid_adj], [cancels], [renewals], [order], [value])
 VALUES
-('2023-06-01 09:00:00', 1000, 200, 100, 500, 50, 25),
-('2023-06-02 10:30:00', 1500, 300, 150, 750, 75, 40);
+('2023-06-01 00:00:00', 1000, 200, 100, 500, 50, 25),
+('2023-06-02 00:00:00', 1500, 300, 150, 750, 75, 40);
 GO
 ~~ROW COUNT: 2~~
 
@@ -170,7 +170,7 @@ FROM (
         SUM([new_biz]+[mid_adj]+[cancels]+[renewals]+[order]+[value]) AS volume
     FROM BABEL_5454_T12 AS D WITH (NOLOCK)
     LEFT JOIN BABEL_5454_T13 AS DBV WITH (NOLOCK)
-        ON D.date_column = DATEADD(dd, DATEDIFF(dd, 0, creation_date), 0)
+        ON D.date_column = DBV.creation_date
     WHERE D.date_column >= '2022/12/07'
     GROUP BY D.date_column
 ) as a
