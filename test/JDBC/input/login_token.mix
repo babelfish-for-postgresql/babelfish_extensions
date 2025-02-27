@@ -27,12 +27,6 @@ go
 select name, type, usage from sys.user_token order by name;
 go
 
--- tsql user=login_token4 password = 123
-select name, user_id(name) from sys.user_token where name = 'public'
-go
-select sid from sys.user_token where name = 'public'
-go
-
 -- tsql user=login_token1 password = 12345678
 select name, type, usage from sys.login_token order by name;
 go
@@ -49,6 +43,12 @@ go
 select name, type, usage from sys.login_token order by name;
 go
 select name, type, usage from sys.user_token order by name;
+go
+
+-- tsql user=login_token4 password = 123
+select name, user_id(name) from sys.user_token where name = 'public'
+go
+select sid from sys.user_token where name = 'public'
 go
 
 -- tsql
