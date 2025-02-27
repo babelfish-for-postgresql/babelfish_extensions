@@ -310,7 +310,7 @@ SELECT CURRENT_SETTING('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 

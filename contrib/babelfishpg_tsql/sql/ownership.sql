@@ -178,54 +178,6 @@ BEGIN
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysname,
-                                                    IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
-                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
-                                                    IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@location" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@catalog" sys.sysname DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
-                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                              IN "@locallogin" sys.sysname)
-  AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_dropserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys.sysname)
-  AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
-  AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
-
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 END

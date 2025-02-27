@@ -1420,8 +1420,6 @@ public:
 	bool is_cross_db = false;
 	std::string schema_name;
 	std::string db_name;
-	bool is_function = false;
-	bool is_schema_specified = false;	
 	bool in_func_body_return_select_body = false;	
 	
 	// We keep a stack of the containers that are active during a traversal.
@@ -1908,11 +1906,10 @@ public:
 				if (ctx_name->database)
 				{
 					db_name = stripQuoteFromId(ctx_name->database);
-					if (!string_matches(db_name.c_str(), get_cur_db_name()))
-					{
-						is_cross_db = true;
-					}
+					is_cross_db = true;
 				}
+				if (ctx_name->schema)
+					schema_name = stripQuoteFromId(ctx_name->schema);
 			}
 		}
 
@@ -1922,20 +1919,12 @@ public:
 			stmt->is_cross_db = true;
 			is_cross_db = false;
 		}
-		// record that the stmt is dml
-	 	stmt->is_dml = true;
-		// record if a function call
-		if (is_function)
-			stmt->func_call = true;
 
 		if (!schema_name.empty())
 			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		// record db name for the cross db query
 		if (!db_name.empty())
 			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		// record if the SQL object is schema qualified
-		if (is_schema_specified)
-			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -2670,10 +2659,7 @@ public:
 		if (ctx && (ctx->DOT().size() <= 2) && ctx->schema)
 		{
 			schema_name = stripQuoteFromId(ctx->schema);
-			is_schema_specified = true;
 		}
-		else
-			is_schema_specified = false;
 
 		// The flag setSysSchema is used exclusively in case of rewriting a cross-DB catalog reference
 		// that uses 'dbo' as schema: this puts 'sys' in tsqlBuilder::schema_name, which ends up
@@ -2743,7 +2729,6 @@ public:
 
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
-		is_function = true;
 		if (ctx->NEXT() && ctx->full_object_name())
 		{
 			TSqlParser::Full_object_nameContext *fctx = (TSqlParser::Full_object_nameContext *) ctx->full_object_name();
@@ -6814,7 +6799,6 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	std::string proc_name;
 	std::string db_name;
 	std::string name;		
-	bool is_cross_db = false;		
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
 	std::string execKeywd = "EXEC"; // DO NOT CHANGE!
@@ -6877,12 +6861,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		if (ctx_name->database)
 		{
 			db_name = stripQuoteFromId(ctx_name->database);
-			if (!string_matches(db_name.c_str(), get_cur_db_name()))
-			{
-				is_cross_db = true;
-			}
 		}
-		
+
 		if (ctx_name->schema)
 		{
 			schema_name = stripQuoteFromId(ctx_name->schema);
@@ -6895,32 +6875,26 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Note: previous code performed rewriting here for procedure names with leading dots (EXEC ..proc1)
 		// This is now performed in exitFunc_proc_name_server_database_schema() which is called via the mutator (previously, it wasn't).
-		
-		// For sp_* procs, truncate proc name to sp_* if the schema is "dbo" or "sys" or has leading dots
-		// ToDo: handle 'EXEC mydb..sp_proc' where sp_proc gets executed in the context of 'mydb', even when the current DB is not 'mydb'	
-		if ((pg_strncasecmp(name.c_str(), "..dbo.sp_", 9) == 0) || (pg_strncasecmp(name.c_str(), "..sys.sp_", 9) == 0))
+
+		if ((!proc_name.empty() && pg_strncasecmp(proc_name.c_str(), "sp_", 3) == 0) &&
+			(schema_name.empty() || pg_strcasecmp(schema_name.c_str(), "dbo") == 0))
 		{
-			name.erase(name.begin() + 0, name.begin() + 6);
+			/*
+			 * For sp_ prefixed procedures remove database and schema portion if schema name is empty or dbo
+			 * We do this because db.dbo.sp_proc should be searched in sys and master.dbo schema as well
+			 */
+			name.replace(name.begin(), name.end(), proc_name);
+			name_length = proc_name.length();
 		}
-		else if ((pg_strncasecmp(name.c_str(), ".dbo.sp_", 8) == 0) || (pg_strncasecmp(name.c_str(), ".sys.sp_", 8) == 0))
+		else if (is_sp_proc(proc_name) && !schema_name.empty() && pg_strcasecmp(schema_name.c_str(), "sys") == 0)
 		{
-			name.erase(name.begin() + 0, name.begin() + 5);
-		}
-		else if ((pg_strncasecmp(name.c_str(), "dbo.sp_", 7) == 0) || (pg_strncasecmp(name.c_str(), "sys.sp_", 7) == 0))
-		{
-			name.erase(name.begin() + 0, name.begin() + 4);
-		}
-		else if (pg_strncasecmp(name.c_str(), ".sp_", 4) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 1);
-		}
-		else if (pg_strncasecmp(name.c_str(), "..sp_", 5) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 2);
-		}
-		else if (pg_strncasecmp(name.c_str(), "...sp_", 6) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 3);
+			/*
+			 * These sys.sp_procs do not actually exists in sys schema
+			 * We handle them as different statement in iterative executor
+			 * so only keep the proc name and discard everything else
+			 */
+			name.replace(name.begin(), name.end(), proc_name);
+			name_length = proc_name.length();
 		}
 	}	
 			
@@ -6958,7 +6932,6 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->return_code_dno = return_code_dno;
 	result->paramno = 0;
 	result->params = NIL;
-	result->is_cross_db = is_cross_db;  // Record whether this is a cross-db call
 	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
@@ -6966,6 +6939,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
 	}
+	else
+		result->proc_name = pstrdup("");
 	if (!schema_name.empty())
 	{
 		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));

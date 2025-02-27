@@ -22,7 +22,7 @@ select set_config('search_path', current_setting('search_path') + ', pg_catalog'
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog, pg_catalog
 ~~END~~
 
 -- Set tsql dialet so the fix for BABEL-219 can kick in

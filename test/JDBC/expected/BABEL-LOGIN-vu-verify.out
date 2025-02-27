@@ -23,7 +23,7 @@ SELECT current_setting('search_path');
 go
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -117,7 +117,7 @@ SELECT current_setting('search_path');
 go
 ~~START~~
 text
-master_babel_login_vu_prepare_sch, "$user", sys, pg_catalog
+master_babel_login_vu_prepare_sch, master_dbo, sys, pg_catalog
 ~~END~~
 
 

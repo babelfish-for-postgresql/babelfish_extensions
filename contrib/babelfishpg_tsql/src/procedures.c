@@ -1856,9 +1856,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	PlannedStmt *wrapper;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_path = "public, \"$user\", sys, pg_catalog";
+	int        save_nestlevel;
 
+	save_nestlevel = NewGUCNestLevel();
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
@@ -2067,12 +2068,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		set_config_option("search_path", saved_path,
-						  PGC_USERSET, PGC_S_SESSION,
-						  GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 
 	}
+	AtEOXact_GUC(false, save_nestlevel);
 	PG_END_TRY();
 	PG_RETURN_VOID();
 }

@@ -1,0 +1,57 @@
+-- tsql
+USE babel_5448_db
+GO
+DROP PROC dbo.babel_5448_p1, babel_5448_s1.babel_5448_p1, babel_5448_user_default_schema.babel_5448_p1
+GO
+USE master
+GO
+DROP DATABASE babel_5448_db
+GO
+
+DROP PROC dbo.babel_5448_p, dbo.babel_5448_p1, dbo.babel_5448_p2
+GO
+DROP PROC babel_5448_user_default_schema.babel_5448_p, babel_5448_user_default_schema.babel_5448_p1,
+          babel_5448_user_default_schema.babel_5448_p2
+GO
+DROP PROC babel_5448_s1.babel_5448_p, babel_5448_s1.babel_5448_p1, babel_5448_s1.babel_5448_p2
+GO
+DROP PROC babel_5448_s1.babel_5448_p5, babel_5448_s1.babel_5448_p6, babel_5448_s1.babel_5448_p7,
+          babel_5448_s1.babel_5448_p8, babel_5448_s1.babel_5448_p9, babel_5448_s1.babel_5448_p10,
+          babel_5448_s1.babel_5448_p11, babel_5448_s1.babel_5448_p12, babel_5448_s1.babel_5448_p13,
+          babel_5448_s1.babel_5448_p14, babel_5448_s1.babel_5448_p15;
+GO
+
+DROP FUNCTION dbo.babel_5448_f
+GO
+DROP FUNCTION babel_5448_user_default_schema.babel_5448_f
+GO
+DROP FUNCTION babel_5448_s1.babel_5448_f, babel_5448_s1.babel_5448_f2,
+              babel_5448_s1.babel_5448_f3, babel_5448_s1.babel_5448_f4,
+              babel_5448_s1.babel_5448_f5;
+GO
+DROP FUNCTION babel_5448_s2.babel_5448_f
+GO
+
+DROP TABLE dbo.babel_5448_t
+GO
+DROP TABLE babel_5448_user_default_schema.babel_5448_t
+GO
+DROP TABLE babel_5448_s1.babel_5448_t
+GO
+
+DROP VIEW babel_5448_s2.babel_5448_v
+GO
+
+DROP SCHEMA babel_5448_user_default_schema
+GO
+DROP SCHEMA babel_5448_s1
+GO
+DROP SCHEMA babel_5448_s2
+GO
+
+DROP LOGIN babel_5448_login
+GO
+
+-- psql
+DROP FUNCTION master_dbo.babel_5448_plpgsql_func();
+GO

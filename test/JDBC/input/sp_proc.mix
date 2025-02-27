@@ -1,3 +1,4 @@
+-- tsql
 create proc sp_hello as select 1
 go
 
@@ -95,7 +96,48 @@ go
 exec @a;
 go
 
+use master
+go
+create table sometableinmaster(somecolumn INT)
+go
+use db1
+go
+create schema s1
+go
+
+-- should resolve to db1.dbo.sp_hello
+exec db1.dbo.sp_hello
+go
+exec db1..sp_hello
+go
+
+-- should throw an error
+exec db1.sys.sp_hello
+go
+
+-- should thorw an error
+exec db1.s1.sp_hello
+go
+
 drop proc sp_hello;
+go
+
+-- should resolve to master.dbo.sp_hello since proc does not exists in db1
+-- special behaviour for sp_ procs
+exec db1.dbo.sp_hello
+go
+exec db1..sp_hello
+go
+
+-- should resolve to sys sp_tables
+exec db1.dbo.sp_tables
+go
+exec db1..sp_tables
+go
+-- procedure should be executed as if current db was master
+exec master..sp_tables @table_name = N'sometableinmaster'
+go
+exec master.dbo.sp_tables @table_name = N'sometableinmaster'
 go
 
 use master
@@ -193,8 +235,45 @@ go
 use master
 go
 
+drop table sometableinmaster
+go
 drop proc sp_hello
 go
 
+use db1
+go
+create schema s1
+go
+    create login non_default_schema_login with password = '12345678'
+go
+create user non_default_schema_login
+go
+alter user non_default_schema_login with default_schema = s1
+go
+create proc s1.sp_user_proc as select '--- S1 ---';
+go
+create proc dbo.sp_user_proc as select '--- DBO ---';
+go
+alter role db_owner add member non_default_schema_login
+go
+
+-- tsql user=non_default_schema_login password=12345678 database=db1
+select schema_name(), db_name()
+go
+-- should resolve to s1.sp_user_proc
+exec sp_user_proc
+exec db1..sp_user_proc
+go
+-- should resolve to dbo.sp_user_proc
+exec dbo.sp_user_proc
+exec db1.dbo.sp_user_proc
+go
+-- terminate-tsql-conn user=non_default_schema_login password=12345678 database=db1
+
+-- tsql
+use master
+go
+drop login non_default_schema_login
+go
 drop database db1
 go

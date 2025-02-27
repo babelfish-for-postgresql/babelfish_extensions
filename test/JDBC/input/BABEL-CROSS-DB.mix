@@ -632,3 +632,98 @@ GO
 
 DROP DATABASE db2;
 GO
+
+------------------ BABEL-5448 ------------------
+------------------------------------------------
+USE master;
+GO
+
+CREATE DATABASE babel_5448_db1;
+GO
+CREATE DATABASE babel_5448_db2;
+GO
+
+USE babel_5448_db1
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p1 AS
+BEGIN
+    SELECT 'This is correct: babel_5448_db1.dbo.babel_5448_p1';
+END;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p2 AS
+BEGIN
+    EXECUTE dbo.babel_5448_p1;           -- schema.proc
+    EXECUTE babel_5448_db1.dbo.babel_5448_p1;   -- db.schema.proc
+    EXECUTE babel_5448_db1..babel_5448_p1;      -- db..proc
+    EXECUTE babel_5448_p1;               -- proc
+END;
+GO
+
+USE babel_5448_db2;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p1 AS
+BEGIN
+    SELECT 'This is the incorrect database: babel_5448_db2.dbo.sp_test_babel_5448_1';
+END;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p3 AS
+BEGIN
+    EXECUTE babel_5448_db1.dbo.babel_5448_p2;
+END;
+GO
+
+EXECUTE dbo.babel_5448_p3;
+GO
+
+------------------------------------------------
+--------------- sp_proc cross db ---------------
+------------------------------------------------
+
+USE babel_5448_db1;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_1 AS
+BEGIN
+SELECT N'This is correct: babel_5448_db1.dbo.sp_test_babel_5448_1'
+END;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_2 AS
+BEGIN
+EXECUTE babel_5448_db1..sp_test_babel_5448_1;
+EXECUTE sp_test_babel_5448_1;
+EXECUTE dbo.sp_test_babel_5448_1;
+EXECUTE babel_5448_db1.dbo.sp_test_babel_5448_1;
+END;
+GO
+
+USE babel_5448_db2;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_1 AS
+BEGIN
+SELECT N'This is the incorrect database: babel_5448_db2.dbo.sp_test_babel_5448_1';
+END;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_3 AS
+BEGIN
+EXECUTE babel_5448_db1.dbo.sp_test_babel_5448_2;
+END;
+GO
+
+EXECUTE dbo.sp_test_babel_5448_3;
+GO
+
+USE master
+GO
+DROP DATABASE babel_5448_db2
+GO
+DROP DATABASE babel_5448_db1
+GO
+----------- END OF BABEL-5448 ------------------
+------------------------------------------------

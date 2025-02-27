@@ -140,3 +140,9 @@ GO
 
 DROP SCHEMA babel_cross_db_vu_prepare_myschema
 GO
+
+DROP PROCEDURE babel_5448_p02, babel_5448_p01
+GO
+
+DROP PROC sp_test_babel_5448_1, sp_test_babel_5448_2
+GO

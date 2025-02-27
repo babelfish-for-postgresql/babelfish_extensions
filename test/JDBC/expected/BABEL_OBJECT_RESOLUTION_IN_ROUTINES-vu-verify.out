@@ -1,0 +1,1653 @@
+
+-- tsql
+
+
+-- All tests will be triggered from babel_5448_db database
+-- For cross database, we will use master database
+/*********************************/
+/*********** SAME DB ************/
+/*********************************/
+USE babel_5448_db
+GO
+
+-- All objects should resolve to babel_5448_db.dbo schema in this call
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.babel_5448_s1 schema in this call
+-- except EXEC call stmt
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+
+
+-- Now we will run the same procedures again but this time we will references objects from other schema
+-- proc in dbo will reference objects from babel_5448_user_default_schema schema
+-- proc in babel_5448_s1 will reference objects from dbo schema
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    EXEC babel_5448_user_default_schema.babel_5448_p;
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    EXEC dbo.babel_5448_p;
+    INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM dbo.babel_5448_t;
+GO
+
+-- All objects should resolve to babel_5448_db.babel_5448_user_default_schema schema in this call
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_user_default_schema#!#babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+
+-- All objects should resolve to babel_5448_db.dbo schema in this call
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.dbo#!#babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+
+-- testing different schemas
+-- procedure and function will be on same schema but
+-- table & trigger will be different schema
+-- basically testing row level search path changes
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    -- trigger execution will tells use what the function resolved to
+    -- and what the objects inside triggers resolved to
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE id != 'babel_5448_db.babel_5448_user_default_schema'
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    INSERT INTO dbo.babel_5448_t SELECT babel_5448_f() FROM generate_series(1,3);
+    -- trigger execution will tells use what the function resolved to
+    -- and what the objects inside triggers resolved to
+    DELETE FROM dbo.babel_5448_t WHERE id != 'babel_5448_db.dbo'
+GO
+
+
+EXEC dbo.babel_5448_p1
+GO
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_user_default_schema
+babel_5448_db.dbo
+babel_5448_db.dbo
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+EXEC babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.dbo
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+-- Test INSERT EXEC
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+GO
+
+INSERT INTO #temp EXEC dbo.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db.dbo#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+INSERT INTO #temp EXEC babel_5448_s1.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!# |-- function in -- babel_5448_db.babel_5448_s2 --| #!#babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+DROP TABLE #temp
+GO
+
+
+-- Test declare statement inside function
+SELECT babel_5448_s1.babel_5448_f2();
+-- Test declare statement inside function
+SELECT babel_5448_s1.babel_5448_f3();
+GO
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+
+
+/*********************************/
+/*********** CROSS DB ************/
+/*********************************/
+USE babel_5448_db
+GO
+
+-- All objects should resolve to master.dbo schema in this call
+EXEC master.dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.dbo#!#master.dbo
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+
+-- All objects should resolve to master.babel_5448_s1 schema in this call
+-- except EXEC call stmt
+EXEC master.babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_s1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+
+-- Now we need to alter the procedure so switch to master database 
+-- alter the master database procedures and then execute then from
+-- babel_5448_db again
+USE master
+GO
+
+ALTER PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_user_default_schema.babel_5448_f(), * FROM babel_5448_user_default_schema.babel_5448_t;
+    EXEC babel_5448_user_default_schema.babel_5448_p;
+    INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_user_default_schema.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_user_default_schema.babel_5448_t;
+GO
+
+ALTER PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT dbo.babel_5448_f(), * FROM dbo.babel_5448_t;
+    EXEC dbo.babel_5448_p;
+    INSERT INTO dbo.babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM dbo.babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM dbo.babel_5448_t;
+GO
+
+USE babel_5448_db
+GO
+
+-- Now execute the altered master database procedures
+-- All objects should resolve to master.babel_5448_user_default_schema schema in this call
+EXEC master.dbo.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_user_default_schema#!#master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.babel_5448_user_default_schema
+~~END~~
+
+
+-- All objects should resolve to master.dbo schema in this call
+EXEC master.babel_5448_s1.babel_5448_p1
+GO
+~~START~~
+nvarchar#!#nvarchar
+master.dbo#!#master.dbo
+~~END~~
+
+~~START~~
+varchar
+master.dbo
+~~END~~
+
+~~START~~
+varchar
+=========== START OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+~~START~~
+nvarchar
+master.dbo
+temp inserted row to check DML and trigger executiong
+~~END~~
+
+~~START~~
+varchar
+=========== END OF TRIGGER EXECUTION ========== master.dbo
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+master.dbo
+~~END~~
+
+
+-- Test INSERT EXEC
+CREATE TABLE #temp (col1 NVARCHAR(MAX), col2 NVARCHAR(MAX), col3 NVARCHAR(MAX), col4 NVARCHAR(MAX))
+GO
+
+INSERT INTO #temp EXEC master.dbo.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master.dbo#!# |-- function in -- master.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+EXEC master.babel_5448_s1.babel_5448_p2
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#varchar
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+INSERT INTO #temp EXEC master.babel_5448_s1.babel_5448_p2
+SELECT * FROM #temp
+TRUNCATE TABLE #temp
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master.babel_5448_s1#!# |-- function in -- master.babel_5448_s2 --| #!#master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+
+
+-- Test declare statement inside function
+SELECT master.babel_5448_s1.babel_5448_f2();
+-- Test declare statement inside function
+SELECT master.babel_5448_s1.babel_5448_f3();
+GO
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+
+DROP TABLE #temp
+GO
+
+
+
+/************************************************************************************************/
+/************************** START OF TRANSACTION AND ERROR **************************************/
+/*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
+/************************************************************************************************/
+/*********** SAME DB ************/
+EXEC babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+
+SELECT babel_5448_s1.babel_5448_f4();
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*********** SAME DB ************/
+/*********** BUT INSIDE TRAN ************/
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+BEGIN TRAN
+GO
+EXEC babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT babel_5448_s1.babel_5448_f4();
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+COMMIT
+GO
+
+/*********** CROSS DB ************/
+EXEC master.babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+
+SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*********** CROSS DB ************/
+/*********** BUT INSIDE TRAN ************/
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p5
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p6
+SELECT '========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ===================='
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+COMMIT
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 1752)~~
+
+~~ERROR (Message: column "id1" of relation "#temp" is a generated column)~~
+
+~~START~~
+varchar
+========= CURRENT BATCH TERMINATING ERROR ONLY SO STILL IN EXECUTION OUTSIDE ERROR BATCH ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+BEGIN TRAN
+GO
+EXEC master.babel_5448_s1.babel_5448_p7
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existent_table" does not exist)~~
+
+SELECT '========= END OF TRANSACTION ABORTING ERROR ===================='
+GO
+~~START~~
+varchar
+========= END OF TRANSACTION ABORTING ERROR ====================
+~~END~~
+
+
+BEGIN TRAN
+GO
+SELECT master.babel_5448_s1.babel_5448_f4() FROM generate_series(1,3);
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+COMMIT
+GO
+
+
+/************************************************************************************************/
+/************************** START OF TRY CATCH BLOCK TESTS **************************************/
+/************************************************************************************************/
+USE babel_5448_db
+GO
+
+BEGIN TRY
+    EXEC babel_5448_s1.babel_5448_p8
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE msdb
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+END CATCH
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ====================
+~~END~~
+
+~~START~~
+varchar
+############ IN TRY BLOCK ############
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+############ IN CATCH BLOCK ############
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5448_t" does not exist)~~
+
+
+SELECT db_name()
+GO
+~~START~~
+nvarchar
+msdb
+~~END~~
+
+
+USE babel_5448_db
+GO
+
+BEGIN TRY
+    EXEC babel_5448_s1.babel_5448_p8
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE msdb
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+END CATCH
+GO
+~~START~~
+varchar
+========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ====================
+~~END~~
+
+~~START~~
+varchar
+############ IN TRY BLOCK ############
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+############ IN CATCH BLOCK ############
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ====================
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_5448_t" does not exist)~~
+
+
+SELECT db_name()
+GO
+~~START~~
+nvarchar
+msdb
+~~END~~
+
+
+USE babel_5448_db
+GO
+
+
+/*************************************************************************************/
+/************************** START OF DDLs TESTS **************************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p9;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p9;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+
+-- tsql database=babel_5448_db
+-- run this in a new connection to avoid hitting BABEL-5604
+EXEC master.babel_5448_s1.babel_5448_p10;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: babel_5448_r2 is not a role.)~~
+
+~~START~~
+text
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+babel_5448_r2
+~~END~~
+
+
+
+/*************************************************************************************/
+/************************** START OF DYNAMIC SQL *************************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p11;
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p11;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*************************************************************************************/
+/************************* START OF SP_EXECUTE_SQL ***********************************/
+/*************************************************************************************/
+EXEC babel_5448_s1.babel_5448_p12;
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+EXEC master.babel_5448_s1.babel_5448_p12;
+GO
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+
+
+/*************************************************************************************/
+/***************** VERIFY DEFAULT SCHEMA OF IN BUILT USERS ***************************/
+/*************************************************************************************/
+SELECT database_name, orig_username, default_schema_name FROM sys.babelfish_authid_user_ext
+WHERE database_name IN ('master', 'tempdb', 'msdb', 'babel_5448_db') AND
+      orig_username IN ('dbo', 'guest')
+ORDER BY database_name, orig_username;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+babel_5448_db#!#dbo#!#dbo
+babel_5448_db#!#guest#!#guest
+master#!#dbo#!#dbo
+master#!#guest#!#guest
+msdb#!#dbo#!#dbo
+msdb#!#guest#!#guest
+tempdb#!#dbo#!#dbo
+tempdb#!#guest#!#guest
+~~END~~
+
+
+-- tsql
+USE master
+GO
+CREATE LOGIN babel_5448_login WITH PASSWORD = '12345678'
+GO
+GRANT CONNECT TO guest
+GO
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, master_dbo, sys, pg_catalog
+~~END~~
+
+-- tsql user=babel_5448_login password=12345678 database=master
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_guest, master_dbo, sys, pg_catalog
+~~END~~
+
+
+
+-- tsql database=babel_5448_db
+/*************************************************************************************/
+/************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
+/*************************************************************************************/
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+EXEC master.babel_5448_s1.babel_5448_p13
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+
+CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+EXEC master.babel_5448_s1.babel_5448_p14
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+master.babel_5448_s1#!# |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- master.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+DROP TABLE #temp_babel_5448;
+GO
+
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN 	
+        DROP TABLE #temp;
+    END; SELECT TOP 111 * 
+    INTO #temp
+    FROM ( SELECT col1 AS col1_cross_db FROM master.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM #temp;
+END;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar
+ |-- view in -- master.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+
+
+
+BEGIN 	
+    IF OBJECT_ID ('tempdb..#temp') IS NOT NULL 
+    BEGIN
+        DROP TABLE #temp;
+    END;
+    USE master;
+    SELECT TOP 111 * 
+    INTO #temp
+    FROM (SELECT col1 AS col1_cross_db FROM babel_5448_db.babel_5448_s2.babel_5448_v)
+    JOIN babel_5448_t ON (1=1)
+    JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    USE babel_5448_db;
+    SELECT * FROM #temp;
+END;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~~~WARNING (Message: Changed database context to 'babel_5448_db'.  Server SQLState: S0001)~~
+
+~~START~~
+varchar#!#nvarchar#!#varchar
+ |-- view in -- babel_5448_db.babel_5448_s2 --| #!#master.dbo#!# |-- view in -- master.babel_5448_s2 --| 
+~~END~~
+
+
+
+-- tsql
+/*************************************************************************************/
+/******************************** INTEROPERABILITY ***********************************/
+/*************************************************************************************/
+USE master
+GO
+
+-- plpgsql function call outside any procedure or function
+SELECT babel_5448_plpgsql_func();
+GO
+~~START~~
+text
+master.dbo
+~~END~~
+
+
+-- tsql database=babel_5448_db
+USE babel_5448_db
+GO
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+EXEC master.babel_5448_s1.babel_5448_p15
+GO
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+master.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+
+
+SELECT master.babel_5448_s1.babel_5448_f5();
+CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+~~START~~
+nvarchar
+master.babel_5448_s1
+~~END~~
+
+~~START~~
+nvarchar#!#varchar
+babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
+~~END~~
+
+EXEC babel_5448_s1.babel_5448_p15
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#varchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!# |-- view in -- babel_5448_db.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+varchar
+<----------------------- start of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+text
+babel_5448_db.babel_5448_s1
+~~END~~
+
+~~START~~
+varchar
+<----------------------- end of plpgsql function ----------------------->
+~~END~~
+
+~~START~~
+varchar#!#nvarchar
+ |-- view in -- babel_5448_db.babel_5448_s2 --| #!#<-------- temp table --------->
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+babel_5448_db.babel_5448_s1#!#<-------- temp table --------->
+~~END~~
+
+DROP TABLE #temp_babel_5448;
+GO
+
+SELECT babel_5448_s1.babel_5448_f5();
+GO
+~~START~~
+nvarchar
+babel_5448_db.babel_5448_s1
+~~END~~
+

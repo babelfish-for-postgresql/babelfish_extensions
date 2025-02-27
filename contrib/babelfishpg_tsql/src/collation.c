@@ -1835,7 +1835,7 @@ set_db_collation_internal(const char *db_name)
 	Oid database_collation_oid;
 
 	/* Get collation oid corresponding to collation name */
-	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
+	database_collation_oid = get_collation_oid(list_make2(makeString("sys"), makeString((char*)get_collation_name_for_db(db_name))), false);
 
 	if (!OidIsValid(database_collation_oid))
 		ereport(ERROR,
