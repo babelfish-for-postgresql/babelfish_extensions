@@ -11,6 +11,7 @@ GO
 CREATE VIEW sys_sql_logins_vu_prepare_view AS
     SELECT sq.name, sq.type_desc
     FROM sys.sql_logins AS sq
+    WHERE sq.name like 'sys_sql_logins_vu_login%' OR sq.name = 'jdbc_user' 
     order by sq.name;
 GO
 

@@ -14,6 +14,7 @@ CREATE VIEW sys_server_permissions_vu_prepare_view AS
     FROM sys.server_principals AS pr   
     JOIN sys.server_permissions AS pe   
         ON pe.grantee_principal_id = pr.principal_id 
+    WHERE pr.name like 'sys_server_permissions_vu_login%' OR pr.name = 'jdbc_user' 
     order by pr.name;
 GO
 
