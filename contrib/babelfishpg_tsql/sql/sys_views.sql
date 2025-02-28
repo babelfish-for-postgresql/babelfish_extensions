@@ -834,7 +834,16 @@ with index_id_map as MATERIALIZED(
 )
 select
   cast(X.indrelid as int) as object_id
-  , cast(I.relname as sys.sysname) as name
+  , cast(
+		coalesce(
+			(select pg_catalog.string_agg(
+				case
+					when option like 'bbf_original_rel_name=%' then substring(option, 23 /* prefix length */)
+					else null
+				end, ',')
+			from unnest(I.reloptions) as option),
+			I.relname)
+		AS sys.sysname) AS name
   , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
   , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
   , cast(X.indisunique as sys.bit) as is_unique

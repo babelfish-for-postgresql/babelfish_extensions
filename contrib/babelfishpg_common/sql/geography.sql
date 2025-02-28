@@ -316,7 +316,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
+			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
 				-- Call the underlying function after preprocessing
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
@@ -410,7 +410,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
+			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
 				-- Call the underlying function after preprocessing
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2
@@ -520,6 +520,68 @@ CREATE OPERATOR sys.<> (
     COMMUTATOR = <>
 );
 
+--STDimension
+-- Retrieves spatial dimension
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
+        RETURNS integer
+        AS $$ 
+        BEGIN
+	        -- Check if the geography is empty
+                IF STIsEmpty(geom) = 1 THEN  
+                        RETURN -1;
+                END IF;
+                RETURN sys.STDimension_helper($1);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--STDisjoint
+-- Checks if two geometries have no points in common
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS $$
+        BEGIN
+	        --Check if the SRIDs do not match
+                IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+                        RETURN NULL;
+                END IF;
+                RETURN sys.STDisjoint_helper($1, $2);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIntersects
+-- Checks if two geometries spatially intersect
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS $$
+        BEGIN
+	        --Check if the SRIDs do not match
+                IF STSrid(geom1) != STSrid(geom2) THEN
+                        RETURN NULL;
+                ELSE
+                        RETURN sys.STIntersects_helper($1,$2);
+                END IF;
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+
+--STIsClosed
+-- Checks if geometry is closed
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS $$
+        DECLARE
+                geom_type text;
+        BEGIN
+                -- Get the geography type
+                geom_type := ST_GeometryType(geom); 
+                -- Check if any figures of the geography instance are points
+                IF geom_type = 'ST_Point' THEN
+                        RETURN 0;
+                END IF; 
+
+                RETURN sys.STIsClosed_helper(geom);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Minimum distance
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
 	RETURNS float8
@@ -547,6 +609,20 @@ CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY, integer)
 	AS '$libdir/postgis-3','transform'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
+--STIsEmpty
+-- Checks if geometry is empty
+CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isempty'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIsValid
+-- Checks if geometry is valid 
+CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','isvalid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
@@ -557,6 +633,26 @@ CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOGRAPHY, geom2 sys.
 	RETURNS sys.BIT
 	AS '$libdir/postgis-3','within'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
+        RETURNS integer
+        AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','ST_Intersects'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.stgeogfromtext_helper(text, integer)
 	RETURNS sys.GEOGRAPHY
@@ -612,7 +708,7 @@ CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 		Zmflag = (SELECT sys.ST_Zmflag(geog));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
-			IF lat >= -90.0 AND lat <= 90.0 THEN
+			IF (lat >= -90.0 AND lat <= 90.0) OR lat is NULL THEN
 				-- Call the underlying function after preprocessing
 				-- if the point instance has z flag only then Zmflag = 1
 				-- if the point instance has m flag only then Zmflag = 2

@@ -72,6 +72,7 @@ Oid			bbf_authid_login_ext_idx_oid;
  *****************************************/
 Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
+Oid			bbf_authid_user_ext_login_dbname_idx_oid;
 
 /*****************************************
  *			VIEW_DEF
@@ -911,6 +912,16 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
+Oid
+get_bbf_authid_user_ext_login_dbname_idx_oid(void)
+{
+	if (!OidIsValid(bbf_authid_user_ext_login_dbname_idx_oid))
+		bbf_authid_user_ext_login_dbname_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME,
+														get_namespace_oid("sys", false));
+
+	return bbf_authid_user_ext_login_dbname_idx_oid;
+}
+
 /* Returns palloc'd original name given the physical name of the db principal */
 char *
 get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error)
@@ -959,7 +970,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	TableScanDesc scan;
+	SysScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
 	ScanKeyData key[2];
@@ -977,14 +988,21 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 			Anum_bbf_authid_user_ext_login_name,
 			BTEqualStrategyNumber, F_NAMEEQ,
 			NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-			Anum_bbf_authid_user_ext_database_name,
-			BTEqualStrategyNumber, F_TEXTEQ,
-			CStringGetTextDatum(db_name));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	ScanKeyEntryInitialize(&key[1],
+							0,
+							Anum_bbf_authid_user_ext_database_name,
+							BTEqualStrategyNumber,
+							InvalidOid,
+							tsql_get_database_or_server_collation_oid_internal(false),
+							F_TEXTEQ,
+							CStringGetTextDatum(db_name));
 
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_bbf_authid_user_ext_login_dbname_idx_oid(),
+							  true, NULL, 2, key);
+
+	tuple_user_ext = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Form_authid_user_ext userform;
@@ -993,7 +1011,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 		user_name = pstrdup(NameStr(userform->rolname));
 	}
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return user_name;
@@ -1002,47 +1020,33 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 char *
 get_authid_user_ext_schema_name(const char *db_name, const char *user)
 {
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
 	char	   *schema_name = NULL;
-	NameData   *user_name;
 
 	if (!db_name || !user)
 		return NULL;
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+	tuple_user_ext = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
 
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", user);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Datum		datum;
-		bool		is_null;
+		Datum datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											 Anum_bbf_authid_user_ext_database_name);
+		char  *db_name_cstring = TextDatumGetCString(datum);
 
-		datum = heap_getattr(tuple_user_ext,
-							 Anum_bbf_authid_user_ext_default_schema_name,
-							 bbf_authid_user_ext_rel->rd_att,
-							 &is_null);
-		schema_name = pstrdup(TextDatumGetCString(datum));
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			Datum 	schema_datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											   Anum_bbf_authid_user_ext_default_schema_name);
+			char  	*default_schema_name = TextDatumGetCString(schema_datum);
+
+			if (strlen(default_schema_name))
+				schema_name = default_schema_name;
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple_user_ext);
 	}
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return schema_name;
 }
@@ -3817,7 +3821,8 @@ update_privileges_of_object(const char *schema_name,
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
-							const char *grantee)
+							const char *grantee,
+							const char *object_type)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3831,7 +3836,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 
 	if (grantee != NULL)
 	{
-		ScanKeyData	scanKey[4];
+		ScanKeyData	scanKey[5];
 		/* Immediately return false, if grantee is PUBLIC. */
 		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 			return false;
@@ -3863,13 +3868,20 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(grantee));
+		ScanKeyEntryInitialize(&scanKey[4], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 4, scanKey);
+					true, NULL, 5, scanKey);
 	}
 	else
 	{
-		ScanKeyData	scanKey[3];
+		ScanKeyData	scanKey[4];
 		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 										AccessShareLock);
 		ScanKeyInit(&scanKey[0],
@@ -3890,10 +3902,17 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&scanKey[3], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 3, scanKey);
+					true, NULL, 4, scanKey);
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
@@ -4056,7 +4075,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
