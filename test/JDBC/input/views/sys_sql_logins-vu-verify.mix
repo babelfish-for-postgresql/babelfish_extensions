@@ -1,39 +1,39 @@
--- tsql user=jdbc_user password=1235678
+-- tsql
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
--- tsql user=login1 password=123
+-- tsql user=sys_sql_logins_vu_login1 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
--- tsql user=login2 password=123
+-- tsql user=sys_sql_logins_vu_login2 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
--- tsql user=login3 password=123
+-- tsql user=sys_sql_logins_vu_login3 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
 -- tsql
-ALTER ROLE sysadmin add member login1
+ALTER ROLE sysadmin add member sys_sql_logins_vu_login1
 GO
 
--- tsql user=login1 password=123
+-- tsql user=sys_sql_logins_vu_login1 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
 -- tsql
-ALTER ROLE dbcreator add member login2
+ALTER ROLE dbcreator add member sys_sql_logins_vu_login2
 GO
 
--- tsql user=login2 password=123
+-- tsql user=sys_sql_logins_vu_login2 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
 -- tsql
-ALTER ROLE securityadmin add member login3
+ALTER ROLE securityadmin add member sys_sql_logins_vu_login3
 GO
 
--- tsql user=login3 password=123
+-- tsql user=sys_sql_logins_vu_login3 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
