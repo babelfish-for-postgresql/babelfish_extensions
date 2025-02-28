@@ -10,6 +10,13 @@ DROP TRIGGER IF EXISTS [trg_i_COD]
 DROP TRIGGER IF EXISTS tr_UniqueChild_Insert;
 DROP TRIGGER IF EXISTS tr_UniqueChild_Update;
 DROP TRIGGER IF EXISTS tr_UniqueChild_ComplexInsert;
+DROP TRIGGER IF EXISTS Cascade_Delete_TransitionTbl_Trig1;
+DROP TRIGGER IF EXISTS Cascade_Delete_TransitionTbl_Trig2;
+DROP TRIGGER IF EXISTS Cascade_Delete_TransitionTbl_Trig3;
+DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig1;
+DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig2;
+DROP TRIGGER IF EXISTS Cascade_Update_TransitionTbl_Trig3;
+DROP TRIGGER IF EXISTS Del_Cascade_trig1;
 GO
 
 -- constraints
@@ -47,4 +54,18 @@ DROP TABLE IF EXISTS [dbo].[OrderItem]
 DROP TABLE IF EXISTS [order]
 DROP TABLE IF EXISTS UniqueChild;
 DROP TABLE IF EXISTS UniqueParent;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl6;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl5;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl4;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl3;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl2;
+DROP TABLE IF EXISTS Cascade_Delete_TransitionTbl1;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl6;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl5;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl4;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl3;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl2;
+DROP TABLE IF EXISTS Cascade_Update_TransitionTbl1;
+DROP TABLE IF EXISTS Del_Cascade_child;
+DROP TABLE IF EXISTS Del_Cascade_parent;
 GO
