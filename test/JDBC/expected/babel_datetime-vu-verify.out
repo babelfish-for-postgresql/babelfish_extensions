@@ -514,9 +514,9 @@ datetime
 -- 12-byte varbinary
 SELECT CAST(0x0000B022018B81FF0000B022 AS DateTime);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 517)~~
 
-~~ERROR (Message: invalid binary size for datetime conversion)~~
+~~ERROR (Message: data out of range for datetime)~~
 
 
 -- Before min value
@@ -626,6 +626,102 @@ datetime
 ~~END~~
 
 
+-- different input size
+SELECT CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2E4600000000 AS DateTime);
+GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(0x1018B81FF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-02 23:59:59.997
+~~END~~
+
+
+SELECT CAST(0x11018B81FF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-18 23:59:59.997
+~~END~~
+
+
+SELECT CAST(0xFFF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-01 00:00:13.65
+~~END~~
+
+
+SELECT CAST(0xF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.05
+~~END~~
+
+
+SELECT CAST(0xFFFF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-01 00:03:38.45
+~~END~~
+
+
+SELECT CAST(0xFFFFFF  AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-01 15:32:04.05
+~~END~~
+
+
+SELECT CAST(0x1FFFFFF AS DateTime);
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT CAST(0x100FFFFFF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CAST(CAST(0x100FFFFFF AS VARBINARY(MAX)) AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CAST(0xFFFF235FFF0000000100FFFFFF AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CAST(CAST(0xFFFF235FFF0000000100FFFFFF AS VARBINARY(MAX)) AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
 -- Test Varbinary to Datetime conversion using CONVERT
 -- Min value
 SELECT CONVERT(DateTime, 0xFFFF2E4600000000);
@@ -722,7 +818,7 @@ GO
 datetime
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid binary size for datetime conversion)~~
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
 
 
 -- Before min value
