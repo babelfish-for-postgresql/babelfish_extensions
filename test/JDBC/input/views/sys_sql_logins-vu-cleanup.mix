@@ -8,5 +8,5 @@ GO
 DROP LOGIN login3
 GO
 
-DROP VIEW sys_server_permissions_vu_prepare_view
+DROP VIEW sys_sql_logins_vu_prepare_view
 GO

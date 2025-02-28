@@ -1,44 +1,18 @@
 -- tsql user=jdbc_user password=1235678
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login1#!#SQL_LOGIN
-login2#!#SQL_LOGIN
-login3#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql user=login1 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login1#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql user=login2 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login2#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql user=login3 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login3#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql
 ALTER ROLE sysadmin add member login1
@@ -47,14 +21,6 @@ GO
 -- tsql user=login1 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login1#!#SQL_LOGIN
-login2#!#SQL_LOGIN
-login3#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql
 ALTER ROLE dbcreator add member login2
@@ -63,12 +29,6 @@ GO
 -- tsql user=login2 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login2#!#SQL_LOGIN
-~~END~~
-
 
 -- tsql
 ALTER ROLE securityadmin add member login3
@@ -77,11 +37,3 @@ GO
 -- tsql user=login3 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
-~~START~~
-varchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN
-login1#!#SQL_LOGIN
-login2#!#SQL_LOGIN
-login3#!#SQL_LOGIN
-~~END~~
-

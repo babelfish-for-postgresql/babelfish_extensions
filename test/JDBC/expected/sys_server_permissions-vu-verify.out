@@ -1,31 +1,87 @@
-USE master
-GO
-
-SELECT * FROM sys.server_permissions
-GO
-~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
-~~END~~
-
-
+-- tsql user=jdbc_user password=1235678
 SELECT * FROM sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 ~~END~~
 
 
-EXEC sys_server_permissions_vu_prepare_proc
+-- tsql user=login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 ~~END~~
 
 
-SELECT sys_server_permissions_vu_prepare_func()
+-- tsql user=login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-int
-0
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql user=login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member login1
+GO
+
+-- tsql user=login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member login2
+GO
+
+-- tsql user=login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql
+ALTER ROLE securityadmin add member login3
+GO
+
+-- tsql user=login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 ~~END~~
 
