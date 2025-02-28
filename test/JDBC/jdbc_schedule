@@ -421,6 +421,6 @@ ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
 ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
 ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
 ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
-ignore#!#trim-before-15_11-or-16_7-vu-prepare
-ignore#!#trim-before-15_11-or-16_7-vu-verify
-ignore#!#trim-before-15_11-or-16_7-vu-cleanup
+ignore#!#trim-before-15_12-or-16_8-vu-prepare
+ignore#!#trim-before-15_12-or-16_8-vu-verify
+ignore#!#trim-before-15_12-or-16_8-vu-cleanup
