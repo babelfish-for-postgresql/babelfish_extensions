@@ -140,7 +140,7 @@ jobs:
 
       - name: Run Dotnet Tests
         id: run-dotnet-tests
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: always() && steps.re-install-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-and-run-dotnet
 
       - name: Start secondary server
