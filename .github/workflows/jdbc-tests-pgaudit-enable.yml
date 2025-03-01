@@ -1,7 +1,7 @@
 name: JDBC Tests With PG AUDIT Enable
-on:
-  schedule:
-    - cron: '0 0 * * *'  # runs every midnight
+on: [push, pull_request]
+  # schedule:
+  #   - cron: '0 0 * * *'  # runs every midnight
 
 jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
@@ -128,6 +128,15 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests
+
+      - name: Drop and re-create Babelfish database with pgaudit installed
+        id: re-install-extensions
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode="multi-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
+          sudo PGPASSWORD=12345678 ~/${{ env.INSTALL_DIR }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "CREATE EXTENSION pgaudit;"
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run Dotnet Tests
         id: run-dotnet-tests

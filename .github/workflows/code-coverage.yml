@@ -1,7 +1,7 @@
 name: Code Coverage
-on:
-  schedule:
-    - cron: '0 0 * * *'  # runs every midnight
+on: [push, pull_request]
+  # schedule:
+  #   - cron: '0 0 * * *'  # runs every midnight
   
 jobs:
   run-code-coverage-tests:
@@ -66,6 +66,14 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         uses: ./.github/composite-actions/run-jdbc-tests 
+
+      - name: Drop and re-create Babelfish database
+        id: re-install-extensions
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode="multi-db" -v tsql_port=1433 -v parallel_query_mode=false -f .github/scripts/create_extension.sql
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Dotnet Tests
         id: install-and-run-dotnet
