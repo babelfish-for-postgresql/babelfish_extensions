@@ -11,22 +11,58 @@ USE master
 GO
 CREATE TABLE BABEL5119_t4(a int)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE TABLE BABEL5119_t5(a int)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE TABLE BABEL5119_t6(a int)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE VIEW BABEL5119_v4 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE VIEW BABEL5119_v5 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE VIEW BABEL5119_v6 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE PROCEDURE BABEL5119_p4 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE PROCEDURE BABEL5119_p5 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 CREATE PROCEDURE BABEL5119_p6 AS SELECT 1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema master_guest)~~
+
 -- terminate-tsql-conn user=login_babel5119_1 password=12345678
 
 -- tsql
@@ -110,17 +146,16 @@ babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 -- General crossdb queries
 SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
-~~START~~
-int#!#int
-1#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
 
 
 -- Using crossdb query data
@@ -168,9 +203,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_v4
-babel5119_v5
-babel5119_v6
 ~~END~~
 
 
@@ -179,9 +211,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
 ~~END~~
 
 
@@ -191,12 +220,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#guest#!#BABEL5119_t4#!#BASE TABLE
-master#!#guest#!#BABEL5119_t5#!#BASE TABLE
-master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
@@ -205,12 +228,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t4#!#a
-BABEL5119_t5#!#a
-BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
 ~~END~~
 
 
@@ -219,34 +236,28 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
 -- General crossdb queries
 SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_guest.babel5119_t4" does not exist)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
-~~START~~
-int#!#int
-1#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_guest.babel5119_v4" does not exist)~~
 
 
 -- Using crossdb query data
 CREATE TABLE #babel5119_tmp_table_4(name VARCHAR(MAX), object_id int, schema_id int)
 INSERT INTO #babel5119_tmp_table_4 select name, object_id, schema_id from master.sys.tables WHERE name LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE TABLE #babel5119_tmp_table_5(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_5 SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
@@ -257,8 +268,6 @@ GO
 CREATE TABLE #babel5119_tmp_table_6(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_6 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 6~~
-
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'
 GO
@@ -350,17 +359,16 @@ babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 -- General crossdb queries
 SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
-~~START~~
-int#!#int
-1#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
 
 
 -- Using crossdb query data
@@ -408,9 +416,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_v4
-babel5119_v5
-babel5119_v6
 ~~END~~
 
 
@@ -419,9 +424,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
 ~~END~~
 
 
@@ -431,12 +433,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#guest#!#BABEL5119_t4#!#BASE TABLE
-master#!#guest#!#BABEL5119_t5#!#BASE TABLE
-master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
@@ -445,12 +441,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t4#!#a
-BABEL5119_t5#!#a
-BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
 ~~END~~
 
 
@@ -459,34 +449,28 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
 -- General crossdb queries
 SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_guest.babel5119_t4" does not exist)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
-~~START~~
-int#!#int
-1#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_guest.babel5119_v4" does not exist)~~
 
 
 -- Using crossdb query data
 CREATE TABLE #babel5119_tmp_table_10(name VARCHAR(MAX), object_id int, schema_id int)
 INSERT INTO #babel5119_tmp_table_10 select name, object_id, schema_id from master.sys.tables WHERE name LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE TABLE #babel5119_tmp_table_11(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_11 SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
@@ -497,8 +481,6 @@ GO
 CREATE TABLE #babel5119_tmp_table_12(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_12 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 6~~
-
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'
 GO
@@ -570,14 +552,14 @@ SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABE
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel5119_t1)~~
+~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for view babel5119_v1)~~
+~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
 
 
 -- Using crossdb query data
@@ -626,9 +608,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_v4
-babel5119_v5
-babel5119_v6
 ~~END~~
 
 
@@ -637,9 +616,6 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
 ~~END~~
 
 
@@ -649,12 +625,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#guest#!#BABEL5119_t4#!#BASE TABLE
-master#!#guest#!#BABEL5119_t5#!#BASE TABLE
-master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
 ~~END~~
 
 
@@ -663,12 +633,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-BABEL5119_t4#!#a
-BABEL5119_t5#!#a
-BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
 ~~END~~
 
 
@@ -677,9 +641,6 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -687,8 +648,6 @@ babel5119_v6#!#CREATE VIEW BABEL5119_v6 AS SELECT 1<newline>
 CREATE TABLE #babel5119_tmp_table_16(name VARCHAR(MAX), object_id int, schema_id int)
 INSERT INTO #babel5119_tmp_table_16 select name, object_id, schema_id from master.sys.tables WHERE name LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE TABLE #babel5119_tmp_table_17(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_17 SELECT name FROM master.sys.databases WHERE name LIKE 'BABEL5119%'
@@ -699,8 +658,6 @@ GO
 CREATE TABLE #babel5119_tmp_table_18(name VARCHAR(MAX))
 INSERT INTO #babel5119_tmp_table_18 SELECT TABLE_NAME FROM master.information_schema.tables WHERE TABLE_NAME LIKE 'BABEL5119%'
 GO
-~~ROW COUNT: 6~~
-
 
 SELECT has_dbaccess(master.sys.databases.name) FROM master.sys.databases WHERE master.sys.databases.name='BABEL5119_db'
 GO

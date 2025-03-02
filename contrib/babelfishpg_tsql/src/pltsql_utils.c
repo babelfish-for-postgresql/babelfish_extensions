@@ -2590,7 +2590,7 @@ exec_database_roles_subcmds(const char *schema)
 
 	if (is_guest_schema)
 	{
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE ON TABLES TO dummy; ");
+		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO dummy; ");
 		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
 		expected_stmts += 2;  // Increase expected statements
 	}
