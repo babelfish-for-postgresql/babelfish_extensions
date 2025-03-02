@@ -33,6 +33,8 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "executor/execExpr.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -191,6 +193,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
+static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -298,6 +301,7 @@ static pltsql_replace_non_determinstic_hook_type prev_pltsql_replace_non_determi
 static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_partitioned_table_reloptions_allowed_hook = NULL;
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
+static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -520,6 +524,8 @@ InstallExtendedHooks(void)
 
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
 
+	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
+	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
 }
 
@@ -590,6 +596,7 @@ UninstallExtendedHooks(void)
 	pltsql_is_partitioned_table_reloptions_allowed_hook = prev_pltsql_is_partitioned_table_reloptions_allowed_hook;	
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
+	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -5906,6 +5913,22 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 	pfree(splited_object_name);
 
 	return (const char *)pstrdup(object_name + prefix_len);
+}
+
+static bool
+pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
+{
+	ListCell   *lc;
+
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		if (!OverrideSearchPathMatchesCurrent(plansource->search_path))
+			return false;
+	}
+	return true;
+	
 }
 
 /* Check if current connection is a tds connection */
