@@ -4,33 +4,6 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-
-    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
-    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
-
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop view' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when undefined_function then --if 'Deprecated function does not exist'
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -44,33 +17,6 @@ AS $$
     SELECT sys.suser_name_internal(suser_id());
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.user_name()
-RETURNS sys.NVARCHAR(128)
-AS $$
-    SELECT sys.user_name(user_id());
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.user_name(IN id OID DEFAULT NULL) RENAME TO user_name_deprecated_4_6_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'user_name_deprecated_4_6_0');
-
-CREATE OR REPLACE FUNCTION sys.user_name(IN id OID)
-RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'user_name'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 create or replace view sys.indexes as
 -- Get all indexes from all system and user tables
@@ -629,9 +575,7 @@ WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = C
 
 GRANT SELECT ON sys.user_token TO PUBLIC;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

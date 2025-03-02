@@ -817,7 +817,7 @@ user_name(PG_FUNCTION_ARGS)
 	id = PG_ARGISNULL(0) ? InvalidOid : PG_GETARG_OID(0);
 
 	if (id == InvalidOid)
-		PG_RETURN_NULL();
+		id = GetUserId();
 
 	if(id == 1)
 		PG_RETURN_TEXT_P(cstring_to_text("public")); 
