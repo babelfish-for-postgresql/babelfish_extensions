@@ -1,0 +1,97 @@
+-- sys.babelfish_fts_rewrite()
+CREATE VIEW prefix_rewrite_prepare_v1 AS (SELECT sys.babelfish_fts_rewrite('"one two three*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v2 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v3 AS (SELECT sys.babelfish_fts_rewrite('"one two three*" '));
+GO
+CREATE VIEW prefix_rewrite_prepare_v4 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*" '));
+GO
+
+CREATE PROCEDURE prefix_rewrite_prepare_p1 AS (SELECT sys.babelfish_fts_rewrite('"one*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p2 AS (SELECT sys.babelfish_fts_rewrite('"* one*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p3 AS (SELECT sys.babelfish_fts_rewrite('"one * two*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p4 AS (SELECT sys.babelfish_fts_rewrite('" ** one * * * two*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p5 AS (SELECT sys.babelfish_fts_rewrite('"*one*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p6 AS (SELECT sys.babelfish_fts_rewrite('"*"'));
+GO
+
+--special characters
+CREATE PROCEDURE prefix_rewrite_prepare_p7 AS (SELECT sys.babelfish_fts_rewrite('"one$*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p8 AS (SELECT sys.babelfish_fts_rewrite('"$$one*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p9 AS (SELECT sys.babelfish_fts_rewrite('" $one *"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p10 AS (SELECT sys.babelfish_fts_rewrite('"o@ne* "'));
+GO
+
+-- Create the table
+CREATE TABLE ArticleSentences (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Content TEXT,
+    Category VARCHAR(50),
+    ShortDescription NVARCHAR(200),
+    Author CHAR(50),
+    Tags NCHAR(30),
+    Notes TEXT
+);
+
+INSERT INTO ArticleSentences (Content, Category, ShortDescription, Author, Tags, Notes) VALUES
+    ('Digital transformation helps businesses grow exponentially', 'Technology', 'Overview of digital transformation impact', 'JSMITH', N'#DIGITAL#TRANSFORM', 'Key focus on enterprise solutions'),
+    ('Cloud computing reduces infrastructure costs significantly', 'Technology', 'Cost benefits of cloud adoption', 'EWATSN', N'#CLOUD#COSTS', 'ROI analysis included'),
+    ('Data analytics drives better business decisions', 'Business', 'Analytics impact on decision making', 'MBROWN', N'#DATA#ANALYTICS', 'Case studies referenced'),
+    ('Machine learning algorithms improve predictive analytics', 'Technology', 'ML in predictive analysis', 'SCLARK', N'#ML#PREDICT', 'Technical implementation details'),
+    ('Blockchain technology ensures transaction transparency', 'Finance', 'Blockchain in financial systems', 'HMARTZ', N'#BLOCKCHAIN#FIN', 'Security aspects covered'),
+    ('Artificial intelligence transforms customer service', 'Technology', 'AI impact on customer experience', 'ASMITH', N'#AI#SERVICE', 'Implementation success metrics'),
+    ('Cloud security protocols enhance data protection', 'Security', 'Advanced cloud security measures', 'RWILSN', N'#SECURITY#CLOUD', 'Best practices documented'),
+    ('Data visualization improves decision making process', 'Analytics', 'Visual analytics benefits', 'JBAKER', N'#VIZ#ANALYTICS', 'Tool comparison included'),
+    ('Digital marketing strategies boost online presence', 'Marketing', 'Digital marketing effectiveness', 'MTHOMS', N'#DIGITAL#MKTG', 'Campaign performance data'),
+    ('Cloud native applications maximize efficiency', 'Technology', 'Benefits of cloud native apps', 'PGREEN', N'#CLOUD#NATIVE', 'Architecture guidelines'),
+    ('Internet of Things enables smart manufacturing', 'Manufacturing', 'IoT in industrial settings', 'KWHITE', N'#IOT#INDUSTRY', 'Implementation roadmap'),
+    ('Cybersecurity measures prevent data breaches', 'Security', 'Modern security protocols', 'LBLACK', N'#SECURITY#CYBER', 'Threat analysis included'),
+    ('Big data analytics reveal customer patterns', 'Analytics', 'Customer behavior analysis', 'RJAMES', N'#BIGDATA#CRM', 'Pattern recognition study'),
+    ('Digital payments revolutionize transactions', 'Finance', 'Evolution of payment systems', 'ABROOK', N'#PAYMENT#FIN', 'Market adoption rates'),
+    ('Cloud migration strategies simplify transitions', 'Technology', 'Effective migration planning', 'TCLARK', N'#CLOUD#MIGRATE', 'Step-by-step guide'),
+    ('Data governance ensures compliance standards', 'Compliance', 'Regulatory compliance guide', 'DSMITH', N'#DATA#GOVERN', 'Regulatory updates included'),
+    ('Virtual reality transforms user experiences', 'Technology', 'VR applications overview', 'BWILSN', N'#VR#UX', 'User testing results'),
+    ('Edge computing reduces latency issues', 'Technology', 'Edge computing benefits', 'MROGER', N'#EDGE#COMPUTE', 'Performance metrics'),
+    ('Quantum computing advances computation speed', 'Technology', 'Quantum computing impact', 'JTHOMS', N'#QUANTUM#TECH', 'Research findings'),
+    ('Digital twins optimize manufacturing processes', 'Manufacturing', 'Digital twin applications', 'CGREEN', N'#TWIN#MANUF', 'Case implementation'),
+    ('Natural language processing enhances AI', 'Technology', 'NLP in modern AI', 'FWHITE', N'#NLP#AI', 'Language model analysis'),
+    ('Cloud automation improves workflow efficiency', 'Technology', 'Workflow automation benefits', 'HBLACK', N'#CLOUD#AUTO', 'Efficiency metrics'),
+    ('Data lakes centralize information storage', 'Technology', 'Data lake architecture', 'WJAMES', N'#DATA#STORE', 'Storage optimization'),
+    ('Blockchain solutions for supply chain', 'Supply Chain', 'Supply chain transparency', 'NBROOK', N'#BLOCKCHAIN#SCM', 'Implementation guide'),
+    ('Machine vision enhances quality control', 'Manufacturing', 'Quality control automation', 'VCLARK', N'#VISION#QC', 'Error reduction stats'),
+    ('Cloud-based CRM improves customer relations', 'Business', 'Modern CRM solutions', 'QSMITH', N'#CRM#CLOUD', 'Customer satisfaction data'),
+    ('Data mining uncovers business insights', 'Analytics', 'Business intelligence tools', 'UWILSN', N'#DATA#MINE', 'ROI case studies'),
+    ('Digital identity verifies online transactions', 'Security', 'Identity verification systems', 'KROGER', N'#IDENTITY#SEC', 'Security protocols'),
+    ('Augmented reality enhances training', 'Education', 'AR in corporate training', 'ITHOMS', N'#AR#TRAIN', 'Training effectiveness'),
+    ('Cloud telephony revolutionizes communication', 'Communication', 'Modern business communication', 'YGREEN', N'#VOIP#COMM', 'Cost benefit analysis'),
+    ('Data encryption secures information transfer', 'Security', 'Modern encryption methods', 'XWHITE', N'#ENCRYPT#SEC', 'Security standards'),
+    ('Digital workspace enables remote work', 'Business', 'Remote work solutions', 'OBLACK', N'#REMOTE#WORK', 'Productivity metrics'),
+    ('Cloud gaming transforms entertainment', 'Entertainment', 'Gaming industry evolution', 'ZJAMES', N'#GAME#CLOUD', 'Market growth data'),
+    ('Data backup ensures business continuity', 'Technology', 'Backup strategy guide', 'GBROOK', N'#BACKUP#BIZ', 'Recovery protocols'),
+    ('Artificial neural networks advance AI', 'Technology', 'Neural network applications', 'ESMITH', N'#NEURAL#AI', 'Performance studies'),
+    ('Cloud storage optimizes data management', 'Technology', 'Storage solution benefits', 'DWILSN', N'#STORAGE#CLOUD', 'Capacity planning'),
+    ('Data analytics predicts market trends', 'Business', 'Predictive analytics use', 'SROGER', N'#PREDICT#BIZ', 'Accuracy metrics'),
+    ('Digital advertising targets audiences', 'Marketing', 'Ad targeting strategies', 'ATHOMS', N'#AD#TARGET', 'Campaign results'),
+    ('Cloud security prevents cyber attacks', 'Security', 'Security measure overview', 'BGREEN', N'#SECURE#CLOUD', 'Threat prevention'),
+    ('Data integration streamlines operations', 'Technology', 'Integration best practices', 'CWHITE', N'#DATA#INTEG', 'Efficiency gains'),
+    ('Digital signatures automate approvals', 'Business', 'E-signature solutions', 'DBLACK', N'#SIGN#AUTO', 'Compliance details'),
+    ('Cloud monitoring ensures performance', 'Technology', 'Performance monitoring tools', 'EJAMES', N'#MONITOR#PERF', 'Uptime statistics'),
+    ('Data quality improves decision making', 'Analytics', 'Quality management guide', 'FBROOK', N'#QUALITY#DATA', 'Impact analysis'),
+    ('Digital currency transforms banking', 'Finance', 'Cryptocurrency impact', 'GSMITH', N'#CRYPTO#FIN', 'Market adoption'),
+    ('Cloud compliance meets regulations', 'Compliance', 'Regulatory requirements', 'HWILSN', N'#COMPLY#REG', 'Standard updates'),
+    ('Data privacy protects user rights', 'Security', 'Privacy protection measures', 'IROGER', N'#PRIVACY#SEC', 'GDPR compliance'),
+    ('Digital supply chains optimize logistics', 'Supply Chain', 'Supply chain innovation', 'JGREEN', N'#SUPPLY#CHAIN', 'Efficiency gains'),
+    ('Cloud architecture scales systems', 'Technology', 'Scalable system design', 'KWHITE', N'#ARCH#SCALE', 'Design patterns'),
+    ('Data visualization tells stories', 'Analytics', 'Visual storytelling guide', 'LBLACK', N'#VIZ#STORY', 'Example cases'),
+    ('Digital ethics guides AI development', 'Technology', 'AI ethics framework', 'MJAMES', N'#AI#ETHICS', 'Policy guidelines'),
+    ('Cloud solutions enable innovation', 'Technology', 'Innovation enablement', 'NBROOK', N'#INNOVATE#CLOUD', 'Success stories')
+GO
