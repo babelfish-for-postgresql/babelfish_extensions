@@ -1,0 +1,165 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- leading and trailing spaces between quotes and double quotes
+SELECT * FROM prefix_rewrite_prepare_v1
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v2
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v3
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v4
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+
+-- handling different cases of prefix terms
+-- all are valid search strings
+EXEC prefix_rewrite_prepare_p1
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p2
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p3
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p4
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p5
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+-- negative test
+-- does not give warning about noise in search string
+EXEC prefix_rewrite_prepare_p6
+GO
+~~START~~
+text
+
+~~END~~
+
+
+-- special characters
+EXEC prefix_rewrite_prepare_p7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+EXEC prefix_rewrite_prepare_p8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+EXEC prefix_rewrite_prepare_p9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+EXEC prefix_rewrite_prepare_p10
+GO
+~~START~~
+text
+o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+~~END~~
+
+
+-- Create a unique-text index
+CREATE UNIQUE INDEX uid ON ArticleSentences(id)
+GO
+-- Create a full-text index
+CREATE FULLTEXT INDEX ON ArticleSentences(Content)
+KEY INDEX uid 
+GO
+
+-- Sample search query using CONTAINS
+-- 1. Basic prefix search across all text fields
+SELECT * 
+FROM ArticleSentences 
+WHERE CONTAINS(Content, '"digi*"')
+GO
+~~START~~
+int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
+1#!#Digital transformation helps businesses grow exponentially#!#Technology#!#Overview of digital transformation impact#!#JSMITH                                            #!##DIGITAL#TRANSFORM            #!#Key focus on enterprise solutions
+9#!#Digital marketing strategies boost online presence#!#Marketing#!#Digital marketing effectiveness#!#MTHOMS                                            #!##DIGITAL#MKTG                 #!#Campaign performance data
+14#!#Digital payments revolutionize transactions#!#Finance#!#Evolution of payment systems#!#ABROOK                                            #!##PAYMENT#FIN                  #!#Market adoption rates
+20#!#Digital twins optimize manufacturing processes#!#Manufacturing#!#Digital twin applications#!#CGREEN                                            #!##TWIN#MANUF                   #!#Case implementation
+28#!#Digital identity verifies online transactions#!#Security#!#Identity verification systems#!#KROGER                                            #!##IDENTITY#SEC                 #!#Security protocols
+32#!#Digital workspace enables remote work#!#Business#!#Remote work solutions#!#OBLACK                                            #!##REMOTE#WORK                  #!#Productivity metrics
+38#!#Digital advertising targets audiences#!#Marketing#!#Ad targeting strategies#!#ATHOMS                                            #!##AD#TARGET                    #!#Campaign results
+41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
+44#!#Digital currency transforms banking#!#Finance#!#Cryptocurrency impact#!#GSMITH                                            #!##CRYPTO#FIN                   #!#Market adoption
+47#!#Digital supply chains optimize logistics#!#Supply Chain#!#Supply chain innovation#!#JGREEN                                            #!##SUPPLY#CHAIN                 #!#Efficiency gains
+50#!#Digital ethics guides AI development#!#Technology#!#AI ethics framework#!#MJAMES                                            #!##AI#ETHICS                    #!#Policy guidelines
+~~END~~
+
+
+SELECT * 
+FROM ArticleSentences 
+WHERE CONTAINS(Content, '"int*"')
+GO
+~~START~~
+int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
+6#!#Artificial intelligence transforms customer service#!#Technology#!#AI impact on customer experience#!#ASMITH                                            #!##AI#SERVICE                   #!#Implementation success metrics
+11#!#Internet of Things enables smart manufacturing#!#Manufacturing#!#IoT in industrial settings#!#KWHITE                                            #!##IOT#INDUSTRY                 #!#Implementation roadmap
+40#!#Data integration streamlines operations#!#Technology#!#Integration best practices#!#CWHITE                                            #!##DATA#INTEG                   #!#Efficiency gains
+~~END~~
+
+
+SELECT Content, ShortDescription 
+FROM ArticleSentences 
+WHERE CONTAINS(Content, '"manufac process*"')
+GO
+~~START~~
+text#!#nvarchar
+Digital twins optimize manufacturing processes#!#Digital twin applications
+~~END~~
+

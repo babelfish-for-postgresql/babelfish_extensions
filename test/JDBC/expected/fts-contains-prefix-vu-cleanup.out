@@ -1,0 +1,58 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- Drop views
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v1
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v2
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v3
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v4
+GO
+
+-- Drop procedures
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p1
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p2
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p3
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p4
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p5
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p6
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p7
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p8
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p9
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p10
+GO
+
+-- Drop Fulltext index
+DROP FULLTEXT INDEX ON ArticleSentences
+GO
+
+-- Drop tables
+DROP TABLE IF EXISTS ArticleSentences
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+

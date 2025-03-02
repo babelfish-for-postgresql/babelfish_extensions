@@ -23,6 +23,7 @@ static char     *scanbuf;
 static int      scanbuflen;
 
 static char     *translate_simple_term(const char* s);
+static char     *translate_prefix_term(const char* s);
 static char     *trim(char *s, bool insideQuotes);
 static void     replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes);
 
@@ -76,7 +77,16 @@ simple_term:
 
 prefix_term:
     PREFIX_TERM_TOKEN {
-        fts_yyerror(NULL, "Prefix term is not currently supported in Babelfish");
+        *result = translate_prefix_term($1);
+    }
+    | WS_TOKEN PREFIX_TERM_TOKEN {
+        *result = translate_prefix_term($2);
+    }
+    | PREFIX_TERM_TOKEN WS_TOKEN {
+        *result = translate_prefix_term($1);
+    }
+    | WS_TOKEN PREFIX_TERM_TOKEN WS_TOKEN {
+        *result = translate_prefix_term($2);
     }
     ;
 
@@ -191,6 +201,95 @@ static char
     pfree(leftStr);
     pfree(rightStr);
     pfree(trimmedInputStr);
+
+    return output.data;
+}
+
+/* Helper function that takes in a prefix word or phrase and returns the same prefix word/phrase in Postgres format
+ * Example: '"word*"' is rewritten into 'word:*'; '"word1 word2 word3*"' is rewritten into 'word1:*<->word2:*<->word3:*'
+ * Case 1: '"word*"' = 'word:*'
+ * Case 2: '"word1 word2 word3*"' = 'word1:*<->word2:*<->word3:*'
+ * Case 3: '  "word*"' = 'word:*' || '"word*" ' = 'word:*' || ' "word*" ' = 'word:*'
+ * Case 4: '" word1 word2*"' = 'word1:*<->word2:*'
+ * Case 5: '"word1* word2*"' = 'word1:*<->word2:*'
+ * Case 6: '"word1 word2* "' && '" word1 word2* "' are treated as simple terms over SQL server
+ * Trivial Case: spaces before and after double quotes, Example - '   "word1 word2" ' = 'word1<->word2'
+ */
+static char
+*translate_prefix_term(const char* inputStr) {
+    int             inputLength;
+    char            *trimmedInputStr;
+    char            *outputStr;
+    StringInfoData  output;
+    const char      *specialChars = "~!&|@#$%^+=\\;:<>?.\\/";
+
+
+    /* Check for empty input - this should not be possible based on lexer rules, but check just in case */
+    if (!inputStr || !(inputLength = strlen(inputStr))) {
+      ereport(ERROR,
+          (errcode(ERRCODE_INTERNAL_ERROR),
+           errmsg("Null or empty full-text predicate.")));
+    }
+    
+    trimmedInputStr = pstrdup(inputStr);
+
+    /* removing leading and trailing spaces outside of double quotes */
+    trim(trimmedInputStr, false);
+    inputLength = strlen(trimmedInputStr);
+  
+    /* removing leading spaces, for the phrase enclosed in double quotes
+     * search string with trailing spaces are identified as simple terms by the lexer
+     */
+    trim(trimmedInputStr, true);
+    
+    /* Rewriting search string in format word1:*<->word2:*  */
+    outputStr = pstrdup(trimmedInputStr);
+    inputLength = strlen(outputStr);
+    initStringInfo(&output);
+
+    for(int i=0; i<inputLength; i++) {
+        if (strchr(specialChars, outputStr[i]) != NULL || strchr("`'_", outputStr[i]) != NULL) {
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
+        }
+        if (outputStr[i] == ' ') {
+            /* Removing multiple spaces and * from the search string */
+            while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
+                i++;
+            }
+            if(output.len > 0){
+              if(i == inputLength-1) {
+                  appendStringInfoString(&output, ":*");
+              }
+              else {
+                  appendStringInfoString(&output, ":*<->");
+              }
+            } else {
+                  continue;
+            }
+        } else if(outputStr[i] == '*') {
+                while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
+                    i++;
+                }
+                /* adding the prefix operator ':*' and followed by operator '<->' if output is not NULL */
+                if(output.len > 0){
+                    if(i == inputLength-1) {
+                        appendStringInfoString(&output, ":*");
+                    }
+                    else {
+                        appendStringInfoString(&output, ":*<->");
+                    }
+                } else {
+                        continue;
+                }
+        } else {
+                appendStringInfoChar(&output, outputStr[i]);
+        }
+    }
+    appendStringInfoChar(&output, '\0');
+    pfree(trimmedInputStr);
+    pfree(outputStr);
 
     return output.data;
 }
