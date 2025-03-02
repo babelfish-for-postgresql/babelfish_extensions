@@ -153,7 +153,14 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- User and Login Functions
-CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.user_name()
+RETURNS sys.NVARCHAR(128)
+AS $$
+    SELECT sys.user_name(user_id());
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.user_name(IN id OID)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'user_name'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
