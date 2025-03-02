@@ -25,6 +25,21 @@ AS $$
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.user_name(IN id OID DEFAULT NULL) RENAME TO user_name_deprecated_4_6_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'user_name_deprecated_4_6_0');
+
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'user_name'
