@@ -430,7 +430,7 @@ AS 'babelfishpg_tsql', 'alter_default_privilege_on_schema';
 CALL sys.babelfish_alter_default_privilege_on_schema();
 
 -- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_alter_default_privilege_on_guest_schema();
+DROP PROCEDURE sys.babelfish_alter_default_privilege_on_schema();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
