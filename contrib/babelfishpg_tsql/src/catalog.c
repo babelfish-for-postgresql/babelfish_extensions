@@ -6259,7 +6259,6 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
 
             pfree(query.data);
             pfree(guest_role);
-            pfree(guest_schema);
 			pfree(physical_schema);
         }
 
