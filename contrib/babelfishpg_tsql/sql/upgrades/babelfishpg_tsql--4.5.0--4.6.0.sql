@@ -423,11 +423,11 @@ $$;
 
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on guest the schemas where the schema owner is guest
-CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_guest_schema()
+CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_on_schema()
 LANGUAGE C
-AS 'babelfishpg_tsql', 'alter_default_privilege_on_guest_schema';
+AS 'babelfishpg_tsql', 'alter_default_privilege_on_schema';
 
-CALL sys.babelfish_alter_default_privilege_on_guest_schema();
+CALL sys.babelfish_alter_default_privilege_on_schema();
 
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_alter_default_privilege_on_guest_schema();
