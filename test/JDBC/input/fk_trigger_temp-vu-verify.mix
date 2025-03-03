@@ -353,3 +353,40 @@ GO
 -- should fail (operation conflicts with the REFERENCE constraint)
 UPDATE ParentSetDefault SET ParentID = 3 WHERE ParentID = 2;
 GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 13: DELETE CASCADE/SET NULL/SET DEFAULT
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl1;
+GO
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl3;
+GO
+-- Should Pass
+DELETE FROM Cascade_Delete_TransitionTbl5;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 14: UPDATE CASCADE/SET NULL/SET DEFAULT
+-- Should Pass
+Update Cascade_Update_TransitionTbl1 set id = 2 where id=1;
+GO
+-- Should Pass
+Update Cascade_Update_TransitionTbl3 set id = 2 where id=1;
+GO
+-- Should Pass
+Update Cascade_Update_TransitionTbl5 set id = 2 where id=1;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Case 15: Delete Cascade with search path changing
+DELETE FROM Del_Cascade_parent WHERE a = 1
+GO
+USE tempdb
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 2
+GO
+USE master
+GO
+DELETE FROM master.dbo.Del_Cascade_parent WHERE a = 3
+GO

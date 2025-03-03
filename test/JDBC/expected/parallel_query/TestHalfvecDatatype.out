@@ -966,7 +966,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -985,7 +985,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -1007,7 +1007,7 @@ text
 Query Text: SELECT COUNT(*) FROM halfvec_table
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -1028,7 +1028,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -1091,7 +1091,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <#> '[3,3,3]'::halfvec)
@@ -1110,7 +1110,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -1175,7 +1175,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::halfvec)
@@ -1194,7 +1194,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -1214,7 +1214,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -1280,7 +1280,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <+> '[3,3,3]'::halfvec)
@@ -1299,7 +1299,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <+> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -1365,7 +1365,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -1384,7 +1384,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -1406,7 +1406,7 @@ text
 Query Text: SELECT COUNT(*) FROM halfvec_table
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -1427,7 +1427,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -1495,11 +1495,11 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=5 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Sort (actual rows=5 loops=1)
         Sort Key: ((val <#> '[3,3,3]'::halfvec))
-        Sort Method: quicksort  Memory: 25kB
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
 ~~END~~
 
@@ -1516,12 +1516,12 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Sort (actual rows=5 loops=1)
               Sort Key: ((halfvec_table.val <#> (InitPlan 1).col1))
-              Sort Method: quicksort  Memory: 25kB
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
               InitPlan 1
                 ->  Result (actual rows=1 loops=1)
               ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -1583,7 +1583,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::halfvec)
@@ -1602,7 +1602,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -1622,7 +1622,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -2786,7 +2786,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -2805,7 +2805,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -2827,7 +2827,7 @@ text
 Query Text: SELECT COUNT(*) FROM halfvec_table
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -2848,7 +2848,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -2911,7 +2911,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <#> '[3,3,3]'::halfvec)
@@ -2930,7 +2930,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -2995,7 +2995,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::halfvec)
@@ -3014,7 +3014,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -3034,7 +3034,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -3100,7 +3100,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <+> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <+> '[3,3,3]'::halfvec)
@@ -3119,7 +3119,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <+> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -3185,7 +3185,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=4 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -3204,7 +3204,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <-> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=4 loops=1)
@@ -3226,7 +3226,7 @@ text
 Query Text: SELECT COUNT(*) FROM halfvec_table
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -3247,7 +3247,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <-> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=0 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=0 loops=1)
         Order By: (val <-> '[3,3,3]'::halfvec)
@@ -3315,11 +3315,11 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <#> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=5 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Sort (actual rows=5 loops=1)
         Sort Key: ((val <#> '[3,3,3]'::halfvec))
-        Sort Method: quicksort  Memory: 25kB
+        Worker 0:  Sort Method: quicksort  Memory: 25kB
         ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
 ~~END~~
 
@@ -3336,12 +3336,12 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <#> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Sort (actual rows=5 loops=1)
               Sort Key: ((halfvec_table.val <#> (InitPlan 1).col1))
-              Sort Method: quicksort  Memory: 25kB
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
               InitPlan 1
                 ->  Result (actual rows=1 loops=1)
               ->  Seq Scan on halfvec_table (actual rows=5 loops=1)
@@ -3403,7 +3403,7 @@ text
 Query Text: SELECT * FROM halfvec_table ORDER BY val <=> CAST('[3,3,3]' AS halfvec) NULLS LAST
 Gather (actual rows=3 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
         Order By: (val <=> '[3,3,3]'::halfvec)
@@ -3422,7 +3422,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> CAST('[0,0,0]' AS halfvec) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)
@@ -3442,7 +3442,7 @@ text
 Query Text: SELECT COUNT(*) FROM (SELECT * FROM halfvec_table ORDER BY val <=> (SELECT CAST(NULL as halfvec)) NULLS LAST) t2
 Gather (actual rows=1 loops=1)
   Workers Planned: 1
-  Workers Launched: 0
+  Workers Launched: 1
   Single Copy: true
   ->  Aggregate (actual rows=1 loops=1)
         ->  Index Scan using idxhalfvec_table7f9bec28bc8902d45d905788d7aa59a1 on halfvec_table (actual rows=3 loops=1)

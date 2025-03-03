@@ -1,0 +1,23 @@
+SELECT * FROM loginproperty_vu_prepare_view
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+EXEC loginproperty_vu_prepare_proc
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT * FROM loginproperty_vu_prepare_func()
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
