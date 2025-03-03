@@ -3385,6 +3385,7 @@ SELECT
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext 
   ON Base.rolname COLLATE sys.database_default = Ext.rolname COLLATE sys.database_default 
+  AND Ext.type != 'U' COLLATE sys.database_default 
 LEFT JOIN pg_authid Auth 
   ON Auth.rolname = Base.rolname COLLATE sys.database_default 
   AND Ext.type != 'U' COLLATE sys.database_default 

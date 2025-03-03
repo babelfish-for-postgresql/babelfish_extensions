@@ -10,6 +10,18 @@ sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login1 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login2 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login3 WITH PASSWORD = '123';
+GO
+
 -- tsql user=sys_server_permissions_vu_login1 password=123
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO

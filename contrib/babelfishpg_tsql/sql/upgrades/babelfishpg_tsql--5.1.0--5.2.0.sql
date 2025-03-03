@@ -450,11 +450,6 @@ BEGIN
 END;
 $$;
 
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
 RETURNS sys.nvarchar(128) 
 AS $$ 
@@ -559,6 +554,7 @@ SELECT
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext 
   ON Base.rolname COLLATE sys.database_default = Ext.rolname COLLATE sys.database_default 
+  AND Ext.type != 'U' COLLATE sys.database_default 
 LEFT JOIN pg_authid Auth 
   ON Auth.rolname = Base.rolname COLLATE sys.database_default 
   AND Ext.type != 'U' COLLATE sys.database_default 
@@ -572,3 +568,7 @@ WHERE (pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type IN ('S', 'U');
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
