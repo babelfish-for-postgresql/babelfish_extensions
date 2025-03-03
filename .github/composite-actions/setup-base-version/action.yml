@@ -228,7 +228,7 @@ runs:
       if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.11
 
     - name: Configure Python Environment
       id: configure-python-environment

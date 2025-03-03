@@ -11,7 +11,7 @@ jobs:
         id: install-python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.11
       - name: Run tests
         id: run-test 
         if: always() && steps.install-python.outcome == 'success'
