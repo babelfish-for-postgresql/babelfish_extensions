@@ -4,9 +4,6 @@
 
 #pragma GCC diagnostic ignored "-Wattributes"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
-
 #include "antlr4-runtime.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
