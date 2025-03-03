@@ -6,11 +6,8 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
-extern "C" {
-#include "antlr4-runtime.h" // antlr4-cpp-runtime
-}
-#pragma GCC diagnostic pop
 
+#include "antlr4-runtime.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeWalker.h" // antlr4-cpp-runtime
 #include "tree/ParseTreeProperty.h" // antlr4-cpp-runtime
 
