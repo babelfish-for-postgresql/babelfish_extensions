@@ -45,12 +45,12 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11
+          python-version: 3.10
       
       - name: Configure Python environment
         run: |
           cd ~
-          curl https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
           pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime==4.13.2

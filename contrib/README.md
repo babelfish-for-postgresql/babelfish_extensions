@@ -16,7 +16,7 @@ This package includes 5 extensions:
 
 # How do I build the extensions?
 
-The following build instructions comply with Ubuntu 24.04 and Amazon Linux 2 environment.
+The following build instructions comply with Ubuntu 22.04 and Amazon Linux 2 environment.
 
 ## Build the Postgres engine
 
