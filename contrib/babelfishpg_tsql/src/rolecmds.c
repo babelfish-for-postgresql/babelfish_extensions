@@ -893,7 +893,6 @@ user_id(PG_FUNCTION_ARGS)
 	}
 	if (strcmp(user_input, "public") == 0)
 	{
-		pfree(user_name);
 		PG_RETURN_OID(1);
 	}
         user_name = get_physical_user_name(db_name, user_input, false, true);
