@@ -6239,16 +6239,20 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
                                                  db_rel->rd_att, &is_null);
         char *db_name = TextDatumGetCString(db_name_datum);
         char *guest_schema = get_guest_schema_name(db_name);
-
+		char *physical_schema;
+		MigrationMode baseline_mode = is_user_database_singledb(db_name) ? SINGLE_DB : MULTI_DB;
+		char *guest_role;
 
         if (guest_schema != NULL)
         {
-            char *guest_role = get_guest_role_name(db_name);
-            StringInfoData query;
+			StringInfoData query;
+			
+			physical_schema = get_physical_schema_name_by_mode(db_name, guest_schema, baseline_mode);
+            guest_role = get_guest_role_name(db_name);
             initStringInfo(&query);
 
             // Revoke CREATE from guest on the guest schema
-            appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s;", guest_schema, guest_role);
+            appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s;", physical_schema, guest_role);
 
             // Execute the query
             exec_utility_cmd_helper(query.data);
@@ -6256,6 +6260,7 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
             pfree(query.data);
             pfree(guest_role);
             pfree(guest_schema);
+			pfree(physical_schema);
         }
 
         pfree(db_name);
