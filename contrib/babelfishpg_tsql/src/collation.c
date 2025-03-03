@@ -1485,7 +1485,7 @@ icu_compare_utf8_coll(UCollator  *coll, UChar *uchar1, int32_t ulen1,
 
 	if (is_cs_ai_range_cmp)
 	{
-		collator = ucol_safeClone(coll, NULL, NULL, &status);
+		collator = ucol_clone(coll, &status);
 
 		if (U_FAILURE(status))
 			ereport(ERROR,

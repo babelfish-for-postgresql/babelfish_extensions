@@ -3,7 +3,7 @@ on: [workflow_call]
 
 jobs:
   run-babelfish-python-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
