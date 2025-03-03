@@ -4,7 +4,6 @@ runs:
   steps:
     - name: Install Dependencies
       run: |
-        $GITHUB_WORKSPACE/.github/scripts/choose_install_mirror
         sudo apt clean && sudo apt-get update --fix-missing -y
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
         curl https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
