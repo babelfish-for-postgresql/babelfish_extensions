@@ -880,14 +880,13 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-        user_name = get_physical_user_name(db_name, user_input, false, true);
-
-        if (!user_name)
-            PG_RETURN_NULL();
+	if (!user_input)
+		PG_RETURN_NULL();
 
 	i = strlen(user_input);
 	while (i > 0 && isspace((unsigned char) user_input[i - 1]))
-	user_input[--i] = '\0';
+		user_input[--i] = '\0';
+
 	for (i = 0; user_input[i]; i++)
 	{
 		user_input[i] = tolower(user_input[i]);
@@ -897,6 +896,11 @@ user_id(PG_FUNCTION_ARGS)
 		pfree(user_name);
 		PG_RETURN_OID(1);
 	}
+        user_name = get_physical_user_name(db_name, user_input, false, true);
+
+        if (!user_name)
+            PG_RETURN_NULL();
+
 	len = strlen(user_name);
 	while (len > 0 && isspace(user_name[len-1]))
 	user_name[--len] = '\0';
