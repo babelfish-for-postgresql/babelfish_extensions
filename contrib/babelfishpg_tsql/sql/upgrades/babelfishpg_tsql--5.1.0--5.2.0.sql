@@ -541,8 +541,6 @@ SELECT
   CAST(CASE WHEN Ext.type = 'R' COLLATE sys.database_default THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
   CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
   CAST(CASE WHEN Ext.type = 'R' COLLATE sys.database_default THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
-  CAST(CASE WHEN Ext.type = 'R' COLLATE sys.database_default THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
-  CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role,
   CAST(
     CASE 
       WHEN Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default THEN 1 
