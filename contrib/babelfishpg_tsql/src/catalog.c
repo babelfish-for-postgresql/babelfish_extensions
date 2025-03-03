@@ -6156,6 +6156,65 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_guest_schema);
+Datum
+alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
+{
+    Relation    db_rel;
+    TableScanDesc scan;
+    HeapTuple    tuple;
+    bool        is_null;
+    Oid         save_userid;
+    int         save_sec_context;
+
+
+    GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+    db_rel = table_open(sysdatabases_oid, AccessShareLock);
+    scan = table_beginscan_catalog(db_rel, 0, NULL);
+    tuple = heap_getnext(scan, ForwardScanDirection);
+
+    while (HeapTupleIsValid(tuple))
+    {
+        Datum        db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+                                                 db_rel->rd_att, &is_null);
+        char *dbname = TextDatumGetCString(db_name_datum);
+
+        char *dbo_role = get_dbo_role_name(dbname);
+        char *guest_role = get_guest_role_name(dbname);
+        char *guest_schema = get_guest_schema_name(dbname);
+
+        if (guest_schema != NULL)
+        {
+            StringInfoData query;
+            initStringInfo(&query);
+            
+            /* Revoke CREATE from guest on guest schema */
+            appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", guest_schema, guest_role);
+
+            /* Execute the query */
+            exec_utility_cmd_helper(query.data);
+
+            pfree(query.data);
+        }
+
+        pfree(dbname);
+        pfree(dbo_role);
+        pfree(guest_role);
+        if (guest_schema)
+            pfree(guest_schema);
+
+        tuple = heap_getnext(scan, ForwardScanDirection);
+    }
+
+    table_endscan(scan);
+    table_close(db_rel, AccessShareLock);
+
+    SetUserIdAndSecContext(save_userid, save_sec_context);
+
+    PG_RETURN_INT32(0);
+}
+
 /*
  * get_proc_namespace_oid:
  * Find namespace oid of a procedure based on proc name.

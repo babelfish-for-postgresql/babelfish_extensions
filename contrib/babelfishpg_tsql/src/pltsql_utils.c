@@ -2590,6 +2590,7 @@ exec_database_roles_subcmds(const char *schema)
 
 	if (is_guest_schema)
 	{
+		/* TODO Revert "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO dummy;" this change in BABEL-5361 */
 		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO dummy; ");
 		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
 		expected_stmts += 2;  // Increase expected statements
@@ -2618,6 +2619,7 @@ exec_database_roles_subcmds(const char *schema)
 
 	if (is_guest_schema)
 	{
+		/* TODO Revert "update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);" this change in BABEL-5361 */
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);

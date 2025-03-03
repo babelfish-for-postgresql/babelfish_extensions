@@ -67,6 +67,10 @@ GO
 
 CREATE TABLE babel_2571_table2(a int, b int)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema babel_2571_db1_guest)~~
+
 
 -- Dropping guest schema should not be allowed regardless of the user
 SELECT user_name()
@@ -95,9 +99,9 @@ GO
 -- This should not
 SELECT * FROM guest.babel_2571_table2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel_2571_table2" does not exist)~~
 
 
 USE master
@@ -176,6 +180,10 @@ GO
 
 CREATE TABLE babel_2571_table2(a int, b int)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema babel_2571_db1_guest)~~
+
 
 -- Dropping guest schema should not be allowed regardless of the user
 SELECT user_name()
@@ -204,9 +212,9 @@ GO
 -- This should not
 SELECT * FROM guest.babel_2571_table2
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "guest.babel_2571_table2" does not exist)~~
 
 
 -- tsql

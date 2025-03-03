@@ -421,6 +421,8 @@ BEGIN
 END;
 $$;
 
+
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
