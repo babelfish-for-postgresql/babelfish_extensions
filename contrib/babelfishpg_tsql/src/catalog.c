@@ -6089,7 +6089,6 @@ alter_default_privilege_for_db(char *dbname)
 		const char	*dbo_user;
 		const char	*db_owner;
 		int			i;
-		const char	*guest_role;
 
 		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
 		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
@@ -6099,7 +6098,6 @@ alter_default_privilege_for_db(char *dbname)
 		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
 		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
 		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
-		guest_role = get_guest_role_name(dbname);
 
 		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
 		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
@@ -6118,12 +6116,6 @@ alter_default_privilege_for_db(char *dbname)
 					pfree(alter_query);
 					pfree(grant_query);
 				}
-			}
-			if ((strcmp(schema_owner, guest_role) == 0))
-			{
-				char	*create_query = NULL;
-				create_query = psprintf("REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
-				exec_utility_cmd_helper(create_query);
 			}
 		}
 		pfree(physical_schema);
@@ -6228,42 +6220,51 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 // 	table_close(bbf_schema_rel, AccessShareLock);
 // }
 
-// PG_FUNCTION_INFO_V1(alter_default_privilege_on_guest_schema);
-// Datum
-// alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
-// {
-//     Relation    db_rel;
-//     TableScanDesc scan;
-//     HeapTuple    tuple;
-//     bool        is_null;
-//     Oid         save_userid;
-//     int         save_sec_context;
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_guest_schema);
+Datum
+alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
+{
+    Relation    db_rel;
+    TableScanDesc scan;
+    HeapTuple    tuple;
+    bool        is_null;
+
+    db_rel = table_open(sysdatabases_oid, AccessShareLock);
+    scan = table_beginscan_catalog(db_rel, 0, NULL);
+    tuple = heap_getnext(scan, ForwardScanDirection);
+
+    while (HeapTupleIsValid(tuple))
+    {
+        Datum        db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+                                                 db_rel->rd_att, &is_null);
+        char *db_name = TextDatumGetCString(db_name_datum);
+        char *guest_schema = get_guest_schema_name(db_name);
 
 
-//     GetUserIdAndSecContext(&save_userid, &save_sec_context);
+        if (guest_schema != NULL)
+        {
+            char *guest_role = get_guest_role_name(db_name);
+            StringInfoData query;
+            initStringInfo(&query);
 
-//     db_rel = table_open(sysdatabases_oid, AccessShareLock);
-//     scan = table_beginscan_catalog(db_rel, 0, NULL);
-//     tuple = heap_getnext(scan, ForwardScanDirection);
+            // Revoke CREATE from guest on the guest schema
+            appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s;", guest_schema, guest_role);
 
-// 	while (HeapTupleIsValid(tuple))
-// 	{
-// 		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
-// 												 db_rel->rd_att, &is_null);
-// 		char *db_name = TextDatumGetCString(db_name_datum);
+            // Execute the query
+            exec_utility_cmd_helper(query.data);
 
-// 		alter_default_privilege_for_guest_db(db_name);
-// 		pfree(db_name);
-// 		tuple = heap_getnext(scan, ForwardScanDirection);
-// 	}
+            pfree(query.data);
+            pfree(guest_role);
+            pfree(guest_schema);
+        }
 
-//     table_endscan(scan);
-//     table_close(db_rel, AccessShareLock);
-
-//     SetUserIdAndSecContext(save_userid, save_sec_context);
-
-//     PG_RETURN_INT32(0);
-// }
+        pfree(db_name);
+        tuple = heap_getnext(scan, ForwardScanDirection);
+    }
+    table_endscan(scan);
+    table_close(db_rel, AccessShareLock);
+    PG_RETURN_INT32(0);
+}
 
 /*
  * get_proc_namespace_oid:
