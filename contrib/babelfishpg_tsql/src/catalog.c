@@ -6159,70 +6159,40 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 static void
 alter_default_privilege_for_guest_db(char *dbname)
 {
-	SysScanDesc scan;
-	Relation	bbf_schema_rel;
-	TupleDesc	dsc;
-	HeapTuple	tuple_bbf_schema;
-	ScanKeyData scanKey[2];
-	int16		dbid = get_db_id(dbname);
+
 	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 
-	/* Fetch the relation */
-	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									AccessShareLock);
-	dsc = RelationGetDescr(bbf_schema_rel);
-	ScanKeyInit(&scanKey[0],
-				Anum_bbf_schema_perms_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
-	ScanKeyEntryInitialize(&scanKey[1], 0,
-				Anum_bbf_schema_perms_object_type,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_database_or_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(OBJ_SCHEMA));
 
-	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
-							true, NULL, 2, scanKey);
-	tuple_bbf_schema = systable_getnext(scan);
-
-	while (HeapTupleIsValid(tuple_bbf_schema))
-	{
-		bool		isnull;
-		const char	*schema_name;
-		char		*schema_owner;
-		char		*physical_schema;
-		const char	*guest_role;
-		Oid save_userid;
-		int save_sec_context;
-		
-		GetUserIdAndSecContext(&save_userid, &save_sec_context);
-		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
-		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
-		guest_role = get_guest_role_name(dbname);
-		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
-
-		if ((strcmp(schema_owner, guest_role) == 0))
-		{
-			StringInfoData query;
-			initStringInfo(&query);
-
-			/* Revoke CREATE from guest on the specified schema */
-			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
-
-			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-			/* Execute the query */
-			exec_utility_cmd_helper(query.data);
-		}
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-		pfree(physical_schema);
-		pfree(schema_owner);
-		tuple_bbf_schema = systable_getnext(scan);
-	}
+	// bool		isnull;
+	// const char	*schema_name;
+	// char		*schema_owner;
+	char		*physical_schema;
+	const char	*guest_role;
+	StringInfoData query;
+	// Oid save_userid;
+	// int save_sec_context;
 	
-	systable_endscan(scan);
-	table_close(bbf_schema_rel, AccessShareLock);
+	// GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	// guest_schema = get_guest_schema_name(dbname);
+	physical_schema = get_physical_schema_name_by_mode(dbname, "guest", baseline_mode);
+	guest_role = get_guest_role_name(dbname);
+	elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
+	// schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
+	
+	initStringInfo(&query);
+	/* Revoke CREATE from guest on the specified schema */
+	appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
+	// SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+	elog(DEBUG1, "query appended");
+	/* Execute the query */
+	exec_utility_cmd_helper(query.data);
+	elog(DEBUG1, "exec_utility_cmd_helper done");
+
+	// SetUserIdAndSecContext(save_userid, save_sec_context);
+	pfree(physical_schema);
+	// pfree(schema_owner);
+	// tuple_bbf_schema = systable_getnext(scan);
+
 }
 
 PG_FUNCTION_INFO_V1(alter_default_privilege_on_guest_schema);
