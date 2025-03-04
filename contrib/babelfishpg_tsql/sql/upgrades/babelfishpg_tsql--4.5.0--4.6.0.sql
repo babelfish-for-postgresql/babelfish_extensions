@@ -421,8 +421,8 @@ BEGIN
 END;
 $$;
 
-This is a temporary procedure which is called during upgrade to alter
-default privileges on guest the schemas where the schema owner is guest
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on guest the schemas where the schema owner is guest
 CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_guest_on_schema()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'alter_default_privilege_on_guest_schema';

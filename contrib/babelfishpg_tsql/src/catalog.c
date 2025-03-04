@@ -6194,7 +6194,10 @@ alter_default_privilege_for_guest_db(char *dbname)
 		char		*schema_owner;
 		char		*physical_schema;
 		const char	*guest_role;
-
+		Oid save_userid;
+		int save_sec_context;
+		
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
 		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
 		guest_role = get_guest_role_name(dbname);
@@ -6208,9 +6211,11 @@ alter_default_privilege_for_guest_db(char *dbname)
 			/* Revoke CREATE from guest on the specified schema */
 			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
 
+			SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 			/* Execute the query */
 			exec_utility_cmd_helper(query.data);
 		}
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 		pfree(physical_schema);
 		pfree(schema_owner);
 		tuple_bbf_schema = systable_getnext(scan);
