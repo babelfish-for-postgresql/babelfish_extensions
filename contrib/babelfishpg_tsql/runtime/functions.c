@@ -2370,29 +2370,12 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			HeapTuple	class_tuple;
-			Oid			relid = InvalidOid;
+			/* search in pg_class by name and schema oid */
+			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-			/* Perform a single lookup in pg_class by name and schema oid */
-			class_tuple = SearchSysCache2(RELNAMENSP, CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
-
-			if (HeapTupleIsValid(class_tuple))
+			if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				Form_pg_class classform = (Form_pg_class) GETSTRUCT(class_tuple);
-
-				/* Check if the relation is not an index */
-				if (classform->relkind != RELKIND_INDEX)
-				{
-					relid = classform->oid;
-
-					/* Perform ACL check */
-					if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
-					{
-						result = relid;
-					}
-				}
-
-				ReleaseSysCache(class_tuple);
+				result = relid;
 			}
 
 			if (!OidIsValid(result))	/* search only if not found earlier */
