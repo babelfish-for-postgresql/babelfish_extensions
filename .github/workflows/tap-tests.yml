@@ -110,6 +110,7 @@ jobs:
         with:
           install_dir: ${{env.OLD_INSTALL_DIR}}
           extension_branch: ${{env.EXTENSION_BRANCH_OLD}}
+          engine_version: 14.9
 
       - uses: actions/checkout@v2
 

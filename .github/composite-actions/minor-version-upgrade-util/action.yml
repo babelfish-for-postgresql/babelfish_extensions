@@ -20,6 +20,10 @@ inputs:
     description: "ANTLR version to use (based on Extension Branch)"
     required: false
     default: 4.13.2
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -47,6 +51,7 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Save cache
       if: always() && steps.build-extensions-newer == 'success'
