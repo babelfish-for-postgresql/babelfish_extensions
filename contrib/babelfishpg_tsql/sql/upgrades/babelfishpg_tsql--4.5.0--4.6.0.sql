@@ -575,6 +575,40 @@ WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = C
 
 GRANT SELECT ON sys.user_token TO PUBLIC;
 
+-- login_token
+CREATE OR REPLACE VIEW sys.login_token
+AS SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+ELSE 'SQL LOGIN' END AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.orig_loginname = sys.suser_name()
+AND Ext.type in ('S','U')
+UNION ALL
+SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
+CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.type = 'R'
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid)
+UNION ALL
+SELECT
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
+
+
+GRANT SELECT ON sys.login_token TO PUBLIC;
+
 
 
 -- After upgrade, always run analyze for all babelfish catalogs.

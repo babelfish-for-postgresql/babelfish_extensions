@@ -7,6 +7,8 @@ GO
 
 -- Log in as user 'test' and run queries
 -- tsql user=test password=12345678
+select name, principal_id, sid, type,usage from sys.login_token where name = 'public'
+go
 SELECT name, user_id(name) FROM sys.user_token WHERE name = 'public';
 GO
 SELECT sid FROM sys.user_token WHERE name = 'public';

@@ -7,6 +7,13 @@ GO
 
 -- tsql user=test password=12345678
 -- Log in as user 'test' and run queries
+select name, principal_id, sid, type,usage from sys.login_token where name = 'public'
+go
+~~START~~
+nvarchar#!#int#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#SERVER ROLE#!#GRANT OR DENY
+~~END~~
+
 SELECT name, user_id(name) FROM sys.user_token WHERE name = 'public';
 GO
 ~~START~~
