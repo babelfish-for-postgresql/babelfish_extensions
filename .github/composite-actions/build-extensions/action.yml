@@ -42,7 +42,7 @@ runs:
         make -j 4 && make install
         cd ../babelfishpg_tsql
 
-        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -ge 17.5 ]]
+        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -lt 17.5 ]]
         then
           export PG_CFLAGS='-fcommon -Wno-misleading-indentation'
         fi
