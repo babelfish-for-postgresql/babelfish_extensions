@@ -6183,11 +6183,8 @@ get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
 	SysScanDesc authid_scan;
 	HeapTuple tuple_bbf_authid;
 
-	if (!OidIsValid(bbf_authid_user_ext_oid))
-		bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-													get_namespace_oid("sys", false));
 
-	bbf_authid_rel = table_open(bbf_authid_user_ext_oid, AccessShareLock);
+	bbf_authid_rel = table_open(get_authid_user_ext_oid(), AccessShareLock);
 	authid_dsc = RelationGetDescr(bbf_authid_rel);
 
 	ScanKeyInit(&authid_scanKey[0],
@@ -6200,11 +6197,7 @@ get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum("guest"));
 
-	if (!OidIsValid(bbf_authid_user_ext_idx_oid))
-		bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME,
-														get_namespace_oid("sys", false));
-
-	authid_scan = systable_beginscan(bbf_authid_rel, bbf_authid_user_ext_idx_oid,
+	authid_scan = systable_beginscan(bbf_authid_rel, get_authid_user_ext_idx_oid(),
 									true, NULL, 2, authid_scanKey);
 
 	tuple_bbf_authid = systable_getnext(authid_scan);
@@ -6321,7 +6314,9 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
 			db_rel->rd_att, &is_null);
 		Oid db_id = DatumGetInt16(dbid_datum);
 
-		alter_default_privilege_for_guest_db(db_name, db_id);
+		if(strlen(db_name) < 64)
+			alter_default_privilege_for_guest_db(db_name, db_id);
+
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
