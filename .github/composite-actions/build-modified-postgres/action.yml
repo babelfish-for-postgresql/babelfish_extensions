@@ -41,10 +41,15 @@ runs:
           REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
         fi
 
-        if [[ ${{inputs.engine_version}} != "source.latest" && ${{inputs.engine_version}} != "target.latest" && ${{inputs.engine_version}} -lt 14.18 ]]; then
+        engine_version="${{ inputs.engine_version }}"
+        if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" && $(echo "$engine_version < 14.18" | bc -l) -eq 1 ]]; then
           export CC=gcc-9
+        else
+          export CC=gcc
         fi
 
+        echo "CC version: "
+        $CC -v
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
         git rev-parse HEAD
