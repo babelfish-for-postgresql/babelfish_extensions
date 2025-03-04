@@ -680,6 +680,24 @@ get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missin
 	return dbid;
 }
 
+Oid
+get_bbf_namespace_ext_oid()
+{
+	if (!OidIsValid(namespace_ext_oid))
+		namespace_ext_oid = get_relname_relid(NAMESPACE_EXT_TABLE_NAME,
+											get_namespace_oid("sys", false));
+	return namespace_ext_oid;
+}
+
+Oid
+get_bbf_namespace_ext_idx_oid()
+{
+	if (!OidIsValid(namespace_ext_idx_oid_oid))
+	namespace_ext_idx_oid_oid = get_relname_relid(NAMESAPCE_EXT_PK_NAME,
+													get_namespace_oid("sys", false));
+	return namespace_ext_idx_oid_oid;
+}
+
 /*****************************************
  *			LOGIN EXT
  *****************************************/
@@ -6157,45 +6175,120 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 }
 
 static void
-alter_default_privilege_for_guest_db(char *dbname)
+get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
 {
+	Relation bbf_authid_rel;
+	TupleDesc authid_dsc;
+	ScanKeyData authid_scanKey[2];
+	SysScanDesc authid_scan;
+	HeapTuple tuple_bbf_authid;
 
-	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+	if (!OidIsValid(bbf_authid_user_ext_oid))
+		bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+													get_namespace_oid("sys", false));
 
+	bbf_authid_rel = table_open(bbf_authid_user_ext_oid, AccessShareLock);
+	authid_dsc = RelationGetDescr(bbf_authid_rel);
 
+	ScanKeyInit(&authid_scanKey[0],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(dbname));
+
+	ScanKeyInit(&authid_scanKey[1],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("guest"));
+
+	if (!OidIsValid(bbf_authid_user_ext_idx_oid))
+		bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME,
+														get_namespace_oid("sys", false));
+
+	authid_scan = systable_beginscan(bbf_authid_rel, bbf_authid_user_ext_idx_oid,
+									true, NULL, 2, authid_scanKey);
+
+	tuple_bbf_authid = systable_getnext(authid_scan);
+
+	if (HeapTupleIsValid(tuple_bbf_authid))
+	{
+		bool isnull;
+		Datum rolname_datum = heap_getattr(tuple_bbf_authid, 
+										Anum_bbf_authid_user_ext_rolname,
+										authid_dsc, &isnull);
+		*guest_role = TextDatumGetCString(rolname_datum);
+	}
+
+	systable_endscan(authid_scan);
+	table_close(bbf_authid_rel, AccessShareLock);
+}
+
+static void
+get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
+{
+	Relation bbf_namespace_rel;
+	TupleDesc dsc;
+	ScanKeyData scanKey[2];
+	SysScanDesc scan;
+	HeapTuple tuple_bbf_namespace;
+	
+	bbf_namespace_rel = table_open(get_bbf_namespace_ext_oid(), AccessShareLock);
+	dsc = RelationGetDescr(bbf_namespace_rel);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_namespace_ext_dbid,  // This is now 2
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	
+	ScanKeyInit(&scanKey[1],
+				Anum_namespace_ext_orig_name,  // This is now 3
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("guest"));
+	
+	scan = systable_beginscan(bbf_namespace_rel, get_bbf_namespace_ext_idx_oid(),
+							  true, NULL, 2, scanKey);
+	
+	tuple_bbf_namespace = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple_bbf_namespace))
+	{
+	bool isnull;
+	Datum nspname_datum = heap_getattr(tuple_bbf_namespace, 
+										Anum_namespace_ext_namespace,  // This is now 1
+										dsc, &isnull);
+	*physical_schema = TextDatumGetCString(nspname_datum);
+	}
+	systable_endscan(scan);
+	table_close(bbf_namespace_rel, AccessShareLock);
+}
+static void
+alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
+{
+	// MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
 	// bool		isnull;
 	// const char	*schema_name;
 	// char		*schema_owner;
 	char		*physical_schema;
-	const char	*guest_role;
+	char	*guest_role;
 	StringInfoData query;
 	Oid save_userid;
 	int save_sec_context;
 	
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	// guest_schema = get_guest_schema_name(dbname);
-	physical_schema = get_physical_schema_name_by_mode(dbname, "guest", baseline_mode);
-	guest_role = get_guest_role_name(dbname);
+	get_physical_schema_for_guest(dbname, dbid, &physical_schema);
+	get_physical_rolname_for_guest(dbname, dbid, &guest_role);
 	elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
 	// schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
-	PG_TRY();
-	{
-		SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		initStringInfo(&query);
-		/* Revoke CREATE from guest on the specified schema */
-		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
-		// SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		elog(DEBUG1, "query appended");
-		/* Execute the query */
-		exec_utility_cmd_helper(query.data);
-		elog(DEBUG1, "exec_utility_cmd_helper done");
-	}
-	PG_FINALLY();
-	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-	}
-	PG_END_TRY();
-	// SetUserIdAndSecContext(save_userid, save_sec_context);
+
+	initStringInfo(&query);
+
+	/* Revoke CREATE from guest on the specified schema */
+	appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
+
+	/* Execute the query */
+	exec_utility_cmd_helper(query.data);
+
+
 	pfree(physical_schema);
 	// pfree(schema_owner);
 	// tuple_bbf_schema = systable_getnext(scan);
@@ -6221,7 +6314,11 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
 												 db_rel->rd_att, &is_null);
 		char *db_name = TextDatumGetCString(db_name_datum);
 
-		alter_default_privilege_for_guest_db(db_name);
+		Datum dbid_datum = heap_getattr(tuple, Anum_sysdatabases_oid,
+			db_rel->rd_att, &is_null);
+		Oid db_id = DatumGetInt16(dbid_datum);
+
+		alter_default_privilege_for_guest_db(db_name, db_id);
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
