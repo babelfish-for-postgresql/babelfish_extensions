@@ -40,6 +40,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Compile ANTLR
       id: compile-antlr
@@ -54,7 +55,6 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
-        engine_version: ${{ inputs.engine_version }}
 
     - name: Build tds_fdw Extension
       run: |

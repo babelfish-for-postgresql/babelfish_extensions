@@ -8,10 +8,6 @@ inputs:
     description: 'Extension Branch name which needs to checkout first'
     required: no
     default: 'not_specified'
-  engine_version:
-    description: 'Engine version'
-    required: no
-    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -41,12 +37,6 @@ runs:
         cd ../babelfishpg_tds
         make -j 4 && make install
         cd ../babelfishpg_tsql
-
-        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -lt 15.13 ]]
-        then
-          export PG_CFLAGS='-fcommon -Wno-misleading-indentation'
-        fi
-
         PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB -DENABLE_SPATIAL_TYPES' SHLIB_LINK='-lsybdb -L/usr/lib64' make
         PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB -DENABLE_SPATIAL_TYPES' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
       shell: bash
