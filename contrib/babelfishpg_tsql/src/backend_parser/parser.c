@@ -29,6 +29,8 @@
 #include "src/pltsql.h"
 #include "tcop/tcopprot.h"
 
+int			pgtsql_base_yydebug;
+
 List	   *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 
 /*
