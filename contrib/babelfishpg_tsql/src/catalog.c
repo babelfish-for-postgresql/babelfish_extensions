@@ -6267,8 +6267,8 @@ alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
 	// bool		isnull;
 	// const char	*schema_name;
 	// char		*schema_owner;
-	char		*physical_schema;
-	char	*guest_role;
+	char		*physical_schema = NULL;
+	char	*guest_role = NULL;
 	StringInfoData query;
 	Oid save_userid;
 	int save_sec_context;
@@ -6280,16 +6280,19 @@ alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
 	elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
 	// schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
 
-	initStringInfo(&query);
+	if(physical_schema != NULL && guest_role != NULL)
+	{
+		initStringInfo(&query);
 
-	/* Revoke CREATE from guest on the specified schema */
-	appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
-
-	/* Execute the query */
-	exec_utility_cmd_helper(query.data);
-
-
-	pfree(physical_schema);
+		/* Revoke CREATE from guest on the specified schema */
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
+	
+		/* Execute the query */
+		exec_utility_cmd_helper(query.data);
+	
+	
+		pfree(physical_schema);
+	}
 	// pfree(schema_owner);
 	// tuple_bbf_schema = systable_getnext(scan);
 
