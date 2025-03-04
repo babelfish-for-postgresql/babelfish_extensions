@@ -20,6 +20,10 @@ inputs:
     description: "Whether it is version upgrade or dump/restore"
     required: false
     default: 'false'
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -50,6 +54,7 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Build tds_fdw Extension
       run: |
@@ -221,7 +226,7 @@ runs:
       if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 'v3.10'
 
     - name: Configure Python Environment
       id: configure-python-environment
