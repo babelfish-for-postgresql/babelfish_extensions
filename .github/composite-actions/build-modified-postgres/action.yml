@@ -41,8 +41,7 @@ runs:
           REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
         fi
 
-        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -lt 14.18 ]]
-        then
+        if [[ ${{inputs.engine_version}} != "source.latest" && ${{inputs.engine_version}} != "target.latest" && ${{inputs.engine_version}} -lt 14.18 ]]; then
           export CC=gcc-9
         fi
 
