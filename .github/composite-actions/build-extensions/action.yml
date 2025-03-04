@@ -43,5 +43,5 @@ runs:
           export PG_CFLAGS='-fcommon -Wno-misleading-indentation'
         fi
 
-        make && make install
+        make clean && make && make install
       shell: bash
