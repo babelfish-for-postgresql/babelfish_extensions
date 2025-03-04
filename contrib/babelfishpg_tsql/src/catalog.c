@@ -6169,25 +6169,32 @@ alter_default_privilege_for_guest_db(char *dbname)
 	char		*physical_schema;
 	const char	*guest_role;
 	StringInfoData query;
-	// Oid save_userid;
-	// int save_sec_context;
+	Oid save_userid;
+	int save_sec_context;
 	
-	// GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	// guest_schema = get_guest_schema_name(dbname);
 	physical_schema = get_physical_schema_name_by_mode(dbname, "guest", baseline_mode);
 	guest_role = get_guest_role_name(dbname);
 	elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
 	// schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
-	
-	initStringInfo(&query);
-	/* Revoke CREATE from guest on the specified schema */
-	appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
-	// SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-	elog(DEBUG1, "query appended");
-	/* Execute the query */
-	exec_utility_cmd_helper(query.data);
-	elog(DEBUG1, "exec_utility_cmd_helper done");
-
+	PG_TRY();
+	{
+		SetUserIdAndSecContext(get_sa_role_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		initStringInfo(&query);
+		/* Revoke CREATE from guest on the specified schema */
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
+		// SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		elog(DEBUG1, "query appended");
+		/* Execute the query */
+		exec_utility_cmd_helper(query.data);
+		elog(DEBUG1, "exec_utility_cmd_helper done");
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 	// SetUserIdAndSecContext(save_userid, save_sec_context);
 	pfree(physical_schema);
 	// pfree(schema_owner);
