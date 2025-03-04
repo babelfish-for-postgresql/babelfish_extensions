@@ -6238,7 +6238,7 @@ get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
 				CStringGetTextDatum("guest"));
 	
 	scan = systable_beginscan(bbf_namespace_rel, namespace_ext_oid,
-							  true, NULL, 2, scanKey);
+							  false, NULL, 2, scanKey);
 	
 	tuple_bbf_namespace = systable_getnext(scan);
 
@@ -6314,8 +6314,7 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
 			db_rel->rd_att, &is_null);
 		Oid db_id = DatumGetInt16(dbid_datum);
 
-		if(strlen(db_name) < 64)
-			alter_default_privilege_for_guest_db(db_name, db_id);
+		alter_default_privilege_for_guest_db(db_name, db_id);
 
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
