@@ -6190,7 +6190,7 @@ get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
 	bbf_authid_rel = table_open(bbf_authid_user_ext_oid, AccessShareLock);
 	authid_dsc = RelationGetDescr(bbf_authid_rel);
 
-	ScanKeyInit(&authid_scanKey[0], 
+	ScanKeyInit(&authid_scanKey[0],
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(dbname));
