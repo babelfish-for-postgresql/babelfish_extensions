@@ -16,6 +16,10 @@ inputs:
     description: "Server collation name which need to be set in postgresql.conf"
     required: false
     default: "default"
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -46,6 +50,7 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
+        engine_version: ${{ inputs.engine_version }}
 
     # Not used composite action install-extension here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated install-extension composite action
@@ -131,7 +136,7 @@ runs:
       if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 'v3.10'
 
     - name: Configure Python Environment
       id: configure-python-environment

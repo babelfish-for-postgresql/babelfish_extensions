@@ -16,6 +16,10 @@ inputs:
     description: "Server collation name"
     required: false
     default: "default"
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -32,6 +36,7 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
+        engine_version: ${{ inputs.engine_version }}
 
     # Not created and used composite action update-extensions here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated update-extension composite action
