@@ -8,10 +8,6 @@ inputs:
     description: 'Extension Branch name which needs to checkout first'
     required: no
     default: 'not_specified'
-  engine_version:
-    description: 'Engine version'
-    required: no
-    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -37,11 +33,5 @@ runs:
         cd ../babelfishpg_tds
         make && make install
         cd ../babelfishpg_tsql
-
-        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -lt 14.18 ]]
-        then
-          export PG_CFLAGS='-fcommon -Wno-misleading-indentation'
-        fi
-
-        make clean && make && make install
+        make && make install
       shell: bash

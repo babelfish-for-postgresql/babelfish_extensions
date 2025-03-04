@@ -12,6 +12,10 @@ inputs:
     description: 'Tap Tests Enabled'
     required: no
     default: no
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -35,6 +39,11 @@ runs:
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi
           REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+        fi
+
+        if [[ "$engine_version" != 'source.latest' && "$engine_version" != 'target.latest' && "$engine_version" -lt 14.18 ]]
+        then
+          export CC=gcc-9
         fi
 
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"

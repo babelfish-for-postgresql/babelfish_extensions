@@ -23,6 +23,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
+          engine_version: 14.3
 
       - name: Compile ANTLR
         id: compile-antlr
@@ -38,8 +39,6 @@ jobs:
         id: build-extensions-older
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
-        with:
-          engine_version: 17.4
 
       - name: Install extensions
         id: install-extensions-older
