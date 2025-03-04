@@ -28,6 +28,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Compile new ANTLR
       id: compile-new-antlr
@@ -44,7 +45,6 @@ runs:
       with:
         install_dir: ${{ inputs.pg_new_dir }}
         extension_branch: ${{ inputs.extension_branch }}
-        engine_version: ${{ inputs.engine_version }}
 
     - uses: actions/checkout@v2
 

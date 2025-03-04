@@ -20,6 +20,10 @@ inputs:
     description: 'Build in Release Mode'
     required: no
     default: no
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -81,6 +85,17 @@ runs:
 
     - name: Build and Install the Modified PostgreSQL Instance and Run Tests
       run: |
+        # Function to compare versions correctly
+        version_lt() {
+          printf "%s\n%s" "$1" "$2" | sort -V | head -n1 | grep -q "^$1$"
+        }
+        engine_version="${{ inputs.engine_version }}"
+        if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" ]] && version_lt "$engine_version" "17.5"; then
+          export CC=gcc-9
+        else
+          export CC=gcc
+        fi
+
         echo "${{env.SAVE_CCACHE}}"
         echo "${{ steps.restore-ccache.outputs.cache-matched-key }}"
         cd ..
