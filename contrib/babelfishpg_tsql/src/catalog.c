@@ -6224,7 +6224,7 @@ get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
 	SysScanDesc scan;
 	HeapTuple tuple_bbf_namespace;
 	
-	bbf_namespace_rel = table_open(get_bbf_namespace_ext_oid(), AccessShareLock);
+	bbf_namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(bbf_namespace_rel);
 	
 	ScanKeyInit(&scanKey[0],
@@ -6237,7 +6237,7 @@ get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum("guest"));
 	
-	scan = systable_beginscan(bbf_namespace_rel, get_bbf_namespace_ext_idx_oid(),
+	scan = systable_beginscan(bbf_namespace_rel, namespace_ext_oid,
 							  true, NULL, 2, scanKey);
 	
 	tuple_bbf_namespace = systable_getnext(scan);
