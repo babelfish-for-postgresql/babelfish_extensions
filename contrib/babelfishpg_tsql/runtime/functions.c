@@ -2628,13 +2628,13 @@ type_id(PG_FUNCTION_ARGS)
     if (i > SYSVARCHAR_MAX_LENGTH)
         ereport(ERROR,
                 (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-                 errmsg("input value is too long for object name")));
+                errmsg("input value is too long for object name")));
 
-	/*
+    /*
 	 * Split the input string, downcase and truncate if needed
 	 * and return the db_name, schema_name and object_name.
 	 */
-	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+    downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
 
     pfree(input);
 
