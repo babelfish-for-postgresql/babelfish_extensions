@@ -6174,205 +6174,68 @@ alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-// static void
-// get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
-// {
-// 	Relation bbf_authid_rel;
-// 	TupleDesc authid_dsc;
-// 	ScanKeyData authid_scanKey[2];
-// 	SysScanDesc authid_scan;
-// 	HeapTuple tuple_bbf_authid;
-
-
-// 	bbf_authid_rel = table_open(get_authid_user_ext_oid(), RowExclusiveLock);
-// 	authid_dsc = RelationGetDescr(bbf_authid_rel);
-
-// 	ScanKeyInit(&authid_scanKey[0],
-// 				Anum_bbf_authid_user_ext_database_name,
-// 				BTEqualStrategyNumber, F_TEXTEQ,
-// 				CStringGetTextDatum(dbname));
-
-// 	ScanKeyInit(&authid_scanKey[1],
-// 				Anum_bbf_authid_user_ext_orig_username,
-// 				BTEqualStrategyNumber, F_TEXTEQ,
-// 				CStringGetTextDatum("guest"));
-
-// 	authid_scan = systable_beginscan(bbf_authid_rel, get_authid_user_ext_idx_oid(),
-// 									false, NULL, 2, authid_scanKey);
-
-// 	tuple_bbf_authid = systable_getnext(authid_scan);
-
-// 	if (HeapTupleIsValid(tuple_bbf_authid))
-// 	{
-// 		bool isnull;
-// 		Datum rolname_datum = heap_getattr(tuple_bbf_authid, 
-// 										Anum_bbf_authid_user_ext_rolname,
-// 										authid_dsc, &isnull);
-// 		*guest_role = NameStr(*DatumGetName(rolname_datum));
-// 	}
-
-// 	systable_endscan(authid_scan);
-// 	table_close(bbf_authid_rel, RowExclusiveLock);
-// }
-
-// static void
-// get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
-// {
-// 	Relation bbf_namespace_rel;
-// 	TupleDesc dsc;
-// 	ScanKeyData scanKey[2];
-// 	TableScanDesc scan;
-// 	HeapTuple tuple_bbf_namespace;
-// 	char *temp_physical_name;
-	
-// 	bbf_namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
-// 	dsc = RelationGetDescr(bbf_namespace_rel);
-	
-// 	ScanKeyInit(&scanKey[0],
-// 		Anum_namespace_ext_orig_name,  
-// 		BTEqualStrategyNumber, F_TEXTEQ,
-// 		CStringGetTextDatum("guest"));
-
-// 	ScanKeyInit(&scanKey[1],
-// 				Anum_namespace_ext_dbid, 
-// 				BTEqualStrategyNumber, F_INT2EQ,
-// 				Int16GetDatum(dbid));
-	
-	
-// 	scan = table_beginscan_catalog(bbf_namespace_rel, 2, scanKey);
-	
-// 	tuple_bbf_namespace = heap_getnext(scan, ForwardScanDirection);
-
-// 	if (HeapTupleIsValid(tuple_bbf_namespace))
-// 	{
-// 	bool isnull;
-// 	temp_physical_name = NameStr(*DatumGetName(heap_getattr(tuple_bbf_namespace, 
-// 		Anum_namespace_ext_namespace,
-// 		dsc, &isnull)));
-
-// 	*physical_schema = NameStr(*DatumGetName(heap_getattr(tuple_bbf_namespace, 
-// 								Anum_namespace_ext_namespace,
-// 								dsc, &isnull)));
-// 	elog(DEBUG1, "physical_schema: %s", temp_physical_name);
-// 	}
-
-// 	table_endscan(scan);
-// 	table_close(bbf_namespace_rel, AccessShareLock);
-// }
-// static void
-// alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
-// {
-// 	// MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
-// 	// bool		isnull;
-// 	// const char	*schema_name;
-// 	// char		*schema_owner;
-// 	char		*physical_schema = NULL;
-// 	char	*guest_role = NULL;
-// 	StringInfoData query;
-// 	Oid save_userid;
-// 	int save_sec_context;
-	
-// 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-// 	// guest_schema = get_guest_schema_name(dbname);
-// 	get_physical_schema_for_guest(dbname, dbid, &physical_schema);
-// 	get_physical_rolname_for_guest(dbname, dbid, &guest_role);
-// 	elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
-// 	// schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
-
-// 	if(physical_schema != NULL && guest_role != NULL)
-// 	{
-// 		initStringInfo(&query);
-
-// 		/* Revoke CREATE from guest on the specified schema */
-// 		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", quote_identifier(physical_schema), quote_identifier(guest_role));
-	
-// 		/* Execute the query */
-// 		exec_utility_cmd_helper(query.data);
-	
-	
-// 		// pfree(physical_schema);
-// 	}
-// 	// pfree(schema_owner);
-// 	// tuple_bbf_schema = systable_getnext(scan);
-
-// }
-
 static void
-alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
+revoke_create_privilege_from_guest_user_db(char *dbname, Oid dbid)
 {
-    char *physical_schema = NULL;
-    const char *guest_role = NULL;
-    StringInfoData query;
-    Oid save_userid;
-    int save_sec_context;
-    int pltsql_save_nestlevel;
-    int save_nestlevel;
-    MigrationMode mode;
+	char *physical_schema = NULL;
+	const char *guest_role = NULL;
+	StringInfoData query;
+	Oid save_userid;
+	int save_sec_context;
+	int pltsql_save_nestlevel;
+	int save_nestlevel;
+	MigrationMode mode;	
 
-    GetUserIdAndSecContext(&save_userid, &save_sec_context);
-    pltsql_save_nestlevel = pltsql_new_guc_nest_level();
-    save_nestlevel = NewGUCNestLevel();
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	save_nestlevel = NewGUCNestLevel();
 
-    PG_TRY();
-    {
-        // Set the SQL dialect to TSQL first
-        set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-                          GUC_CONTEXT_CONFIG,
-                          PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_TRY();
+	{
+		// Set the SQL dialect to TSQL first
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						 GUC_CONTEXT_CONFIG,
+						 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-        // Now that the SQL dialect is set, determine the migration mode
-        mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+		// Now that the SQL dialect is set, determine the migration mode
+		mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;	
 
-        // Set the migration mode
-        // set_config_option("babelfishpg_tsql.migration_mode", 
-        //                   (mode == SINGLE_DB) ? "single-db" : "multi-db",
-        //                   GUC_CONTEXT_CONFIG,
-        //                   PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		// Get the physical schema name for the guest schema
+		physical_schema = get_physical_schema_name_by_mode(dbname, "guest", mode);
 
-        // Get the physical schema name for the guest schema
-        physical_schema = get_physical_schema_name_by_mode(dbname, "guest", mode);
+		// Get the guest role name
+		guest_role = get_guest_role_name(dbname);	
+	
+		if (physical_schema != NULL && guest_role != NULL)
+		{
+			initStringInfo(&query);
+			/* Revoke CREATE from guest on the specified schema */
+			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", 
+							 quote_identifier(physical_schema), 
+							 quote_identifier(guest_role));
+			/* Execute the query */
+			exec_utility_cmd_helper(query.data);
+			pfree(query.data);
+		}
 
-        // Get the guest role name
-        guest_role = get_guest_role_name(dbname);
+	}
+	PG_FINALLY();
+	{
+		// Revert GUC settings
+		pltsql_revert_guc(pltsql_save_nestlevel);
+		AtEOXact_GUC(false, save_nestlevel);
 
-        elog(DEBUG1, "physical_schema: %s, guest_role: %s", physical_schema, guest_role);
+		if (physical_schema)
+			pfree(physical_schema);
+	}
+	PG_END_TRY();
 
-        if (physical_schema != NULL && guest_role != NULL)
-        {
-            initStringInfo(&query);
-
-            /* Revoke CREATE from guest on the specified schema */
-            appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", 
-                             quote_identifier(physical_schema), 
-                             quote_identifier(guest_role));
-
-            /* Execute the query */
-            exec_utility_cmd_helper(query.data);
-
-            pfree(query.data);
-        }
-        else
-        {
-            elog(WARNING, "Could not find physical schema or guest role for database %s", dbname);
-        }
-    }
-    PG_FINALLY();
-    {
-        // Revert GUC settings
-        pltsql_revert_guc(pltsql_save_nestlevel);
-        AtEOXact_GUC(false, save_nestlevel);
-
-        if (physical_schema)
-            pfree(physical_schema);
-    }
-    PG_END_TRY();
-
-    SetUserIdAndSecContext(save_userid, save_sec_context);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
-PG_FUNCTION_INFO_V1(alter_default_privilege_on_guest_schema);
+PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
 Datum
-alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
+revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 {
 	Relation		db_rel;
 	TableScanDesc	scan;
@@ -6393,7 +6256,7 @@ alter_default_privilege_on_guest_schema(PG_FUNCTION_ARGS)
 			db_rel->rd_att, &is_null);
 		Oid db_id = DatumGetInt16(dbid_datum);
 
-		alter_default_privilege_for_guest_db(db_name, db_id);
+		revoke_create_privilege_from_guest_user_db(db_name, db_id);
 
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);

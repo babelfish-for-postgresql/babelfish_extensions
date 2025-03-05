@@ -3,22 +3,58 @@ USE master
 GO
 DROP TABLE guest.BABEL5119_t4
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel5119_t4" does not exist)~~
+
 DROP TABLE guest.BABEL5119_t5
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel5119_t5" does not exist)~~
+
 DROP TABLE guest.BABEL5119_t6
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel5119_t6" does not exist)~~
+
 DROP VIEW guest.BABEL5119_v4
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel5119_v4" does not exist)~~
+
 DROP VIEW guest.BABEL5119_v5
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel5119_v5" does not exist)~~
+
 DROP VIEW guest.BABEL5119_v6
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel5119_v6" does not exist)~~
+
 DROP PROCEDURE guest.BABEL5119_p4
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "master_guest.babel5119_p4")~~
+
 DROP PROCEDURE guest.BABEL5119_p5
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "master_guest.babel5119_p5")~~
+
 DROP PROCEDURE guest.BABEL5119_p6
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "master_guest.babel5119_p6")~~
+
 DROP LOGIN login_babel5119_1
 GO
 DROP LOGIN login_babel5119_2
