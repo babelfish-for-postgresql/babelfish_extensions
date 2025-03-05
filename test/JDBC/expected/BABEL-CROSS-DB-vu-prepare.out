@@ -279,3 +279,76 @@ GO
 
 GRANT SELECT ON babel_cross_db_vu_prepare_t4 TO guest;
 GO
+
+------------------ BABEL-5448 ------------------
+------------------------------------------------
+USE master;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p01 AS
+BEGIN
+    SELECT 'This is correct datbase dbname = master';
+END;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p02 AS
+BEGIN
+    EXECUTE dbo.babel_5448_p01;           -- schema.proc
+    EXECUTE master.dbo.babel_5448_p01;    -- db.schema.proc
+    EXECUTE master..babel_5448_p01;       -- db..proc
+    EXECUTE babel_5448_p01;               -- proc
+END;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p01 AS
+BEGIN
+    SELECT 'This is the incorrect database: dbname = my_babel_cross_db_vu_prepare_db1';
+END;
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p03 AS
+BEGIN
+    EXECUTE master.dbo.babel_5448_p02;
+END;
+GO
+
+
+------------------------------------------------
+--------------- sp_proc cross db ---------------
+------------------------------------------------
+USE master;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_1 AS
+BEGIN
+SELECT N'This is correct: master.dbo.sp_test_babel_5448_1'
+END;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_2 AS
+BEGIN
+EXECUTE master..sp_test_babel_5448_1;
+EXECUTE sp_test_babel_5448_1;
+EXECUTE dbo.sp_test_babel_5448_1;
+EXECUTE master.dbo.sp_test_babel_5448_1;
+END;
+GO
+
+USE my_babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_1 AS
+BEGIN
+SELECT N'This is the incorrect database: my_babel_cross_db_vu_prepare_db1.dbo.sp_test_babel_5448_1';
+END;
+GO
+
+CREATE PROCEDURE dbo.sp_test_babel_5448_3 AS
+BEGIN
+EXECUTE master.dbo.sp_test_babel_5448_2;
+END;
+GO
+

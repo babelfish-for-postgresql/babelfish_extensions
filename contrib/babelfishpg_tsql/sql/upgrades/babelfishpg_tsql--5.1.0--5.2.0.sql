@@ -375,6 +375,153 @@ BEGIN
 		END
 END;
 $$;
+CREATE OR REPLACE FUNCTION sys.db_id() RETURNS SMALLINT
+AS 'babelfishpg_tsql', 'babelfish_db_id'
+LANGUAGE C PARALLEL SAFE STABLE;
+
+CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
+AS 'babelfishpg_tsql', 'babelfish_db_name'
+LANGUAGE C PARALLEL SAFE STABLE;
+
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_addlinkedserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_droplinkedsrvlogin;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_dropserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_testlinkedserver;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+DO $$
+BEGIN
+    BEGIN
+        DROP PROCEDURE master_dbo.sp_enum_oledb_providers;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise NOTICE '%', SQLERRM;
+    END;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
+														  IN p_floatval FLOAT,
+														  IN p_style NUMERIC DEFAULT 0)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+	v_format VARCHAR COLLATE "C";
+	v_floatval NUMERIC := abs(p_floatval);
+	v_digits SMALLINT;
+	v_integral_digits SMALLINT;
+	v_decimal_digits SMALLINT;
+	v_sign SMALLINT := sign(p_floatval);
+	v_result TEXT;
+	v_res_length SMALLINT;
+	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+	IF (v_style = 0) THEN
+		v_digits := length(v_floatval::NUMERIC::TEXT);
+		v_decimal_digits := scale(v_floatval);
+		IF (v_decimal_digits > 0) THEN
+			v_integral_digits := v_digits - v_decimal_digits - 1;
+		ELSE
+			v_integral_digits := v_digits;
+		END IF;
+		IF (v_floatval >= 999999.5) THEN
+			v_format := '9D99999EEEE';
+			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
+			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
+		ELSE
+            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+                v_decimal_digits := 6 - v_integral_digits;
+            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+                v_decimal_digits := 6;
+            END IF;
+			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
+			IF (v_decimal_digits > 0) THEN
+				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
+			END IF;
+			v_result := to_char(p_floatval, v_format);
+		END IF;
+	ELSIF (v_style = 1) THEN
+		v_format := '9D9999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSIF (v_style = 2) THEN
+		v_format := '9D999999999999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSIF (v_style = 3) THEN
+		v_format := '9D9999999999999999EEEE';
+		v_result := to_char(p_floatval, v_format);
+	ELSE
+		RAISE invalid_parameter_value;
+	END IF;
+
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
+	IF v_res_length IS NULL THEN
+		RETURN ltrim(v_result);
+	ELSE
+		RETURN rpad(ltrim(v_result),  v_res_length, ' ');
+	END IF;
+EXCEPTION
+	WHEN invalid_parameter_value THEN
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from FLOAT to a character string.', v_style),
+					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+					HINT := 'Change "style" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
 
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
@@ -570,3 +717,72 @@ GRANT SELECT ON sys.login_token TO PUBLIC;
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE VIEW sys.server_permissions 
+AS
+SELECT
+  CAST(0 as sys.tinyint) AS class,
+  CAST(NULL as sys.nvarchar(60)) AS class_desc,
+  CAST(NULL as INT) AS major_id,
+  CAST(NULL as INT) AS minor_id,
+  CAST(NULL as INT) AS grantee_principal_id,
+  CAST(NULL as INT) AS grantor_principal_id,
+  CAST(NULL as sys.BPCHAR(4)) AS type,
+  CAST(NULL as sys.nvarchar(128)) AS permission_name,
+  CAST(NULL as sys.BPCHAR(1)) AS state,
+  CAST(NULL as sys.nvarchar(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.server_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.credentials 
+AS
+SELECT
+  CAST(NULL as INT) AS credential_id,
+  CAST(NULL as sys.sysname) AS name,
+  CAST(NULL as sys.nvarchar(4000)) AS credential_identity,
+  CAST(NULL as sys.datetime) AS create_date,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(NULL as sys.nvarchar(100)) AS target_type,
+  CAST(NULL as INT) AS target_id
+WHERE FALSE;
+GRANT SELECT ON sys.credentials TO PUBLIC;
+
+CREATE VIEW sys.sql_logins AS
+SELECT
+    CAST(NULL as sys.sysname) AS name,
+    CAST(NULL as INT) AS principal_id,
+    CAST(NULL as sys.VARBINARY(85)) AS sid,
+    CAST(NULL as sys.BPCHAR(1)) AS type,
+    CAST(NULL as sys.nvarchar(60)) AS type_desc,
+    CAST(NULL as INT) AS is_disabled,
+    CAST(NULL as sys.DATETIME) AS create_date,
+    CAST(NULL as sys.DATETIME) AS modify_date,
+    CAST(NULL as sys.sysname) AS default_database_name,
+    CAST(NULL as sys.sysname) AS default_language_name,
+    CAST(NULL as INT) AS credential_id,
+    CAST(NULL as INT) AS owning_principal_id,
+    CAST(0 as sys.BIT) AS is_fixed_role,
+    CAST(0 as sys.BIT) AS is_policy_checked,
+    CAST(0 as sys.BIT) AS is_expiration_checked,
+    CAST(NULL as sys.varbinary(256)) AS password_hash
+WHERE FALSE;
+GRANT SELECT ON sys.sql_logins TO PUBLIC;
+

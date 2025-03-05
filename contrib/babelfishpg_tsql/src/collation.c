@@ -489,12 +489,12 @@ get_remove_accents_internal_oid()
 #ifdef USE_ICU
 	if (U_ICU_VERSION_MAJOR_NUM == pltsql_remove_accent_map_icu_major_version && U_ICU_VERSION_MINOR_NUM == pltsql_remove_accent_map_icu_min_version)
 	{
-		elog(LOG, "Using cached mappings to remove accents");
+		elog(DEBUG1, "Using cached mappings to remove accents");
 		remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal_using_cache")), -1, funcargtypes, true);
 		return;
 	}
 #endif
-	elog(LOG, "Using ICU function to remove accents");
+	elog(DEBUG1, "Using ICU function to remove accents");
 	remove_accents_internal_oid = LookupFuncName(list_make2(makeString("sys"), makeString("remove_accents_internal")), -1, funcargtypes, true);
 }
 
@@ -1835,7 +1835,7 @@ set_db_collation_internal(const char *db_name)
 	Oid database_collation_oid;
 
 	/* Get collation oid corresponding to collation name */
-	database_collation_oid = get_collation_oid(list_make1(makeString((char*)get_collation_name_for_db(db_name))), false);
+	database_collation_oid = get_collation_oid(list_make2(makeString("sys"), makeString((char*)get_collation_name_for_db(db_name))), false);
 
 	if (!OidIsValid(database_collation_oid))
 		ereport(ERROR,

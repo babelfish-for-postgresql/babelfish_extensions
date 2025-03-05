@@ -101,7 +101,7 @@ EXEC babel_4877_s1.babel_4877_p1
 GO
 ~~START~~
 varchar#!#text
-before search path ====> #!#master_dbo, "$user", sys, pg_catalog
+before search path ====> #!#master_babel_4877_s1, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
@@ -120,7 +120,7 @@ master_babel_4877_s1, sys, pg_catalog
 
 ~~START~~
 varchar#!#text
-after search path ====> #!#master_babel_4877_s1, sys, pg_catalog
+after search path ====> #!#master_babel_4877_s1, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -144,26 +144,26 @@ EXEC babel_4877_s1.babel_4877_p1
 GO
 ~~START~~
 varchar#!#text
-before search path ====> #!#master_dbo, "$user", sys, pg_catalog
+before search path ====> #!#master_babel_4877_s1, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
 varchar
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
-master_babel_4877_s1, master_dbo, "$user", sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
+master_babel_4877_s1, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
 varchar#!#text
-after search path ====> #!#master_dbo, "$user", sys, pg_catalog
+after search path ====> #!#master_babel_4877_s1, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -256,7 +256,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -273,7 +273,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -290,7 +290,7 @@ SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -301,7 +301,7 @@ SELECT 'before search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+before search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 EXEC babel_4877_s.babel_4877_p
@@ -316,7 +316,7 @@ SELECT 'after error search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after error search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 COMMIT
@@ -325,7 +325,7 @@ SELECT 'after tran search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after tran search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -335,7 +335,7 @@ SELECT 'before search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+before search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4877_s.babel_4877_f2();
@@ -350,7 +350,7 @@ SELECT 'after error search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after error search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 COMMIT
@@ -359,7 +359,7 @@ SELECT 'after tran search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after tran search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -371,7 +371,7 @@ COMMIT
 GO
 ~~START~~
 varchar#!#text
-before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+before search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 ~~START~~
@@ -382,7 +382,7 @@ varchar
 
 ~~START~~
 varchar#!#text
-after error search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after error search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -415,7 +415,7 @@ SELECT 'before search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+before search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 EXEC babel_4877_s.babel_4877_p2
@@ -436,7 +436,7 @@ SELECT 'after tran search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after tran search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -446,7 +446,7 @@ SELECT 'before search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-before search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+before search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4877_s.babel_4877_f3();
@@ -467,7 +467,7 @@ SELECT 'after tran search_path  ----> ', current_setting('search_path');
 GO
 ~~START~~
 varchar#!#text
-after tran search_path  ----> #!#master_dbo, "$user", sys, pg_catalog
+after tran search_path  ----> #!#master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 

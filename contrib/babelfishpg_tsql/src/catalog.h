@@ -139,6 +139,7 @@ extern Oid	get_authid_login_ext_idx_oid(void);
  *****************************************/
 #define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
 #define BBF_AUTHID_USER_EXT_IDX_NAME "babelfish_authid_user_ext_pkey"
+#define BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME "babelfish_authid_user_ext_login_db_idx"
 #define Anum_bbf_authid_user_ext_rolname				1
 #define Anum_bbf_authid_user_ext_login_name				2
 #define Anum_bbf_authid_user_ext_orig_username			11
@@ -153,6 +154,7 @@ extern Oid	bbf_authid_user_ext_idx_oid;
 const  int	get_db_principal_kind(Oid role_oid, const char *db_name);
 extern Oid	get_authid_user_ext_oid(void);
 extern Oid	get_authid_user_ext_idx_oid(void);
+extern Oid	get_bbf_authid_user_ext_login_dbname_idx_oid(void);
 extern char *get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
@@ -370,7 +372,7 @@ typedef struct FormData_bbf_schema_perms
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
 extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type, const char *func_args);
-extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee);
+extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant, const char *func_args);
