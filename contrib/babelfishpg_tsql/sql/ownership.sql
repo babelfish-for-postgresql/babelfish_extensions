@@ -527,7 +527,7 @@ AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
 ((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
 UNION ALL
 SELECT
-CAST(1 AS INT) AS principal_id, 
+CAST(1 AS INT) AS principal_id,
 CAST(CAST(1 AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
 CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
