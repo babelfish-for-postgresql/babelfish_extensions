@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   run-sql-validation-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -11,7 +11,7 @@ jobs:
         id: install-python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 'v3.10'
       - name: Run tests
         id: run-test 
         if: always() && steps.install-python.outcome == 'success'

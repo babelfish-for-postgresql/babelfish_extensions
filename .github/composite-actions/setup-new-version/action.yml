@@ -9,6 +9,10 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -20,6 +24,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Copy ANTLR
       id: copy-antlr
