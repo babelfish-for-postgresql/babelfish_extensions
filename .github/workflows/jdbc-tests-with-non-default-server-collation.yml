@@ -7,7 +7,7 @@ jobs:
       INSTALL_DIR: psql
       SERVER_COLLATION_NAME: chinese_prc_ci_as
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
