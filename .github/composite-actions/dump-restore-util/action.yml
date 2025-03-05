@@ -33,6 +33,10 @@ inputs:
     description: "Dump type full or combination of schema-only and data-only"
     required: false
     default: 'full'
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -45,6 +49,7 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Build latest dump/restore utilities
       id: build-dump-utils
