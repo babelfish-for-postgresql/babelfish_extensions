@@ -3,7 +3,7 @@ SELECT * FROM sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\Aduser#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
 jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
@@ -62,7 +62,7 @@ SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\Aduser#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
 jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
@@ -93,7 +93,7 @@ SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\Aduser#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
 jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
