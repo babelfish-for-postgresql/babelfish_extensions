@@ -2729,10 +2729,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							*/
 							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype, oldoid);
 						}
-						/* Clean up table entries for the create function statement */
-						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-						deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+						/* Clean up table entries for the create function statement if applicable*/
+						if (address.objectId != oldoid)
+						{
+							/*
+							 * if this is the same procedure, it'll update the existing one,
+							 * in such case, should not delete dependent records
+							 */
+							deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+							deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+							deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+						}
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
