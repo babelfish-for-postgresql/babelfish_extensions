@@ -1248,7 +1248,7 @@ float82bpchar(PG_FUNCTION_ARGS)
 	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
 	char	   *ascii = (char *) palloc0(32);
 	char	   *buf_padded;
-	int		   str_len = -1;
+	int		   str_len;
 	
 	/* Handle special cases */
 	if (unlikely(isinf(num)|| isnan(num))) 
@@ -1265,21 +1265,18 @@ float82bpchar(PG_FUNCTION_ARGS)
 	double_to_shortest_decimal_buf(num, ascii);
 
 	/* Check if the number fits within the specified length */
-	if (maxlen > 0)
+	str_len = strlen(ascii);
+	if (str_len > maxlen) 
 	{
-		str_len = strlen(ascii);
-		if (str_len > maxlen) 
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					 errmsg("There is insufficient result space to convert a float value to char/nchar.")));
-		}
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				errmsg("There is insufficient result space to convert a float value to char/nchar.")));
 	}
 
-	/* Left pad float value with the spaces */
+	/* Right pad float value with the spaces */
 	buf_padded = (char *) palloc0(maxlen + 1);
-	memset(buf_padded, ' ', maxlen - str_len);
-	memcpy(buf_padded + maxlen - str_len, ascii, str_len);
+	memcpy(buf_padded, ascii, str_len);
+	memset(buf_padded + str_len, ' ', maxlen - str_len);
 	
 	res = DirectFunctionCall3(bpcharin,
 							   CStringGetDatum(buf_padded),
