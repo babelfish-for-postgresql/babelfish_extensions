@@ -34,3 +34,37 @@ SELECT name, type, type_desc, default_database_name, default_language_name
 FROM sys.server_principals 
 WHERE name in ('jdbc_user', 'serv_principal_test');
 GO
+
+select name, principal_id, sid, type, type_desc
+from sys.server_principals where name = 'public'
+GO
+
+select name, principal_id, sid,
+suser_name(principal_id) as suser_name,
+suser_sid(name) as suser_sid,
+suser_sname(sid) as suser_sname,
+suser_sname(suser_sid(name)) as name2
+from sys.server_principals
+where name = 'public'
+GO
+
+select suser_sid('public')
+GO
+
+select name, principal_id, sid, suser_name(principal_id) as suser_name, suser_sid(name) as suser_sid, suser_sname(sid) as suser_sname, suser_sname(suser_sid(name)) as name2 from sys.server_principals where name = 'pUbLiC'
+GO
+
+select suser_name(002)
+GO
+
+select suser_name(0000002)
+GO
+
+select suser_sid('PuBlIC')
+GO
+
+select user_name(1)
+GO
+
+select user_id('public')
+GO

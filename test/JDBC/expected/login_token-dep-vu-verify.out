@@ -6,7 +6,7 @@ exec login_token_proc;
 go
 ~~START~~
 int
-2
+3
 ~~END~~
 
 
@@ -14,7 +14,7 @@ select login_token_func();
 go
 ~~START~~
 int
-2
+3
 ~~END~~
 
 
@@ -22,7 +22,7 @@ select * from login_token_view;
 go
 ~~START~~
 int
-2
+3
 ~~END~~
 
 

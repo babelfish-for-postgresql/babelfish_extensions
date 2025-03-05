@@ -819,6 +819,9 @@ user_name(PG_FUNCTION_ARGS)
 	if (id == InvalidOid)
 		id = GetUserId();
 
+	if(id == 1)
+		PG_RETURN_TEXT_P(cstring_to_text("public")); 
+
 	physical_user = GetUserNameFromId(id, true);
 	if (!physical_user)
 		PG_RETURN_NULL();
@@ -869,6 +872,7 @@ user_id(PG_FUNCTION_ARGS)
 	Form_pg_authid authform;
 	Oid			ret;
 	size_t  	len;
+	int			i;
 
 	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	db_name = get_cur_db_name();
@@ -876,14 +880,29 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
+	if (!user_input)
+		PG_RETURN_NULL();
+
+	i = strlen(user_input);
+	while (i > 0 && isspace((unsigned char) user_input[i - 1]))
+		user_input[--i] = '\0';
+
+	for (i = 0; user_input[i]; i++)
+	{
+		user_input[i] = tolower(user_input[i]);
+	}
+	if (strcmp(user_input, "public") == 0)
+	{
+		PG_RETURN_OID(1);
+	}
         user_name = get_physical_user_name(db_name, user_input, false, true);
 
         if (!user_name)
             PG_RETURN_NULL();
 
-        len = strlen(user_name);
-        while (len > 0 && isspace(user_name[len-1]))
-        user_name[--len] = '\0';
+	len = strlen(user_name);
+	while (len > 0 && isspace(user_name[len-1]))
+	user_name[--len] = '\0';
 
     if (pltsql_case_insensitive_identifiers)
     {
@@ -980,6 +999,11 @@ suser_name(PG_FUNCTION_ARGS)
 
 	if (server_user_id == InvalidOid)
 		PG_RETURN_NULL();
+	
+	if (server_user_id == 0x02)
+	{
+		PG_RETURN_TEXT_P(cstring_to_text("public"));
+	}
 
 	ret = GetUserNameFromId(server_user_id, true);
 
@@ -1028,7 +1052,11 @@ suser_id(PG_FUNCTION_ARGS)
 		{
 			login[i] = tolower(login[i]);
 		}
-
+		/* Check if login is 'public' */
+		if (strcmp(login, "public") == 0)
+		{
+			PG_RETURN_OID(2);
+		}
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
 		if (!HeapTupleIsValid(auth_tuple))

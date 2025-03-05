@@ -345,8 +345,8 @@ WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 UNION ALL
 SELECT
 CAST('public' AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
-CAST(CAST(0 as INT) as sys.varbinary(85)) AS sid,
+CAST(2 AS INT) AS principal_id, 
+CAST(CAST(2 as INT) as sys.varbinary(85)) AS sid,
 CAST('R' AS CHAR(1)) as type,
 CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
 CAST(0 AS INT) AS is_disabled,
@@ -444,7 +444,7 @@ SELECT
 CAST(name AS SYS.SYSNAME) AS name,
 CAST(
   CASE name
-    WHEN 'public' THEN 0
+    WHEN 'public' THEN 1
     WHEN 'INFORMATION_SCHEMA' THEN 3
     WHEN 'sys' THEN 4
   END AS INT) AS principal_id,
@@ -494,7 +494,15 @@ CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
 CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE Ext.type = 'R'
-AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid);
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid)
+UNION ALL
+SELECT
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
+
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
@@ -519,8 +527,8 @@ AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
 ((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
 UNION ALL
 SELECT
-CAST(-1 AS INT) AS principal_id,
-CAST(CAST(-1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(1 AS INT) AS principal_id,
+CAST(CAST(1 AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
 CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
