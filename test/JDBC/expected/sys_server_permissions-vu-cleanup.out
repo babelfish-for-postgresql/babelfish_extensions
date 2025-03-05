@@ -8,5 +8,8 @@ GO
 DROP LOGIN sys_server_permissions_vu_login3
 GO
 
+DROP LOGIN [ad\Aduser]
+GO
+
 DROP VIEW sys_server_permissions_vu_prepare_view
 GO

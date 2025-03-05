@@ -544,7 +544,7 @@ WHERE (pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = sys.suser_name() 
   OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default) 
-  AND Ext.type IN ('S');
+  AND Ext.type = 'S';
   
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
