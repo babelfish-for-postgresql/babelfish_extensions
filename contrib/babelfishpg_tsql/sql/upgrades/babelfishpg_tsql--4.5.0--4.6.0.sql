@@ -423,14 +423,14 @@ $$;
 
 -- This is a temporary procedure which is called during upgrade to alter
 -- default privileges on guest the schemas where the schema owner is guest
-CREATE PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_schema()
+CREATE PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user()
 LANGUAGE C
-AS 'babelfishpg_tsql', 'revoke_create_privilege_from_guest_schema';
+AS 'babelfishpg_tsql', 'revoke_create_privilege_from_guest_user';
 
-CALL babelfish_revoke_create_privilege_from_guest_schema();
+CALL babelfish_revoke_create_privilege_from_guest_user();
 
 -- -- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_schema();
+DROP PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user();
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
 														  IN p_floatval FLOAT,
