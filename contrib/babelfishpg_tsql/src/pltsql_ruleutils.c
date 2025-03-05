@@ -398,11 +398,16 @@ PG_FUNCTION_INFO_V1(tsql_get_expr);
 Datum
 tsql_get_expr(PG_FUNCTION_ARGS)
 {
-	text	   *expr = PG_GETARG_TEXT_PP(0);
-	Oid			relid = PG_GETARG_OID(1);
+	text	   *expr;
+	Oid			relid;
 	int			prettyFlags;
 	char	   *relname;
-
+	
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	
+	expr = PG_GETARG_TEXT_PP(0);
+	relid = PG_GETARG_OID(1);
 	prettyFlags = PRETTYFLAG_INDENT;
 
 	if (OidIsValid(relid))
