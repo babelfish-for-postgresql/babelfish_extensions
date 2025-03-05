@@ -3302,41 +3302,25 @@ GRANT SELECT ON sys.events TO PUBLIC;
 CREATE OR REPLACE VIEW sys.server_permissions 
 AS 
 SELECT 
-    CAST(100 AS sys.tinyint) AS class,
-    CAST('SERVER' AS sys.nvarchar(60)) AS class_desc,
-    CAST(0 AS int) AS major_id,
-    CAST(0 AS int) AS minor_id,
-    CAST(Base.oid AS INT) AS grantee_principal_id,
-    CAST(Master.oid AS INT) AS grantor_principal_id,
-    CAST('COSQ' AS sys.BPCHAR(4)) AS type,
-    CAST('CONNECT SQL' AS sys.nvarchar(128)) AS permission_name,
-    CAST('G' AS sys.BPCHAR(1)) AS state,
-    CAST('GRANT' AS sys.nvarchar(60)) AS state_desc 
-FROM 
-    pg_catalog.pg_roles AS Base 
-INNER JOIN 
-    sys.babelfish_authid_login_ext AS Ext 
-    ON Base.rolname COLLATE sys.database_default = Ext.rolname COLLATE sys.database_default
-    AND Ext.type IN ('S', 'U')
-    AND (
-        pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
-        OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
-        OR Base.rolname COLLATE sys.database_default = sys.suser_name() COLLATE sys.database_default
-        OR Base.rolname COLLATE sys.database_default = (
-            SELECT pg_get_userbyid(datdba)::VARCHAR COLLATE sys.database_default
-            FROM pg_database 
-            WHERE datname = CURRENT_DATABASE() COLLATE sys.database_default
-        ) 
-     ) 
-CROSS JOIN 
-    pg_catalog.pg_roles AS Master   
-WHERE 
-    Master.rolname COLLATE sys.database_default = (
-        SELECT pg_get_userbyid(datdba)::VARCHAR COLLATE sys.database_default 
-        FROM pg_database 
-        WHERE datname = CURRENT_DATABASE() COLLATE sys.database_default
-  );
-
+   CAST(100 AS sys.tinyint) AS class,
+   CAST('SERVER' AS sys.nvarchar(60)) AS class_desc,
+   CAST(0 AS int) AS major_id,
+   CAST(0 AS int) AS minor_id,
+   CAST(Base.oid AS INT) AS grantee_principal_id,
+   CAST(Master.oid AS INT) AS grantor_principal_id,
+   CAST('COSQ' AS sys.BPCHAR(4)) AS type,
+   CAST('CONNECT SQL' AS sys.nvarchar(128)) AS permission_name,
+   CAST('G' AS sys.BPCHAR(1)) AS state,
+   CAST('GRANT' AS sys.nvarchar(60)) AS state_desc 
+FROM pg_catalog.pg_roles AS Base 
+INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
+INNER JOIN pg_catalog.pg_roles AS Master ON Master.rolname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) 
+WHERE (pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+    OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+    OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
+    OR Base.rolname = Master.rolname)
+    AND Ext.type IN ('S', 'U');
+   
 GRANT SELECT ON sys.server_permissions TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.credentials 
@@ -3352,7 +3336,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
-CREATE VIEW sys.sql_logins AS
+CREATE OR REPLACE VIEW sys.sql_logins AS 
 SELECT
   CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
   CAST(Base.oid As INT) AS principal_id,
@@ -3360,18 +3344,18 @@ SELECT
   CAST(Ext.type AS sys.BPCHAR(1)) COLLATE sys.database_default AS type, 
   CAST(
     CASE
-      WHEN Ext.type = 'S' COLLATE sys.database_default THEN 'SQL_LOGIN' 
-      WHEN Ext.type = 'R' COLLATE sys.database_default THEN 'SERVER_ROLE' 
-      WHEN Ext.type = 'U' COLLATE sys.database_default THEN 'WINDOWS_LOGIN' 
+      WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+      WHEN Ext.type = 'R' THEN 'SERVER_ROLE' 
+      WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN' 
       ELSE NULL 
     END 
-    AS sys.NVARCHAR(60)) COLLATE sys.database_default AS type_desc, 
+    AS sys.NVARCHAR(60)) AS type_desc, 
   CAST(Ext.is_disabled AS INT) AS is_disabled,
   CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
   CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-  CAST(CASE WHEN Ext.type = 'R' COLLATE sys.database_default THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
   CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-  CAST(CASE WHEN Ext.type = 'R' COLLATE sys.database_default THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
   CAST(
     CASE 
       WHEN Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default THEN 1 
@@ -3379,22 +3363,20 @@ SELECT
     END 
     AS sys.BIT) AS is_policy_checked,
   CAST(0 AS sys.BIT) AS is_expiration_checked,
-  CAST(Auth.rolpassword AS sys.varbinary(256)) AS password_hash 
+  CAST(
+    CASE 
+      WHEN (sys.suser_name() = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')) THEN Auth.rolpassword 
+      ELSE NULL 
+    END AS sys.varbinary(256)) AS password_hash 
 FROM pg_catalog.pg_roles AS Base 
-INNER JOIN sys.babelfish_authid_login_ext AS Ext 
-  ON Base.rolname COLLATE sys.database_default = Ext.rolname COLLATE sys.database_default 
-  AND Ext.type != 'U' COLLATE sys.database_default 
-LEFT JOIN pg_authid Auth 
-  ON Auth.rolname = Base.rolname COLLATE sys.database_default 
-  AND Ext.type != 'U' COLLATE sys.database_default 
-  AND (sys.suser_name() COLLATE sys.database_default = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default 
-    OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER'))
+INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
+LEFT JOIN pg_authid Auth ON Auth.rolname = Base.rolname 
 WHERE (pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
-  OR Ext.orig_loginname = sys.suser_name() COLLATE sys.database_default 
+  OR Ext.orig_loginname = sys.suser_name() 
   OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default) 
-  AND Base.rolname COLLATE sys.database_default = Ext.rolname COLLATE sys.database_default 
-  AND Ext.type IN ('S', 'U');
+  AND Ext.type IN ('S');
+  
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.trigger_events
