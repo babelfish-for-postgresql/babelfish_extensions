@@ -22,6 +22,10 @@ inputs:
     description: "Server collation name"
     required: false
     default: "default"
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -33,6 +37,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Copy ANTLR
       id: copy-antlr
