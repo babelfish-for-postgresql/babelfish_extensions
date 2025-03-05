@@ -350,7 +350,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
 
-	Assert(ltypeId == rtypeId);
 	/*
 	 * Find the CS_AS collation corresponding to the CI_AS collation
 	 * Change the collation of the ILIKE op to the CS_AS collation
@@ -434,6 +433,8 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
 	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
+
+	Assert(ltypeId == rtypeId);
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
