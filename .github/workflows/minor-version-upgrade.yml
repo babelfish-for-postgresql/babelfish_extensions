@@ -8,7 +8,7 @@ jobs:
       EXTENSION_VER_FROM: BABEL_2_1_STABLE
 
     name: Build and test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -23,6 +23,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
+          engine_version: 14.3
 
       - name: Compile ANTLR
         id: compile-antlr

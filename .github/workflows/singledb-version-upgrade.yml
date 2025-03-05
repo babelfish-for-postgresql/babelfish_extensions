@@ -10,7 +10,7 @@ jobs:
       ENGINE_BRANCH_FROM: BABEL_1_2_STABLE__PG_13_6
       EXTENSION_BRANCH_FROM: BABEL_1_2_STABLE
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -23,6 +23,7 @@ jobs:
           extension_branch: ${{ env.EXTENSION_BRANCH_FROM }}
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
+          engine_version: 13.6
 
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
