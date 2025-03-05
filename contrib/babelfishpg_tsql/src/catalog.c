@@ -6284,7 +6284,7 @@ alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
 		initStringInfo(&query);
 
 		/* Revoke CREATE from guest on the specified schema */
-		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", physical_schema, guest_role);
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", quote_identifier(physical_schema), quote_identifier(guest_role));
 	
 		/* Execute the query */
 		exec_utility_cmd_helper(query.data);
