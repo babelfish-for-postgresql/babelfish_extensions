@@ -6208,11 +6208,11 @@ get_physical_rolname_for_guest(char *dbname, Oid dbid, char **guest_role)
 		Datum rolname_datum = heap_getattr(tuple_bbf_authid, 
 										Anum_bbf_authid_user_ext_rolname,
 										authid_dsc, &isnull);
-		*guest_role = TextDatumGetCString(rolname_datum);
+		*guest_role = NameStr(*DatumGetName(rolname_datum));
 	}
 
 	systable_endscan(authid_scan);
-	table_close(bbf_authid_rel, AccessShareLock);
+	table_close(bbf_authid_rel, RowExclusiveLock);
 }
 
 static void
@@ -6221,36 +6221,42 @@ get_physical_schema_for_guest(char *dbname, Oid dbid, char **physical_schema)
 	Relation bbf_namespace_rel;
 	TupleDesc dsc;
 	ScanKeyData scanKey[2];
-	SysScanDesc scan;
+	TableScanDesc scan;
 	HeapTuple tuple_bbf_namespace;
+	char *temp_physical_name;
 	
 	bbf_namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(bbf_namespace_rel);
 	
 	ScanKeyInit(&scanKey[0],
-				Anum_namespace_ext_dbid,  // This is now 2
+		Anum_namespace_ext_orig_name,  
+		BTEqualStrategyNumber, F_TEXTEQ,
+		CStringGetTextDatum("guest"));
+
+	ScanKeyInit(&scanKey[1],
+				Anum_namespace_ext_dbid, 
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	
-	ScanKeyInit(&scanKey[1],
-				Anum_namespace_ext_orig_name,  // This is now 3
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum("guest"));
 	
-	scan = systable_beginscan(bbf_namespace_rel, namespace_ext_oid,
-							  false, NULL, 2, scanKey);
+	scan = table_beginscan_catalog(bbf_namespace_rel, 2, scanKey);
 	
-	tuple_bbf_namespace = systable_getnext(scan);
+	tuple_bbf_namespace = heap_getnext(scan, ForwardScanDirection);
 
 	if (HeapTupleIsValid(tuple_bbf_namespace))
 	{
 	bool isnull;
-	Datum nspname_datum = heap_getattr(tuple_bbf_namespace, 
-										Anum_namespace_ext_namespace,  // This is now 1
-										dsc, &isnull);
-	*physical_schema = TextDatumGetCString(nspname_datum);
+	temp_physical_name = NameStr(*DatumGetName(heap_getattr(tuple_bbf_namespace, 
+		Anum_namespace_ext_namespace,
+		dsc, &isnull)));
+
+	*physical_schema = NameStr(*DatumGetName(heap_getattr(tuple_bbf_namespace, 
+								Anum_namespace_ext_namespace,
+								dsc, &isnull)));
+	elog(DEBUG1, "physical_schema: %s", temp_physical_name);
 	}
-	systable_endscan(scan);
+
+	table_endscan(scan);
 	table_close(bbf_namespace_rel, AccessShareLock);
 }
 static void
@@ -6284,7 +6290,7 @@ alter_default_privilege_for_guest_db(char *dbname, Oid dbid)
 		exec_utility_cmd_helper(query.data);
 	
 	
-		pfree(physical_schema);
+		// pfree(physical_schema);
 	}
 	// pfree(schema_owner);
 	// tuple_bbf_schema = systable_getnext(scan);
