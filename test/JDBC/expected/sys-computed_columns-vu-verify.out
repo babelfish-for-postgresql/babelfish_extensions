@@ -56,3 +56,11 @@ text
 <NULL>
 ~~END~~
 
+
+Select sys.tsql_get_expr(null, null)
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+

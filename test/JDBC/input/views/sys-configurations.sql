@@ -1,4 +1,4 @@
-SELECT * FROM sys.configurations;
+SELECT configuration_id, name, minimum, maximum, description, is_dynamic, is_advanced FROM sys.configurations;
 GO
 
 -- Verify the sql variant of the all the rows in sys.configurations
