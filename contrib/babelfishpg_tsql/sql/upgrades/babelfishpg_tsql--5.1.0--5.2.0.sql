@@ -450,11 +450,6 @@ BEGIN
 END;
 $$;
 
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
 RETURNS sys.nvarchar(128) 
 AS $$ 
@@ -464,14 +459,40 @@ BEGIN
 END; 
 $$ LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
-RETURNS sys.nvarchar(128) 
-AS $$ 
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, substr_length INT)
+RETURNS sys.nvarchar(128) AS 
+$$ 
 DECLARE 
+    pstrout sys.nvarchar(128);
+    hex_str text;
 BEGIN 
-    RETURN NULL; 
-END; 
-$$ LANGUAGE plpgsql STABLE;
+    IF expression IS NULL THEN 
+        RETURN NULL;
+    END IF;
+
+    IF substr_length IS NULL OR substr_length <= 0 OR substr_length > LEN(expression) THEN 
+        substr_length := LEN(expression);
+    END IF;
+
+    IF start_offset < 1 OR start_offset > LEN(expression) THEN 
+        RETURN NULL;
+    END IF;
+
+    IF (LEN(expression) - start_offset + 1) < substr_length THEN 
+        substr_length := LEN(expression) - start_offset + 1;
+    END IF;
+
+    hex_str := LOWER(ENCODE(SUBSTRING(expression, start_offset, substr_length)::bytea, 'hex'));
+
+    pstrout := CASE 
+                WHEN set_prefix IS NULL THEN N''
+                WHEN set_prefix = 0 THEN N'' 
+                ELSE N'0x' 
+               END || hex_str;
+    RETURN pstrout;
+END;
+$$ 
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE VIEW sys.server_permissions 
 AS
@@ -523,3 +544,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
