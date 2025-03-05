@@ -20,6 +20,10 @@ inputs:
     description: 'Build in Release Mode'
     required: no
     default: no
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -81,18 +85,33 @@ runs:
 
     - name: Build and Install the Modified PostgreSQL Instance and Run Tests
       run: |
+        # Function to compare versions correctly
+        version_le() {
+          printf "%s\n%s" "$1" "$2" | sort -V | head -n1 | grep -q "^$1$"
+        }
+        # Use gcc-9 for versions prior to 14.18, 15.13 and 16.9
+        engine_version="${{ inputs.engine_version }}"
+        if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" ]] && 
+          ( version_le "$engine_version" "14.17" || 
+            ( [[ "${engine_version%%.*}" == "15" ]] && version_le "$engine_version" "15.12" ) || 
+            ( [[ "${engine_version%%.*}" == "16" ]] && version_le "$engine_version" "16.8" ) ); then
+          export CC='ccache gcc-9'
+        else
+          export CC='ccache gcc'
+        fi
+
         echo "${{env.SAVE_CCACHE}}"
         echo "${{ steps.restore-ccache.outputs.cache-matched-key }}"
         cd ..
         cd postgresql_modified_for_babelfish
         if [[ ${{inputs.tap_tests}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
+          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         elif [[ ${{inputs.release_mode}} == "yes" ]]; then
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu
+            ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu
         else
-            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+            ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         fi
         make -j 4 2>error.txt
         make install
