@@ -3,31 +3,6 @@
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
--- Basic Multiple Column Tests
-SELECT sys.replace_special_chars_fts('one`two', 'three@four', 'five#six');
-GO
-
--- Mixed Single and Multiple Column Tests
-SELECT sys.replace_special_chars_fts('"one @ @ @ @ two"');
-GO
-
--- Quoted String Multiple Column Tests
-SELECT sys.replace_special_chars_fts('"one @ two"', '"three $ four"', '"five # six"');
-GO
-
--- Apostrophe Multiple Column Tests
-SELECT sys.replace_special_chars_fts('Arts '' opening', 'Bob''s place', 'Smith''s store');
-GO
-
--- Empty and NULL Multiple Column Tests
-SELECT sys.replace_special_chars_fts('', NULL, 'three');
-GO
-
--- Mixed Content Type Tests
-SELECT sys.replace_special_chars_fts('normal text', '"quoted text"', 'special@text');
-GO
-
-
 -- Test cases for the relation test_tb
 
 -- gives error as fulltext index is still not created

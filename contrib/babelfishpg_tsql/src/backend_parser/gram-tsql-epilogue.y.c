@@ -805,32 +805,45 @@ is_json_query(List *name)
 static Node *
 TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
-	A_Expr *fts;
-	Node *to_tsvector_call, *to_tsquery_call;
+	Node *fts = NULL;
+	A_Expr *col;
 	Node *result_pgconfig;
 	List *args_pgconfig;
-	// int colSize = colId->length;
+	int colSize = colId->length;
 
 	args_pgconfig = list_make1(search_expr);
 	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+	for(int i = 0; i < colSize; i++)
+	{
+		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+		Node * vec = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
+		col = createClause(vec, query);
+		if(fts != NULL)
+		{
+			fts = concatClause((Node *) fts, (Node *) col);
+		}
+		else
+		{
+			fts = (Node *)col;
+		}
+	}
+	return (Node *) fts;
+}
 
-	to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-	to_tsvector_call = makeToTSVectorFuncCall((colId->elements[0]).ptr_value, yyscanner, result_pgconfig);
-	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
-	// for(int i = 0; i < colSize; i++)
-	// {
-	// 	to_tsvector_call = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
-	// 	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
-	// 	if(fts != NULL)
-	// 	{
-	// 		// fts = makeA_Expr(AEXPR_OP, list_make1(makeString("OR")), (Node *)fts, (Node *)col, -1);
-	// 	}
-	// 	else
-	// 	{
-	// 		fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
-	// 	}
-	// }
-	return (Node *)fts;
+static A_Expr *
+createClause(Node *lexpr, Node *rexpr)
+{
+	A_Expr *fts;
+	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
+	return fts;
+}
+
+static Node *
+concatClause(Node *lexpr, Node *rexpr)
+{
+	Node *fts;
+	fts = makeOrExpr(lexpr, rexpr, -1);
+	return fts;
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
@@ -842,88 +855,68 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 	List	*replaceSpecialCharsArgs;
 	Node 	*col = NULL;
 
-	// char 	*colName = (colId->elements[i]).ptr_value;
 	char 	*colName = colId;
 	char 	*schemaName = NULL;
 	char 	*tableName = NULL;
 	char 	*columnName = NULL;
 	char 	*dot1, *dot2;
 
-	/* length of list of columns passed as colId */
-	// int 	len = colId->length; 	
-
-	/* inititalize the list of columns as null as we are using lappend function to append column(s)
-	 * so its necessary to have a null list to start with  
-	 */
-	// replaceSpecialCharsArgs = NIL;
-
-	// for(int i = 0; i < len; i++)
-	// {
-		/* Node to store the passed column as a column reference */
-
-		/* Check if the column name is NULL or empty */
-		// if(colName == NULL)
-		// {
-		// 	continue;
-		// }
-
-		/* Find the first and second dots in the column identifier */
-		dot1 = strchr(colName, '.');
-		dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
-		
-		if (dot1)
+	/* Find the first and second dots in the column identifier */
+	dot1 = strchr(colName, '.');
+	dot2 = (dot1) ? strchr(dot1 + 1, '.') : NULL;
+	
+	if (dot1)
+	{
+		if (dot2)
 		{
-			if (dot2)
-			{
-				/* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
-				* Parse the schema name, table name, and column name accordingly
-				*/
-				*dot1 = '\0';
-				*dot2 = '\0';
-				schemaName = colName;
-				tableName = dot1 + 1;
-				columnName = dot2 + 1;
-			} 
-			else
-			{
-				/* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
-				* Parse the table name and column name accordingly
-				*/
-				*dot1 = '\0';
-				tableName = colName;
-				columnName = dot1 + 1;
-			}
-		}
-		else
-		{
-			/* If no dots are found, then the input is just the column name
-			* Set the column name directly
+			/* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
+			* Parse the schema name, table name, and column name accordingly
 			*/
-			columnName = colName;
-		}
-		
-		if (schemaName)
-		{
-			/* If a schema name is present, create column reference to the schema first then append the table name and column name */
-			col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
-			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
-			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
-		}
-		else if (tableName)
-		{
-			/* If a table name is present, create column reference to the table first then append the column name */
-			col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
-			((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
-		}
+			*dot1 = '\0';
+			*dot2 = '\0';
+			schemaName = colName;
+			tableName = dot1 + 1;
+			columnName = dot2 + 1;
+		} 
 		else
 		{
-			/* Create a ColumnRef node for the column */
-			col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+			/* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
+			* Parse the table name and column name accordingly
+			*/
+			*dot1 = '\0';
+			tableName = colName;
+			columnName = dot1 + 1;
 		}
+	}
+	else
+	{
+		/* If no dots are found, then the input is just the column name
+		* Set the column name directly
+		*/
+		columnName = colName;
+	}
+	
+	if (schemaName)
+	{
+		/* If a schema name is present, create column reference to the schema first then append the table name and column name */
+		col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
+		((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
+		((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+	}
+	else if (tableName)
+	{
+		/* If a table name is present, create column reference to the table first then append the column name */
+		col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
+		((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+	}
+	else
+	{
+		/* Create a ColumnRef node for the column */
+		col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+	}
 
-		/* append the created ColumnRef node in the replaceSpecialCharsArgs list */
-		replaceSpecialCharsArgs = list_make1(col);
-	// }
+	/* create list of the created ColumnRef node in the replaceSpecialCharsArgs list */
+	replaceSpecialCharsArgs = list_make1(col);
 	
 	/* Create a function call for replace_special_chars_fts(column_list) */
 	replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);

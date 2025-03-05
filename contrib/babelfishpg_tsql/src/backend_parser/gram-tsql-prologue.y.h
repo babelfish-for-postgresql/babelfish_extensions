@@ -69,6 +69,8 @@ static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
 
 static Node *TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner);
+static A_Expr *createClause(Node *lexpr, Node *rexpr);
+static Node *concatClause(Node *lexpr, Node *rexpr);
 static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
 static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
 
