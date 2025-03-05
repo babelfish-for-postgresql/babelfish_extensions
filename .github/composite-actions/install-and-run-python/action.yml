@@ -8,14 +8,14 @@ runs:
       id: install-python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 'v3.10'
 
     - name: Configure Python Environment
       id: configure-python-environment
       if: always() && steps.install-python.outcome == 'success'
       run: |
         cd ~
-        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
         cd ~/work/babelfish_extensions/babelfish_extensions/test/python
         mkdir sqltoolsservice
         cd sqltoolsservice

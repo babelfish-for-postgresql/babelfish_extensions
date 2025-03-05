@@ -9,7 +9,7 @@ jobs:
       ENGINE_BRANCH_OLD: BABEL_2_6_STABLE__PG_14_9
       EXTENSION_BRANCH_OLD: BABEL_2_6_STABLE
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -43,6 +43,7 @@ jobs:
         with:
           engine_branch: ${{env.ENGINE_BRANCH_OLD}}
           install_dir: ${{env.OLD_INSTALL_DIR}}
+          engine_version: 14.9
 
       - name: Compile ANTLR
         id: compile-antlr
