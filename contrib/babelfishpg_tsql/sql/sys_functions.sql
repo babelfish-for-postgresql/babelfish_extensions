@@ -1,4 +1,8 @@
 -- SELECT FOR XML
+CREATE OR REPLACE PROCEDURE sys.babelfish_alter_default_privilege_guest_on_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'alter_default_privilege_on_guest_schema';
+
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
     rec ANYELEMENT,
