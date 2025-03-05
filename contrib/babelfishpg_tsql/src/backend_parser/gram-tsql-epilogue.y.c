@@ -806,7 +806,7 @@ static Node *
 TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
 	Node *fts = NULL;
-	A_Expr *col;
+	A_Expr *column_clause;
 	Node *result_pgconfig;
 	List *args_pgconfig;
 	int colSize = colId->length;
@@ -817,14 +817,14 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 	{
 		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
 		Node * vec = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
-		col = createClause(vec, query);
+		column_clause = createClause(vec, query);
 		if(fts != NULL)
 		{
-			fts = concatClause((Node *) fts, (Node *) col);
+			fts = concatClause((Node *) fts, (Node *) column_clause);
 		}
 		else
 		{
-			fts = (Node *)col;
+			fts = (Node *)column_clause;
 		}
 	}
 	return (Node *) fts;
