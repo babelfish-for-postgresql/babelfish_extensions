@@ -42,12 +42,13 @@ runs:
         fi
 
         # Function to compare versions correctly
-        version_lt() {
+        version_le() {
           printf "%s\n%s" "$1" "$2" | sort -V | head -n1 | grep -q "^$1$"
         }
 
+        # Use gcc-9 for versions prior to 14.18
         engine_version="${{ inputs.engine_version }}"
-        if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" ]] && version_lt "$engine_version" "14.18"; then
+        if [[ "$engine_version" != "source.latest" && "$engine_version" != "target.latest" ]] && version_le "$engine_version" "14.17"; then
           export CC=gcc-9
         else
           export CC=gcc
