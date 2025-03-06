@@ -1765,7 +1765,7 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 									db_rel->rd_att, &is_null);
 		char 			*db_name = TextDatumGetCString(db_name_datum);
 		char 			*physical_schema = NULL;
-		const char 		*guest_role = NULL;
+		char 		*guest_role = NULL;
 		StringInfoData 	query;
 		int 			pltsql_save_nestlevel;
 		MigrationMode 	mode; 
