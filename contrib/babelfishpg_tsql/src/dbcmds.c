@@ -1698,3 +1698,96 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+static void
+revoke_create_privilege_from_guest_user_db(char *dbname, Oid dbid)
+{
+	char *physical_schema = NULL;
+	const char *guest_role = NULL;
+	StringInfoData query;
+	Oid save_userid;
+	int save_sec_context;
+	int pltsql_save_nestlevel;
+	int save_nestlevel;
+	MigrationMode mode;	
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	save_nestlevel = NewGUCNestLevel();
+
+	PG_TRY();
+	{
+		/* Set the SQL dialect to TSQL first */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						 GUC_CONTEXT_CONFIG,
+						 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/* Now that the SQL dialect is set, determine the migration mode */
+		mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;	
+
+		// Get the physical schema name for the guest schema
+		physical_schema = get_physical_schema_name_by_mode(dbname, "guest", mode);
+
+		/* Get the guest role name */
+		guest_role = get_guest_role_name(dbname);	
+	
+		if (physical_schema != NULL && guest_role != NULL)
+		{
+			initStringInfo(&query);
+			/* Revoke CREATE from guest on the specified schema */
+			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", 
+							 quote_identifier(physical_schema), 
+							 quote_identifier(guest_role));
+			/* Execute the query */
+			exec_utility_cmd_helper(query.data);
+			pfree(query.data);
+		}
+
+	}
+	PG_FINALLY();
+	{
+		/* Revert GUC settings */
+		pltsql_revert_guc(pltsql_save_nestlevel);
+		AtEOXact_GUC(false, save_nestlevel);
+
+		if (physical_schema)
+			pfree(physical_schema);
+	}
+	PG_END_TRY();
+
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+}
+
+PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
+Datum
+revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
+{
+	Relation		db_rel;
+	TableScanDesc	scan;
+	HeapTuple		tuple;
+	bool			is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+												 db_rel->rd_att, &is_null);
+		char *db_name = TextDatumGetCString(db_name_datum);
+
+		Datum dbid_datum = heap_getattr(tuple, Anum_sysdatabases_oid,
+			db_rel->rd_att, &is_null);
+		Oid db_id = DatumGetInt16(dbid_datum);
+
+		revoke_create_privilege_from_guest_user_db(db_name, db_id);
+
+		pfree(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
+
