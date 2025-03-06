@@ -1,15 +1,3 @@
--- tsql
-SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
-GO
-~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-~~END~~
-
-
 -- reset the login password
 ALTER LOGIN sys_sql_logins_vu_login1 WITH PASSWORD = '123';
 GO
@@ -21,6 +9,18 @@ GO
 -- reset the login password
 ALTER LOGIN sys_sql_logins_vu_login3 WITH PASSWORD = '123';
 GO
+
+-- tsql
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+~~END~~
+
 
 -- tsql user=sys_sql_logins_vu_login1 password=123
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view

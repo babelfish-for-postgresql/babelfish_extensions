@@ -1,7 +1,3 @@
--- tsql
-SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
-GO
-
 -- reset the login password
 ALTER LOGIN sys_sql_logins_vu_login1 WITH PASSWORD = '123';
 GO
@@ -12,6 +8,10 @@ GO
 
 -- reset the login password
 ALTER LOGIN sys_sql_logins_vu_login3 WITH PASSWORD = '123';
+GO
+
+-- tsql
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 
 -- tsql user=sys_sql_logins_vu_login1 password=123
