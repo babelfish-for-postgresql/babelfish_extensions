@@ -667,14 +667,6 @@ varchar
 ~~END~~
 
 
--- cleanup guest schema
-DROP TABLE babel_object_id_table_in_guest_schema
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "babel_object_id_table_in_guest_schema" does not exist)~~
-
-
 -- tsql
 USE babel_object_id_db;
 GO

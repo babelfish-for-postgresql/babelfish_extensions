@@ -722,12 +722,6 @@ go
 nvarchar#!#varchar#!#text
 ~~END~~
 
-drop function test_sp_babelfish_volatility_f1
-go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a function named "test_sp_babelfish_volatility_f1")~~
-
 
 -- tsql
 use test_sp_babelfish_volatility_db1

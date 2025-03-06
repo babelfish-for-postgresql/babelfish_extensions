@@ -1699,7 +1699,7 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 }
 
 static void
-revoke_create_privilege_from_guest_user_db(char *dbname, Oid dbid)
+revoke_create_privilege_from_guest_user_db(char *dbname)
 {
 	char *physical_schema = NULL;
 	const char *guest_role = NULL;
@@ -1724,7 +1724,7 @@ revoke_create_privilege_from_guest_user_db(char *dbname, Oid dbid)
 		/* Now that the SQL dialect is set, determine the migration mode */
 		mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;	
 
-		// Get the physical schema name for the guest schema
+		/* Get the physical schema name for the guest schema */
 		physical_schema = get_physical_schema_name_by_mode(dbname, "guest", mode);
 
 		/* Get the guest role name */
@@ -1776,11 +1776,7 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 												 db_rel->rd_att, &is_null);
 		char *db_name = TextDatumGetCString(db_name_datum);
 
-		Datum dbid_datum = heap_getattr(tuple, Anum_sysdatabases_oid,
-			db_rel->rd_att, &is_null);
-		Oid db_id = DatumGetInt16(dbid_datum);
-
-		revoke_create_privilege_from_guest_user_db(db_name, db_id);
+		revoke_create_privilege_from_guest_user_db(db_name);
 
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);

@@ -429,7 +429,7 @@ AS 'babelfishpg_tsql', 'revoke_create_privilege_from_guest_user';
 
 CALL babelfish_revoke_create_privilege_from_guest_user();
 
--- -- Drop this procedure after it gets executed once.
+-- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user();
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,

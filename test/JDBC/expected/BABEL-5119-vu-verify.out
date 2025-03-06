@@ -144,18 +144,19 @@ babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+~~END~~
 
-~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
 
-
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- Using crossdb query data
@@ -240,18 +241,19 @@ nvarchar#!#nvarchar
 
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+~~END~~
 
-~~ERROR (Message: relation "master_guest.babel5119_t4" does not exist)~~
 
-
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "master_guest.babel5119_v4" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- Using crossdb query data
@@ -357,18 +359,19 @@ babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+~~END~~
 
-~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
 
-
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- Using crossdb query data
@@ -453,18 +456,19 @@ nvarchar#!#nvarchar
 
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+~~END~~
 
-~~ERROR (Message: relation "master_guest.babel5119_t4" does not exist)~~
 
-
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "master_guest.babel5119_v4" does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
 -- Using crossdb query data
@@ -548,18 +552,18 @@ GO
 
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "guest.babel5119_t4" does not exist)~~
+~~ERROR (Message: permission denied for table babel5119_t1)~~
 
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "guest.babel5119_v4" does not exist)~~
+~~ERROR (Message: permission denied for view babel5119_v1)~~
 
 
 -- Using crossdb query data

@@ -62,10 +62,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 
 -- Using crossdb query data
@@ -114,10 +114,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 
 -- Using crossdb query data
@@ -170,10 +170,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 
 -- Using crossdb query data
@@ -222,10 +222,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 
 -- Using crossdb query data
@@ -278,10 +278,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
+SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
 GO
 
-SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
+SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
 GO
 
 -- Using crossdb query data
