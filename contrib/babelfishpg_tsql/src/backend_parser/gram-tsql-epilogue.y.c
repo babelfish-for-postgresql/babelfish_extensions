@@ -2253,7 +2253,7 @@ tsql_unpivot_transformation(List *components)
 		String *col_name = (String *)lfirst(lc);
 		/* Future enhancement: Handle aliased unpivot source columns syntax
 		 * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
-		 * solution: lfirst needs to be llast if aliases are used in values list
+		 * solution: lfirst needs to be essentially llast if aliases are used in values list
 		 */
 		List *value_pair;
 		ColumnRef *col_ref;
@@ -2262,7 +2262,7 @@ tsql_unpivot_transformation(List *components)
 		col_ref = makeNode(ColumnRef);
 		col_ref->fields = list_make2(
 			makeString(source_alias), /* source table alias */
-			makeString(strVal(col_name)) /* column name */
+			col_name /* column name */
 		);
 		
 		/* Create pair (column_ref, column_name) */
