@@ -2250,9 +2250,11 @@ tsql_unpivot_transformation(List *components)
 	/* Build VALUES list from unpivot source columns */
 	foreach(lc, source_cols)
 	{
-		// Future enhancement: Handle aliased unpivot source columns syntax
-		// solution: lfirst needs to be llast if aliases are used in values list, ex c.q1
 		String *col_name = (String *)lfirst(lc);
+		/* Future enhancement: Handle aliased unpivot source columns syntax
+		 * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
+		 * solution: lfirst needs to be llast if aliases are used in values list
+		 */
 		List *value_pair;
 		ColumnRef *col_ref;
 		

@@ -5392,8 +5392,6 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 
 	/* Free allocated memory */
 	list_free_deep(measure_cols);
-	//list_free_deep(src_cols);
-	//free(has_unpivot);
 }
 
 /*
@@ -5476,8 +5474,10 @@ static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt 
 	List *result_targetlist = NIL;
 	ListCell *lc;
 	
-	/* Only process if target list contains * */
-	// TODO: Validate agains all types of target list (including functions)
+	/* Only process if target list contains * 
+	 * Does not handle: `SELECT unpivot_alias.* ...`
+	 * Future enhancement: Validate agains more targetlist variations
+	 */
 	if (stmt->targetList == NIL || 
 		!IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
 		!IsA(linitial(((ColumnRef *)((ResTarget *)linitial(stmt->targetList))->val)->fields), A_Star))
