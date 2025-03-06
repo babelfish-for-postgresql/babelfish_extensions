@@ -214,3 +214,110 @@ GO
 
 INSERT INTO ChildSetDefault (ChildID, ParentID, ChildName) VALUES (1, 1, 'ChildSetDefault1'), (2, 2, 'ChildSetDefault2');
 GO
+
+-- checking transition tables in delete triggers
+CREATE TABLE Cascade_Delete_TransitionTbl1 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Delete_TransitionTbl2 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Delete_TransitionTbl1(id) ON DELETE CASCADE);
+GO
+
+CREATE TRIGGER Cascade_Delete_TransitionTbl_Trig1 ON Cascade_Delete_TransitionTbl2 AFTER DELETE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Delete_TransitionTbl1 VALUES (1)
+INSERT INTO Cascade_Delete_TransitionTbl2 VALUES (1)
+GO
+
+CREATE TABLE Cascade_Delete_TransitionTbl3 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Delete_TransitionTbl4 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Delete_TransitionTbl3(id) ON DELETE SET NULL);
+GO
+
+CREATE TRIGGER Cascade_Delete_TransitionTbl_Trig2 ON Cascade_Delete_TransitionTbl4 AFTER DELETE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Delete_TransitionTbl3 VALUES (1)
+INSERT INTO Cascade_Delete_TransitionTbl4 VALUES (1)
+GO
+
+CREATE TABLE Cascade_Delete_TransitionTbl5 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Delete_TransitionTbl6 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Delete_TransitionTbl5(id) ON DELETE SET DEFAULT);
+GO
+
+CREATE TRIGGER Cascade_Delete_TransitionTbl_Trig3 ON Cascade_Delete_TransitionTbl6 AFTER DELETE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Delete_TransitionTbl5 VALUES (1)
+INSERT INTO Cascade_Delete_TransitionTbl6 VALUES (1)
+GO
+
+-- checking transition tables in cascade update
+CREATE TABLE Cascade_Update_TransitionTbl1 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Update_TransitionTbl2 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Update_TransitionTbl1(id) ON UPDATE CASCADE);
+GO
+
+CREATE TRIGGER Cascade_Update_TransitionTbl_Trig1 ON Cascade_Update_TransitionTbl2 AFTER UPDATE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Update_TransitionTbl1 VALUES (1)
+INSERT INTO Cascade_Update_TransitionTbl2 VALUES (1)
+GO
+
+CREATE TABLE Cascade_Update_TransitionTbl3 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Update_TransitionTbl4 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Update_TransitionTbl3(id) ON UPDATE SET DEFAULT);
+GO
+
+CREATE TRIGGER Cascade_Update_TransitionTbl_Trig2 ON Cascade_Update_TransitionTbl4 AFTER UPDATE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Update_TransitionTbl3 VALUES (1)
+INSERT INTO Cascade_Update_TransitionTbl4 VALUES (1)
+GO
+
+CREATE TABLE Cascade_Update_TransitionTbl5 (id INT PRIMARY KEY)
+GO
+
+CREATE TABLE Cascade_Update_TransitionTbl6 ( t_id INT, FOREIGN KEY (t_id) REFERENCES Cascade_Update_TransitionTbl5(id) ON UPDATE SET NULL);
+GO
+
+CREATE TRIGGER Cascade_Update_TransitionTbl_Trig3 ON Cascade_Update_TransitionTbl6 AFTER UPDATE AS SELECT * FROM DELETED; SELECT * FROM INSERTED;
+GO
+
+INSERT INTO Cascade_Update_TransitionTbl5 VALUES (1)
+INSERT INTO Cascade_Update_TransitionTbl6 VALUES (1)
+GO
+
+create table Del_Cascade_parent(a int primary key)
+go
+
+create table Del_Cascade_child(b int, foreign key (b) REFERENCES Del_Cascade_parent(a) ON DELETE CASCADE)
+GO
+
+create trigger Del_Cascade_trig1 on Del_Cascade_child AFTER DELETE AS BEGIN
+DECLARE @test TABLE
+(
+    pkOrderItem INT NOT NULL ,  /**/ PRIMARY KEY ( pkOrderItem )
+)
+
+
+        INSERT  INTO @test
+                ( pkOrderItem )
+                SELECT  b
+                FROM    deleted
+
+        SELECT TOP 1 * from @test
+END
+GO
+
+INSERT INTO Del_Cascade_parent VALUES (generate_series(1,10))
+GO
+INSERT INTO Del_Cascade_child VALUES (generate_series(1,10))
+GO
