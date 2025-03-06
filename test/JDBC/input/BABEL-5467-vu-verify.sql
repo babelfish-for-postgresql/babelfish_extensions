@@ -53,7 +53,6 @@ go
 select cast(((cast(18 as decimal) - cast(10.666666 as decimal(38,6)))/cast(10.666666 as decimal(38,6)))*100 as decimal(38,6))
 go
 
--- result should be upto correct scale
 select convert(decimal(38,6), 32)/convert(decimal(38,6), 3)
 go
 
@@ -107,6 +106,64 @@ go
 select c = (a/b) into babel_5467_t3 from babel_5467_t2
 go
 select * from babel_5467_t3
+go
+
+-- tables with check constraints having expression which results in numeric
+create table babel_5467_t6(a decimal(38,6), b decimal(38,6), CHECK (a/b = 10.666666))
+go
+
+create table babel_5467_t7(a decimal(38,6), b decimal(38,6), CHECK (a * b = 113.777763))
+go
+
+insert into babel_5467_t6 values(32, 3)
+go
+
+insert into babel_5467_t7 values(10.666666, 10.666666)
+go
+
+select * from babel_5467_t6
+go
+
+select * from babel_5467_t7
+go
+
+
+-- Tests with numeric expressions in where clause where with and without truncation results in different behaviour
+create table babel_5467_t9(a decimal(38,6), b decimal(38,6))
+go
+
+insert into babel_5467_t9 values(32, 3), (10.666666, 10.666666)
+go
+
+select * from babel_5467_t9 where a/b = 10.666666
+go
+
+select * from babel_5467_t9 where a/b = 32/3
+go
+
+select * from babel_5467_t9 where a*b = 113.777763
+go
+
+select * from babel_5467_t9 where a*b = 10.666666*10.666666
+go
+
+
+-- tests when result precision and scale is adjusted as precision value becomes more than MAX_PRECISION_VALUE which is 38
+-- -- result precision and scale such as (precision - scale > 38 && scale <= 6)
+-- -- -- initial precision = 46, scale = 6
+select (cast(32 as decimal(38,1)) / cast(3 as decimal(4,3))) as a, 
+        cast(32.123 as decimal(38,3)) * cast(3.12 as decimal(38,2)) as b, 
+        cast(32.2222 as decimal(38,4)) + cast(3.11111 as decimal(38,5)) as c,
+        cast(32.2222 as decimal(38,4)) - cast(3.11111 as decimal(38,5)) as d 
+into babel_5467_t8
+go
+
+select * from babel_5467_t8
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_t8' order by COLUMN_NAME
 go
 
 -- Testing on UDT
@@ -167,6 +224,7 @@ from information_schema.columns
 where TABLE_NAME = 'babel_5467_avgdata_udt_3' order by COLUMN_NAME
 go
 
+-- Tests for aggregates
 create table babel_5467_t4(a decimal(10,2), b decimal(15, 6), c decimal(8, 5))
 go
 
@@ -228,7 +286,6 @@ from information_schema.columns
 where TABLE_NAME = 'babel_5467_avgdata_8' order by COLUMN_NAME
 go
 
--- Tests for aggregates
 CREATE TABLE babel_5467_t5 (id integer PRIMARY KEY, amount decimal(38,6));
 GO
 
@@ -258,6 +315,67 @@ GO
 SELECT ((avg(cast(18 as decimal)) - avg(amount))/avg(amount))*100 FROM babel_5467_t5;
 GO
 
+-- Tests aggregates with local variables
+declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
+select avg(@a) as p, avg(@b) as q, avg(@c) as r, avg(@a+@c) as s into babel_5467_avgdata_9
+go
+
+declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
+select min(@a) as p, min(@b) as q, min(@c) as r, min(@a+@c) as s into babel_5467_avgdata_10
+go
+
+declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
+select max(@a) as p, max(@b) as q, max(@c) as r, max(@a+@c) as s into babel_5467_avgdata_11
+go
+
+declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
+select sum(@a) as p, sum(@b) as q, sum(@c) as r, sum(@a+@c) as s into babel_5467_avgdata_12
+go
+
+declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
+select count(@a) as p, count(@b) as q, count(@c) as r, count(@a+@c) as s into babel_5467_avgdata_13
+go
+
+select * from babel_5467_avgdata_9
+go
+
+select * from babel_5467_avgdata_10
+go
+
+select * from babel_5467_avgdata_11
+go
+
+select * from babel_5467_avgdata_12
+go
+
+select * from babel_5467_avgdata_13
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_9' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_10' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_11' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_12' order by COLUMN_NAME
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5467_avgdata_13' order by COLUMN_NAME
+go
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -271,11 +389,20 @@ drop table babel_5467_avgdata_5
 drop table babel_5467_avgdata_6
 drop table babel_5467_avgdata_7
 drop table babel_5467_avgdata_8
+drop table babel_5467_avgdata_9
+drop table babel_5467_avgdata_10
+drop table babel_5467_avgdata_11
+drop table babel_5467_avgdata_12
+drop table babel_5467_avgdata_13
 drop table babel_5467_t1
 drop table babel_5467_t2
 drop table babel_5467_t3
 drop table babel_5467_t4
 drop table babel_5467_t5
+drop table babel_5467_t6
+drop table babel_5467_t7
+drop table babel_5467_t8
+drop table babel_5467_t9
 go
 
 drop type DECIMALUDT_38_6
