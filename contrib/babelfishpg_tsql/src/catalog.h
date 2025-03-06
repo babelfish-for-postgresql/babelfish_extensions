@@ -115,7 +115,6 @@ extern int	namespace_ext_num_cols;
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
 extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
 
-
 /*****************************************
  *			LOGIN EXT
  *****************************************/
