@@ -1707,12 +1707,13 @@ revoke_create_privilege_from_guest_user_db(char *dbname)
 	Oid save_userid;
 	int save_sec_context;
 	int pltsql_save_nestlevel;
-	int save_nestlevel;
 	MigrationMode mode;	
+	Node *stmt;
+	List *stmt_list;
+	int i = 0;
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
-	save_nestlevel = NewGUCNestLevel();
 
 	PG_TRY();
 	{
@@ -1733,10 +1734,14 @@ revoke_create_privilege_from_guest_user_db(char *dbname)
 		if (physical_schema != NULL && guest_role != NULL)
 		{
 			initStringInfo(&query);
+
 			/* Revoke CREATE from guest on the specified schema */
-			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA %s FROM %s; ", 
-							 quote_identifier(physical_schema), 
-							 quote_identifier(guest_role));
+			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+
+			stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+			stmt = parsetree_nth_stmt(stmt_list, i++);
+			update_GrantStmt(stmt, quote_identifier(physical_schema), NULL, quote_identifier(guest_role), NULL);
+
 			/* Execute the query */
 			exec_utility_cmd_helper(query.data);
 			pfree(query.data);
@@ -1747,7 +1752,6 @@ revoke_create_privilege_from_guest_user_db(char *dbname)
 	{
 		/* Revert GUC settings */
 		pltsql_revert_guc(pltsql_save_nestlevel);
-		AtEOXact_GUC(false, save_nestlevel);
 
 		if (physical_schema)
 			pfree(physical_schema);
