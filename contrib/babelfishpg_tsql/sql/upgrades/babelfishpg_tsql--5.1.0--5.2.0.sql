@@ -549,18 +549,17 @@ SELECT
    CAST(0 AS int) AS major_id,
    CAST(0 AS int) AS minor_id,
    CAST(Base.oid AS INT) AS grantee_principal_id,
-   CAST(Master.oid AS INT) AS grantor_principal_id,
+   CAST((SELECT datdba FROM pg_database WHERE datname = CURRENT_DATABASE()) AS INT) AS grantor_principal_id,
    CAST('COSQ' AS sys.BPCHAR(4)) AS type,
    CAST('CONNECT SQL' AS sys.nvarchar(128)) AS permission_name,
    CAST('G' AS sys.BPCHAR(1)) AS state,
    CAST('GRANT' AS sys.nvarchar(60)) AS state_desc 
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
-INNER JOIN pg_catalog.pg_roles AS Master ON Master.rolname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) 
 WHERE (pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
     OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
     OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
-    OR Base.rolname = Master.rolname)
+    OR Base.rolname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()))
     AND Ext.type IN ('S', 'U');
    
 GRANT SELECT ON sys.server_permissions TO PUBLIC;
@@ -583,25 +582,18 @@ SELECT
   CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
   CAST(Base.oid As INT) AS principal_id,
   CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
-  CAST(Ext.type AS sys.BPCHAR(1)) COLLATE sys.database_default AS type, 
-  CAST(
-    CASE
-      WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
-      WHEN Ext.type = 'R' THEN 'SERVER_ROLE' 
-      WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN' 
-      ELSE NULL 
-    END 
-    AS sys.NVARCHAR(60)) AS type_desc, 
+  CAST('S' AS sys.BPCHAR(1)) AS type, 
+  CAST('SQL_LOGIN' AS sys.NVARCHAR(60)) AS type_desc, 
   CAST(Ext.is_disabled AS INT) AS is_disabled,
   CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
   CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+  CAST(Ext.default_database_name AS SYS.SYSNAME) AS default_database_name,
   CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+  CAST(Ext.credential_id AS INT) AS credential_id,
   CAST(
     CASE 
-      WHEN Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default THEN 1 
-      ELSE 0 
+      WHEN Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default THEN 0
+      ELSE 1
     END 
     AS sys.BIT) AS is_policy_checked,
   CAST(0 AS sys.BIT) AS is_expiration_checked,
