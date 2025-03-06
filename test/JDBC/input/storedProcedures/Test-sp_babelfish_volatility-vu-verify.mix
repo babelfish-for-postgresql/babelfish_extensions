@@ -303,8 +303,6 @@ sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
 go
 sp_babelfish_volatility
 go
-drop function test_sp_babelfish_volatility_f1
-go
 
 -- tsql
 use test_sp_babelfish_volatility_db1
