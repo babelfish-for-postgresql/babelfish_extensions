@@ -1742,8 +1742,6 @@ revoke_create_privilege_from_guest_user_db(char *dbname)
 			stmt = parsetree_nth_stmt(stmt_list, i++);
 			update_GrantStmt(stmt, quote_identifier(physical_schema), NULL, quote_identifier(guest_role), NULL);
 
-			/* Execute the query */
-			exec_utility_cmd_helper(query.data);
 			pfree(query.data);
 		}
 
