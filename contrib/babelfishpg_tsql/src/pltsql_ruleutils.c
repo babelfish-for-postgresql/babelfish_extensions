@@ -1464,67 +1464,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				appendStringInfoChar(buf, ')');
 			}
 			break;
-			
-		case T_SQLValueFunction:
-			{
-				SQLValueFunction *svf = (SQLValueFunction *) node;
-
-				/*
-				 * Note: this code knows that typmod for time, timestamp, and
-				 * timestamptz just prints as integer.
-				 */
-				switch (svf->op)
-				{
-					case SVFOP_CURRENT_DATE:
-						appendStringInfoString(buf, "CURRENT_DATE");
-						break;
-					case SVFOP_CURRENT_TIME:
-						appendStringInfoString(buf, "CURRENT_TIME");
-						break;
-					case SVFOP_CURRENT_TIME_N:
-						appendStringInfo(buf, "CURRENT_TIME(%d)", svf->typmod);
-						break;
-					case SVFOP_CURRENT_TIMESTAMP:
-						appendStringInfoString(buf, "CURRENT_TIMESTAMP");
-						break;
-					case SVFOP_CURRENT_TIMESTAMP_N:
-						appendStringInfo(buf, "CURRENT_TIMESTAMP(%d)",
-										 svf->typmod);
-						break;
-					case SVFOP_LOCALTIME:
-						appendStringInfoString(buf, "LOCALTIME");
-						break;
-					case SVFOP_LOCALTIME_N:
-						appendStringInfo(buf, "LOCALTIME(%d)", svf->typmod);
-						break;
-					case SVFOP_LOCALTIMESTAMP:
-						appendStringInfoString(buf, "LOCALTIMESTAMP");
-						break;
-					case SVFOP_LOCALTIMESTAMP_N:
-						appendStringInfo(buf, "LOCALTIMESTAMP(%d)",
-										 svf->typmod);
-						break;
-					case SVFOP_CURRENT_ROLE:
-						appendStringInfoString(buf, "CURRENT_ROLE");
-						break;
-					case SVFOP_CURRENT_USER:
-						appendStringInfoString(buf, "CURRENT_USER");
-						break;
-					case SVFOP_USER:
-						appendStringInfoString(buf, "USER");
-						break;
-					case SVFOP_SESSION_USER:
-						appendStringInfoString(buf, "SESSION_USER");
-						break;
-					case SVFOP_CURRENT_CATALOG:
-						appendStringInfoString(buf, "CURRENT_CATALOG");
-						break;
-					case SVFOP_CURRENT_SCHEMA:
-						appendStringInfoString(buf, "CURRENT_SCHEMA");
-						break;
-				}
-			}
-			break;
 		
 		case T_SetToDefault:
 			appendStringInfoString(buf, "DEFAULT");
