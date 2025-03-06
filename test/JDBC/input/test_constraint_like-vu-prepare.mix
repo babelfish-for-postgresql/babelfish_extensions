@@ -154,7 +154,7 @@ GO
 CREATE TABLE BABEL_5608_vu_prepare_t12_2 (status varchar(10),CONSTRAINT chk_status CHECK (
         CASE 
             WHEN status LIKE 'act%' THEN 1
-            WHEN status LIKE'inactive' THEN 1
+            WHEN status LIKE 'inactive' THEN 1
             ELSE 0
         END = 1
     )
