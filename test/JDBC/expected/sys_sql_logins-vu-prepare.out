@@ -15,8 +15,8 @@ CREATE VIEW sys_sql_logins_vu_prepare_view AS
         sq.is_policy_checked, 
         sq.is_expiration_checked, 
         CASE 
-            WHEN sq.password_hash IS NULL THEN sq.password_hash 
-            ELSE CAST(123456789 AS VARBINARY(256))
+            WHEN sq.password_hash IS NULL THEN 'NULL' 
+            ELSE 'PASSWORD_HASH'
         END
     FROM sys.sql_logins AS sq
     WHERE sq.name like 'sys_sql_logins_vu_login%' OR sq.name = 'jdbc_user' 
