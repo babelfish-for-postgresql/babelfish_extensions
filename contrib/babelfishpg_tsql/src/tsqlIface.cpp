@@ -225,6 +225,7 @@ static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);	
 static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
+static antlr4::tree::TerminalNode *getTokenFromFunctionOption(TSqlParser::Function_optionContext* o);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -4130,11 +4131,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4147,11 +4144,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4183,11 +4176,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4200,11 +4189,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -9893,4 +9878,13 @@ CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
 	{
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", name.c_str()), lineNr, 0);
 	}
+}
+
+static antlr4::tree::TerminalNode *
+getTokenFromFunctionOption(TSqlParser::Function_optionContext* o) {
+    if (o->execute_as_clause())
+        return o->execute_as_clause()->CALLER();
+    if (o->inline_clause())
+        return o->inline_clause()->INLINE();
+    return o->SCHEMABINDING();
 }
