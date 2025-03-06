@@ -1470,9 +1470,9 @@ get_rule_expr(Node *node, deparse_context *context,
 				SQLValueFunction *svf = (SQLValueFunction *) node;
 
 				/*
-					* Note: this code knows that typmod for time, timestamp, and
-					* timestamptz just prints as integer.
-					*/
+				 * Note: this code knows that typmod for time, timestamp, and
+				 * timestamptz just prints as integer.
+				 */
 				switch (svf->op)
 				{
 					case SVFOP_CURRENT_DATE:
@@ -1489,7 +1489,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						break;
 					case SVFOP_CURRENT_TIMESTAMP_N:
 						appendStringInfo(buf, "CURRENT_TIMESTAMP(%d)",
-											svf->typmod);
+										 svf->typmod);
 						break;
 					case SVFOP_LOCALTIME:
 						appendStringInfoString(buf, "LOCALTIME");
@@ -1502,7 +1502,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						break;
 					case SVFOP_LOCALTIMESTAMP_N:
 						appendStringInfo(buf, "LOCALTIMESTAMP(%d)",
-											svf->typmod);
+										 svf->typmod);
 						break;
 					case SVFOP_CURRENT_ROLE:
 						appendStringInfoString(buf, "CURRENT_ROLE");
@@ -1524,7 +1524,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						break;
 				}
 			}
-		break;
+			break;
 		
 		case T_SetToDefault:
 			appendStringInfoString(buf, "DEFAULT");
