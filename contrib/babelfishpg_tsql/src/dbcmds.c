@@ -1699,64 +1699,51 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 }
 
 static void
-revoke_create_privilege_from_guest_user_db(char *dbname)
+exec_revoke_create_privilege_from_guest_user_db(List *stmt_list, char *physical_schema, char *guest_role)
 {
-	char *physical_schema = NULL;
-	const char *guest_role = NULL;
-	StringInfoData query;
+	Node *stmts;
 	Oid save_userid;
 	int save_sec_context;
-	int pltsql_save_nestlevel;
-	MigrationMode mode;	
-	Node *stmt;
-	List *stmt_list;
 	int i = 0;
+	ListCell	*parsetree_item;
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmts, quote_identifier(physical_schema), NULL, quote_identifier(guest_role), NULL);
 
 	PG_TRY();
 	{
-		/* Set the SQL dialect to TSQL first */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						 GUC_CONTEXT_CONFIG,
-						 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		/* Now that the SQL dialect is set, determine the migration mode */
-		mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;	
-
-		/* Get the physical schema name for the guest schema */
-		physical_schema = get_physical_schema_name_by_mode(dbname, "guest", mode);
-
-		/* Get the guest role name */
-		guest_role = get_guest_role_name(dbname);	
-	
-		if (physical_schema != NULL && guest_role != NULL)
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		/* Run the subcommand */
+		foreach(parsetree_item, stmt_list)
 		{
-			initStringInfo(&query);
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;	
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;	
 
-			/* Revoke CREATE from guest on the specified schema */
-			appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
-
-			stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-			stmt = parsetree_nth_stmt(stmt_list, i++);
-			update_GrantStmt(stmt, quote_identifier(physical_schema), NULL, quote_identifier(guest_role), NULL);
-
-			pfree(query.data);
+			/* do this step */
+			ProcessUtility(wrapper,
+						 ALTER_DEFAULT_PRIVILEGES,
+						 false,
+						 PROCESS_UTILITY_SUBCOMMAND,
+						 NULL,
+						 NULL,
+						 None_Receiver,
+						 NULL);
 		}
-
+		CommandCounterIncrement();
 	}
 	PG_FINALLY();
 	{
-		/* Revert GUC settings */
-		pltsql_revert_guc(pltsql_save_nestlevel);
-
-		if (physical_schema)
-			pfree(physical_schema);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 	PG_END_TRY();
-
-	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
@@ -1774,11 +1761,49 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum	db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
-						     db_rel->rd_att, &is_null);
-		char 	*db_name = TextDatumGetCString(db_name_datum);
-
-		revoke_create_privilege_from_guest_user_db(db_name);
+		Datum			db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+									db_rel->rd_att, &is_null);
+		char 			*db_name = TextDatumGetCString(db_name_datum);
+		char 			*physical_schema = NULL;
+		const char 		*guest_role = NULL;
+		StringInfoData 	query;
+		int 			pltsql_save_nestlevel;
+		MigrationMode 	mode; 
+		List 			*stmt_list;
+	
+		pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	
+		PG_TRY();
+		{
+			/* Set the SQL dialect to TSQL first */
+			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							 GUC_CONTEXT_CONFIG,
+							 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);	
+			/* Now that the SQL dialect is set, determine the migration mode */
+			mode = is_user_database_singledb(db_name) ? SINGLE_DB : MULTI_DB;	
+			/* Get the physical schema name for the guest schema */
+			physical_schema = get_physical_schema_name_by_mode(db_name, "guest", mode);
+			/* Get the guest role name */
+			guest_role = get_guest_role_name(db_name); 
+	
+			if (physical_schema != NULL && guest_role != NULL)
+			{
+				initStringInfo(&query);
+				/* Revoke CREATE from guest on the specified schema */
+				appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+				stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	
+				exec_revoke_create_privilege_from_guest_user_db(stmt_list, physical_schema, guest_role);
+				pfree(query.data);
+			}
+		}
+		PG_FINALLY();
+		{
+			pltsql_revert_guc(pltsql_save_nestlevel);
+			if (physical_schema)
+				pfree(physical_schema);
+		}
+		PG_END_TRY();
 
 		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
