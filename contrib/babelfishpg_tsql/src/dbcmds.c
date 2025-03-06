@@ -1762,7 +1762,7 @@ Datum
 revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 {
 	Relation		db_rel;
-	TableScanDesc	scan;
+	TableScanDesc		scan;
 	HeapTuple		tuple;
 	bool			is_null;
 
@@ -1772,9 +1772,9 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
-												 db_rel->rd_att, &is_null);
-		char *db_name = TextDatumGetCString(db_name_datum);
+		Datum	db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+						     db_rel->rd_att, &is_null);
+		char 	*db_name = TextDatumGetCString(db_name_datum);
 
 		revoke_create_privilege_from_guest_user_db(db_name);
 
