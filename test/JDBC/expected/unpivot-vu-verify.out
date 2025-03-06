@@ -1233,12 +1233,10 @@ int#!#int#!#varchar
 
 -- ERROR CONDITIONS
     -- Column names clashing (ambiguous usage)
-        -- Test: Basic join with SELECT *
-SELECT * 
+        -- Test: Join with specific columns with potential conflict
+SELECT customer_id, customer_desc, turnover, time_period, history_id, q1, q3 
 FROM customer_turnover 
-UNPIVOT (
-    turnover FOR quarter IN (q1, q2, q3, q4)
-) AS unpvt 
+UNPIVOT (turnover FOR time_period IN (q1, q2, q3, q4)) AS unpvt 
 JOIN customer_history t2 ON unpvt.customer_id = t2.customer_id;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -1246,17 +1244,20 @@ GO
 ~~ERROR (Message: column reference "customer_id" is ambiguous)~~
 
 
-        -- Test: Join with specific columns but still potential conflict
-SELECT t1.customer_id, t2.history_id, turnover, quarter 
-FROM customer_turnover t1 
-JOIN customer_history t2 ON t1.customer_id = t2.customer_id 
-UNPIVOT (
-    turnover FOR quarter IN (q1, q2, q3, q4)
-) AS unpvt;
+    -- Unpivot without mandatory alias
+SELECT * FROM customer_turnover UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: VALUES could not convert type date to integer)~~
+~~ERROR (Message: syntax error at end of input)~~
+
+
+    -- Using reserved keywords
+SELECT * FROM customer_turnover UNPIVOT (select FOR from IN (q1, q2)) AS u;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'select' at line 2 and character position 41)~~
 
 
 -- Edge Cases

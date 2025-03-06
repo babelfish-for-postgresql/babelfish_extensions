@@ -18,11 +18,6 @@
 #include "src/multidb.h"
 #include "src/tsql_for/tsql_for.h"
 
-// #include "nodes/nodes.h"
-// #include "nodes/parsenodes.h"
-// #include "nodes/value.h"
-// #include "parser/parse_node.h"
-
 #define MD5_HASH_LEN 32
 
 static void pgtsql_base_yyerror(YYLTYPE * yylloc, core_yyscan_t yyscanner, const char *msg);

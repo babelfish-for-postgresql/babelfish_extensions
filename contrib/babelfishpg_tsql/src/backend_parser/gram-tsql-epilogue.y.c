@@ -1820,11 +1820,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = palloc0(4);
-	//CWE-676,120 - Insecure Buffer Access -HIGH VULN
 	strncpy(rt->name, "xml", 3);
-	//Instead, use
-	// strlcpy(rt->name, "xml", 4); // #include <string.h>
-	// or explicitly assign termination symbol in the end
 	rt->indirection = NIL;
 	rt->val = (Node *) fc;
 	rt->location = -1;
@@ -1907,12 +1903,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause)
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = palloc0(5);
-	// CWE-676,120 - Insecure Buffer Access -HIGH VULN
 	strncpy(rt->name, "json", 4);
-	//Instead, use
-	// strlcpy(rt->name, "json", 5); // #include <string.h>
-	// or explicitly assign termination symbol in the end
-
 	rt->indirection = NIL;
 	rt->val = (Node *) fc;
 	rt->location = -1;
@@ -2245,7 +2236,7 @@ tsql_unpivot_transformation(List *components)
 	
 	n->jointype = JOIN_INNER;
 	n->isNatural = false;
-	//source_alias = "invalid_default_alias"; /* Will be overwritten or error thrown */ 
+
 	/* Set up left side with alias if not present */
 	source_alias = get_unpivot_source_alias(table_ref);
 
@@ -2259,7 +2250,8 @@ tsql_unpivot_transformation(List *components)
 	/* Build VALUES list from unpivot source columns */
 	foreach(lc, source_cols)
 	{
-		// TODO: needs to be llast if aliases are used in values list, ex c.q1
+		// Future enhancement: Handle aliased unpivot source columns syntax
+		// solution: lfirst needs to be llast if aliases are used in values list, ex c.q1
 		String *col_name = (String *)lfirst(lc);
 		List *value_pair;
 		ColumnRef *col_ref;
@@ -2285,22 +2277,15 @@ tsql_unpivot_transformation(List *components)
 	rarg->subquery = (Node *)values_subquery;
 	
 	/* Handle alias for Join-Values (RangeSubSelect) clause 
-	basically, replace unpivot_alias with unpivot_alias_XXXXXX */
+	basically, replace unpivot_alias with unpivot_alias_XXXXXX 
+	Note: alias cannot be null due to rule having (non-optional) alias_clause */
 	inner_alias_name = generate_unpivot_source_table_alias(alias->aliasname);
-	if (alias != NULL)
-	{
-		rarg->alias = makeAlias(inner_alias_name, list_make2(
-			makeString(measure_colname),
-			makeString(dim_colname)
-			)
-		);
-	}
-	else
-	{
-		ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("Alias for UNPIVOT operation is required.")));
-	}
+
+	rarg->alias = makeAlias(inner_alias_name, list_make2(
+		makeString(measure_colname),
+		makeString(dim_colname)
+		)
+	);
 	
 	n->rarg = (Node *)rarg;
 	n->usingClause = NIL;

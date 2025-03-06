@@ -724,22 +724,19 @@ GO
 -- ERROR CONDITIONS
 
     -- Column names clashing (ambiguous usage)
-        -- Test: Basic join with SELECT *
-SELECT * 
+        -- Test: Join with specific columns with potential conflict
+SELECT customer_id, customer_desc, turnover, time_period, history_id, q1, q3 
 FROM customer_turnover 
-UNPIVOT (
-    turnover FOR quarter IN (q1, q2, q3, q4)
-) AS unpvt 
+UNPIVOT (turnover FOR time_period IN (q1, q2, q3, q4)) AS unpvt 
 JOIN customer_history t2 ON unpvt.customer_id = t2.customer_id;
 GO
 
-        -- Test: Join with specific columns but still potential conflict
-SELECT t1.customer_id, t2.history_id, turnover, quarter 
-FROM customer_turnover t1 
-JOIN customer_history t2 ON t1.customer_id = t2.customer_id 
-UNPIVOT (
-    turnover FOR quarter IN (q1, q2, q3, q4)
-) AS unpvt;
+    -- Unpivot without mandatory alias
+SELECT * FROM customer_turnover UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4));
+GO
+
+    -- Using reserved keywords
+SELECT * FROM customer_turnover UNPIVOT (select FOR from IN (q1, q2)) AS u;
 GO
 
 -- Edge Cases
