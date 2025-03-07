@@ -8,14 +8,10 @@
 USE master
 GO
 
-SELECT user_name()
-GO
 
 CREATE TABLE babel_2571_table1(a int, b int)
 GO
 
-CREATE TABLE guest.babel_2571_gt(a int);
-GO
 
 CREATE LOGIN babel_2571_login1 WITH password='12345678'
 GO
@@ -24,6 +20,12 @@ CREATE DATABASE babel_2571_db1
 GO
 
 USE babel_2571_db1
+GO
+
+SELECT user_name()
+GO
+
+CREATE TABLE guest.babel_2571_gt(a int);
 GO
 
 GRANT CONNECT TO guest
@@ -44,6 +46,9 @@ GO
 -- Login as guest to show default schema is guest
 -- tsql         user=babel_2571_login1 password=12345678
 SELECT schema_name()
+GO
+
+USE babel_2571_db1
 GO
 
 SELECT user_name()
@@ -68,9 +73,6 @@ TRUNCATE TABLE guest.babel_2571_gt;
 GO
 
 drop table guest.babel_2571_gt
-GO
-
-USE babel_2571_db1
 GO
 
 CREATE TABLE babel_2571_table2(a int, b int)
