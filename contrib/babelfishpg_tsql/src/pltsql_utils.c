@@ -2663,6 +2663,7 @@ exec_database_roles_subcmds(const char *schema)
 		pfree(db_ddladmin);
 		pfree(dbo_role);
 		pfree(db_owner);
+		pfree(guest_role);
 	}
 	PG_END_TRY();
 	pfree(query.data);

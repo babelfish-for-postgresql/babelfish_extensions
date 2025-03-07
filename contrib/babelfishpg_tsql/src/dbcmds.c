@@ -1699,17 +1699,13 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 }
 
 static void
-exec_revoke_create_privilege_from_guest_user_db(List *stmt_list, char *physical_schema, char *guest_role)
+exec_revoke_create_privilege_from_guest_user(List *stmt_list)
 {
-	Node *stmts;
 	Oid save_userid;
 	int save_sec_context;
-	int i = 0;
 	ListCell	*parsetree_item;
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	stmts = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmts, quote_identifier(physical_schema), NULL, quote_identifier(guest_role), NULL);
 
 	PG_TRY();
 	{
@@ -1765,11 +1761,12 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 									db_rel->rd_att, &is_null);
 		char 			*db_name = TextDatumGetCString(db_name_datum);
 		char 			*physical_schema = NULL;
-		char 		*guest_role = NULL;
-		StringInfoData 	query;
+		char 			*guest_role = NULL;
+		StringInfoData 		query;
 		int 			pltsql_save_nestlevel;
-		MigrationMode 	mode; 
+		MigrationMode 		mode; 
 		List 			*stmt_list;
+		Node 			*stmt;
 	
 		pltsql_save_nestlevel = pltsql_new_guc_nest_level();
 	
@@ -1792,8 +1789,10 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 				/* Revoke CREATE from guest on the specified schema */
 				appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
 				stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+				stmt = parsetree_nth_stmt(stmt_list, 0);
+				update_GrantStmt(stmt, physical_schema, NULL, guest_role, NULL);
 	
-				exec_revoke_create_privilege_from_guest_user_db(stmt_list, physical_schema, guest_role);
+				exec_revoke_create_privilege_from_guest_user(stmt_list);
 				pfree(query.data);
 			}
 		}
@@ -1802,6 +1801,8 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 			pltsql_revert_guc(pltsql_save_nestlevel);
 			if (physical_schema)
 				pfree(physical_schema);
+			if(guest_role)
+				pfree(guest_role);
 		}
 		PG_END_TRY();
 
