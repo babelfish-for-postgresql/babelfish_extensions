@@ -711,13 +711,6 @@ CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
-
-
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
 RETURNS sys.nvarchar(128) 
 AS $$ 
@@ -785,4 +778,11 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
+
+
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
