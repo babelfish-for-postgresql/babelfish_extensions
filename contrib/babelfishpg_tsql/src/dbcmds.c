@@ -1701,45 +1701,32 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 static void
 exec_revoke_create_privilege_from_guest_user(List *stmt_list)
 {
-	Oid save_userid;
-	int save_sec_context;
 	ListCell	*parsetree_item;
 
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-
-	PG_TRY();
+	/* Run the subcommand */
+	foreach(parsetree_item, stmt_list)
 	{
-		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		/* Run the subcommand */
-		foreach(parsetree_item, stmt_list)
-		{
-			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-			PlannedStmt *wrapper;	
-			/* need to make a wrapper PlannedStmt */
-			wrapper = makeNode(PlannedStmt);
-			wrapper->commandType = CMD_UTILITY;
-			wrapper->canSetTag = false;
-			wrapper->utilityStmt = stmt;
-			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 0;	
+		Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;	
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;	
+		/* do this step */
+		ProcessUtility(wrapper,
+					 ALTER_DEFAULT_PRIVILEGES,
+					 false,
+					 PROCESS_UTILITY_SUBCOMMAND,
+					 NULL,
+					 NULL,
+					 None_Receiver,
+					 NULL);
+	}
+	CommandCounterIncrement();
 
-			/* do this step */
-			ProcessUtility(wrapper,
-						 ALTER_DEFAULT_PRIVILEGES,
-						 false,
-						 PROCESS_UTILITY_SUBCOMMAND,
-						 NULL,
-						 NULL,
-						 None_Receiver,
-						 NULL);
-		}
-		CommandCounterIncrement();
-	}
-	PG_FINALLY();
-	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-	}
-	PG_END_TRY();
 }
 
 PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
@@ -1753,9 +1740,8 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
-	tuple = heap_getnext(scan, ForwardScanDirection);
 
-	while (HeapTupleIsValid(tuple))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Datum			db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
 									db_rel->rd_att, &is_null);
@@ -1782,7 +1768,17 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 			physical_schema = get_physical_schema_name_by_mode(db_name, "guest", mode);
 			/* Get the guest role name */
 			guest_role = get_guest_role_name(db_name); 
-	
+
+			if (physical_schema == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						 errmsg("Guest schema does not exist in database \"%s\"", db_name)));
+
+			if (guest_role == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("Guest role does not exist in database \"%s\"", db_name)));
+
 			if (physical_schema != NULL && guest_role != NULL)
 			{
 				initStringInfo(&query);
@@ -1799,14 +1795,15 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 		PG_FINALLY();
 		{
 			pltsql_revert_guc(pltsql_save_nestlevel);
-			if (physical_schema)
-				pfree(physical_schema);
-			if(guest_role)
-				pfree(guest_role);
 		}
 		PG_END_TRY();
 
 		pfree(db_name);
+		if (physical_schema)
+			pfree(physical_schema);
+		if(guest_role)
+			pfree(guest_role);
+
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);
