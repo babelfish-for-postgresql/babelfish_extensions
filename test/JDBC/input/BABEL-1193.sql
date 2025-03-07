@@ -123,8 +123,9 @@ GO
 -- functions
 select upper(cast (1 as smallint)), upper(cast (1 as int)), upper(cast (1 as bigint)), upper(cast (1 as real)), upper(cast (1 as float)), upper(cast (2.1 as numeric(2,1))), upper(cast (1 as smallmoney)), upper(cast (1 as money));
 GO
-select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
-GO
+-- this test is moved to round-return-type.sql
+-- select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
+-- GO
 
 DROP TABLE t1;
 GO
