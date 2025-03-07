@@ -25,7 +25,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -63,7 +62,6 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/guc_tables.h"
 #include "utils/lsyscache.h"
 #include "utils/plancache.h"
@@ -2649,10 +2647,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							isSameProc = false;
 							CommandCounterIncrement();
 						}
-						else
+						else if (!isSameProc) /* i.e. different signature */
 						{
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
-							CommandCounterIncrement();
 						}
 
 						if(tbltypStmt)
@@ -2724,16 +2721,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 						/* Increase counter after bbf_func_ext modified in pltsql_store_func_default_positions*/
 						CommandCounterIncrement();
-						if (oldoid != address.objectId)
-						{
-							pg_proc_update_oid_acl(address, oldoid, proacl);
+						pg_proc_update_oid_acl(address, oldoid, proacl);
+						if (!isSameProc) {
+						       /*
+							* When the signatures differ we need to manually update the 'function_args' column in 
+							* the 'bbf_schema_permissions' catalog
+							*/
 							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype, oldoid);
 						}
-						/*
-						* When the signatures differ we need to manually update the 'function_args' column in 
-						* the 'bbf_schema_permissions' catalog
-						*/
 						/* Clean up table entries for the create function statement if applicable*/
+						if (address.objectId != oldoid)
+						{
+							/*
+							 * if this is the same procedure, it'll update the existing one,
+							 * in such case, should not delete dependent records
+							 */
+							deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
+							deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
+							deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+						}
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
@@ -4796,10 +4802,8 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 static void
 pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 {
-	Relation		rel,depRel;
-	ScanKeyData 	key[2];
-	SysScanDesc 	scan;
-	HeapTuple		proctup, depTup;
+	Relation		rel;
+	HeapTuple		proctup;
 	Form_pg_proc	form_proctup;
 	char		*physical_schemaname;
 
@@ -4849,53 +4853,6 @@ pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
 	heap_freetuple(newtup);
 
 	table_close(rel, RowExclusiveLock);
-
-	depRel = table_open(DependRelationId, RowExclusiveLock);
-	
-	ScanKeyInit(&key[0],
-		Anum_pg_depend_objid,
-		BTEqualStrategyNumber, F_OIDEQ,
-		ObjectIdGetDatum(address.objectId));
-	ScanKeyInit(&key[1],
-		Anum_pg_depend_refobjid,
-		BTEqualStrategyNumber, F_OIDEQ,
-		ObjectIdGetDatum(address.objectId));
-
-	scan = systable_beginscan(depRel, InvalidOid, false,
-					  NULL, 2, key);
-
-	while (HeapTupleIsValid(depTup = systable_getnext(scan)))
-	{
-		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(depTup);
-		Datum		dep_values[Natts_pg_depend];
-		bool		dep_nulls[Natts_pg_depend];
-		bool		dep_replaces[Natts_pg_depend];
-		HeapTuple	dep_newtup;
-	
-		if (foundDep->objid == address.objectId)
-		{
-			memset(dep_values, 0, sizeof(dep_values));
-			memset(dep_nulls, 0, sizeof(dep_nulls));
-			memset(dep_replaces, 0, sizeof(dep_replaces));
-			dep_values[Anum_pg_depend_objid - 1] = ObjectIdGetDatum(oid);
-			dep_replaces[Anum_pg_depend_objid - 1] = true;
-			dep_newtup = heap_modify_tuple(depTup, RelationGetDescr(depRel), dep_values, dep_nulls, dep_replaces);
-			CatalogTupleUpdate(depRel, &dep_newtup->t_self, dep_newtup);
-			heap_freetuple(dep_newtup);
-		}
-		if (foundDep->refobjid == address.objectId)
-		{
-			memset(dep_values, 0, sizeof(dep_values));
-			memset(dep_nulls, 0, sizeof(dep_nulls));
-			memset(dep_replaces, 0, sizeof(dep_replaces));
-			dep_values[Anum_pg_depend_refobjid - 1] = ObjectIdGetDatum(oid);
-			dep_replaces[Anum_pg_depend_refobjid - 1] = true;
-			dep_newtup = heap_modify_tuple(depTup, RelationGetDescr(depRel), dep_values, dep_nulls, dep_replaces);
-			CatalogTupleUpdate(depRel, &dep_newtup->t_self, dep_newtup);
-			heap_freetuple(dep_newtup);
-		}
-	}
-	table_close(depRel, RowExclusiveLock);
 }
 
 /*
