@@ -523,6 +523,196 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+-- SERVER_PRINCIPALS
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
+  OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+-- DATABASE_PRINCIPALS
+CREATE OR REPLACE VIEW sys.database_principals AS
+SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME()
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
+  OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(
+  CASE name
+    WHEN 'public' THEN 1
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_USER'
+    WHEN type = 'R' THEN 'DATABASE_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(-1 AS INT) AS owning_principal_id,
+CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(0 AS SYS.BIT) AS is_fixed_role,
+CAST(-1 AS INT) AS authentication_type,
+CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(-1 AS INT) AS default_language_lcid,
+CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
+
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- user_token
+CREATE OR REPLACE VIEW sys.user_token AS
+SELECT
+CAST(Base.oid AS INT) AS principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+WHEN Ext.type = 'R' THEN 'ROLE'
+ELSE 'SQL USER' END
+AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = sys.DB_NAME()
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
+((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
+UNION ALL
+SELECT
+CAST(1 AS INT) AS principal_id,
+CAST(CAST(1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
+WHERE (SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo';
+
+GRANT SELECT ON sys.user_token TO PUBLIC;
+
+-- login_token
+CREATE OR REPLACE VIEW sys.login_token
+AS SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST(CASE
+WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+ELSE 'SQL LOGIN' END AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.orig_loginname = sys.suser_name()
+AND Ext.type in ('S','U')
+UNION ALL
+SELECT
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
+CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
+CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE Ext.type = 'R'
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid)
+UNION ALL
+SELECT
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
+
+
+GRANT SELECT ON sys.login_token TO PUBLIC;
+
+
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
