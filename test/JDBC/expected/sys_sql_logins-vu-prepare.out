@@ -19,7 +19,7 @@ CREATE VIEW sys_sql_logins_vu_prepare_view AS
             ELSE 'PASSWORD_HASH'
         END
     FROM sys.sql_logins AS sq
-    WHERE sq.name like 'sys_sql_logins_vu_login%' OR sq.name = 'jdbc_user' 
+    WHERE sq.name like 'sys_sql_logins_vu_login%' OR sq.name IN ('jdbc_user','public','sysadmin','securityadmin','dbcreator','bbf_role_admin')
     ORDER BY sq.name;
 GO
 

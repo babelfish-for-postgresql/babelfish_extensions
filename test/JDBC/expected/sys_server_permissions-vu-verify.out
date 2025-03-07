@@ -100,3 +100,57 @@ sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 ~~END~~
 
+
+-- tsql
+ALTER ROLE securityadmin add member sys_server_permissions_vu_login1
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+-- login with sysadmin and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member sys_server_permissions_vu_login2
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+-- login with sysadmin and dbcreator server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member sys_server_permissions_vu_login3
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+-- login with dbcreator and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+~~END~~
+
