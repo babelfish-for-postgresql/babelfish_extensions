@@ -452,7 +452,7 @@ $$;
 
 DO $$
 BEGIN
-IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'babelfish_partition_function' AND table_schema = 'sys' AND column_name = 'input_parameter_collation')
+IF NOT EXISTS(SELECT 1 FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relname = 'babelfish_partition_function' AND c.relnamespace::regnamespace::text = 'sys' AND a.attname = 'input_parameter_collation')
 THEN
     -- Add input_parameter_collation column in sys.babelfish_partition_function.
     SET allow_system_table_mods = on;
