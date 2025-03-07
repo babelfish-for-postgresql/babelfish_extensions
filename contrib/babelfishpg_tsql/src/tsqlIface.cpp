@@ -88,7 +88,7 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
-	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
+	extern bool check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name, List *ft_indexed_column_name);
 
 	extern int escape_hatch_showplan_all;
 
@@ -155,10 +155,10 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate = false);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx);
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List *column_name);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -3646,8 +3646,9 @@ static void process_query_specification(
 	}
 
 	bool is_freetext_predicate = false;
+	List *column_name = NULL;
 	if(qctx->where)
-		is_freetext_predicate = check_freetext_predicate(qctx->where);
+		is_freetext_predicate = check_freetext_predicate(qctx->where, column_name);
 
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
@@ -3656,7 +3657,7 @@ static void process_query_specification(
 	if (qctx->table_sources())
 	{
 		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
+			post_process_table_source(tctx, expr, baseCtx, column_name, is_freetext_predicate);
 	}
 
 	/* handle special alias syntax and quote alias */
@@ -7428,27 +7429,30 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List *column_name)
 {
     if (ctx && ctx->predicate_br().size() > 0)
 	{
         for (auto pred : ctx->predicate_br())
 		{
-            if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
-                return true;
-            if (pred && pred->search_condition()) {
-                if (check_freetext_predicate(pred->search_condition()))
-                    return true;
-            }
+		if (pred && pred->predicate() && pred->predicate()->freetext_predicate()){
+			for(auto col : pred->predicate()->freetext_predicate())
+			column_name = lappend(column_name, col);
+			return true;
+		}
+		if (pred && pred->search_condition()) {
+			if (check_freetext_predicate(pred->search_condition(), column_name))
+			return true;
+		}
         }
     }
     return false;
 }
 
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate)
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name, bool is_freetext_predicate)
 {
 	for (auto cctx : ctx->table_source_item())
-		post_process_table_source(cctx, expr, baseCtx, is_freetext_predicate);
+		post_process_table_source(cctx, expr, baseCtx, column_name, is_freetext_predicate);
 
 	std::string table_name = extractTableName(nullptr, ctx);
 
@@ -7499,6 +7503,11 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	if (is_freetext_predicate)
 	{
 		std::string schema_name = extractSchemaName(nullptr, ctx);
+		// List *ft_indexed_column_name = NULL;
+		// for(auto col : ictx->fulltext_index_column())
+		// {
+		// 	ft_indexed_column_name = lappend(ft_indexed_column_name, col);
+		// }
 		
 		/* Use the alias name if available, otherwise use the original table name */
 		if (alias_to_table_mapping.find(table_name) != alias_to_table_mapping.end())
@@ -7508,7 +7517,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		const char *s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
 		
 		/* Check if full-text index exists for the table, if not throw an error */
-		if (!check_fulltext_exist(const_cast<char *>(s_name), const_cast<char *>(t_name)))
+		if (!check_fulltext_exist(const_cast<char *>(s_name), const_cast<char *>(t_name), const_cast<List *>column_name, const_cast<List *>ft_indexed_column_name))
 			throw PGErrorWrapperException(ERROR, ERRCODE_RAISE_EXCEPTION, format_errmsg("Cannot use a CONTAINS or FREETEXT predicate on table or indexed view '%s' because it is not full-text indexed.", table_name.c_str()), getLineAndPos(ctx));
 	}
 }
