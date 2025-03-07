@@ -30,6 +30,7 @@
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
+#include "utils/varlena.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -135,6 +136,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 
 /* Enclose a user-defined @@var or @var# name in delimiters */
 static char *delimit_tsql_atatuservar(const char *src);
+static void set_search_path_for_sp_procs(char *schema);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -835,56 +837,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
-	bool		need_path_reset = false;
+	char 	*save_db_name = get_cur_db_name();
 
-	char	   *cur_dbname = get_cur_db_name();
-
-	/* fetch current search_path */
-	char	   *old_search_path = NULL;
-	char	   *new_search_path;
-	
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
-
-	estate->db_name = NULL;
-	if (stmt->proc_name == NULL)
-		stmt->proc_name = "";
-
-	if (stmt->is_cross_db)
-	{
-		estate->db_name = stmt->db_name;
-	}
-
-	/*
-	 * "sp_describe_first_result_set" needs special handling. It is a sys
-	 * function and satisfies the below condition and it appends "master_dbo"
-	 * to the search path which is not required for sys functions.
-	 */
-	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
-	{
-		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& ((stmt->schema_name == NULL || stmt->schema_name[0] == (char) '\0') || strcmp(stmt->schema_name, "dbo") == 0))
-		{
-			if (!old_search_path)
-			{
-				List	   *path_oids = fetch_search_path(false);
-
-				old_search_path = flatten_search_path(path_oids);
-				list_free(path_oids);
-			}
-			new_search_path = psprintf("%s, master_dbo", old_search_path);
-
-			/* Add master_dbo to the new search path */
-			(void) set_config_option("search_path", new_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-			need_path_reset = true;
-		}
-	}
-	if (stmt->schema_name != NULL && stmt->schema_name[0] != (char) '\0')
-		estate->schema_name = stmt->schema_name;
-	else
-		estate->schema_name = NULL;
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
@@ -912,6 +868,28 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* for EXEC as part of inline code under INSERT ... EXECUTE */
 		Tuplestorestate *tss;
 		DestReceiver *dest;
+
+		if (IS_TDS_CONN())
+		{
+			if (strncmp(stmt->proc_name, "sp_", 3) == 0 &&
+				(stmt->schema_name == NULL || strcmp(stmt->schema_name, "dbo") == 0))
+			{
+
+				if (stmt->db_name != NULL)
+					set_cur_user_db_and_path(stmt->db_name, false);
+
+				set_search_path_for_sp_procs(stmt->schema_name);
+			}
+			else if (stmt->db_name != NULL && strcmp(stmt->db_name, save_db_name) != 0 &&
+					 stmt->schema_name != NULL && strcmp(stmt->schema_name, "sys") == 0)
+			{
+				/*
+				 * For sys pltsql routines and sp_ procs switch to
+				 * the database specified while calling it.
+				 */
+				set_cur_user_db_and_path(stmt->db_name, false);
+			}
+		}
 
 		if (plan == NULL)
 			plan = prepare_stmt_exec(estate, estate->func, stmt, estate->atomic);
@@ -1290,20 +1268,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		if (need_path_reset)
-		{
-			/*
-			 * Note: there is no test case to validate restoring the search_path below.
-			 * In fact, we don't know whether this restore is even required, since removing the
-			 * call set_config_option("search_path") does not cause any test cases to fail.
-			 * Nevertheless we're keeping the code out of an abundance of caution.
-			 */
-			(void) set_config_option("search_path", old_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-		}
+		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
+			set_cur_user_db_and_path(save_db_name, false);
+
+		pfree(save_db_name);
 
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
@@ -1316,30 +1286,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			expr->plan = NULL;
 			SPI_freeplan(plan);
 		}
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	if (need_path_reset)
-	{
-		/*
-		 * Note: there is no test case to validate restoring the search_path below.
-		 * In fact, we don't know whether this restore is even required, since removing the
-		 * call set_config_option("search_path") does not cause any test cases to fail.
-		 * Nevertheless we're keeping the code out of an abundance of caution.
-		 */	
-		(void) set_config_option("search_path", old_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-	}
-
-	if (expr->plan && !expr->plan->saved)
-	{
-		SPIPlanPtr	plan = expr->plan;
-
-		expr->plan = NULL;
-		SPI_freeplan(plan);
-	}
 
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
@@ -1585,7 +1533,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		cur_db_name = get_cur_db_name();
 		if (strcmp(cur_db_name, old_db_name) != 0)
-			set_session_properties(old_db_name);
+			set_cur_user_db_and_path(old_db_name, false);
 	}
 	PG_END_TRY();
 
@@ -3109,11 +3057,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	/*
-	 * Same as set_session_properties() but skips checks as they were done
-	 * before locking
-	 */
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	top_es_entry = exec_state_call_stack->next;
 	while (top_es_entry != NULL)
@@ -3186,7 +3130,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 	/* error if new db is not valid and restore original db */
 	if (!DbidIsValid(new_db_id))
 	{
-		set_session_properties(initial_database_name);
+		set_cur_user_db_and_path(initial_database_name, true);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
@@ -3213,7 +3157,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	return PLTSQL_RC_OK;
 }
@@ -4653,4 +4597,24 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	/* make sure later statements in batch can see the updated catalog entry */
 	CommandCounterIncrement();
 	return PLTSQL_RC_OK;
+}
+
+static void
+set_search_path_for_sp_procs(char *schema)
+{
+	char 		*dbo_schema = get_dbo_schema_name(get_current_pltsql_db_name());
+	char 		*new_search_path;
+
+	if (schema != NULL && strcmp(schema, "dbo") == 0)
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						quote_identifier(dbo_schema), "master_dbo");
+	else
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						get_current_db_search_path(), "master_dbo");
+
+	SetConfigOption("search_path", new_search_path,
+					PGC_SUSET, PGC_S_SESSION);
+
+	pfree(new_search_path);
+	pfree(dbo_schema);
 }

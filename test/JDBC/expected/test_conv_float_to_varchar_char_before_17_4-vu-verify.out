@@ -49,49 +49,49 @@ GO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#                       123.456#!# 123.456                      #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#                      -123.456#!#-123.456                      #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#                             0#!# 0                            #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#                   10000000000#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#                             0#!# 0.000000                     #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#                 9999999999.99#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#                             0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456                       #!#123.456                       #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#-123.456                      #!#-123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0                             #!#0                             #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#10000000000                   #!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0                             #!#0.000000                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#9999999999.99                 #!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0                             #!#0.000000                      #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 ~~START~~
 char#!#char
-                       123.456#!# 123.456                      
+123.456                       #!#123.456                       
 ~~END~~
 
 ~~START~~
 char#!#char
-                      -123.456#!#-123.456                      
+-123.456                      #!#-123.456                      
 ~~END~~
 
 ~~START~~
 char#!#char
-                             0#!# 0                            
+0                             #!#0                             
 ~~END~~
 
 ~~START~~
 char#!#char
-                   10000000000#!#1e+10                         
+10000000000                   #!#1e+10                         
 ~~END~~
 
 ~~START~~
 char#!#char
-                             0#!# 0.000000                     
+0                             #!#0.000000                      
 ~~END~~
 
 ~~START~~
 char#!#char
-                 9999999999.99#!#1e+10                         
+9999999999.99                 #!#1e+10                         
 ~~END~~
 
 ~~START~~
 char#!#char
-                             0#!# 0.000000                     
+0                             #!#0.000000                      
 ~~END~~
 
 ~~START~~
@@ -121,12 +121,12 @@ SELECT float_char_f2('123.4567')
 GO
 ~~START~~
 varchar
-                      123.4567
+123.4567                      
 ~~END~~
 
 ~~START~~
 varchar
- 123.457                      
+123.457                       
 ~~END~~
 
 
@@ -182,19 +182,19 @@ GO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456#!# 123.456                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456#!#123.456                       #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#-123.456#!#-123.456                      #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0#!# 0                            #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0#!#0                             #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#10000000000#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0#!#0.000000                      #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#9999999999.99#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0#!# 0.000000                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0#!#0.000000                      #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 ~~START~~
 varchar#!#varchar
-123.456#!# 123.456                      
+123.456#!#123.456                       
 ~~END~~
 
 ~~START~~
@@ -204,7 +204,7 @@ varchar#!#varchar
 
 ~~START~~
 varchar#!#varchar
-0#!# 0                            
+0#!#0                             
 ~~END~~
 
 ~~START~~
@@ -214,7 +214,7 @@ varchar#!#varchar
 
 ~~START~~
 varchar#!#varchar
-0#!# 0.000000                     
+0#!#0.000000                      
 ~~END~~
 
 ~~START~~
@@ -224,7 +224,7 @@ varchar#!#varchar
 
 ~~START~~
 varchar#!#varchar
-0#!# 0.000000                     
+0#!#0.000000                      
 ~~END~~
 
 ~~START~~
@@ -260,7 +260,7 @@ varchar
 
 ~~START~~
 varchar
- 123.457                      
+123.457                       
 ~~END~~
 
 
@@ -341,6 +341,6 @@ SELECT cast(@flt1*@flt2 as varchar(30)),cast(@flt1/@flt2 as varchar(30)),cast(@f
 GO
 ~~START~~
 varchar#!#varchar#!#char#!#char
--71820.376206#!#-2.4e-05#!#                 -54234.107967#!#                      -2.4e-05
+-71820.376206#!#-2.4e-05#!#-54234.107967                 #!#-2.4e-05                      
 ~~END~~
 

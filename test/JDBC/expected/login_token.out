@@ -26,6 +26,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 jdbc_user#!#SQL LOGIN#!#GRANT OR DENY
+public#!#SERVER ROLE#!#GRANT OR DENY
 sysadmin#!#SERVER ROLE#!#GRANT OR DENY
 ~~END~~
 
@@ -36,6 +37,13 @@ nvarchar#!#nvarchar#!#nvarchar
 dbo#!#SQL USER#!#GRANT OR DENY
 ~~END~~
 
+select name, principal_id, sid, type,usage from sys.login_token where name = 'public'
+go
+~~START~~
+nvarchar#!#int#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#SERVER ROLE#!#GRANT OR DENY
+~~END~~
+
 
 -- tsql user=login_token1 password = 12345678
 select name, type, usage from sys.login_token order by name;
@@ -43,6 +51,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 login_token1#!#SQL LOGIN#!#GRANT OR DENY
+public#!#SERVER ROLE#!#GRANT OR DENY
 ~~END~~
 
 select name, type, usage from sys.user_token order by name;
@@ -60,6 +69,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 login_token2#!#SQL LOGIN#!#GRANT OR DENY
+public#!#SERVER ROLE#!#GRANT OR DENY
 ~~END~~
 
 select name, type, usage from sys.user_token order by name;
@@ -78,6 +88,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 login_token3#!#SQL LOGIN#!#GRANT OR DENY
+public#!#SERVER ROLE#!#GRANT OR DENY
 sysadmin#!#SERVER ROLE#!#GRANT OR DENY
 ~~END~~
 

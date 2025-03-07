@@ -1,0 +1,659 @@
+
+
+
+
+
+
+
+
+
+-- tsql
+-- In this test file we will test babelfish object resolution inside procedure functions and triggers
+-- At high level there are four cases to tests
+-- 1. CROSS DB routine calls
+-- 2. Same DB routine calls
+-- 3. CROSS DB non default user schema
+-- 4. Same DB non default user schema
+-- Then each case will be tested against subcases like
+-- 1. DMLs
+-- 2. DDLs
+-- 3. Cross databases objects references
+-- 4. EXEC procedure call statements
+-- 5. Other tsql statements
+-- Easiest way to test both db_context and search path in a single query
+-- is to have both schema specified and non schema specified object references in the query
+-- We can skip three part names because they have very straight forward handling and not dependant
+-- upon current active logical database or current search path (sp_procs are exception to this and test cases are present elsewhere)
+-- Another important case to test is scope handling
+-- This means that search path and current logical database value should be set and reset correctly 
+-- and we do not leak any of these values in any case
+-- For example a search path which was set inside the procedure should not be used for queries after the procedure has ended
+-- So we need tests cases like EXEC s1.p; SELECT * FROM t; and check if t is resolved correctly.
+/***************************************/
+/*************** SAME DB ***************/
+/***************************************/
+/******** SETUP ********/
+-- We will work with 3 schemas "dbo" <user_default_schema> & <some_other_schema>
+USE master
+GO
+CREATE SCHEMA babel_5448_user_default_schema
+GO
+CREATE SCHEMA babel_5448_s1
+GO
+CREATE SCHEMA babel_5448_s2
+GO
+
+-- Now create objects in all three schemas
+CREATE TABLE dbo.babel_5448_t (id NVARCHAR(max))
+GO
+CREATE TABLE babel_5448_user_default_schema.babel_5448_t (id NVARCHAR(max))
+GO
+CREATE TABLE babel_5448_s1.babel_5448_t (id NVARCHAR(max))
+GO
+
+INSERT INTO dbo.babel_5448_t VALUES ('master.dbo')
+INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('master.babel_5448_user_default_schema')
+INSERT INTO babel_5448_s1.babel_5448_t VALUES ('master.babel_5448_s1')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE dbo.babel_5448_p AS SELECT 'master.dbo' AS col1
+GO
+CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p AS SELECT 'master.babel_5448_user_default_schema' AS col1
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p AS SELECT 'master.babel_5448_s1' AS col1
+GO
+
+CREATE FUNCTION dbo.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'master.dbo';
+END
+GO
+
+CREATE FUNCTION babel_5448_user_default_schema.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'master.babel_5448_user_default_schema';
+END
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'master.babel_5448_s1';
+END
+GO
+
+CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN ' |-- function in -- master.babel_5448_s2 --| ';
+END
+GO
+
+-- Test declare statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f2() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @i NVARCHAR(MAX) = (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+    RETURN @i
+END
+GO
+
+-- Test return statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+END
+GO
+
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- master.babel_5448_s2 --| ' AS col1
+GO
+
+CREATE TRIGGER dbo.babel_5448_trigger
+ON dbo.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== master.dbo'
+    SELECT dbo.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== master.dbo'
+GO
+
+CREATE TRIGGER babel_5448_user_default_schema.babel_5448_trigger
+ON babel_5448_user_default_schema.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema'
+    SELECT babel_5448_user_default_schema.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== master.babel_5448_user_default_schema'
+GO
+
+CREATE TRIGGER babel_5448_s1.babel_5448_trigger
+ON babel_5448_s1.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== master.babel_5448_s1'
+    SELECT babel_5448_s1.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== master.babel_5448_s1'
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROC dbo.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_s1.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+/***************************************/
+/************** CROSS DB ***************/
+/***************************************/
+CREATE DATABASE babel_5448_db
+GO
+USE babel_5448_db
+GO
+CREATE SCHEMA babel_5448_user_default_schema
+GO
+CREATE SCHEMA babel_5448_s1
+GO
+CREATE SCHEMA babel_5448_s2
+GO
+
+-- Now create objects in all three schemas
+CREATE TABLE dbo.babel_5448_t (id NVARCHAR(max))
+GO
+CREATE TABLE babel_5448_user_default_schema.babel_5448_t (id NVARCHAR(max))
+GO
+CREATE TABLE babel_5448_s1.babel_5448_t (id NVARCHAR(max))
+GO
+
+INSERT INTO dbo.babel_5448_t VALUES ('babel_5448_db.dbo')
+INSERT INTO babel_5448_user_default_schema.babel_5448_t VALUES ('babel_5448_db.babel_5448_user_default_schema')
+INSERT INTO babel_5448_s1.babel_5448_t VALUES ('babel_5448_db.babel_5448_s1')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE dbo.babel_5448_p AS SELECT 'babel_5448_db.dbo' AS col1
+GO
+CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p AS SELECT 'babel_5448_db.babel_5448_user_default_schema' AS col1
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p AS SELECT 'babel_5448_db.babel_5448_s1' AS col1
+GO
+
+CREATE FUNCTION dbo.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'babel_5448_db.dbo';
+END
+GO
+
+CREATE FUNCTION babel_5448_user_default_schema.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'babel_5448_db.babel_5448_user_default_schema';
+END
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN 'babel_5448_db.babel_5448_s1';
+END
+GO
+
+CREATE FUNCTION babel_5448_s2.babel_5448_f() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN ' |-- function in -- babel_5448_db.babel_5448_s2 --| ';
+END
+GO
+
+-- Test declare statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f2() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @i NVARCHAR(MAX) = (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+    RETURN @i
+END
+GO
+
+-- Test return statement inside function
+CREATE FUNCTION babel_5448_s1.babel_5448_f3() RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN (SELECT id FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1));
+END
+GO
+
+CREATE VIEW babel_5448_s2.babel_5448_v AS SELECT ' |-- view in -- babel_5448_db.babel_5448_s2 --| ' AS col1
+GO
+
+CREATE TRIGGER dbo.babel_5448_trigger
+ON dbo.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== babel_5448_db.dbo'
+    SELECT dbo.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== babel_5448_db.dbo'
+GO
+
+CREATE TRIGGER babel_5448_user_default_schema.babel_5448_trigger
+ON babel_5448_user_default_schema.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema'
+    SELECT babel_5448_user_default_schema.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_user_default_schema'
+GO
+
+CREATE TRIGGER babel_5448_s1.babel_5448_trigger
+ON babel_5448_s1.babel_5448_t
+AFTER INSERT AS
+    SELECT '=========== START OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1'
+    SELECT babel_5448_s1.babel_5448_f();
+    SELECT * FROM babel_5448_t;
+    SELECT '=========== END OF TRIGGER EXECUTION ========== babel_5448_db.babel_5448_s1'
+GO
+
+CREATE PROCEDURE dbo.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROCEDURE babel_5448_user_default_schema.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p1
+AS
+    SELECT babel_5448_f(), * FROM babel_5448_t;
+    -- EXEC call should still resolve to dbo.babel_5448_p
+    EXEC babel_5448_p;
+    INSERT INTO babel_5448_t VALUES ('temp inserted row to check DML and trigger executiong');
+    DELETE FROM babel_5448_t WHERE length(id) > 50;
+    -- CHECK IF ROW WAS DELETED FROM THE RIGHT TABLE
+    SELECT * FROM babel_5448_t;
+GO
+
+CREATE PROC dbo.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_user_default_schema.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE PROC babel_5448_s1.babel_5448_p2 AS
+    SELECT babel_5448_f(), babel_5448_s2.babel_5448_f(), * FROM
+        babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+
+
+/************************************************************************************************/
+/************************** START OF TRANSACTION AND ERROR **************************************/
+/*********************** CASES TESTING WITH OBJECT RESOLUTION ***********************************/
+/************************************************************************************************/
+-- create procedures functions which will throw different levels of error
+-- and check if search path correctly updated
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p5 
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT 1/0;
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p6
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    CREATE TABLE #temp (id INT, id1 AS id*2);
+    ALTER TABLE #temp ADD CONSTRAINT def DEFAULT 1 FOR id1;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p7
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM non_existent_table;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f4() RETURNS INT
+AS
+    BEGIN
+        DECLARE @table_var TABLE(id INT);
+        INSERT INTO @table_var VALUES (1), (255), (256);
+        RETURN (SELECT CAST(max(id) AS TINYINT) FROM @table_var);
+    END
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p5 
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT 1/0;
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p6
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW BATCH TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    CREATE TABLE #temp (id INT, id1 AS id*2);
+    ALTER TABLE #temp ADD CONSTRAINT def DEFAULT 1 FOR id1;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p7
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW TRANSACTION TERMINATING ERROR ===================='
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    SELECT * FROM non_existent_table;
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f4() RETURNS INT
+AS
+    BEGIN
+        DECLARE @table_var TABLE(id INT);
+        INSERT INTO @table_var VALUES (1), (255), (256)
+        RETURN (SELECT CAST(max(id) AS TINYINT) FROM @table_var);
+    END
+GO
+
+
+
+/************************************************************************************************/
+/************************** START OF TRY CATCH BLOCK TESTS **************************************/
+/************************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p8
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ===================='
+    BEGIN TRY
+        SELECT '############ IN TRY BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+        SELECT 1/0;
+    END TRY
+    BEGIN CATCH
+        SELECT '############ IN CATCH BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    END CATCH
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p8
+AS
+    SELECT '========= START OF PROC WHICH WILL THROW STATEMENT TERMINATING ERROR WITH TRY CATCH ===================='
+    BEGIN TRY
+        SELECT '############ IN TRY BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+        SELECT 1/0;
+    END TRY
+    BEGIN CATCH
+        SELECT '############ IN CATCH BLOCK ############'
+        SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    END CATCH
+    SELECT '========= STATEMENT TERMINATING ERROR SO STILL IN EXECUTION AFTER ERROR ===================='
+GO
+
+
+/*************************************************************************************/
+/************************** START OF DDLs TESTS **************************************/
+/*************************************************************************************/
+USE master
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p9
+AS
+    CREATE TABLE #temp (rolename TEXT, roleid TEXT, isapprole TEXT)
+    CREATE ROLE babel_5448_r1;
+    CREATE ROLE babel_5448_r2;
+    ALTER ROLE babel_5448_r1 ADD MEMBER babel_5448_r2;
+    INSERT INTO #temp EXEC sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC master.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC babel_5448_db.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    DROP ROLE babel_5448_r2;
+    DROP ROLE babel_5448_r1;
+    DROP TABLE #temp;
+GO
+
+-- test nested cross database case for ddls
+CREATE PROC babel_5448_s1.babel_5448_p10
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC babel_5448_db.babel_5448_s1.babel_5448_p9;
+GO
+
+
+USE babel_5448_db
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p9
+AS
+    CREATE TABLE #temp (rolename TEXT, roleid TEXT, isapprole TEXT)
+    CREATE ROLE babel_5448_r1;
+    CREATE ROLE babel_5448_r2;
+    ALTER ROLE babel_5448_r1 ADD MEMBER babel_5448_r2;
+    INSERT INTO #temp EXEC sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC master.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    INSERT INTO #temp EXEC babel_5448_db.sys.sp_helprole 'babel_5448_r2';
+    SELECT rolename FROM #temp; TRUNCATE TABLE #temp;
+    DROP ROLE babel_5448_r2;
+    DROP ROLE babel_5448_r1;
+    DROP TABLE #temp;
+GO
+
+
+
+
+/*************************************************************************************/
+/************************** START OF DYNAMIC SQL *************************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p11
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p11
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+
+/*************************************************************************************/
+/************************* START OF SP_EXECUTE_SQL ***********************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p12
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+USE babel_5448_db
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p12
+AS
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+    EXEC('SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1); SELECT babel_5448_s1.babel_5448_f2();')
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1);
+GO
+
+
+/*************************************************************************************/
+/************************* CROSS DB TESTS WITH TEMP TABLE ****************************/
+/*************************************************************************************/
+USE master
+GO
+
+CREATE PROCEDURE babel_5448_s1.babel_5448_p13
+AS
+    CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+    DROP TABLE #temp_babel_5448;
+GO
+
+-- same as previous but temp table will be created in another database and used inside this proc
+CREATE PROCEDURE babel_5448_s1.babel_5448_p14
+AS
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+GO
+
+
+-- psql
+/*************************************************************************************/
+/******************************** INTEROPERABILITY ***********************************/
+/*************************************************************************************/
+CREATE FUNCTION master_dbo.babel_5448_plpgsql_func()
+RETURNS TEXT
+AS
+$$ BEGIN return (SELECT id FROM babel_5448_t); END; $$
+LANGUAGE plpgsql;
+GO
+
+-- tsql
+CREATE PROCEDURE babel_5448_s1.babel_5448_p15
+AS
+    CREATE TABLE #temp_babel_5448 (id NVARCHAR(MAX));
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+    DROP TABLE #temp_babel_5448;
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f5() RETURNS NVARCHAR(MAX) AS
+BEGIN
+    return (SELECT babel_5448_plpgsql_func())
+END;
+GO
+
+-- same as previous but temp table will be created in another database and used inside this proc
+USE babel_5448_db
+GO
+CREATE PROCEDURE babel_5448_s1.babel_5448_p15
+AS
+    INSERT INTO #temp_babel_5448 VALUES ('<-------- temp table --------->');
+    SELECT * FROM babel_5448_t JOIN babel_5448_s2.babel_5448_v ON (1=1) JOIN #temp_babel_5448 ON (1=1);
+    SELECT '<----------------------- start of plpgsql function ----------------------->'
+    SELECT master.dbo.babel_5448_plpgsql_func();
+    SELECT '<----------------------- end of plpgsql function ----------------------->'
+    SELECT * FROM babel_5448_s2.babel_5448_v JOIN #temp_babel_5448 ON (1=1);
+    SELECT * FROM babel_5448_t JOIN #temp_babel_5448 ON (1=1);
+GO
+
+CREATE FUNCTION babel_5448_s1.babel_5448_f5() RETURNS NVARCHAR(MAX) AS
+BEGIN
+    return (SELECT master.dbo.babel_5448_plpgsql_func())
+END;
+GO
