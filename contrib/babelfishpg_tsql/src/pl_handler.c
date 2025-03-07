@@ -158,7 +158,7 @@ extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, Oid *seqoid);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -6727,7 +6727,7 @@ get_identity_into_args(Node *node)
 }
 
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt)
+transformSelectIntoStmt(CreateTableAsStmt *stmt, Oid *seqoid)
 {
 	List *result;
 	ListCell *elements;
@@ -6895,11 +6895,12 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 						seen_identity = true;
+						*seqoid = get_table_identity(tle->resorigtbl);
 
 						constraint = makeNode(Constraint);
 						constraint->contype = CONSTR_IDENTITY;
 						constraint->generated_when = attrStruct->attidentity;
-						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+						constraint->options = sequence_options(*seqoid);
 						constraint->location = -1;
 
 						/*
@@ -6966,7 +6967,9 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
+	Oid seqoid = InvalidOid;
+
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, &seqoid);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
@@ -6989,6 +6992,28 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		}
 		if (stmts != NIL)
 			CommandCounterIncrement();
+	}
+
+	/* If we have an identity column */
+	if (OidIsValid(seqoid) && OidIsValid(address->objectId))
+	{
+		Oid current_user_id = InvalidOid;
+
+		/* We assume session user to cover for cross-db cases */
+		PG_TRY();
+		{
+			current_user_id = GetUserId();
+			SetCurrentRoleId(GetSessionUserId(), false);
+
+			DirectFunctionCall2(setval_oid,
+				ObjectIdGetDatum(get_table_identity(address->objectId)),
+				Int64GetDatum(DirectFunctionCall1(pg_sequence_last_value, ObjectIdGetDatum(seqoid))));
+		}
+		PG_FINALLY();
+		{
+			SetCurrentRoleId(current_user_id, false);
+		}
+		PG_END_TRY();
 	}
 }
 
