@@ -410,6 +410,7 @@ sys-xml_schema_collections
 table-variable
 tdscollation
 temp-tables
+test_drop_login
 TestBigInt
 TestBinary
 TestBIT
