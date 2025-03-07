@@ -149,7 +149,7 @@ sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
 ~~END~~
 
 
--- negative test to show server roles are not being displayed in sql_logins view
+-- negative tests to show server roles are not being displayed in sql_logins view
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'bbf_role_admin';
 GO
@@ -158,7 +158,6 @@ varchar#!#nvarchar#!#bit#!#bit#!#varchar
 ~~END~~
 
 
--- negative test to show server roles are not being displayed in sql_logins view
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'public';
 GO
@@ -167,7 +166,6 @@ varchar#!#nvarchar#!#bit#!#bit#!#varchar
 ~~END~~
 
 
--- negative test to show server roles are not being displayed in sql_logins view
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'sysadmin';
 GO
@@ -176,7 +174,6 @@ varchar#!#nvarchar#!#bit#!#bit#!#varchar
 ~~END~~
 
 
--- negative test to show server roles are not being displayed in sql_logins view
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'securityadmin';
 GO
@@ -185,7 +182,6 @@ varchar#!#nvarchar#!#bit#!#bit#!#varchar
 ~~END~~
 
 
--- negative test to show server roles are not being displayed in sql_logins view
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'dbcreator';
 GO
