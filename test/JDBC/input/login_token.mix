@@ -25,6 +25,8 @@ select name, type, usage from sys.login_token order by name;
 go
 select name, type, usage from sys.user_token order by name;
 go
+select name, principal_id, sid, type,usage from sys.login_token where name = 'public'
+go
 
 -- tsql user=login_token1 password = 12345678
 select name, type, usage from sys.login_token order by name;
