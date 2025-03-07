@@ -603,3 +603,8 @@ test_conv_float_to_varchar_char
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like
+<<<<<<< HEAD
+round_return_type_test
+=======
+round_return_type_test
+>>>>>>> ee92cc1c2 (resolve conflict in schedule)

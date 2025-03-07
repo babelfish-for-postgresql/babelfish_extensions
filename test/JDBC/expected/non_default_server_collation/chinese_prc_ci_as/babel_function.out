@@ -1922,13 +1922,9 @@ GO
 ~~ERROR (Message: value overflows for numeric format)~~
 
 -- test NULL input
-select ROUND(NULL, -3);
-GO
-~~START~~
-numeric
-<NULL>
-~~END~~
-
+-- this test is moved to round-return-type.sql
+-- select ROUND(NULL, -3);
+-- GO
 select ROUND(748.58, NULL);
 GO
 ~~START~~

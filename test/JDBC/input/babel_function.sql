@@ -658,8 +658,9 @@ GO
 select ROUND(-1548.1234, -4);
 GO
 -- test NULL input
-select ROUND(NULL, -3);
-GO
+-- this test is moved to round-return-type.sql
+-- select ROUND(NULL, -3);
+-- GO
 select ROUND(748.58, NULL);
 GO
 -- test rounding
