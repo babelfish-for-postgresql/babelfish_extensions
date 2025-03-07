@@ -1987,7 +1987,7 @@ search_partition(PG_FUNCTION_ARGS)
 	Datum			arg;
 	Oid			argtypeid;
 	char			*func_param_typname = NULL;
-	char			*func_param_collation;
+	char			*func_param_collation = NULL;
 	Oid			collation_oid = InvalidOid;
 	Oid			func_param_typoid;
 	Oid			sqlvariant_typoid;
@@ -2084,6 +2084,11 @@ search_partition(PG_FUNCTION_ARGS)
 	if (func_param_collation)
 	{
 		collation_oid = get_collation_oid(list_make1(makeString(func_param_collation)), false);
+		/* Sanity check. */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", func_param_collation)));
 	}
 
 	/* 
