@@ -450,6 +450,25 @@ BEGIN
 END;
 $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'babelfish_partition_function' AND table_schema = 'sys' AND column_name = 'input_parameter_collation')
+THEN
+    -- Add input_parameter_collation column in sys.babelfish_partition_function.
+    SET allow_system_table_mods = on;
+    ALTER TABLE sys.babelfish_partition_function ADD COLUMN input_parameter_collation NAME;
+    RESET allow_system_table_mods;
+
+    -- Update the input_parameter_collation column in sys.babelfish_partition_function
+    -- catalog for collatable datatypes with default database collation.
+    UPDATE sys.babelfish_partition_function pf
+    SET input_parameter_collation = db.default_collation
+    FROM sys.babelfish_sysdatabases db 
+    WHERE pf.dbid = db.dbid 
+    AND pf.input_parameter_type IN ('CHAR', 'VARCHAR', 'NCHAR', 'NVARCHAR');
+END IF;
+END $$;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
 														  IN p_floatval FLOAT,
 														  IN p_style NUMERIC DEFAULT 0)
