@@ -1479,7 +1479,7 @@ GO
 SELECT CAST(CAST(123.45 AS DECIMAL(8,2)) AS DECIMAL(5,2));
 GO
 
--- TODO1: CREATE JIRA
+-- JIRA: BABEL-5662
 -- DECIMAL(5,2) -> DECIMAL(5,4) (same precision, increase scale)
 -- SELECT CAST(CAST(12.34 AS DECIMAL(5,2)) AS DECIMAL(5,4));
 -- GO
@@ -1488,7 +1488,7 @@ GO
 SELECT CAST(CAST(1.2345 AS DECIMAL(5,4)) AS DECIMAL(5,2));
 GO
 
--- TODO2: CREATE JIRA
+-- JIRA: BABEL-5662
 -- DECIMAL(10,5) -> DECIMAL(5,2) (decrease precision, decrease scale)
 -- SELECT CAST(CAST(12345.67890 AS DECIMAL(10,5)) AS DECIMAL(5,2));
 -- GO
@@ -1497,7 +1497,7 @@ GO
 SELECT CAST(CAST(123.45 AS DECIMAL(5,2)) AS DECIMAL(10,5));
 GO
 
--- TODO3: CREATE JIRA
+-- JIRA: BABEL-5662
 -- DECIMAL(10,2) -> DECIMAL(5,4) (decrease precision, increase scale)
 -- SELECT CAST(CAST(123.45 AS DECIMAL(10,2)) AS DECIMAL(5,4));
 -- GO
@@ -1578,7 +1578,8 @@ GO
 -- NUMERIC(38,10) -> NUMERIC(20,5) (from max precision)
 SELECT CAST(CAST(12345678901234567890.1234567890 AS NUMERIC(38,10)) AS NUMERIC(20,5));
 GO
--- TODO4: CREATE JIRA
+
+-- JIRA : BABEL-5662
 -- DECIMAL(38,10) -> DECIMAL(20,5) (from max precision)
 -- SELECT CAST(CAST(12345678901234567890.1234567890 AS DECIMAL(38,10)) AS DECIMAL(20,5));
 -- GO
@@ -1613,7 +1614,7 @@ GO
 SELECT CAST(CAST(1.23 AS NUMERIC(3,2)) AS NUMERIC(5,5));
 GO
 
--- TODO5: CREATE JIRA
+-- JIRA: BABEL-5662
 -- DECIMAL(3,2) -> DECIMAL(5,5) (to all decimal digits)
 -- SELECT CAST(CAST(1.23 AS DECIMAL(3,2)) AS DECIMAL(5,5));
 -- GO
@@ -3638,4 +3639,900 @@ CREATE TABLE identity_test_table2 (
     id_col DECIMAL(20,0) IDENTITY(1000,100),
     description VARCHAR(50)
 );
+GO
+
+
+------------------------------------------------------------------------
+---- 12. User Defined Type Tests
+------------------------------------------------------------------------
+
+-- Create user-defined types with different precisions and scales
+CREATE TYPE SmallAmount FROM NUMERIC(5,2);
+GO
+
+CREATE TYPE LargeAmount FROM NUMERIC(20,2);
+GO
+
+CREATE TYPE ExactDecimal FROM DECIMAL(10,5);
+GO
+
+CREATE TYPE WholeNumber FROM NUMERIC(18,0);
+GO
+
+CREATE TYPE MoneyAmount FROM DECIMAL(19,4);
+GO
+
+CREATE TYPE Percentage FROM NUMERIC(5,4);
+GO
+
+CREATE TYPE ScientificValue FROM NUMERIC(30,10);
+GO
+
+CREATE TYPE TinyValue FROM NUMERIC(3,2);
+GO
+
+------------------------------------------------------------------------
+---- 12.1 Basic UDT Tests
+------------------------------------------------------------------------
+
+CREATE TABLE udt_numeric_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    small_amount SmallAmount,
+    large_amount LargeAmount,
+    exact_decimal ExactDecimal,
+    whole_number WholeNumber
+);
+GO
+
+-- Test NULL values
+INSERT INTO udt_numeric_test (small_amount, large_amount, exact_decimal, whole_number)
+VALUES (NULL, NULL, NULL, NULL);
+GO
+
+-- Validate NULL insertions
+SELECT CASE 
+    WHEN small_amount IS NULL AND large_amount IS NULL 
+    AND exact_decimal IS NULL AND whole_number IS NULL THEN 'NULL test passed'
+    ELSE 'NULL test failed'
+END AS null_test_result
+FROM udt_numeric_test WHERE id = 1;
+GO
+
+-- Test zero values
+INSERT INTO udt_numeric_test (small_amount, large_amount, exact_decimal, whole_number)
+VALUES (0, 0, 0, 0);
+GO
+
+-- Validate zero insertions
+SELECT CASE 
+    WHEN small_amount = 0 AND large_amount = 0 
+    AND exact_decimal = 0 AND whole_number = 0 THEN 'Zero test passed'
+    ELSE 'Zero test failed'
+END AS zero_test_result
+FROM udt_numeric_test WHERE id = 2;
+GO
+
+-- Test positive values within range
+INSERT INTO udt_numeric_test (small_amount, large_amount, exact_decimal, whole_number)
+VALUES (123.45, 123456789.12, 123.45678, 123456);
+GO
+
+-- Validate positive value insertions
+SELECT CASE 
+    WHEN small_amount = 123.45 AND large_amount = 123456789.12 
+    AND exact_decimal = 123.45678 AND whole_number = 123456 THEN 'Positive value test passed'
+    ELSE 'Positive value test failed'
+END AS positive_test_result
+FROM udt_numeric_test WHERE id = 3;
+GO
+
+-- Test negative values
+INSERT INTO udt_numeric_test (small_amount, large_amount, exact_decimal, whole_number)
+VALUES (-123.45, -123456789.12, -123.45678, -123456);
+GO
+
+-- Validate negative value insertions
+SELECT CASE 
+    WHEN small_amount = -123.45 AND large_amount = -123456789.12 
+    AND exact_decimal = -123.45678 AND whole_number = -123456 THEN 'Negative value test passed'
+    ELSE 'Negative value test failed'
+END AS negative_test_result
+FROM udt_numeric_test WHERE id = 4;
+GO
+
+------------------------------------------------------------------------
+---- 12.2 Complex UDT Scenarios
+------------------------------------------------------------------------
+
+CREATE TABLE udt_complex_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    price MoneyAmount,
+    discount_rate Percentage,
+    scientific_measure ScientificValue,
+    small_measure TinyValue,
+    description VARCHAR(100)
+);
+GO
+
+-- Test precision boundaries
+INSERT INTO udt_complex_test (price, discount_rate, scientific_measure, small_measure, description)
+VALUES 
+    (9999999999999.9999, 0.9999, 12345678901234567890.1234567890, 9.99, 'Maximum values within precision');
+GO
+
+-- Validate precision boundary test
+SELECT CASE 
+    WHEN price = 9999999999999.9999 AND discount_rate = 0.9999 
+    AND scientific_measure = 12345678901234567890.1234567890 
+    AND small_measure = 9.99 THEN 'Precision boundary test passed'
+    ELSE 'Precision boundary test failed'
+END AS precision_test_result
+FROM udt_complex_test WHERE id = 1;
+GO
+
+-- Test decimal alignment
+INSERT INTO udt_complex_test (price, discount_rate, scientific_measure, small_measure, description)
+VALUES 
+    (1234.5000, 0.5000, 1234.0000000000, 1.20, 'Aligned decimals');
+GO
+
+-- Validate decimal alignment
+SELECT CASE 
+    WHEN CAST(price AS VARCHAR(20)) = '1234.5000' 
+    AND CAST(discount_rate AS VARCHAR(20)) = '0.5000'
+    AND CAST(scientific_measure AS VARCHAR(30)) = '1234.0000000000'
+    AND CAST(small_measure AS VARCHAR(20)) = '1.20' THEN 'Decimal alignment test passed'
+    ELSE 'Decimal alignment test failed'
+END AS alignment_test_result
+FROM udt_complex_test WHERE id = 2;
+GO
+
+------------------------------------------------------------------------
+---- 12.3 UDT Function Tests
+------------------------------------------------------------------------
+
+CREATE FUNCTION calculate_discount
+(
+    @price MoneyAmount,
+    @rate Percentage
+)
+RETURNS MoneyAmount
+AS
+BEGIN
+    RETURN @price * @rate;
+END;
+GO
+
+-- Test function with known values
+DECLARE @test_price MoneyAmount = 100.0000;
+DECLARE @test_rate Percentage = 0.2500;
+DECLARE @expected_result MoneyAmount = 25.0000;
+DECLARE @actual_result MoneyAmount;
+
+SET @actual_result = dbo.calculate_discount(@test_price, @test_rate);
+
+SELECT CASE 
+    WHEN @actual_result = @expected_result THEN 'Function test passed'
+    ELSE 'Function test failed: Expected ' + CAST(@expected_result AS VARCHAR) + 
+         ', Got ' + CAST(@actual_result AS VARCHAR)
+END AS function_test_result;
+GO
+
+------------------------------------------------------------------------
+---- 12.4 UDT Arithmetic Tests
+------------------------------------------------------------------------
+
+CREATE TABLE udt_arithmetic_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    value1 MoneyAmount,
+    value2 MoneyAmount
+);
+GO
+
+INSERT INTO udt_arithmetic_test (value1, value2) VALUES (100.0000, 50.0000);
+GO
+
+-- Test and validate arithmetic operations
+SELECT 
+    CASE WHEN value1 + value2 = 150.0000 THEN 'Addition test passed'
+         ELSE 'Addition test failed' END AS addition_test,
+    CASE WHEN value1 - value2 = 50.0000 THEN 'Subtraction test passed'
+         ELSE 'Subtraction test failed' END AS subtraction_test,
+    CASE WHEN value1 * 2 = 200.0000 THEN 'Multiplication test passed'
+         ELSE 'Multiplication test failed' END AS multiplication_test,
+    CASE WHEN value1 / 2 = 50.0000 THEN 'Division test passed'
+         ELSE 'Division test failed' END AS division_test
+FROM udt_arithmetic_test;
+GO
+
+------------------------------------------------------------------------
+---- 12.5 UDT Constraint Tests
+------------------------------------------------------------------------
+
+CREATE TABLE udt_constraint_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    price MoneyAmount CHECK (price >= 0),
+    discount_rate Percentage CHECK (discount_rate BETWEEN 0 AND 1),
+    CONSTRAINT valid_price_range CHECK (price <= 1000000)
+);
+GO
+
+-- Test constraint violations (these should fail)
+BEGIN TRY
+    INSERT INTO udt_constraint_test (price, discount_rate)
+    VALUES (-100, 0.5);
+    PRINT 'Constraint test 1 failed - Negative price was accepted';
+END TRY
+BEGIN CATCH
+    PRINT 'Constraint test 1 passed - Negative price was rejected';
+END CATCH
+GO
+
+BEGIN TRY
+    INSERT INTO udt_constraint_test (price, discount_rate)
+    VALUES (100, 1.5);
+    PRINT 'Constraint test 2 failed - Invalid discount rate was accepted';
+END TRY
+BEGIN CATCH
+    PRINT 'Constraint test 2 passed - Invalid discount rate was rejected';
+END CATCH
+GO
+
+------------------------------------------------------------------------
+---- 12.6 UDT Computed Column Tests
+------------------------------------------------------------------------
+
+CREATE TABLE udt_computed_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    base_price MoneyAmount,
+    tax_rate Percentage,
+    tax_amount AS (base_price * tax_rate) PERSISTED,
+    final_price AS (base_price + (base_price * tax_rate)) PERSISTED
+);
+GO
+
+INSERT INTO udt_computed_test (base_price, tax_rate)
+VALUES (100.0000, 0.2000);
+GO
+
+-- Validate computed columns
+SELECT CASE 
+    WHEN tax_amount = 20.0000 AND final_price = 120.0000 THEN 'Computed column test passed'
+    ELSE 'Computed column test failed: Expected tax_amount=20.0000 and final_price=120.0000, Got tax_amount=' + 
+         CAST(tax_amount AS VARCHAR) + ' and final_price=' + CAST(final_price AS VARCHAR)
+END AS computed_column_test_result
+FROM udt_computed_test;
+GO
+
+------------------------------------------------------------------------
+---- 12.7 Cleanup
+------------------------------------------------------------------------
+
+-- Drop all test tables
+DROP TABLE udt_numeric_test;
+GO
+DROP TABLE udt_complex_test;
+GO
+DROP TABLE udt_arithmetic_test;
+GO
+DROP TABLE udt_constraint_test;
+GO
+DROP TABLE udt_computed_test;
+GO
+
+-- Drop all functions
+DROP FUNCTION calculate_discount;
+GO
+
+-- Drop all user-defined types
+DROP TYPE SmallAmount;
+GO
+DROP TYPE LargeAmount;
+GO
+DROP TYPE ExactDecimal;
+GO
+DROP TYPE WholeNumber;
+GO
+DROP TYPE MoneyAmount;
+GO
+DROP TYPE Percentage;
+GO
+DROP TYPE ScientificValue;
+GO
+DROP TYPE TinyValue;
+GO
+
+
+------------------------------------------------------------------------
+---- 13. UNION Tests with Different Types/Precision/Scales
+------------------------------------------------------------------------
+
+---- 13.1 Create User-Defined Types for UNION testing
+CREATE TYPE SmallNumeric FROM NUMERIC(5,2);
+GO
+
+CREATE TYPE LargeNumeric FROM NUMERIC(18,4);
+GO
+
+CREATE TYPE ScientificNumeric FROM NUMERIC(38,10);
+GO
+
+---- 13.2 Basic UNION Tests with Direct SELECT and CAST
+-- Test: UNION between different precisions/scales
+SELECT 'NUMERIC_10_2' as source_type, CAST(123.456 AS NUMERIC(10,2)) as val
+UNION
+SELECT 'NUMERIC_15_3', CAST(123.456 AS NUMERIC(15,3))
+UNION
+SELECT 'NUMERIC_12_4', CAST(123.456 AS NUMERIC(12,4))
+ORDER BY val;
+GO
+
+---- 13.3 Complex UNION Tests with Expressions
+-- Test: UNION with complex expressions and different types
+SELECT 'EXPR1' as source_type, 
+       CAST(POWER(2, 10) AS NUMERIC(10,2)) * CAST(1.23456 AS NUMERIC(8,5)) as val
+UNION
+SELECT 'EXPR2', 
+       CAST(EXP(5) AS NUMERIC(12,4)) * CAST(0.987654321 AS NUMERIC(10,9))
+UNION
+SELECT 'EXPR3', 
+       CAST(PI() AS NUMERIC(15,10)) * CAST(100.5 AS NUMERIC(5,1))
+ORDER BY val;
+GO
+
+---- 13.4 UNION with UDTs and Mixed Types
+DECLARE @small_val SmallNumeric = 123.45;
+DECLARE @large_val LargeNumeric = 123456.7890;
+DECLARE @scientific_val ScientificNumeric = 123456789.0123456789;
+
+-- Test: UNION between UDTs and built-in types
+SELECT 'UDT_SMALL' as source_type, CAST(@small_val AS NUMERIC(5,2)) as val
+UNION
+SELECT 'UDT_LARGE', CAST(@large_val AS NUMERIC(18,4))
+UNION
+SELECT 'UDT_SCIENTIFIC', CAST(@scientific_val AS NUMERIC(38,10))
+UNION
+SELECT 'DIRECT_NUMERIC', CAST(123.456789 AS NUMERIC(20,6))
+ORDER BY val;
+GO
+
+---- 13.5 UNION with Complex Mathematical Operations
+-- Test: UNION with mathematical functions
+SELECT 'MATH1' as source_type,
+       CAST(SQRT(POWER(CAST(2 AS NUMERIC(10,5)), 10)) AS NUMERIC(15,5)) as val
+UNION
+SELECT 'MATH2',
+       CAST(EXP(CAST(LN(10.5) AS NUMERIC(10,5))) AS NUMERIC(12,6))
+UNION
+SELECT 'MATH3',
+       CAST(POWER(CAST(PI() AS NUMERIC(15,10)), 2) AS NUMERIC(20,10))
+ORDER BY val;
+GO
+
+---- 13.6 UNION with Nested Calculations
+-- Test: UNION with CASE expressions
+SELECT 'NESTED1' as source_type,
+       CAST(
+           CASE 
+               WHEN CAST(PI() AS NUMERIC(15,10)) > 3 
+               THEN POWER(CAST(2.5 AS NUMERIC(5,2)), 3)
+               ELSE SQRT(CAST(100 AS NUMERIC(10,2)))
+           END AS NUMERIC(20,10)
+       ) as val
+UNION
+SELECT 'NESTED2',
+       CAST(
+           CASE 
+               WHEN CAST(EXP(1) AS NUMERIC(15,10)) > 2 
+               THEN POWER(CAST(3.5 AS NUMERIC(5,2)), 2)
+               ELSE SQRT(CAST(200 AS NUMERIC(10,2)))
+           END AS NUMERIC(20,10)
+       )
+ORDER BY val;
+GO
+
+---- 13.7 UNION with Extreme Values and Calculations
+-- Test: UNION with boundary values
+SELECT 'EXTREME1' as source_type,
+       CAST(9999999999999999.999999999999 AS NUMERIC(38,12)) as val
+UNION
+SELECT 'EXTREME2',
+       CAST(0.000000000001 AS NUMERIC(38,12))
+UNION
+SELECT 'EXTREME3',
+       CAST(
+           POWER(CAST(10 AS NUMERIC(38,12)), 20) / 
+           CAST(3 AS NUMERIC(38,12))
+       AS NUMERIC(38,12))
+ORDER BY val;
+GO
+
+---- 13.8 UNION with Mixed Scale Calculations
+-- Test: UNION with different scale multiplications
+SELECT 'MIXED1' as source_type,
+       CAST(123.45 AS NUMERIC(10,2)) * CAST(0.0000000001 AS NUMERIC(20,10)) as val
+UNION
+SELECT 'MIXED2',
+       CAST(9876.54321 AS NUMERIC(15,5)) * CAST(0.0000000001 AS NUMERIC(20,10))
+UNION
+SELECT 'MIXED3',
+       CAST(
+           CAST(1234567.89 AS NUMERIC(10,2)) * 
+           CAST(0.0000000001 AS NUMERIC(20,10))
+       AS NUMERIC(30,15))
+ORDER BY val;
+GO
+
+---- 13.9 UNION with NULL and Zero Values
+-- Test: UNION with NULL and zero values
+SELECT 'NULL_VAL' as source_type, CAST(NULL AS NUMERIC(10,2)) as val
+UNION
+SELECT 'ZERO_NUMERIC', CAST(0 AS NUMERIC(10,2))
+UNION
+SELECT 'ZERO_SCIENTIFIC', CAST(0.0000000000 AS NUMERIC(20,10))
+ORDER BY val;
+GO
+
+---- 13.10 UNION ALL vs UNION Tests
+-- Test: Compare UNION ALL with UNION for duplicate handling
+SELECT 'PRECISION_5_2' as source_type, CAST(123.45 AS NUMERIC(5,2)) as val
+UNION ALL
+SELECT 'PRECISION_10_2', CAST(123.45 AS NUMERIC(10,2))
+UNION ALL
+SELECT 'PRECISION_15_2', CAST(123.45 AS NUMERIC(15,2))
+ORDER BY source_type;
+GO
+
+SELECT 'PRECISION_5_2' as source_type, CAST(123.45 AS NUMERIC(5,2)) as val
+UNION
+SELECT 'PRECISION_10_2', CAST(123.45 AS NUMERIC(10,2))
+UNION
+SELECT 'PRECISION_15_2', CAST(123.45 AS NUMERIC(15,2))
+ORDER BY source_type;
+GO
+
+---- 13.11 UNION with Mixed NUMERIC and DECIMAL Types
+-- Test: UNION between NUMERIC and DECIMAL types
+SELECT 'NUMERIC_VAL' as source_type, CAST(123.456 AS NUMERIC(10,3)) as val
+UNION
+SELECT 'DECIMAL_VAL', CAST(123.456 AS DECIMAL(10,3))
+UNION
+SELECT 'NUMERIC_LARGER', CAST(123.456 AS NUMERIC(15,3))
+UNION
+SELECT 'DECIMAL_LARGER', CAST(123.456 AS DECIMAL(15,3))
+ORDER BY source_type;
+GO
+
+-- TODO: 
+---- 13.12 UNION with Calculated Columns
+-- Test: UNION with arithmetic operations
+-- SELECT 
+--     'CALC1' as source_type,
+--     val,
+--     val * 2 as doubled,
+--     val / 2 as halved,
+--     val + 100 as added,
+--     val - 100 as subtracted
+-- FROM (
+--     SELECT CAST(123.45 AS NUMERIC(10,2)) as val
+--     UNION
+--     SELECT CAST(456.78 AS NUMERIC(10,2))
+-- ) t
+-- ORDER BY val;
+-- GO
+
+---- 13.13 UNION with Negative Scale
+-- Test: UNION with negative scale values
+SELECT 'NEG_SCALE1' as source_type, 
+       CAST(ROUND(12345.6789, -2) AS NUMERIC(10,2)) as val
+UNION
+SELECT 'NEG_SCALE2', 
+       CAST(ROUND(67890.1234, -1) AS NUMERIC(10,2))
+UNION
+SELECT 'NEG_SCALE3', 
+       CAST(ROUND(11111.2222, -3) AS NUMERIC(10,2))
+ORDER BY val;
+GO
+
+
+---- 13.14 UNION with Mixed Data Types and UDTs Resolution
+-- Test: UNION between INTEGER types, NUMERIC, and UDTs
+DECLARE @small_num SmallNumeric = 123.45;
+DECLARE @large_num LargeNumeric = 123.4567;
+
+SELECT 'INT' as source_type, 
+       CAST(123 AS INT) as val
+UNION
+SELECT 'BIGINT', 
+       CAST(123 AS BIGINT)
+UNION
+SELECT 'SMALLINT', 
+       CAST(123 AS SMALLINT)
+UNION
+SELECT 'TINYINT', 
+       CAST(123 AS TINYINT)
+UNION
+SELECT 'NUMERIC', 
+       CAST(123 AS NUMERIC(10,2))
+UNION
+SELECT 'UDT_SMALL',
+       @small_num
+UNION
+SELECT 'UDT_LARGE',
+       @large_num
+ORDER BY source_type;
+GO
+
+-- Test: UNION between FLOAT/REAL, NUMERIC, and UDTs
+DECLARE @scientific_num ScientificNumeric = 123.4567890123;
+
+SELECT 'FLOAT' as source_type, 
+       CAST(123.456 AS FLOAT) as val
+UNION
+SELECT 'REAL', 
+       CAST(123.456 AS REAL)
+UNION
+SELECT 'NUMERIC_10_2', 
+       CAST(123.456 AS NUMERIC(10,2))
+UNION
+SELECT 'UDT_SCIENTIFIC',
+       @scientific_num
+ORDER BY source_type;
+GO
+
+-- Test: Complex mixed type expressions with UDTs
+DECLARE @small_num SmallNumeric = 123.45;
+DECLARE @large_num LargeNumeric = 123.4567;
+
+SELECT 'INT_FLOAT' as source_type,
+       CAST(123 AS INT) * CAST(1.5 AS FLOAT) as val
+UNION
+SELECT 'UDT_SMALL_FLOAT',
+       @small_num * CAST(1.5 AS FLOAT)
+UNION
+SELECT 'UDT_LARGE_INT',
+       @large_num * CAST(2 AS INT)
+UNION
+SELECT 'REAL_NUMERIC',
+       CAST(123.45 AS REAL) * CAST(1.5 AS NUMERIC(5,2))
+ORDER BY val;
+GO
+
+-- Test: Mathematical functions with mixed types and UDTs
+DECLARE @small_num SmallNumeric = 100.00;
+DECLARE @large_num LargeNumeric = 2.5;
+
+SELECT 'POWER_FLOAT' as source_type,
+       POWER(CAST(2 AS FLOAT), CAST(10 AS INT)) as val
+UNION
+SELECT 'SQRT_UDT',
+       SQRT(CAST(@small_num AS NUMERIC(10,2)))
+UNION
+SELECT 'POWER_UDT',
+       POWER(@large_num, 2)
+ORDER BY val;
+GO
+
+-- Test: Aggregate functions with mixed types and UDTs
+DECLARE @small_num1 SmallNumeric = 100.00;
+DECLARE @small_num2 SmallNumeric = 200.00;
+DECLARE @large_num LargeNumeric = 300.00;
+
+SELECT 'SUM' as source_type,
+       SUM(val) as val
+FROM (
+    SELECT CAST(100 AS INT) as val
+    UNION ALL
+    SELECT CAST(200.5 AS FLOAT)
+    UNION ALL
+    SELECT @small_num1
+    UNION ALL
+    SELECT @large_num
+) t
+UNION
+SELECT 'AVG',
+       AVG(val)
+FROM (
+    SELECT CAST(100 AS INT) as val
+    UNION ALL
+    SELECT CAST(200.5 AS FLOAT)
+    UNION ALL
+    SELECT @small_num2
+    UNION ALL
+    SELECT @large_num
+) t
+ORDER BY source_type;
+GO
+
+-- Test: CASE expressions with mixed types and UDTs
+DECLARE @small_num SmallNumeric = 100.00;
+DECLARE @large_num LargeNumeric = 200.00;
+
+SELECT 'CASE1' as source_type,
+       CASE 
+           WHEN CAST(1 AS BIT) = 1 THEN @small_num
+           WHEN CAST(0 AS BIT) = 1 THEN CAST(200.5 AS FLOAT)
+           ELSE CAST(300.99 AS NUMERIC(10,2))
+       END as val
+UNION
+SELECT 'CASE2',
+       CASE 
+           WHEN CAST(0 AS BIT) = 1 THEN CAST(100 AS MONEY)
+           WHEN CAST(1 AS BIT) = 1 THEN @large_num
+           ELSE CAST(300.99 AS NUMERIC(10,2))
+       END
+ORDER BY val;
+GO
+
+-- Test: Mixed types with NULL values including UDTs
+SELECT 'NULL_INT' as source_type,
+       CAST(NULL AS INT) as val
+UNION
+SELECT 'NULL_FLOAT',
+       CAST(NULL AS FLOAT)
+UNION
+SELECT 'NULL_UDT_SMALL',
+       CAST(NULL AS SmallNumeric)
+UNION
+SELECT 'NULL_UDT_LARGE',
+       CAST(NULL AS LargeNumeric)
+ORDER BY source_type;
+GO
+
+-- Test: Arithmetic operations with mixed types and UDTs
+DECLARE @small_num SmallNumeric = 100.00;
+DECLARE @large_num LargeNumeric = 200.00;
+
+SELECT 'ADD_UDT' as source_type,
+       @small_num + CAST(200.5 AS FLOAT) as val
+UNION
+SELECT 'SUBTRACT_UDT',
+       @large_num - CAST(100 AS INT)
+UNION
+SELECT 'MULTIPLY_UDT',
+       @small_num * CAST(2.5 AS MONEY)
+UNION
+SELECT 'DIVIDE_UDT',
+       @large_num / CAST(2.5 AS FLOAT)
+ORDER BY source_type;
+GO
+
+-- Test: Mixed precision with UDTs
+DECLARE @scientific_num ScientificNumeric = 123.4567890123;
+
+SELECT 'FLOAT_24' as source_type,
+       CAST(123.456 AS FLOAT(24)) as val
+UNION
+SELECT 'UDT_SCIENTIFIC',
+       @scientific_num
+UNION
+SELECT 'NUMERIC_EQUIV',
+       CAST(123.456 AS NUMERIC(17,3))
+ORDER BY source_type;
+GO
+
+-- Test: Extreme values with UDTs
+DECLARE @large_num LargeNumeric = 9999999999.9999;
+DECLARE @scientific_num ScientificNumeric = 9999999999.9999999999;
+
+SELECT 'MAX_INT' as source_type,
+       CAST(2147483647 AS INT) as val
+UNION
+SELECT 'UDT_LARGE',
+       @large_num
+UNION
+SELECT 'UDT_SCIENTIFIC',
+       @scientific_num
+UNION
+SELECT 'NUMERIC_EQUIV',
+       CAST(2147483647 AS NUMERIC(10,0))
+ORDER BY source_type;
+GO
+
+-- Test: Decimal places in mixed type operations with UDTs
+DECLARE @small_num SmallNumeric = 100.00;
+DECLARE @scientific_num ScientificNumeric = 1.23456789;
+
+SELECT 'PRECISE1' as source_type,
+       CAST(100 AS INT) * @scientific_num as val
+UNION
+SELECT 'PRECISE2',
+       @small_num * CAST(1.23456789 AS FLOAT)
+UNION
+SELECT 'PRECISE3',
+       CAST(100 AS MONEY) * @scientific_num
+ORDER BY val;
+GO
+
+-- Cleanup
+DROP TYPE SmallNumeric;
+GO
+
+DROP TYPE LargeNumeric;
+GO
+
+DROP TYPE ScientificNumeric;
+GO
+
+------------------------------------------------------------------------
+---- 14. Index Tests with NUMERIC and Binary-Coercible Types
+------------------------------------------------------------------------
+
+-- Create test tables with different numeric types and indexes
+CREATE TABLE numeric_index_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    num_col NUMERIC(18,2),
+    num_precise_col NUMERIC(38,10),
+    decimal_col DECIMAL(18,2),
+    int_col INT,
+    bigint_col BIGINT,
+    smallint_col SMALLINT,
+    float_col FLOAT,
+    money_col MONEY,
+    category VARCHAR(10)
+);
+GO
+
+-- Create indexes on numeric columns
+CREATE INDEX idx_numeric ON numeric_index_test(num_col);
+CREATE INDEX idx_numeric_precise ON numeric_index_test(num_precise_col);
+CREATE INDEX idx_decimal ON numeric_index_test(decimal_col);
+CREATE INDEX idx_composite_num_cat ON numeric_index_test(num_col, category);
+GO
+
+-- Store some specific values for testing
+INSERT INTO numeric_index_test (
+    num_col, num_precise_col, decimal_col, int_col, 
+    bigint_col, smallint_col, float_col, money_col, category
+) VALUES 
+(123.45, 123.4567890123, 123.45, 123, 123000, 123, 123.45, 123.45, 'CAT-1'),
+(500.00, 500.0000000000, 500.00, 500, 500000, 500, 500.00, 500.00, 'CAT-2'),
+(999.99, 999.9999999999, 999.99, 999, 999999, 999, 999.99, 999.99, 'CAT-3');
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'on', false)
+go
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+SELECT set_config('enable_seqscan', 'off', false)
+go
+SELECT set_config('enable_bitmapscan', 'off', false)
+go
+SET babelfish_showplan_all ON
+go
+
+-- Test 1: Direct NUMERIC comparison (baseline)
+
+-- Should use idx_numeric
+SELECT * FROM numeric_index_test 
+WHERE num_col = 123.45;
+GO
+
+-- Test 2: NUMERIC compared with INTEGER
+SELECT * FROM numeric_index_test 
+WHERE num_col = 500;
+GO
+
+-- Test 3: NUMERIC compared with DECIMAL
+SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(999.99 AS DECIMAL(18,2));
+GO
+
+-- Test 4: NUMERIC compared with FLOAT
+SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(123.45 AS FLOAT);
+GO
+
+-- Test 5: NUMERIC compared with MONEY
+SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(500.00 AS MONEY);
+GO
+
+-- Test 6: Range queries with different types
+SELECT * FROM numeric_index_test 
+WHERE num_col BETWEEN 100 AND CAST(200 AS INT);
+GO
+
+SELECT * FROM numeric_index_test 
+WHERE num_col BETWEEN 400.00 AND CAST(600.00 AS DECIMAL(18,2));
+GO
+
+-- Test 7: JOIN conditions with different numeric types
+SELECT a.*, b.* 
+FROM numeric_index_test a
+JOIN numeric_index_test b ON a.num_col = b.decimal_col;
+GO
+
+-- Test 8: Complex conditions mixing types
+SELECT * FROM numeric_index_test 
+WHERE num_col = int_col 
+   OR num_col = CAST(float_col AS NUMERIC(18,2))
+   OR num_col = CAST(money_col AS NUMERIC(18,2));
+GO
+
+-- Test 9: Composite index tests with type mixing
+SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(500 AS INT)
+  AND category = 'CAT-2';
+GO
+
+-- Test 10: Index usage with calculations
+SELECT * FROM numeric_index_test 
+WHERE num_col = int_col + 0.45;
+GO
+
+-- Test 11: Index usage with CAST operations
+SELECT * FROM numeric_index_test 
+WHERE CAST(num_col AS DECIMAL(18,2)) = decimal_col;
+GO
+
+-- Test 12: Implicit conversions
+SELECT * FROM numeric_index_test 
+WHERE num_col IN (123, 123.45, 123.45678);
+GO
+
+-- Test 13: Different precision/scale comparisons
+SELECT * FROM numeric_index_test 
+WHERE num_precise_col = CAST(123.4567890123 AS NUMERIC(38,10));
+GO
+
+-- Test 14: Index intersection possibilities
+SELECT * FROM numeric_index_test 
+WHERE num_col = 123.45
+  AND decimal_col = 123.45;
+GO
+
+-- Test 15: ORDER BY with different types
+SELECT * FROM numeric_index_test 
+WHERE num_col > 100
+ORDER BY decimal_col;
+GO
+
+-- Test 16: GROUP BY with different types
+SELECT CAST(num_col AS DECIMAL(18,2)) as num_group, 
+       COUNT(*) as cnt
+FROM numeric_index_test 
+GROUP BY CAST(num_col AS DECIMAL(18,2));
+GO
+
+-- Test 17: Covering index scenarios
+SELECT num_col, category 
+FROM numeric_index_test 
+WHERE num_col = 500.00;
+GO
+
+-- Test 18: Index usage with NULL values
+INSERT INTO numeric_index_test (
+    num_col, decimal_col, int_col, category
+) VALUES (NULL, NULL, NULL, 'CAT-N');
+GO
+
+SELECT * FROM numeric_index_test 
+WHERE num_col IS NULL;
+GO
+
+-- Test 19: Index usage with arithmetic operations
+SELECT * FROM numeric_index_test 
+WHERE num_col * 2 = decimal_col;
+GO
+
+-- Test 20: Index usage with LIKE patterns
+SELECT * FROM numeric_index_test 
+WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%';
+GO
+
+-- Reset
+SET babelfish_showplan_all OFF
+go
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'off', false)
+go
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+SELECT set_config('enable_seqscan', 'on', false)
+go
+SELECT set_config('enable_bitmapscan', 'on', false)
+go
+
+-- Cleanup
+DROP TABLE numeric_index_test;
 GO
