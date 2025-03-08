@@ -1804,7 +1804,6 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 		if(guest_role)
 			pfree(guest_role);
 
-		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
