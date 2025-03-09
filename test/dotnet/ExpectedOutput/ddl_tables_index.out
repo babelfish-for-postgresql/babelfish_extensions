@@ -1,0 +1,534 @@
+#Q#DROP TABLE IF EXISTS table_check
+
+#Q#DROP TABLE IF EXISTS table_foreign 
+
+#Q#DROP TABLE IF EXISTS table_primary
+
+#Q#DROP TABLE IF EXISTS table_unique
+
+#Q#DROP TABLE IF EXISTS isc_check_constraints_t1
+
+#Q#DROP TABLE IF EXISTS test_tsql_const
+
+#Q#DROP TABLE IF EXISTS test_tsql_cast
+
+#Q#DROP TABLE IF EXISTS test_datetime
+
+#Q#DROP TABLE IF EXISTS test_functioncall
+
+#Q#DROP TABLE IF EXISTS test_tsql_collate
+
+#Q#DROP TABLE IF EXISTS test_null
+
+#Q#DROP TABLE IF EXISTS test_upper
+
+#Q#Create table table_unique (a int NOT NULL UNIQUE)
+
+#Q#DROP TABLE IF EXISTS babel_4817_t1, babel_4817_t2, babel_4817_t3, babel_4817_t4, babel_4817_t5;
+
+#Q#Create table table_primary (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
+
+#Q#Create table table_foreign (aa int NOT NULL , bb int NOT NULL,a int, PRIMARY KEY(aa) ,FOREIGN KEY (a) REFERENCES table_primary(a))
+
+#Q#Create table table_check (ID int NOT NULL,NAME varchar(10)  NOT NULL,AGE int NOT NULL CHECK (AGE >= 18))
+
+#Q#Create table isc_check_constraints_t1( a varchar, check(a = 'provvwstdjtlyzygsx'));
+
+#Q#Create table test_tsql_const(
+    c_int int primary key,
+    c_bit sys.bit check(c_bit <> cast(1 as sys.bit)),
+    check(c_int < 10),
+    c_smallint smallint check(c_smallint < cast(cast(CAST('20' AS smallint) as sql_variant) as smallint)),
+    c_binary binary(8) check(c_binary > cast(0xfe as binary(8))),
+    c_varbinary varbinary(8) check(c_varbinary > cast(0xfe as varbinary(8)))
+)
+
+#Q#Create table test_datetime(
+    c_time time check(cast(c_time as pg_catalog.time) < cast('09:00:00' as time) and c_time < cast('09:00:00' as time(6))),
+    c_date date check(c_date < cast('2001-01-01' as date)),
+    c_datetime datetime check(c_datetime < cast('2020-10-20 09:00:00' as datetime)),
+    c_datetime2 datetime2 check(c_datetime2 < cast('2020-10-20 09:00:00' as datetime2) and c_datetime2 < cast('2020-10-20 09:00:00' as datetime2(6)) ),
+    c_datetimeoffset datetimeoffset check(c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as sys.datetimeoffset) and c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset(4))),
+    c_smalldatetime smalldatetime check(c_smalldatetime < cast('2007-05-08 12:35:29.123' AS smalldatetime)),
+)
+
+#Q#create table test_tsql_collate(
+	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE latin1_general_ci_as),
+	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE japanese_ci_as),
+	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
+)
+
+#Q#Create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
+
+#Q#Create table test_upper(a char, check (upper(a) in ('A','B')));
+
+#Q#Create index test_index on test_upper(a)
+
+#Q#Create index test_comp_index on table_unique(a)
+
+#Q#
+CREATE TABLE babel_4817_t1 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT, col8 INT NOT NULL, PRIMARY KEY NONCLUSTERED(col3, col7 DESC), UNIQUE (col2 DESC, col8));
+
+#Q#CREATE INDEX babel_4817_t1_idx_1 ON dbo.babel_4817_t1 (col5) INCLUDE (col1);
+
+#Q#
+CREATE TABLE babel_4817_t2 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT NOT NULL IDENTITY, col8 INT NOT NULL)
+
+#Q#ALTER TABLE babel_4817_t2 ADD CONSTRAINT babel_4817_t2_pk PRIMARY KEY NONCLUSTERED (col3, col7);
+
+#Q#CREATE UNIQUE NONCLUSTERED INDEX babel_4817_t2_unique_index ON dbo.babel_4817_t2 (col2 DESC, col8) INCLUDE (col4);
+
+#Q#CREATE NONCLUSTERED INDEX babel_4817_t2_idx ON dbo.babel_4817_t2 (col5) INCLUDE (col1);
+
+#Q#CREATE TABLE babel_4817_t3 (col1 INT IDENTITY, col2 INT, col3 INT, col4 INT, col5 AS col1*col2, col6 VARCHAR(30))
+
+#Q#ALTER TABLE babel_4817_t3 DROP COLUMN col4
+
+#Q#ALTER TABLE babel_4817_t3 ADD col4 INT
+
+#Q#
+SET ANSI_NULLS ON
+
+#Q#SET QUOTED_IDENTIFIER ON
+
+#Q#CREATE TABLE [dbo].[babel_4817_t4](
+    [id] [int] NULL,
+    [filename] [varchar](200) NOT NULL,
+    [commited_dt] [datetime] NOT NULL,
+    [commited_sql] [ntext] NULL,
+PRIMARY KEY CLUSTERED 
+(
+    [filename] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+#Q#
+CREATE TABLE [dbo].[babel_4817_t5]
+(
+  [id] [int] NOT NULL,
+  [filename] [varchar](200) NOT NULL,
+  [commited_dt] [datetime] NOT NULL,
+  [commited_sql] [ntext] NULL,
+  PRIMARY KEY CLUSTERED
+(
+              [filename] ASC, [ID] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+#Q#CREATE NONCLUSTERED INDEX ix_test ON [dbo].[babel_4817_t5] ([filename]) INCLUDE ([id],[commited_dt])
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t1](
+	[col1] [int] NULL,
+	[col2] [int] NOT NULL,
+	[col3]  AS (col1 * col2) PERSISTED NOT NULL,
+	[col4] [int] NULL,
+	[col5] [int] NULL,
+	[col6] [int] NULL,
+	[col7] [int] NOT NULL,
+	[col8] [int] NOT NULL,
+ CONSTRAINT [babel_4817_t1_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[col3] ASC,
+	[col7] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [babel_4817_t1_col2_col8_key] UNIQUE NONCLUSTERED 
+(
+	[col2] DESC,
+	[col8] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_4817_t1] ADD  CONSTRAINT [babel_4817_t1_col2_col8_key] UNIQUE NONCLUSTERED 
+(
+	[col2] DESC,
+	[col8] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [babel_4817_t1_idx_1] ON [dbo].[babel_4817_t1]
+(
+	[col5] ASC
+)
+INCLUDE([col1]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+
+GO
+ALTER TABLE [dbo].[babel_4817_t1] ADD  CONSTRAINT [babel_4817_t1_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[col3] ASC,
+	[col7] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t2](
+	[col1] [int] NULL,
+	[col2] [int] NOT NULL,
+	[col3]  AS (col1 * col2) PERSISTED NOT NULL,
+	[col4] [int] NULL,
+	[col5] [int] NULL,
+	[col6] [int] NULL,
+	[col7] [int] IDENTITY(1,1) NOT NULL,
+	[col8] [int] NOT NULL,
+ CONSTRAINT [babel_4817_t2_pk] PRIMARY KEY NONCLUSTERED 
+(
+	[col3] ASC,
+	[col7] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+CREATE NONCLUSTERED INDEX [babel_4817_t2_idx] ON [dbo].[babel_4817_t2]
+(
+	[col5] ASC
+)
+INCLUDE([col1]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+
+GO
+ALTER TABLE [dbo].[babel_4817_t2] ADD  CONSTRAINT [babel_4817_t2_pk] PRIMARY KEY NONCLUSTERED 
+(
+	[col3] ASC,
+	[col7] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [babel_4817_t2_unique_index] ON [dbo].[babel_4817_t2]
+(
+	[col2] DESC,
+	[col8] ASC
+)
+INCLUDE([col4]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t3](
+	[col1] [int] IDENTITY(1,1) NOT NULL,
+	[col2] [int] NULL,
+	[col3] [int] NULL,
+	[col5]  AS (col1 * col2) PERSISTED,
+	[col6] [varchar](30) NULL,
+	[col4] [int] NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t4](
+	[id] [int] NULL,
+	[filename] [varchar](200) NOT NULL,
+	[commited_dt] [datetime] NOT NULL,
+	[commited_sql] [ntext] NULL,
+ CONSTRAINT [babel_4817_t4_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[filename] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_4817_t4] ADD  CONSTRAINT [babel_4817_t4_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[filename] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t5](
+	[id] [int] NOT NULL,
+	[filename] [varchar](200) NOT NULL,
+	[commited_dt] [datetime] NOT NULL,
+	[commited_sql] [ntext] NULL,
+ CONSTRAINT [babel_4817_t5_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[filename] ASC,
+	[id] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[babel_4817_t5] ADD  CONSTRAINT [babel_4817_t5_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[filename] ASC,
+	[id] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [ix_test] ON [dbo].[babel_4817_t5]
+(
+	[filename] ASC
+)
+INCLUDE([id],[commited_dt]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[isc_check_constraints_t1](
+	[a] [varchar](1) NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[isc_check_constraints_t1]  WITH CHECK ADD  CONSTRAINT [isc_check_constraints_t1_a_check] CHECK  (((a = 'provvwstdjtlyzygsx')))
+GO
+ALTER TABLE [dbo].[isc_check_constraints_t1] CHECK CONSTRAINT [isc_check_constraints_t1_a_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[table_check](
+	[id] [int] NOT NULL,
+	[name] [varchar](10) NOT NULL,
+	[age] [int] NOT NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[table_check]  WITH CHECK ADD  CONSTRAINT [table_check_age_check] CHECK  (((age >= 18)))
+GO
+ALTER TABLE [dbo].[table_check] CHECK CONSTRAINT [table_check_age_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[table_foreign](
+	[aa] [int] NOT NULL,
+	[bb] [int] NOT NULL,
+	[a] [int] NULL,
+ CONSTRAINT [table_foreign_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[aa] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[table_foreign]  WITH CHECK ADD FOREIGN KEY([a])
+REFERENCES [dbo].[table_primary] ([a])
+GO
+ALTER TABLE [dbo].[table_foreign] ADD  CONSTRAINT [table_foreign_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[aa] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[table_primary](
+	[a] [int] NOT NULL,
+	[b] [int] NOT NULL,
+	[c] [int] NULL,
+ CONSTRAINT [table_primary_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[table_primary] ADD  CONSTRAINT [table_primary_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[table_unique](
+	[a] [int] NOT NULL,
+ CONSTRAINT [table_unique_a_key] UNIQUE NONCLUSTERED 
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[table_unique] ADD  CONSTRAINT [table_unique_a_key] UNIQUE NONCLUSTERED 
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [test_comp_index] ON [dbo].[table_unique]
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_datetime](
+	[c_time] [time](6) NULL,
+	[c_date] [date] NULL,
+	[c_datetime] [datetime] NULL,
+	[c_datetime2] [datetime2](6) NULL,
+	[c_datetimeoffset] [datetimeoffset](6) NULL,
+	[c_smalldatetime] [smalldatetime] NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_date_check] CHECK  (((c_date < '2001-01-01')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_date_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime_check] CHECK  (((c_datetime < '2020-10-20 09:00:00')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime2_check] CHECK  ((((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime2_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetimeoffset_check] CHECK  ((((c_datetimeoffset < '2025-12-10 12:32:10 +01:00') AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetimeoffset_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_smalldatetime_check] CHECK  (((c_smalldatetime < '2007-05-08 12:35:00')))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_smalldatetime_check]
+GO
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_time_check] CHECK  ((((c_time < '09:00:00') AND (c_time < CAST('09:00:00' AS time(6))))))
+GO
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_time_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_null](
+	[a] [int] NULL,
+	[b] [int] NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [constraint1] CHECK  (((a > 10)))
+GO
+ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [constraint1]
+GO
+ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [test_null_a_check] CHECK  (((a IS NOT NULL)))
+GO
+ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [test_null_a_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_tsql_collate](
+	[c_varchar] [varchar](1) NULL,
+	[c_char] [char](1) NULL,
+	[c_nchar] [nchar](1) NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_char_check] CHECK  (((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE japanese_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_char_check]
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_nchar_check] CHECK  (((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf') AS nchar(7)) COLLATE latin1_general_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_nchar_check]
+GO
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_varchar_check] CHECK  (((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE latin1_general_ci_as))))
+GO
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_varchar_check]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_tsql_const](
+	[c_int] [int] NOT NULL,
+	[c_bit] [bit] NULL,
+	[c_smallint] [smallint] NULL,
+	[c_binary] [binary](8) NULL,
+	[c_varbinary] [varbinary](8) NULL,
+ CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[c_int] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_binary_check] CHECK  (((c_binary > CAST(('0xfe') AS binary(8)))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_binary_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_bit_check] CHECK  (((c_bit <> CAST((1) AS bit))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_bit_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_int_check] CHECK  (((c_int < 10)))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_int_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_smallint_check] CHECK  (((c_smallint < CAST((CAST(('20') AS sql_variant)) AS smallint))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_smallint_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_varbinary_check] CHECK  (((c_varbinary > CAST('0xfe' AS varbinary(8)))))
+GO
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_varbinary_check]
+GO
+ALTER TABLE [dbo].[test_tsql_const] ADD  CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[c_int] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[test_upper](
+	[a] [char](1) NULL
+) ON [PRIMARY]
+
+GO
+ALTER TABLE [dbo].[test_upper]  WITH CHECK ADD  CONSTRAINT [test_upper_a_check] CHECK  (((upper(a) IN ('A', 'B'))))
+GO
+ALTER TABLE [dbo].[test_upper] CHECK CONSTRAINT [test_upper_a_check]
+GO
+CREATE NONCLUSTERED INDEX [test_index] ON [dbo].[test_upper]
+(
+	[a] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+#Q#DROP TABLE IF EXISTS babel_4817_3, babel_4817_4;
+
+#Q#DROP TABLE IF EXISTS babel_4817_t1, babel_4817_t2, babel_4817_t3, babel_4817_t4, babel_4817_t5;
+
+#Q#DROP TABLE IF EXISTS table_check
+
+#Q#DROP TABLE IF EXISTS table_foreign 
+
+#Q#DROP TABLE IF EXISTS table_primary
+
+#Q#DROP TABLE IF EXISTS table_unique
+
+#Q#DROP TABLE IF EXISTS isc_check_constraints_t1
+
+#Q#DROP TABLE IF EXISTS test_tsql_const
+
+#Q#DROP TABLE IF EXISTS test_tsql_cast
+
+#Q#DROP TABLE IF EXISTS test_tsql_collate
+
+#Q#DROP TABLE IF EXISTS test_datetime
+
+#Q#DROP TABLE IF EXISTS test_functioncall
+
+#Q#DROP TABLE IF EXISTS test_null
+
+#Q#DROP TABLE IF EXISTS test_upper
+

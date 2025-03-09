@@ -295,7 +295,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
 AS $$
-    SELECT sys.suser_name_internal(NULL);
+    SELECT sys.suser_name_internal(suser_id());
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
@@ -2395,7 +2395,7 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_id() RETURNS SMALLINT
 AS 'babelfishpg_tsql', 'babelfish_db_id'
-LANGUAGE C PARALLEL SAFE IMMUTABLE;
+LANGUAGE C PARALLEL SAFE STABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_name(int) RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
@@ -2403,7 +2403,7 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
-LANGUAGE C PARALLEL SAFE IMMUTABLE;
+LANGUAGE C PARALLEL SAFE STABLE;
 
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
@@ -4125,6 +4125,24 @@ BEGIN
 END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,

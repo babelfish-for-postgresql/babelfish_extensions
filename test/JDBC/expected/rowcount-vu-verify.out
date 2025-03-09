@@ -124,7 +124,7 @@ select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
 go
 ~~START~~
 text
-2147483647
+0
 ~~END~~
 
 
@@ -218,7 +218,7 @@ select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
 go
 ~~START~~
 text
-2147483647
+0
 ~~END~~
 
 

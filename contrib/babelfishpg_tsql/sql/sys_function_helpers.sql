@@ -11004,9 +11004,9 @@ BEGIN
 
 	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
-		RETURN v_result;
+		RETURN ltrim(v_result);
 	ELSE
-		RETURN rpad(v_result,  v_res_length, ' ');
+		RETURN rpad(ltrim(v_result),  v_res_length, ' ');
 	END IF;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
@@ -11430,4 +11430,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
 RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
+RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

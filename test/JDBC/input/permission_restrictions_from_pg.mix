@@ -8,6 +8,32 @@ go
 create user permission_restrictions_tsql_user1 for login permission_restrictions_tsql_login1;
 go
 
+-- create user for a login in master, tempdb and msdb
+create login permission_restrictions_tsql_login2 with password = '123';
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use tempdb;
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use msdb;
+go
+
+create user permission_restrictions_tsql_login2;
+go
+
+use master
+go
+
+-- create a login with no mapped user
+create login permission_restrictions_tsql_login3 with password = '123';
+go
+
 -- psql
 create user permission_restrictions_psql_user with password '123';
 go
@@ -39,11 +65,20 @@ go
 grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
 go
 
+grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
+go
+
 grant master_db_datareader to master_db_datareader;
 go
 
 -- dropping of BBF users/logins should not be allowed
 drop user permission_restrictions_tsql_login1;
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+drop user permission_restrictions_tsql_login3;
 go
 
 drop user master_permission_restrictions_tsql_user1;
@@ -97,11 +132,20 @@ go
 grant permission_restrictions_tsql_login1 to permission_restrictions_psql_user;
 go
 
+grant permission_restrictions_tsql_login2 to permission_restrictions_psql_user;
+go
+
 grant master_db_datareader to master_db_datareader;
 go
 
 -- dropping of BBF users/logins should not be allowed
 drop user permission_restrictions_tsql_login1;
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+drop user permission_restrictions_tsql_login3;
 go
 
 drop user master_permission_restrictions_tsql_user1;
@@ -147,6 +191,10 @@ SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
 select pg_sleep(1);
 GO
 
@@ -154,8 +202,29 @@ GO
 drop user permission_restrictions_tsql_user1;
 go
 
+drop user permission_restrictions_tsql_login2;
+go
+
+use tempdb
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
+use msdb
+go
+
+drop user permission_restrictions_tsql_login2;
+go
+
 drop login permission_restrictions_tsql_login1;
 go
 
+drop login permission_restrictions_tsql_login2;
+go
+
 drop login permission_restrictions_tsql_login
+go
+
+drop login permission_restrictions_tsql_login3;
 go

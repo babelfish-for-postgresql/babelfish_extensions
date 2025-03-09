@@ -80,7 +80,7 @@ SELECT babel_4442_f(), current_setting('search_path'), babel_4442_s1.babel_4442_
 GO
 ~~START~~
 int#!#text#!#int#!#text#!#int#!#int#!#text#!#int
-1#!#master_dbo, "$user", sys, pg_catalog#!#2#!#master_dbo, "$user", sys, pg_catalog#!#3#!#1#!#master_dbo, "$user", sys, pg_catalog#!#1
+1#!#master_dbo, master_dbo, sys, pg_catalog#!#2#!#master_dbo, master_dbo, sys, pg_catalog#!#3#!#1#!#master_dbo, master_dbo, sys, pg_catalog#!#1
 ~~END~~
 
 
@@ -88,7 +88,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -98,7 +98,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
@@ -112,7 +112,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
@@ -129,7 +129,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -139,7 +139,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
@@ -153,7 +153,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
@@ -170,7 +170,7 @@ SELECT current_setting('search_path')
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 

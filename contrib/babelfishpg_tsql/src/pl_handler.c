@@ -48,6 +48,7 @@
 #include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -1382,13 +1383,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 					}
 				}
 				break;
-			case T_IndexStmt:
-				{
-					IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-				}
-				break;
 			case T_CreateTableAsStmt:
 				{
 					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
@@ -2545,6 +2539,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool 				with_recompile = false;
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
+					HeapTuple 			proctup;
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2626,13 +2621,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectId = oldoid;
 						originalFunc.classId = ProcedureRelationId;
 						originalFunc.objectSubId = 0;
-						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
+						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
+						if (!HeapTupleIsValid(proctup))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+										errmsg("cache lookup failed for procedure %u", oldoid)));
+						}
+						if (get_bbf_function_tuple_from_proctuple(proctup) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-									errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
+									(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+										errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
 						}
+						ReleaseSysCache(proctup);
+
 						if(!cfs->is_procedure)
 						{
 							/*
@@ -3606,7 +3610,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						PG_END_TRY();
 
-						set_session_properties(db_name);
+						set_cur_user_db_and_path(db_name, true);
 						pfree(db_name);
 
 						return;
@@ -4345,30 +4349,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_IndexStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL)
-				{
-					IndexStmt *stmt = (IndexStmt *) parsetree;
+				IndexStmt	*stmt = (IndexStmt *) parsetree;
 
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
+				{
+					char    	*original_name = stmt->idxname != NULL ? pstrdup(stmt->idxname) : NULL;
+					List    	*partition_schemes = stmt->excludeOpNames;
+
+					stmt->excludeOpNames = NIL;
+					if (stmt->idxname && !stmt->isconstraint)
+						stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
+					/*
+					 * Create the index first so that columns and table name
+					 * checks get done before index alignment check.
+					 */
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					/*
 					 * Create partitioned index if partition scheme is specified.
 					 * Allow only aligned-index.
 					 */
-					if (stmt->excludeOpNames != NIL)
-					{
-						List *partition_schemes = stmt->excludeOpNames;
-						stmt->excludeOpNames = NIL;
-
-						/*
-						 * Create the index first so that columns and table name
-						 * checks get done before index alignment check.
-						 */
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-											queryEnv, dest, qc);
-						
+					if (partition_schemes != NIL)
+					{	
 						stmt->excludeOpNames = partition_schemes;
 
 						/* Validate that index is aligned-index. */
@@ -4378,8 +4380,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
-						return;
 					}
+					if (original_name && !stmt->isconstraint)
+						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+					return;
 				}
 				break;
 			}
@@ -4528,7 +4532,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4566,7 +4570,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 										exec_pg_command = true;
 
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
@@ -4636,7 +4640,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4674,7 +4678,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									exec_pg_command = true;
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
@@ -5356,7 +5360,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 	
 	if (current_spi_stack_depth > SPI_depth)
-		elog(WARNING, "SPI connection leak found, expected count:%d, current count:%d",
+		elog(LOG, "SPI connection leak found, expected count:%d, current count:%d",
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
@@ -5512,6 +5516,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
+	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
+	int16		saved_dbid = get_cur_db_id();
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -5569,6 +5575,10 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(func->fn_oid);
 
+			/* for cross db func/proc calls switch to that db */
+			if (DbidIsValid(func->fn_dbid) && get_cur_db_id() != func->fn_dbid)
+				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false);
+
 			/*
 			 * Determine if called as function or trigger and call appropriate
 			 * subhandler
@@ -5603,7 +5613,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
-			
+
 			send_error = true;
 		}
 		PG_END_TRY(2);
@@ -5616,10 +5626,23 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		pltsql_remove_current_query_env();
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
+
+		/* reset db context must always be the last line in this block */
+		if (get_cur_db_id() != saved_dbid)
+			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
+		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
+			&& !IsAbortedTransactionBlockState())
+		{
+			pltsql_check_search_path = false;
+			SetConfigOption("search_path", saved_search_path,
+							PGC_SUSET, PGC_S_SESSION);
+		}
+		pfree(saved_search_path);
 	}
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+		pltsql_check_search_path = true;
 
 		/* If func is NULL then we have encountered a parser error. */
 		if (!func)
@@ -6721,15 +6744,51 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		bool ordinality_changed = false;
 		AttrNumber current_resno = 0;
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
+
+		bool persist_identity = true;
+
+		/*
+		 * In T-SQL, identity property of column in destination
+		 * table is not persisted if the SELECT ... INTO statement
+		 * does not contain a single base relation
+		 */
+		if (q->jointree && q->jointree->fromlist != NIL)
+		{
+			if (list_length(q->jointree->fromlist) > 1)
+				persist_identity = false;
+			else
+			{
+				Node *n_from = (Node *) linitial(q->jointree->fromlist);
+
+				if (!IsA(n_from, RangeTblRef))
+					persist_identity = false;
+				else
+				{
+					RangeTblRef		*rtr = (RangeTblRef *) n_from;
+					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+
+					/* Do not persist identity if not an ordinary relation */
+					if (rte->rtekind != RTE_RELATION)
+						persist_identity = false;
+				}
+			}
+		}
+
+		altstmt = makeNode(AlterTableStmt);
+		altstmt->relation = into->rel;
+		altstmt->objtype = OBJECT_TABLE;
+		altstmt->cmds = NIL;
 
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			if(tle->resname != NULL && !tle->resjunk)
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -6783,18 +6842,15 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 
 				seen_identity = true;
+				ordinality_changed = true;
 				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
 				/** Add alter table add identity node after Select Into statement */
-				altstmt = makeNode(AlterTableStmt);
-				altstmt->relation = into->rel;
-				altstmt->objtype = OBJECT_TABLE;
-				altstmt->cmds = NIL;
-
 				constraint = makeNode(Constraint);
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
+				constraint->location = -1;
 
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
@@ -6809,6 +6865,61 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			{
+				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+
+				if (HeapTupleIsValid(attrtup))
+				{
+					AlterTableCmd *lcmd;
+					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
+					if (attrStruct->attnotnull)
+					{
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
+						 * after SELECT INTO statement
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_SetNotNull;
+						lcmd->name = tle->resname;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					if (attrStruct->attidentity && persist_identity)
+					{
+						Constraint *constraint;
+
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						seen_identity = true;
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_IDENTITY;
+						constraint->generated_when = attrStruct->attidentity;
+						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+						constraint->location = -1;
+
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... after SELECT INTO
+						 * statement where the column is made an IDENTITY column
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_AddIdentity;
+						lcmd->name = tle->resname;
+						lcmd->def = (Node *) constraint;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					current_resno += 1;
+					tle->resno = current_resno;
+					modifiedTargetList = lappend(modifiedTargetList, tle);
+
+					ReleaseSysCache(attrtup);
+				}
+			}
 			else
 			{
 				current_resno += 1;
@@ -6818,7 +6929,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		}
 		q->targetList = modifiedTargetList;
 
-		if (seen_identity)
+		if (ordinality_changed)
 		{
 			if (q->sortClause)
 			{
@@ -6843,7 +6954,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	if (altstmt)
+	if (altstmt && list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
 	return result;
