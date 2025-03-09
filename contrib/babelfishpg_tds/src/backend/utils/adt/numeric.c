@@ -764,7 +764,7 @@ numeric_get_typmod(Numeric num)
 	 * case of zero both precision and scale will be evaluated to zero, so we
 	 * will set (precision,scale) to T-SQL default (18,0).
 	 */
-	if (NUMERIC_NDIGITS(num) == 0)
+	if (NUMERIC_NDIGITS(num) == 0 && scale == 0)
 	{
 		precision = 18;
 		scale = 0;
