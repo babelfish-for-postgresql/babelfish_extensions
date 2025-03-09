@@ -5763,7 +5763,6 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
  * Objects are always owned by current user in postgres but in babelfish
  * schema contained objects should be owned by the schema owner by default
  * Use this hook to pick schema owner as object owner during object creation
- * We currently only do this if current user is member of db_ddladmin or db_owner
  */
 static Oid
 pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
@@ -5808,14 +5807,9 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 		if (ownerId != nsp_owner)
 		{
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-			Oid 	db_owner = get_db_owner_oid(db_name, false);
 			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
 
-			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
-			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
-				(has_privs_of_role(GetUserId(), db_owner) ||
-				has_privs_of_role(GetUserId(), db_ddladmin)))
+			if (schema_db_id == get_cur_db_id()) 
 				ownerId = nsp_owner;
 		}
 
