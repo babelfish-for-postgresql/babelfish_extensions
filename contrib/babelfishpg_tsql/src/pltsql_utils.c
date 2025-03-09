@@ -1956,24 +1956,26 @@ gen_schema_name_for_fulltext_index(const char *schema_name)
  * during execution of CONTAINS() statement
  */
 bool
-check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name, List *ft_indexed_column_name)
+check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name)
 {
 	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
 	char		*ft_index_name;
+	List 		*ft_column_name;
 	Oid		schemaOid;
 	Oid		relid;
+	int 		len = column_name->length;
 
 	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
-
+	
 	// Check if schema exists
 	if (!OidIsValid(schemaOid))
-		ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				errmsg("schema \"%s\" does not exist",
-					schema_name)));	
-
+	ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_SCHEMA),
+		errmsg("schema \"%s\" does not exist",
+			schema_name)));	
+			
 	relid = get_relname_relid((const char *) table_name, schemaOid);
-
+	
 
 	// Check if table exists
 	if (!OidIsValid(relid))
@@ -1983,50 +1985,87 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 					table_name)));
 	
 	ft_index_name = get_fulltext_index_name(relid, table_name);
-	for( int i = 0; i < column_name->length; i++)
+	if(ft_index_name == NULL)
+		return false;
+	
+	ft_column_name = get_fulltext_indexed_columns(relid, ft_index_name);
+	for(int i = 0; i < len; i++)
 	{
 		bool flag = false;
-		for(int j = 0; j < ft_indexed_column_name->length; j++)
+		for(int j = 0; j < ft_column_name->length; j++)
 		{
-			if((column_name->elements[i]).ptr_value == (ft_indexed_column_name->elements[j]).ptr_value)
+			if(strcmp((char *)(column_name->elements[i]).ptr_value, (char *)(ft_column_name->elements[j]).ptr_value) == 0)
 			{
 				flag = true;
 				break;
 			}
 		}
 		if(!flag)
+		{
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \"%d\" because it is not full-text indexed.",
-									(column_name->elements[i]).int_value)));
+					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \"%s\" because it is not full-text indexed.",
+						(char *)(column_name->elements[i]).ptr_value)));
+		}
 	}
-	return ft_index_name != NULL;
+	return true;
 }
 
-// List
-// *get_fulltextindexed_columns(const char* schema_name, const char* table_name, const char* index_name)
-// {
-// 	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
-// 	Oid		schemaOid = LookupExplicitNamespace(gen_schema_name, true);
-// 	Oid		relid = get_relname_relid((const char *) table_name, schemaOid);
-// 	Relation        relation = RelationIdGetRelation(relid);
-// 	List            *indexoidlist = RelationGetIndexList(relation);
-//     	List            *indexoidlist = RelationGetIndexList(relation);
-// 	ListCell	*cell;
+List
+*get_fulltext_indexed_columns(Oid relid, char *ft_index_name)
+{
+	Relation        relation  = RelationIdGetRelation(relid);
+	List            *indexoidlist = RelationGetIndexList(relation);
+	List 		*column_name = NULL;
+	ListCell	*cell;
+	char		*idx;
+	Datum 		result;
+	
+	foreach(cell, indexoidlist)
+	{
+		Oid indexOid = lfirst_oid(cell);
+		char *name = get_rel_name(indexOid);
+		
+		if (strcmp(name, ft_index_name) == 0)
+		{
+			result = DirectFunctionCall1(pg_get_indexdef, ObjectIdGetDatum(indexOid));
+			if(DatumGetPointer(result) == NULL)
+				return NULL;
+			idx = text_to_cstring(DatumGetTextP(result));
+			column_name = get_columns(idx);
+			break;
+		}
+	}
+    	return column_name;
+}
 
-// 	foreach(cell, indexoidlist)
-// 	{
-// 		Oid indexOid = lfirst_oid(cell);
-// 		char *name = get_rel_name(indexOid);
+List
+*get_columns(char *index_stmt)
+{
+	List	 *column_name = NULL;
+	// Find the starting point after "to_tsvector"
+	const char* current = index_stmt;
+	
+	while ((current = strstr(current, "replace_special_chars_fts(")) != NULL) 
+	{
+		int i = 0;
+		StringInfoData bufStr;
 
-// 		if (strcmp(name, index_name) == 0)
-// 		{
-// 			HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-// 			Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-// 		}
-// 	}
-
-// }
+		initStringInfo(&bufStr);
+		current += strlen("replace_special_chars_fts(");
+		
+		// Extract until the closing parenthesis
+		while (current[i] != ')' ) 
+		{
+			appendStringInfoChar(&bufStr, current[i]);
+			i++;
+		}
+		appendStringInfoChar(&bufStr, '\0');
+		column_name = lappend(column_name, bufStr.data);
+		
+	}
+	return column_name;
+}
 
 /*
  * replace_special_chars_fts_impl
@@ -2126,30 +2165,30 @@ char
 char
 *get_fulltext_index_name(Oid relid, const char *table_name)
 {
-    	Relation        relation = RelationIdGetRelation(relid);
-    	List            *indexoidlist = RelationGetIndexList(relation);
-	ListCell	*cell;
-    	char            *ft_index_name = NULL;
-	char		*table_name_cpy = palloc(strlen(table_name) + 1);
-    	char            *temp_ft_index_name;
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    char            *ft_index_name = NULL;
+	char			*table_name_cpy = palloc(strlen(table_name) + 1);
+    char            *temp_ft_index_name;
 
 	strcpy(table_name_cpy, table_name);
 	temp_ft_index_name = construct_unique_index_name("ft_index", table_name_cpy);
-	foreach(cell, indexoidlist)
-	{
-		Oid indexOid = lfirst_oid(cell);
-		ft_index_name = get_rel_name(indexOid);
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        ft_index_name = get_rel_name(indexOid);
 
-		if (strcmp(ft_index_name, temp_ft_index_name) == 0)
-		break;
+        if (strcmp(ft_index_name, temp_ft_index_name) == 0)
+            break;
 
-		ft_index_name = NULL;
-	}
+        ft_index_name = NULL;
+    }
 
-	RelationClose(relation);
-	list_free(indexoidlist);
-		pfree(table_name_cpy);
-    	return ft_index_name;
+    RelationClose(relation);
+    list_free(indexoidlist);
+	pfree(table_name_cpy);
+    return ft_index_name;
 }
 
 /*
@@ -2159,64 +2198,64 @@ char
 bool
 is_unique_index(Oid relid, const char *index_name)
 {
-    	Relation        relation = RelationIdGetRelation(relid);
-    	List            *indexoidlist = RelationGetIndexList(relation);
-	ListCell	*cell;
-    	bool            is_unique = false;
-	int		unique_key_count = 0;
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    bool            is_unique = false;
+	int				unique_key_count = 0;
 
-	foreach(cell, indexoidlist)
-	{
-		Oid indexOid = lfirst_oid(cell);
-		char *name = get_rel_name(indexOid);
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        char *name = get_rel_name(indexOid);
 
-		if (strcmp(name, index_name) == 0)
-		{
-			HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+        if (strcmp(name, index_name) == 0)
+        {
+            HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
+            Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-					/* Check if the key column is unique and is of single-key */
-			if (indexForm->indisunique && indexForm->indrelid == relid && indexForm->indnkeyatts == 1)
-			{
-						/* Check if the key column is non-nullable */
-				for (int i = 0; i < indexForm->indnatts; i++)
-				{
+			/* Check if the key column is unique and is of single-key */
+            if (indexForm->indisunique && indexForm->indrelid == relid && indexForm->indnkeyatts == 1)
+            {
+				/* Check if the key column is non-nullable */
+                for (int i = 0; i < indexForm->indnatts; i++)
+                {
 					AttrNumber attnum = indexForm->indkey.values[i];
-					if (attnum != 0)
-					{
-						HeapTuple attTuple = SearchSysCache2(ATTNUM,
-									ObjectIdGetDatum(relid),
-									Int16GetDatum(attnum));
-									if(HeapTupleIsValid(attTuple))
-									{
-										Form_pg_attribute attForm = (Form_pg_attribute) GETSTRUCT(attTuple);
+                    if (attnum != 0)
+                    {
+                        HeapTuple attTuple = SearchSysCache2(ATTNUM,
+												ObjectIdGetDatum(relid),
+                                                Int16GetDatum(attnum));
+						if(HeapTupleIsValid(attTuple))
+						{
+							Form_pg_attribute attForm = (Form_pg_attribute) GETSTRUCT(attTuple);
 
-										if (attForm->attnotnull)
-										{
-											unique_key_count++;
-											if (unique_key_count > 1)
-											{
-												ReleaseSysCache(attTuple);
-												break;
-											}
-										}
-									}
-						ReleaseSysCache(attTuple);
-					}
-				}
+							if (attForm->attnotnull)
+							{
+								unique_key_count++;
+								if (unique_key_count > 1)
+								{
+									ReleaseSysCache(attTuple);
+									break;
+								}
+							}
+						}
+                        ReleaseSysCache(attTuple);
+                    }
+                }
 
-				if (unique_key_count == 1)
+                if (unique_key_count == 1)
 					is_unique = true;
 			}
 
-			ReleaseSysCache(indexTuple);
-			break;
-		}
-	}
+            ReleaseSysCache(indexTuple);
+            break;
+        }
+    }
 
-	RelationClose(relation);
-	list_free(indexoidlist);
-	return is_unique;
+    RelationClose(relation);
+    list_free(indexoidlist);
+    return is_unique;
 }
 
 char
