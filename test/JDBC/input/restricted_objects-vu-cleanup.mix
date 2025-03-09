@@ -1,7 +1,5 @@
-SELECT * FROM babelfish_namespace_ext;
+SELECT object_type, schema_name, object_name FROM sys.babelfish_inconsistent_metadata()
 GO
-
-SELECT * FROM babelfish_function_ext;
 
 REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
 GO
