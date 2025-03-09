@@ -180,28 +180,33 @@ master#!#dbo#!#babel_5467_t1#!#f#!#38#!#10#!#6
 
 
 -- tables with computed columns having expression which results in numeric
-create table babel_5467_t2(a decimal(38,6), b decimal(38,6), c as a / b)
+create table babel_5467_t2(a decimal(38,6), b decimal(38,6), c as a / b, d as a * b)
 insert into babel_5467_t2 values(32,3)
+insert into babel_5467_t2 values(10.666666, 10.666666)
 go
+~~ROW COUNT: 1~~
+
 ~~ROW COUNT: 1~~
 
 
 select * from babel_5467_t2
 go
 ~~START~~
-numeric#!#numeric#!#numeric
-32.000000#!#3.000000#!#10.666666
+numeric#!#numeric#!#numeric#!#numeric
+32.000000#!#3.000000#!#10.666666#!#96.000000
+10.666666#!#10.666666#!#1.000000#!#113.777764
 ~~END~~
 
 
 -- non-constant expression
-select c = (a/b) into babel_5467_t3 from babel_5467_t2
+select c = (a/b), d = (a*b) into babel_5467_t3 from babel_5467_t2
 go
 select * from babel_5467_t3
 go
 ~~START~~
-numeric
-10.666666
+numeric#!#numeric
+10.666666#!#96.000000
+1.000000#!#113.777764
 ~~END~~
 
 
@@ -209,7 +214,7 @@ numeric
 create table babel_5467_t6(a decimal(38,6), b decimal(38,6), CHECK (a/b = 10.666666))
 go
 
-create table babel_5467_t7(a decimal(38,6), b decimal(38,6), CHECK (a * b = 113.777763))
+create table babel_5467_t7(a decimal(38,6), b decimal(38,6), CHECK (a * b = 113.777764))
 go
 
 insert into babel_5467_t6 values(32, 3)
@@ -263,7 +268,7 @@ numeric#!#numeric
 ~~END~~
 
 
-select * from babel_5467_t9 where a*b = 113.777763
+select * from babel_5467_t9 where a*b = 113.777764
 go
 ~~START~~
 numeric#!#numeric
@@ -728,6 +733,66 @@ master#!#dbo#!#babel_5467_avgdata_13#!#r#!#10#!#10#!#0
 master#!#dbo#!#babel_5467_avgdata_13#!#s#!#10#!#10#!#0
 ~~END~~
 
+
+-- tests for truncation/rounding of expressions
+-- s = max(6, s1 + p2 + 1) = 45, p = p1 - s1 + s2 + max(6, s1 + p2 + 1) = 83 => s = 6, p = 38
+-- truncation
+select 32/3, cast(32 as numeric(38, 6)) / cast(3 as numeric(38, 6))
+go
+~~START~~
+int#!#numeric
+10#!#10.666666
+~~END~~
+
+
+-- s = s1 + s2 = 12, p = p1 + p2 + 1 = 77 => s = 6, p = 38
+-- rounding
+select 10.666666*10.666666, cast(10.666666 as numeric(38, 6)) * cast(10.666666 as numeric(38, 6))
+go
+~~START~~
+numeric#!#numeric
+113.777763555556#!#113.777764
+~~END~~
+
+
+-- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
+-- rounding
+select cast(10.6666666666 as numeric(38, 10)) + cast(5.11111111 as numeric(38, 8))
+go
+~~START~~
+numeric
+15.7777777766
+~~END~~
+
+
+-- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
+-- rounding
+select cast(10.6666666666 as numeric(38, 10)) - cast(5.11111111 as numeric(38, 8))
+go
+~~START~~
+numeric
+5.5555555566
+~~END~~
+
+
+create table babel_5467_t10(a numeric(38,6));
+insert into babel_5467_t10 values(20),(10),(2);
+go
+~~ROW COUNT: 3~~
+
+
+-- s = 6, p = 38
+-- truncation
+select avg(a) from babel_5467_t10
+go
+~~START~~
+numeric
+10.666666
+~~END~~
+
+
+drop table babel_5467_t10
+go
 
 -- cleanup
 drop table babel_5467_avgdata_1

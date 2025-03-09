@@ -192,7 +192,7 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
-static Datum trunc_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod);
+static Datum adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod);
 static void pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
@@ -281,7 +281,7 @@ static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
-static trunc_numeric_result_hook_type prev_trunc_numeric_result_hook = NULL;
+static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
 static ExecUpdateResultTypeTL_hook_type prev_ExecUpdateResultTypeTL_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
@@ -427,8 +427,8 @@ InstallExtendedHooks(void)
 	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
 	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger;
 
-	prev_trunc_numeric_result_hook = trunc_numeric_result_hook;
-	trunc_numeric_result_hook = trunc_numeric_result;
+	prev_adjust_numeric_result_hook = adjust_numeric_result_hook;
+	adjust_numeric_result_hook = adjust_numeric_result;
 
 	prev_ExecUpdateResultTypeTL_hook = ExecUpdateResultTypeTL_hook;
 	ExecUpdateResultTypeTL_hook = pltsql_ExecUpdateResultTypeTL;
@@ -593,7 +593,7 @@ UninstallExtendedHooks(void)
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
-	trunc_numeric_result_hook = prev_trunc_numeric_result_hook;
+	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
 	ExecUpdateResultTypeTL_hook = prev_ExecUpdateResultTypeTL_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
@@ -1218,14 +1218,38 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 }
 
 /*
- * trunc_numeric_result
- *  truncates the result value to the correct scale based on result_typmod.
+ * get_func_id_from_exp
+ *  For expressions T_FuncExpr, T_OpExpr, T_Aggref returns its function Oid
+ */
+static Oid
+get_func_id_from_exp(Node *expr)
+{
+	if (expr == NULL)
+		return InvalidOid;
+
+	switch(nodeTag(expr))
+	{
+		case T_FuncExpr:
+			return ((FuncExpr *) expr)->funcid;
+		case T_OpExpr:
+			return ((OpExpr *) expr)->opfuncid;
+		case T_Aggref:
+			return ((Aggref *) expr)->aggfnoid;
+		default:
+			return InvalidOid;
+	}
+}
+
+/*
+ * adjust_numeric_result
+ *  truncates/rounds the result value to the correct scale based on result_typmod.
  *  for result_typmod = -1, computes the result_typmod using pltsql_exprTypmod function.
  */
 static Datum
-trunc_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
+adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
 {
 	int32       scale;
+	Oid         func_id;
 
 	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
 		return result;
@@ -1241,7 +1265,12 @@ trunc_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, O
 		if (result_typmod != -1)
 		{
 			scale = (result_typmod - VARHDRSZ) & 0xffff; 
-			return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+			func_id = get_func_id_from_exp(expr);
+
+			if (func_id == F_NUMERIC_DIV || func_id == F_AVG_NUMERIC)
+				return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+			else
+				return DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
 		}
 	}
 

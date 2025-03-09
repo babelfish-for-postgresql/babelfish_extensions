@@ -999,7 +999,7 @@ insert into testnumeric_tab values (1879323.2222, 2383823.343, 4.5484, 232.79, 3
 select in1 * in2 from testnumeric_tab;
 ~~START~~
 numeric
-4479974566122.335814
+4479974566122.335815
 ~~END~~
 
 
@@ -1007,7 +1007,7 @@ numeric
 select in4 * in5 from testnumeric_tab;
 ~~START~~
 numeric
-80367.255
+80367.256
 ~~END~~
 
 

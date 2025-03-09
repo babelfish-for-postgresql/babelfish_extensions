@@ -95,15 +95,16 @@ where TABLE_NAME = 'babel_5467_t1' order by COLUMN_NAME
 go
 
 -- tables with computed columns having expression which results in numeric
-create table babel_5467_t2(a decimal(38,6), b decimal(38,6), c as a / b)
+create table babel_5467_t2(a decimal(38,6), b decimal(38,6), c as a / b, d as a * b)
 insert into babel_5467_t2 values(32,3)
+insert into babel_5467_t2 values(10.666666, 10.666666)
 go
 
 select * from babel_5467_t2
 go
 
 -- non-constant expression
-select c = (a/b) into babel_5467_t3 from babel_5467_t2
+select c = (a/b), d = (a*b) into babel_5467_t3 from babel_5467_t2
 go
 select * from babel_5467_t3
 go
@@ -112,7 +113,7 @@ go
 create table babel_5467_t6(a decimal(38,6), b decimal(38,6), CHECK (a/b = 10.666666))
 go
 
-create table babel_5467_t7(a decimal(38,6), b decimal(38,6), CHECK (a * b = 113.777763))
+create table babel_5467_t7(a decimal(38,6), b decimal(38,6), CHECK (a * b = 113.777764))
 go
 
 insert into babel_5467_t6 values(32, 3)
@@ -141,7 +142,7 @@ go
 select * from babel_5467_t9 where a/b = 32/3
 go
 
-select * from babel_5467_t9 where a*b = 113.777763
+select * from babel_5467_t9 where a*b = 113.777764
 go
 
 select * from babel_5467_t9 where a*b = 10.666666*10.666666
@@ -374,6 +375,39 @@ go
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
 where TABLE_NAME = 'babel_5467_avgdata_13' order by COLUMN_NAME
+go
+
+-- tests for truncation/rounding of expressions
+-- s = max(6, s1 + p2 + 1) = 45, p = p1 - s1 + s2 + max(6, s1 + p2 + 1) = 83 => s = 6, p = 38
+-- truncation
+select 32/3, cast(32 as numeric(38, 6)) / cast(3 as numeric(38, 6))
+go
+
+-- s = s1 + s2 = 12, p = p1 + p2 + 1 = 77 => s = 6, p = 38
+-- rounding
+select 10.666666*10.666666, cast(10.666666 as numeric(38, 6)) * cast(10.666666 as numeric(38, 6))
+go
+
+-- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
+-- rounding
+select cast(10.6666666666 as numeric(38, 10)) + cast(5.11111111 as numeric(38, 8))
+go
+
+-- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
+-- rounding
+select cast(10.6666666666 as numeric(38, 10)) - cast(5.11111111 as numeric(38, 8))
+go
+
+create table babel_5467_t10(a numeric(38,6));
+insert into babel_5467_t10 values(20),(10),(2);
+go
+
+-- s = 6, p = 38
+-- truncation
+select avg(a) from babel_5467_t10
+go
+
+drop table babel_5467_t10
 go
 
 -- cleanup
