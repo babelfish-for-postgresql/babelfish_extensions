@@ -5805,7 +5805,11 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		else
 			nsp_owner = nsptup->nspowner;
 
-		if (ownerId != nsp_owner)
+		/*
+		 * 1. Object owner should not be same as schema owner AND
+		 * 2. schema owner not dbo
+		 */
+		if ((ownerId != nsp_owner) && (nsp_owner != dbo_oid))
 		{
 			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
 
