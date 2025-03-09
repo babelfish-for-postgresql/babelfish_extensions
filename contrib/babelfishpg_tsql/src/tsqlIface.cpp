@@ -7429,7 +7429,7 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static bool (TSqlParser::Search_conditionContext *ctx, List *column_name)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List *column_name)
 {
     if (ctx && ctx->predicate_br().size() > 0)
     	{
