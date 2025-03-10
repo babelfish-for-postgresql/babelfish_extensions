@@ -2497,3 +2497,387 @@ GO
 drop table temp_tbl
 GO
 
+
+-- Create test table with binary data
+CREATE TABLE #BinaryData (
+    ID INT,
+    GroupID INT,
+    BinaryValue VARBINARY(10),
+    Description VARCHAR(50)
+);
+GO
+
+-- Insert test data
+INSERT INTO #BinaryData VALUES
+-- Group 1: Regular values
+(1, 1, 0x0A, 'Group 1 - Small value'),
+(2, 1, 0x0F, 'Group 1 - Larger value'),
+(3, 1, NULL, 'Group 1 - NULL value'),
+
+-- Group 2: NULL values
+(4, 2, NULL, 'Group 2 - NULL value 1'),
+(5, 2, NULL, 'Group 2 - NULL value 2'),
+(6, 2, 0x12, 'Group 2 - Non-NULL value'),
+
+-- Group 3: Same values
+(7, 3, 0x0A, 'Group 3 - Duplicate value'),
+(8, 3, 0x0A, 'Group 3 - Duplicate value'),
+(9, 3, NULL, 'Group 3 - NULL value');
+GO
+
+-- Test Case 1: CHECKSUM_AGG
+SELECT t.* INTO #ChecksumResults FROM
+(
+SELECT 'Regular CHECKSUM_AGG' AS Test,
+    GroupID,
+    CHECKSUM_AGG(CAST(BinaryValue AS INT)) AS ChecksumResult
+FROM #BinaryData
+GROUP BY GroupID
+UNION
+SELECT 'CHECKSUM_AGG with DISTINCT',
+    GroupID,
+    CHECKSUM_AGG(DISTINCT CAST(BinaryValue AS INT)) AS ChecksumResult
+FROM #BinaryData
+GROUP BY GroupID
+) t;
+GO
+
+-- Test Case 2: CHECKSUM_AGG with NULL handling
+SELECT t.* INTO #ChecksumNullResults FROM
+(
+SELECT 'Default NULL handling' AS Test,
+    GroupID,
+    CHECKSUM_AGG(CAST(BinaryValue AS INT)) AS ChecksumResult
+FROM #BinaryData
+GROUP BY GroupID
+UNION
+SELECT 'NULL handling with ISNULL',
+    GroupID,
+    CHECKSUM_AGG(CAST(ISNULL(BinaryValue, 0x00) AS INT)) AS ChecksumResult
+FROM #BinaryData
+GROUP BY GroupID
+) t;
+GO
+
+-- Test Case 3: MAX aggregate
+SELECT t.* INTO #MaxResults FROM
+(
+SELECT 'Regular MAX' AS Test,
+    GroupID,
+    MAX(BinaryValue) AS MaxValue,
+    DATALENGTH(MAX(BinaryValue)) AS MaxLength
+FROM #BinaryData
+GROUP BY GroupID
+UNION
+SELECT 'MAX with ISNULL',
+    GroupID,
+    MAX(ISNULL(BinaryValue, 0x00)) AS MaxValue,
+    DATALENGTH(MAX(ISNULL(BinaryValue, 0x00))) AS MaxLength
+FROM #BinaryData
+GROUP BY GroupID
+) t;
+GO
+
+-- Test Case 4: MIN aggregate
+SELECT t.* INTO #MinResults FROM
+(
+SELECT 'Regular MIN' AS Test,
+    GroupID,
+    MIN(BinaryValue) AS MinValue,
+    DATALENGTH(MIN(BinaryValue)) AS MinLength
+FROM #BinaryData
+GROUP BY GroupID
+UNION
+SELECT 'MIN with ISNULL',
+    GroupID,
+    MIN(ISNULL(BinaryValue, 0xFF)) AS MinValue,
+    DATALENGTH(MIN(ISNULL(BinaryValue, 0xFF))) AS MinLength
+FROM #BinaryData
+GROUP BY GroupID
+) t;
+GO
+
+-- Test Case 5: Combining multiple aggregates
+SELECT t.* INTO #CombinedResults FROM
+(
+SELECT 'Combined Aggregates' AS Test,
+    GroupID,
+    MAX(BinaryValue) AS MaxValue,
+    MIN(BinaryValue) AS MinValue,
+    CHECKSUM_AGG(CAST(BinaryValue AS INT)) AS ChecksumResult,
+    COUNT(*) AS TotalRows,
+    COUNT(BinaryValue) AS NonNullRows
+FROM #BinaryData
+GROUP BY GroupID
+) t;
+GO
+
+-- Display results
+-- CHECKSUM_AGG results
+SELECT 'CHECKSUM_AGG Results' AS ResultType, *
+FROM #ChecksumResults
+ORDER BY GroupID;
+GO
+
+-- CHECKSUM_AGG NULL handling results
+SELECT 'CHECKSUM_AGG NULL Handling' AS ResultType, *
+FROM #ChecksumNullResults
+ORDER BY GroupID;
+GO
+
+-- MAX results
+SELECT 'MAX Results' AS ResultType,
+    Test,
+    GroupID,
+    MaxValue,
+    MaxLength
+FROM #MaxResults
+ORDER BY GroupID;
+GO
+
+-- MIN results
+SELECT 'MIN Results' AS ResultType,
+    Test,
+    GroupID,
+    MinValue,
+    MinLength
+FROM #MinResults
+ORDER BY GroupID;
+GO
+
+-- Combined results
+SELECT 'Combined Results' AS ResultType,
+    Test,
+    GroupID,
+    MaxValue,
+    MinValue,
+    ChecksumResult,
+    TotalRows,
+    NonNullRows
+FROM #CombinedResults
+ORDER BY GroupID;
+GO
+
+-- Additional verification queries
+-- Verify NULL handling
+SELECT 'NULL Handling Verification' AS Test,
+    GroupID,
+    COUNT(*) AS TotalCount,
+    COUNT(BinaryValue) AS NonNullCount,
+    COUNT(CASE WHEN BinaryValue IS NULL THEN 1 END) AS NullCount
+FROM #BinaryData
+GROUP BY GroupID;
+GO
+
+-- Verify distinct values
+SELECT 'Distinct Values' AS Test,
+    GroupID,
+    COUNT(DISTINCT BinaryValue) AS DistinctValues
+FROM #BinaryData
+GROUP BY GroupID;
+GO
+
+-- Cleanup
+DROP TABLE #BinaryData;
+GO
+DROP TABLE #ChecksumResults;
+GO
+DROP TABLE #ChecksumNullResults;
+GO
+DROP TABLE #MaxResults;
+GO
+DROP TABLE #MinResults;
+GO
+DROP TABLE #CombinedResults;
+GO
+
+-- test cases to test convert where target type is [var]binary
+GO
+
+-- String Types to BINARY/VARBINARY
+SELECT 'CHAR to BINARY(10)' AS Test,
+    CONVERT(BINARY(10), CAST('Hello' AS CHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(10), 'Hello')) AS Length;
+GO
+
+SELECT 'VARCHAR to VARBINARY(MAX)' AS Test,
+    CONVERT(VARBINARY(MAX), CAST('World' AS VARCHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(MAX), 'World')) AS Length;
+GO
+
+SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
+    CONVERT(VARBINARY(10), CAST(N'测试' AS NVARCHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), N'测试')) AS Length;
+GO
+
+SELECT 'CHAR to BINARY(10)' AS Test,
+    CONVERT(BINARY(2), CAST('Hello' AS CHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(10), 'Hello')) AS Length;
+GO
+
+SELECT 'VARCHAR to VARBINARY(MAX)' AS Test,
+    CONVERT(VARBINARY(2), CAST('World' AS VARCHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(MAX), 'World')) AS Length;
+GO
+
+SELECT 'NVARCHAR to VARBINARY(10)' AS Test,
+    CONVERT(VARBINARY(2), CAST(N'测试' AS NVARCHAR(10))) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), N'测试')) AS Length;
+GO
+
+-- Numeric Types to BINARY/VARBINARY
+SELECT 'INT to BINARY(4)' AS Test,
+    CONVERT(BINARY(4), CAST(12345 AS INT)) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(4), 12345)) AS Length;
+GO
+
+SELECT 'DECIMAL to VARBINARY(10)' AS Test,
+    CONVERT(VARBINARY(10), CAST(123.45 AS DECIMAL(10,2))) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), 123.45)) AS Length;
+GO
+
+SELECT 'FLOAT to VARBINARY(8)' AS Test,
+    CONVERT(VARBINARY(8), CAST(123.45 AS FLOAT)) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(8), 123.45)) AS Length;
+GO
+
+-- DateTime Types to BINARY/VARBINARY
+SELECT 'DATETIME to BINARY(8)' AS Test,
+    CONVERT(BINARY(8), CAST('2024-01-15' AS DATETIME)) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(8), '2024-01-15')) AS Length;
+GO
+
+SELECT 'DATE to VARBINARY(6)' AS Test,
+    CONVERT(VARBINARY(6), CAST('2024-01-15' AS DATE)) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(6), '2024-01-15')) AS Length;
+GO
+
+SELECT 'TIME to VARBINARY(5)' AS Test,
+    CONVERT(VARBINARY(5), CAST('12:34:56' AS TIME)) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(5), '12:34:56')) AS Length;
+GO
+
+-- Special Types to BINARY/VARBINARY
+SELECT 'UNIQUEIDENTIFIER to BINARY(16)' AS Test,
+    CONVERT(BINARY(16), CAST('12345678-1234-1234-1234-123456789012' AS UNIQUEIDENTIFIER)) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(16), '12345678-1234-1234-1234-123456789012')) AS Length;
+GO
+
+SELECT 'BIT to VARBINARY(1)' AS Test,
+    CONVERT(VARBINARY(1), CAST(1 AS BIT)) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(1), 1)) AS Length;
+GO
+
+-- NULL and Empty Values
+SELECT 'NULL to BINARY(10)' AS Test,
+    CONVERT(BINARY(10), NULL) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(10), NULL)) AS Length;
+GO
+
+SELECT 'Empty string to VARBINARY(10)' AS Test,
+    CONVERT(VARBINARY(10), '') AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '')) AS Length;
+GO
+
+-- Style Parameter Tests
+SELECT 'Style 1 (hex)' AS Test,
+    CONVERT(VARBINARY(10), '1234', 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '1234', 1)) AS Length;
+GO
+
+SELECT 'Style 2 (decimal)' AS Test,
+    CONVERT(VARBINARY(10), '1234', 2) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '1234', 2)) AS Length;
+GO
+
+-- Style 0 (Default)
+SELECT 'Style 0 - Default String' AS Test,
+    CONVERT(VARBINARY(10), CAST('ABC' AS VARCHAR(10)), 0) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), 'ABC', 0)) AS Length;
+GO
+
+-- Style 1 (Hex strings)
+SELECT 'Style 1 - Basic Hex' AS Test,
+    CONVERT(VARBINARY(10), CAST('1234' AS VARCHAR(10)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '1234', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - With 0x Prefix' AS Test,
+    CONVERT(VARBINARY(10), CAST('0x1234' AS VARCHAR(10)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '0x1234', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - Long Hex' AS Test,
+    CONVERT(VARBINARY(10), CAST('ABCDEF1234' AS VARCHAR(10)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), 'ABCDEF1234', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - Odd Length Hex' AS Test,
+    CONVERT(VARBINARY(10), CAST('123' AS VARCHAR(10)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '123', 1)) AS Length;
+GO
+
+-- Style 2 (Decimal strings)
+SELECT 'Style 2 - Small Number' AS Test,
+    CONVERT(VARBINARY(10), CAST('123' AS VARCHAR(10)), 2) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '123', 2)) AS Length;
+GO
+
+SELECT 'Style 2 - Large Number' AS Test,
+    CONVERT(VARBINARY(10), CAST('65535' AS VARCHAR(10)), 2) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '65535', 2)) AS Length;
+GO
+
+SELECT 'Style 2 - Zero' AS Test,
+    CONVERT(VARBINARY(10), CAST('0' AS VARCHAR(10)), 2) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '0', 2)) AS Length;
+GO
+
+-- Different target types
+SELECT 'Style 1 - To BINARY' AS Test,
+    CONVERT(BINARY(8), CAST('1234ABCD' AS VARCHAR(8)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(8), '1234ABCD', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - To VARBINARY(MAX)' AS Test,
+    CONVERT(VARBINARY(MAX), CAST('1234ABCD' AS VARCHAR(8)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(MAX), '1234ABCD', 1)) AS Length;
+GO
+
+-- Empty and NULL values
+SELECT 'Style 1 - Empty String' AS Test,
+    CONVERT(VARBINARY(10), CAST('' AS VARCHAR(1)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), '', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - NULL Value' AS Test,
+    CONVERT(VARBINARY(10), CAST(NULL AS VARCHAR(1)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(10), NULL, 1)) AS Length;
+GO
+
+-- Different lengths
+SELECT 'Style 1 - Short to Long' AS Test,
+    CONVERT(BINARY(10), CAST('12' AS VARCHAR(2)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(BINARY(10), '12', 1)) AS Length;
+GO
+
+SELECT 'Style 1 - Long to Short' AS Test,
+    CONVERT(VARBINARY(5), CAST('123456789A' AS VARCHAR(10)), 1) AS ConvertedValue,
+    DATALENGTH(CONVERT(VARBINARY(5), '123456789A', 1)) AS Length;
+GO
+
+-- Error cases using TRY_CONVERT
+SELECT 'Style 1 - Invalid Hex' AS Test,
+    TRY_CONVERT(VARBINARY(10), CAST('GHIJK' AS VARCHAR(5)), 1) AS ConvertedValue,
+    DATALENGTH(TRY_CONVERT(VARBINARY(10), 'GHIJK', 1)) AS Length;
+GO
+
+SELECT 'Style 2 - Negative Number' AS Test,
+    TRY_CONVERT(VARBINARY(10), CAST('-123' AS VARCHAR(4)), 2) AS ConvertedValue,
+    DATALENGTH(TRY_CONVERT(VARBINARY(10), '-123', 2)) AS Length;
+GO
+
+SELECT 'Invalid Style Number' AS Test,
+    TRY_CONVERT(VARBINARY(10), CAST('1234' AS VARCHAR(4)), 3) AS ConvertedValue,
+    DATALENGTH(TRY_CONVERT(VARBINARY(10), '1234', 3)) AS Length;
+GO
