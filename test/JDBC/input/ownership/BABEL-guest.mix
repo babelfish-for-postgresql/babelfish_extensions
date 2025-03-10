@@ -8,10 +8,8 @@
 USE master
 GO
 
-
 CREATE TABLE babel_2571_table1(a int, b int)
 GO
-
 
 CREATE LOGIN babel_2571_login1 WITH password='12345678'
 GO
@@ -20,12 +18,6 @@ CREATE DATABASE babel_2571_db1
 GO
 
 USE babel_2571_db1
-GO
-
-SELECT user_name()
-GO
-
-CREATE TABLE guest.babel_2571_gt(a int);
 GO
 
 GRANT CONNECT TO guest
@@ -49,30 +41,6 @@ SELECT schema_name()
 GO
 
 USE babel_2571_db1
-GO
-
-SELECT user_name()
-GO
-
-select * from guest.babel_2571_gt;
-GO
-
-INSERT INTO guest.babel_2571_gt(a) values(2);
-GO
-
-INSERT INTO guest.babel_2571_gt(a) values(8);
-GO
-
-DELETE FROM guest.babel_2571_gt WHERE a > 10;
-GO
-
-UPDATE guest.babel_2571_gt SET a = a + 5 WHERE a IS NOT NULL;
-GO
-
-TRUNCATE TABLE guest.babel_2571_gt;
-GO
-
-drop table guest.babel_2571_gt
 GO
 
 CREATE TABLE babel_2571_table2(a int, b int)

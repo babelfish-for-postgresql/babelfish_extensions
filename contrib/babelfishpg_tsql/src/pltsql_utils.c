@@ -2590,11 +2590,8 @@ exec_database_roles_subcmds(const char *schema)
 
 	if (is_guest_schema)
 	{
-		/* TODO Revert "update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);" */
-		/* After we fix issue, schema owner should be object owner by default */
-		appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy IN SCHEMA dummy GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO dummy; ");
 		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
-		expected_stmts += 2;
+		expected_stmts += 1;
 	}
 
 
@@ -2620,10 +2617,6 @@ exec_database_roles_subcmds(const char *schema)
 
 	if (is_guest_schema)
 	{
-		/* TODO Revert "update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);" */
-		/* After we fix issue, schema owner should be object owner by default */
-		stmts = parsetree_nth_stmt(stmt_list, i++);
-		update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, guest_role, NULL);
 		stmts = parsetree_nth_stmt(stmt_list, i++);
 		update_GrantStmt(stmts, schema, NULL, guest_role, NULL);
 	}
