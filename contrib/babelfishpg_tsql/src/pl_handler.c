@@ -25,7 +25,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -63,7 +62,6 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/guc_tables.h"
 #include "utils/lsyscache.h"
 #include "utils/plancache.h"
@@ -144,8 +142,6 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
-// static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
-// static void update_dependency(Oid objId, Oid targetOid);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2712,7 +2708,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						/* if this is the same procedure, it will update the existing one */
 						address = CreateFunction(pstate, cfs);
-						CommandCounterIncrement();
 						if (tbltypStmt)
 						{
 							/*
@@ -2723,7 +2718,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 															cfs->returnType);
 							tbltyp.objectSubId = 0;
 							recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
-							CommandCounterIncrement();
 						}
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
@@ -2739,12 +2733,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
 							deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
 							deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
-							CommandCounterIncrement();
 						}
-						// pg_proc_update_oid_acl(address, oldoid, proacl);
-						// CommandCounterIncrement();
-						// update_dependency(address.objectId, oldoid);
-						// CommandCounterIncrement();
 						if (!isSameProc) 
 						{
 						    /*
@@ -4808,100 +4797,6 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 
 	*isSameFunc = OidIsValid(funcOid);
 }
-
-/*
- * Update the oid and acl of a pg_proc entry given its address
- */
-// static void
-// pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
-// {
-// 	Relation		rel;
-// 	HeapTuple		proctup;
-// 	Form_pg_proc	form_proctup;
-// 	char		*physical_schemaname;
-
-// 	Datum		values[Natts_pg_proc];
-// 	bool		nulls[Natts_pg_proc];
-// 	bool		replaces[Natts_pg_proc];
-// 	HeapTuple	newtup;
-
-// 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-// 	if (!HeapTupleIsValid(proctup))
-// 		return;
-
-// 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-
-// 	if (!is_pltsql_language_oid(form_proctup->prolang))
-// 	{
-// 		ReleaseSysCache(proctup);
-// 		return;
-// 	}
-
-// 	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
-// 	if (physical_schemaname == NULL)
-// 	{
-// 		elog(ERROR,
-// 				"Could not find physical schemaname for %u",
-// 				 form_proctup->pronamespace);
-// 	}
-
-// 	rel = table_open(ProcedureRelationId, RowExclusiveLock);
-
-// 	memset(values, 0, sizeof(values));
-// 	memset(nulls, 0, sizeof(nulls));
-// 	memset(replaces, 0, sizeof(replaces));
-// 	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
-// 	replaces[Anum_pg_proc_oid - 1] = true;
-// 	if(acl)
-// 		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
-// 	else
-// 		nulls[Anum_pg_proc_proacl - 1] = true;
-// 	replaces[Anum_pg_proc_proacl - 1] = true;
-
-// 	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
-// 	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
-
-// 	/* Clean up */
-// 	ReleaseSysCache(proctup);
-// 	heap_freetuple(newtup);
-
-// 	table_close(rel, RowExclusiveLock);
-// }
-
-// static void
-// update_dependency(Oid objId, Oid targetOid)
-// {
-// 	Relation depRel;
-// 	SysScanDesc 	scan;
-// 	ScanKeyData 	key[1];
-// 	HeapTuple depTup;
-// 	depRel = table_open(DependRelationId, RowExclusiveLock);
-
-// 	ScanKeyInit(&key[0],
-// 		Anum_pg_depend_objid,
-// 		BTEqualStrategyNumber, F_OIDEQ,
-// 		ObjectIdGetDatum(objId));
-// 	scan = systable_beginscan(depRel, InvalidOid, false,
-// 		NULL, 1, key);
-// 	while (HeapTupleIsValid(depTup = systable_getnext(scan)))
-// 	{
-// 		Datum		dep_values[Natts_pg_depend];
-// 		bool		dep_nulls[Natts_pg_depend];
-// 		bool		dep_replaces[Natts_pg_depend];
-// 		HeapTuple	dep_newtup;
-
-// 		memset(dep_values, 0, sizeof(dep_values));
-// 		memset(dep_nulls, 0, sizeof(dep_nulls));
-// 		memset(dep_replaces, 0, sizeof(dep_replaces));
-// 		dep_values[Anum_pg_depend_objid - 1] = ObjectIdGetDatum(targetOid);
-// 		dep_replaces[Anum_pg_depend_objid - 1] = true;
-// 		dep_newtup = heap_modify_tuple(depTup, RelationGetDescr(depRel), dep_values, dep_nulls, dep_replaces);
-// 		CatalogTupleUpdate(depRel, &dep_newtup->t_self, dep_newtup);
-// 		heap_freetuple(dep_newtup);
-// 	}
-// 	systable_endscan(scan);
-// 	table_close(depRel, RowExclusiveLock);
-// }
 
 /*
  * Update the pg_type catalog entry for the given name to have
