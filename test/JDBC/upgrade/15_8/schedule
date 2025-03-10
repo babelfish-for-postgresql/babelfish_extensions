@@ -570,3 +570,4 @@ BABEL-2736-before-16_5
 smalldatetime_date_cmp
 test_conv_money_to_varchar
 fixeddecimal_modulo
+BABEL-NUMERIC_EXPR
