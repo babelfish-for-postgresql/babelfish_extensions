@@ -890,6 +890,8 @@ BEGIN
             sys.babelfish_namespace_ext b
         JOIN
             pg_namespace n ON b.nspname = n.nspname
+        WHERE
+            b.orig_name <> 'dbo'
     )
     -- First query for tables, views, and sequences
     SELECT 
