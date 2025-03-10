@@ -2408,9 +2408,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				   DestReceiver *dest,
 				   QueryCompletion *qc)
 {
-	Node	   *parsetree = pstmt->utilityStmt;
+	Node	   *parsetree;
 	ParseState *pstate = make_parsestate(NULL);
 
+	/*
+	 * If the given node tree is read-only, make a copy to ensure that parse
+	 * transformations don't damage the original tree.  This could be
+	 * refactored to avoid making unnecessary copies in more cases, but it's
+	 * not clear that it's worth a great deal of trouble over.  Statements
+	 * that are complex enough to be expensive to copy are exactly the ones
+	 * we'd need to copy, so that only marginal savings seem possible.
+	 */
+	if (readOnlyTree)
+		pstmt = copyObject(pstmt);
+
+	parsetree = pstmt->utilityStmt;
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
