@@ -765,7 +765,7 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 	bytea			*arg = PG_GETARG_BYTEA_PP(0);
 	int32			size = VARSIZE_ANY_EXHDR(arg);
 	int64			days = 0;
-	uint32_t		time_part;
+	uint32_t		time_part = 0;
 	int64			ms_value = 0;
 	int64			usecs;
 	Timestamp		result;
