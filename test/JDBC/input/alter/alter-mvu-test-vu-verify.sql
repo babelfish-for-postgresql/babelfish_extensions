@@ -24,24 +24,3 @@ go
 
 alter function alter_func_mvu_f4() returns TABLE as return (select * from alter_func_users)
 go
-
-select alter_func_mvu_f4();
-go
-
-drop function alter_func_mvu_f1;
-go
-
-drop function alter_func_mvu_f4;
-go
-
-drop function alter_func_mvu_f5;
-go
-
-use alter_proc_db
-go
-
-drop procedure alter_proc_p1;
-go
-
-drop procedure alter_proc_p3;
-go
