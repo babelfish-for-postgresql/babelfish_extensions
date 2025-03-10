@@ -97,6 +97,9 @@ ignore#!#restricted_procedures-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
+ignore#!#object_ownership-vu-prepare
+ignore#!#object_ownership-vu-verify
+ignore#!#object_ownership-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare

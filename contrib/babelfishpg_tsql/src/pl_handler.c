@@ -6013,7 +6013,8 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
 	PG_TRY();
 	{
-		if (GetUserId() != proc->proowner && IS_TDS_CONN())
+		if (GetUserId() != proc->proowner && IS_TDS_CONN() &&
+			has_privs_of_role(GetUserId(), get_db_ddladmin_oid(get_current_pltsql_db_name(), false)))
 			SetUserIdAndSecContext(proc->proowner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 		if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))

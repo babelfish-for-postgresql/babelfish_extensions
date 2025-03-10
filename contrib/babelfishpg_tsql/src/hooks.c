@@ -5806,8 +5806,7 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 			nsp_owner = nsptup->nspowner;
 
 		/*
-		 * 1. Object owner should not be same as schema owner AND
-		 * 2. schema owner not dbo
+		 * 1. Object owner should not be same as schema owner
 		 */
 		if ((ownerId != nsp_owner))
 		{
@@ -5815,8 +5814,9 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
 
 			/*
-			 * 1. Object owner should not be dbo when current user is a member of db_ddladmin
-			 * 2. In case of CREATE permission granted via PG port, schema owner would be dbo. Ignore this case too.
+			 * Ignore cases when:
+			 * 1. Object owner is dbo AND current user is a member of db_ddladmin
+			 * 2. Schema owner is dbo, It happens when CREATE permission is granted via PG port
 			 */
 			if ((schema_db_id == get_cur_db_id()) &&
 				(((ownerId != dbo_oid) && has_privs_of_role(GetUserId(), db_ddladmin))

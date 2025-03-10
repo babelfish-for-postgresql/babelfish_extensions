@@ -869,3 +869,81 @@ SELECT
 	END)
 	ORDER BY class, class_desc, major_id, minor_id, ep.orig_name;
 GRANT SELECT ON sys.extended_properties TO PUBLIC;
+
+/* Shows the list of objects where the object owner is not same as schema owner */
+/* Covers tables, views, functions, procedures, sequences */
+CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
+RETURNS TABLE (
+    schema_name name,
+    schema_owner_name name,
+    object_name name,
+    object_owner_name name,
+    object_type text
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    WITH common_schemas AS (
+        SELECT
+            b.nspname AS schema_name
+        FROM
+            sys.babelfish_namespace_ext b
+        JOIN
+            pg_namespace n ON b.nspname = n.nspname
+    )
+    -- First query for tables, views, and sequences
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        c.relname,
+        r2.rolname,
+        CASE c.relkind
+            WHEN 'r' THEN 'table'
+            WHEN 'v' THEN 'view'
+            WHEN 'S' THEN 'sequence'
+            ELSE c.relkind::text
+        END
+    FROM
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN
+        pg_class c ON cs.schema_name = c.relnamespace::regnamespace::text
+    JOIN
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN
+        pg_roles r2 ON c.relowner = r2.oid
+    WHERE 
+        c.relkind IN ('r', 'v', 'S')
+        AND r1.rolname <> r2.rolname
+        AND r2.rolname <> 'sysadmin'
+    UNION ALL
+    -- Second query for functions and procedures
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        p.proname,
+        r2.rolname,
+        CASE p.prokind
+            WHEN 'f' THEN 'function'
+            WHEN 'p' THEN 'procedure'
+            ELSE p.prokind::text
+        END
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_proc p ON n.oid = p.pronamespace
+    JOIN 
+        pg_roles r2 ON p.proowner = r2.oid
+    WHERE 
+        p.prokind IN ('f', 'p')
+        AND r1.rolname <> r2.rolname
+        AND r2.rolname <> 'sysadmin'
+    ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.get_schema_object_ownership TO PUBLIC;

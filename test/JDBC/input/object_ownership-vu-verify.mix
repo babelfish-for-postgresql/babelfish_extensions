@@ -1,0 +1,47 @@
+-- RESET LOGIN PASSWORD
+ALTER LOGIN object_ownership_l1 WITH PASSWORD = '123'
+GO
+
+/**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+use object_ownership_db;
+go
+select * from get_schema_object_ownership();
+go
+
+/********** CREATE NEW OBJECTS IN ALL THE SCHEMAS **********/
+create table object_ownership_s1.new_t(a int, b int);
+go
+create view object_ownership_s1.new_v as select 1;
+go
+create proc object_ownership_s1.new_p as select 2;
+go
+create function object_ownership_s1.new_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s1.new_sq start with 1 increment by 1 ;
+go
+
+create table object_ownership_s2.new_t(a int, b int);
+go
+create view object_ownership_s2.new_v as select 1;
+go
+create proc object_ownership_s2.new_p as select 2;
+go
+create function object_ownership_s2.new_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s2.new_sq start with 1 increment by 1 ;
+go
+
+create table object_ownership_s3.new_t(a int, b int);
+go
+create view object_ownership_s3.new_v as select 1;
+go
+create proc object_ownership_s3.new_p as select 2;
+go
+create function object_ownership_s3.new_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s3.new_sq start with 1 increment by 1 ;
+go
+
+/**** SHOWS MISMATCHED SCHEMA AND OBJECT OWNERS ******/
+select * from get_schema_object_ownership();
+go
