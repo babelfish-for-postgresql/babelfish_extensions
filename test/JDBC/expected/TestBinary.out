@@ -4051,3 +4051,250 @@ varchar#!#varbinary#!#int
 Invalid Style Number#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+-- Basic ascending sort with simple binary values
+SELECT 'Basic Ascending Sort' AS Test,
+    CAST(0x00 AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Basic Ascending Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Basic Ascending Sort',
+    CAST(0xFF AS VARBINARY(2))
+ORDER BY BinaryValue ASC;
+GO
+~~START~~
+varchar#!#varbinary
+Basic Ascending Sort#!#00
+Basic Ascending Sort#!#01
+Basic Ascending Sort#!#FF
+~~END~~
+
+
+-- Basic descending sort with simple binary values
+SELECT 'Basic Descending Sort' AS Test,
+    CAST(0x00 AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Basic Descending Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Basic Descending Sort',
+    CAST(0xFF AS VARBINARY(2))
+ORDER BY BinaryValue DESC;
+GO
+~~START~~
+varchar#!#varbinary
+Basic Descending Sort#!#FF
+Basic Descending Sort#!#01
+Basic Descending Sort#!#00
+~~END~~
+
+
+-- Sort with different lengths
+SELECT 'Different Lengths Sort' AS Test,
+    CAST(0x01 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Different Lengths Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Different Lengths Sort',
+    CAST(0x010101 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Different Lengths Sort#!#01
+Different Lengths Sort#!#0101
+Different Lengths Sort#!#010101
+~~END~~
+
+
+-- Sort with NULL values
+SELECT 'NULL Values Sort' AS Test,
+    CAST(NULL AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'NULL Values Sort',
+    CAST(0x00 AS VARBINARY(2))
+UNION ALL
+SELECT 'NULL Values Sort',
+    CAST(0x01 AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+NULL Values Sort#!#<NULL>
+NULL Values Sort#!#00
+NULL Values Sort#!#01
+~~END~~
+
+
+-- Sort with same prefix, different endings
+SELECT 'Same Prefix Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Same Prefix Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Same Prefix Sort',
+    CAST(0x01FF AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Same Prefix Sort#!#0100
+Same Prefix Sort#!#0101
+Same Prefix Sort#!#01FF
+~~END~~
+
+
+-- Sort with hex values
+SELECT 'Hex Values Sort' AS Test,
+    CAST(0xAA AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Hex Values Sort',
+    CAST(0xBB AS VARBINARY(2))
+UNION ALL
+SELECT 'Hex Values Sort',
+    CAST(0xCC AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Hex Values Sort#!#AA
+Hex Values Sort#!#BB
+Hex Values Sort#!#CC
+~~END~~
+
+
+-- Sort with mixed case hex (should be same)
+SELECT 'Mixed Case Hex Sort' AS Test,
+    CAST(0xAA AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Mixed Case Hex Sort',
+    CAST(0xaa AS VARBINARY(2))
+UNION ALL
+SELECT 'Mixed Case Hex Sort',
+    CAST(0xAa AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Mixed Case Hex Sort#!#AA
+Mixed Case Hex Sort#!#AA
+Mixed Case Hex Sort#!#AA
+~~END~~
+
+
+-- Sort with empty and non-empty values
+SELECT 'Empty Values Sort' AS Test,
+    CAST(0x AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Empty Values Sort',
+    CAST(0x00 AS VARBINARY(4))
+UNION ALL
+SELECT 'Empty Values Sort',
+    CAST(0x0001 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Empty Values Sort#!#
+Empty Values Sort#!#00
+Empty Values Sort#!#0001
+~~END~~
+
+
+-- Sort with repeated values
+SELECT 'Repeated Values Sort' AS Test,
+    CAST(0x0101 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Repeated Values Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Repeated Values Sort',
+    CAST(0x0102 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Repeated Values Sort#!#0101
+Repeated Values Sort#!#0101
+Repeated Values Sort#!#0102
+~~END~~
+
+
+-- Sort with binary zeros in different positions
+SELECT 'Zero Position Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Zero Position Sort',
+    CAST(0x0010 AS VARBINARY(4))
+UNION ALL
+SELECT 'Zero Position Sort',
+    CAST(0x0001 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Zero Position Sort#!#0001
+Zero Position Sort#!#0010
+Zero Position Sort#!#0100
+~~END~~
+
+
+-- Sort mixing BINARY and VARBINARY
+SELECT 'Mixed Type Sort' AS Test,
+    CAST(0x01 AS BINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Mixed Type Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Mixed Type Sort',
+    CAST(0x0100 AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Mixed Type Sort#!#0100
+Mixed Type Sort#!#01
+Mixed Type Sort#!#0100
+~~END~~
+
+
+-- Sort with trailing zeros
+SELECT 'Trailing Zeros Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Trailing Zeros Sort',
+    CAST(0x01 AS VARBINARY(4))
+UNION ALL
+SELECT 'Trailing Zeros Sort',
+    CAST(0x0100 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Trailing Zeros Sort#!#0100
+Trailing Zeros Sort#!#01
+Trailing Zeros Sort#!#0100
+~~END~~
+
+
+-- Sort with leading zeros
+SELECT 'Leading Zeros Sort' AS Test,
+    CAST(0x0001 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Leading Zeros Sort',
+    CAST(0x0100 AS VARBINARY(4))
+UNION ALL
+SELECT 'Leading Zeros Sort',
+    CAST(0x1000 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+~~START~~
+varchar#!#varbinary
+Leading Zeros Sort#!#0001
+Leading Zeros Sort#!#0100
+Leading Zeros Sort#!#1000
+~~END~~
+

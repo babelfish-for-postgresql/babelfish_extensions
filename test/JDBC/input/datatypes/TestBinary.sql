@@ -2881,3 +2881,159 @@ SELECT 'Invalid Style Number' AS Test,
     TRY_CONVERT(VARBINARY(10), CAST('1234' AS VARCHAR(4)), 3) AS ConvertedValue,
     DATALENGTH(TRY_CONVERT(VARBINARY(10), '1234', 3)) AS Length;
 GO
+
+-- Basic ascending sort with simple binary values
+SELECT 'Basic Ascending Sort' AS Test,
+    CAST(0x00 AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Basic Ascending Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Basic Ascending Sort',
+    CAST(0xFF AS VARBINARY(2))
+ORDER BY BinaryValue ASC;
+GO
+
+-- Basic descending sort with simple binary values
+SELECT 'Basic Descending Sort' AS Test,
+    CAST(0x00 AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Basic Descending Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Basic Descending Sort',
+    CAST(0xFF AS VARBINARY(2))
+ORDER BY BinaryValue DESC;
+GO
+
+-- Sort with different lengths
+SELECT 'Different Lengths Sort' AS Test,
+    CAST(0x01 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Different Lengths Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Different Lengths Sort',
+    CAST(0x010101 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with NULL values
+SELECT 'NULL Values Sort' AS Test,
+    CAST(NULL AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'NULL Values Sort',
+    CAST(0x00 AS VARBINARY(2))
+UNION ALL
+SELECT 'NULL Values Sort',
+    CAST(0x01 AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with same prefix, different endings
+SELECT 'Same Prefix Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Same Prefix Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Same Prefix Sort',
+    CAST(0x01FF AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with hex values
+SELECT 'Hex Values Sort' AS Test,
+    CAST(0xAA AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Hex Values Sort',
+    CAST(0xBB AS VARBINARY(2))
+UNION ALL
+SELECT 'Hex Values Sort',
+    CAST(0xCC AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with mixed case hex (should be same)
+SELECT 'Mixed Case Hex Sort' AS Test,
+    CAST(0xAA AS VARBINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Mixed Case Hex Sort',
+    CAST(0xaa AS VARBINARY(2))
+UNION ALL
+SELECT 'Mixed Case Hex Sort',
+    CAST(0xAa AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with empty and non-empty values
+SELECT 'Empty Values Sort' AS Test,
+    CAST(0x AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Empty Values Sort',
+    CAST(0x00 AS VARBINARY(4))
+UNION ALL
+SELECT 'Empty Values Sort',
+    CAST(0x0001 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with repeated values
+SELECT 'Repeated Values Sort' AS Test,
+    CAST(0x0101 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Repeated Values Sort',
+    CAST(0x0101 AS VARBINARY(4))
+UNION ALL
+SELECT 'Repeated Values Sort',
+    CAST(0x0102 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with binary zeros in different positions
+SELECT 'Zero Position Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Zero Position Sort',
+    CAST(0x0010 AS VARBINARY(4))
+UNION ALL
+SELECT 'Zero Position Sort',
+    CAST(0x0001 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort mixing BINARY and VARBINARY
+SELECT 'Mixed Type Sort' AS Test,
+    CAST(0x01 AS BINARY(2)) AS BinaryValue
+UNION ALL
+SELECT 'Mixed Type Sort',
+    CAST(0x01 AS VARBINARY(2))
+UNION ALL
+SELECT 'Mixed Type Sort',
+    CAST(0x0100 AS VARBINARY(2))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with trailing zeros
+SELECT 'Trailing Zeros Sort' AS Test,
+    CAST(0x0100 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Trailing Zeros Sort',
+    CAST(0x01 AS VARBINARY(4))
+UNION ALL
+SELECT 'Trailing Zeros Sort',
+    CAST(0x0100 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
+
+-- Sort with leading zeros
+SELECT 'Leading Zeros Sort' AS Test,
+    CAST(0x0001 AS VARBINARY(4)) AS BinaryValue
+UNION ALL
+SELECT 'Leading Zeros Sort',
+    CAST(0x0100 AS VARBINARY(4))
+UNION ALL
+SELECT 'Leading Zeros Sort',
+    CAST(0x1000 AS VARBINARY(4))
+ORDER BY BinaryValue;
+GO
