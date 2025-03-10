@@ -780,9 +780,7 @@ WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
 
-
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
