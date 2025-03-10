@@ -569,6 +569,46 @@ UNPIVOT (
 GO
 
 
+-- PROCEDURE containing unpivot 
+
+CREATE PROCEDURE dbo.GetQuarterlyTotal
+    @Quarter VARCHAR(2),
+    @TotalSales DECIMAL(10,2) OUTPUT 
+AS 
+BEGIN
+    SELECT @TotalSales = SUM(sales)
+    FROM customer_turnover
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE quarter = @Quarter;
+END;
+GO
+
+DECLARE @Result DECIMAL(10,2);
+EXEC dbo.GetQuarterlyTotal 'q1', @Result OUTPUT;
+SELECT @Result AS Q1Total;
+GO
+
+-- DYNAMIC UNPIVOT
+DECLARE @cols NVARCHAR(MAX) = '';
+DECLARE @unpivotSql NVARCHAR(MAX);
+
+SELECT @cols = @cols + ',' + QUOTENAME(column_name) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE table_name = 'customer_turnover' 
+AND column_name LIKE 'q[1-4]' 
+ORDER BY column_name;
+SET @cols = SUBSTRING(@cols, 2, LEN(@cols));
+
+SET @unpivotSql = N'
+SELECT customer_id, customer_desc, customer_type, quarter, sales 
+FROM customer_turnover 
+UNPIVOT (
+    sales FOR quarter IN (' + @cols + ')
+) AS unpvt';
+EXEC sp_executesql @unpivotSql;
+GO
+
+
 -- DML
     
     -- 1. INSERT

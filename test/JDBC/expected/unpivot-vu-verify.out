@@ -954,6 +954,65 @@ int#!#varchar#!#int
 
 
 
+
+-- PROCEDURE containing unpivot 
+CREATE PROCEDURE dbo.GetQuarterlyTotal
+    @Quarter VARCHAR(2),
+    @TotalSales DECIMAL(10,2) OUTPUT 
+AS 
+BEGIN
+    SELECT @TotalSales = SUM(sales)
+    FROM customer_turnover
+    UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
+    WHERE quarter = @Quarter;
+END;
+GO
+
+DECLARE @Result DECIMAL(10,2);
+EXEC dbo.GetQuarterlyTotal 'q1', @Result OUTPUT;
+SELECT @Result AS Q1Total;
+GO
+~~START~~
+numeric
+250.00
+~~END~~
+
+
+
+
+-- DYNAMIC UNPIVOT
+DECLARE @cols NVARCHAR(MAX) = '';
+DECLARE @unpivotSql NVARCHAR(MAX);
+SELECT @cols = @cols + ',' + QUOTENAME(column_name) 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE table_name = 'customer_turnover' 
+AND column_name LIKE 'q[1-4]' 
+ORDER BY column_name;
+SET @cols = SUBSTRING(@cols, 2, LEN(@cols));
+SET @unpivotSql = N'
+SELECT customer_id, customer_desc, customer_type, quarter, sales 
+FROM customer_turnover 
+UNPIVOT (
+    sales FOR quarter IN (' + @cols + ')
+) AS unpvt';
+EXEC sp_executesql @unpivotSql;
+GO
+~~START~~
+int#!#varchar#!#char#!#varchar#!#int
+3#!#Cust C#!#R#!#q2#!#0
+3#!#Cust C#!#R#!#q3#!#400
+3#!#Cust C#!#R#!#q4#!#150
+1#!#Cust A#!#R#!#q1#!#100
+1#!#Cust A#!#R#!#q2#!#200
+1#!#Cust A#!#R#!#q3#!#100
+1#!#Cust A#!#R#!#q4#!#400
+2#!#Cust B#!#P#!#q1#!#150
+2#!#Cust B#!#P#!#q2#!#250
+2#!#Cust B#!#P#!#q3#!#200
+~~END~~
+
+
+
 -- DML
     
     -- 1. INSERT
@@ -1316,7 +1375,7 @@ UNPIVOT (
 GO
 ~~START~~
 int#!#numeric#!#varchar
-1#!#2.00#!#q1_??
-1#!#3.00#!#q2_??
+1#!#2.00#!#q1_売上
+1#!#3.00#!#q2_売上
 ~~END~~
 
