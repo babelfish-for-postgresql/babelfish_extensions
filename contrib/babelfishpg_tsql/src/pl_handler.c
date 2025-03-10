@@ -4407,7 +4407,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_TSQL &&
 					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
 				{
-					char    	*original_name = stmt->idxname != NULL ? pstrdup(stmt->idxname) : NULL;
+					char    	*original_name = stmt->idxname != NULL ? stmt->idxname : NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;
 
 					stmt->excludeOpNames = NIL;
@@ -4435,7 +4435,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 					if (original_name && !stmt->isconstraint)
+					{
+						/* Store the original index name in reloptions */
 						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+						/* Restore the original index name in TopMemoryContext so that cached plan remains valid */
+						stmt->idxname = original_name;
+					}
 					return;
 				}
 				break;
