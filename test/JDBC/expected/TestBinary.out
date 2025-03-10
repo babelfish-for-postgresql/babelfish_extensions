@@ -2844,10 +2844,6 @@ CREATE TABLE BinaryFunctionTests (
     FunctionUsed VARCHAR(50)
 );
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "binaryfunctiontests" already exists)~~
-
 
 -- 1. Aggregate Functions
 INSERT INTO BinaryFunctionTests VALUES
@@ -2934,34 +2930,19 @@ int#!#varchar#!#varbinary#!#sql_variant#!#varchar
 2#!#MIN Function#!#1234#!#4660#!#MIN
 3#!#DATALENGTH#!#1234#!#2#!#DATALENGTH
 4#!#LEN#!#1234#!#2#!#LEN
-5#!#SUBSTRING#!#123456#!#[B@16f7b4af#!#SUBSTRING
+5#!#SUBSTRING#!#123456#!#[B@34a1d21f#!#SUBSTRING
 6#!#LEFT#!#123456#!#4#!#LEFT
 7#!#RIGHT#!#123456#!#4V#!#RIGHT
-8#!#HASHBYTES SHA2_256#!#54657374#!#[B@7adf16aa#!#HASHBYTES
+8#!#HASHBYTES SHA2_256#!#54657374#!#[B@58bf8650#!#HASHBYTES
 9#!#AVG Function#!#1234#!#18#!#AVG
-10#!#MAX Function#!#1234#!#4660#!#MAX
-11#!#MIN Function#!#1234#!#4660#!#MIN
-12#!#DATALENGTH#!#1234#!#2#!#DATALENGTH
-13#!#LEN#!#1234#!#2#!#LEN
-14#!#SUBSTRING#!#123456#!#[B@34a1d21f#!#SUBSTRING
-15#!#LEFT#!#123456#!#4#!#LEFT
-16#!#RIGHT#!#123456#!#4V#!#RIGHT
-17#!#HASHBYTES SHA2_256#!#54657374#!#[B@58bf8650#!#HASHBYTES
-18#!#AVG Function#!#1234#!#18#!#AVG
-19#!#MAX Function#!#1234#!#4660#!#MAX
-20#!#MIN Function#!#1234#!#4660#!#MIN
-21#!#DATALENGTH#!#1234#!#2#!#DATALENGTH
-22#!#LEN#!#1234#!#2#!#LEN
-23#!#SUBSTRING#!#123456#!#[B@73c60324#!#SUBSTRING
-24#!#LEFT#!#123456#!#4#!#LEFT
-25#!#RIGHT#!#123456#!#4V#!#RIGHT
-26#!#HASHBYTES SHA2_256#!#54657374#!#[B@71ae31b0#!#HASHBYTES
-27#!#AVG Function#!#1234#!#18#!#AVG
 ~~END~~
 
 
+DROp TABLE BinaryFunctionTests
+GO
+
 -- Test Case 1: Simple UNION with different VARBINARY sizes
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
 SELECT 'UNION Test 1' AS Test,
     CAST(0x1234 AS VARBINARY(4)) AS Value1,
@@ -2970,7 +2951,7 @@ UNION
 SELECT 'UNION Test 1',
     CAST(0x5678 AS VARBINARY(8)) AS Value2,
     DATALENGTH(CAST(0x5678 AS VARBINARY(8))) AS Length2
-);
+) t;
 GO
 
 select * from temp_tbl
@@ -2996,7 +2977,7 @@ drop table temp_tbl
 GO
 
 -- Test Case 2: UNION with NULL and non-NULL values
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
 SELECT 'UNION Test 2' AS Test,
     CAST(NULL AS VARBINARY(4)) AS Value1,
@@ -3005,7 +2986,7 @@ UNION
 SELECT 'UNION Test 2',
     CAST(0x5678 AS VARBINARY(4)) AS Value2,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3022,7 +3003,7 @@ drop table temp_tbl
 GO
 
 -- Test Case 3: UNION with empty and non-empty values
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
 SELECT 'UNION Test 3' AS Test,
     CAST(0x AS VARBINARY(8)) AS Value1,
@@ -3031,7 +3012,7 @@ UNION
 SELECT 'UNION Test 3',
     CAST(0x5678 AS VARBINARY(4)) AS Value2,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3048,7 +3029,7 @@ drop table temp_tbl
 GO
 
 -- Test Case 4: UNION with BINARY and VARBINARY
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
 SELECT 'UNION Test 4' AS Test,
     CAST(0x1234 AS BINARY(4)) AS Value1,
@@ -3057,7 +3038,7 @@ UNION
 SELECT 'UNION Test 4',
     CAST(0x5678 AS VARBINARY(4)) AS Value2,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3074,7 +3055,7 @@ drop table temp_tbl
 GO
 
 -- Test Case 5: UNION with different size values
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
 SELECT 'UNION Test 5' AS Test,
     CAST(0x12 AS VARBINARY(4)) AS Value1,
@@ -3083,7 +3064,7 @@ UNION
 SELECT 'UNION Test 5',
     CAST(0x345678 AS BINARY(8)) AS Value2,
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3100,16 +3081,16 @@ drop table temp_tbl
 GO
 
 -- Test Case 6: UNION with different size values for BINARY
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
-SELECT 'UNION Test 5' AS Test,
+SELECT 'UNION Test 6' AS Test,
     CAST(0x12 AS BINARY(4)) AS Value1,
     DATALENGTH(CAST(0x12 AS BINARY(4))) AS Length1
 UNION
-SELECT 'UNION Test 5',
+SELECT 'UNION Test 6',
     CAST(0x345678 AS BINARY(8)) AS Value2,
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3126,16 +3107,16 @@ drop table temp_tbl
 GO
 
 -- Test Case 7: UNION with varbinary[n] and varbinary[max]
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
-SELECT 'UNION Test 5' AS Test,
+SELECT 'UNION Test 7' AS Test,
     CAST(0x12 AS VARBINARY(4)) AS Value1,
     DATALENGTH(CAST(0x12 AS VARBINARY(4))) AS Length1
 UNION
-SELECT 'UNION Test 5',
+SELECT 'UNION Test 7',
     CAST(0x345678 AS VARBINARY(max)) AS Value2,
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3152,16 +3133,16 @@ drop table temp_tbl
 GO
 
 -- Test Case 8: UNION with binary[n] and varbinary[max]
-select * into temp_tbl from
+select t.* into temp_tbl from
 (
-SELECT 'UNION Test 5' AS Test,
+SELECT 'UNION Test 8' AS Test,
     CAST(0x12 AS BINARY(4)) AS Value1,
     DATALENGTH(CAST(0x12 AS BINARY(4))) AS Length1
 UNION
-SELECT 'UNION Test 5',
+SELECT 'UNION Test 8',
     CAST(0x345678 AS VARBINARY(max)) AS Value2,
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
-);
+) t;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -3176,3 +3157,284 @@ length1#!#int#!#4
 
 drop table temp_tbl
 GO
+
+-- Test 1: VARBINARY and VARCHAR
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and VARCHAR' AS Test,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and VARCHAR',
+    CAST('World' AS VARCHAR(10)) AS Value2,
+    DATALENGTH(CAST('World' AS VARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#21
+value1#!#varchar#!#10
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+
+-- Test 2: VARBINARY and INT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and INT' AS Test,
+    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and INT',
+    CAST(200 AS INT) AS Value2,
+    DATALENGTH(CAST(200 AS VARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#17
+value1#!#int#!#4
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+
+-- Test 3: VARBINARY and DATETIME
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and DATETIME' AS Test,
+    CAST(0x0000AB0C AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0000AB0C AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and DATETIME',
+    CAST('2024-01-16' AS DATETIME) AS Value2,
+    DATALENGTH(CAST('2024-01-16' AS DATETIME)) AS Length2
+) t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type datetime to varbinary)~~
+
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+~~END~~
+
+
+drop table temp_tbl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "temp_tbl" does not exist)~~
+
+
+-- Test 4: VARBINARY and DECIMAL
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and DECIMAL' AS Test,
+    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and DECIMAL',
+    CAST(200.00 AS DECIMAL(10,2)) AS Value2,
+    DATALENGTH(CAST(200.00 AS DECIMAL(10,2))) AS Length2
+) t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type "decimal" to varbinary)~~
+
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+~~END~~
+
+
+drop table temp_tbl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "temp_tbl" does not exist)~~
+
+
+-- Test 5: VARBINARY and UNIQUEIDENTIFIER
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and UNIQUEIDENTIFIER' AS Test,
+    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16)) AS Value1,
+    DATALENGTH(CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16))) AS Length1
+UNION
+SELECT 'VARBINARY and UNIQUEIDENTIFIER',
+    CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER) AS Value2,
+    DATALENGTH(CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER)) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#30
+value1#!#uniqueidentifier#!#16
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+
+-- Test 6: VARBINARY and BIT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and BIT' AS Test,
+    CAST(0x01 AS VARBINARY(1)) AS Value1,
+    DATALENGTH(CAST(0x01 AS VARBINARY(1))) AS Length1
+UNION
+SELECT 'VARBINARY and BIT',
+    CAST(0 AS BIT) AS Value2,
+    DATALENGTH(CAST(0 AS BIT)) AS Length2
+) t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type "bit" to varbinary)~~
+
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+~~END~~
+
+
+drop table temp_tbl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "temp_tbl" does not exist)~~
+
+
+-- Test 7: VARBINARY and FLOAT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and FLOAT' AS Test,
+    CAST(123.45 AS VARBINARY(8)) AS Value1,
+    DATALENGTH(CAST(123.45 AS VARBINARY(8))) AS Length1
+UNION
+SELECT 'VARBINARY and FLOAT',
+    CAST(567.89 AS FLOAT) AS Value2,
+    DATALENGTH(CAST(567.89 AS FLOAT)) AS Length2
+) t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
+
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+~~END~~
+
+
+drop table temp_tbl
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "temp_tbl" does not exist)~~
+
+
+-- Test 8: VARBINARY and NVARCHAR
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and NVARCHAR' AS Test,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and NVARCHAR',
+    CAST(N'World' AS NVARCHAR(10)) AS Value2,
+    DATALENGTH(CAST(N'World' AS NVARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#22
+value1#!#nvarchar#!#20
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+
+-- Test 9: VARBINARY(MAX) and regular VARBINARY
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY(MAX) and VARBINARY' AS Test,
+    CAST(0x12345678 AS VARBINARY(MAX)) AS Value1,
+    DATALENGTH(CAST(0x12345678 AS VARBINARY(MAX))) AS Length1
+UNION
+SELECT 'VARBINARY(MAX) and VARBINARY',
+    CAST(0x9ABCDEF0 AS VARBINARY(8)) AS Value2,
+    DATALENGTH(CAST(0x9ABCDEF0 AS VARBINARY(8))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#28
+value1#!#varbinary#!#-1
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+
+-- Test 10: BINARY and VARBINARY with NULL
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'BINARY and NULL' AS Test,
+    CAST(0x1234 AS BINARY(4)) AS Value1,
+    DATALENGTH(CAST(0x1234 AS BINARY(4))) AS Length1
+UNION
+SELECT 'BINARY and NULL',
+    CAST(NULL AS VARBINARY(4)) AS Value2,
+    NULL AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+~~START~~
+varchar#!#varchar#!#smallint
+test#!#varchar#!#15
+value1#!#varbinary#!#4
+length1#!#int#!#4
+~~END~~
+
+
+drop table temp_tbl
+GO
+

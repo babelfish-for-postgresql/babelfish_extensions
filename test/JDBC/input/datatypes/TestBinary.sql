@@ -2306,3 +2306,194 @@ GO
 
 drop table temp_tbl
 GO
+
+-- Test 1: VARBINARY and VARCHAR
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and VARCHAR' AS Test,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and VARCHAR',
+    CAST('World' AS VARCHAR(10)) AS Value2,
+    DATALENGTH(CAST('World' AS VARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 2: VARBINARY and INT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and INT' AS Test,
+    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and INT',
+    CAST(200 AS INT) AS Value2,
+    DATALENGTH(CAST(200 AS VARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 3: VARBINARY and DATETIME
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and DATETIME' AS Test,
+    CAST(0x0000AB0C AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0000AB0C AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and DATETIME',
+    CAST('2024-01-16' AS DATETIME) AS Value2,
+    DATALENGTH(CAST('2024-01-16' AS DATETIME)) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 4: VARBINARY and DECIMAL
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and DECIMAL' AS Test,
+    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and DECIMAL',
+    CAST(200.00 AS DECIMAL(10,2)) AS Value2,
+    DATALENGTH(CAST(200.00 AS DECIMAL(10,2))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 5: VARBINARY and UNIQUEIDENTIFIER
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and UNIQUEIDENTIFIER' AS Test,
+    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16)) AS Value1,
+    DATALENGTH(CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16))) AS Length1
+UNION
+SELECT 'VARBINARY and UNIQUEIDENTIFIER',
+    CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER) AS Value2,
+    DATALENGTH(CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER)) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 6: VARBINARY and BIT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and BIT' AS Test,
+    CAST(0x01 AS VARBINARY(1)) AS Value1,
+    DATALENGTH(CAST(0x01 AS VARBINARY(1))) AS Length1
+UNION
+SELECT 'VARBINARY and BIT',
+    CAST(0 AS BIT) AS Value2,
+    DATALENGTH(CAST(0 AS BIT)) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 7: VARBINARY and FLOAT
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and FLOAT' AS Test,
+    CAST(123.45 AS VARBINARY(8)) AS Value1,
+    DATALENGTH(CAST(123.45 AS VARBINARY(8))) AS Length1
+UNION
+SELECT 'VARBINARY and FLOAT',
+    CAST(567.89 AS FLOAT) AS Value2,
+    DATALENGTH(CAST(567.89 AS FLOAT)) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 8: VARBINARY and NVARCHAR
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY and NVARCHAR' AS Test,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
+UNION
+SELECT 'VARBINARY and NVARCHAR',
+    CAST(N'World' AS NVARCHAR(10)) AS Value2,
+    DATALENGTH(CAST(N'World' AS NVARCHAR(10))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 9: VARBINARY(MAX) and regular VARBINARY
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'VARBINARY(MAX) and VARBINARY' AS Test,
+    CAST(0x12345678 AS VARBINARY(MAX)) AS Value1,
+    DATALENGTH(CAST(0x12345678 AS VARBINARY(MAX))) AS Length1
+UNION
+SELECT 'VARBINARY(MAX) and VARBINARY',
+    CAST(0x9ABCDEF0 AS VARBINARY(8)) AS Value2,
+    DATALENGTH(CAST(0x9ABCDEF0 AS VARBINARY(8))) AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
+-- Test 10: BINARY and VARBINARY with NULL
+SELECT t.* INTO temp_tbl FROM
+(
+SELECT 'BINARY and NULL' AS Test,
+    CAST(0x1234 AS BINARY(4)) AS Value1,
+    DATALENGTH(CAST(0x1234 AS BINARY(4))) AS Length1
+UNION
+SELECT 'BINARY and NULL',
+    CAST(NULL AS VARBINARY(4)) AS Value2,
+    NULL AS Length2
+) t;
+GO
+
+select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
+GO
+
+drop table temp_tbl
+GO
+
