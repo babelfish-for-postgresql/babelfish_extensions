@@ -895,7 +895,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 
 
 static Node *
-transform_likenode_for_AI(Node *node, OpExpr *op, coll_info_t coll_info_of_inputcollid)
+transform_likenode_for_AI(Node *node, OpExpr *op)
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
@@ -955,7 +955,7 @@ transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	return transform_likenode_for_AI(node, op, coll_info_of_inputcollid);	
+	return transform_likenode_for_AI(node, op);	
 }
 
 /*
@@ -1045,7 +1045,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op, coll_info_of_inputcollid), op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

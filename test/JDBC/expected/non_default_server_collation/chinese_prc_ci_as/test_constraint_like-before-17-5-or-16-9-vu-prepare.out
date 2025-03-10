@@ -180,6 +180,14 @@ GO
 CREATE VIEW BABEL_5608_13_5_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t12_2 WHERE UPPER(status) COLLATE DATABASE_DEFAULT LIKE 'ac%';
 GO
 
+-- CASE 14: PostFix Patter match
+CREATE TABLE BABEL_5608_vu_prepare_t14(BABEL_5608_vu_prepare_t14_col1 varchar(max), CONSTRAINT BABEL_5608_vu_prepare_t14_c1 CHECK (BABEL_5608_vu_prepare_t14_col1 COLLATE Latin1_General_CI_AI LIKE '%abc'));
+GO
+
+CREATE VIEW BABEL_5608_vu_prepare_t14_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t14;
+GO
+
+
 -- psql
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t1'::regclass;
@@ -384,5 +392,15 @@ GO
 ~~START~~
 text
 CHECK ((<newline>CASE<newline>    WHEN ((status)::text ~~* 'act%'::text) THEN 1<newline>    WHEN ((status)::text ~~* 'inactive'::text) THEN 1<newline>    ELSE 0<newline>END = 1))
+~~END~~
+
+
+
+-- CASE 14: PostFix Patter match
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
+GO
+~~START~~
+text
+CHECK (((sys.remove_accents_internal(((babel_5608_vu_prepare_t14_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai))) ~~* '%abc'::text))
 ~~END~~
 

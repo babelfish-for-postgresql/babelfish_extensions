@@ -175,6 +175,12 @@ GO
 SELECT * FROM BABEL_5608_13_5_VIEW;
 GO
 
+-- CASE 14: PostFix Patter match
+INSERT INTO BABEL_5608_vu_prepare_t14 VALUES ('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t14_VIEW;
+GO
 
 -- psql
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -261,4 +267,8 @@ GO
 
 -- CASE WHEN
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_2'::regclass;
+GO
+
+-- CASE 14: PostFix Patter match
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
 GO

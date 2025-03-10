@@ -374,6 +374,19 @@ active
 ~~END~~
 
 
+-- CASE 14: PostFix Patter match
+INSERT INTO BABEL_5608_vu_prepare_t14 VALUES ('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM BABEL_5608_vu_prepare_t14_VIEW;
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
 
 -- psql
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -579,5 +592,14 @@ GO
 ~~START~~
 text
 CHECK ((<newline>CASE<newline>    WHEN (((status)::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('act%'::text COLLATE sys.bbf_unicode_cp1_cs_as)) THEN 1<newline>    WHEN ((status)::text ~~* 'inactive'::text) THEN 1<newline>    ELSE 0<newline>END = 1))
+~~END~~
+
+
+-- CASE 14: PostFix Patter match
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
+GO
+~~START~~
+text
+CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t14_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('%abc'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
