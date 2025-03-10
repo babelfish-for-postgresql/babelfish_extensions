@@ -943,6 +943,37 @@ BEGIN
         p.prokind IN ('f', 'p')
         AND r1.rolname <> r2.rolname
         AND r2.rolname <> 'sysadmin'
+    UNION ALL
+    -- Third query for types
+    SELECT 
+      cs.schema_name::name,
+      r1.rolname,
+      t.typname,
+      r2.rolname,
+      CASE t.typtype
+          WHEN 'b' THEN 'base type'
+          WHEN 'c' THEN 'composite type'
+          WHEN 'd' THEN 'domain'
+          WHEN 'e' THEN 'enum type'
+          WHEN 'r' THEN 'range type'
+          WHEN 'm' THEN 'multirange'
+          ELSE t.typtype::text
+      END
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_catalog.pg_type t ON n.oid = t.typnamespace
+    JOIN 
+        pg_roles r2 ON t.typowner = r2.oid
+    WHERE 
+        t.typtype IN ('b', 'c', 'd', 'e', 'r', 'm')
+        AND r1.rolname <> r2.rolname
+        AND r2.rolname <> 'sysadmin'
+        AND t.typname NOT LIKE '_%'  -- Filter out system types
     ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
 END;
 $$ LANGUAGE plpgsql;
