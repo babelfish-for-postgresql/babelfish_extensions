@@ -2249,13 +2249,6 @@ object_id(PG_FUNCTION_ARGS)
 	search_in_sys_for_sp_procs = (OidIsValid(sys_schema_oid) && strncmp(object_name, "sp_", 3) == 0 &&
 								 (strcmp(schema_name, "dbo") == 0 || strlen(schema_name) == 0));
 
-	/*
-	 * Identify temporary objects early.
-	 * This check ensures both '#' and 'tempdb..' syntaxes are detected during object ID lookup, allowing for
-	 * consistent handling of temp objects regardless of how they're referenced.
-	 */
-	is_temp_object = strncmp(db_name, "tempdb", 6) == 0 || object_name[0] == '#';
-
 	/* free unnecessary pointers */
 	pfree(db_name);
 	pfree(schema_name);
@@ -2269,13 +2262,15 @@ object_id(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/* check if looking for temp object */
+	is_temp_object = (object_name[0] == '#' ? true : false);
+
 	if (object_type)			/* "object_type" is specified in-argument */
 	{
 		if (is_temp_object)
 		{
 			if (!strcmp(object_type, "s") || !strcmp(object_type, "u") || !strcmp(object_type, "v") ||
-				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so") ||
-				!strcmp(object_type, "pk") || !strcmp(object_type, "uq"))
+				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so"))
 			{
 				/*
 				 * search in list of ENRs registered in the current query
