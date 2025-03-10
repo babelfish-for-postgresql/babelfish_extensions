@@ -3724,7 +3724,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
  * Update 'function_args' in 'sys.babelfish_schema_permissions' 
  */
 void
-alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt)
+alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt, Oid oid)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;

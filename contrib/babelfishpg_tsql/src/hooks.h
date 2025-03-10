@@ -26,8 +26,8 @@ extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 bool with_recompile);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,
-                                                    int objtypeInt
-                                                    );
+                                                    int objtypeInt,
+                                                    Oid oid);
 extern Oid  get_tsql_trigger_oid(List *object,
                                  const char *tsql_trigger_name,
                                  bool object_from_input);
