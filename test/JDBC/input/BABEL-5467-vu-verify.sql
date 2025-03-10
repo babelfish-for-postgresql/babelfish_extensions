@@ -139,7 +139,7 @@ go
 select * from babel_5467_t9 where a/b = 10.666666
 go
 
-select * from babel_5467_t9 where a/b = 32/3
+select * from babel_5467_t9 where a/b = 32.0/3.0
 go
 
 select * from babel_5467_t9 where a*b = 113.777764
@@ -377,28 +377,36 @@ from information_schema.columns
 where TABLE_NAME = 'babel_5467_avgdata_13' order by COLUMN_NAME
 go
 
+-- tests aggregates with group by clause
+create table babel_5467_t12(id int, a decimal(38,6));
+insert into babel_5467_t12 values(1, 10), (1, 11), (1, 11), (2, 2), (2, 2), (2, 1), (3, 10.666666), (3, 4.333333), (3, 1.000001);
+go
+
+select id, avg(a) as avg, sum(a) as sum, min(a) as min, max(a) as max, count(a) as count from babel_5467_t12 group by id order by id
+go
+
 -- tests for truncation/rounding of expressions
 -- s = max(6, s1 + p2 + 1) = 45, p = p1 - s1 + s2 + max(6, s1 + p2 + 1) = 83 => s = 6, p = 38
 -- truncation
-select 32/3, cast(32 as numeric(38, 6)) / cast(3 as numeric(38, 6))
+select 32.0/3.0, cast(32 as decimal(38, 6)) / cast(3 as decimal(38, 6))
 go
 
 -- s = s1 + s2 = 12, p = p1 + p2 + 1 = 77 => s = 6, p = 38
 -- rounding
-select 10.666666*10.666666, cast(10.666666 as numeric(38, 6)) * cast(10.666666 as numeric(38, 6))
+select 10.666666*10.666666, cast(10.666666 as decimal(38, 6)) * cast(10.666666 as decimal(38, 6))
 go
 
 -- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
 -- rounding
-select cast(10.6666666666 as numeric(38, 10)) + cast(5.11111111 as numeric(38, 8))
+select cast(10.6666666666 as decimal(38, 10)) + cast(5.11111111 as decimal(38, 8))
 go
 
 -- s = max(s1, s2) = 10, p = max(s1, s2) + max(p1 - s1, p2 - s2) + 1 = 40 => p = 38, s = 8
 -- rounding
-select cast(10.6666666666 as numeric(38, 10)) - cast(5.11111111 as numeric(38, 8))
+select cast(10.6666666666 as decimal(38, 10)) - cast(5.11111111 as decimal(38, 8))
 go
 
-create table babel_5467_t10(a numeric(38,6));
+create table babel_5467_t10(a decimal(38,6));
 insert into babel_5467_t10 values(20),(10),(2);
 go
 
@@ -407,7 +415,22 @@ go
 select avg(a) from babel_5467_t10
 go
 
-drop table babel_5467_t10
+
+-- Combinations of arithmetic operations and aggregate functions
+select (32.0/3.0)*10.666666, (cast(32 as decimal(38, 6)) / cast(3 as decimal(38, 6))) * cast(10.666666 as decimal(38, 6))
+go
+
+select ((32.0/3.0)*10.666666) + 10.22, ((cast(32 as decimal(38, 6)) / cast(3 as decimal(38, 6))) * cast(10.666666 as decimal(38, 6))) + cast(10.22 as decimal(38, 2))
+go
+
+create table babel_5467_t11(a decimal(38,6), b decimal(38,6), c decimal(38,6), d decimal(38,2));
+insert into babel_5467_t11 values(32,3,10.666666,10.22), (5,3,1.666666,1.22), (7,3,2.333333,2.22)
+go
+
+select (((a / b) * c) + d), ((a / b) * c), (a / b) from babel_5467_t11
+go
+
+select avg(((a / b) * c) + d), avg((a / b) * c), avg(a / b) from babel_5467_t11
 go
 
 -- cleanup
@@ -437,6 +460,9 @@ drop table babel_5467_t6
 drop table babel_5467_t7
 drop table babel_5467_t8
 drop table babel_5467_t9
+drop table babel_5467_t10
+drop table babel_5467_t11
+drop table babel_5467_t12
 go
 
 drop type DECIMALUDT_38_6
