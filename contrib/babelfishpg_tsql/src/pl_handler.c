@@ -2730,9 +2730,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							 * if this is the same procedure, it'll update the existing one,
 							 * in such case, should not delete dependent records
 							 */
-							deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-							deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-							deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
+							deleteDependencyRecordsFor(DefaultAclRelationId, oldoid, false);
+							deleteDependencyRecordsFor(ProcedureRelationId, oldoid, false);
+							deleteSharedDependencyRecordsFor(ProcedureRelationId, oldoid, 0);
 						}
 						if (!isSameProc) 
 						{
