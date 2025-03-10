@@ -24,6 +24,18 @@ go
 drop sequence object_ownership_s2.new_sq;
 go
 
+drop index new_idx on object_ownership_s3.new_t;
+go
+drop trigger object_ownership_s3.new_tr;
+go
+drop function object_ownership_s3.new_tvf;
+go
+drop function object_ownership_s3.new_mtvf;
+go
+drop type object_ownership_s3.new_type;
+go
+drop type object_ownership_s3.new_ttype;
+go
 drop table object_ownership_s3.new_t;
 go
 drop view object_ownership_s3.new_v;
@@ -59,6 +71,18 @@ go
 drop sequence object_ownership_s2.old_sq;
 go
 
+drop index old_idx1 on object_ownership_s2.old_t1;
+go
+drop trigger object_ownership_s2.old_tr1;
+go
+drop function object_ownership_s2.old_tvf1;
+go
+drop function object_ownership_s2.old_mtvf1;
+go
+drop type object_ownership_s2.old_type1;
+go
+drop type object_ownership_s2.old_ttype1;
+go
 drop table object_ownership_s2.old_t1;
 go
 drop view object_ownership_s2.old_v1;
@@ -70,6 +94,18 @@ go
 drop sequence object_ownership_s2.old_sq1;
 go
 
+drop index old_idx on object_ownership_s3.old_t;
+go
+drop trigger object_ownership_s3.old_tr;
+go
+drop function object_ownership_s3.old_tvf;
+go
+drop function object_ownership_s3.old_mtvf;
+go
+drop type object_ownership_s3.old_type;
+go
+drop type object_ownership_s3.old_ttype;
+go
 drop table object_ownership_s3.old_t;
 go
 drop view object_ownership_s3.old_v;
@@ -81,6 +117,18 @@ go
 drop sequence object_ownership_s3.old_sq;
 go
 
+drop index old_idx1 on object_ownership_s3.old_t1;
+go
+drop trigger object_ownership_s3.old_tr1;
+go
+drop function object_ownership_s3.old_tvf1;
+go
+drop function object_ownership_s3.old_mtvf1;
+go
+drop type object_ownership_s3.old_type1;
+go
+drop type object_ownership_s3.old_ttype1;
+go
 drop table object_ownership_s3.old_t1;
 go
 drop view object_ownership_s3.old_v1;

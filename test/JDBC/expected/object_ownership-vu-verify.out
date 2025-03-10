@@ -45,6 +45,22 @@ create function object_ownership_s3.new_f() returns int begin declare @a int; se
 go
 create sequence object_ownership_s3.new_sq start with 1 increment by 1 ;
 go
+create index new_idx on object_ownership_s3.new_t(a);
+go
+create trigger object_ownership_s3.new_tr on object_ownership_s3.new_t after insert as select 1;
+go
+create function object_ownership_s3.new_tvf() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.new_mtvf()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.new_type from sys.varchar(10)
+go
+create type object_ownership_s3.new_ttype as table (id int)
+go
 
 /**** SHOWS MISMATCHED SCHEMA AND OBJECT OWNERS ******/
 select * from get_schema_object_ownership();

@@ -97,9 +97,6 @@ ignore#!#restricted_procedures-vu-cleanup
 ignore#!#fixeddecimal_modulo-vu-prepare
 ignore#!#fixeddecimal_modulo-vu-verify
 ignore#!#fixeddecimal_modulo-vu-cleanup
-ignore#!#object_ownership-vu-prepare
-ignore#!#object_ownership-vu-verify
-ignore#!#object_ownership-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -507,3 +504,6 @@ ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-cleanup
 ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-prepare
 ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-verify
 ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-cleanup
+ignore#!#object_ownership-before-16_8-or-17_4-vu-prepare
+ignore#!#object_ownership-before-16_8-or-17_4-vu-verify
+ignore#!#object_ownership-before-16_8-or-17_4-vu-cleanup
