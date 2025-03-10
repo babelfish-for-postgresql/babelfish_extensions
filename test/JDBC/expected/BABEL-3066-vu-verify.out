@@ -504,7 +504,7 @@ SELECT CAST(CAST(12465781.46792 as real) as numeric(38,10)) - CAST(CAST(12465781
 GO
 ~~START~~
 numeric
-0
+0E-15
 ~~END~~
 
 
@@ -512,7 +512,7 @@ SELECT CAST(CAST(12465781.46792 as real) as numeric(38,10)) - CAST(CAST(12465781
 GO
 ~~START~~
 numeric
-0
+0E-10
 ~~END~~
 
 
