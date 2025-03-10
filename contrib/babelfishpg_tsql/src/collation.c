@@ -72,6 +72,8 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 Const **prefix,
 										 Selectivity *rest_selec);
 
+static Node *transform_likenode_for_AI(OpExpr *op);
+
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
  * Pattern_Prefix_Exact: the pattern doesn't include any wildcard character
@@ -321,7 +323,7 @@ transform_funcexpr(Node *node)
 static Node *
 transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
-	Node	   *leftop = (Node *) linitial(op->args);
+	Node	   *leftop = copyObject(linitial(op->args));
 	Node	   *rightop = (Node *) lsecond(op->args);
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
@@ -362,27 +364,33 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		return node;
 	}
 
-	/* Change the opno and oprfuncid to ILIKE */
-	op->opno = like_entry.ilike_oid;
-	op->opfuncid = like_entry.ilike_opfuncid;
+	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
+	{
+		/* Change the opno and oprfuncid to ILIKE */
+		op->opno = like_entry.ilike_oid;
+		op->opfuncid = like_entry.ilike_opfuncid;
+	}
 
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	/* 
-	 * This is needed to process CI_AI for Const nodes
-	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
-	 * we obtain a Relabel node which won't help us to perform optimization
-	 * for constant prefix. Hence, we process that here
-	 */
-	if (IsA(rightop, RelabelType))
-	{
-		RelabelType		*relabel = (RelabelType *) rightop;
-		if (IsA(relabel->arg, Const))
-		{
-			lsecond(op->args) = relabel->arg;
-			rightop = (Node *) lsecond(op->args);
-		}
-	}
+	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		node = transform_likenode_for_AI(op);
+
+	// /* 
+	//  * This is needed to process CI_AI for Const nodes
+	//  * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	//  * we obtain a Relabel node which won't help us to perform optimization
+	//  * for constant prefix. Hence, we process that here
+	//  */
+	// if (IsA(rightop, RelabelType))
+	// {
+	// 	RelabelType		*relabel = (RelabelType *) rightop;
+	// 	if (IsA(relabel->arg, Const))
+	// 	{
+	// 		lsecond(op->args) = relabel->arg;
+	// 		rightop = (Node *) lsecond(op->args);
+	// 	}
+	// }
 
 	/* no constant prefix found in pattern, or pattern is not constant */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
@@ -394,8 +402,13 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	patt = (Const *) rightop;
 
 	/* extract pattern */
-	pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
-											&prefix, NULL);
+	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d)
+		pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
+												&prefix, NULL);
+	else
+		pstatus = pattern_fixed_prefix_wrapper(patt, 0, coll_info_of_inputcollid.oid,
+												&prefix, NULL);
+
 
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
@@ -466,7 +479,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		}
 		else
 		{
-			constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+			// constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
 			ret = make_and_qual(node, constant_suffix);
 		}
 		ReleaseSysCache(optup);
@@ -846,7 +859,7 @@ convert_node_to_funcexpr_for_like(Node *node)
 
 
 static Node *
-transform_likenode_for_AI(Node *node, OpExpr *op)
+transform_likenode_for_AI(OpExpr *op)
 {
 	Node		*leftop = (Node *) linitial(op->args);
 	Node		*rightop = (Node *) lsecond(op->args);
@@ -865,7 +878,7 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
-	return node;
+	return (Node*) op;
 }
 
 /*
@@ -873,41 +886,41 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
  * and modify the nodes by removing accents from them
  */
 
-static Node *
-transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
-{
-	int			collidx_of_cs_as;
+// static Node *
+// transform_from_cs_ai_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+// {
+// 	int			collidx_of_cs_as;
 
-	tsql_get_database_or_server_collation_oid_internal(true);
+// 	tsql_get_database_or_server_collation_oid_internal(true);
 
-	if (!OidIsValid(database_or_server_collation_oid))
-		return node;
+// 	if (!OidIsValid(database_or_server_collation_oid))
+// 		return node;
 
-	/*
-	 * Find the CS_AS collation corresponding to the CS_AI collation
-	 */
-	collidx_of_cs_as =
-		tsql_find_cs_as_collation_internal(
-											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+// 	/*
+// 	 * Find the CS_AS collation corresponding to the CS_AI collation
+// 	 */
+// 	collidx_of_cs_as =
+// 		tsql_find_cs_as_collation_internal(
+// 											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
 
 
-	/*
-	 * A CS_AS collation should always exist unless a Babelfish CS_AS
-	 * collation was dropped or the lookup tables were not defined in
-	 * lexicographic order.  Program defensively here and just do no
-	 * transformation in this case, which will generate a
-	 * 'nondeterministic collation not supported' error.
-	 */
-	if (NOT_FOUND == collidx_of_cs_as)
-	{
-		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
-		return node;
-	}
+// 	/*
+// 	 * A CS_AS collation should always exist unless a Babelfish CS_AS
+// 	 * collation was dropped or the lookup tables were not defined in
+// 	 * lexicographic order.  Program defensively here and just do no
+// 	 * transformation in this case, which will generate a
+// 	 * 'nondeterministic collation not supported' error.
+// 	 */
+// 	if (NOT_FOUND == collidx_of_cs_as)
+// 	{
+// 		elog(DEBUG2, "No corresponding CS_AS collation found for collation \"%s\"", coll_info_of_inputcollid.collname);
+// 		return node;
+// 	}
 
-	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+// 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	return transform_likenode_for_AI(node, op);	
-}
+// 	return transform_likenode_for_AI(op);
+// }
 
 /*
  * Currently we support Latin based collations for LIKE for AI
@@ -984,7 +997,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
 			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_cs_ai_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -996,7 +1009,7 @@ transform_likenode(Node *node)
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
 			if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-				return transform_from_ci_as_for_likenode(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+				return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 			else
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1007,6 +1020,13 @@ transform_likenode(Node *node)
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
+		{
+			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
+		}
+
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000c /* CS_AS  */ )
 		{
 			return transform_from_ci_as_for_likenode(node, op, like_entry, coll_info_of_inputcollid);
 		}
