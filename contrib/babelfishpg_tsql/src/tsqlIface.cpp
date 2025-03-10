@@ -710,10 +710,7 @@ void PLtsql_expr_query_mutator::run()
 					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
-			/*
-			 * Note: The original test (offset - cursor < 0) never worked as intended because both offset and cursor are unsigned.
-			 * This has been corrected to (offset < cursor) to properly detect multiple mutations on the same position.
-			 */
+			/* detect multiple mutations on the same position */
 			if (offset < cursor)
 			{
 				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, 
