@@ -1,10 +1,10 @@
 use master;
 go
 
-SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_func_mvu%' and nspname = 'alter_func_db_dbo'
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_func_mvu%' and nspname = 'alter_func_db_dbo' order by funcname;
 go
 
-SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_proc%' and nspname = 'alter_proc_db_dbo'
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_proc%' and nspname = 'alter_proc_db_dbo' order by funcname;
 go
 
 drop database alter_proc_db
