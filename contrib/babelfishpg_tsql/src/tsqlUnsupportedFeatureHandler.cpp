@@ -485,9 +485,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
 {
-	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW, "ALTER VIEW", getLineAndPos(ctx->ALTER()));
-
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_view != EH_IGNORE)
 	{
