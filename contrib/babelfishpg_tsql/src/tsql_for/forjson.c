@@ -317,11 +317,22 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 			value->type=jbvNull;
 		}
 		else	{
-			// Extract the colummn value in the correct format
+			/*
+			*   Extract the column value in the correct format
+			*   USE JSONOID for JSON functions outputs to distinguish them from regular VARCHARs
+			*   Note : nvarchar_json is custom domain created to handle output from JSON functions
+			*/ 
 			value = palloc(sizeof(JsonbValue));
-			jsonb_get_value(colval, isnull, value, datatype_oid);
-			if(datatype_oid != JSONOID)
+			if(strcmp(typename, "nvarchar_json") == 0 || strcmp(typename, "json") == 0)
+			{
+				jsonb_get_value(colval, isnull, value, JSONOID);
+			}
+			else
+			{
+				jsonb_get_value(colval, isnull, value, datatype_oid);
 				value = &value->val.array.elems[0];
+			}
+
 		}
 
 		// Determine if the value should be inserted as a nested json object
@@ -582,10 +593,22 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 			value->type=jbvNull;
 		}
 		else	{
-			// Extract the colummn value in the correct format
+			/*
+			*   Extract the column value in the correct format
+			*   USE JSONOID for JSON functions outputs to distinguish them from regular VARCHARs
+			*   Note : nvarchar_json is custom domain created to handle output from JSON functions
+			*/ 
 			value = palloc(sizeof(JsonbValue));
-			jsonb_get_value(colval, isnull, value, datatype_oid);
-			value = &value->val.array.elems[0];
+			if(strcmp(typename, "nvarchar_json") == 0  || strcmp(typename, "json") == 0)
+			{
+				jsonb_get_value(colval, isnull, value, JSONOID);
+			}
+			else
+			{
+				jsonb_get_value(colval, isnull, value, datatype_oid);
+				value = &value->val.array.elems[0];
+			}
+				
 		}
 
 		// Determine if the value should be inserted as a nested json object
