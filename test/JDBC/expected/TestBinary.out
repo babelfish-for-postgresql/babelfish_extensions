@@ -2840,7 +2840,7 @@ CREATE TABLE BinaryFunctionTests (
     TestID INT IDENTITY(1,1),
     TestDescription VARCHAR(100),
     InputValue VARBINARY(MAX),
-    OutputValue SQL_VARIANT,
+    OutputValue VARBINARY(MAX),
     FunctionUsed VARCHAR(50)
 );
 GO
@@ -2849,39 +2849,55 @@ GO
 INSERT INTO BinaryFunctionTests VALUES
 -- MAX
 ('MAX Function', 0x1234, 
- CAST((SELECT MAX(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT MAX(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MAX'),
 -- MIN
 ('MIN Function', 0x1234, 
- CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
 ~~ROW COUNT: 2~~
-
-
-
-
 
 
 -- 2. String/Binary Functions
 INSERT INTO BinaryFunctionTests VALUES
 ('DATALENGTH', 0x1234, 
  DATALENGTH(0x1234),
- 'DATALENGTH'),
+ 'DATALENGTH');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BinaryFunctionTests VALUES
 ('LEN', 0x1234, 
  LEN(0x1234),
- 'LEN'),
+ 'LEN');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BinaryFunctionTests VALUES
 ('SUBSTRING', 0x123456, 
  SUBSTRING(0x123456, 2, 2),
- 'SUBSTRING'),
+ 'SUBSTRING');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BinaryFunctionTests VALUES
 ('LEFT', 0x123456, 
- LEFT(0x123456, 2),
- 'LEFT'),
+ cast(LEFT(0x123456, 2) as varbinary(100)),
+ 'LEFT');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO BinaryFunctionTests VALUES
 ('RIGHT', 0x123456, 
- RIGHT(0x123456, 2),
+ cast(RIGHT(0x123456, 2) as varbinary(100)),
  'RIGHT');
 GO
-~~ROW COUNT: 5~~
+~~ROW COUNT: 1~~
 
 
 -- 3. Cryptographic Functions
@@ -2897,7 +2913,7 @@ GO
 -- 4. Mathematical Functions that work with binary
 INSERT INTO BinaryFunctionTests VALUES
 ('AVG Function', 0x1234, 
- CAST((SELECT AVG(CAST(0x12 AS INT)) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT AVG(CAST(0x12 AS INT)) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'AVG');
 GO
 ~~ROW COUNT: 1~~
@@ -2925,16 +2941,16 @@ FROM BinaryFunctionTests
 ORDER BY TestID;
 GO
 ~~START~~
-int#!#varchar#!#varbinary#!#sql_variant#!#varchar
-1#!#MAX Function#!#1234#!#4660#!#MAX
-2#!#MIN Function#!#1234#!#4660#!#MIN
-3#!#DATALENGTH#!#1234#!#2#!#DATALENGTH
-4#!#LEN#!#1234#!#2#!#LEN
-5#!#SUBSTRING#!#123456#!#[B@34a1d21f#!#SUBSTRING
-6#!#LEFT#!#123456#!#4#!#LEFT
-7#!#RIGHT#!#123456#!#4V#!#RIGHT
-8#!#HASHBYTES SHA2_256#!#54657374#!#[B@58bf8650#!#HASHBYTES
-9#!#AVG Function#!#1234#!#18#!#AVG
+int#!#varchar#!#varbinary#!#varbinary#!#varchar
+1#!#MAX Function#!#1234#!#0000000000001234#!#MAX
+2#!#MIN Function#!#1234#!#0000000000001234#!#MIN
+3#!#DATALENGTH#!#1234#!#00000002#!#DATALENGTH
+4#!#LEN#!#1234#!#00000002#!#LEN
+5#!#SUBSTRING#!#123456#!#3456#!#SUBSTRING
+6#!#LEFT#!#123456#!#1234#!#LEFT
+7#!#RIGHT#!#123456#!#3456#!#RIGHT
+8#!#HASHBYTES SHA2_256#!#54657374#!#532EAABD9574880DBF76B9B8CC00832C20A6EC113D682299550D7A6E0F345E25#!#HASHBYTES
+9#!#AVG Function#!#1234#!#00000012#!#AVG
 ~~END~~
 
 
@@ -3526,7 +3542,7 @@ SELECT 'MAX with ISNULL',
     DATALENGTH(MAX(ISNULL(BinaryValue, 0x00))) AS MaxLength
 FROM #BinaryData
 GROUP BY GroupID
-) t;
+) t order by GroupID, MaxValue;
 GO
 
 -- Test Case 4: MIN aggregate
@@ -3545,7 +3561,7 @@ SELECT 'MIN with ISNULL',
     DATALENGTH(MIN(ISNULL(BinaryValue, 0xFF))) AS MinLength
 FROM #BinaryData
 GROUP BY GroupID
-) t;
+) t order by GroupID, MinValue;
 GO
 
 -- Test Case 5: Combining multiple aggregates

@@ -2072,7 +2072,7 @@ CREATE TABLE BinaryFunctionTests (
     TestID INT IDENTITY(1,1),
     TestDescription VARCHAR(100),
     InputValue VARBINARY(MAX),
-    OutputValue SQL_VARIANT,
+    OutputValue VARBINARY(MAX),
     FunctionUsed VARCHAR(50)
 );
 GO
@@ -2081,11 +2081,11 @@ GO
 INSERT INTO BinaryFunctionTests VALUES
 -- MAX
 ('MAX Function', 0x1234, 
- CAST((SELECT MAX(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT MAX(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MAX'),
 -- MIN
 ('MIN Function', 0x1234, 
- CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT MIN(CAST(0x1234 AS VARBINARY(10))) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'MIN');
 GO
 
@@ -2093,22 +2093,30 @@ GO
 INSERT INTO BinaryFunctionTests VALUES
 ('DATALENGTH', 0x1234, 
  DATALENGTH(0x1234),
- 'DATALENGTH'),
+ 'DATALENGTH');
+GO
 
+INSERT INTO BinaryFunctionTests VALUES
 ('LEN', 0x1234, 
  LEN(0x1234),
- 'LEN'),
+ 'LEN');
+GO
 
+INSERT INTO BinaryFunctionTests VALUES
 ('SUBSTRING', 0x123456, 
  SUBSTRING(0x123456, 2, 2),
- 'SUBSTRING'),
+ 'SUBSTRING');
+GO
 
+INSERT INTO BinaryFunctionTests VALUES
 ('LEFT', 0x123456, 
- LEFT(0x123456, 2),
- 'LEFT'),
+ cast(LEFT(0x123456, 2) as varbinary(100)),
+ 'LEFT');
+GO
 
+INSERT INTO BinaryFunctionTests VALUES
 ('RIGHT', 0x123456, 
- RIGHT(0x123456, 2),
+ cast(RIGHT(0x123456, 2) as varbinary(100)),
  'RIGHT');
 GO
 
@@ -2123,7 +2131,7 @@ GO
 -- 4. Mathematical Functions that work with binary
 INSERT INTO BinaryFunctionTests VALUES
 ('AVG Function', 0x1234, 
- CAST((SELECT AVG(CAST(0x12 AS INT)) FROM (VALUES (1)) AS t(c)) AS VARCHAR(100)),
+ CAST((SELECT AVG(CAST(0x12 AS INT)) FROM (VALUES (1)) AS t(c)) AS VARBINARY(100)),
  'AVG');
 GO
 
@@ -2575,7 +2583,7 @@ SELECT 'MAX with ISNULL',
     DATALENGTH(MAX(ISNULL(BinaryValue, 0x00))) AS MaxLength
 FROM #BinaryData
 GROUP BY GroupID
-) t;
+) t order by GroupID, MaxValue;
 GO
 
 -- Test Case 4: MIN aggregate
@@ -2594,7 +2602,7 @@ SELECT 'MIN with ISNULL',
     DATALENGTH(MIN(ISNULL(BinaryValue, 0xFF))) AS MinLength
 FROM #BinaryData
 GROUP BY GroupID
-) t;
+) t order by GroupID, MinValue;
 GO
 
 -- Test Case 5: Combining multiple aggregates
