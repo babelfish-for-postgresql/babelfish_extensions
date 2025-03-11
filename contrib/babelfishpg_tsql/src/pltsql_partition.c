@@ -134,10 +134,13 @@ bbf_create_partition_tables(CreateStmt *stmt)
 			partition_column_basetypoid = pg_type->typbasetype;
 			partition_column_typname = pstrdup(NameStr(pg_type->typname));
 			type_is_collatable = OidIsValid(pg_type->typcollation);
-			if (coldef->collClause)
-				partition_column_colloid = get_collation_oid(coldef->collClause->collname, false);
-			else
-				partition_column_colloid = tsql_get_database_or_server_collation_oid_internal(false);;
+			if (type_is_collatable)
+			{
+				if (coldef->collClause)
+					partition_column_colloid = get_collation_oid(coldef->collClause->collname, false);
+				else
+					partition_column_colloid = tsql_get_database_or_server_collation_oid_internal(false);
+			}
 			ReleaseSysCache(ctype);
 			break;
 		}

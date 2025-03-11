@@ -289,7 +289,7 @@ USE CaseInsensitiveAccentSensitive;
 GO
 
 -------------------------------------------------------------------------------------------
---- Case 1. Partition function and partition key with explicit collation with collation match.
+--- Case 1. Partition function and partition key with explicit collation with collation mismatch.
 -------------------------------------------------------------------------------------------
 -- Create a partition function with a specific collation
 CREATE PARTITION FUNCTION PF_AccentSensitive (NVARCHAR(10) COLLATE Latin1_General_CS_AS)
