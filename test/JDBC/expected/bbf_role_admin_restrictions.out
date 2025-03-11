@@ -235,6 +235,10 @@ t
 ~~END~~
 
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
 -- tsql
 DROP LOGIN bbf_role_admin_restrictions_login;
 GO
