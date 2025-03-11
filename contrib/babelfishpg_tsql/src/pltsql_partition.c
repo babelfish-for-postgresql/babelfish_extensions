@@ -65,15 +65,18 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	SysScanDesc	scan;
 	ScanKeyData	scanKey[2];
 	char		*input_parameter_type;
+	char		*input_parameter_collation;
 	char		*partition_function_name;
 	Datum		*range_values;
 	Datum		*datum_values;
 	bool		*nulls;
+	bool		type_is_collatable = InvalidOid;
 	int		nelems;
 	Oid		sql_variant_type_oid;
 	Oid		input_type_oid;
 	ListCell	*elements;
 	Oid		partition_column_typoid = InvalidOid;
+	Oid		partition_column_colloid = InvalidOid;
 	Oid		partition_column_basetypoid = InvalidOid;
 	char		*partition_column_typname = NULL;
 	bool		is_binary_datatype = false;
@@ -130,6 +133,14 @@ bbf_create_partition_tables(CreateStmt *stmt)
 			partition_column_typoid = pg_type->oid;
 			partition_column_basetypoid = pg_type->typbasetype;
 			partition_column_typname = pstrdup(NameStr(pg_type->typname));
+			type_is_collatable = OidIsValid(pg_type->typcollation);
+			if (type_is_collatable)
+			{
+				if (coldef->collClause)
+					partition_column_colloid = get_collation_oid(coldef->collClause->collname, false);
+				else
+					partition_column_colloid = tsql_get_database_or_server_collation_oid_internal(false);
+			}
 			ReleaseSysCache(ctype);
 			break;
 		}
@@ -170,6 +181,7 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	}
 	
 	input_parameter_type = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+	input_parameter_collation = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_collation, RelationGetDescr(rel), &isnull)));
 	values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 	deconstruct_array(values, sql_variant_type_oid, -1, false, 'i', &datum_values, &nulls, &nelems);
 
@@ -210,6 +222,16 @@ bbf_create_partition_tables(CreateStmt *stmt)
 	if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (input_type_oid) ||
 		(*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (input_type_oid))
 			is_binary_datatype = true;
+	
+	if (type_is_collatable)
+	{
+		Assert(input_parameter_collation != NULL);
+		if (partition_column_colloid != tsql_get_oid_from_collidx(tsql_find_collation_internal(input_parameter_collation)))
+			ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_OBJECT), 
+					errmsg("Collation of partition column '%s' does not match collation of corresponding parameter in partition function '%s'.",
+					partition_colname, partition_function_name)));
+	}
 
 	/* Convert each sql_variant values to CString. */
 	range_values = palloc(nelems * sizeof(Datum));

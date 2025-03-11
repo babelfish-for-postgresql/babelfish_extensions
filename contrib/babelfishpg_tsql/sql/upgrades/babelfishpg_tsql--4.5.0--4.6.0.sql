@@ -421,6 +421,29 @@ BEGIN
 END;
 $$;
 
+DO $$
+BEGIN
+IF NOT EXISTS(
+    SELECT 1 FROM pg_class c JOIN pg_attribute a ON a.attrelid = c.oid 
+      WHERE c.relname = 'babelfish_partition_function' COLLATE sys.database_default
+      AND c.relnamespace::regnamespace::text = 'sys' COLLATE sys.database_default
+	  AND a.attname = 'input_parameter_collation' COLLATE sys.database_default)
+THEN
+    -- Add input_parameter_collation column in sys.babelfish_partition_function.
+    SET allow_system_table_mods = on;
+    ALTER TABLE sys.babelfish_partition_function ADD COLUMN input_parameter_collation NAME;
+    RESET allow_system_table_mods;
+
+    -- Update the input_parameter_collation column in sys.babelfish_partition_function
+    -- catalog for collatable datatypes with default database collation.
+    UPDATE sys.babelfish_partition_function pf
+    SET input_parameter_collation = db.default_collation
+    FROM sys.babelfish_sysdatabases db 
+    WHERE pf.dbid = db.dbid 
+    AND pf.input_parameter_type IN ('CHAR', 'VARCHAR', 'NCHAR', 'NVARCHAR');
+END IF;
+END $$;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
 														  IN p_floatval FLOAT,
 														  IN p_style NUMERIC DEFAULT 0)

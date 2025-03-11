@@ -575,10 +575,12 @@ SET QUOTED_IDENTIFIER OFF;
 Go
 
 
---------------------------------------------------
---- TO test Permission
---------------------------------------------------
-CREATE DATABASE PartitionDb;
+--------------------------------------------------------------------------
+--- Test database to test Permission and Collation of Partition Functions
+--------------------------------------------------------------------------
+-- Create a test database with a specific collation
+CREATE DATABASE PartitionDb
+COLLATE SQL_Latin1_General_CP1_CI_AS;
 GO
 
 USE PartitionDb;
@@ -1161,4 +1163,45 @@ GO
 CREATE VIEW SysSearchPartitionNULLDepView
 AS 
     SELECT sys.search_partition('IntPartitionFunction', 10, NULL)
+GO
+
+--------------------------------------------------
+--- To test Collation of Partition Functions
+--------------------------------------------------
+
+USE PartitionDb;
+GO
+
+-- Create partition functions without explicit collation (will use database default)
+CREATE PARTITION FUNCTION PF_CollationTest_Char (CHAR(10))
+AS RANGE RIGHT FOR VALUES ('A', 'M', 'Z');
+GO
+
+CREATE PARTITION FUNCTION PF_CollationTest_VarChar (VARCHAR(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Mango', 'Zebra');
+GO
+
+CREATE PARTITION FUNCTION PF_CollationTest_NChar (NCHAR(10))
+AS RANGE RIGHT FOR VALUES (N'A', N'M', N'Z');
+GO
+
+CREATE PARTITION FUNCTION PF_CollationTest_NVarChar (NVARCHAR(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Mango', N'Zebra');
+GO
+
+-- Create corresponding partition schemes
+CREATE PARTITION SCHEME PS_CollationTest_Char 
+AS PARTITION PF_CollationTest_Char ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME PS_CollationTest_VarChar 
+AS PARTITION PF_CollationTest_VarChar ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME PS_CollationTest_NChar 
+AS PARTITION PF_CollationTest_NChar ALL TO ([PRIMARY]);
+GO
+
+CREATE PARTITION SCHEME PS_CollationTest_NVarChar 
+AS PARTITION PF_CollationTest_NVarChar ALL TO ([PRIMARY]);
 GO

@@ -1987,6 +1987,8 @@ search_partition(PG_FUNCTION_ARGS)
 	Datum			arg;
 	Oid			argtypeid;
 	char			*func_param_typname = NULL;
+	char			*func_param_collation = NULL;
+	Oid			collation_oid = InvalidOid;
 	Oid			func_param_typoid;
 	Oid			sqlvariant_typoid;
 	Datum			*range_values;
@@ -1999,6 +2001,13 @@ search_partition(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(2)) /* Database is specified. */
 	{
 		char *db_name = text_to_cstring(PG_GETARG_TEXT_P(2));
+		/* Lowercase the db_name, if needed. */
+		if (pltsql_case_insensitive_identifiers)
+		{
+			char *tmp = db_name;
+			db_name = downcase_identifier(tmp, strlen(tmp), false, false);
+			pfree(tmp);
+		}
 		dbid = get_db_id(db_name);
 		if (!DbidIsValid(dbid))
 			ereport(ERROR,
@@ -2037,6 +2046,7 @@ search_partition(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(tuple))
 	{
 		func_param_typname = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+		func_param_collation = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_collation, RelationGetDescr(rel), &isnull)));
 		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 		deconstruct_array(values, sqlvariant_typoid,
 					-1, false, 'i', &range_values, &nulls, &nelems);
@@ -2069,6 +2079,17 @@ search_partition(PG_FUNCTION_ARGS)
 
 	/* Get OID of partition function parameter type. */
 	func_param_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (func_param_typname);
+	
+	/* Get collation oid from partition function collation. */
+	if (func_param_collation)
+	{
+		collation_oid = get_collation_oid(list_make1(makeString(func_param_collation)), false);
+		/* Sanity check. */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", func_param_collation)));
+	}
 
 	/* 
 	 * Implicitly convert input value to parameter type of
@@ -2096,7 +2117,7 @@ search_partition(PG_FUNCTION_ARGS)
 								ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
+	cxt.colloid = collation_oid;
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);

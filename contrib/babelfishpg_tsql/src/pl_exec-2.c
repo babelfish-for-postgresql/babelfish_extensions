@@ -4298,6 +4298,9 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	int32			valtypmod;
 	Datum			tsql_type_datum;
 	char			*tsql_typename = NULL;
+	char			*collation = NULL;
+	Oid			collation_oid = InvalidOid;
+	bool			type_is_collatable;
 	Datum			*input_values;
 	Datum			*sql_variant_values;
 	ArrayType		*arr_value = NULL;
@@ -4335,6 +4338,20 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 		ereport(ERROR, 
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+	}
+
+	/*
+	 * Get collation oid if collation is specified.
+	 */
+	if (stmt->collation)
+	{
+		collation_oid = tsql_get_oid_from_collidx(tsql_find_collation_internal(tsql_translate_tsql_collation_to_bbf_collation(stmt->collation)));
+	
+		/* raise an error if specified collation is invalid */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", stmt->collation)));
 	}
 
 	/* check if there is existing partition function with the given name in the current database */
@@ -4405,6 +4422,28 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("The type '%s' is not yet supported for partition function in Babelfish.", tsql_typename)));
 
+	type_is_collatable = OidIsValid(typ->collation);
+
+	/*
+	 * Raise an error if collate clause is specified and datatype is not collatable.
+	 */
+	if (stmt->collation && !type_is_collatable)
+	{
+		
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 	errmsg("Expression type '%s' is invalid for COLLATE clause.", tsql_typename)));
+	}
+	/*
+	 * Use default database collation if collate clause is not specified and datatype is collatable.
+	 */
+	else if (stmt->collation == NULL && type_is_collatable)
+		collation_oid = tsql_get_database_or_server_collation_oid_internal(false);
+	
+	/* get collation name from collation oid when type is collatable */
+	if (type_is_collatable)
+		collation = get_collation_name(collation_oid);
+	
 	/* check if the given number of boundaries are exceeding allowed limit */
 	nargs = list_length(arg);
 	if (nargs >= MAX_PARTITIONS_LIMIT)
@@ -4464,7 +4503,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 
 	/* set the function oid of operator in tsql comparator context */
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
+	cxt.colloid = collation_oid;
 	cxt.contains_duplicate = false;
 
 	/* 
@@ -4498,12 +4537,14 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 					-1, false, 'i');
 
 	/* add entry in the sys.babelfish_partition_function catalog */
-	add_entry_to_bbf_partition_function(dbid, partition_function_name, tsql_typename, stmt->is_right, arr_value);
+	add_entry_to_bbf_partition_function(dbid, partition_function_name, tsql_typename, stmt->is_right, arr_value, collation);
 
 	pfree(tsql_typename);
 	pfree(input_values);
 	pfree(sql_variant_values);
 	pfree(arr_value);
+	if (collation)
+		pfree(collation);
 
 	/* cleanup estate */
 	exec_eval_cleanup(estate);
