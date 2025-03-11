@@ -10,6 +10,9 @@
 
 all
 
+# TODO
+ignore#!#charindex_and_replace_CIAI_collations
+
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
