@@ -1,0 +1,8152 @@
+
+
+-- Create test tables
+CREATE TABLE MoneyTestTable1 (
+    ID INT IDENTITY(1,1),
+    MoneyVal MONEY,
+    SmallMoneyVal SMALLMONEY,
+    Description VARCHAR(100)
+);
+-- =============================================
+-- 1. Data Type Range Tests
+-- =============================================
+-- Test default values
+INSERT INTO MoneyTestTable1 DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+
+
+INSERT INTO MoneyTestTable1 (MoneyVal, SmallMoneyVal, Description)
+VALUES 
+    (-922337203685477.5808, -214748.3648, 'MIN values'),
+    (922337203685477.5807, 214748.3647, 'MAX values'),
+    (NULL, NULL, 'NULL values'),
+    (CAST(RAND() * 1000000 AS MONEY), 
+     CAST(RAND() * 10000 AS SMALLMONEY), 'Random values'),
+    (0.0001, 0.0001, 'Small positive values'),
+    (-0.0001, -0.0001, 'Small negative values'),
+    (0,0, 'Zero Values');
+-- Display results
+SELECT 'Range Test Results' AS TestName, * FROM MoneyTestTable1 where Description NOT LIKE 'Random values';
+GO
+~~ROW COUNT: 7~~
+
+~~START~~
+varchar#!#int#!#money#!#smallmoney#!#varchar
+Range Test Results#!#2#!#-922337203685477.5808#!#-214748.3648#!#MIN values
+Range Test Results#!#3#!#922337203685477.5807#!#214748.3647#!#MAX values
+Range Test Results#!#4#!#<NULL>#!#<NULL>#!#NULL values
+Range Test Results#!#6#!#0.0001#!#0.0001#!#Small positive values
+Range Test Results#!#7#!#-0.0001#!#-0.0001#!#Small negative values
+Range Test Results#!#8#!#0.0000#!#0.0000#!#Zero Values
+~~END~~
+
+
+
+
+-- =============================================
+-- 2.Overflow Tests
+-- =============================================
+INSERT INTO MoneyTestTable1 (MoneyVal, Description) VALUES (922337203685477.5808, 'Overflow MONEY test'); -- Exceeds maximum
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO MoneyTestTable1 (SmallMoneyVal, Description) VALUES (214748.3648, 'Overflow SMALLMONEY test'); -- Exceeds maximum
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO MoneyTestTable1 (MoneyVal, Description) VALUES (-922337203685477.5809, 'Underflow MONEY test'); -- Below minimum
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO MoneyTestTable1 (SmallMoneyVal, Description) VALUES (-214748.3649, 'Underflow SMALLMONEY test'); -- Below minimum
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- Try Overflow with Arithematic Operators
+-- +
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS SMALLMONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS TINYINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS SMALLINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS INT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS REAL);
+GO
+~~START~~
+real
+9.223372E14
+~~END~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS FLOAT);
+GO
+~~START~~
+float
+9.223372036854786E14
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for MONEY + NUMERIC
+-- SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS NUMERIC);
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS DECIMAL);
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS DECIMAL(5,2));
+-- GO
+-- -
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS SMALLMONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS TINYINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS SMALLINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS INT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS REAL);
+GO
+~~START~~
+real
+-9.223372E14
+~~END~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS FLOAT);
+GO
+~~START~~
+float
+-9.223372036854786E14
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for MONEY -  NUMERIC
+-- SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS NUMERIC);
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS DECIMAL);
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) - CAST(1 AS DECIMAL(5,2));
+-- GO
+-- *
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS SMALLMONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(2 AS TINYINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(2 AS SMALLINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(2 AS INT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(2 AS BIGINT);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS REAL);
+GO
+~~START~~
+real
+1.0145709E15
+~~END~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS FLOAT);
+GO
+~~START~~
+float
+1.0145709240540255E15
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for MONEY *  NUMERIC
+-- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS NUMERIC);
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL);
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(5,2));
+-- GO
+-- /
+SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS MONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS SMALLMONEY);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS REAL);
+GO
+~~START~~
+real
+-1.0248191E15
+~~END~~
+
+SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS FLOAT);
+GO
+~~START~~
+float
+-1.0248191152060862E15
+~~END~~
+
+
+
+
+-- TODO: File JIRA, TDS Protocol Error for MONEY /  NUMERIC
+-- SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS NUMERIC);
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS DECIMAL);
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(-922337203685477.5808 AS MONEY) / CAST(0.9 AS DECIMAL(5,2));
+-- GO
+-- +
+-- TODO: File JIRA , Smallmoney + Smallmoney Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-214747.3649
+~~END~~
+
+-- TODO: File JIRA , Smallmoney + money Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS MONEY);
+GO
+~~START~~
+money
+214749.3647
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS TINYINT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+-- TODO: File JIRA , Smallmoney + smallint Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS SMALLINT);
+GO
+~~START~~
+smallmoney
+-214747.3649
+~~END~~
+
+-- TODO: File JIRA , Smallmoney + int Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS INT);
+GO
+~~START~~
+smallmoney
+-214747.3649
+~~END~~
+
+-- TODO: File JIRA , Smallmoney + bigint Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS BIGINT);
+GO
+~~START~~
+smallmoney
+-214747.3649
+~~END~~
+
+-- TODO: File JIRA , Smallmoney + real Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS REAL);
+GO
+~~START~~
+real
+214749.36
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS FLOAT);
+GO
+~~START~~
+float
+214749.3647
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for SMALLMONEY + NUMERIC
+-- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS NUMERIC);
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS DECIMAL);
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(1 AS DECIMAL(5,2));
+-- GO
+-- - 
+-- TODO: File JIRA , Smallmoney - Smallmoney Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+214747.3648
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS MONEY);
+GO
+~~START~~
+money
+-214749.3648
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS TINYINT);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+-- TODO: File JIRA , Smallmoney - smallint Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS SMALLINT);
+GO
+~~START~~
+smallmoney
+214747.3648
+~~END~~
+
+-- TODO: File JIRA , Smallmoney - int Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS INT);
+GO
+~~START~~
+smallmoney
+214747.3648
+~~END~~
+
+-- TODO: File JIRA , Smallmoney - bigint Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS BIGINT);
+GO
+~~START~~
+smallmoney
+214747.3648
+~~END~~
+
+-- TODO: File JIRA , Smallmoney - real Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS REAL);
+GO
+~~START~~
+real
+-214749.36
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS FLOAT);
+GO
+~~START~~
+float
+-214749.3648
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for SMALLMONEY - NUMERIC
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS NUMERIC);
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS DECIMAL);
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) - CAST(1 AS DECIMAL(5,2));
+-- GO
+-- *
+-- TODO: File JIRA , Smallmoney * Smallmoney Doesnt follow bound checks
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+-193273.5285
+~~END~~
+
+-- TODO: File JIRA output diff: Smallmoney * Money Output Diff
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS MONEY);
+GO
+~~START~~
+money
+236223.2011
+~~END~~
+
+-- TODO: File JIRA output diff: Smallmoney * TinyInt Doesnt Follow Bound Checks
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS TINYINT);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS SMALLINT);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS INT);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS REAL);
+GO
+~~START~~
+real
+236223.2
+~~END~~
+
+SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS FLOAT);
+GO
+~~START~~
+float
+236223.20117000001
+~~END~~
+
+
+-- TODO: File JIRA, TDS Protocol Error for SMALLMONEY * NUMERIC
+-- SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS NUMERIC);
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS DECIMAL);
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(214748.3647 AS SMALLMONEY) * CAST(1.1 AS DECIMAL(5,2));
+-- GO
+-- /
+-- TODO: File JIRA , Smallmoney / Smallmoney Doesnt follow bound checks
+SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS SMALLMONEY);
+GO
+~~START~~
+smallmoney
+190887.4354
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS MONEY);
+GO
+~~START~~
+money
+-238609.2942
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS REAL);
+GO
+~~START~~
+real
+-238609.3
+~~END~~
+
+SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS FLOAT);
+GO
+~~START~~
+float
+-238609.29422222223
+~~END~~
+
+
+
+-- TODO: File JIRA, TDS Protocol Error for SMALLMONEY /  NUMERIC
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS NUMERIC);
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS DECIMAL);
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS NUMERIC(5,2));
+-- GO
+-- SELECT CAST(-214748.3648 AS SMALLMONEY) / CAST(0.9 AS DECIMAL(5,2));
+-- GO
+-- TODO:Try Overflow With Aggregates
+------------------------------------------------------------------------
+---- 3. Arithmetic Operations Tests
+------------------------------------------------------------------------
+-- Addition (+) operator tests with MONEY
+-- MONEY + MONEY
+SELECT CAST(123.45 AS MONEY) + CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+-- MONEY + SMALLMONEY
+SELECT CAST(123.45 AS MONEY) + CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+-- MONEY + TINYINT
+SELECT CAST(123.45 AS MONEY) + CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+money
+378.4500
+~~END~~
+
+
+-- MONEY + SMALLINT
+SELECT CAST(123.45 AS MONEY) + CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+money
+32890.4500
+~~END~~
+
+
+-- MONEY + INT
+SELECT CAST(123.45 AS MONEY) + CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+money
+2147483770.4500
+~~END~~
+
+
+-- TODO: File Jira, MONEY+BIGINT Doesnt Follow Bound Checks
+-- MONEY + BIGINT
+SELECT CAST(123.45 AS MONEY) + CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+money
+122.4500
+~~END~~
+
+
+-- TODO: File JIRA, Money+REAL Precision Difference
+-- MONEY + REAL
+SELECT CAST(123.45 AS MONEY) + CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+802.35004
+~~END~~
+
+
+-- MONEY + FLOAT
+SELECT CAST(123.45 AS MONEY) + CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+802.35
+~~END~~
+
+
+-- MONEY + NUMERIC(5,2)
+SELECT CAST(123.45 AS MONEY) + CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- MONEY + NUMERIC(10,4)
+SELECT CAST(123.45 AS MONEY) + CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+802.3512
+~~END~~
+
+
+-- MONEY + NUMERIC(18,6)
+SELECT CAST(123.45 AS MONEY) + CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+802.351234
+~~END~~
+
+
+-- MONEY + BIT
+SELECT CAST(123.45 AS MONEY) + CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+124.4500
+~~END~~
+
+
+-- Subtraction (-) operator tests with MONEY
+-- MONEY - MONEY
+SELECT CAST(123.45 AS MONEY) - CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+-555.4500
+~~END~~
+
+
+-- MONEY - SMALLMONEY
+SELECT CAST(123.45 AS MONEY) - CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+money
+-555.4500
+~~END~~
+
+
+-- MONEY - TINYINT
+SELECT CAST(123.45 AS MONEY) - CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+money
+-131.5500
+~~END~~
+
+
+-- MONEY - SMALLINT
+SELECT CAST(123.45 AS MONEY) - CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+money
+-32643.5500
+~~END~~
+
+
+-- MONEY - INT
+SELECT CAST(123.45 AS MONEY) - CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+money
+-2147483523.5500
+~~END~~
+
+
+-- TODO: File Jira, MONEY-BIGINT Doesnt Follow Bound Checks
+-- MONEY - BIGINT
+SELECT CAST(123.45 AS MONEY) - CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+money
+124.4500
+~~END~~
+
+
+-- TODO: File JIRA, Money-REAL Precision Difference
+-- MONEY - REAL
+SELECT CAST(123.45 AS MONEY) - CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+-555.45
+~~END~~
+
+
+-- MONEY - FLOAT
+SELECT CAST(123.45 AS MONEY) - CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+-555.4499999999999
+~~END~~
+
+
+-- MONEY - NUMERIC(5,2)
+SELECT CAST(123.45 AS MONEY) - CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+-555.45
+~~END~~
+
+
+-- MONEY - NUMERIC(10,4)
+SELECT CAST(123.45 AS MONEY) - CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+-555.4512
+~~END~~
+
+
+-- MONEY - NUMERIC(18,6)
+SELECT CAST(123.45 AS MONEY) - CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+-555.451234
+~~END~~
+
+
+-- MONEY - BIT
+SELECT CAST(123.45 AS MONEY) - CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+122.4500
+~~END~~
+
+
+-- Multiplication (*) operator tests with MONEY
+-- MONEY * MONEY
+SELECT CAST(123.45 AS MONEY) * CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+83810.2050
+~~END~~
+
+
+-- MONEY * SMALLMONEY
+SELECT CAST(123.45 AS MONEY) * CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+money
+83810.2050
+~~END~~
+
+
+-- MONEY * TINYINT
+SELECT CAST(123.45 AS MONEY) * CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+money
+31479.7500
+~~END~~
+
+
+-- MONEY * SMALLINT
+SELECT CAST(123.45 AS MONEY) * CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+money
+4045086.1500
+~~END~~
+
+
+-- MONEY * INT
+SELECT CAST(123.45 AS MONEY) * CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+money
+265106856222.1500
+~~END~~
+
+
+-- TODO: File Jira, MONEY*BIGINT Doesnt Follow Bound Checks
+-- MONEY * BIGINT
+SELECT CAST(123.45 AS MONEY) * CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+money
+-123.4500
+~~END~~
+
+
+-- TODO: File JIRA, Money*REAL Precision Difference
+-- MONEY * REAL
+SELECT CAST(123.45 AS MONEY) * CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+83810.2
+~~END~~
+
+
+-- MONEY * FLOAT
+SELECT CAST(123.45 AS MONEY) * CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+83810.205
+~~END~~
+
+
+-- MONEY * NUMERIC(5,2)
+SELECT CAST(123.45 AS MONEY) * CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+83810.2050
+~~END~~
+
+
+-- MONEY * NUMERIC(10,4)
+SELECT CAST(123.45 AS MONEY) * CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+83810.35314000
+~~END~~
+
+
+-- TODO: File JIRA, Money*NUMERIC Precision Difference
+-- MONEY * NUMERIC(18,6)
+SELECT CAST(123.45 AS MONEY) * CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+83810.357337300000
+~~END~~
+
+
+-- MONEY * BIT
+SELECT CAST(123.45 AS MONEY) * CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- Division (/) operator tests with MONEY
+-- MONEY / MONEY
+SELECT CAST(123.45 AS MONEY) / CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+0.1818
+~~END~~
+
+
+-- MONEY / SMALLMONEY
+SELECT CAST(123.45 AS MONEY) / CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+money
+0.1818
+~~END~~
+
+
+-- MONEY / TINYINT
+SELECT CAST(123.45 AS MONEY) / CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+money
+0.4841
+~~END~~
+
+
+-- MONEY / SMALLINT
+SELECT CAST(123.45 AS MONEY) / CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+money
+0.0037
+~~END~~
+
+
+-- MONEY / INT
+SELECT CAST(123.45 AS MONEY) / CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- TODO: File Jira, MONEY/BIGINT Doesnt Follow Bound Checks
+-- MONEY / BIGINT
+SELECT CAST(123.45 AS MONEY) / CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- MONEY / REAL
+SELECT CAST(123.45 AS MONEY) / CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+0.18183826
+~~END~~
+
+
+-- MONEY / FLOAT
+SELECT CAST(123.45 AS MONEY) / CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+0.18183826778612464
+~~END~~
+
+
+-- TODO: File JIRA, Money/NUMERIC Precision Difference
+-- MONEY / NUMERIC(5,2)
+SELECT CAST(123.45 AS MONEY) / CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+0.18183826
+~~END~~
+
+
+-- TODO: File JIRA, Money/NUMERIC Precision Difference
+-- MONEY / NUMERIC(10,4)
+SELECT CAST(123.45 AS MONEY) / CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+0.181837946375
+~~END~~
+
+
+-- TODO: File JIRA, Money/NUMERIC Precision Difference
+-- MONEY / NUMERIC(18,6)
+SELECT CAST(123.45 AS MONEY) / CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+0.1818379372690903
+~~END~~
+
+
+-- MONEY / BIT
+SELECT CAST(123.45 AS MONEY) / CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- Modulo (%) operator tests with MONEY
+-- MONEY % MONEY
+SELECT CAST(123.45 AS MONEY) % CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- MONEY % SMALLMONEY
+SELECT CAST(123.45 AS MONEY) % CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- MONEY % TINYINT
+SELECT CAST(123.45 AS MONEY) % CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- MONEY % SMALLINT
+SELECT CAST(123.45 AS MONEY) % CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- MONEY % INT
+SELECT CAST(123.45 AS MONEY) % CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- MONEY % BIGINT
+SELECT CAST(123.45 AS MONEY) % CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775807" is out of range for type money)~~
+
+
+-- TODO: File JIRA, Money%REAL is incompatible in T-SQL
+-- MONEY % REAL
+SELECT CAST(123.45 AS MONEY) % CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- TODO: File JIRA, Money%FLOAT is incompatible in T-SQL
+-- MONEY % FLOAT
+SELECT CAST(123.45 AS MONEY) % CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- TODO: File JIRA, Money%NUMERIC Precision Difference
+-- MONEY % NUMERIC(5,2)
+SELECT CAST(123.45 AS MONEY) % CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+123.45
+~~END~~
+
+
+-- MONEY % NUMERIC(10,4)
+SELECT CAST(123.45 AS MONEY) % CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+123.4500
+~~END~~
+
+
+-- MONEY % NUMERIC(18,6)
+SELECT CAST(123.45 AS MONEY) % CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+123.450000
+~~END~~
+
+
+-- MONEY % BIT
+SELECT CAST(123.45 AS MONEY) % CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+0.4500
+~~END~~
+
+
+
+-- Addition (+) operator tests with SMALLMONEY
+-- SMALLMONEY + MONEY
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+-- SMALLMONEY + SMALLMONEY
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+802.3500
+~~END~~
+
+
+-- SMALLMONEY + TINYINT
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+smallmoney
+378.4500
+~~END~~
+
+
+-- SMALLMONEY + SMALLINT
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+smallmoney
+32890.4500
+~~END~~
+
+
+
+-- SMALLMONEY + INT
+-- TODO: File JIRA , TDS Protocal error in case of overflow for smallmoney
+-- SELECT CAST(123.45 AS SMALLMONEY) + CAST(2147483647 AS INT) AS result;
+-- GO
+-- TODO: File Jira, SMALLMONEY+BIGINT Doesnt Follow Bound Checks
+-- SMALLMONEY + BIGINT
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+smallmoney
+122.4500
+~~END~~
+
+
+-- SMALLMONEY + REAL
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+802.35004
+~~END~~
+
+
+-- SMALLMONEY + FLOAT
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+802.35
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney+NUMERIC Precision Difference
+-- SMALLMONEY + NUMERIC(5,2)
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- SMALLMONEY + NUMERIC(10,4)
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+802.3512
+~~END~~
+
+
+-- SMALLMONEY + NUMERIC(18,6)
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+802.351234
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney+Bit Output Datatype Difference
+-- SMALLMONEY + BIT
+SELECT CAST(123.45 AS SMALLMONEY) + CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+124.4500
+~~END~~
+
+
+-- Subtraction (-) operator tests with SMALLMONEY
+-- SMALLMONEY - MONEY
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+-555.4500
+~~END~~
+
+
+-- SMALLMONEY - SMALLMONEY
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+-555.4500
+~~END~~
+
+
+-- SMALLMONEY - TINYINT
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+smallmoney
+-131.5500
+~~END~~
+
+
+-- SMALLMONEY - SMALLINT
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+smallmoney
+-32643.5500
+~~END~~
+
+
+
+-- SMALLMONEY - INT
+-- TODO: File JIRA, TDS Protocol Error in case of smallmoney overflow
+-- SELECT CAST(123.45 AS SMALLMONEY) - CAST(2147483647 AS INT) AS result;
+-- GO
+-- TODO: File Jira, SMALLMONEY-BIGINT Doesnt Follow Bound Checks
+-- SMALLMONEY - BIGINT
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+smallmoney
+124.4500
+~~END~~
+
+
+-- SMALLMONEY - REAL
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+-555.45
+~~END~~
+
+
+-- SMALLMONEY - FLOAT
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+-555.4499999999999
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney-NUMERIC Precision Difference
+-- SMALLMONEY - NUMERIC(5,2)
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+-555.45
+~~END~~
+
+
+-- SMALLMONEY - NUMERIC(10,4)
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+-555.4512
+~~END~~
+
+
+-- SMALLMONEY - NUMERIC(18,6)
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+-555.451234
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney-Bit Output Datatype Difference
+-- SMALLMONEY - BIT
+SELECT CAST(123.45 AS SMALLMONEY) - CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+122.4500
+~~END~~
+
+
+-- Multiplication (*) operator tests with SMALLMONEY
+-- SMALLMONEY * MONEY
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+83810.2050
+~~END~~
+
+
+-- SMALLMONEY * SMALLMONEY
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+83810.2050
+~~END~~
+
+
+-- SMALLMONEY * TINYINT
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+smallmoney
+31479.7500
+~~END~~
+
+
+
+
+-- SMALLMONEY * SMALLINT
+-- TODO: File JIRA, TDS Protocol Error in case of smallmoney overflowa
+-- SELECT CAST(123.45 AS SMALLMONEY) * CAST(32767 AS SMALLINT) AS result;
+-- GO
+-- SMALLMONEY * INT
+-- TODO: File JIRA, TDS Protocol Error in case of smallmoney overflowa
+-- SELECT CAST(123.45 AS SMALLMONEY) * CAST(2147483647 AS INT) AS result;
+-- GO
+-- TODO: File Jira, SMALLMONEY*BIGINT Doesnt Follow Bound Checks
+-- SMALLMONEY * BIGINT
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+smallmoney
+-123.4500
+~~END~~
+
+
+-- SMALLMONEY * REAL
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+83810.2
+~~END~~
+
+
+-- SMALLMONEY * FLOAT
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+83810.205
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney*NUMERIC Precision Difference
+-- SMALLMONEY * NUMERIC(5,2)
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+83810.2050
+~~END~~
+
+
+-- SMALLMONEY * NUMERIC(10,4)
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+83810.35314000
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney*NUMERIC Precision Difference
+-- SMALLMONEY * NUMERIC(18,6)
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+83810.357337300000
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney*Bit Output Datatype Difference
+-- SMALLMONEY * BIT
+SELECT CAST(123.45 AS SMALLMONEY) * CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- Division (/) operator tests with SMALLMONEY
+-- SMALLMONEY / MONEY
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+0.1818
+~~END~~
+
+
+-- SMALLMONEY / SMALLMONEY
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+0.1818
+~~END~~
+
+
+-- SMALLMONEY / TINYINT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+smallmoney
+0.4841
+~~END~~
+
+
+-- SMALLMONEY / SMALLINT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+smallmoney
+0.0037
+~~END~~
+
+
+-- TODO: File Jira, SMALLMONEY/INT Doesnt Follow Bound Checks
+-- SMALLMONEY / INT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+
+-- TODO: File Jira, SMALLMONEY/BIGINT Doesnt Follow Bound Checks
+-- SMALLMONEY / BIGINT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+
+-- SMALLMONEY / REAL
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+0.18183826
+~~END~~
+
+
+-- SMALLMONEY / FLOAT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+0.18183826778612464
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney/NUMERIC Precision Difference
+-- SMALLMONEY / NUMERIC(5,2)
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+0.18183826
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney/NUMERIC Precision Difference
+-- SMALLMONEY / NUMERIC(10,4)
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+0.181837946375
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney/NUMERIC Precision Difference
+-- SMALLMONEY / NUMERIC(18,6)
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+0.1818379372690903
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney/Bit Output Datatype Difference
+-- SMALLMONEY / BIT
+SELECT CAST(123.45 AS SMALLMONEY) / CAST(1 AS BIT) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- Modulo (%) operator tests with SMALLMONEY
+SELECT 'Modulo (%) Operator Tests with SMALLMONEY' AS test_description;
+GO
+~~START~~
+varchar
+Modulo (%) Operator Tests with SMALLMONEY
+~~END~~
+
+
+-- SMALLMONEY % MONEY
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+
+-- SMALLMONEY % SMALLMONEY
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+123.4500
+~~END~~
+
+
+-- SMALLMONEY % TINYINT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+smallmoney
+123.4500
+~~END~~
+
+
+-- SMALLMONEY % SMALLINT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+smallmoney
+123.4500
+~~END~~
+
+
+-- SMALLMONEY % INT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(2147483647 AS INT) AS result;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- SMALLMONEY % BIGINT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775807" is out of range for type smallmoney)~~
+
+
+-- TODO: File JIRA, SmallMoney%REAL is incompatible in T-SQL
+-- SMALLMONEY % REAL
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+smallmoney
+123.4500
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney%FLOAT is incompatible in T-SQL
+-- SMALLMONEY % FLOAT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+smallmoney
+123.4500
+~~END~~
+
+
+-- TODO: File JIRA, SmallMoney%NUMERIC Precision Difference
+-- SMALLMONEY % NUMERIC(5,2)
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+123.45
+~~END~~
+
+
+-- SMALLMONEY % NUMERIC(10,4)
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.9012 AS NUMERIC(10,4)) AS result;
+GO
+~~START~~
+numeric
+123.4500
+~~END~~
+
+
+-- SMALLMONEY % NUMERIC(18,6)
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(678.901234 AS NUMERIC(18,6)) AS result;
+GO
+~~START~~
+numeric
+123.450000
+~~END~~
+
+
+-- SMALLMONEY % BIT
+SELECT CAST(123.45 AS SMALLMONEY) % CAST(1 AS BIT) AS result;
+GO
+~~START~~
+smallmoney
+0.4500
+~~END~~
+
+
+-- Unary minus (-) operator tests
+-- Unary Minus MONEY
+SELECT -CAST(123.45 AS MONEY) AS result;
+GO
+~~START~~
+money
+-123.4500
+~~END~~
+
+
+-- Unary Minus SMALLMONEY
+SELECT -CAST(123.45 AS SMALLMONEY) AS result;
+GO
+~~START~~
+smallmoney
+-123.4500
+~~END~~
+
+
+-- Complex Arithmetic Tests for MONEY
+-- Multiple operators in single expression
+SELECT (CAST(1234.56 AS MONEY) + CAST(789.12 AS MONEY)) * CAST(2 AS INT) / CAST(3 AS INT) AS result;
+GO
+~~START~~
+money
+1349.1200
+~~END~~
+
+
+-- Nested calculations
+SELECT CAST(100.00 AS MONEY) + (CAST(200.00 AS MONEY) * CAST(3 AS INT)) + (CAST(400.00 AS MONEY) / CAST(2 AS INT)) AS result;
+GO
+~~START~~
+money
+900.0000
+~~END~~
+
+
+-- Mixed money types calculations
+SELECT (CAST(1000.00 AS MONEY) + CAST(500.00 AS SMALLMONEY)) * 
+       (CAST(250.00 AS MONEY) + CAST(125.00 AS SMALLMONEY)) AS result;
+GO
+~~START~~
+money
+562500.0000
+~~END~~
+
+
+-- Complex percentage calculations
+SELECT CAST(1000.00 AS MONEY) + 
+       (CAST(1000.00 AS MONEY) * CAST(0.10 AS FLOAT)) + -- Add 10%
+       (CAST(1000.00 AS MONEY) * CAST(0.05 AS FLOAT))   -- Add 5%
+AS result;
+GO
+~~START~~
+float
+1150.0
+~~END~~
+
+
+-- Mixed numeric type operations
+SELECT (CAST(1000.00 AS MONEY) * CAST(1.5 AS FLOAT)) +
+       (CAST(500.00 AS MONEY) * CAST(2.5 AS NUMERIC(5,2))) +
+       (CAST(250.00 AS MONEY) / CAST(2 AS INT))
+AS result;
+GO
+~~START~~
+float
+2875.0
+~~END~~
+
+
+-- Nested modulo operations
+SELECT (CAST(1000.00 AS MONEY) % CAST(300 AS INT)) +
+       (CAST(500.00 AS MONEY) % CAST(200 AS INT)) AS result;
+GO
+~~START~~
+money
+200.0000
+~~END~~
+
+
+-- Compound interest calculation
+SELECT CAST(1000.00 AS MONEY) * 
+       POWER(CAST(1.05 AS FLOAT), 3) -- 5% interest compounded for 3 periods
+AS result;
+GO
+~~START~~
+float
+1157.6250000000002
+~~END~~
+
+
+-- Tax calculation with multiple rates
+SELECT CAST(1000.00 AS MONEY) +
+       (CAST(1000.00 AS MONEY) * CAST(0.05 AS FLOAT)) + -- State tax 5%
+       (CAST(1000.00 AS MONEY) * CAST(0.08 AS FLOAT)) + -- County tax 8%
+       (CAST(1000.00 AS MONEY) * CAST(0.02 AS FLOAT))   -- Special tax 2%
+AS total_with_taxes;
+GO
+~~START~~
+float
+1150.0
+~~END~~
+
+
+-- Complex discount calculation
+SELECT CAST(1000.00 AS MONEY) -
+       (CAST(1000.00 AS MONEY) * CAST(0.20 AS FLOAT)) - -- 20% off
+       (CAST(50.00 AS MONEY)) +                         -- Less $50
+       (CAST(1000.00 AS MONEY) * CAST(0.05 AS FLOAT))   -- Plus 5% fee
+AS final_price;
+GO
+~~START~~
+float
+800.0
+~~END~~
+
+
+-- Complex division and modulo
+SELECT (CAST(1234.56 AS MONEY) / CAST(2 AS INT)) +
+       (CAST(1234.56 AS MONEY) % CAST(500 AS INT)) +
+       (CAST(1234.56 AS MONEY) * CAST(0.10 AS FLOAT))
+AS result;
+GO
+~~START~~
+float
+975.296
+~~END~~
+
+
+-- Complex SMALLMONEY Arithmetic Tests
+-- Multiple operators in single expression
+SELECT (CAST(123.45 AS SMALLMONEY) + CAST(78.91 AS SMALLMONEY)) * 
+       CAST(2 AS INT) / CAST(3 AS INT) AS result;
+GO
+~~START~~
+smallmoney
+134.9066
+~~END~~
+
+
+-- Nested calculations
+SELECT CAST(100.00 AS SMALLMONEY) + 
+       (CAST(200.00 AS SMALLMONEY) * CAST(3 AS INT)) + 
+       (CAST(400.00 AS SMALLMONEY) / CAST(2 AS INT)) AS result;
+GO
+~~START~~
+smallmoney
+900.0000
+~~END~~
+
+
+-- Mixed money types calculations
+SELECT (CAST(1000.00 AS SMALLMONEY) + CAST(500.00 AS SMALLMONEY)) * 
+       (CAST(250.00 AS MONEY) + CAST(125.00 AS SMALLMONEY)) AS result;
+GO
+~~START~~
+money
+562500.0000
+~~END~~
+
+
+-- Complex percentage calculations with SMALLMONEY
+SELECT CAST(1000.00 AS SMALLMONEY) + 
+       (CAST(1000.00 AS SMALLMONEY) * CAST(0.10 AS FLOAT)) + -- Add 10%
+       (CAST(1000.00 AS SMALLMONEY) * CAST(0.05 AS FLOAT))   -- Add 5%
+AS result;
+GO
+~~START~~
+float
+1150.0
+~~END~~
+
+
+-- Mixed numeric type operations
+SELECT (CAST(1000.00 AS SMALLMONEY) * CAST(1.5 AS FLOAT)) +
+       (CAST(500.00 AS SMALLMONEY) * CAST(2.5 AS NUMERIC(5,2))) +
+       (CAST(250.00 AS SMALLMONEY) / CAST(2 AS INT))
+AS result;
+GO
+~~START~~
+float
+2875.0
+~~END~~
+
+
+-- Price adjustment calculation
+SELECT CAST(100.00 AS SMALLMONEY) +
+       (CAST(100.00 AS SMALLMONEY) * 
+        CASE 
+            WHEN CAST(100.00 AS SMALLMONEY) > CAST(50.00 AS SMALLMONEY) 
+            THEN CAST(0.10 AS FLOAT)
+            ELSE CAST(0.05 AS FLOAT)
+        END)
+AS adjusted_price;
+GO
+~~START~~
+float
+110.0
+~~END~~
+
+
+-- Multi-step calculation
+SELECT (CAST(100.00 AS SMALLMONEY) * 
+        CAST(1.10 AS FLOAT) +                -- Add 10%
+        CAST(25.00 AS SMALLMONEY)) *        -- Add fixed amount
+        CAST(0.95 AS FLOAT)                 -- Apply 5% discount
+AS result;
+GO
+~~START~~
+float
+128.25
+~~END~~
+
+
+-- Weighted average price calculation
+SELECT (CAST(100.00 AS SMALLMONEY) * CAST(0.7 AS FLOAT)) +
+       (CAST(200.00 AS SMALLMONEY) * CAST(0.3 AS FLOAT))
+AS weighted_average;
+GO
+~~START~~
+float
+130.0
+~~END~~
+
+
+-- Complex rounding test
+SELECT CAST(
+    (CAST(123.456 AS FLOAT) * 
+     CAST(100.00 AS SMALLMONEY)) / 
+     CAST(3 AS INT)
+AS SMALLMONEY) AS rounded_result;
+GO
+~~START~~
+smallmoney
+4115.2000
+~~END~~
+
+
+-- Mathematical formula implementation
+SELECT CAST(100.00 AS SMALLMONEY) * 
+       POWER(CAST(1 AS FLOAT) + CAST(0.05 AS FLOAT), 4) -- Compound interest
+AS future_value;
+GO
+~~START~~
+float
+121.55062500000003
+~~END~~
+
+
+-- Complex marginal calculation
+SELECT CASE
+    WHEN CAST(1000.00 AS SMALLMONEY) <= CAST(500.00 AS SMALLMONEY)
+    THEN CAST(1000.00 AS SMALLMONEY) * CAST(1.10 AS FLOAT)
+    WHEN CAST(1000.00 AS SMALLMONEY) <= CAST(1000.00 AS SMALLMONEY)
+    THEN CAST(1000.00 AS SMALLMONEY) * CAST(1.20 AS FLOAT)
+    ELSE CAST(1000.00 AS SMALLMONEY) * CAST(1.30 AS FLOAT)
+END AS tiered_pricing;
+GO
+~~START~~
+float
+1200.0
+~~END~~
+
+
+-- Mixed arithmetic with multiple data types
+SELECT (CAST(100.00 AS SMALLMONEY) * CAST(1.1 AS FLOAT)) +
+       (CAST(50.00 AS SMALLMONEY) / CAST(2 AS INT)) +
+       (CAST(25.00 AS SMALLMONEY) * CAST(0.8 AS NUMERIC(3,1))) +
+       CAST(10 AS TINYINT)
+AS mixed_calculation;
+GO
+~~START~~
+float
+165.0
+~~END~~
+
+
+
+------------------------------------------------------------------------
+---- 4. Mathematical Functions Tests
+------------------------------------------------------------------------
+-- ABS Function
+-- MONEY tests
+SELECT ABS(CAST(123.45 AS MONEY)) AS result;      -- Positive MONEY
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+SELECT ABS(CAST(-123.45 AS MONEY)) AS result;     -- Negative MONEY
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+SELECT ABS(CAST(0 AS MONEY)) AS result;           -- Zero MONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT ABS(CAST(922337203685477.5807 AS MONEY)) AS result;  -- Maximum MONEY value
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+SELECT ABS(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT ABS(CAST(NULL AS MONEY)) AS result;        -- NULL MONEY value
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+SELECT ABS(CAST(-0.0001 AS MONEY)) AS result;     -- Small negative MONEY value
+GO
+~~START~~
+money
+0.0001
+~~END~~
+
+SELECT ABS(CAST(-0.00 AS MONEY)) AS result;       -- Negative zero MONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- SMALLMONEY tests
+SELECT ABS(CAST(123.45 AS SMALLMONEY)) AS result;      -- Positive SMALLMONEY
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+SELECT ABS(CAST(-123.45 AS SMALLMONEY)) AS result;     -- Negative SMALLMONEY
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+SELECT ABS(CAST(0 AS SMALLMONEY)) AS result;           -- Zero SMALLMONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT ABS(CAST(214748.3647 AS SMALLMONEY)) AS result; -- Maximum SMALLMONEY value
+GO
+~~START~~
+money
+214748.3647
+~~END~~
+
+SELECT ABS(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+~~START~~
+money
+214748.3648
+~~END~~
+
+SELECT ABS(CAST(NULL AS SMALLMONEY)) AS result;        -- NULL SMALLMONEY value
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+SELECT ABS(CAST(-0.0001 AS SMALLMONEY)) AS result;     -- Small negative SMALLMONEY value
+GO
+~~START~~
+money
+0.0001
+~~END~~
+
+SELECT ABS(CAST(-0.00 AS SMALLMONEY)) AS result;       -- Negative zero SMALLMONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- CEILING tests for MONEY
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(123.45 AS MONEY)) AS result;  -- Positive MONEY
+GO
+~~START~~
+float
+124.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-123.45 AS MONEY)) AS result; -- Negative MONEY
+GO
+~~START~~
+float
+-123.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(0 AS MONEY)) AS result;       -- Zero MONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(123.00 AS MONEY)) AS result;  -- Integer value MONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(NULL AS MONEY)) AS result;    -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(999.999 AS MONEY)) AS result; -- Value close to next integer
+GO
+~~START~~
+float
+1000.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-999.001 AS MONEY)) AS result; -- Negative value close to integer
+GO
+~~START~~
+float
+-999.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Doesnt value Out of Bounds
+SELECT CEILING(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+9.22337203685478E14
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+float
+-9.22337203685477E14
+~~END~~
+
+-- TODO: File JIRA, Ceiling with Money Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(0.0001 AS MONEY)) AS result;  -- Small positive value
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+-- CEILING tests for SMALLMONEY
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(123.45 AS SMALLMONEY)) AS result;  -- Positive SMALLMONEY
+GO
+~~START~~
+float
+124.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-123.45 AS SMALLMONEY)) AS result; -- Negative SMALLMONEY
+GO
+~~START~~
+float
+-123.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(0 AS SMALLMONEY)) AS result;       -- Zero SMALLMONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(123.00 AS SMALLMONEY)) AS result;  -- Integer value SMALLMONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(NULL AS SMALLMONEY)) AS result;    -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(999.999 AS SMALLMONEY)) AS result; -- Value close to next integer
+GO
+~~START~~
+float
+1000.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-999.001 AS SMALLMONEY)) AS result; -- Negative value close to integer
+GO
+~~START~~
+float
+-999.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(214748.3647 AS SMALLMONEY)) AS result; -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+214749.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+~~START~~
+float
+-214748.0
+~~END~~
+
+-- TODO: File JIRA, Ceiling with SmallMoney Precision Difference + Return Datatype Diff
+SELECT CEILING(CAST(0.0001 AS SMALLMONEY)) AS result;  -- Small positive value
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+-- FLOOR tests for MONEY
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(123.45 AS MONEY)) AS result;    -- Positive MONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(-123.45 AS MONEY)) AS result;   -- Negative MONEY
+GO
+~~START~~
+float
+-124.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(0 AS MONEY)) AS result;         -- Zero MONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(123.00 AS MONEY)) AS result;    -- Integer value MONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(NULL AS MONEY)) AS result;      -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(999.999 AS MONEY)) AS result;   -- Value close to integer
+GO
+~~START~~
+float
+999.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(-999.001 AS MONEY)) AS result;  -- Negative value close to next integer
+GO
+~~START~~
+float
+-1000.0
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+9.22337203685477E14
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Doesnt consider Out of Bounds
+SELECT FLOOR(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+float
+-9.22337203685478E14
+~~END~~
+
+-- TODO: File JIRA, Floor with Money Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(0.0001 AS MONEY)) AS result;    -- Small positive value
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+-- FLOOR tests for SMALLMONEY
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(123.45 AS SMALLMONEY)) AS result;    -- Positive SMALLMONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(-123.45 AS SMALLMONEY)) AS result;   -- Negative SMALLMONEY
+GO
+~~START~~
+float
+-124.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(0 AS SMALLMONEY)) AS result;         -- Zero SMALLMONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(123.00 AS SMALLMONEY)) AS result;    -- Integer value SMALLMONEY
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(NULL AS SMALLMONEY)) AS result;      -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(999.999 AS SMALLMONEY)) AS result;   -- Value close to integer
+GO
+~~START~~
+float
+999.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(-999.001 AS SMALLMONEY)) AS result;  -- Negative value close to next integer
+GO
+~~START~~
+float
+-1000.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(214748.3647 AS SMALLMONEY)) AS result; -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+214748.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+~~START~~
+float
+-214749.0
+~~END~~
+
+-- TODO: File JIRA, Floor with SmallMoney Precision Difference + Return Datatype Diff
+SELECT FLOOR(CAST(0.0001 AS SMALLMONEY)) AS result;    -- Small positive value
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+
+-- ROUND tests for MONEY
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 0) AS result;     -- MONEY 0 decimals
+GO
+~~START~~
+numeric
+123.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.45 AS MONEY), 0) AS result;    -- Negative MONEY 0 decimals
+GO
+~~START~~
+numeric
+-123.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 1) AS result;     -- MONEY 1 decimal
+GO
+~~START~~
+numeric
+123.50000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.45 AS MONEY), 1) AS result;    -- Negative MONEY 1 decimal
+GO
+~~START~~
+numeric
+-123.50000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 2) AS result;     -- MONEY 2 decimals
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 3) AS result;     -- MONEY 3 decimals
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), -1) AS result;    -- MONEY negative digits (round to tens)
+GO
+~~START~~
+numeric
+120.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), -2) AS result;    -- MONEY negative digits (round to hundreds)
+GO
+~~START~~
+numeric
+100.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(NULL AS MONEY), 1) AS result;       -- NULL MONEY value
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.456 AS MONEY), 2) AS result;    -- Round up
+GO
+~~START~~
+numeric
+123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.454 AS MONEY), 2) AS result;    -- Round down
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.455 AS MONEY), 2) AS result;    -- Round half (banker's rounding)
+GO
+~~START~~
+numeric
+123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.456 AS MONEY), 2) AS result;   -- Negative round up
+GO
+~~START~~
+numeric
+-123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.454 AS MONEY), 2) AS result;   -- Negative round down
+GO
+~~START~~
+numeric
+-123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.455 AS MONEY), 2) AS result;   -- Negative round half
+GO
+~~START~~
+numeric
+-123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 2, 0) AS result;  -- Explicit round (default)
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS MONEY), 2, 1) AS result;  -- Explicit truncate
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with Money Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(555.55 AS MONEY), -2, 1) AS result; -- Truncate to hundreds
+GO
+~~START~~
+numeric
+500.00000000
+~~END~~
+
+
+-- ROUND tests for SMALLMONEY
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 0) AS result;     -- SMALLMONEY 0 decimals
+GO
+~~START~~
+numeric
+123.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.45 AS SMALLMONEY), 0) AS result;    -- Negative SMALLMONEY 0 decimals
+GO
+~~START~~
+numeric
+-123.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 1) AS result;     -- SMALLMONEY 1 decimal
+GO
+~~START~~
+numeric
+123.50000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.45 AS SMALLMONEY), 1) AS result;    -- Negative SMALLMONEY 1 decimal
+GO
+~~START~~
+numeric
+-123.50000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 2) AS result;     -- SMALLMONEY 2 decimals
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 3) AS result;     -- SMALLMONEY 3 decimals
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), -1) AS result;    -- SMALLMONEY negative digits (round to tens)
+GO
+~~START~~
+numeric
+120.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), -2) AS result;    -- SMALLMONEY negative digits (round to hundreds)
+GO
+~~START~~
+numeric
+100.00000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(NULL AS SMALLMONEY), 1) AS result;       -- NULL SMALLMONEY value
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.456 AS SMALLMONEY), 2) AS result;    -- Round up
+GO
+~~START~~
+numeric
+123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.454 AS SMALLMONEY), 2) AS result;    -- Round down
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.455 AS SMALLMONEY), 2) AS result;    -- Round half (banker's rounding)
+GO
+~~START~~
+numeric
+123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.456 AS SMALLMONEY), 2) AS result;   -- Negative round up
+GO
+~~START~~
+numeric
+-123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.454 AS SMALLMONEY), 2) AS result;   -- Negative round down
+GO
+~~START~~
+numeric
+-123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(-123.455 AS SMALLMONEY), 2) AS result;   -- Negative round half
+GO
+~~START~~
+numeric
+-123.46000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 2, 0) AS result;  -- Explicit round (default)
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(123.45 AS SMALLMONEY), 2, 1) AS result;  -- Explicit truncate
+GO
+~~START~~
+numeric
+123.45000000
+~~END~~
+
+-- TODO: File JIRA, Round with SmallMoney Precision Difference + Return Datatype Diff
+SELECT ROUND(CAST(555.55 AS SMALLMONEY), -2, 1) AS result; -- Truncate to hundreds
+GO
+~~START~~
+numeric
+500.00000000
+~~END~~
+
+
+-- SIGN tests for MONEY
+SELECT SIGN(CAST(123.45 AS MONEY)) AS result;     -- Positive MONEY
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-123.45 AS MONEY)) AS result;    -- Negative MONEY
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+SELECT SIGN(CAST(0 AS MONEY)) AS result;          -- Zero MONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+-- TODO: File JIRA, Sign with money output difference
+SELECT SIGN(CAST(NULL AS MONEY)) AS result;       -- NULL MONEY value
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+-- TODO: File JIRA, Sign with money output difference
+SELECT SIGN(CAST(922337203685477.5807 AS MONEY)) AS result;  -- Maximum MONEY value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+SELECT SIGN(CAST(0.0001 AS MONEY)) AS result;     -- Small positive value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-0.0001 AS MONEY)) AS result;    -- Small negative value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+-- SIGN tests for SMALLMONEY
+SELECT SIGN(CAST(123.45 AS SMALLMONEY)) AS result;     -- Positive SMALLMONEY
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-123.45 AS SMALLMONEY)) AS result;    -- Negative SMALLMONEY
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+SELECT SIGN(CAST(0 AS SMALLMONEY)) AS result;          -- Zero SMALLMONEY
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT SIGN(CAST(NULL AS SMALLMONEY)) AS result;       -- NULL SMALLMONEY value
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+SELECT SIGN(CAST(214748.3647 AS SMALLMONEY)) AS result;  -- Maximum SMALLMONEY value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-214748.3648 AS SMALLMONEY)) AS result; -- Minimum SMALLMONEY value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+SELECT SIGN(CAST(0.0001 AS SMALLMONEY)) AS result;     -- Small positive value
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+SELECT SIGN(CAST(-0.0001 AS SMALLMONEY)) AS result;    -- Small negative value
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+-- POWER tests for MONEY
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS MONEY), 2) AS result;          -- Positive MONEY, Integer Power
+GO
+~~START~~
+float
+152.2756
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS MONEY), 0.5) AS result;        -- Positive MONEY, Decimal Power
+GO
+~~START~~
+numeric
+3.51283361
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS MONEY), 2) AS result;         -- Negative MONEY, Even Integer Power
+GO
+~~START~~
+float
+152.2756
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS MONEY), 3) AS result;         -- Negative MONEY, Odd Integer Power
+GO
+~~START~~
+float
+-1879.080904
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS MONEY), 2) AS result;              -- Zero MONEY, Positive Power
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS MONEY), 0) AS result;          -- MONEY, Zero Power
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS MONEY), -2) AS result;         -- MONEY, Negative Power
+GO
+~~START~~
+float
+0.006567040287478756
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(NULL AS MONEY), 2) AS result;           -- NULL MONEY base
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS MONEY), NULL) AS result;       -- NULL exponent
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS MONEY), 0) AS result;              -- Zero raised to zero power
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS MONEY), -1) AS result;             -- Zero raised to negative power
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+-- TODO: File JIRA, Power with Money Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS MONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+-- POWER tests for SMALLMONEY
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 2) AS result;          -- Positive SMALLMONEY, Integer Power
+GO
+~~START~~
+float
+152.2756
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0.5) AS result;        -- Positive SMALLMONEY, Decimal Power
+GO
+~~START~~
+numeric
+3.51283361
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 2) AS result;         -- Negative SMALLMONEY, Even Integer Power
+GO
+~~START~~
+float
+152.2756
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 3) AS result;         -- Negative SMALLMONEY, Odd Integer Power
+GO
+~~START~~
+float
+-1879.080904
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS SMALLMONEY), 2) AS result;              -- Zero SMALLMONEY, Positive Power
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS SMALLMONEY), 0) AS result;          -- SMALLMONEY, Zero Power
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS SMALLMONEY), -2) AS result;         -- SMALLMONEY, Negative Power
+GO
+~~START~~
+float
+0.006567040287478756
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(NULL AS SMALLMONEY), 2) AS result;           -- NULL SMALLMONEY base
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(12.34 AS SMALLMONEY), NULL) AS result;       -- NULL exponent
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS SMALLMONEY), 0) AS result;              -- Zero raised to zero power
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(0 AS SMALLMONEY), -1) AS result;             -- Zero raised to negative power
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+-- TODO: File JIRA, Power with SmallMoney Precision Difference + Return Datatype Diff
+SELECT POWER(CAST(-12.34 AS SMALLMONEY), 0.5) AS result;       -- Negative base, fractional power
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+-- SQRT tests for MONEY
+SELECT SQRT(CAST(144.00 AS MONEY)) AS result;                -- Positive MONEY
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0 AS MONEY)) AS result;                     -- Zero MONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS MONEY)) AS result;                -- Decimal MONEY
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS MONEY)) AS result;              -- Negative MONEY (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS MONEY)) AS result;                 -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(2.00 AS MONEY)) AS result;                 -- Irrational result
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+SELECT SQRT(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+3.0370004999760497E7
+~~END~~
+
+SELECT SQRT(CAST(0.0001 AS MONEY)) AS result;               -- Small positive value
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+
+-- SQRT tests for SMALLMONEY
+SELECT SQRT(CAST(144.00 AS SMALLMONEY)) AS result;          -- Positive SMALLMONEY
+GO
+~~START~~
+float
+12.0
+~~END~~
+
+SELECT SQRT(CAST(0 AS SMALLMONEY)) AS result;               -- Zero SMALLMONEY
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SQRT(CAST(12.25 AS SMALLMONEY)) AS result;          -- Decimal SMALLMONEY
+GO
+~~START~~
+float
+3.5
+~~END~~
+
+SELECT SQRT(CAST(-144.00 AS SMALLMONEY)) AS result;        -- Negative SMALLMONEY (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take square root of a negative number)~~
+
+SELECT SQRT(CAST(NULL AS SMALLMONEY)) AS result;           -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SQRT(CAST(2.00 AS SMALLMONEY)) AS result;           -- Irrational result
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+SELECT SQRT(CAST(214748.3647 AS SMALLMONEY)) AS result;    -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+463.4095000105199
+~~END~~
+
+SELECT SQRT(CAST(0.0001 AS SMALLMONEY)) AS result;         -- Small positive value
+GO
+~~START~~
+float
+0.01
+~~END~~
+
+
+-- LOG tests for MONEY
+SELECT LOG(CAST(100.00 AS MONEY)) AS result;              -- Positive MONEY
+GO
+~~START~~
+float
+4.605170185988092
+~~END~~
+
+SELECT LOG(CAST(0.5 AS MONEY)) AS result;                -- MONEY between 0 and 1
+GO
+~~START~~
+float
+-0.6931471805599453
+~~END~~
+
+SELECT LOG(CAST(0 AS MONEY)) AS result;                  -- Zero MONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot take logarithm of zero)~~
+
+SELECT LOG(CAST(-100.00 AS MONEY)) AS result;            -- Negative MONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+SELECT LOG(CAST(1.00 AS MONEY)) AS result;               -- LOG of 1 (should be 0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT LOG(CAST(2.718281828459045 AS MONEY)) AS result;  -- LOG of e (should be 1)
+GO
+~~START~~
+float
+1.0000066849139877
+~~END~~
+
+SELECT LOG(CAST(NULL AS MONEY)) AS result;               -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT LOG(CAST(0.0001 AS MONEY)) AS result;             -- Very small positive number
+GO
+~~START~~
+float
+-9.210340371976182
+~~END~~
+
+SELECT LOG(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+34.45793200330037
+~~END~~
+
+
+-- LOG tests for SMALLMONEY
+SELECT LOG(CAST(100.00 AS SMALLMONEY)) AS result;              -- Positive SMALLMONEY
+GO
+~~START~~
+float
+4.605170185988092
+~~END~~
+
+SELECT LOG(CAST(0.5 AS SMALLMONEY)) AS result;                -- SMALLMONEY between 0 and 1
+GO
+~~START~~
+float
+-0.6931471805599453
+~~END~~
+
+SELECT LOG(CAST(0 AS SMALLMONEY)) AS result;                  -- Zero SMALLMONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot take logarithm of zero)~~
+
+SELECT LOG(CAST(-100.00 AS SMALLMONEY)) AS result;            -- Negative SMALLMONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+SELECT LOG(CAST(1.00 AS SMALLMONEY)) AS result;               -- LOG of 1 (should be 0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT LOG(CAST(2.718281828459045 AS SMALLMONEY)) AS result;  -- LOG of e (should be 1)
+GO
+~~START~~
+float
+1.0000066849139877
+~~END~~
+
+SELECT LOG(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT LOG(CAST(0.0001 AS SMALLMONEY)) AS result;             -- Very small positive number
+GO
+~~START~~
+float
+-9.210340371976182
+~~END~~
+
+SELECT LOG(CAST(214748.3647 AS SMALLMONEY)) AS result;        -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+12.27722222491646
+~~END~~
+
+
+-- LOG10 tests for MONEY
+SELECT LOG10(CAST(100.00 AS MONEY)) AS result;               -- Positive MONEY
+GO
+~~START~~
+float
+2.0
+~~END~~
+
+SELECT LOG10(CAST(0.5 AS MONEY)) AS result;                 -- MONEY between 0 and 1
+GO
+~~START~~
+float
+-0.3010299956639812
+~~END~~
+
+SELECT LOG10(CAST(0 AS MONEY)) AS result;                   -- Zero MONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot take logarithm of zero)~~
+
+SELECT LOG10(CAST(-100.00 AS MONEY)) AS result;             -- Negative MONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+SELECT LOG10(CAST(1.00 AS MONEY)) AS result;                -- LOG10 of 1 (should be 0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT LOG10(CAST(10.00 AS MONEY)) AS result;               -- LOG10 of 10 (should be 1)
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT LOG10(CAST(NULL AS MONEY)) AS result;                -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT LOG10(CAST(0.0001 AS MONEY)) AS result;              -- Very small positive number
+GO
+~~START~~
+float
+-4.0
+~~END~~
+
+SELECT LOG10(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+14.964889726830815
+~~END~~
+
+
+-- LOG10 tests for SMALLMONEY
+SELECT LOG10(CAST(100.00 AS SMALLMONEY)) AS result;         -- Positive SMALLMONEY
+GO
+~~START~~
+float
+2.0
+~~END~~
+
+SELECT LOG10(CAST(0.5 AS SMALLMONEY)) AS result;           -- SMALLMONEY between 0 and 1
+GO
+~~START~~
+float
+-0.3010299956639812
+~~END~~
+
+SELECT LOG10(CAST(0 AS SMALLMONEY)) AS result;             -- Zero SMALLMONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot take logarithm of zero)~~
+
+SELECT LOG10(CAST(-100.00 AS SMALLMONEY)) AS result;       -- Negative SMALLMONEY (should return error or NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: cannot take logarithm of a negative number)~~
+
+SELECT LOG10(CAST(1.00 AS SMALLMONEY)) AS result;          -- LOG10 of 1 (should be 0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT LOG10(CAST(10.00 AS SMALLMONEY)) AS result;         -- LOG10 of 10 (should be 1)
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT LOG10(CAST(NULL AS SMALLMONEY)) AS result;          -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT LOG10(CAST(0.0001 AS SMALLMONEY)) AS result;        -- Very small positive number
+GO
+~~START~~
+float
+-4.0
+~~END~~
+
+SELECT LOG10(CAST(214748.3647 AS SMALLMONEY)) AS result;   -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+5.331929865381183
+~~END~~
+
+
+-- EXP tests for MONEY
+SELECT EXP(CAST(1.00 AS MONEY)) AS result;                   -- Positive MONEY
+GO
+~~START~~
+float
+2.718281828459045
+~~END~~
+
+SELECT EXP(CAST(-1.00 AS MONEY)) AS result;                  -- Negative MONEY
+GO
+~~START~~
+float
+0.36787944117144233
+~~END~~
+
+SELECT EXP(CAST(0 AS MONEY)) AS result;                      -- Zero MONEY
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT TRY_CAST(EXP(CAST(1000.00 AS MONEY)) AS FLOAT) AS result;  -- Large value causing overflow
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
+SELECT EXP(CAST(NULL AS MONEY)) AS result;                   -- NULL MONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT EXP(CAST(0.5 AS MONEY)) AS result;                    -- Fractional value
+GO
+~~START~~
+float
+1.6487212707001282
+~~END~~
+
+SELECT EXP(CAST(-0.5 AS MONEY)) AS result;                   -- Negative fractional value
+GO
+~~START~~
+float
+0.6065306597126334
+~~END~~
+
+SELECT EXP(CAST(10.00 AS MONEY)) AS result;                  -- Larger positive value
+GO
+~~START~~
+float
+22026.465794806718
+~~END~~
+
+SELECT EXP(CAST(-10.00 AS MONEY)) AS result;                 -- Larger negative value
+GO
+~~START~~
+float
+4.5399929762484854E-5
+~~END~~
+
+
+-- EXP tests for SMALLMONEY
+SELECT EXP(CAST(1.00 AS SMALLMONEY)) AS result;             -- Positive SMALLMONEY
+GO
+~~START~~
+float
+2.718281828459045
+~~END~~
+
+SELECT EXP(CAST(-1.00 AS SMALLMONEY)) AS result;            -- Negative SMALLMONEY
+GO
+~~START~~
+float
+0.36787944117144233
+~~END~~
+
+SELECT EXP(CAST(0 AS SMALLMONEY)) AS result;                -- Zero SMALLMONEY
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT TRY_CAST(EXP(CAST(1000.00 AS SMALLMONEY)) AS FLOAT) AS result;  -- Large value causing overflow
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
+SELECT EXP(CAST(NULL AS SMALLMONEY)) AS result;             -- NULL SMALLMONEY value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT EXP(CAST(0.5 AS SMALLMONEY)) AS result;              -- Fractional value
+GO
+~~START~~
+float
+1.6487212707001282
+~~END~~
+
+SELECT EXP(CAST(-0.5 AS SMALLMONEY)) AS result;             -- Negative fractional value
+GO
+~~START~~
+float
+0.6065306597126334
+~~END~~
+
+SELECT EXP(CAST(10.00 AS SMALLMONEY)) AS result;            -- Larger positive value
+GO
+~~START~~
+float
+22026.465794806718
+~~END~~
+
+SELECT EXP(CAST(-10.00 AS SMALLMONEY)) AS result;           -- Larger negative value
+GO
+~~START~~
+float
+4.5399929762484854E-5
+~~END~~
+
+
+-- SIN tests for MONEY
+SELECT SIN(CAST(1.0 AS MONEY)) AS result;                 -- MONEY
+GO
+~~START~~
+float
+0.8414709848078965
+~~END~~
+
+SELECT SIN(CAST(0 AS MONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SIN(CAST(PI() AS MONEY)) AS result;                -- PI
+GO
+~~START~~
+float
+-7.346410206643587E-6
+~~END~~
+
+SELECT SIN(CAST(PI()/2 AS MONEY)) AS result;              -- PI/2 (90 degrees)
+GO
+~~START~~
+float
+0.9999999999932537
+~~END~~
+
+SELECT SIN(CAST(PI()/6 AS MONEY)) AS result;              -- PI/6 (30 degrees)
+GO
+~~START~~
+float
+0.5000010603626028
+~~END~~
+
+SELECT SIN(CAST(NULL AS MONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SIN(CAST(-PI()/2 AS MONEY)) AS result;             -- -PI/2 (-90 degrees)
+GO
+~~START~~
+float
+-0.9999999999932537
+~~END~~
+
+SELECT SIN(CAST(2*PI() AS MONEY)) AS result;              -- 2*PI (360 degrees)
+GO
+~~START~~
+float
+1.469282041289069E-5
+~~END~~
+
+SELECT SIN(CAST(100.00 AS MONEY)) AS result;              -- Large value
+GO
+~~START~~
+float
+-0.5063656411097588
+~~END~~
+
+
+-- SIN tests for SMALLMONEY
+SELECT SIN(CAST(1.0 AS SMALLMONEY)) AS result;                 -- SMALLMONEY
+GO
+~~START~~
+float
+0.8414709848078965
+~~END~~
+
+SELECT SIN(CAST(0 AS SMALLMONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT SIN(CAST(PI() AS SMALLMONEY)) AS result;                -- PI
+GO
+~~START~~
+float
+-7.346410206643587E-6
+~~END~~
+
+SELECT SIN(CAST(PI()/2 AS SMALLMONEY)) AS result;              -- PI/2 (90 degrees)
+GO
+~~START~~
+float
+0.9999999999932537
+~~END~~
+
+SELECT SIN(CAST(PI()/6 AS SMALLMONEY)) AS result;              -- PI/6 (30 degrees)
+GO
+~~START~~
+float
+0.5000010603626028
+~~END~~
+
+SELECT SIN(CAST(NULL AS SMALLMONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT SIN(CAST(-PI()/2 AS SMALLMONEY)) AS result;             -- -PI/2 (-90 degrees)
+GO
+~~START~~
+float
+-0.9999999999932537
+~~END~~
+
+SELECT SIN(CAST(2*PI() AS SMALLMONEY)) AS result;              -- 2*PI (360 degrees)
+GO
+~~START~~
+float
+1.469282041289069E-5
+~~END~~
+
+SELECT SIN(CAST(100.00 AS SMALLMONEY)) AS result;              -- Large value
+GO
+~~START~~
+float
+-0.5063656411097588
+~~END~~
+
+
+-- COS tests for MONEY
+-- TODO: File JIRA, Cos with Money Output Diff
+SELECT COS(CAST(1.0 AS MONEY)) AS result;                 -- MONEY
+GO
+~~START~~
+float
+0.5403023058681398
+~~END~~
+
+SELECT COS(CAST(0 AS MONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT COS(CAST(PI() AS MONEY)) AS result;                -- PI
+GO
+~~START~~
+float
+-0.9999999999730151
+~~END~~
+
+SELECT COS(CAST(PI()/2 AS MONEY)) AS result;              -- PI/2 (90 degrees)
+GO
+~~START~~
+float
+-3.673205103346574E-6
+~~END~~
+
+SELECT COS(CAST(PI()/3 AS MONEY)) AS result;              -- PI/3 (60 degrees)
+GO
+~~START~~
+float
+0.4999978792725457
+~~END~~
+
+SELECT COS(CAST(NULL AS MONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT COS(CAST(-PI() AS MONEY)) AS result;               -- -PI (-180 degrees)
+GO
+~~START~~
+float
+-0.9999999999730151
+~~END~~
+
+SELECT COS(CAST(2*PI() AS MONEY)) AS result;              -- 2*PI (360 degrees)
+GO
+~~START~~
+float
+0.9999999998920606
+~~END~~
+
+SELECT COS(CAST(100.00 AS MONEY)) AS result;              -- Large value
+GO
+~~START~~
+float
+0.8623188722876839
+~~END~~
+
+
+-- COS tests for SMALLMONEY
+-- TODO: File JIRA, Cos with SmallMoney Output Diff
+SELECT COS(CAST(1.0 AS SMALLMONEY)) AS result;                 -- SMALLMONEY
+GO
+~~START~~
+float
+0.5403023058681398
+~~END~~
+
+SELECT COS(CAST(0 AS SMALLMONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+SELECT COS(CAST(PI() AS SMALLMONEY)) AS result;                -- PI
+GO
+~~START~~
+float
+-0.9999999999730151
+~~END~~
+
+SELECT COS(CAST(PI()/2 AS SMALLMONEY)) AS result;              -- PI/2 (90 degrees)
+GO
+~~START~~
+float
+-3.673205103346574E-6
+~~END~~
+
+SELECT COS(CAST(PI()/3 AS SMALLMONEY)) AS result;              -- PI/3 (60 degrees)
+GO
+~~START~~
+float
+0.4999978792725457
+~~END~~
+
+SELECT COS(CAST(NULL AS SMALLMONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT COS(CAST(-PI() AS SMALLMONEY)) AS result;               -- -PI (-180 degrees)
+GO
+~~START~~
+float
+-0.9999999999730151
+~~END~~
+
+SELECT COS(CAST(2*PI() AS SMALLMONEY)) AS result;              -- 2*PI (360 degrees)
+GO
+~~START~~
+float
+0.9999999998920606
+~~END~~
+
+SELECT COS(CAST(100.00 AS SMALLMONEY)) AS result;              -- Large value
+GO
+~~START~~
+float
+0.8623188722876839
+~~END~~
+
+
+-- TAN tests for MONEY
+SELECT TAN(CAST(1.0 AS MONEY)) AS result;                 -- MONEY
+GO
+~~START~~
+float
+1.5574077246549023
+~~END~~
+
+SELECT TAN(CAST(0 AS MONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TAN(CAST(PI()/4 AS MONEY)) AS result;              -- PI/4 (45 degrees)
+GO
+~~START~~
+float
+1.0000036732118496
+~~END~~
+
+SELECT TAN(CAST(PI() AS MONEY)) AS result;                -- PI (180 degrees)
+GO
+~~START~~
+float
+7.346410206841829E-6
+~~END~~
+
+SELECT TAN(CAST(NULL AS MONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT TAN(CAST(-PI()/4 AS MONEY)) AS result;             -- -PI/4 (-45 degrees)
+GO
+~~START~~
+float
+-1.0000036732118496
+~~END~~
+
+SELECT TAN(CAST(PI()/2 - 0.000001 AS MONEY)) AS result;   -- Near PI/2 (near 90 degrees)
+GO
+~~START~~
+float
+-272241.80840927624
+~~END~~
+
+SELECT TAN(CAST(3*PI()/2 - 0.000001 AS MONEY)) AS result; -- Near 3*PI/2 (near 270 degrees)
+GO
+~~START~~
+float
+-90747.26946832224
+~~END~~
+
+
+-- TAN tests for SMALLMONEY
+SELECT TAN(CAST(1.0 AS SMALLMONEY)) AS result;                 -- SMALLMONEY
+GO
+~~START~~
+float
+1.5574077246549023
+~~END~~
+
+SELECT TAN(CAST(0 AS SMALLMONEY)) AS result;                   -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT TAN(CAST(PI()/4 AS SMALLMONEY)) AS result;              -- PI/4 (45 degrees)
+GO
+~~START~~
+float
+1.0000036732118496
+~~END~~
+
+SELECT TAN(CAST(PI() AS SMALLMONEY)) AS result;                -- PI (180 degrees)
+GO
+~~START~~
+float
+7.346410206841829E-6
+~~END~~
+
+SELECT TAN(CAST(NULL AS SMALLMONEY)) AS result;                -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT TAN(CAST(-PI()/4 AS SMALLMONEY)) AS result;             -- -PI/4 (-45 degrees)
+GO
+~~START~~
+float
+-1.0000036732118496
+~~END~~
+
+SELECT TAN(CAST(PI()/2 - 0.000001 AS SMALLMONEY)) AS result;   -- Near PI/2 (near 90 degrees)
+GO
+~~START~~
+float
+-272241.80840927624
+~~END~~
+
+SELECT TAN(CAST(3*PI()/2 - 0.000001 AS SMALLMONEY)) AS result; -- Near 3*PI/2 (near 270 degrees)
+GO
+~~START~~
+float
+-90747.26946832224
+~~END~~
+
+
+-- ASIN tests for MONEY
+SELECT ASIN(CAST(0.5 AS MONEY)) AS result;                -- MONEY
+GO
+~~START~~
+float
+0.5235987755982989
+~~END~~
+
+SELECT ASIN(CAST(0 AS MONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ASIN(CAST(1 AS MONEY)) AS result;                  -- One
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+SELECT ASIN(CAST(-1 AS MONEY)) AS result;                 -- Negative one
+GO
+~~START~~
+float
+-1.5707963267948966
+~~END~~
+
+SELECT ASIN(CAST(2 AS MONEY)) AS result;                  -- Out of range (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ASIN(CAST(-2 AS MONEY)) AS result;                 -- Out of range negative (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ASIN(CAST(NULL AS MONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ASIN(CAST(0.7071067811865475 AS MONEY)) AS result; -- sin(PI/4)
+GO
+~~START~~
+float
+0.7853885733974476
+~~END~~
+
+SELECT ASIN(CAST(0.8660254037844386 AS MONEY)) AS result; -- sin(PI/3)
+GO
+~~START~~
+float
+1.0471467458630677
+~~END~~
+
+
+-- ASIN tests for SMALLMONEY
+SELECT ASIN(CAST(0.5 AS SMALLMONEY)) AS result;                -- SMALLMONEY
+GO
+~~START~~
+float
+0.5235987755982989
+~~END~~
+
+SELECT ASIN(CAST(0 AS SMALLMONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ASIN(CAST(1 AS SMALLMONEY)) AS result;                  -- One
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+SELECT ASIN(CAST(-1 AS SMALLMONEY)) AS result;                 -- Negative one
+GO
+~~START~~
+float
+-1.5707963267948966
+~~END~~
+
+SELECT ASIN(CAST(2 AS SMALLMONEY)) AS result;                  -- Out of range (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ASIN(CAST(-2 AS SMALLMONEY)) AS result;                 -- Out of range negative (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ASIN(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ASIN(CAST(0.7071067811865475 AS SMALLMONEY)) AS result; -- sin(PI/4)
+GO
+~~START~~
+float
+0.7853885733974476
+~~END~~
+
+SELECT ASIN(CAST(0.8660254037844386 AS SMALLMONEY)) AS result; -- sin(PI/3)
+GO
+~~START~~
+float
+1.0471467458630677
+~~END~~
+
+
+-- ACOS tests for MONEY
+SELECT ACOS(CAST(0.5 AS MONEY)) AS result;                -- MONEY
+GO
+~~START~~
+float
+1.0471975511965979
+~~END~~
+
+SELECT ACOS(CAST(0 AS MONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+SELECT ACOS(CAST(1 AS MONEY)) AS result;                  -- One
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ACOS(CAST(-1 AS MONEY)) AS result;                 -- Negative one
+GO
+~~START~~
+float
+3.141592653589793
+~~END~~
+
+SELECT ACOS(CAST(2 AS MONEY)) AS result;                  -- Out of range (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ACOS(CAST(-2 AS MONEY)) AS result;                 -- Out of range negative (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ACOS(CAST(NULL AS MONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ACOS(CAST(0.7071067811865475 AS MONEY)) AS result; -- cos(PI/4)
+GO
+~~START~~
+float
+0.785407753397449
+~~END~~
+
+SELECT ACOS(CAST(0.5 AS MONEY)) AS result;                -- cos(PI/3)
+GO
+~~START~~
+float
+1.0471975511965979
+~~END~~
+
+
+-- ACOS tests for SMALLMONEY
+SELECT ACOS(CAST(0.5 AS SMALLMONEY)) AS result;                -- SMALLMONEY
+GO
+~~START~~
+float
+1.0471975511965979
+~~END~~
+
+SELECT ACOS(CAST(0 AS SMALLMONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+SELECT ACOS(CAST(1 AS SMALLMONEY)) AS result;                  -- One
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ACOS(CAST(-1 AS SMALLMONEY)) AS result;                 -- Negative one
+GO
+~~START~~
+float
+3.141592653589793
+~~END~~
+
+SELECT ACOS(CAST(2 AS SMALLMONEY)) AS result;                  -- Out of range (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ACOS(CAST(-2 AS SMALLMONEY)) AS result;                 -- Out of range negative (should return NULL)
+GO
+~~START~~
+float
+~~ERROR (Code: 3623)~~
+
+~~ERROR (Message: input is out of range)~~
+
+SELECT ACOS(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ACOS(CAST(0.7071067811865475 AS SMALLMONEY)) AS result; -- cos(PI/4)
+GO
+~~START~~
+float
+0.785407753397449
+~~END~~
+
+SELECT ACOS(CAST(0.5 AS SMALLMONEY)) AS result;                -- cos(PI/3)
+GO
+~~START~~
+float
+1.0471975511965979
+~~END~~
+
+
+-- ATAN tests for MONEY
+SELECT ATAN(CAST(1.0 AS MONEY)) AS result;                -- MONEY
+GO
+~~START~~
+float
+0.7853981633974483
+~~END~~
+
+SELECT ATAN(CAST(0 AS MONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ATAN(CAST(1000000 AS MONEY)) AS result;            -- Large value
+GO
+~~START~~
+float
+1.5707953267948966
+~~END~~
+
+SELECT ATAN(CAST(-1.0 AS MONEY)) AS result;               -- Negative value
+GO
+~~START~~
+float
+-0.7853981633974483
+~~END~~
+
+SELECT ATAN(CAST(NULL AS MONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ATAN(CAST(1.7320508075688772 AS MONEY)) AS result; -- tan(PI/3)
+GO
+~~START~~
+float
+1.047209849042422
+~~END~~
+
+SELECT ATAN(CAST(-1.7320508075688772 AS MONEY)) AS result; -- tan(-PI/3)
+GO
+~~START~~
+float
+-1.047209849042422
+~~END~~
+
+SELECT ATAN(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value (approaches PI/2)
+GO
+~~START~~
+float
+1.5707963267948954
+~~END~~
+
+SELECT ATAN(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value (approaches -PI/2)
+GO
+~~START~~
+float
+-1.5707963267948954
+~~END~~
+
+
+-- ATAN tests for SMALLMONEY
+SELECT ATAN(CAST(1.0 AS SMALLMONEY)) AS result;                -- SMALLMONEY
+GO
+~~START~~
+float
+0.7853981633974483
+~~END~~
+
+SELECT ATAN(CAST(0 AS SMALLMONEY)) AS result;                  -- Zero
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT ATAN(CAST(214748.3647 AS SMALLMONEY)) AS result;        -- Large value
+GO
+~~START~~
+float
+1.5707916701820215
+~~END~~
+
+SELECT ATAN(CAST(-1.0 AS SMALLMONEY)) AS result;               -- Negative value
+GO
+~~START~~
+float
+-0.7853981633974483
+~~END~~
+
+SELECT ATAN(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT ATAN(CAST(1.7320508075688772 AS SMALLMONEY)) AS result; -- tan(PI/3)
+GO
+~~START~~
+float
+1.047209849042422
+~~END~~
+
+SELECT ATAN(CAST(-1.7320508075688772 AS SMALLMONEY)) AS result; -- tan(-PI/3)
+GO
+~~START~~
+float
+-1.047209849042422
+~~END~~
+
+SELECT ATAN(CAST(214748.3647 AS SMALLMONEY)) AS result;         -- Maximum SMALLMONEY value (approaches PI/2)
+GO
+~~START~~
+float
+1.5707916701820215
+~~END~~
+
+SELECT ATAN(CAST(-214748.3648 AS SMALLMONEY)) AS result;        -- Minimum SMALLMONEY value (approaches -PI/2)
+GO
+~~START~~
+float
+-1.5707916701820235
+~~END~~
+
+
+-- DEGREES tests for MONEY
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI() AS MONEY)) AS result;            -- Convert radians to degrees (PI)
+GO
+~~START~~
+float
+180.00042091829943
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI()/2 AS MONEY)) AS result;          -- Convert radians to degrees (PI/2)
+GO
+~~START~~
+float
+90.00021045914971
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI()/4 AS MONEY)) AS result;          -- Convert radians to degrees (PI/4)
+GO
+~~START~~
+float
+45.00010522957486
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(2*PI() AS MONEY)) AS result;          -- Convert radians to degrees (2*PI)
+GO
+~~START~~
+float
+360.00084183659885
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(0 AS MONEY)) AS result;               -- Convert radians to degrees (0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(NULL AS MONEY)) AS result;            -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Degress with Money Precision Diff + Return Datatype
+SELECT DEGREES(CAST(-PI() AS MONEY)) AS result;           -- Negative angle
+GO
+~~START~~
+float
+-180.00042091829943
+~~END~~
+
+
+-- DEGREES tests for SMALLMONEY
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI() AS SMALLMONEY)) AS result;            -- Convert radians to degrees (PI)
+GO
+~~START~~
+float
+180.00042091829943
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI()/2 AS SMALLMONEY)) AS result;          -- Convert radians to degrees (PI/2)
+GO
+~~START~~
+float
+90.00021045914971
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(PI()/4 AS SMALLMONEY)) AS result;          -- Convert radians to degrees (PI/4)
+GO
+~~START~~
+float
+45.00010522957486
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(2*PI() AS SMALLMONEY)) AS result;          -- Convert radians to degrees (2*PI)
+GO
+~~START~~
+float
+360.00084183659885
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(0 AS SMALLMONEY)) AS result;               -- Convert radians to degrees (0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(NULL AS SMALLMONEY)) AS result;            -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Degress with SmallMoney Precision Diff + Return Datatype
+SELECT DEGREES(CAST(-PI() AS SMALLMONEY)) AS result;           -- Negative angle
+GO
+~~START~~
+float
+-180.00042091829943
+~~END~~
+
+
+-- RADIANS tests for MONEY
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(180.00 AS MONEY)) AS result;             -- Convert degrees to radians (180)
+GO
+~~START~~
+float
+3.141592653589793
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(90.00 AS MONEY)) AS result;              -- Convert degrees to radians (90)
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(45.00 AS MONEY)) AS result;              -- Convert degrees to radians (45)
+GO
+~~START~~
+float
+0.7853981633974483
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(360.00 AS MONEY)) AS result;             -- Convert degrees to radians (360)
+GO
+~~START~~
+float
+6.283185307179586
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(0 AS MONEY)) AS result;                  -- Convert degrees to radians (0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(NULL AS MONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(-180.00 AS MONEY)) AS result;            -- Negative angle
+GO
+~~START~~
+float
+-3.141592653589793
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(922337203685477.5807 AS MONEY)) AS result; -- Maximum MONEY value
+GO
+~~START~~
+float
+1.6097821017949162E13
+~~END~~
+
+-- TODO: File JIRA, Radians with Money Precision Diff + Return Datatype
+SELECT RADIANS(CAST(-922337203685477.5808 AS MONEY)) AS result; -- Minimum MONEY value
+GO
+~~START~~
+float
+-1.6097821017949162E13
+~~END~~
+
+
+-- RADIANS tests for SMALLMONEY
+-- TODO: File JIRA, Radians with SmallMoney Precision Diff + Return Datatype
+SELECT RADIANS(CAST(180.00 AS SMALLMONEY)) AS result;             -- Convert degrees to radians (180)
+GO
+~~START~~
+float
+3.141592653589793
+~~END~~
+
+SELECT RADIANS(CAST(90.00 AS SMALLMONEY)) AS result;              -- Convert degrees to radians (90)
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+SELECT RADIANS(CAST(45.00 AS SMALLMONEY)) AS result;              -- Convert degrees to radians (45)
+GO
+~~START~~
+float
+0.7853981633974483
+~~END~~
+
+SELECT RADIANS(CAST(360.00 AS SMALLMONEY)) AS result;             -- Convert degrees to radians (360)
+GO
+~~START~~
+float
+6.283185307179586
+~~END~~
+
+SELECT RADIANS(CAST(0 AS SMALLMONEY)) AS result;                  -- Convert degrees to radians (0)
+GO
+~~START~~
+float
+0.0
+~~END~~
+
+SELECT RADIANS(CAST(NULL AS SMALLMONEY)) AS result;               -- NULL value
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+SELECT RADIANS(CAST(-180.00 AS SMALLMONEY)) AS result;            -- Negative angle
+GO
+~~START~~
+float
+-3.141592653589793
+~~END~~
+
+SELECT RADIANS(CAST(214748.3647 AS SMALLMONEY)) AS result;        -- Maximum SMALLMONEY value
+GO
+~~START~~
+float
+3748.066027288565
+~~END~~
+
+SELECT RADIANS(CAST(-214748.3648 AS SMALLMONEY)) AS result;       -- Minimum SMALLMONEY value
+GO
+~~START~~
+float
+-3748.066029033894
+~~END~~
+
+
+------------------------------------------------------------------------
+---- 5. Comparison Operators
+------------------------------------------------------------------------
+-- Equality (=) operator tests
+-- MONEY = MONEY
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123.45 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) = CAST(922337203685477.5807 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MAX MONEY = MAX MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5808 AS MONEY) = CAST(-922337203685477.5808 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MIN MONEY = MIN MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(0.0000 AS MONEY) = CAST(0.0000 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [ZERO MONEY = ZERO MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-123.45 AS MONEY) = CAST(-123.45 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [NEG MONEY = NEG MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- SMALLMONEY = SMALLMONEY
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) = CAST(123.45 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [SMALLMONEY = SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) = CAST(214748.3647 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MAX SMALLMONEY = MAX SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3648 AS SMALLMONEY) = CAST(-214748.3648 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MIN SMALLMONEY = MIN SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(0.0000 AS SMALLMONEY) = CAST(0.0000 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [ZERO SMALLMONEY = ZERO SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-123.45 AS SMALLMONEY) = CAST(-123.45 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [NEG SMALLMONEY = NEG SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+
+
+-- Cross money-type comparisons
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123.45 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- Money types with other numeric types
+SELECT CASE WHEN CAST(123.45 AS MONEY) = 123.45 THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = Literal];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123.45 AS FLOAT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = FLOAT];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123.45 AS REAL) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = REAL];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123.45 AS NUMERIC(5,2)) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = NUMERIC];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123 AS INT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = INT];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123 AS BIGINT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = BIGINT];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123 AS SMALLINT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = SMALLINT];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(123 AS TINYINT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = TINYINT];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+
+-- Money types with string types
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST('123.45' AS VARCHAR(20)) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = VARCHAR];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST('123.45' AS CHAR(20)) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = CHAR];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST('123.45' AS NVARCHAR(20)) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = NVARCHAR];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST('123.45' AS NCHAR(20)) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = NCHAR];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- Money types with SQL_VARIANT
+SELECT CASE WHEN CAST(123.45 AS MONEY) = CAST(CAST(123.45 AS MONEY) AS SQL_VARIANT) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY = SQL_VARIANT];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) = CAST(CAST(123.45 AS SMALLMONEY) AS SQL_VARIANT) THEN 'Equal' ELSE 'Not Equal' END AS [SMALLMONEY = SQL_VARIANT];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- Inequality (<>) operator tests
+-- MONEY <> MONEY
+SELECT CASE WHEN CAST(123.45 AS MONEY) <> CAST(123.46 AS MONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MONEY <> MONEY];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) <> CAST(922337203685477.5806 AS MONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MAX MONEY <> NEAR MAX];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5808 AS MONEY) <> CAST(-922337203685477.5807 AS MONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MIN MONEY <> NEAR MIN];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+
+-- SMALLMONEY <> SMALLMONEY
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) <> CAST(123.46 AS SMALLMONEY) THEN 'Not Equal' ELSE 'Equal' END AS [SMALLMONEY <> SMALLMONEY];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) <> CAST(214748.3646 AS SMALLMONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MAX SMALLMONEY <> NEAR MAX];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3648 AS SMALLMONEY) <> CAST(-214748.3647 AS SMALLMONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MIN SMALLMONEY <> NEAR MIN];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+
+-- Cross money-type inequalities
+SELECT CASE WHEN CAST(123.45 AS MONEY) <> CAST(123.46 AS SMALLMONEY) THEN 'Not Equal' ELSE 'Equal' END AS [MONEY <> SMALLMONEY];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+
+
+-- Greater than (>) operator tests
+-- MONEY > MONEY
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123.45 AS MONEY) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > MONEY];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) > CAST(922337203685477.5806 AS MONEY) THEN 'Greater' ELSE 'Not Greater' END AS [MAX MONEY > NEAR MAX];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5807 AS MONEY) > CAST(-922337203685477.5808 AS MONEY) THEN 'Greater' ELSE 'Not Greater' END AS [NEAR MIN > MIN MONEY];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+
+-- SMALLMONEY > SMALLMONEY
+SELECT CASE WHEN CAST(123.46 AS SMALLMONEY) > CAST(123.45 AS SMALLMONEY) THEN 'Greater' ELSE 'Not Greater' END AS [SMALLMONEY > SMALLMONEY];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) > CAST(214748.3646 AS SMALLMONEY) THEN 'Greater' ELSE 'Not Greater' END AS [MAX SMALLMONEY > NEAR MAX];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3647 AS SMALLMONEY) > CAST(-214748.3648 AS SMALLMONEY) THEN 'Greater' ELSE 'Not Greater' END AS [NEAR MIN > MIN SMALLMONEY];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+
+-- Cross money-type greater than
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123.45 AS SMALLMONEY) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > SMALLMONEY];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+
+-- Money types greater than other numeric types
+SELECT CASE WHEN CAST(123.46 AS MONEY) > 123.45 THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > Literal];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123.45 AS FLOAT) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > FLOAT];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123.45 AS REAL) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > REAL];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123.45 AS NUMERIC(5,2)) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > NUMERIC];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) > CAST(123 AS INT) THEN 'Greater' ELSE 'Not Greater' END AS [MONEY > INT];
+GO
+~~START~~
+varchar
+Greater
+~~END~~
+
+
+-- Less than (<) operator tests
+SELECT 'Less Than (<) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Less Than (<) Operator Tests
+~~END~~
+
+
+-- MONEY < MONEY
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(123.46 AS MONEY) THEN 'Less' ELSE 'Not Less' END AS [MONEY < MONEY];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5806 AS MONEY) < CAST(922337203685477.5807 AS MONEY) THEN 'Less' ELSE 'Not Less' END AS [NEAR MAX < MAX MONEY];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5808 AS MONEY) < CAST(-922337203685477.5807 AS MONEY) THEN 'Less' ELSE 'Not Less' END AS [MIN MONEY < NEAR MIN];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+
+-- SMALLMONEY < SMALLMONEY
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) < CAST(123.46 AS SMALLMONEY) THEN 'Less' ELSE 'Not Less' END AS [SMALLMONEY < SMALLMONEY];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3646 AS SMALLMONEY) < CAST(214748.3647 AS SMALLMONEY) THEN 'Less' ELSE 'Not Less' END AS [NEAR MAX < MAX SMALLMONEY];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3648 AS SMALLMONEY) < CAST(-214748.3647 AS SMALLMONEY) THEN 'Less' ELSE 'Not Less' END AS [MIN SMALLMONEY < NEAR MIN];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+
+-- Cross money-type less than
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(123.46 AS SMALLMONEY) THEN 'Less' ELSE 'Not Less' END AS [MONEY < SMALLMONEY];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+
+-- Money types less than other numeric types
+SELECT CASE WHEN CAST(123.45 AS MONEY) < 123.46 THEN 'Less' ELSE 'Not Less' END AS [MONEY < Literal];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(123.46 AS FLOAT) THEN 'Less' ELSE 'Not Less' END AS [MONEY < FLOAT];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(123.46 AS REAL) THEN 'Less' ELSE 'Not Less' END AS [MONEY < REAL];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(123.46 AS NUMERIC(5,2)) THEN 'Less' ELSE 'Not Less' END AS [MONEY < NUMERIC];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) < CAST(124 AS INT) THEN 'Less' ELSE 'Not Less' END AS [MONEY < INT];
+GO
+~~START~~
+varchar
+Less
+~~END~~
+
+
+-- Greater than or equal to (>=) operator tests
+-- MONEY >= MONEY
+SELECT CASE WHEN CAST(123.45 AS MONEY) >= CAST(123.45 AS MONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MONEY >= MONEY (Equal)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) >= CAST(123.45 AS MONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MONEY >= MONEY (Greater)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) >= CAST(922337203685477.5807 AS MONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MAX MONEY >= MAX MONEY];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+
+-- SMALLMONEY >= SMALLMONEY
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) >= CAST(123.45 AS SMALLMONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [SMALLMONEY >= SMALLMONEY (Equal)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS SMALLMONEY) >= CAST(123.45 AS SMALLMONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [SMALLMONEY >= SMALLMONEY (Greater)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) >= CAST(214748.3647 AS SMALLMONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MAX SMALLMONEY >= MAX SMALLMONEY];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+
+-- Cross money-type greater than or equal
+SELECT CASE WHEN CAST(123.45 AS MONEY) >= CAST(123.45 AS SMALLMONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MONEY >= SMALLMONEY (Equal)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.46 AS MONEY) >= CAST(123.45 AS SMALLMONEY) THEN 'Greater or Equal' ELSE 'Less' END AS [MONEY >= SMALLMONEY (Greater)];
+GO
+~~START~~
+varchar
+Greater or Equal
+~~END~~
+
+
+-- Less than or equal to (<=) operator tests
+-- MONEY <= MONEY
+SELECT CASE WHEN CAST(123.45 AS MONEY) <= CAST(123.45 AS MONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MONEY <= MONEY (Equal)];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS MONEY) <= CAST(123.46 AS MONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MONEY <= MONEY (Less)];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) <= CAST(922337203685477.5807 AS MONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MAX MONEY <= MAX MONEY];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5808 AS MONEY) <= CAST(-922337203685477.5808 AS MONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MIN MONEY <= MIN MONEY];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+
+-- SMALLMONEY <= SMALLMONEY
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) <= CAST(123.45 AS SMALLMONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [SMALLMONEY <= SMALLMONEY (Equal)];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) <= CAST(123.46 AS SMALLMONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [SMALLMONEY <= SMALLMONEY (Less)];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) <= CAST(214748.3647 AS SMALLMONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MAX SMALLMONEY <= MAX SMALLMONEY];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3648 AS SMALLMONEY) <= CAST(-214748.3648 AS SMALLMONEY) THEN 'Less or Equal' ELSE 'Greater' END AS [MIN SMALLMONEY <= MIN SMALLMONEY];
+GO
+~~START~~
+varchar
+Less or Equal
+~~END~~
+
+
+-- BETWEEN operator tests
+-- MONEY BETWEEN
+SELECT CASE WHEN CAST(123.45 AS MONEY) BETWEEN CAST(123.44 AS MONEY) AND CAST(123.46 AS MONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [MONEY BETWEEN];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+SELECT CASE WHEN CAST(0.00 AS MONEY) BETWEEN CAST(-1.00 AS MONEY) AND CAST(1.00 AS MONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [MONEY BETWEEN (Zero)];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) BETWEEN CAST(922337203685477.5806 AS MONEY) AND CAST(922337203685477.5807 AS MONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [MONEY BETWEEN (Max)];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+
+-- SMALLMONEY BETWEEN
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) BETWEEN CAST(123.44 AS SMALLMONEY) AND CAST(123.46 AS SMALLMONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [SMALLMONEY BETWEEN];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+SELECT CASE WHEN CAST(0.00 AS SMALLMONEY) BETWEEN CAST(-1.00 AS SMALLMONEY) AND CAST(1.00 AS SMALLMONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [SMALLMONEY BETWEEN (Zero)];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) BETWEEN CAST(214748.3646 AS SMALLMONEY) AND CAST(214748.3647 AS SMALLMONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [SMALLMONEY BETWEEN (Max)];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+
+-- Cross type BETWEEN
+SELECT CASE WHEN CAST(123.45 AS MONEY) BETWEEN CAST(123.44 AS SMALLMONEY) AND CAST(123.46 AS SMALLMONEY) 
+            THEN 'In Range' ELSE 'Not In Range' END AS [MONEY BETWEEN SMALLMONEY];
+GO
+~~START~~
+varchar
+In Range
+~~END~~
+
+
+-- IN operator tests
+-- MONEY IN
+SELECT CASE WHEN CAST(123.45 AS MONEY) IN (CAST(123.44 AS MONEY), CAST(123.45 AS MONEY), CAST(123.46 AS MONEY)) 
+            THEN 'In List' ELSE 'Not In List' END AS [MONEY IN];
+GO
+~~START~~
+varchar
+In List
+~~END~~
+
+SELECT CASE WHEN CAST(0.00 AS MONEY) IN (CAST(-1.00 AS MONEY), CAST(0.00 AS MONEY), CAST(1.00 AS MONEY)) 
+            THEN 'In List' ELSE 'Not In List' END AS [MONEY IN (Zero)];
+GO
+~~START~~
+varchar
+In List
+~~END~~
+
+
+-- SMALLMONEY IN
+SELECT CASE WHEN CAST(123.45 AS SMALLMONEY) IN (CAST(123.44 AS SMALLMONEY), CAST(123.45 AS SMALLMONEY), CAST(123.46 AS SMALLMONEY)) 
+            THEN 'In List' ELSE 'Not In List' END AS [SMALLMONEY IN];
+GO
+~~START~~
+varchar
+In List
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) IN (CAST(214748.3646 AS SMALLMONEY), CAST(214748.3647 AS SMALLMONEY)) 
+            THEN 'In List' ELSE 'Not In List' END AS [SMALLMONEY IN (Max)];
+GO
+~~START~~
+varchar
+In List
+~~END~~
+
+
+-- Cross type IN
+SELECT CASE WHEN CAST(123.45 AS MONEY) IN (CAST(123.44 AS SMALLMONEY), CAST(123.45 AS SMALLMONEY), CAST(123.46 AS SMALLMONEY)) 
+            THEN 'In List' ELSE 'Not In List' END AS [MONEY IN SMALLMONEY];
+GO
+~~START~~
+varchar
+In List
+~~END~~
+
+
+-- NULL comparison tests
+-- MONEY NULL comparisons
+SELECT CASE WHEN CAST(NULL AS MONEY) = CAST(123.45 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [NULL MONEY = MONEY];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS MONEY) <> CAST(123.45 AS MONEY) THEN 'Not Equal' ELSE 'Equal' END AS [NULL MONEY <> MONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS MONEY) > CAST(123.45 AS MONEY) THEN 'Greater' ELSE 'Not Greater' END AS [NULL MONEY > MONEY];
+GO
+~~START~~
+varchar
+Not Greater
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS MONEY) < CAST(123.45 AS MONEY) THEN 'Less' ELSE 'Not Less' END AS [NULL MONEY < MONEY];
+GO
+~~START~~
+varchar
+Not Less
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS MONEY) IS NULL THEN 'Is NULL' ELSE 'Is Not NULL' END AS [MONEY IS NULL];
+GO
+~~START~~
+varchar
+Is NULL
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS MONEY) IS NOT NULL THEN 'Is Not NULL' ELSE 'Is NULL' END AS [MONEY IS NOT NULL];
+GO
+~~START~~
+varchar
+Is NULL
+~~END~~
+
+
+-- SMALLMONEY NULL comparisons
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) = CAST(123.45 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [NULL SMALLMONEY = SMALLMONEY];
+GO
+~~START~~
+varchar
+Not Equal
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) <> CAST(123.45 AS SMALLMONEY) THEN 'Not Equal' ELSE 'Equal' END AS [NULL SMALLMONEY <> SMALLMONEY];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) > CAST(123.45 AS SMALLMONEY) THEN 'Greater' ELSE 'Not Greater' END AS [NULL SMALLMONEY > SMALLMONEY];
+GO
+~~START~~
+varchar
+Not Greater
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) < CAST(123.45 AS SMALLMONEY) THEN 'Less' ELSE 'Not Less' END AS [NULL SMALLMONEY < SMALLMONEY];
+GO
+~~START~~
+varchar
+Not Less
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) IS NULL THEN 'Is NULL' ELSE 'Is Not NULL' END AS [SMALLMONEY IS NULL];
+GO
+~~START~~
+varchar
+Is NULL
+~~END~~
+
+SELECT CASE WHEN CAST(NULL AS SMALLMONEY) IS NOT NULL THEN 'Is Not NULL' ELSE 'Is NULL' END AS [SMALLMONEY IS NOT NULL];
+GO
+~~START~~
+varchar
+Is NULL
+~~END~~
+
+
+-- Edge cases and special values
+-- Zero comparisons
+SELECT CASE WHEN CAST(0 AS MONEY) = CAST(0.0000 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY Zero = Zero];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(0 AS MONEY) = CAST(-0.0000 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY Zero = Negative Zero];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(0 AS SMALLMONEY) = CAST(0.0000 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [SMALLMONEY Zero = Zero];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(0 AS SMALLMONEY) = CAST(-0.0000 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [SMALLMONEY Zero = Negative Zero];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- Maximum and minimum value comparisons
+SELECT CASE WHEN CAST(922337203685477.5807 AS MONEY) > CAST(922337203685477.5806 AS MONEY) THEN 'True' ELSE 'False' END AS [MAX MONEY > NEAR MAX];
+GO
+~~START~~
+varchar
+True
+~~END~~
+
+SELECT CASE WHEN CAST(-922337203685477.5808 AS MONEY) < CAST(-922337203685477.5807 AS MONEY) THEN 'True' ELSE 'False' END AS [MIN MONEY < NEAR MIN];
+GO
+~~START~~
+varchar
+True
+~~END~~
+
+SELECT CASE WHEN CAST(214748.3647 AS SMALLMONEY) > CAST(214748.3646 AS SMALLMONEY) THEN 'True' ELSE 'False' END AS [MAX SMALLMONEY > NEAR MAX];
+GO
+~~START~~
+varchar
+True
+~~END~~
+
+SELECT CASE WHEN CAST(-214748.3648 AS SMALLMONEY) < CAST(-214748.3647 AS SMALLMONEY) THEN 'True' ELSE 'False' END AS [MIN SMALLMONEY < NEAR MIN];
+GO
+~~START~~
+varchar
+True
+~~END~~
+
+
+-- Precision comparison tests
+SELECT CASE WHEN CAST(123.4500 AS MONEY) = CAST(123.45 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [MONEY Precision Test];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+SELECT CASE WHEN CAST(123.4500 AS SMALLMONEY) = CAST(123.45 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [SMALLMONEY Precision Test];
+GO
+~~START~~
+varchar
+Equal
+~~END~~
+
+
+-- Create test table
+CREATE TABLE MoneyComparisonTest
+(
+    ID INT PRIMARY KEY,
+    MoneyVal MONEY,
+    SmallMoneyVal SMALLMONEY,
+    MoneyNull MONEY NULL,
+    SmallMoneyNull SMALLMONEY NULL
+);
+GO
+
+-- Insert test data
+INSERT INTO MoneyComparisonTest (ID, MoneyVal, SmallMoneyVal, MoneyNull, SmallMoneyNull)
+VALUES 
+(1, 100.00, 100.00, NULL, NULL),
+(2, 200.00, 200.00, 200.00, 200.00),
+(3, -100.00, -100.00, -100.00, -100.00),
+(4, 922337203685477.5807, 214748.3647, NULL, NULL),
+(5, -922337203685477.5808, -214748.3648, NULL, NULL),
+(6, 0.00, 0.00, 0.00, 0.00),
+(7, 123.45, 123.45, 123.45, 123.45);
+GO
+~~ROW COUNT: 7~~
+
+
+-- WHERE clause tests
+-- Equality tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest WHERE MoneyVal = CAST(100.00 AS MONEY);
+GO
+~~START~~
+int#!#money
+1#!#100.0000
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest WHERE SmallMoneyVal = CAST(100.00 AS SMALLMONEY);
+GO
+~~START~~
+int#!#smallmoney
+1#!#100.0000
+~~END~~
+
+
+-- Inequality tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest WHERE MoneyVal <> CAST(100.00 AS MONEY);
+GO
+~~START~~
+int#!#money
+2#!#200.0000
+3#!#-100.0000
+4#!#922337203685477.5807
+5#!#-922337203685477.5808
+6#!#0.0000
+7#!#123.4500
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest WHERE SmallMoneyVal <> CAST(100.00 AS SMALLMONEY);
+GO
+~~START~~
+int#!#smallmoney
+2#!#200.0000
+3#!#-100.0000
+4#!#214748.3647
+5#!#-214748.3648
+6#!#0.0000
+7#!#123.4500
+~~END~~
+
+
+-- Greater than tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest WHERE MoneyVal > CAST(100.00 AS MONEY);
+GO
+~~START~~
+int#!#money
+2#!#200.0000
+4#!#922337203685477.5807
+7#!#123.4500
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest WHERE SmallMoneyVal > CAST(100.00 AS SMALLMONEY);
+GO
+~~START~~
+int#!#smallmoney
+2#!#200.0000
+4#!#214748.3647
+7#!#123.4500
+~~END~~
+
+
+-- Less than tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest WHERE MoneyVal < CAST(100.00 AS MONEY);
+GO
+~~START~~
+int#!#money
+3#!#-100.0000
+5#!#-922337203685477.5808
+6#!#0.0000
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest WHERE SmallMoneyVal < CAST(100.00 AS SMALLMONEY);
+GO
+~~START~~
+int#!#smallmoney
+3#!#-100.0000
+5#!#-214748.3648
+6#!#0.0000
+~~END~~
+
+
+-- BETWEEN tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest 
+WHERE MoneyVal BETWEEN CAST(100.00 AS MONEY) AND CAST(200.00 AS MONEY);
+GO
+~~START~~
+int#!#money
+1#!#100.0000
+2#!#200.0000
+7#!#123.4500
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest 
+WHERE SmallMoneyVal BETWEEN CAST(100.00 AS SMALLMONEY) AND CAST(200.00 AS SMALLMONEY);
+GO
+~~START~~
+int#!#smallmoney
+1#!#100.0000
+2#!#200.0000
+7#!#123.4500
+~~END~~
+
+
+-- IN tests
+SELECT ID, MoneyVal FROM MoneyComparisonTest 
+WHERE MoneyVal IN (CAST(100.00 AS MONEY), CAST(200.00 AS MONEY));
+GO
+~~START~~
+int#!#money
+1#!#100.0000
+2#!#200.0000
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest 
+WHERE SmallMoneyVal IN (CAST(100.00 AS SMALLMONEY), CAST(200.00 AS SMALLMONEY));
+GO
+~~START~~
+int#!#smallmoney
+1#!#100.0000
+2#!#200.0000
+~~END~~
+
+
+-- NULL tests
+SELECT ID, MoneyNull FROM MoneyComparisonTest WHERE MoneyNull IS NULL;
+GO
+~~START~~
+int#!#money
+1#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+~~END~~
+
+SELECT ID, SmallMoneyNull FROM MoneyComparisonTest WHERE SmallMoneyNull IS NULL;
+GO
+~~START~~
+int#!#smallmoney
+1#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+~~END~~
+
+SELECT ID, MoneyNull FROM MoneyComparisonTest WHERE MoneyNull IS NOT NULL;
+GO
+~~START~~
+int#!#money
+2#!#200.0000
+3#!#-100.0000
+6#!#0.0000
+7#!#123.4500
+~~END~~
+
+SELECT ID, SmallMoneyNull FROM MoneyComparisonTest WHERE SmallMoneyNull IS NOT NULL;
+GO
+~~START~~
+int#!#smallmoney
+2#!#200.0000
+3#!#-100.0000
+6#!#0.0000
+7#!#123.4500
+~~END~~
+
+
+-- JOIN tests
+-- Create second test table
+CREATE TABLE MoneyComparisonTest2
+(
+    ID INT PRIMARY KEY,
+    MoneyVal MONEY,
+    SmallMoneyVal SMALLMONEY
+);
+GO
+
+-- Insert test data
+INSERT INTO MoneyComparisonTest2 (ID, MoneyVal, SmallMoneyVal)
+VALUES 
+(1, 100.00, 100.00),
+(2, 200.00, 200.00),
+(3, 300.00, 300.00);
+GO
+~~ROW COUNT: 3~~
+
+
+-- INNER JOIN tests
+SELECT t1.ID, t1.MoneyVal, t2.MoneyVal AS MoneyVal2
+FROM MoneyComparisonTest t1
+INNER JOIN MoneyComparisonTest2 t2 ON t1.MoneyVal = t2.MoneyVal;
+GO
+~~START~~
+int#!#money#!#money
+1#!#100.0000#!#100.0000
+2#!#200.0000#!#200.0000
+~~END~~
+
+
+SELECT t1.ID, t1.SmallMoneyVal, t2.SmallMoneyVal AS SmallMoneyVal2
+FROM MoneyComparisonTest t1
+INNER JOIN MoneyComparisonTest2 t2 ON t1.SmallMoneyVal = t2.SmallMoneyVal;
+GO
+~~START~~
+int#!#smallmoney#!#smallmoney
+1#!#100.0000#!#100.0000
+2#!#200.0000#!#200.0000
+~~END~~
+
+
+-- LEFT JOIN tests
+SELECT t1.ID, t1.MoneyVal, t2.MoneyVal AS MoneyVal2
+FROM MoneyComparisonTest t1
+LEFT JOIN MoneyComparisonTest2 t2 ON t1.MoneyVal = t2.MoneyVal;
+GO
+~~START~~
+int#!#money#!#money
+5#!#-922337203685477.5808#!#<NULL>
+3#!#-100.0000#!#<NULL>
+6#!#0.0000#!#<NULL>
+1#!#100.0000#!#100.0000
+7#!#123.4500#!#<NULL>
+2#!#200.0000#!#200.0000
+4#!#922337203685477.5807#!#<NULL>
+~~END~~
+
+
+SELECT t1.ID, t1.SmallMoneyVal, t2.SmallMoneyVal AS SmallMoneyVal2
+FROM MoneyComparisonTest t1
+LEFT JOIN MoneyComparisonTest2 t2 ON t1.SmallMoneyVal = t2.SmallMoneyVal;
+GO
+~~START~~
+int#!#smallmoney#!#smallmoney
+5#!#-214748.3648#!#<NULL>
+3#!#-100.0000#!#<NULL>
+6#!#0.0000#!#<NULL>
+1#!#100.0000#!#100.0000
+7#!#123.4500#!#<NULL>
+2#!#200.0000#!#200.0000
+4#!#214748.3647#!#<NULL>
+~~END~~
+
+
+-- ORDER BY tests
+-- Basic ORDER BY
+SELECT ID, MoneyVal FROM MoneyComparisonTest ORDER BY MoneyVal;
+GO
+~~START~~
+int#!#money
+5#!#-922337203685477.5808
+3#!#-100.0000
+6#!#0.0000
+1#!#100.0000
+7#!#123.4500
+2#!#200.0000
+4#!#922337203685477.5807
+~~END~~
+
+SELECT ID, MoneyVal FROM MoneyComparisonTest ORDER BY MoneyVal DESC;
+GO
+~~START~~
+int#!#money
+4#!#922337203685477.5807
+2#!#200.0000
+7#!#123.4500
+1#!#100.0000
+6#!#0.0000
+3#!#-100.0000
+5#!#-922337203685477.5808
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest ORDER BY SmallMoneyVal;
+GO
+~~START~~
+int#!#smallmoney
+5#!#-214748.3648
+3#!#-100.0000
+6#!#0.0000
+1#!#100.0000
+7#!#123.4500
+2#!#200.0000
+4#!#214748.3647
+~~END~~
+
+SELECT ID, SmallMoneyVal FROM MoneyComparisonTest ORDER BY SmallMoneyVal DESC;
+GO
+~~START~~
+int#!#smallmoney
+4#!#214748.3647
+2#!#200.0000
+7#!#123.4500
+1#!#100.0000
+6#!#0.0000
+3#!#-100.0000
+5#!#-214748.3648
+~~END~~
+
+
+-- Multiple column ORDER BY
+SELECT ID, MoneyVal, SmallMoneyVal 
+FROM MoneyComparisonTest 
+ORDER BY MoneyVal, SmallMoneyVal;
+GO
+~~START~~
+int#!#money#!#smallmoney
+5#!#-922337203685477.5808#!#-214748.3648
+3#!#-100.0000#!#-100.0000
+6#!#0.0000#!#0.0000
+1#!#100.0000#!#100.0000
+7#!#123.4500#!#123.4500
+2#!#200.0000#!#200.0000
+4#!#922337203685477.5807#!#214748.3647
+~~END~~
+
+
+SELECT ID, MoneyVal, SmallMoneyVal 
+FROM MoneyComparisonTest 
+ORDER BY MoneyVal DESC, SmallMoneyVal ASC;
+GO
+~~START~~
+int#!#money#!#smallmoney
+4#!#922337203685477.5807#!#214748.3647
+2#!#200.0000#!#200.0000
+7#!#123.4500#!#123.4500
+1#!#100.0000#!#100.0000
+6#!#0.0000#!#0.0000
+3#!#-100.0000#!#-100.0000
+5#!#-922337203685477.5808#!#-214748.3648
+~~END~~
+
+
+-- ORDER BY with NULL values
+SELECT ID, MoneyNull 
+FROM MoneyComparisonTest 
+ORDER BY MoneyNull;
+GO
+~~START~~
+int#!#money
+4#!#<NULL>
+1#!#<NULL>
+5#!#<NULL>
+3#!#-100.0000
+6#!#0.0000
+7#!#123.4500
+2#!#200.0000
+~~END~~
+
+
+SELECT ID, SmallMoneyNull 
+FROM MoneyComparisonTest 
+ORDER BY SmallMoneyNull DESC;
+GO
+~~START~~
+int#!#smallmoney
+2#!#200.0000
+7#!#123.4500
+6#!#0.0000
+3#!#-100.0000
+4#!#<NULL>
+1#!#<NULL>
+5#!#<NULL>
+~~END~~
+
+
+-- GROUP BY tests
+-- Basic GROUP BY
+SELECT MoneyVal, COUNT(*) as Count 
+FROM MoneyComparisonTest 
+GROUP BY MoneyVal;
+GO
+~~START~~
+money#!#int
+-100.0000#!#1
+-922337203685477.5808#!#1
+123.4500#!#1
+200.0000#!#1
+0.0000#!#1
+922337203685477.5807#!#1
+100.0000#!#1
+~~END~~
+
+
+SELECT SmallMoneyVal, COUNT(*) as Count 
+FROM MoneyComparisonTest 
+GROUP BY SmallMoneyVal;
+GO
+~~START~~
+smallmoney#!#int
+214748.3647#!#1
+-100.0000#!#1
+123.4500#!#1
+200.0000#!#1
+0.0000#!#1
+-214748.3648#!#1
+100.0000#!#1
+~~END~~
+
+
+-- GROUP BY with aggregates
+SELECT 
+    CASE 
+        WHEN MoneyVal >= 0 THEN 'Positive'
+        ELSE 'Negative'
+    END AS ValueType,
+    COUNT(*) as Count,
+    MIN(MoneyVal) as MinValue,
+    MAX(MoneyVal) as MaxValue,
+    AVG(CAST(MoneyVal AS FLOAT)) as AvgValue
+FROM MoneyComparisonTest 
+GROUP BY CASE 
+    WHEN MoneyVal >= 0 THEN 'Positive'
+    ELSE 'Negative'
+END;
+GO
+~~START~~
+varchar#!#int#!#money#!#money#!#float
+Positive#!#5#!#0.0000#!#922337203685477.5807#!#1.8446744073718022E14
+Negative#!#2#!#-922337203685477.5808#!#-100.0000#!#-4.611686018427888E14
+~~END~~
+
+
+-- HAVING clause tests
+SELECT MoneyVal, COUNT(*) as Count 
+FROM MoneyComparisonTest 
+GROUP BY MoneyVal
+HAVING MoneyVal > 0;
+GO
+~~START~~
+money#!#int
+123.4500#!#1
+200.0000#!#1
+922337203685477.5807#!#1
+100.0000#!#1
+~~END~~
+
+
+SELECT SmallMoneyVal, COUNT(*) as Count 
+FROM MoneyComparisonTest 
+GROUP BY SmallMoneyVal
+HAVING SmallMoneyVal < 0;
+GO
+~~START~~
+smallmoney#!#int
+-100.0000#!#1
+-214748.3648#!#1
+~~END~~
+
+
+-- Complex comparison scenarios
+-- Case expression comparisons
+SELECT ID,
+    CASE 
+        WHEN MoneyVal > 0 THEN 'Positive'
+        WHEN MoneyVal < 0 THEN 'Negative'
+        ELSE 'Zero'
+    END AS MoneyCategory,
+    CASE 
+        WHEN SmallMoneyVal > 0 THEN 'Positive'
+        WHEN SmallMoneyVal < 0 THEN 'Negative'
+        ELSE 'Zero'
+    END AS SmallMoneyCategory
+FROM MoneyComparisonTest;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Positive#!#Positive
+2#!#Positive#!#Positive
+3#!#Negative#!#Negative
+4#!#Positive#!#Positive
+5#!#Negative#!#Negative
+6#!#Zero#!#Zero
+7#!#Positive#!#Positive
+~~END~~
+
+
+-- Nested comparisons
+SELECT ID, MoneyVal
+FROM MoneyComparisonTest
+WHERE MoneyVal > (
+    SELECT AVG(CAST(MoneyVal AS FLOAT))
+    FROM MoneyComparisonTest
+    WHERE MoneyVal > 0
+);
+GO
+~~START~~
+int#!#money
+4#!#922337203685477.5807
+~~END~~
+
+
+-- Multiple conditions
+SELECT ID, MoneyVal, SmallMoneyVal
+FROM MoneyComparisonTest
+WHERE MoneyVal > 0 
+AND SmallMoneyVal > 0 
+AND MoneyVal = SmallMoneyVal;
+GO
+~~START~~
+int#!#money#!#smallmoney
+1#!#100.0000#!#100.0000
+2#!#200.0000#!#200.0000
+7#!#123.4500#!#123.4500
+~~END~~
+
+
+-- Exists with comparison
+SELECT ID, MoneyVal
+FROM MoneyComparisonTest t1
+WHERE EXISTS (
+    SELECT 1 
+    FROM MoneyComparisonTest2 t2 
+    WHERE t2.MoneyVal = t1.MoneyVal
+);
+GO
+~~START~~
+int#!#money
+1#!#100.0000
+2#!#200.0000
+~~END~~
+
+
+-- Union with comparisons
+SELECT ID, MoneyVal, 'MONEY' as Type
+FROM MoneyComparisonTest
+WHERE MoneyVal > 0
+UNION
+SELECT ID, SmallMoneyVal, 'SMALLMONEY' as Type
+FROM MoneyComparisonTest
+WHERE SmallMoneyVal > 0
+ORDER BY MoneyVal;
+GO
+~~START~~
+int#!#money#!#varchar
+1#!#100.0000#!#MONEY
+1#!#100.0000#!#SMALLMONEY
+7#!#123.4500#!#MONEY
+7#!#123.4500#!#SMALLMONEY
+2#!#200.0000#!#MONEY
+2#!#200.0000#!#SMALLMONEY
+4#!#214748.3647#!#SMALLMONEY
+4#!#922337203685477.5807#!#MONEY
+~~END~~
+
+
+-- Intersection test
+SELECT MoneyVal
+FROM MoneyComparisonTest
+WHERE MoneyVal > 0
+INTERSECT
+SELECT MoneyVal
+FROM MoneyComparisonTest2
+WHERE MoneyVal > 0;
+GO
+~~START~~
+money
+200.0000
+100.0000
+~~END~~
+
+
+-- Except test
+SELECT MoneyVal
+FROM MoneyComparisonTest
+WHERE MoneyVal > 0
+EXCEPT
+SELECT MoneyVal
+FROM MoneyComparisonTest2
+WHERE MoneyVal > 0;
+GO
+~~START~~
+money
+123.4500
+922337203685477.5807
+~~END~~
+
+
+-- Additional complex scenarios
+-- Subquery comparisons
+SELECT ID, MoneyVal
+FROM MoneyComparisonTest t1
+WHERE MoneyVal = (
+    SELECT MAX(MoneyVal)
+    FROM MoneyComparisonTest
+    WHERE ID < t1.ID
+);
+GO
+~~START~~
+int#!#money
+~~END~~
+
+
+-- Correlated subqueries
+SELECT ID, MoneyVal
+FROM MoneyComparisonTest t1
+WHERE MoneyVal > (
+    SELECT AVG(CAST(t2.MoneyVal AS FLOAT))
+    FROM MoneyComparisonTest t2
+    WHERE t2.ID < t1.ID
+);
+GO
+~~START~~
+int#!#money
+2#!#200.0000
+4#!#922337203685477.5807
+7#!#123.4500
+~~END~~
+
+
+-- Window functions with comparisons
+SELECT 
+    ID,
+    MoneyVal,
+    LAG(MoneyVal) OVER (ORDER BY ID) as PrevValue,
+    CASE 
+        WHEN MoneyVal > LAG(MoneyVal) OVER (ORDER BY ID) THEN 'Increased'
+        WHEN MoneyVal < LAG(MoneyVal) OVER (ORDER BY ID) THEN 'Decreased'
+        WHEN MoneyVal = LAG(MoneyVal) OVER (ORDER BY ID) THEN 'No Change'
+        ELSE 'First Row'
+    END as ValueChange
+FROM MoneyComparisonTest;
+GO
+~~START~~
+int#!#money#!#money#!#varchar
+1#!#100.0000#!#<NULL>#!#First Row
+2#!#200.0000#!#100.0000#!#Increased
+3#!#-100.0000#!#200.0000#!#Decreased
+4#!#922337203685477.5807#!#-100.0000#!#Increased
+5#!#-922337203685477.5808#!#922337203685477.5807#!#Decreased
+6#!#0.0000#!#-922337203685477.5808#!#Increased
+7#!#123.4500#!#0.0000#!#Increased
+~~END~~
+
+
+-- Running totals with comparisons
+SELECT 
+    ID,
+    MoneyVal,
+    SUM(MoneyVal) OVER (ORDER BY ID) as RunningTotal,
+    CASE 
+        WHEN SUM(MoneyVal) OVER (ORDER BY ID) > 0 THEN 'Positive Balance'
+        ELSE 'Negative Balance'
+    END as BalanceStatus
+FROM MoneyComparisonTest;
+GO
+~~START~~
+int#!#money#!#money#!#varchar
+1#!#100.0000#!#100.0000#!#Positive Balance
+2#!#200.0000#!#300.0000#!#Positive Balance
+3#!#-100.0000#!#200.0000#!#Positive Balance
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- Pivot operations
+-- Create sample data for pivot
+CREATE TABLE MoneyPivotTest (
+    ID INT,
+    Category VARCHAR(10),
+    Amount MONEY
+);
+GO
+
+INSERT INTO MoneyPivotTest (ID, Category, Amount)
+VALUES 
+(1, 'A', 100.00),
+(1, 'B', 200.00),
+(2, 'A', 300.00),
+(2, 'B', 400.00);
+GO
+~~ROW COUNT: 4~~
+
+
+-- Pivot query
+SELECT *
+FROM (
+    SELECT ID, Category, Amount
+    FROM MoneyPivotTest
+) AS SourceTable
+PIVOT (
+    SUM(Amount)
+    FOR Category IN ([A], [B])
+) AS PivotTable;
+GO
+~~START~~
+int#!#money#!#money
+1#!#100.0000#!#200.0000
+2#!#300.0000#!#400.0000
+~~END~~
+
+
+-- Complex conditional aggregation
+SELECT 
+    CASE 
+        WHEN MoneyVal BETWEEN -1000 AND 1000 THEN 'Normal Range'
+        WHEN MoneyVal > 1000 THEN 'High Range'
+        ELSE 'Low Range'
+    END AS ValueRange,
+    COUNT(*) AS Count,
+    MIN(MoneyVal) AS MinValue,
+    MAX(MoneyVal) AS MaxValue,
+    SUM(CASE WHEN MoneyVal > 0 THEN 1 ELSE 0 END) AS PositiveCount,
+    SUM(CASE WHEN MoneyVal < 0 THEN 1 ELSE 0 END) AS NegativeCount
+FROM MoneyComparisonTest
+GROUP BY 
+    CASE 
+        WHEN MoneyVal BETWEEN -1000 AND 1000 THEN 'Normal Range'
+        WHEN MoneyVal > 1000 THEN 'High Range'
+        ELSE 'Low Range'
+    END;
+GO
+~~START~~
+varchar#!#int#!#money#!#money#!#int#!#int
+High Range#!#1#!#922337203685477.5807#!#922337203685477.5807#!#1#!#0
+Low Range#!#1#!#-922337203685477.5808#!#-922337203685477.5808#!#0#!#1
+Normal Range#!#5#!#-100.0000#!#200.0000#!#3#!#1
+~~END~~
+
+
+-- String formatting and comparison tests
+SELECT 
+    ID,
+    MoneyVal,
+    CAST(MoneyVal AS VARCHAR(20)) AS StringValue,
+    CASE 
+        WHEN CAST(MoneyVal AS VARCHAR(20)) LIKE '%-%.%' THEN 'Negative Decimal'
+        WHEN CAST(MoneyVal AS VARCHAR(20)) LIKE '%.%' THEN 'Positive Decimal'
+        ELSE 'Whole Number'
+    END AS FormatType
+FROM MoneyComparisonTest;
+GO
+~~START~~
+int#!#money#!#varchar#!#varchar
+1#!#100.0000#!#100.00#!#Positive Decimal
+2#!#200.0000#!#200.00#!#Positive Decimal
+3#!#-100.0000#!#-100.00#!#Negative Decimal
+4#!#922337203685477.5807#!#922337203685477.58#!#Positive Decimal
+5#!#-922337203685477.5808#!#-922337203685477.58#!#Negative Decimal
+6#!#0.0000#!#0.00#!#Positive Decimal
+7#!#123.4500#!#123.45#!#Positive Decimal
+~~END~~
+
+
+-- Rounding comparison tests
+SELECT 
+    ID,
+    MoneyVal,
+    ROUND(MoneyVal, 0) AS RoundedToInteger,
+    CASE 
+        WHEN MoneyVal = ROUND(MoneyVal, 0) THEN 'Whole Number'
+        ELSE 'Decimal Number'
+    END AS NumberType
+FROM MoneyComparisonTest;
+GO
+~~START~~
+int#!#money#!#numeric#!#varchar
+1#!#100.0000#!#100.00000000#!#Whole Number
+2#!#200.0000#!#200.00000000#!#Whole Number
+3#!#-100.0000#!#-100.00000000#!#Whole Number
+4#!#922337203685477.5807#!#922337203685478.00000000#!#Decimal Number
+5#!#-922337203685477.5808#!#-922337203685478.00000000#!#Decimal Number
+6#!#0.0000#!#0E-8#!#Whole Number
+7#!#123.4500#!#123.00000000#!#Decimal Number
+~~END~~
+
+
+-- Boundary value analysis
+-- Test near-boundary values for MONEY
+SELECT 
+    CASE WHEN CAST(922337203685477.5807 AS MONEY) = CAST(922337203685477.5807 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [Max_Money_Equal],
+    CASE WHEN CAST(-922337203685477.5808 AS MONEY) = CAST(-922337203685477.5808 AS MONEY) THEN 'Equal' ELSE 'Not Equal' END AS [Min_Money_Equal];
+GO
+~~START~~
+varchar#!#varchar
+Equal#!#Equal
+~~END~~
+
+
+-- Test near-boundary values for SMALLMONEY
+SELECT 
+    CASE WHEN CAST(214748.3647 AS SMALLMONEY) = CAST(214748.3647 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [Max_SmallMoney_Equal],
+    CASE WHEN CAST(-214748.3648 AS SMALLMONEY) = CAST(-214748.3648 AS SMALLMONEY) THEN 'Equal' ELSE 'Not Equal' END AS [Min_SmallMoney_Equal];
+GO
+~~START~~
+varchar#!#varchar
+Equal#!#Equal
+~~END~~
+
+
+-- Cleanup
+DROP TABLE MoneyComparisonTest;
+DROP TABLE MoneyComparisonTest2;
+DROP TABLE MoneyPivotTest;
+GO
+
+
+------------------------------------------------------------------------
+---- 6. Datatype Conversion
+------------------------------------------------------------------------
+---- Conversion using CAST()
+-- BIT to Money types
+SELECT 'BIT to Money Types Conversion' AS test_description;
+GO
+~~START~~
+varchar
+BIT to Money Types Conversion
+~~END~~
+
+
+-- BIT -> MONEY
+SELECT CAST(0 AS MONEY) AS [BIT_0_TO_MONEY], CAST(1 AS MONEY) AS [BIT_1_TO_MONEY];
+GO
+~~START~~
+money#!#money
+0.0000#!#1.0000
+~~END~~
+
+
+-- BIT -> SMALLMONEY
+SELECT CAST(0 AS SMALLMONEY) AS [BIT_0_TO_SMALLMONEY], CAST(1 AS SMALLMONEY) AS [BIT_1_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney
+0.0000#!#1.0000
+~~END~~
+
+
+-- Integer types to Money types
+SELECT 'Integer Types to Money Types Conversion' AS test_description;
+GO
+~~START~~
+varchar
+Integer Types to Money Types Conversion
+~~END~~
+
+
+-- TINYINT -> MONEY
+SELECT CAST(CAST(0 AS TINYINT) AS MONEY) AS [TINYINT_MIN_TO_MONEY], 
+       CAST(CAST(255 AS TINYINT) AS MONEY) AS [TINYINT_MAX_TO_MONEY],
+       CAST(CAST(128 AS TINYINT) AS MONEY) AS [TINYINT_MID_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money
+0.0000#!#255.0000#!#128.0000
+~~END~~
+
+
+-- TINYINT -> SMALLMONEY
+SELECT CAST(CAST(0 AS TINYINT) AS SMALLMONEY) AS [TINYINT_MIN_TO_SMALLMONEY],
+       CAST(CAST(255 AS TINYINT) AS SMALLMONEY) AS [TINYINT_MAX_TO_SMALLMONEY],
+       CAST(CAST(128 AS TINYINT) AS SMALLMONEY) AS [TINYINT_MID_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+0.0000#!#255.0000#!#128.0000
+~~END~~
+
+
+-- SMALLINT -> MONEY
+SELECT CAST(CAST(-32768 AS SMALLINT) AS MONEY) AS [SMALLINT_MIN_TO_MONEY],
+       CAST(CAST(32767 AS SMALLINT) AS MONEY) AS [SMALLINT_MAX_TO_MONEY],
+       CAST(CAST(0 AS SMALLINT) AS MONEY) AS [SMALLINT_ZERO_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money
+-32768.0000#!#32767.0000#!#0.0000
+~~END~~
+
+
+-- SMALLINT -> SMALLMONEY
+SELECT CAST(CAST(-32768 AS SMALLINT) AS SMALLMONEY) AS [SMALLINT_MIN_TO_SMALLMONEY],
+       CAST(CAST(32767 AS SMALLINT) AS SMALLMONEY) AS [SMALLINT_MAX_TO_SMALLMONEY],
+       CAST(CAST(0 AS SMALLINT) AS SMALLMONEY) AS [SMALLINT_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+-32768.0000#!#32767.0000#!#0.0000
+~~END~~
+
+
+-- INT -> MONEY
+SELECT CAST(CAST(-2147483648 AS INT) AS MONEY) AS [INT_MIN_TO_MONEY],
+       CAST(CAST(2147483647 AS INT) AS MONEY) AS [INT_MAX_TO_MONEY],
+       CAST(CAST(0 AS INT) AS MONEY) AS [INT_ZERO_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money
+-2147483648.0000#!#2147483647.0000#!#0.0000
+~~END~~
+
+
+-- INT -> SMALLMONEY
+SELECT TRY_CAST(CAST(-2147483648 AS INT) AS SMALLMONEY) AS [INT_MIN_TO_SMALLMONEY],
+       TRY_CAST(CAST(2147483647 AS INT) AS SMALLMONEY) AS [INT_MAX_TO_SMALLMONEY],
+       CAST(CAST(0 AS INT) AS SMALLMONEY) AS [INT_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+<NULL>#!#<NULL>#!#0.0000
+~~END~~
+
+
+-- BIGINT -> MONEY
+SELECT CAST(CAST(-9223372036854775808 AS BIGINT) AS MONEY) AS [BIGINT_MIN_TO_MONEY],
+       CAST(CAST(9223372036854775807 AS BIGINT) AS MONEY) AS [BIGINT_MAX_TO_MONEY],
+       CAST(CAST(0 AS BIGINT) AS MONEY) AS [BIGINT_ZERO_TO_MONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-9223372036854775808" is out of range for type money)~~
+
+
+-- BIGINT -> SMALLMONEY
+SELECT TRY_CAST(CAST(-9223372036854775808 AS BIGINT) AS SMALLMONEY) AS [BIGINT_MIN_TO_SMALLMONEY],
+       TRY_CAST(CAST(9223372036854775807 AS BIGINT) AS SMALLMONEY) AS [BIGINT_MAX_TO_SMALLMONEY],
+       CAST(CAST(0 AS BIGINT) AS SMALLMONEY) AS [BIGINT_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+<NULL>#!#<NULL>#!#0.0000
+~~END~~
+
+
+-- Floating point types to Money types
+-- FLOAT -> MONEY
+SELECT CAST(CAST(-1234.56789 AS FLOAT) AS MONEY) AS [FLOAT_NEG_TO_MONEY],
+       CAST(CAST(1234.56789 AS FLOAT) AS MONEY) AS [FLOAT_POS_TO_MONEY],
+       CAST(CAST(0.0 AS FLOAT) AS MONEY) AS [FLOAT_ZERO_TO_MONEY],
+       CAST(CAST(922337203685477.5807 AS FLOAT) AS MONEY) AS [FLOAT_MAX_TO_MONEY],
+       CAST(CAST(-922337203685477.5808 AS FLOAT) AS MONEY) AS [FLOAT_MIN_TO_MONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- FLOAT -> SMALLMONEY
+SELECT CAST(CAST(-214748.3648 AS FLOAT) AS SMALLMONEY) AS [FLOAT_NEG_TO_SMALLMONEY],
+       CAST(CAST(214748.3647 AS FLOAT) AS SMALLMONEY) AS [FLOAT_POS_TO_SMALLMONEY],
+       CAST(CAST(0.0 AS FLOAT) AS SMALLMONEY) AS [FLOAT_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+-214748.3648#!#214748.3647#!#0.0000
+~~END~~
+
+
+-- REAL -> MONEY
+SELECT CAST(CAST(-1234.56789 AS REAL) AS MONEY) AS [REAL_NEG_TO_MONEY],
+       CAST(CAST(1234.56789 AS REAL) AS MONEY) AS [REAL_POS_TO_MONEY],
+       CAST(CAST(0.0 AS REAL) AS MONEY) AS [REAL_ZERO_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money
+-1234.5679#!#1234.5679#!#0.0000
+~~END~~
+
+
+-- REAL -> SMALLMONEY
+SELECT CAST(CAST(-214748.3648 AS REAL) AS SMALLMONEY) AS [REAL_NEG_TO_SMALLMONEY],
+       CAST(CAST(214748.3647 AS REAL) AS SMALLMONEY) AS [REAL_POS_TO_SMALLMONEY],
+       CAST(CAST(0.0 AS REAL) AS SMALLMONEY) AS [REAL_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- String types to Money types
+-- CHAR -> MONEY
+SELECT CAST(CAST('123.45' AS CHAR(40)) AS MONEY) AS [CHAR_POS_TO_MONEY],
+       CAST(CAST('-123.45' AS CHAR(40)) AS MONEY) AS [CHAR_NEG_TO_MONEY],
+       CAST(CAST('0' AS CHAR(40)) AS MONEY) AS [CHAR_ZERO_TO_MONEY],
+       CAST(CAST('922337203685477.5807' AS CHAR(40)) AS MONEY) AS [CHAR_MAX_TO_MONEY],
+       CAST(CAST('-922337203685477.5808' AS CHAR(40)) AS MONEY) AS [CHAR_MIN_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+123.4500#!#-123.4500#!#0.0000#!#922337203685477.5807#!#-922337203685477.5808
+~~END~~
+
+
+-- CHAR -> SMALLMONEY
+SELECT CAST(CAST('214748.3647' AS CHAR(40)) AS SMALLMONEY) AS [CHAR_POS_TO_SMALLMONEY],
+       CAST(CAST('-214748.3648' AS CHAR(40)) AS SMALLMONEY) AS [CHAR_NEG_TO_SMALLMONEY],
+       CAST(CAST('0' AS CHAR(40)) AS SMALLMONEY) AS [CHAR_ZERO_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#-214748.3648#!#0.0000
+~~END~~
+
+
+-- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
+-- VARCHAR -> MONEY
+SELECT CAST(CAST('123.45' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_POS_TO_MONEY],
+       CAST(CAST('-123.45' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_NEG_TO_MONEY],
+       CAST(CAST('0' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_ZERO_TO_MONEY],
+       CAST(CAST('922337203685477.5807' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_MAX_TO_MONEY],
+       CAST(CAST('-922337203685477.5808' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_MIN_TO_MONEY],
+       TRY_CAST(CAST('$123.45' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_CURRENCY_TO_MONEY],
+       TRY_CAST(CAST('1,234.56' AS VARCHAR(40)) AS MONEY) AS [VARCHAR_COMMA_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money#!#money
+123.4500#!#-123.4500#!#0.0000#!#922337203685477.5807#!#-922337203685477.5808#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- TODO: File JIRA, Strings with dollar/comma not parsed to smallmoney in BBF
+-- VARCHAR -> SMALLMONEY
+SELECT CAST(CAST('214748.3647' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_POS_TO_SMALLMONEY],
+       CAST(CAST('-214748.3648' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_NEG_TO_SMALLMONEY],
+       CAST(CAST('0' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_ZERO_TO_SMALLMONEY],
+       TRY_CAST(CAST('$123.45' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_CURRENCY_TO_SMALLMONEY],
+       TRY_CAST(CAST('1,234.56' AS VARCHAR(40)) AS SMALLMONEY) AS [VARCHAR_COMMA_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#-214748.3648#!#0.0000#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- NCHAR -> MONEY
+SELECT CAST(CAST(N'123.45' AS NCHAR(40)) AS MONEY) AS [NCHAR_POS_TO_MONEY],
+       CAST(CAST(N'-123.45' AS NCHAR(40)) AS MONEY) AS [NCHAR_NEG_TO_MONEY],
+       CAST(CAST(N'0' AS NCHAR(40)) AS MONEY) AS [NCHAR_ZERO_TO_MONEY],
+       CAST(CAST(N'922337203685477.5807' AS NCHAR(40)) AS MONEY) AS [NCHAR_MAX_TO_MONEY],
+       CAST(CAST(N'-922337203685477.5808' AS NCHAR(40)) AS MONEY) AS [NCHAR_MIN_TO_MONEY],
+       TRY_CAST(CAST(N'$123.45' AS NCHAR(40)) AS MONEY) AS [NCHAR_CURRENCY_TO_MONEY],
+       TRY_CAST(CAST(N'1,234.56' AS NCHAR(40)) AS MONEY) AS [NCHAR_COMMA_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money#!#money
+123.4500#!#-123.4500#!#0.0000#!#922337203685477.5807#!#-922337203685477.5808#!#123.4500#!#1234.5600
+~~END~~
+
+
+-- NCHAR -> SMALLMONEY
+SELECT CAST(CAST(N'214748.3647' AS NCHAR(40)) AS SMALLMONEY) AS [NCHAR_POS_TO_SMALLMONEY],
+       CAST(CAST(N'-214748.3648' AS NCHAR(40)) AS SMALLMONEY) AS [NCHAR_NEG_TO_SMALLMONEY],
+       CAST(CAST(N'0' AS NCHAR(40)) AS SMALLMONEY) AS [NCHAR_ZERO_TO_SMALLMONEY],
+       TRY_CAST(CAST(N'$123.45' AS NCHAR(40)) AS SMALLMONEY) AS [NCHAR_CURRENCY_TO_SMALLMONEY],
+       TRY_CAST(CAST(N'1,234.56' AS NCHAR(40)) AS SMALLMONEY) AS [NCHAR_COMMA_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#-214748.3648#!#0.0000#!#123.4500#!#1234.5600
+~~END~~
+
+
+-- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
+-- NVARCHAR -> MONEY
+SELECT CAST(CAST(N'123.45' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_POS_TO_MONEY],
+       CAST(CAST(N'-123.45' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_NEG_TO_MONEY],
+       CAST(CAST(N'0' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_ZERO_TO_MONEY],
+       CAST(CAST(N'922337203685477.5807' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_MAX_TO_MONEY],
+       CAST(CAST(N'-922337203685477.5808' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_MIN_TO_MONEY],
+       TRY_CAST(CAST(N'$123.45' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_CURRENCY_TO_MONEY],
+       TRY_CAST(CAST(N'1,234.56' AS NVARCHAR(40)) AS MONEY) AS [NVARCHAR_COMMA_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money#!#money
+123.4500#!#-123.4500#!#0.0000#!#922337203685477.5807#!#-922337203685477.5808#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- TODO: File JIRA, Strings with dollar/comma not parsed to money in BBF
+-- NVARCHAR -> SMALLMONEY
+SELECT CAST(CAST(N'214748.3647' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_POS_TO_SMALLMONEY],
+       CAST(CAST(N'-214748.3648' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_NEG_TO_SMALLMONEY],
+       CAST(CAST(N'0' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_ZERO_TO_SMALLMONEY],
+       TRY_CAST(CAST(N'$123.45' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_CURRENCY_TO_SMALLMONEY],
+       TRY_CAST(CAST(N'1,234.56' AS NVARCHAR(40)) AS SMALLMONEY) AS [NVARCHAR_COMMA_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#-214748.3648#!#0.0000#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Date/Time types to Money types
+-- DATE -> Money types
+SELECT CAST(CAST('2023-12-31' AS DATE) AS MONEY) AS [DATE_TO_MONEY],
+       TRY_CAST(CAST('2023-12-31' AS DATE) AS SMALLMONEY) AS [DATE_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money)~~
+
+
+-- TIME -> Money types
+SELECT CAST(CAST('12:34:56.789' AS TIME) AS MONEY) AS [TIME_TO_MONEY],
+       TRY_CAST(CAST('12:34:56.789' AS TIME) AS SMALLMONEY) AS [TIME_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to money)~~
+
+
+-- DATETIME -> Money types
+SELECT CAST(CAST('2023-12-31 23:59:59.997' AS DATETIME) AS MONEY) AS [DATETIME_TO_MONEY],
+       TRY_CAST(CAST('2023-12-31 23:59:59.997' AS DATETIME) AS SMALLMONEY) AS [DATETIME_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to money)~~
+
+
+-- DATETIME2 -> Money types
+SELECT CAST(CAST('2023-12-31 23:59:59.9999999' AS DATETIME2) AS MONEY) AS [DATETIME2_TO_MONEY],
+       TRY_CAST(CAST('2023-12-31 23:59:59.9999999' AS DATETIME2) AS SMALLMONEY) AS [DATETIME2_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to money)~~
+
+
+-- SMALLDATETIME -> Money types
+SELECT CAST(CAST('2023-12-31 23:59:00' AS SMALLDATETIME) AS MONEY) AS [SMALLDATETIME_TO_MONEY],
+       TRY_CAST(CAST('2023-12-31 23:59:00' AS SMALLDATETIME) AS SMALLMONEY) AS [SMALLDATETIME_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type smalldatetime to money)~~
+
+
+-- DATETIMEOFFSET -> Money types
+SELECT CAST(CAST('2023-12-31 23:59:59.9999999 +00:00' AS DATETIMEOFFSET) AS MONEY) AS [DATETIMEOFFSET_TO_MONEY],
+       TRY_CAST(CAST('2023-12-31 23:59:59.9999999 +00:00' AS DATETIMEOFFSET) AS SMALLMONEY) AS [DATETIMEOFFSET_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to money)~~
+
+
+-- Binary types to Money types
+-- BINARY -> Money types
+SELECT CAST(CAST(123.45 AS BINARY(8)) AS MONEY) AS [BINARY_TO_MONEY],
+       TRY_CAST(CAST(123.45 AS BINARY(8)) AS SMALLMONEY) AS [BINARY_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to "binary")~~
+
+
+-- VARBINARY -> Money types
+SELECT CAST(CAST(123.45 AS VARBINARY(8)) AS MONEY) AS [VARBINARY_TO_MONEY],
+       TRY_CAST(CAST(123.45 AS VARBINARY(8)) AS SMALLMONEY) AS [VARBINARY_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to varbinary)~~
+
+
+-- Special types to Money types
+-- TODO: File JIRA, explicit conversion to money from UUID not allowed in TSQL
+-- UNIQUEIDENTIFIER -> Money types (using TRY_CAST to handle potential errors)
+DECLARE @uid UNIQUEIDENTIFIER = NEWID();
+SELECT TRY_CAST(@uid AS MONEY) AS [UNIQUEIDENTIFIER_TO_MONEY],
+       TRY_CAST(@uid AS SMALLMONEY) AS [UNIQUEIDENTIFIER_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- XML -> Money types (using value method)
+DECLARE @xml XML = '<root>123.45</root>';
+SELECT CAST(@xml.value('/root[1]', 'MONEY') AS MONEY) AS [XML_TO_MONEY],
+       TRY_CAST(@xml.value('/root[1]', 'SMALLMONEY') AS SMALLMONEY) AS [XML_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+
+
+-- HIERARCHYID -> Money types
+DECLARE @hid HIERARCHYID = '/1/2/3/';
+SELECT TRY_CAST(CAST(@hid AS VARCHAR(20)) AS MONEY) AS [HIERARCHYID_TO_MONEY],
+       TRY_CAST(CAST(@hid AS VARCHAR(20)) AS SMALLMONEY) AS [HIERARCHYID_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+-- GEOMETRY -> Money types (using STX and STY methods)
+DECLARE @geom GEOMETRY = GEOMETRY::STGeomFromText('POINT(123.45 678.90)', 0);
+SELECT CAST(@geom.STX AS MONEY) AS [GEOMETRY_X_TO_MONEY],
+       TRY_CAST(@geom.STX AS SMALLMONEY) AS [GEOMETRY_X_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+-- GEOGRAPHY -> Money types (using Lat and Long methods)
+DECLARE @geog GEOGRAPHY = GEOGRAPHY::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT CAST(@geog.Lat AS MONEY) AS [GEOGRAPHY_LAT_TO_MONEY],
+       TRY_CAST(@geog.Lat AS SMALLMONEY) AS [GEOGRAPHY_LAT_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+-- ROWVERSION/TIMESTAMP -> Money types
+CREATE TABLE #TempRowVersion (Id INT IDENTITY(1,1), RowVer ROWVERSION);
+INSERT INTO #TempRowVersion DEFAULT VALUES;
+SELECT CAST(RowVer AS MONEY) AS [ROWVERSION_TO_MONEY],
+       TRY_CAST(RowVer AS SMALLMONEY) AS [ROWVERSION_TO_SMALLMONEY]
+FROM #TempRowVersion;
+DROP TABLE #TempRowVersion;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: To use the ROWVERSION datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
+
+
+-- Error Cases and Edge Cases
+-- NULL value conversions
+SELECT CAST(NULL AS MONEY) AS [NULL_TO_MONEY],
+       CAST(NULL AS SMALLMONEY) AS [NULL_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Invalid string conversions (using TRY_CAST to handle errors)
+SELECT TRY_CAST('abc' AS MONEY) AS [INVALID_STRING_TO_MONEY],
+       TRY_CAST('abc' AS SMALLMONEY) AS [INVALID_STRING_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Overflow tests for SMALLMONEY (using TRY_CAST)
+SELECT TRY_CAST(214748.3648 AS SMALLMONEY) AS [OVERFLOW_POS_TO_SMALLMONEY],
+       TRY_CAST(-214748.3649 AS SMALLMONEY) AS [OVERFLOW_NEG_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Maximum and minimum values
+SELECT 
+    -- MONEY max/min
+    CAST(922337203685477.5807 AS MONEY) AS [MONEY_MAX],
+    CAST(-922337203685477.5808 AS MONEY) AS [MONEY_MIN],
+    
+    -- SMALLMONEY max/min
+    CAST(214748.3647 AS SMALLMONEY) AS [SMALLMONEY_MAX],
+    CAST(-214748.3648 AS SMALLMONEY) AS [SMALLMONEY_MIN];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+922337203685477.5807#!#-922337203685477.5808#!#214748.3647#!#-214748.3648
+~~END~~
+
+
+-- Rounding behavior tests
+SELECT 
+    -- MONEY rounding
+    CAST(123.4549 AS MONEY) AS [MONEY_ROUND_DOWN],
+    CAST(123.4550 AS MONEY) AS [MONEY_ROUND_UP],
+    
+    -- SMALLMONEY rounding
+    CAST(123.4549 AS SMALLMONEY) AS [SMALLMONEY_ROUND_DOWN],
+    CAST(123.4550 AS SMALLMONEY) AS [SMALLMONEY_ROUND_UP];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+123.4549#!#123.4550#!#123.4549#!#123.4550
+~~END~~
+
+
+-- Scientific notation tests
+SELECT 
+    TRY_CAST('1.23E+3' AS MONEY) AS [SCIENTIFIC_TO_MONEY],
+    TRY_CAST('1.23E+3' AS SMALLMONEY) AS [SCIENTIFIC_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Currency symbol and format tests
+SELECT 
+    TRY_CAST('$123.45' AS MONEY) AS [CURRENCY_TO_MONEY],
+    TRY_CAST('$123.45' AS SMALLMONEY) AS [CURRENCY_TO_SMALLMONEY],
+    
+    TRY_CAST('123.45€' AS MONEY) AS [EURO_TO_MONEY],
+    TRY_CAST('£123.45' AS MONEY) AS [POUND_TO_MONEY],
+    
+    TRY_CAST('1,234.56' AS MONEY) AS [COMMA_TO_MONEY],
+    TRY_CAST('1.234,56' AS MONEY) AS [EUROPEAN_TO_MONEY];
+GO
+~~START~~
+money#!#smallmoney#!#money#!#money#!#money#!#money
+123.4500#!#123.4500#!#<NULL>#!#123.4500#!#1234.5600#!#<NULL>
+~~END~~
+
+
+
+---- Conversion using CONVERT()
+-- Style 0 (default) tests
+SELECT CONVERT(MONEY, '1234.56', 0) AS [DEFAULT_TO_MONEY],
+       CONVERT(SMALLMONEY, '1234.56', 0) AS [DEFAULT_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- Style 1 (with commas) tests
+SELECT CONVERT(MONEY, '1,234.56', 1) AS [STYLE1_TO_MONEY],
+       CONVERT(SMALLMONEY, '1,234.56', 1) AS [STYLE1_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- Style 2 (with decimal point) tests
+SELECT CONVERT(MONEY, '1234.56', 2) AS [STYLE2_TO_MONEY],
+       CONVERT(SMALLMONEY, '1234.56', 2) AS [STYLE2_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- Currency symbol tests with different styles
+SELECT CONVERT(MONEY, '$1,234.56', 1) AS [DOLLAR_TO_MONEY],
+       CONVERT(SMALLMONEY, '$1,234.56', 1) AS [DOLLAR_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- Convert from different numeric types using CONVERT
+-- INTEGER types
+SELECT CONVERT(MONEY, CAST(1234 AS INT)) AS [INT_TO_MONEY],
+       CONVERT(SMALLMONEY, CAST(1234 AS INT)) AS [INT_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.0000#!#1234.0000
+~~END~~
+
+
+-- DECIMAL types
+SELECT CONVERT(MONEY, CAST(1234.56 AS DECIMAL(10,2))) AS [DECIMAL_TO_MONEY],
+       CONVERT(SMALLMONEY, CAST(1234.56 AS DECIMAL(10,2))) AS [DECIMAL_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- FLOAT types
+SELECT CONVERT(MONEY, CAST(1234.56 AS FLOAT)) AS [FLOAT_TO_MONEY],
+       CONVERT(SMALLMONEY, CAST(1234.56 AS FLOAT)) AS [FLOAT_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+-- Convert from temporal types using CONVERT
+-- DATE
+SELECT CONVERT(MONEY, GETDATE()) AS [DATE_TO_MONEY],
+       CONVERT(SMALLMONEY, GETDATE()) AS [DATE_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to money)~~
+
+
+-- DATETIME2
+SELECT CONVERT(MONEY, SYSDATETIME()) AS [DATETIME2_TO_MONEY],
+       CONVERT(SMALLMONEY, SYSDATETIME()) AS [DATETIME2_TO_SMALLMONEY];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to money)~~
+
+
+-- Convert between money types using CONVERT
+-- MONEY conversions
+SELECT CONVERT(SMALLMONEY, CAST(1234.56 AS MONEY)) AS [MONEY_TO_SMALLMONEY];
+GO
+~~START~~
+smallmoney
+1234.5600
+~~END~~
+
+
+-- SMALLMONEY conversions
+SELECT CONVERT(MONEY, CAST(1234.56 AS SMALLMONEY)) AS [SMALLMONEY_TO_MONEY];
+GO
+~~START~~
+money
+1234.5600
+~~END~~
+
+
+-- Special number format tests using CONVERT
+-- Scientific notation
+SELECT TRY_CONVERT(MONEY, '1.23E+3') AS [SCIENTIFIC_TO_MONEY],
+       TRY_CONVERT(SMALLMONEY, '1.23E+3') AS [SCIENTIFIC_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Negative values
+SELECT CONVERT(MONEY, '-1234.56') AS [NEGATIVE_TO_MONEY],
+       CONVERT(SMALLMONEY, '-1234.56') AS [NEGATIVE_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+-1234.5600#!#-1234.5600
+~~END~~
+
+
+-- Different decimal separators
+SELECT TRY_CONVERT(MONEY, '1234,56') AS [COMMA_TO_MONEY],
+       TRY_CONVERT(SMALLMONEY, '1234,56') AS [COMMA_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+123456.0000#!#123456.0000
+~~END~~
+
+
+
+-- Edge cases with CONVERT
+-- Maximum and minimum values
+-- MONEY max/min
+SELECT CONVERT(MONEY, 922337203685477.5807) AS [MONEY_MAX],
+       CONVERT(MONEY, -922337203685477.5808) AS [MONEY_MIN],
+       TRY_CONVERT(MONEY, 922337203685477.5808) AS [MONEY_OVERFLOW_POS], -- Should fail
+       TRY_CONVERT(MONEY, -922337203685477.5809) AS [MONEY_OVERFLOW_NEG]; -- Should fail
+GO
+~~START~~
+money#!#money#!#money#!#money
+922337203685477.5807#!#-922337203685477.5808#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- SMALLMONEY max/min
+SELECT CONVERT(SMALLMONEY, 214748.3647) AS [SMALLMONEY_MAX],
+       CONVERT(SMALLMONEY, -214748.3648) AS [SMALLMONEY_MIN],
+       TRY_CONVERT(SMALLMONEY, 214748.3648) AS [SMALLMONEY_OVERFLOW_POS], -- Should fail
+       TRY_CONVERT(SMALLMONEY, -214748.3649) AS [SMALLMONEY_OVERFLOW_NEG]; -- Should fail
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#-214748.3648#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Rounding behavior tests with CONVERT
+-- Regular rounding tests
+SELECT CONVERT(MONEY, 123.4549) AS [MONEY_ROUND_DOWN],
+       CONVERT(MONEY, 123.4550) AS [MONEY_ROUND_UP],
+       CONVERT(SMALLMONEY, 123.4549) AS [SMALLMONEY_ROUND_DOWN],
+       CONVERT(SMALLMONEY, 123.4550) AS [SMALLMONEY_ROUND_UP];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+123.4549#!#123.4550#!#123.4549#!#123.4550
+~~END~~
+
+
+-- Rounding with more decimal places
+SELECT CONVERT(MONEY, 123.45494949) AS [MONEY_ROUND_MANY_DECIMALS],
+       CONVERT(SMALLMONEY, 123.45494949) AS [SMALLMONEY_ROUND_MANY_DECIMALS];
+GO
+~~START~~
+money#!#smallmoney
+123.4549#!#123.4549
+~~END~~
+
+
+-- Special value conversions
+-- Zero value tests
+SELECT CONVERT(MONEY, 0) AS [ZERO_TO_MONEY],
+       CONVERT(MONEY, 0.0) AS [ZERO_DECIMAL_TO_MONEY],
+       CONVERT(MONEY, '0') AS [ZERO_STRING_TO_MONEY],
+       CONVERT(MONEY, '0.0') AS [ZERO_DECIMAL_STRING_TO_MONEY],
+       CONVERT(MONEY, '$0.00') AS [ZERO_CURRENCY_TO_MONEY];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+0.0000#!#0.0000#!#0.0000#!#0.0000#!#0.0000
+~~END~~
+
+
+-- NULL value tests
+SELECT CONVERT(MONEY, NULL) AS [NULL_TO_MONEY],
+       CONVERT(SMALLMONEY, NULL) AS [NULL_TO_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Currency format tests with different styles
+-- Style 0 (default)
+SELECT TRY_CONVERT(MONEY, '$1234.56', 0) AS [CURRENCY_DEFAULT_STYLE],
+       TRY_CONVERT(MONEY, '£1234.56', 0) AS [POUND_DEFAULT_STYLE],
+       TRY_CONVERT(MONEY, '€1234.56', 0) AS [EURO_DEFAULT_STYLE],
+       TRY_CONVERT(MONEY, '¥1234.56', 0) AS [YEN_DEFAULT_STYLE];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234.5600#!#1234.5600#!#1234.5600#!#1234.5600
+~~END~~
+
+
+-- Style 1 (with commas)
+SELECT TRY_CONVERT(MONEY, '$1,234.56', 1) AS [CURRENCY_STYLE_1],
+       TRY_CONVERT(MONEY, '£1,234.56', 1) AS [POUND_STYLE_1],
+       TRY_CONVERT(MONEY, '€1,234.56', 1) AS [EURO_STYLE_1],
+       TRY_CONVERT(MONEY, '¥1,234.56', 1) AS [YEN_STYLE_1];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234.5600#!#1234.5600#!#1234.5600#!#1234.5600
+~~END~~
+
+
+-- Style 2 (with decimal point)
+SELECT TRY_CONVERT(MONEY, '$1234.56', 2) AS [CURRENCY_STYLE_2],
+       TRY_CONVERT(MONEY, '£1234.56', 2) AS [POUND_STYLE_2],
+       TRY_CONVERT(MONEY, '€1234.56', 2) AS [EURO_STYLE_2],
+       TRY_CONVERT(MONEY, '¥1234.56', 2) AS [YEN_STYLE_2];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234.5600#!#1234.5600#!#1234.5600#!#1234.5600
+~~END~~
+
+
+-- Invalid format tests
+-- Invalid string formats
+SELECT TRY_CONVERT(MONEY, 'abc') AS [INVALID_STRING_MONEY],
+       TRY_CONVERT(SMALLMONEY, 'abc') AS [INVALID_STRING_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Invalid numeric formats
+SELECT TRY_CONVERT(MONEY, '123.45.67') AS [INVALID_NUMBER_MONEY],
+       TRY_CONVERT(SMALLMONEY, '123.45.67') AS [INVALID_NUMBER_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Empty string tests
+SELECT TRY_CONVERT(MONEY, '') AS [EMPTY_STRING_MONEY],
+       TRY_CONVERT(SMALLMONEY, '') AS [EMPTY_STRING_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+0.0000#!#0.0000
+~~END~~
+
+
+-- Whitespace tests
+SELECT TRY_CONVERT(MONEY, ' ') AS [WHITESPACE_MONEY],
+       TRY_CONVERT(SMALLMONEY, ' ') AS [WHITESPACE_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+0.0000#!#0.0000
+~~END~~
+
+
+-- Mixed format tests
+SELECT TRY_CONVERT(MONEY, ' $1,234.56 ') AS [MIXED_FORMAT_MONEY],
+       TRY_CONVERT(SMALLMONEY, ' $1,234.56 ') AS [MIXED_FORMAT_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+1234.5600#!#1234.5600
+~~END~~
+
+
+
+-- Specialized conversion scenarios
+-- Decimal precision tests
+-- Testing different decimal places
+SELECT CONVERT(MONEY, '123.4') AS [ONE_DECIMAL],
+       CONVERT(MONEY, '123.45') AS [TWO_DECIMALS],
+       CONVERT(MONEY, '123.456') AS [THREE_DECIMALS],
+       CONVERT(MONEY, '123.4567') AS [FOUR_DECIMALS],
+       CONVERT(MONEY, '123.45678') AS [FIVE_DECIMALS];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+123.4000#!#123.4500#!#123.4560#!#123.4567#!#123.4568
+~~END~~
+
+
+-- Testing with SMALLMONEY
+SELECT CONVERT(SMALLMONEY, '123.4') AS [SM_ONE_DECIMAL],
+       CONVERT(SMALLMONEY, '123.45') AS [SM_TWO_DECIMALS],
+       CONVERT(SMALLMONEY, '123.456') AS [SM_THREE_DECIMALS],
+       CONVERT(SMALLMONEY, '123.4567') AS [SM_FOUR_DECIMALS],
+       CONVERT(SMALLMONEY, '123.45678') AS [SM_FIVE_DECIMALS];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+123.4000#!#123.4500#!#123.4560#!#123.4567#!#123.4568
+~~END~~
+
+
+-- Conversion with calculations
+-- Basic arithmetic during conversion
+SELECT CONVERT(MONEY, 123.45 + 678.90) AS [ADD_THEN_CONVERT],
+       CONVERT(MONEY, 123.45) + CONVERT(MONEY, 678.90) AS [CONVERT_THEN_ADD],
+       CONVERT(SMALLMONEY, 123.45 + 678.90) AS [SM_ADD_THEN_CONVERT],
+       CONVERT(SMALLMONEY, 123.45) + CONVERT(SMALLMONEY, 678.90) AS [SM_CONVERT_THEN_ADD];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+802.3500#!#802.3500#!#802.3500#!#802.3500
+~~END~~
+
+
+-- Complex calculations
+SELECT CONVERT(MONEY, (123.45 * 2 + 678.90) / 3) AS [COMPLEX_CALC_MONEY],
+       CONVERT(SMALLMONEY, (123.45 * 2 + 678.90) / 3) AS [COMPLEX_CALC_SMALLMONEY];
+GO
+~~START~~
+money#!#smallmoney
+308.6000#!#308.6000
+~~END~~
+
+
+-- Unicode string conversion tests
+-- Unicode numbers
+SELECT CONVERT(MONEY, N'123.45') AS [UNICODE_BASIC],
+       CONVERT(MONEY, N'１２３.４５') AS [UNICODE_FULL_WIDTH],
+       TRY_CONVERT(MONEY, N'①②③.④⑤') AS [UNICODE_CIRCLED],
+       TRY_CONVERT(MONEY, N'壹貳叁.肆伍') AS [UNICODE_CHINESE];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "１２３.４５" is out of range for type fixeddecimal)~~
+
+
+-- Special character handling
+-- TODO: File JIRA, Output Difference with T-SQL
+-- Testing various currency symbols
+SELECT TRY_CONVERT(MONEY, '₹123.45') AS [RUPEE],
+       TRY_CONVERT(MONEY, '₱123.45') AS [PESO],
+       TRY_CONVERT(MONEY, '₩123.45') AS [WON],
+       TRY_CONVERT(MONEY, '₴123.45') AS [HRYVNIA];
+GO
+~~START~~
+money#!#money#!#money#!#money
+123.4500#!#123.4500#!#123.4500#!#123.4500
+~~END~~
+
+
+-- Comprehensive error handling tests
+-- Create table for error logging
+CREATE TABLE #ConversionErrors (
+    TestName VARCHAR(100),
+    TestValue VARCHAR(100),
+    ErrorMessage VARCHAR(1000)
+);
+GO
+
+-- Test procedure for safe conversion
+CREATE PROCEDURE #TestMoneyConversion
+    @TestName VARCHAR(100),
+    @TestValue VARCHAR(100),
+    @TargetType VARCHAR(20)
+AS
+BEGIN
+    BEGIN TRY
+        DECLARE @SQL NVARCHAR(1000);
+        SET @SQL = 'SELECT CONVERT(' + @TargetType + ', ''' + @TestValue + ''')';
+        EXEC(@SQL);
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #ConversionErrors (TestName, TestValue, ErrorMessage)
+        VALUES (@TestName, @TestValue, ERROR_MESSAGE());
+    END CATCH
+END;
+GO
+
+-- Test various problematic conversions
+EXEC #TestMoneyConversion 'Invalid Characters', 'ABC', 'MONEY';
+EXEC #TestMoneyConversion 'Multiple Decimal Points', '123.45.67', 'MONEY';
+EXEC #TestMoneyConversion 'Multiple Currency Symbols', '$$123.45', 'MONEY';
+EXEC #TestMoneyConversion 'Invalid Position Currency', '123.45$', 'MONEY';
+EXEC #TestMoneyConversion 'Mixed Separators', '1,234.567,89', 'MONEY';
+EXEC #TestMoneyConversion 'Overflow Value', '922337203685477.5808', 'MONEY';
+EXEC #TestMoneyConversion 'Underflow Value', '-922337203685477.5809', 'MONEY';
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "123.45.67" is out of range for type fixeddecimal)~~
+
+
+-- TODO: File JIRA, Output Difference with Dynamic SQL
+-- Display error results
+SELECT * FROM #ConversionErrors ORDER BY TestName;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Invalid Characters#!#ABC#!#invalid characters found: cannot cast value "ABC" to money
+~~END~~
+
+
+-- Cleanup
+DROP TABLE #ConversionErrors;
+DROP PROCEDURE #TestMoneyConversion;
+GO
+
+-- Conversion with different number systems
+-- Binary string to money
+SELECT TRY_CONVERT(MONEY, '0b1111011') AS [BINARY_STRING_CONVERSION];
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+-- Hexadecimal string to money
+SELECT TRY_CONVERT(MONEY, '0x7B') AS [HEX_STRING_CONVERSION];
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+-- Scientific notation
+SELECT TRY_CONVERT(MONEY, '1.2345e3') AS [SCIENTIFIC_NOTATION_POSITIVE],
+       TRY_CONVERT(MONEY, '1.2345e-3') AS [SCIENTIFIC_NOTATION_NEGATIVE];
+GO
+~~START~~
+money#!#money
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Testing conversion of special values
+-- Testing with various forms of zero
+SELECT CONVERT(MONEY, 0) AS [ZERO_INT],
+       CONVERT(MONEY, 0.0) AS [ZERO_DECIMAL],
+       CONVERT(MONEY, '0') AS [ZERO_STRING],
+       CONVERT(MONEY, '+0') AS [PLUS_ZERO],
+       CONVERT(MONEY, '-0') AS [MINUS_ZERO],
+       CONVERT(MONEY, '0.0000') AS [ZERO_MULTI_DECIMAL];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money
+0.0000#!#0.0000#!#0.0000#!#0.0000#!#0.0000#!#0.0000
+~~END~~
+
+
+-- Testing with international formatting
+-- Create temporary table for various international formats
+CREATE TABLE #InternationalFormats (
+    CountryFormat VARCHAR(50),
+    MoneyString VARCHAR(50)
+);
+GO
+
+-- Insert various international formats
+INSERT INTO #InternationalFormats VALUES
+('US', '$1,234.56'),
+('UK', '£1,234.56'),
+('EU', '1.234,56€'),
+('JP', '¥1,234.56'),
+('IN', '₹1,234.56'),
+('CH', '¥1,234.56'),
+('RU', '1 234,56₽'),
+('BR', 'R$1.234,56'),
+('MX', 'MX$1,234.56'),
+('KR', '₩1,234.56');
+GO
+~~ROW COUNT: 10~~
+
+
+-- Test conversions with TRY_CONVERT
+SELECT CountryFormat,
+       MoneyString,
+       TRY_CONVERT(MONEY, MoneyString) AS ConvertedToMoney,
+       TRY_CONVERT(SMALLMONEY, MoneyString) AS ConvertedToSmallMoney
+FROM #InternationalFormats;
+GO
+~~START~~
+varchar#!#varchar#!#money#!#smallmoney
+US#!#$1,234.56#!#1234.5600#!#1234.5600
+UK#!#£1,234.56#!#1234.5600#!#1234.5600
+EU#!#1.234,56€#!#<NULL>#!#<NULL>
+JP#!#¥1,234.56#!#1234.5600#!#1234.5600
+IN#!#?1,234.56#!#1234.5600#!#1234.5600
+CH#!#¥1,234.56#!#1234.5600#!#1234.5600
+RU#!#1 234,56?#!#<NULL>#!#<NULL>
+BR#!#R$1.234,56#!#<NULL>#!#<NULL>
+MX#!#MX$1,234.56#!#<NULL>#!#<NULL>
+KR#!#?1,234.56#!#1234.5600#!#1234.5600
+~~END~~
+
+
+-- Cleanup
+DROP TABLE #InternationalFormats;
+GO
+
+-- Testing with various decimal separator positions
+SELECT TRY_CONVERT(MONEY, '1234.5678') AS [NORMAL_POSITION],
+       TRY_CONVERT(MONEY, '12345.678') AS [ONE_RIGHT],
+       TRY_CONVERT(MONEY, '123.45678') AS [ONE_LEFT],
+       TRY_CONVERT(MONEY, '1.2345678') AS [FAR_LEFT],
+       TRY_CONVERT(MONEY, '12345678.') AS [FAR_RIGHT];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+1234.5678#!#12345.6780#!#123.4568#!#1.2346#!#12345678.0000
+~~END~~
+
+
+-- Testing with different spacing patterns
+SELECT TRY_CONVERT(MONEY, '1234.56') AS [NO_SPACES],
+       TRY_CONVERT(MONEY, ' 1234.56') AS [LEADING_SPACE],
+       TRY_CONVERT(MONEY, '1234.56 ') AS [TRAILING_SPACE],
+       TRY_CONVERT(MONEY, ' 1234.56 ') AS [BOTH_SPACES],
+       TRY_CONVERT(MONEY, '1 234.56') AS [MIDDLE_SPACE];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+1234.5600#!#1234.5600#!#1234.5600#!#1234.5600#!#<NULL>
+~~END~~
+
+
+-- Testing with parentheses (negative numbers)
+SELECT TRY_CONVERT(MONEY, '(1234.56)') AS [PARENTHESES_BASIC],
+       TRY_CONVERT(MONEY, '$(1234.56)') AS [PARENTHESES_WITH_SYMBOL],
+       TRY_CONVERT(MONEY, '(£1234.56)') AS [PARENTHESES_WITH_POUND],
+       TRY_CONVERT(MONEY, '(1,234.56)') AS [PARENTHESES_WITH_COMMA];
+GO
+~~START~~
+money#!#money#!#money#!#money
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Testing with different grouping separator patterns
+SELECT TRY_CONVERT(MONEY, '1,234,567.89') AS [STANDARD_GROUPING],
+       TRY_CONVERT(MONEY, '1234,567.89') AS [PARTIAL_GROUPING],
+       TRY_CONVERT(MONEY, '12,34,567.89') AS [IRREGULAR_GROUPING],
+       TRY_CONVERT(MONEY, '1.234.567,89') AS [EUROPEAN_GROUPING];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234567.8900#!#1234567.8900#!#1234567.8900#!#<NULL>
+~~END~~
+
+
+-- Testing with mixed notation types
+SELECT TRY_CONVERT(MONEY, '$-1234.56') AS [SYMBOL_THEN_NEGATIVE],
+       TRY_CONVERT(MONEY, '-$1234.56') AS [NEGATIVE_THEN_SYMBOL],
+       TRY_CONVERT(MONEY, '$ (1234.56)') AS [SYMBOL_AND_PARENTHESES],
+       TRY_CONVERT(MONEY, '($1234.56)') AS [PARENTHESES_WITH_INTERNAL_SYMBOL];
+GO
+~~START~~
+money#!#money#!#money#!#money
+-1234.5600#!#-1234.5600#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Testing with precision boundary cases
+-- Maximum precision tests
+SELECT TRY_CONVERT(MONEY, '922337203685477.5807') AS [MAX_MONEY_PRECISE],
+       TRY_CONVERT(MONEY, '922337203685477.5806999999') AS [NEAR_MAX_MONEY],
+       TRY_CONVERT(SMALLMONEY, '214748.3647') AS [MAX_SMALLMONEY_PRECISE],
+       TRY_CONVERT(SMALLMONEY, '214748.3646999999') AS [NEAR_MAX_SMALLMONEY];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+922337203685477.5807#!#922337203685477.5807#!#214748.3647#!#214748.3647
+~~END~~
+
+
+-- Minimum precision tests
+SELECT TRY_CONVERT(MONEY, '-922337203685477.5808') AS [MIN_MONEY_PRECISE],
+       TRY_CONVERT(MONEY, '-922337203685477.5807999999') AS [NEAR_MIN_MONEY],
+       TRY_CONVERT(SMALLMONEY, '-214748.3648') AS [MIN_SMALLMONEY_PRECISE],
+       TRY_CONVERT(SMALLMONEY, '-214748.3647999999') AS [NEAR_MIN_SMALLMONEY];
+GO
+~~START~~
+money#!#money#!#smallmoney#!#smallmoney
+-922337203685477.5808#!#-922337203685477.5808#!#-214748.3648#!#-214748.3648
+~~END~~
+
+
+-- Testing with exponential notation variations
+SELECT TRY_CONVERT(MONEY, '1.23456E+3') AS [STANDARD_EXP],
+       TRY_CONVERT(MONEY, '1.23456E3') AS [NO_PLUS_EXP],
+       TRY_CONVERT(MONEY, '1.23456e+3') AS [LOWERCASE_E],
+       TRY_CONVERT(MONEY, '1.23456D+3') AS [D_NOTATION],
+       TRY_CONVERT(MONEY, '123.456E+1') AS [SHIFTED_EXP],
+       TRY_CONVERT(MONEY, '12345.6E-1') AS [NEGATIVE_EXP];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Testing with currency symbol positions
+SELECT TRY_CONVERT(MONEY, '$1234.56') AS [LEADING_SYMBOL],
+       TRY_CONVERT(MONEY, '1234.56$') AS [TRAILING_SYMBOL],
+       TRY_CONVERT(MONEY, '$ 1234.56') AS [LEADING_SYMBOL_SPACE],
+       TRY_CONVERT(MONEY, '1234.56 $') AS [TRAILING_SYMBOL_SPACE];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234.5600#!#<NULL>#!#1234.5600#!#<NULL>
+~~END~~
+
+
+-- Edge case conversion tests with trailing zeros
+-- Testing different trailing zero patterns
+SELECT CONVERT(MONEY, '1234.00') AS [BASIC_TRAILING_ZEROS],
+       CONVERT(MONEY, '1234.000') AS [EXTRA_TRAILING_ZEROS],
+       CONVERT(MONEY, '1234.0000000') AS [MANY_TRAILING_ZEROS],
+       CONVERT(MONEY, '1234.') AS [DECIMAL_NO_ZEROS],
+       CONVERT(MONEY, '1234') AS [NO_DECIMAL_NO_ZEROS];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+1234.0000#!#1234.0000#!#1234.0000#!#1234.0000#!#1234.0000
+~~END~~
+
+
+-- Leading zeros tests
+SELECT CONVERT(MONEY, '00001234.56') AS [LEADING_ZEROS],
+       CONVERT(MONEY, '000000.12') AS [LEADING_ZEROS_DECIMAL],
+       CONVERT(MONEY, '00000.00') AS [ALL_ZEROS],
+       CONVERT(MONEY, '-00001234.56') AS [NEGATIVE_LEADING_ZEROS];
+GO
+~~START~~
+money#!#money#!#money#!#money
+1234.5600#!#0.1200#!#0.0000#!#-1234.5600
+~~END~~
+
+
+-- Testing with alternative negative notations
+SELECT TRY_CONVERT(MONEY, '-1234.56') AS [STANDARD_NEGATIVE],
+       TRY_CONVERT(MONEY, '(1234.56)') AS [PARENTHESES],
+       TRY_CONVERT(MONEY, '- 1234.56') AS [NEGATIVE_WITH_SPACE],
+       TRY_CONVERT(MONEY, '-$1234.56') AS [NEGATIVE_WITH_SYMBOL],
+       TRY_CONVERT(MONEY, '$-1234.56') AS [SYMBOL_WITH_NEGATIVE],
+       TRY_CONVERT(MONEY, '($1234.56)') AS [PARENTHESES_WITH_SYMBOL];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money#!#money
+-1234.5600#!#<NULL>#!#-1234.5600#!#-1234.5600#!#-1234.5600#!#<NULL>
+~~END~~
+
+
+-- Fractional value edge cases
+SELECT CONVERT(MONEY, '0.12345678901234') AS [MANY_DECIMALS],
+       CONVERT(MONEY, '0.00000000000001') AS [VERY_SMALL_POSITIVE],
+       CONVERT(MONEY, '-0.00000000000001') AS [VERY_SMALL_NEGATIVE],
+       CONVERT(MONEY, '0.99999999999999') AS [NEAR_ONE_POSITIVE],
+       CONVERT(MONEY, '-0.99999999999999') AS [NEAR_ONE_NEGATIVE];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+0.1235#!#0.0000#!#0.0000#!#1.0000#!#-1.0000
+~~END~~
+
+
+
+-- Testing with unusual string formats
+-- Mixed format strings
+SELECT TRY_CONVERT(MONEY, '+$1,234.56') AS [PLUS_SIGN_DOLLAR],
+       TRY_CONVERT(MONEY, '$ +1,234.56') AS [DOLLAR_PLUS_SIGN],
+       TRY_CONVERT(MONEY, '1234.56+ $') AS [TRAILING_PLUS_DOLLAR],
+       TRY_CONVERT(MONEY, '++1234.56') AS [MULTIPLE_PLUS],
+       TRY_CONVERT(MONEY, '--1234.56') AS [MULTIPLE_MINUS];
+GO
+~~START~~
+money#!#money#!#money#!#money#!#money
+1234.5600#!#1234.5600#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Testing with special characters
+SELECT TRY_CONVERT(MONEY, '1␣234.56') AS [WITH_SPECIAL_SPACE],
+       TRY_CONVERT(MONEY, '1⁄234.56') AS [WITH_FRACTION_SLASH],
+       TRY_CONVERT(MONEY, '1−234.56') AS [WITH_MINUS_SIGN],
+       TRY_CONVERT(MONEY, '1·234.56') AS [WITH_MIDDLE_DOT];
+GO
+~~START~~
+money#!#money#!#money#!#money
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Boundary condition tests
+-- Maximum value variations
+SELECT TRY_CONVERT(MONEY, '922337203685477.5807') AS [MAX_MONEY],
+       TRY_CONVERT(MONEY, '922337203685477.5808') AS [MAX_MONEY_PLUS_POINT0001],
+       TRY_CONVERT(MONEY, '922337203685477.5806') AS [MAX_MONEY_MINUS_POINT0001];
+GO
+~~START~~
+money#!#money#!#money
+922337203685477.5807#!#<NULL>#!#922337203685477.5806
+~~END~~
+
+
+-- Minimum value variations
+SELECT TRY_CONVERT(MONEY, '-922337203685477.5808') AS [MIN_MONEY],
+       TRY_CONVERT(MONEY, '-922337203685477.5809') AS [MIN_MONEY_MINUS_POINT0001],
+       TRY_CONVERT(MONEY, '-922337203685477.5807') AS [MIN_MONEY_PLUS_POINT0001];
+GO
+~~START~~
+money#!#money#!#money
+-922337203685477.5808#!#<NULL>#!#-922337203685477.5807
+~~END~~
+
+
+-- SmallMoney boundary tests
+SELECT TRY_CONVERT(SMALLMONEY, '214748.3647') AS [MAX_SMALLMONEY],
+       TRY_CONVERT(SMALLMONEY, '214748.3648') AS [MAX_SMALLMONEY_PLUS_POINT0001],
+       TRY_CONVERT(SMALLMONEY, '-214748.3648') AS [MIN_SMALLMONEY],
+       TRY_CONVERT(SMALLMONEY, '-214748.3649') AS [MIN_SMALLMONEY_MINUS_POINT0001];
+GO
+~~START~~
+smallmoney#!#smallmoney#!#smallmoney#!#smallmoney
+214748.3647#!#<NULL>#!#-214748.3648#!#<NULL>
+~~END~~
+
+
+-- Testing with mathematical expressions
+-- Create function to evaluate string expressions
+CREATE FUNCTION dbo.EvaluateExpression (@expr VARCHAR(100))
+RETURNS MONEY
+AS
+BEGIN
+    DECLARE @result MONEY
+    BEGIN TRY
+        DECLARE @sql NVARCHAR(200) = N'SELECT @result = ' + @expr
+        EXEC sp_executesql @sql, N'@result MONEY OUTPUT', @result OUTPUT
+    END TRY
+    BEGIN CATCH
+        RETURN NULL
+    END CATCH
+    RETURN @result
+END;
+GO
+
+-- Test mathematical expressions
+SELECT dbo.EvaluateExpression('CONVERT(MONEY, 100 + 200)') AS [SIMPLE_ADDITION],
+       dbo.EvaluateExpression('CONVERT(MONEY, 500 - 200)') AS [SIMPLE_SUBTRACTION],
+       dbo.EvaluateExpression('CONVERT(MONEY, 100 * 1.5)') AS [MULTIPLICATION_DECIMAL],
+       dbo.EvaluateExpression('CONVERT(MONEY, 1000 / 2)') AS [DIVISION];
+GO
+~~START~~
+money#!#money#!#money#!#money
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Cleanup
+DROP FUNCTION dbo.EvaluateExpression;
+GO
+
+
+-- Complex type interaction scenarios
+-- Create temporary tables for testing
+CREATE TABLE SourceValues (
+    IntVal INT,
+    FloatVal FLOAT,
+    DecimalVal DECIMAL(18,4),
+    VarcharVal VARCHAR(50),
+    DateVal DATE
+);
+CREATE TABLE ResultsMoney (
+    TestName VARCHAR(100),
+    MoneyResult MONEY,
+    SmallMoneyResult SMALLMONEY
+);
+GO
+
+-- Insert test data
+INSERT INTO SourceValues VALUES
+(1234, 1234.5678, 1234.5678, '1234.5678', '2024-01-01'),
+(-1234, -1234.5678, -1234.5678, '-1234.5678', '2024-12-31'),
+(0, 0.0, 0.0, '0.0', '2024-06-15');
+GO
+~~ROW COUNT: 3~~
+
+
+-- Complex conversion scenarios
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Mixed Addition' AS TestName,
+    CAST(IntVal AS MONEY) + CAST(FloatVal AS MONEY),
+    CAST(IntVal AS SMALLMONEY) + CAST(FloatVal AS SMALLMONEY)
+FROM SourceValues
+WHERE IntVal > 0;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Nested conversion tests
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Nested Conversion' AS TestName,
+    CAST(CAST(CAST(FloatVal AS VARCHAR(20)) AS DECIMAL(18,4)) AS MONEY),
+    CAST(CAST(CAST(FloatVal AS VARCHAR(20)) AS DECIMAL(18,4)) AS SMALLMONEY)
+FROM SourceValues
+WHERE FloatVal IS NOT NULL;
+GO
+~~ROW COUNT: 3~~
+
+
+-- Mathematical function interactions
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Math Functions' AS TestName,
+    CAST(ROUND(FloatVal, 2) AS MONEY),
+    CAST(ROUND(FloatVal, 2) AS SMALLMONEY)
+FROM SourceValues
+WHERE FloatVal IS NOT NULL;
+GO
+~~ROW COUNT: 3~~
+
+
+-- Date arithmetic conversions
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Date Conversion' AS TestName,
+    CAST(DATEDIFF(DAY, '2024-01-01', DateVal) AS MONEY),
+    CAST(DATEDIFF(DAY, '2024-01-01', DateVal) AS SMALLMONEY)
+FROM SourceValues;
+GO
+~~ROW COUNT: 3~~
+
+
+-- Complex arithmetic expressions
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Complex Arithmetic' AS TestName,
+    CAST((IntVal * 2 + SQRT(ABS(FloatVal))) AS MONEY),
+    CAST((IntVal * 2 + SQRT(ABS(FloatVal))) AS SMALLMONEY)
+FROM SourceValues
+WHERE IntVal != 0;
+GO
+~~ROW COUNT: 2~~
+
+
+-- String manipulation then conversion
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'String Manipulation' AS TestName,
+    CAST(REPLACE(VarcharVal, '.', '') AS MONEY) / 10000,
+    CAST(REPLACE(VarcharVal, '.', '') AS SMALLMONEY) / 10000
+FROM SourceValues
+WHERE VarcharVal != '0.0';
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- Conditional conversion tests
+INSERT INTO ResultsMoney (TestName, MoneyResult, SmallMoneyResult)
+SELECT 
+    'Conditional Conversion' AS TestName,
+    CASE 
+        WHEN IntVal > 0 THEN CAST(FloatVal AS MONEY)
+        WHEN IntVal < 0 THEN CAST(DecimalVal AS MONEY)
+        ELSE CAST(0 AS MONEY)
+    END,
+    CASE 
+        WHEN IntVal > 0 THEN CAST(FloatVal AS SMALLMONEY)
+        WHEN IntVal < 0 THEN CAST(DecimalVal AS SMALLMONEY)
+        ELSE CAST(0 AS SMALLMONEY)
+    END
+FROM SourceValues;
+GO
+~~ROW COUNT: 3~~
+
+
+-- Aggregate function conversions
+SELECT 
+    'Aggregate Conversions' AS TestName,
+    CAST(AVG(CAST(FloatVal AS MONEY)) AS MONEY) AS AvgMoney,
+    CAST(AVG(CAST(FloatVal AS SMALLMONEY)) AS SMALLMONEY) AS AvgSmallMoney
+FROM SourceValues
+WHERE FloatVal IS NOT NULL;
+GO
+~~START~~
+varchar#!#money#!#smallmoney
+Aggregate Conversions#!#0.0000#!#0.0000
+~~END~~
+
+
+-- Display results
+SELECT * FROM ResultsMoney ORDER BY TestName;
+GO
+~~START~~
+varchar#!#money#!#smallmoney
+Complex Arithmetic#!#2503.1364#!#2503.1364
+Complex Arithmetic#!#-2432.8636#!#-2432.8636
+Conditional Conversion#!#0.0000#!#0.0000
+Conditional Conversion#!#-1234.5678#!#-1234.5678
+Conditional Conversion#!#1234.5678#!#1234.5678
+Date Conversion#!#0.0000#!#0.0000
+Date Conversion#!#365.0000#!#365.0000
+Date Conversion#!#166.0000#!#166.0000
+Math Functions#!#1234.5700#!#1234.5700
+Math Functions#!#-1234.5700#!#-1234.5700
+Math Functions#!#0.0000#!#0.0000
+Mixed Addition#!#2468.5678#!#2468.5678
+Nested Conversion#!#-1234.5678#!#-1234.5678
+Nested Conversion#!#0.0000#!#0.0000
+Nested Conversion#!#1234.5678#!#1234.5678
+~~END~~
+
+
+-- Cleanup
+DROP TABLE SourceValues;
+DROP TABLE ResultsMoney;
+GO
+
+
+
+
+
+-- BABEL-5664, Renable test after fixing
+-- -- Testing with computed columns
+-- CREATE TABLE #ComputedColumns (
+--     ID INT IDENTITY(1,1),
+--     BaseValue DECIMAL(18,4),
+--     ComputedMoney AS CAST(BaseValue AS MONEY),
+--     ComputedSmallMoney AS CAST(BaseValue AS SMALLMONEY)
+-- );
+-- GO
+-- -- Insert test data
+-- INSERT INTO #ComputedColumns (BaseValue)
+-- VALUES (1234.5678), (-1234.5678), (0.0), (9999.9999);
+-- -- Display computed results
+-- SELECT * FROM #ComputedColumns;
+-- GO
+-- -- Cleanup
+-- DROP TABLE #ComputedColumns;
+-- GO
+-- Advanced scenarios and error handling
+-- Create error logging table
+CREATE TABLE ConversionErrorLog (
+    TestID INT IDENTITY(1,1),
+    TestName VARCHAR(100),
+    TestValue VARCHAR(MAX),
+    TargetType VARCHAR(50),
+    ErrorMessage VARCHAR(MAX),
+    ErrorNumber INT,
+    ErrorSeverity INT,
+    ErrorState INT,
+    TestTimestamp DATETIME DEFAULT GETDATE()
+);
+GO
+
+-- Create procedure for safe conversion testing
+CREATE PROCEDURE TestMoneyConversionWithErrorHandling
+    @TestName VARCHAR(100),
+    @TestValue VARCHAR(MAX),
+    @TargetType VARCHAR(50)
+AS
+BEGIN
+    BEGIN TRY
+        DECLARE @SQL NVARCHAR(MAX) = N'
+            SELECT CAST(@TestValue AS ' + @TargetType + ') AS ConversionResult;
+        ';
+        EXEC sp_executesql @SQL, N'@TestValue VARCHAR(MAX)', @TestValue;
+    END TRY
+    BEGIN CATCH
+        INSERT INTO ConversionErrorLog 
+            (TestName, TestValue, TargetType, ErrorMessage, ErrorNumber, ErrorSeverity, ErrorState)
+        VALUES 
+            (@TestName, @TestValue, @TargetType,
+             ERROR_MESSAGE(), ERROR_NUMBER(), ERROR_SEVERITY(), ERROR_STATE());
+    END CATCH
+END;
+GO
+
+-- Test various edge cases and error conditions
+-- Overflow tests
+EXEC TestMoneyConversionWithErrorHandling 
+    'Overflow MONEY Max', '922337203685477.5808', 'MONEY';
+GO
+~~START~~
+money
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Overflow MONEY Min', '-922337203685477.5809', 'MONEY';
+GO
+~~START~~
+money
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Overflow SMALLMONEY Max', '214748.3648', 'SMALLMONEY';
+GO
+~~START~~
+smallmoney
+~~END~~
+
+~~ROW COUNT: 1~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Overflow SMALLMONEY Min', '-214748.3649', 'SMALLMONEY';
+GO
+~~START~~
+smallmoney
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Invalid format tests
+EXEC TestMoneyConversionWithErrorHandling 
+    'Invalid Characters', 'ABC123', 'MONEY';
+GO
+~~START~~
+money
+~~END~~
+
+~~ROW COUNT: 1~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Multiple Decimal Points', '123.45.67', 'MONEY';
+GO
+~~START~~
+money
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "123.45.67" is out of range for type fixeddecimal)~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Invalid Currency Format', '$$123.45', 'MONEY';
+GO
+~~START~~
+money
+123.4500
+~~END~~
+
+EXEC TestMoneyConversionWithErrorHandling 
+    'Mixed Separators', '1.234,56', 'MONEY';
+GO
+~~START~~
+money
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1.234,56" is out of range for type fixeddecimal)~~
+
+
+DROP PROCEDURE TestMoneyConversionWithErrorHandling
+GO
+
+DROP TABLE ConversionErrorLog
+GO
+
+-- Create table for testing conversions with different collations
+CREATE TABLE CollationTest (
+    ID INT IDENTITY(1,1),
+    StringValue NVARCHAR(50) COLLATE Latin1_General_CI_AI,
+    StringValue_CS_AS NVARCHAR(50) COLLATE Latin1_General_CS_AS
+);
+GO
+
+
+-- Insert test data with different formats
+INSERT INTO CollationTest (StringValue, StringValue_CS_AS)
+VALUES 
+('$123.45', '$123.45'),
+('€123,45', '€123,45'),
+('£123.45', '£123.45'),
+('¥123.45', '¥123.45');
+-- Test conversions with different collations
+SELECT 
+    ID,
+    TRY_CAST(StringValue AS MONEY) AS Money_CI_AI,
+    TRY_CAST(StringValue_CS_AS AS MONEY) AS Money_CS_AS
+FROM CollationTest;
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int#!#money#!#money
+1#!#123.4500#!#123.4500
+2#!#12345.0000#!#12345.0000
+3#!#123.4500#!#123.4500
+4#!#123.4500#!#123.4500
+~~END~~
+
+
+DROP TABLE CollationTest
+GO
+
+-- Test with various number formats and precisions
+CREATE TABLE NumberFormatTest (
+    ID INT IDENTITY(1,1),
+    TestCase VARCHAR(50),
+    InputValue VARCHAR(50),
+    MoneyResult MONEY NULL,
+    SmallMoneyResult SMALLMONEY NULL,
+    ConversionSuccess BIT DEFAULT 0
+);
+GO
+
+
+
+-- Insert test cases
+INSERT INTO NumberFormatTest (TestCase, InputValue) VALUES
+('Standard Format', '1234.56'),
+('Scientific Notation', '1.23456E+3'),
+('Negative Scientific', '-1.23456E+3'),
+('Leading Zeros', '00001234.56'),
+('Trailing Zeros', '1234.5600'),
+('No Decimal', '1234'),
+('Only Decimal', '.56'),
+('European Format', '1.234,56'),
+('Parentheses Negative', '(1234.56)'),
+('Currency Symbol', '$1,234.56'),
+('Multiple Grouping', '1,234,567.89'),
+('Zero Padded Decimal', '1234.560000000');
+-- Perform conversions with error handling
+UPDATE NumberFormatTest
+SET 
+    MoneyResult = TRY_CAST(InputValue AS MONEY),
+    SmallMoneyResult = TRY_CAST(InputValue AS SMALLMONEY),
+    ConversionSuccess = CASE 
+        WHEN TRY_CAST(InputValue AS MONEY) IS NOT NULL 
+        OR TRY_CAST(InputValue AS SMALLMONEY) IS NOT NULL 
+        THEN 1 
+        ELSE 0 
+    END;
+-- Display results
+SELECT * FROM NumberFormatTest ORDER BY ID;
+GO
+~~ROW COUNT: 12~~
+
+~~ROW COUNT: 12~~
+
+~~START~~
+int#!#varchar#!#varchar#!#money#!#smallmoney#!#bit
+1#!#Standard Format#!#1234.56#!#1234.5600#!#1234.5600#!#1
+2#!#Scientific Notation#!#1.23456E+3#!#<NULL>#!#<NULL>#!#0
+3#!#Negative Scientific#!#-1.23456E+3#!#<NULL>#!#<NULL>#!#0
+4#!#Leading Zeros#!#00001234.56#!#1234.5600#!#1234.5600#!#1
+5#!#Trailing Zeros#!#1234.5600#!#1234.5600#!#1234.5600#!#1
+6#!#No Decimal#!#1234#!#1234.0000#!#1234.0000#!#1
+7#!#Only Decimal#!#.56#!#0.5600#!#0.5600#!#1
+8#!#European Format#!#1.234,56#!#<NULL>#!#<NULL>#!#0
+9#!#Parentheses Negative#!#(1234.56)#!#<NULL>#!#<NULL>#!#0
+10#!#Currency Symbol#!#$1,234.56#!#1234.5600#!#1234.5600#!#1
+11#!#Multiple Grouping#!#1,234,567.89#!#1234567.8900#!#<NULL>#!#1
+12#!#Zero Padded Decimal#!#1234.560000000#!#1234.5600#!#1234.5600#!#1
+~~END~~
+
+
+DROP TABLE NumberFormatTest
+GO
+
+-- Test arithmetic operations with conversion
+CREATE TABLE ArithmeticTest (
+    ID INT IDENTITY(1,1),
+    Operation VARCHAR(50),
+    Value1 VARCHAR(50),
+    Value2 VARCHAR(50),
+    MoneyResult MONEY NULL,
+    SmallMoneyResult SMALLMONEY NULL,
+    CalculationSuccess BIT DEFAULT 0
+);
+GO
+
+
+
+-- Insert test cases
+INSERT INTO ArithmeticTest (Operation, Value1, Value2) VALUES
+('Addition', '123.45', '678.90'),
+('Subtraction', '1000.00', '123.45'),
+('Multiplication', '123.45', '2'),
+('Division', '1000.00', '2'),
+('Complex', '123.45', '1.1');
+-- Perform calculations with error handling
+UPDATE ArithmeticTest
+SET 
+    MoneyResult = 
+        CASE Operation
+            WHEN 'Addition' THEN TRY_CAST(Value1 AS MONEY) + TRY_CAST(Value2 AS MONEY)
+            WHEN 'Subtraction' THEN TRY_CAST(Value1 AS MONEY) - TRY_CAST(Value2 AS MONEY)
+            WHEN 'Multiplication' THEN TRY_CAST(Value1 AS MONEY) * TRY_CAST(Value2 AS MONEY)
+            WHEN 'Division' THEN TRY_CAST(Value1 AS MONEY) / TRY_CAST(Value2 AS MONEY)
+            WHEN 'Complex' THEN TRY_CAST(Value1 AS MONEY) * TRY_CAST(Value2 AS MONEY) + 
+                                TRY_CAST(Value1 AS MONEY)
+        END,
+    SmallMoneyResult = 
+        CASE Operation
+            WHEN 'Addition' THEN TRY_CAST(Value1 AS SMALLMONEY) + TRY_CAST(Value2 AS SMALLMONEY)
+            WHEN 'Subtraction' THEN TRY_CAST(Value1 AS SMALLMONEY) - TRY_CAST(Value2 AS SMALLMONEY)
+            WHEN 'Multiplication' THEN TRY_CAST(Value1 AS SMALLMONEY) * TRY_CAST(Value2 AS SMALLMONEY)
+            WHEN 'Division' THEN TRY_CAST(Value1 AS SMALLMONEY) / TRY_CAST(Value2 AS SMALLMONEY)
+            WHEN 'Complex' THEN TRY_CAST(Value1 AS SMALLMONEY) * TRY_CAST(Value2 AS SMALLMONEY) + 
+                                TRY_CAST(Value1 AS SMALLMONEY)
+        END,
+    CalculationSuccess = 1;
+-- Display results
+SELECT * FROM ArithmeticTest ORDER BY ID;
+GO
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 5~~
+
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#money#!#smallmoney#!#bit
+1#!#Addition#!#123.45#!#678.90#!#802.3500#!#802.3500#!#1
+2#!#Subtraction#!#1000.00#!#123.45#!#876.5500#!#876.5500#!#1
+3#!#Multiplication#!#123.45#!#2#!#246.9000#!#246.9000#!#1
+4#!#Division#!#1000.00#!#2#!#500.0000#!#500.0000#!#1
+5#!#Complex#!#123.45#!#1.1#!#259.2450#!#259.2450#!#1
+~~END~~
+
+
+DROP TABLE ArithmeticTest
+GO
+
+-- Testing with XML conversions
+CREATE TABLE XMLTest (
+    ID INT IDENTITY(1,1),
+    XMLData XML,
+    MoneyValue MONEY,
+    SmallMoneyValue SMALLMONEY
+);
+GO
+
+
+
+-- Insert test data
+INSERT INTO XMLTest (XMLData)
+VALUES 
+('<money><value>123.45</value></money>'),
+('<money><value>-123.45</value></money>'),
+('<money><value>0.00</value></money>'),
+('<money><value>922337203685477.5807</value></money>');
+-- Update with converted values
+UPDATE XMLTest
+SET 
+    MoneyValue = t.XMLData.value('(//value)[1]', 'MONEY'),
+    SmallMoneyValue = t.XMLData.value('(//value)[1]', 'SMALLMONEY')
+FROM XMLTest t
+WHERE t.XMLData IS NOT NULL;
+-- Display results
+SELECT * FROM XMLTest;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'XML VALUE' is not currently supported in Babelfish)~~
+
+
+-- Testing with JSON conversions
+CREATE TABLE JSONTest (
+    ID INT IDENTITY(1,1),
+    JSONData NVARCHAR(MAX),
+    MoneyValue MONEY,
+    SmallMoneyValue SMALLMONEY
+);
+GO
+
+
+
+-- Insert test data
+INSERT INTO JSONTest (JSONData)
+VALUES 
+('{"value": 123.45}'),
+('{"value": -123.45}'),
+('{"value": 0.00}'),
+('{"value": 922337203685477.5807}');
+-- Update with converted values
+UPDATE JSONTest
+SET 
+    MoneyValue = JSON_VALUE(JSONData, '$.value'),
+    SmallMoneyValue = JSON_VALUE(JSONData, '$.value')
+WHERE JSONData IS NOT NULL;
+-- Display results
+SELECT * FROM JSONTest;
+GO
+~~ROW COUNT: 4~~
+
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+~~START~~
+int#!#nvarchar#!#money#!#smallmoney
+1#!#{"value": 123.45}#!#<NULL>#!#<NULL>
+2#!#{"value": -123.45}#!#<NULL>#!#<NULL>
+3#!#{"value": 0.00}#!#<NULL>#!#<NULL>
+4#!#{"value": 922337203685477.5807}#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Cleanup
+DROP TABLE IF EXISTS XMLTest;
+DROP TABLE IF EXISTS JSONTest;
+GO
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------
+---- 7. Aggregate Function Tests
+------------------------------------------------------------------------
+-- CLEANUP
+DROP TABLE MoneyTestTable1
+GO
+
+
+
+
+
+
