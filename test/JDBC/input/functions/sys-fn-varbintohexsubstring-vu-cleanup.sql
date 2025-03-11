@@ -6,3 +6,9 @@ GO
 
 DROP FUNCTION fn_varbintohexsubstring_vu_prepare_func
 GO
+
+DROP TABLE babel_5654_t1
+GO
+
+DROP TABLE babel_5654_t2
+GO

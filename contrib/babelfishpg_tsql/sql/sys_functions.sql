@@ -4135,30 +4135,30 @@ BEGIN
 END; 
 $$ LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, substr_length INT)
-RETURNS sys.nvarchar(128) AS 
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix sys.BIT, expression sys.varbinary, start_offset INT, substr_length INT)
+RETURNS sys.nvarchar AS 
 $$ 
 DECLARE 
-    pstrout sys.nvarchar(128);
+    pstrout sys.nvarchar;
     hex_str text;
 BEGIN 
     IF expression IS NULL THEN 
         RETURN NULL;
     END IF;
 
-    IF substr_length IS NULL OR substr_length <= 0 OR substr_length > LEN(expression) THEN 
-        substr_length := LEN(expression);
+    IF substr_length IS NULL OR substr_length <= 0 OR substr_length > sys.LEN(expression) THEN 
+        substr_length := sys.LEN(expression);
     END IF;
 
-    IF start_offset < 1 OR start_offset > LEN(expression) THEN 
+    IF start_offset IS NULL OR start_offset < 1 OR start_offset > sys.LEN(expression) THEN 
         RETURN NULL;
     END IF;
 
-    IF (LEN(expression) - start_offset + 1) < substr_length THEN 
-        substr_length := LEN(expression) - start_offset + 1;
+    IF (sys.LEN(expression) - start_offset + 1) < substr_length THEN 
+        substr_length := sys.LEN(expression) - start_offset + 1;
     END IF;
 
-    hex_str := LOWER(ENCODE(SUBSTRING(expression, start_offset, substr_length)::bytea, 'hex'));
+    hex_str := sys.LOWER(pg_catalog.ENCODE(sys.SUBSTRING(expression, start_offset, substr_length)::bytea, 'hex'));
 
     pstrout := CASE 
                 WHEN set_prefix IS NULL THEN N''
@@ -4168,7 +4168,7 @@ BEGIN
     RETURN pstrout;
 END;
 $$ 
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,

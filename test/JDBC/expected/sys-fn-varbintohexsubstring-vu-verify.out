@@ -3,7 +3,7 @@ SELECT * FROM fn_varbintohexsubstring_vu_prepare_view
 GO
 ~~START~~
 nvarchar
-0x30783132
+0x1234
 ~~END~~
 
 
@@ -11,7 +11,7 @@ EXEC fn_varbintohexsubstring_vu_prepare_proc
 GO
 ~~START~~
 nvarchar
-0x30783132
+0x1234
 ~~END~~
 
 
@@ -19,7 +19,7 @@ SELECT * FROM fn_varbintohexsubstring_vu_prepare_func()
 GO
 ~~START~~
 nvarchar
-0x30783132
+0x1234
 ~~END~~
 
 
@@ -205,4 +205,44 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+
+
+-- validate check constraint
+INSERT INTO babel_5654_t1 VALUES (0,0x123486534659789876435656,1,4)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5654_t1 VALUES (1,0x123486534659789876435656,1,4)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5654_t1 VALUES (1,0x123486534659789876435656,3,4)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_5654_t1
+GO
+~~START~~
+int#!#varbinary#!#int#!#int
+0#!#123486534659789876435656#!#1#!#4
+0#!#123486534659789876435656#!#1#!#4
+1#!#123486534659789876435656#!#1#!#4
+1#!#123486534659789876435656#!#3#!#4
+~~END~~
+
+
+-- computed columns
+INSERT INTO babel_5654_t2 VALUES (1,0x23486534659789876435656,3,4)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_5654_t2 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
+GO
+~~START~~
+int#!#varbinary#!#int#!#int#!#nvarchar
+1#!#023486534659789876435656#!#3#!#4#!#0x86534659
+~~END~~
+
 

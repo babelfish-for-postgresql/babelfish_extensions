@@ -83,3 +83,22 @@ GO
 -- negative test gives error as the expression datatype is not varbinary
 SELECT sys.fn_varbintohexsubstring(1,'1A2B3C4D', 2, 4);  
 GO
+
+-- validate check constraint
+INSERT INTO babel_5654_t1 VALUES (0,0x123486534659789876435656,1,4)
+GO
+INSERT INTO babel_5654_t1 VALUES (1,0x123486534659789876435656,1,4)
+GO
+INSERT INTO babel_5654_t1 VALUES (1,0x123486534659789876435656,3,4)
+GO
+
+SELECT * FROM babel_5654_t1
+GO
+
+-- computed columns
+INSERT INTO babel_5654_t2 VALUES (1,0x23486534659789876435656,3,4)
+GO
+
+SELECT * FROM babel_5654_t2 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
+GO
+
