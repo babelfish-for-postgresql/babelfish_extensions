@@ -109,22 +109,6 @@ create function object_ownership_s2.old_f1() returns int begin declare @a int; s
 go
 create sequence object_ownership_s2.old_sq1 start with 1 increment by 1 ;
 go
-create index old_idx1 on object_ownership_s2.old_t1(a);
-go
-create trigger object_ownership_s2.old_tr1 on object_ownership_s2.old_t1 after insert as select 1;
-go
-create function object_ownership_s2.old_tvf1() returns table as return (select '1' as col);
-go
-create function object_ownership_s2.old_mtvf1()
-returns @result table([Id] int) AS
-begin
-    insert into @result values (1) return 
-end
-go
-create type object_ownership_s2.old_type1 from sys.varchar(10)
-go
-create type object_ownership_s2.old_ttype1 as table (id int)
-go
 
 /** OBJECT OWNER NOT SAME AS SCHEMA OWNER **/
 /** SCHEMA OWNED BY ROLE, OBJECTS OWNER **/

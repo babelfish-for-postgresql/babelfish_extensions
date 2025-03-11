@@ -871,7 +871,7 @@ SELECT
 GRANT SELECT ON sys.extended_properties TO PUBLIC;
 
 /* Shows the list of objects where the object owner is not same as schema owner */
-/* Covers tables, views, functions, procedures, sequences */
+/* Covers tables, views, functions, procedures, sequences, types */
 CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
 RETURNS TABLE (
     schema_name name,
@@ -884,16 +884,21 @@ $$
 BEGIN
     RETURN QUERY
     WITH common_schemas AS (
-        SELECT
-            b.nspname AS schema_name
-        FROM
-            sys.babelfish_namespace_ext b
-        JOIN
-            pg_namespace n ON b.nspname = n.nspname
-        WHERE
-            b.orig_name <> 'dbo'
+      SELECT
+          b.nspname AS schema_name
+      FROM
+          sys.babelfish_namespace_ext b
+      JOIN
+          pg_namespace n ON b.nspname = n.nspname
+      JOIN
+          pg_roles r ON n.nspowner = r.oid
+      JOIN
+          sys.babelfish_authid_user_ext u ON r.rolname = u.rolname
+      WHERE
+          u.orig_username <> 'db_owner'
     )
-    -- First query for tables, views, and sequences
+    -- First query for tables, views, index, types and sequences
+    -- table types are considered as tables
     SELECT 
         cs.schema_name::name,
         r1.rolname,
@@ -910,17 +915,18 @@ BEGIN
     JOIN 
         pg_namespace n ON cs.schema_name = n.nspname
     JOIN
-        pg_class c ON cs.schema_name = c.relnamespace::regnamespace::text
+        pg_class c ON n.oid = c.relnamespace
     JOIN
         pg_roles r1 ON n.nspowner = r1.oid
     JOIN
         pg_roles r2 ON c.relowner = r2.oid
     WHERE 
         c.relkind IN ('r', 'v', 'S')
+        AND c.relname NOT LIKE '@%' -- Ignore temporary tables
         AND r1.rolname <> r2.rolname
-        AND r2.rolname <> 'sysadmin'
     UNION ALL
     -- Second query for functions and procedures
+    -- triggers are considered as functions
     SELECT 
         cs.schema_name::name,
         r1.rolname,
@@ -941,26 +947,20 @@ BEGIN
         pg_proc p ON n.oid = p.pronamespace
     JOIN 
         pg_roles r2 ON p.proowner = r2.oid
+    LEFT JOIN
+        pg_trigger t ON p.oid = t.tgfoid
     WHERE 
         p.prokind IN ('f', 'p')
         AND r1.rolname <> r2.rolname
-        AND r2.rolname <> 'sysadmin'
+        AND t.oid IS NULL  -- Exclude trigger functions
     UNION ALL
-    -- Third query for types
+    -- Third query is for types(excluding table types)
     SELECT 
-      cs.schema_name::name,
-      r1.rolname,
-      t.typname,
-      r2.rolname,
-      CASE t.typtype
-          WHEN 'b' THEN 'base type'
-          WHEN 'c' THEN 'composite type'
-          WHEN 'd' THEN 'domain'
-          WHEN 'e' THEN 'enum type'
-          WHEN 'r' THEN 'range type'
-          WHEN 'm' THEN 'multirange'
-          ELSE t.typtype::text
-      END
+        cs.schema_name::name,
+        r1.rolname,
+        t.typname,
+        r2.rolname,
+        'type'::text
     FROM 
         common_schemas cs
     JOIN 
@@ -968,15 +968,96 @@ BEGIN
     JOIN 
         pg_roles r1 ON n.nspowner = r1.oid
     JOIN 
-        pg_catalog.pg_type t ON n.oid = t.typnamespace
+        pg_type t ON n.oid = t.typnamespace
     JOIN 
         pg_roles r2 ON t.typowner = r2.oid
     WHERE 
-        t.typtype IN ('b', 'c', 'd', 'e', 'r', 'm')
+        t.typtype = 'd' -- Only show domain data type
         AND r1.rolname <> r2.rolname
-        AND r2.rolname <> 'sysadmin'
-        AND t.typname NOT LIKE '_%'  -- Filter out system types
     ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
 END;
 $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.get_schema_object_ownership TO PUBLIC;
+
+/*
+ * Gives a list of ALTER statements that, when executed, 
+ * will change the ownership of all the objects to match their schema owners.
+ */
+CREATE OR REPLACE FUNCTION sys.generate_alter_ownership_statements()
+RETURNS TABLE (alter_statement text)
+AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM sys.get_schema_object_ownership()
+    LOOP
+        CASE obj.object_type
+            WHEN 'table' THEN
+                alter_statement := format('ALTER TABLE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'view' THEN
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;';
+                RETURN NEXT;
+
+                alter_statement := format('ALTER VIEW %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;';
+                RETURN NEXT;
+            WHEN 'sequence' THEN
+                alter_statement := format('ALTER SEQUENCE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'function' THEN
+                alter_statement := format('ALTER FUNCTION %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'procedure' THEN
+                alter_statement := format('ALTER PROCEDURE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'type' THEN
+                alter_statement := format('ALTER TYPE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            ELSE
+                alter_statement := format('-- Unsupported object type: %s for %I.%I',
+                                          obj.object_type, obj.schema_name, obj.object_name);
+                RETURN NEXT;
+        END CASE;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.generate_alter_ownership_statements TO PUBLIC;
+
+/*
+ * Executes the list of ALTER statements generated by generate_alter_ownership_statements()
+ * where the object owner is not same as schema owner
+ */
+CREATE OR REPLACE FUNCTION sys.execute_alter_ownership_statements()
+RETURNS TABLE (
+    statement_executed text,
+    execution_status text
+)
+AS $$
+DECLARE
+    stmt text;
+BEGIN
+    FOR stmt IN SELECT alter_statement FROM sys.generate_alter_ownership_statements()
+    LOOP
+        BEGIN
+            EXECUTE stmt;
+            statement_executed := stmt;
+            execution_status := 'SUCCESS';
+            RETURN NEXT;
+        EXCEPTION WHEN OTHERS THEN
+            statement_executed := stmt;
+            execution_status := 'FAILED: ' || SQLERRM;
+            RETURN NEXT;
+        END;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.execute_alter_ownership_statements TO PUBLIC;

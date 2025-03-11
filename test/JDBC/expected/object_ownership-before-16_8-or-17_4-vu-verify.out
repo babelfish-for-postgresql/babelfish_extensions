@@ -2,9 +2,153 @@
 ALTER LOGIN object_ownership_l1 WITH PASSWORD = '123'
 GO
 
-/**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+create login object_ownership_l2 with password = '123'
+go
 use object_ownership_db;
 go
+create user object_ownership_u2 for login object_ownership_l2;
+go
+alter role object_ownership_r1 add member object_ownership_u2;
+go
+use master;
+go
+
+-- tsql user=object_ownership_l2 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u2
+~~END~~
+
+
+/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNER AND OBJECT OWNERS ARE DIFFERENT ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY USER ***/
+select * from object_ownership_s3.old_t;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s3.old_v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s3.old_p;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure old_p)~~
+
+select object_ownership_s3.old_f();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function old_f)~~
+
+insert into object_ownership_s3.old_t values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s3.old_sq;
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence old_sq)~~
+
+use master
+go
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u1
+~~END~~
+
+
+/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNER AND OBJECT OWNERS ARE DIFFERENT ***/
+/*** SCHEMA OWNED BY USER, OBJECTS OWNED BY DBO ***/
+select * from object_ownership_s2.old_t;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s2.old_v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s2.old_p;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure old_p)~~
+
+select object_ownership_s2.old_f();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function old_f)~~
+
+insert into object_ownership_s2.old_t values (2, 3);
+go
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s2.old_sq;
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence old_sq)~~
+
+select * from object_ownership_s2.old_tvf();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function object_ownership_s2.old_tvf() does not exist)~~
+
+select * from object_ownership_s2.old_mtvf();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function object_ownership_s2.old_mtvf() does not exist)~~
+
+use master
+go
+
+-- tsql
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+/**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/
 select * from get_schema_object_ownership();
 go
 ~~START~~
@@ -16,40 +160,111 @@ object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u
 object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_v#!#object_ownership_db_dbo#!#view
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f#!#object_ownership_db_dbo#!#function
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f1#!#object_ownership_db_object_ownership_u1#!#function
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_mtvf#!#object_ownership_db_dbo#!#function
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_mtvf1#!#object_ownership_db_object_ownership_u1#!#function
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_p#!#object_ownership_db_dbo#!#procedure
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_p1#!#object_ownership_db_object_ownership_u1#!#procedure
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_sq#!#object_ownership_db_dbo#!#sequence
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_sq1#!#object_ownership_db_object_ownership_u1#!#sequence
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_t#!#object_ownership_db_dbo#!#table
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_t1#!#object_ownership_db_object_ownership_u1#!#table
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_ttype#!#object_ownership_db_dbo#!#table
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_ttype1#!#object_ownership_db_object_ownership_u1#!#table
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_tvf#!#object_ownership_db_dbo#!#function
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_tvf1#!#object_ownership_db_object_ownership_u1#!#function
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_type#!#object_ownership_db_dbo#!#type
+object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_type1#!#object_ownership_db_object_ownership_u1#!#type
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_v#!#object_ownership_db_dbo#!#view
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_v1#!#object_ownership_db_object_ownership_u1#!#view
 ~~END~~
 
 
+/*** SHOWS THE LIST OF ALTER STATEMENTS TO BE EXECUTED ***/
+select * from generate_alter_ownership_statements();
+go
+~~START~~
+text
+ALTER FUNCTION object_ownership_db_object_ownership_s2.old_f OWNER TO object_ownership_db_object_ownership_u1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s2.old_p OWNER TO object_ownership_db_object_ownership_u1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_sq OWNER TO object_ownership_db_object_ownership_u1;
+ALTER TABLE object_ownership_db_object_ownership_s2.old_t OWNER TO object_ownership_db_object_ownership_u1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s2.old_v OWNER TO object_ownership_db_object_ownership_u1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p OWNER TO object_ownership_db_object_ownership_r1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq OWNER TO object_ownership_db_object_ownership_r1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type1 OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v1 OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+~~END~~
+
+
+/*** EXECUTES THE ALTER STATEMENTS ***/
+SELECT * FROM execute_alter_ownership_statements();
+GO
+~~START~~
+text#!#text
+ALTER FUNCTION object_ownership_db_object_ownership_s2.old_f OWNER TO object_ownership_db_object_ownership_u1;#!#SUCCESS
+ALTER PROCEDURE object_ownership_db_object_ownership_s2.old_p OWNER TO object_ownership_db_object_ownership_u1;#!#SUCCESS
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_sq OWNER TO object_ownership_db_object_ownership_u1;#!#SUCCESS
+ALTER TABLE object_ownership_db_object_ownership_s2.old_t OWNER TO object_ownership_db_object_ownership_u1;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;#!#SUCCESS
+ALTER VIEW object_ownership_db_object_ownership_s2.old_v OWNER TO object_ownership_db_object_ownership_u1;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;#!#SUCCESS
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;#!#SUCCESS
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v1 OWNER TO object_ownership_db_object_ownership_r1;#!#SUCCESS
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;#!#SUCCESS
+~~END~~
+
+
+/**** THERE SHOULD BE NO MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+select * from get_schema_object_ownership();
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+~~END~~
+
+
+-- tsql user=object_ownership_l2 password=123
 /********** CREATE NEW OBJECTS IN ALL THE SCHEMAS **********/
-create table object_ownership_s1.new_t(a int, b int);
+use object_ownership_db;
 go
-create view object_ownership_s1.new_v as select 1;
-go
-create proc object_ownership_s1.new_p as select 2;
-go
-create function object_ownership_s1.new_f() returns int begin declare @a int; set @a = 1; return @a; END
-go
-create sequence object_ownership_s1.new_sq start with 1 increment by 1 ;
-go
-
-create table object_ownership_s2.new_t(a int, b int);
-go
-create view object_ownership_s2.new_v as select 1;
-go
-create proc object_ownership_s2.new_p as select 2;
-go
-create function object_ownership_s2.new_f() returns int begin declare @a int; set @a = 1; return @a; END
-go
-create sequence object_ownership_s2.new_sq start with 1 increment by 1 ;
-go
-
 create table object_ownership_s3.new_t(a int, b int);
 go
 create view object_ownership_s3.new_v as select 1;
@@ -77,25 +292,110 @@ go
 create type object_ownership_s3.new_ttype as table (id int)
 go
 
-/**** SHOWS MISMATCHED SCHEMA AND OBJECT OWNERS ******/
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+select * from object_ownership_s3.old_t;
+go
+~~START~~
+int#!#int
+2#!#3
+~~END~~
+
+select * from object_ownership_s3.old_v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s3.old_p;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s3.old_f();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s3.old_t values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s3.old_sq;
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u1
+~~END~~
+
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+select * from object_ownership_s2.old_t;
+go
+~~START~~
+int#!#int
+2#!#3
+~~END~~
+
+select * from object_ownership_s2.old_v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s2.old_p;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s2.old_f();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s2.old_t values (2, 3);
+go
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s2.old_sq;
+go
+~~START~~
+bigint
+1
+~~END~~
+
+use master
+go
+
+/**** THERE SHOULD BE NO MISMATCHED OBJECT AND SCHEMA OWNERS ******/
 select * from get_schema_object_ownership();
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#text
-object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_f#!#object_ownership_db_dbo#!#function
-object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_p#!#object_ownership_db_dbo#!#procedure
-object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_sq#!#object_ownership_db_dbo#!#sequence
-object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_t#!#object_ownership_db_dbo#!#table
-object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_v#!#object_ownership_db_dbo#!#view
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f#!#object_ownership_db_dbo#!#function
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f1#!#object_ownership_db_object_ownership_u1#!#function
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_p#!#object_ownership_db_dbo#!#procedure
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_p1#!#object_ownership_db_object_ownership_u1#!#procedure
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_sq#!#object_ownership_db_dbo#!#sequence
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_sq1#!#object_ownership_db_object_ownership_u1#!#sequence
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_t#!#object_ownership_db_dbo#!#table
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_t1#!#object_ownership_db_object_ownership_u1#!#table
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_v#!#object_ownership_db_dbo#!#view
-object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_v1#!#object_ownership_db_object_ownership_u1#!#view
 ~~END~~
 
