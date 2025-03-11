@@ -20,3 +20,18 @@ go
 varchar#!#varchar
 ~~END~~
 
+
+-- psql currentSchema=master_dbo,public
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_func_db_dbo');
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#varchar
+~~END~~
+
+
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_proc_db_dbo');
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#varchar
+~~END~~
+

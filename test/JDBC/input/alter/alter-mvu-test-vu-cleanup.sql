@@ -12,3 +12,10 @@ go
 
 SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_proc%'
 go
+
+-- psql currentSchema=master_dbo,public
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_func_db_dbo');
+go
+
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_proc_db_dbo');
+go
