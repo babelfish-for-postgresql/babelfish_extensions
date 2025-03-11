@@ -5313,7 +5313,7 @@ is_partition_function_used(int16 dbid, const char *partition_function_name)
  */
 void
 add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name, char *typname,
-					bool partition_option, ArrayType *values)
+					bool partition_option, ArrayType *values, char *collation)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -5337,6 +5337,15 @@ add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_n
 	new_record[Anum_bbf_partition_function_partition_option - 1] = BoolGetDatum(partition_option);
 	new_record[Anum_bbf_partition_function_range_values - 1] = PointerGetDatum(values);
 	new_record[6] = new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+
+	if (collation)
+	{
+		NameData input_parameter_collation;
+		namestrcpy(&input_parameter_collation, collation);
+		new_record[Anum_bbf_partition_function_input_parameter_collation - 1] = NameGetDatum(&input_parameter_collation);
+	}
+	else
+		new_record_nulls[Anum_bbf_partition_function_input_parameter_collation - 1] = true;
 
 	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
 
