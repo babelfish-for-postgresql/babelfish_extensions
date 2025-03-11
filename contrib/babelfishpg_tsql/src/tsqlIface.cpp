@@ -710,13 +710,12 @@ void PLtsql_expr_query_mutator::run()
 					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
-			// Note: the test below does not work, and has never worked, because size_t will not be negative, 
-			// and the result of the subtraction is also of type size_t.
-			// This test has been in the code since day 1. 
-			// When making the test work, some test cases will start failing as they run into this condition 
-			// (test table_variable_xact_errors and two variants). Therefore, not touching the test for now.
-			if (offset - cursor < 0)
-				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to multiple mutations on the same position", 0, 0);
+			/* detect multiple mutations on the same position */
+			if (offset < cursor)
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, 
+					"Can't mutate an internal query: detected multiple mutations on the same position", 0, 0);
+			}
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
 				rewritten_query += query.substr(cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
 			rewritten_query += repl_text;
