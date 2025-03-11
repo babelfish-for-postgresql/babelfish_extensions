@@ -29,16 +29,15 @@ object_ownership_u2
 /*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY USER ***/
 select * from object_ownership_s3.old_t;
 go
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table old_t)~~
 
 select * from object_ownership_s3.old_v;
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view old_v)~~
 
 exec object_ownership_s3.old_p;
 go
@@ -54,12 +53,9 @@ go
 
 insert into object_ownership_s3.old_t values (2, 3);
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: permission denied for table old_t)~~
 
 select next value for object_ownership_s3.old_sq;
 go
@@ -68,6 +64,18 @@ bigint
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for sequence old_sq)~~
+
+select * from object_ownership_s3.old_tvf();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function old_tvf)~~
+
+select * from object_ownership_s3.old_mtvf();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function old_mtvf)~~
 
 use master
 go
@@ -88,16 +96,15 @@ object_ownership_u1
 /*** SCHEMA OWNED BY USER, OBJECTS OWNED BY DBO ***/
 select * from object_ownership_s2.old_t;
 go
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table old_t)~~
 
 select * from object_ownership_s2.old_v;
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view old_v)~~
 
 exec object_ownership_s2.old_p;
 go
@@ -113,7 +120,9 @@ go
 
 insert into object_ownership_s2.old_t values (2, 3);
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table old_t)~~
 
 select next value for object_ownership_s2.old_sq;
 go
@@ -122,18 +131,6 @@ bigint
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for sequence old_sq)~~
-
-select * from object_ownership_s2.old_tvf();
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function object_ownership_s2.old_tvf() does not exist)~~
-
-select * from object_ownership_s2.old_mtvf();
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function object_ownership_s2.old_mtvf() does not exist)~~
 
 use master
 go
@@ -297,7 +294,6 @@ select * from object_ownership_s3.old_t;
 go
 ~~START~~
 int#!#int
-2#!#3
 ~~END~~
 
 select * from object_ownership_s3.old_v;
@@ -354,7 +350,6 @@ select * from object_ownership_s2.old_t;
 go
 ~~START~~
 int#!#int
-2#!#3
 ~~END~~
 
 select * from object_ownership_s2.old_v;
