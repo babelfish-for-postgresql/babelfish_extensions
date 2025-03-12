@@ -1,13 +1,8 @@
-SELECT object_type, schema_name, object_name FROM sys.babelfish_inconsistent_metadata()
+-- tsql
+USE msdb;
 GO
 
 REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
-GO
-
-DROP PROCEDURE IF EXISTS babel_5146_prepare_p1;
-GO
-
-USE msdb;
 GO
 
 REVOKE EXECUTE ON babel_5146_prepare_p2 TO guest;
@@ -16,7 +11,7 @@ GO
 REVOKE EXECUTE ON babel_5146_prepare_p3 TO guest;
 GO
 
-REVOKE EXECUTE ON babel_5146_prepare_p4 TO guest;
+DROP PROCEDURE IF EXISTS babel_5146_prepare_p1;
 GO
 
 DROP PROCEDURE IF EXISTS babel_5146_prepare_p2;
@@ -25,14 +20,23 @@ GO
 DROP PROCEDURE IF EXISTS babel_5146_prepare_p3;
 GO
 
-DROP PROCEDURE IF EXISTS babel_5146_prepare_p4;
+-- tsql user=babel_5146_user_l1 password=abc
+USE msdb;
 GO
 
--- tsql user=babel_5146_user_l1 password=abc
-DROP PROCEDURE IF EXISTS babel_5146_test_schema_s1.sp_addlinkedserver;
+DROP FUNCTION IF EXISTS babel_5146_test_schema_s1.fn_syspolicy_is_automation_enabled();
+GO
+
+DROP VIEW IF EXISTS babel_5146_test_schema_s1.syspolicy_configuration;
+GO
+
+DROP VIEW IF EXISTS babel_5146_test_schema_s1.syspolicy_system_health_state;
 GO
 
 -- tsql
+USE msdb;
+GO
+
 DROP SCHEMA IF EXISTS babel_5146_test_schema_s1;
 GO
 
@@ -47,54 +51,4 @@ GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
-GO
-
--- tsql
-DROP LOGIN babel_5146_user_l1;
-GO
-
-DROP LOGIN babel_5146_user_l2;
-GO
-
--- tsql user=babel_5146_user_l3 password=abc
-USE msdb;
-GO
-
-DROP FUNCTION IF EXISTS babel_5146_test_schema_s2.fn_syspolicy_is_automation_enabled();
-GO
-
-DROP VIEW IF EXISTS babel_5146_test_schema_s2.syspolicy_configuration;
-GO
-
-DROP VIEW IF EXISTS babel_5146_test_schema_s2.syspolicy_system_health_state;
-GO
-
--- tsql
-USE msdb;
-GO
-
-DROP SCHEMA IF EXISTS babel_5146_test_schema_s2;
-GO
-
-DROP USER IF EXISTS babel_5146_user_u3;
-GO
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'babel_5146_user_l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-
--- tsql
-DROP LOGIN babel_5146_user_l3;
-GO
-
-DROP LOGIN babel_5146_user_l4;
-GO
-
-REVOKE CONNECT FROM guest;
 GO

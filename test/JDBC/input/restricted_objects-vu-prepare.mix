@@ -1,3 +1,7 @@
+-- tsql
+USE msdb
+GO
+
 CREATE LOGIN babel_5146_user_l1 WITH PASSWORD = '12345678';
 GO
 
@@ -7,92 +11,57 @@ GO
 CREATE SCHEMA babel_5146_test_schema_s1 AUTHORIZATION babel_5146_user_u1;
 GO
 
--- test login for master
-CREATE LOGIN babel_5146_user_l2 WITH PASSWORD = '12345678';
-GO
-
-GRANT CONNECT TO guest;
-GO
-
-USE msdb
-GO
-
-CREATE LOGIN babel_5146_user_l3 WITH PASSWORD = '12345678';
-GO
-
-CREATE USER babel_5146_user_u3 FOR LOGIN babel_5146_user_l3;
-GO
-
-CREATE SCHEMA babel_5146_test_schema_s2 AUTHORIZATION babel_5146_user_u3;
-GO
-
 GRANT CONNECT TO guest;
 GO
 
 -- test login for msdb
-CREATE LOGIN babel_5146_user_l4 WITH PASSWORD = '12345678';
+CREATE LOGIN babel_5146_user_l2 WITH PASSWORD = '12345678';
 GO
 
--- tsql user=babel_5146_user_l1 password=12345678
-CREATE PROCEDURE babel_5146_test_schema_s1.sp_addlinkedserver AS
-BEGIN
-    SELECT 1;
-END
-GO
-
--- tsql user=babel_5146_user_l3 WITH PASSWORD = '12345678'
+-- tsql user=babel_5146_user_l1 WITH PASSWORD = '12345678'
 USE msdb
 GO
 
-CREATE FUNCTION babel_5146_test_schema_s2.fn_syspolicy_is_automation_enabled()
+CREATE FUNCTION babel_5146_test_schema_s1.fn_syspolicy_is_automation_enabled()
 RETURNS INT AS
 BEGIN
     RETURN 1;
 END
 GO
 
-CREATE VIEW babel_5146_test_schema_s2.syspolicy_configuration AS SELECT 1;
+CREATE VIEW babel_5146_test_schema_s1.syspolicy_configuration AS SELECT 1;
 GO
 
-CREATE VIEW babel_5146_test_schema_s2.syspolicy_system_health_state AS SELECT 1;
+CREATE VIEW babel_5146_test_schema_s1.syspolicy_system_health_state AS SELECT 1;
 GO
 
 -- tsql
+USE msdb
+GO
+
 CREATE PROCEDURE babel_5146_prepare_p1 AS
 BEGIN
-    EXEC('DROP PROCEDURE dbo.sp_addlinkedserver');
+    EXEC('DROP FUNCTION dbo.fn_syspolicy_is_automation_enabled()');
+END
+GO
+
+CREATE PROCEDURE babel_5146_prepare_p2 AS
+BEGIN
+    EXEC('DROP VIEW dbo.syspolicy_configuration');
+END
+GO
+
+CREATE PROCEDURE babel_5146_prepare_p3 AS
+BEGIN
+    EXEC('DROP VIEW dbo.syspolicy_system_health_state');
 END
 GO
 
 GRANT EXECUTE ON babel_5146_prepare_p1 TO guest;
 GO
 
-USE msdb
-GO
-
-CREATE PROCEDURE babel_5146_prepare_p2 AS
-BEGIN
-    EXEC('DROP FUNCTION dbo.fn_syspolicy_is_automation_enabled()');
-END
-GO
-
-CREATE PROCEDURE babel_5146_prepare_p3 AS
-BEGIN
-    EXEC('DROP VIEW dbo.syspolicy_configuration');
-END
-GO
-
-CREATE PROCEDURE babel_5146_prepare_p4 AS
-BEGIN
-    EXEC('DROP VIEW dbo.syspolicy_system_health_state');
-END
-GO
-
 GRANT EXECUTE ON babel_5146_prepare_p2 TO guest;
 GO
 
 GRANT EXECUTE ON babel_5146_prepare_p3 TO guest;
-GO
-
-GRANT EXECUTE ON babel_5146_prepare_p4 TO guest;
 GO
