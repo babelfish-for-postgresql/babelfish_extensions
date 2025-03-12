@@ -2,29 +2,6 @@
 use object_ownership_db;
 go
 
-drop index new_idx on object_ownership_s3.new_t;
-go
-drop trigger object_ownership_s3.new_tr;
-go
-drop function object_ownership_s3.new_tvf;
-go
-drop function object_ownership_s3.new_mtvf;
-go
-drop type object_ownership_s3.new_type;
-go
-drop type object_ownership_s3.new_ttype;
-go
-drop table object_ownership_s3.new_t;
-go
-drop view object_ownership_s3.new_v;
-go
-drop procedure object_ownership_s3.new_p;
-go
-drop function object_ownership_s3.new_f
-go
-drop sequence object_ownership_s3.new_sq;
-go
-
 /** DROP OLD OBJECTS **/
 drop table object_ownership_s1.old_t;
 go
