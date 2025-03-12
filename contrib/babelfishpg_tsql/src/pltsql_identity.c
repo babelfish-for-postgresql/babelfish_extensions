@@ -481,9 +481,9 @@ reseed_identity_post_select_into(Oid relid)
 	int            save_sec_context;
 	int            saved_sql_dialect;
 	bool           is_identity_increasing = false;
-	const char     *schema_name;
-	const char     *table_name;
-	const char     *seq_name;
+	const char     *schema_name = NULL;
+	const char     *table_name = NULL;
+	const char     *seq_name = NULL;
 	const char     *identity_colname = NULL;
 	Relation       rel;
 	TupleDesc      tupdesc;
