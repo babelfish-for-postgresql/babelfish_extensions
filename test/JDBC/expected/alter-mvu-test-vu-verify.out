@@ -1,0 +1,52 @@
+use alter_func_db
+go
+
+select alter_func_mvu_f1(10);
+go
+~~START~~
+int
+10
+~~END~~
+
+
+select alter_func_mvu_f4();
+go
+~~START~~
+varchar
+(1,1,1,5,2023-06-25)
+(2,1,1,6,2023-06-25)
+~~END~~
+
+
+select Id from alter_func_mvu_f5();
+go
+~~START~~
+int
+2
+~~END~~
+
+
+use alter_proc_db
+go
+
+exec alter_proc_p1 @dateParam = '2020-01-01'
+go
+~~START~~
+date
+2020-01-01
+~~END~~
+
+
+exec alter_proc_p3;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+use alter_func_db
+go
+
+alter function alter_func_mvu_f4() returns TABLE as return (select * from alter_func_users)
+go

@@ -142,7 +142,6 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
-static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2715,6 +2714,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else if (!isSameProc) /* i.e. different signature */
 						{
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
+							CommandCounterIncrement();
 						}
 
 						if(tbltypStmt)
@@ -2769,7 +2769,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							/* Need CCI between commands */
 							CommandCounterIncrement();
+						}
 
+						/* if this is the same procedure, it will update the existing one */
+						address = CreateFunction(pstate, cfs);
+						if (tbltypStmt)
+						{
 							/*
 							 * Update dependency on oldoid
 							 */
@@ -2777,27 +2782,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							tbltyp.objectId = typenameTypeId(pstate,
 															cfs->returnType);
 							tbltyp.objectSubId = 0;
-							recordDependencyOn(&tbltyp, &originalFunc, DEPENDENCY_INTERNAL);
+							recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
 						}
-
-						/* if this is the same procedure, it will update the existing one */
-						address = CreateFunction(pstate, cfs);
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 						/* Increase counter after bbf_func_ext modified in pltsql_store_func_default_positions*/
 						CommandCounterIncrement();
-						pg_proc_update_oid_acl(address, oldoid, proacl);
-						if (!isSameProc) {
-						       /*
+						/* Clean up table entries for the create function statement if applicable*/
+						if (address.objectId != oldoid)
+						{
+							/*
+							 * if this is the same procedure, it'll update the existing one,
+							 * in such case, should not delete dependent records
+							 */
+							deleteDependencyRecordsFor(DefaultAclRelationId, oldoid, false);
+							deleteDependencyRecordsFor(ProcedureRelationId, oldoid, false);
+							deleteSharedDependencyRecordsFor(ProcedureRelationId, oldoid, 0);
+						}
+						if (!isSameProc) 
+						{
+						    /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
 							* the 'bbf_schema_permissions' catalog
 							*/
-							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype, oldoid);
+							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype);
 						}
-						/* Clean up table entries for the create function statement */
-						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-						deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
@@ -4857,65 +4866,6 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, true);
 
 	*isSameFunc = OidIsValid(funcOid);
-}
-
-/*
- * Update the oid and acl of a pg_proc entry given its address
- */
-static void
-pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
-{
-	Relation		rel;
-	HeapTuple		proctup;
-	Form_pg_proc	form_proctup;
-	char		*physical_schemaname;
-
-	Datum		values[Natts_pg_proc];
-	bool		nulls[Natts_pg_proc];
-	bool		replaces[Natts_pg_proc];
-	HeapTuple	newtup;
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-	if (!HeapTupleIsValid(proctup))
-		return;
-
-	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-
-	if (!is_pltsql_language_oid(form_proctup->prolang))
-	{
-		ReleaseSysCache(proctup);
-		return;
-	}
-
-	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
-	if (physical_schemaname == NULL)
-	{
-		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form_proctup->pronamespace);
-	}
-
-	rel = table_open(ProcedureRelationId, RowExclusiveLock);
-
-	memset(values, 0, sizeof(values));
-	memset(nulls, 0, sizeof(nulls));
-	memset(replaces, 0, sizeof(replaces));
-	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
-	replaces[Anum_pg_proc_oid - 1] = true;
-	if(acl)
-		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
-	else
-		nulls[Anum_pg_proc_proacl - 1] = true;
-	replaces[Anum_pg_proc_proacl - 1] = true;
-
-	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
-	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
-
-	/* Clean up */
-	ReleaseSysCache(proctup);
-	heap_freetuple(newtup);
-
-	table_close(rel, RowExclusiveLock);
 }
 
 /*
