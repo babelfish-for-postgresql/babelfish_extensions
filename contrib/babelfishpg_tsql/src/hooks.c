@@ -5812,14 +5812,15 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		 */
 		if ((ownerId != nsp_owner) && (schema_db_id == get_cur_db_id()))
 		{
-			/*
-			 * If the schema is dbo, only change the object owner if the current user is a
-			 * member of db_owner or db_ddladmin. That would mean that permission was granted via PG Port.
-			 */
 			if (nsp_owner == dbo_oid)
 			{
 				Oid		db_ddladmin = get_db_ddladmin_oid(db_name, false);
 				Oid		db_owner = get_db_owner_oid(db_name, false);
+				/*
+				 * If the schema is dbo, only change the object owner if the current user is a
+				 * member of db_owner or db_ddladmin. If the current user is something else, that would mean
+				 * that permission was granted via PG Port. We won't handle that case.
+				 */
 				if (has_privs_of_role(GetUserId(), db_owner) || has_privs_of_role(GetUserId(), db_ddladmin))
 				{
 					ownerId = nsp_owner;
