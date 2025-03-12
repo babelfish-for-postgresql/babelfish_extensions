@@ -5492,22 +5492,27 @@ static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt 
 								 false, 
 								 false);
 
-	/* Filter out source columns */
+	/* Filter out source columns from TargetList */
 	foreach(lc, temp_query->targetList)
 	{
 		TargetEntry *te = (TargetEntry *)lfirst(lc);
 		bool skip_column = false;
-		ListCell *source_lc;
-		
+	    ListCell *source_lc;
+
 		/* Check if this column is in source_cols */
-		foreach(source_lc, source_cols)
+		for (source_lc = list_head(source_cols); source_lc != NULL;)
 		{
 			String *source_col = (String *)lfirst(source_lc);
+			ListCell *next_lc = lnext(source_cols, source_lc);
+
 			if (strcmp(te->resname, strVal(source_col)) == 0)
 			{
 				skip_column = true;
+				/* Remove the matched source column to avoid duplicate removal */
+				source_cols = list_delete_cell(source_cols, source_lc);
 				break;
 			}
+			source_lc = next_lc;
 		}
 		
 		if (!skip_column)

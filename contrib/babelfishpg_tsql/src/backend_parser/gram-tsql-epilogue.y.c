@@ -2132,19 +2132,13 @@ get_unpivot_source_alias(Node *table_ref) {
 	else if (IsA(table_ref, JoinExpr))
 	{
 		/* For JOIN, we need to ensure the last joined table has an alias */
-		/* TODO: First extract Join Alias if present else rarg */
 		JoinExpr *join = (JoinExpr *)table_ref;
 
-		// if (join->alias != NULL)
-        //     return join->alias->aliasname;
-
-        /* No join alias, recurse on right arg */
-        if (join->rarg != NULL)
-            return get_unpivot_source_alias(join->rarg);
-        
-        ereport(ERROR,
-                (errcode(ERRCODE_SYNTAX_ERROR),
-                 errmsg("Invalid JOIN expression in UNPIVOT source")));
+		if (join->alias == NULL) 
+		{
+			join->alias = makeAlias(generate_unpivot_source_table_alias("joined"), NIL);
+		}
+		return join->alias->aliasname;
 	}
     else if (IsA(table_ref, RangeFunction))
 	{
