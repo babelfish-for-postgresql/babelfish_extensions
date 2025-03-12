@@ -110,3 +110,86 @@ GO
 -- tsql
 DROP LOGIN bbf_role_admin_restrictions_login;
 GO
+
+-- tsql
+-- Tests for BABEL-5127
+-- Create a login with sysadmin privileges
+CREATE LOGIN babel_5127_test_sysadmin WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_5127_test_sysadmin;
+GO
+
+-- Create a login with securityadmin privileges
+CREATE LOGIN babel_5127_test_securityadmin WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE securityadmin ADD MEMBER babel_5127_test_securityadmin;
+GO
+
+-- Create a regular user without special privileges
+CREATE LOGIN babel_5127_test_regularuser WITH PASSWORD = '12345678';
+GO
+
+-- 1. Test with master user, should still fail
+DROP LOGIN [public];
+GO
+
+DROP USER [public];
+GO
+
+DROP ROLE [public];
+GO
+
+-- tsql user=babel_5127_test_sysadmin password=12345678
+-- 2. Test with sysadmin (should fail again, but due to inability to drop 'public', not privileges)
+DROP LOGIN [public];
+GO
+
+DROP USER [public];
+GO
+
+DROP ROLE [public];
+GO
+
+-- tsql user=babel_5127_test_securityadmin password=12345678
+-- 3. Test with securityadmin, should fail again
+DROP LOGIN [public];
+GO
+
+DROP USER [public];
+GO
+
+DROP ROLE [public];
+GO
+
+-- tsql user=babel_5127_test_regularuser password=12345678
+-- 4. Test with regular user, should fail again
+DROP LOGIN [public];
+GO
+
+DROP USER [public];
+GO
+
+DROP ROLE [public];
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_5127_test_sysadmin', 'babel_5127_test_securityadmin', 'babel_5127_test_regularuser') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN babel_5127_test_sysadmin;
+GO
+
+DROP LOGIN babel_5127_test_securityadmin;
+GO
+
+DROP LOGIN babel_5127_test_regularuser;
+GO
