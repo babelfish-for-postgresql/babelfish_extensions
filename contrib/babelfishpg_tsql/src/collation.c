@@ -342,7 +342,6 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
-	CollateExpr *new_leftop;
 	CollateExpr *prefix_collate;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
@@ -465,8 +464,7 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Const	   *highest_sort_key;
 
 		/* Always create a CollateExpr on top to match with op->inputcollid */
-		new_leftop = create_collate_expr(linitial(op->args), op->inputcollid);
-		linitial(op->args) = (Node*) new_leftop;
+		linitial(op->args) = (Node*) create_collate_expr(linitial(op->args), op->inputcollid);
 		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 
 		/* construct leftop >= pattern */

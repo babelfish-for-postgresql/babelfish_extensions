@@ -142,7 +142,7 @@ GO
 SELECT * FROM BABEL_5608_vu_prepare_t11_VIEW;
 GO
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('active');
 INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('inactive');
@@ -156,7 +156,73 @@ INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('active');
 INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('inactive');
 GO
 
+-- should fail
+INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('idle');
+GO
+
 SELECT * FROM BABEL_5608_vu_prepare_t12_2_VIEW;
+GO
+
+-- IF EXISTS
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'act%'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'inactive'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'idle'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('prd'),('drp');
+-- GO
+
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('r');
+-- GO
+
+-- SELECT * FROM BABEL_5608_vu_prepare_t12_3_VIEW;
+-- GO
+
+-- FUNCTION
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('act%');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('inactive');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('idle%');
+GO
+
+
+-- PROCEDURE
+EXEC BABEL_5608_vu_prepare_t12_proc1 'act%';
+GO
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'inactive';
+GO
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'idle';
 GO
 
 -- CASE 13: VIEW WITH LIKE
@@ -175,11 +241,18 @@ GO
 SELECT * FROM BABEL_5608_13_5_VIEW;
 GO
 
--- CASE 14: PostFix Patter match
+-- CASE 14: PostFix Pattern match
 INSERT INTO BABEL_5608_vu_prepare_t14 VALUES ('abc');
 GO
 
 SELECT * FROM BABEL_5608_vu_prepare_t14_VIEW;
+GO
+
+-- CASE 15: T_Const LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t15 VALUES ('abc');
+GO
+
+SELECT * FROM BABEL_5608_vu_prepare_t15_VIEW;
 GO
 
 -- psql
@@ -260,7 +333,7 @@ GO
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t11'::regclass;
 GO
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_1'::regclass;
 GO
@@ -269,6 +342,38 @@ GO
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_2'::regclass;
 GO
 
--- CASE 14: PostFix Patter match
+-- COMPUTED COLUMNS (BABEL-5022)
+-- SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_3'::regclass;
+-- GO
+
+-- FUNCTION
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_fun1' as regproc));
+GO
+
+-- PROCEDURE
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_proc1' as regproc));
+GO
+
+-- CASE 13: VIEW WITH LIKE
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_1_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_2_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_3_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_4_VIEW', true);
+GO
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_5_VIEW', true);
+GO
+
+-- CASE 14: PostFix Pattern match
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
+GO
+
+-- CASE 15: T_Const LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t15'::regclass;
 GO

@@ -296,7 +296,7 @@ abc
 ~~END~~
 
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('active');
 INSERT INTO BABEL_5608_vu_prepare_t12_1 VALUES ('inactive');
@@ -324,12 +324,125 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- should fail
+INSERT INTO BABEL_5608_vu_prepare_t12_2 VALUES ('idle');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "babel_5608_vu_prepare_t12_2" violates check constraint "chk_status")~~
+
+
 SELECT * FROM BABEL_5608_vu_prepare_t12_2_VIEW;
 GO
 ~~START~~
 varchar
 active
 inactive
+~~END~~
+
+
+-- IF EXISTS
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'act%'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+~~START~~
+varchar
+Found matching records
+~~END~~
+
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'inactive'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+~~START~~
+varchar
+Found matching records
+~~END~~
+
+
+IF (EXISTS (SELECT 1 FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'idle'))
+BEGIN
+    SELECT 'Found matching records'
+END
+ELSE
+BEGIN
+    SELECT 'No matches found'
+END
+GO
+~~START~~
+varchar
+No matches found
+~~END~~
+
+
+
+
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('prd'),('drp');
+-- GO
+-- INSERT INTO BABEL_5608_vu_prepare_t12_3(name) VALUES('r');
+-- GO
+-- SELECT * FROM BABEL_5608_vu_prepare_t12_3_VIEW;
+-- GO
+-- FUNCTION
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('act%');
+GO
+~~START~~
+varchar
+active
+~~END~~
+
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('inactive');
+GO
+~~START~~
+varchar
+inactive
+~~END~~
+
+
+SELECT * FROM BABEL_5608_vu_prepare_t12_fun1('idle%');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+
+-- PROCEDURE
+EXEC BABEL_5608_vu_prepare_t12_proc1 'act%';
+GO
+~~START~~
+varchar
+active
+~~END~~
+
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'inactive';
+GO
+~~START~~
+varchar
+inactive
+~~END~~
+
+
+EXEC BABEL_5608_vu_prepare_t12_proc1 'idle';
+GO
+~~START~~
+varchar
 ~~END~~
 
 
@@ -374,13 +487,27 @@ active
 ~~END~~
 
 
--- CASE 14: PostFix Patter match
+-- CASE 14: PostFix Pattern match
 INSERT INTO BABEL_5608_vu_prepare_t14 VALUES ('abc');
 GO
 ~~ROW COUNT: 1~~
 
 
 SELECT * FROM BABEL_5608_vu_prepare_t14_VIEW;
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- CASE 15: T_Const LIKE T_Const
+INSERT INTO BABEL_5608_vu_prepare_t15 VALUES ('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM BABEL_5608_vu_prepare_t15_VIEW;
 GO
 ~~START~~
 varchar
@@ -576,7 +703,7 @@ CHECK ((((sys.remove_accents_internal(((('123'::sys."varchar" COLLATE sys.bbf_un
 ~~END~~
 
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_1'::regclass;
 GO
@@ -595,11 +722,83 @@ CHECK ((<newline>CASE<newline>    WHEN (((sys.remove_accents_internal((status)::
 ~~END~~
 
 
--- CASE 14: PostFix Patter match
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_3'::regclass;
+-- GO
+-- FUNCTION
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_fun1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_5608_vu_prepare_t12_fun1("@pattern" sys."varchar")<newline> RETURNS TABLE(status sys."varchar")<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["100", "-1"], "original_probin": ""}', $function$RETURN<newline>(<newline>    SELECT * FROM BABEL_5608_vu_prepare_t12_2<newline>    WHERE status LIKE @pattern<newline>);$function$<newline>
+~~END~~
+
+
+-- PROCEDURE
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_proc1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5608_vu_prepare_t12_proc1(IN "@pattern" sys."varchar")<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["100"], "original_probin": ""}', $procedure$BEGIN<newline>    SET NOCOUNT ON;<newline>    <newline>    SELECT * FROM BABEL_5608_vu_prepare_t12_2<newline>    WHERE status LIKE @pattern<newline>END;$procedure$<newline>
+~~END~~
+
+
+-- CASE 13: VIEW WITH LIKE
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_1_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE status::text ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_2_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE (status::text COLLATE sys.estonian_ci_ai) ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_3_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE status::text ~~ ('ac%'::text COLLATE sys.estonian_ci_ai);
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_4_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE sys.upper(status)::text ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_5_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE (sys.upper(status)::text COLLATE sys.bbf_unicode_cp1_ci_ai) ~~ 'ac%'::text;
+~~END~~
+
+
+-- CASE 14: PostFix Pattern match
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
 GO
 ~~START~~
 text
 CHECK ((((sys.remove_accents_internal(((babel_5608_vu_prepare_t14_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('%abc'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+~~END~~
+
+
+-- CASE 15: T_Const LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t15'::regclass;
+GO
+~~START~~
+text
+CHECK (((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)) AND (('abc'::text >= ('A'::text COLLATE sys.bbf_unicode_cp1_ci_ai)) AND ('abc'::text < (('A'::text COLLATE sys.bbf_unicode_cp1_ci_ai) || ('￿'::text COLLATE sys.bbf_unicode_cp1_ci_ai))))))
 ~~END~~
 

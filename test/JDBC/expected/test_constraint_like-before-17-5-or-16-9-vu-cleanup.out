@@ -172,7 +172,7 @@ GO
 DROP TABLE BABEL_5608_vu_prepare_t12_2;
 GO
 
--- CASE 14: PostFix Patter match
+-- CASE 14: PostFix Pattern match
 DROP VIEW BABEL_5608_vu_prepare_t14_VIEW;
 GO
 

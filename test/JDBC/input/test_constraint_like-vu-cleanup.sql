@@ -141,7 +141,7 @@ GO
 DROP TABLE BABEL_5608_vu_prepare_t11;
 GO
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 DROP VIEW BABEL_5608_vu_prepare_t12_1_VIEW;
 GO
@@ -151,6 +151,21 @@ GO
 
 -- CASE WHEN
 DROP VIEW BABEL_5608_vu_prepare_t12_2_VIEW;
+GO
+
+-- COMPUTED COLUMN (BABEL-5022)
+-- DROP VIEW BABEL_5608_vu_prepare_t12_3_VIEW;
+-- GO
+
+-- DROP TABLE BABEL_5608_vu_prepare_t12_3;
+-- GO
+
+-- FUNCTIONS
+DROP FUNCTION BABEL_5608_vu_prepare_t12_fun1;
+GO
+
+-- PROCEDURE
+DROP PROCEDURE BABEL_5608_vu_prepare_t12_proc1;
 GO
 
 -- CASE 13: VIEW WITH LIKE
@@ -172,9 +187,16 @@ GO
 DROP TABLE BABEL_5608_vu_prepare_t12_2;
 GO
 
--- CASE 14: PostFix Patter match
+-- CASE 14: PostFix Pattern match
 DROP VIEW BABEL_5608_vu_prepare_t14_VIEW;
 GO
 
 DROP TABLE BABEL_5608_vu_prepare_t14;
+GO
+
+-- CASE 15: T_Const LIKE T_Const
+DROP VIEW BABEL_5608_vu_prepare_t15_VIEW;
+GO
+
+DROP TABLE BABEL_5608_vu_prepare_t15;
 GO
