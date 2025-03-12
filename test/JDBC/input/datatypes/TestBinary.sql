@@ -2583,7 +2583,7 @@ SELECT 'MAX with ISNULL',
     DATALENGTH(MAX(ISNULL(BinaryValue, 0x00))) AS MaxLength
 FROM #BinaryData
 GROUP BY GroupID
-) t order by GroupID, MaxValue;
+) t order by GroupID, MaxValue, Test;
 GO
 
 -- Test Case 4: MIN aggregate
@@ -2602,7 +2602,7 @@ SELECT 'MIN with ISNULL',
     DATALENGTH(MIN(ISNULL(BinaryValue, 0xFF))) AS MinLength
 FROM #BinaryData
 GROUP BY GroupID
-) t order by GroupID, MinValue;
+) t order by GroupID, MinValue, Test;
 GO
 
 -- Test Case 5: Combining multiple aggregates
@@ -2639,8 +2639,7 @@ SELECT 'MAX Results' AS ResultType,
     GroupID,
     MaxValue,
     MaxLength
-FROM #MaxResults
-ORDER BY GroupID;
+FROM #MaxResults;
 GO
 
 -- MIN results
@@ -2649,8 +2648,7 @@ SELECT 'MIN Results' AS ResultType,
     GroupID,
     MinValue,
     MinLength
-FROM #MinResults
-ORDER BY GroupID;
+FROM #MinResults;
 GO
 
 -- Combined results
