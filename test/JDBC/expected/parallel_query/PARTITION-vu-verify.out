@@ -1226,10 +1226,16 @@ SELECT
         name, type, type_desc, fanout, boundary_value_on_right, is_system
     FROM 
         sys.partition_functions
+    ORDER BY
+        name
 go
 ~~START~~
 nvarchar#!#char#!#nvarchar#!#int#!#bit#!#bit
 PartitionDb_PartitionFunction#!#R #!#RANGE#!#4#!#1#!#0
+PF_CollationTest_Char#!#R #!#RANGE#!#4#!#1#!#0
+PF_CollationTest_NChar#!#R #!#RANGE#!#4#!#1#!#0
+PF_CollationTest_NVarChar#!#R #!#RANGE#!#4#!#1#!#0
+PF_CollationTest_VarChar#!#R #!#RANGE#!#4#!#1#!#0
 ~~END~~
 
 
@@ -1239,10 +1245,16 @@ SELECT
         sys.partition_schemes ps
     INNER JOIN 
         sys.partition_functions pf on (ps.function_id = pf.function_id)
+    ORDER BY
+        ps.name
 go
 ~~START~~
 nvarchar#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit
 PartitionDb_PartitionScheme#!#PartitionDb_PartitionFunction#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PS_CollationTest_Char#!#PF_CollationTest_Char#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PS_CollationTest_NChar#!#PF_CollationTest_NChar#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PS_CollationTest_NVarChar#!#PF_CollationTest_NVarChar#!#PS#!#PARTITION_SCHEME#!#0#!#0
+PS_CollationTest_VarChar#!#PF_CollationTest_VarChar#!#PS#!#PARTITION_SCHEME#!#0#!#0
 ~~END~~
 
 
@@ -3489,7 +3501,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid database name 'NonExistentDatabase'.)~~
+~~ERROR (Message: Invalid database name 'nonexistentdatabase'.)~~
 
 
 -- error during implicit Conversion of values to partition function parameter type
@@ -3913,3 +3925,83 @@ GO
 
 DROP USER partition_u2
 GO
+
+---------------------------------------------------------------
+--- Test Collation of Partition Functions after upgrade
+---------------------------------------------------------------
+USE PartitionDb
+Go
+
+-- Test 1: Create tables with the compatible collation i.e. database default (should work)
+CREATE TABLE PT_SameCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go
+
+-- Test 2: Create tables with incompatible collation i.e. other than database default (should fail)
+CREATE TABLE PT_DifferentCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Collation of partition column 'partitionkey' does not match collation of corresponding parameter in partition function 'PF_CollationTest_Char'.)~~
+
+
+CREATE TABLE PT_DifferentCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Collation of partition column 'partitionkey' does not match collation of corresponding parameter in partition function 'PF_CollationTest_VarChar'.)~~
+
+
+CREATE TABLE PT_DifferentCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Collation of partition column 'partitionkey' does not match collation of corresponding parameter in partition function 'PF_CollationTest_NChar'.)~~
+
+
+CREATE TABLE PT_DifferentCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Collation of partition column 'partitionkey' does not match collation of corresponding parameter in partition function 'PF_CollationTest_NVarChar'.)~~
+

@@ -37,6 +37,10 @@ inputs:
     description: "ANTLR version to use (based on Extension Branch)"
     required: false
     default: 4.13.2
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -50,6 +54,7 @@ runs:
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
         antlr_version: ${{ inputs.antlr_version }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Build latest dump/restore utilities
       id: build-dump-utils
