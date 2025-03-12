@@ -432,8 +432,9 @@ extern Oid	get_bbf_extended_properties_idx_oid(void);
 #define Anum_bbf_partition_function_input_parameter_type 4
 #define Anum_bbf_partition_function_partition_option 5
 #define Anum_bbf_partition_function_range_values 6
+#define Anum_bbf_partition_function_input_parameter_collation 9
 
-#define BBF_PARTITION_FUNCTION_NUM_COLS 8
+#define BBF_PARTITION_FUNCTION_NUM_COLS 9
 
 extern Oid	bbf_partition_function_oid;
 extern Oid	bbf_partition_function_pk_idx_oid;
@@ -446,7 +447,7 @@ extern Oid	get_bbf_partition_function_id_idx_oid(void);
 extern Oid	get_bbf_partition_function_seq_oid(void);
 extern int32	get_available_partition_function_id(void);
 extern void	add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name,
-						char *typname, bool partition_option, ArrayType *values);
+						char *typname, bool partition_option, ArrayType *values, char *collation);
 extern void	remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_function_name);
 extern bool	partition_function_exists(int16 dbid, const char *partition_function_name);
 extern int	get_partition_count(int16 dbid, const char *partition_function_name);
