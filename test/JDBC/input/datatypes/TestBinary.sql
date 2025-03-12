@@ -1385,7 +1385,8 @@ SELECT 'Binary > String',
 CASE WHEN CAST('Test2' AS VARBINARY(100)) > CAST('Test1' AS VARCHAR(100)) THEN 'True' ELSE 'False' END
 UNION ALL
 SELECT 'Binary < String',
-CASE WHEN CAST('Test1' AS VARBINARY(100)) < CAST('Test2' AS VARCHAR(100)) THEN 'True' ELSE 'False' END;
+CASE WHEN CAST('Test1' AS VARBINARY(100)) < CAST('Test2' AS VARCHAR(100)) THEN 'True' ELSE 'False' END
+ORDER BY Test;
 GO
 
 -- Binary vs Integer
@@ -1400,7 +1401,8 @@ SELECT 'Binary > Integer',
 CASE WHEN @binInt > CAST(@regularInt-1 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
 UNION ALL
 SELECT 'Binary < Integer',
-CASE WHEN @binInt < CAST(@regularInt+1 AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+CASE WHEN @binInt < CAST(@regularInt+1 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+ORDER BY Test;
 GO
 
 -- Binary vs DateTime
@@ -1415,7 +1417,8 @@ SELECT 'Binary > Earlier DateTime',
 CASE WHEN @binDate > CAST('2024-01-14' AS VARBINARY(100)) THEN 'True' ELSE 'False' END
 UNION ALL
 SELECT 'Binary < Later DateTime',
-CASE WHEN @binDate < CAST('2024-01-16' AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+CASE WHEN @binDate < CAST('2024-01-16' AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+ORDER BY Test;
 GO
 
 -- Binary vs Decimal
@@ -1430,7 +1433,8 @@ SELECT 'Binary > Smaller Decimal',
 CASE WHEN @binDecimal > CAST(123.44 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
 UNION ALL
 SELECT 'Binary < Larger Decimal',
-CASE WHEN @binDecimal < CAST(123.46 AS VARBINARY(100)) THEN 'True' ELSE 'False' END;
+CASE WHEN @binDecimal < CAST(123.46 AS VARBINARY(100)) THEN 'True' ELSE 'False' END
+ORDER BY Test;
 GO
 
 -- Binary vs UNIQUEIDENTIFIER
@@ -2164,13 +2168,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 1' AS Test,
-    CAST(0x1234 AS VARBINARY(4)) AS Value1,
+    CAST(0x1234 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x1234 AS VARBINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 1',
-    CAST(0x5678 AS VARBINARY(8)) AS Value2,
+    CAST(0x5678 AS VARBINARY(8)) AS Value,
     DATALENGTH(CAST(0x5678 AS VARBINARY(8))) AS Length2
-) t;
+) t order by value;
 GO
 
 select * from temp_tbl
@@ -2186,13 +2190,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 2' AS Test,
-    CAST(NULL AS VARBINARY(4)) AS Value1,
+    CAST(NULL AS VARBINARY(4)) AS Value,
     NULL AS Length1
 UNION
 SELECT 'UNION Test 2',
-    CAST(0x5678 AS VARBINARY(4)) AS Value2,
+    CAST(0x5678 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2205,13 +2209,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 3' AS Test,
-    CAST(0x AS VARBINARY(8)) AS Value1,
+    CAST(0x AS VARBINARY(8)) AS Value,
     DATALENGTH(CAST(0x AS VARBINARY(8))) AS Length1
 UNION
 SELECT 'UNION Test 3',
-    CAST(0x5678 AS VARBINARY(4)) AS Value2,
+    CAST(0x5678 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2224,13 +2228,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 4' AS Test,
-    CAST(0x1234 AS BINARY(4)) AS Value1,
+    CAST(0x1234 AS BINARY(4)) AS Value,
     DATALENGTH(CAST(0x1234 AS BINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 4',
-    CAST(0x5678 AS VARBINARY(4)) AS Value2,
+    CAST(0x5678 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2243,13 +2247,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 5' AS Test,
-    CAST(0x12 AS VARBINARY(4)) AS Value1,
+    CAST(0x12 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x12 AS VARBINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 5',
-    CAST(0x345678 AS BINARY(8)) AS Value2,
+    CAST(0x345678 AS BINARY(8)) AS Value,
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2262,13 +2266,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 6' AS Test,
-    CAST(0x12 AS BINARY(4)) AS Value1,
+    CAST(0x12 AS BINARY(4)) AS Value,
     DATALENGTH(CAST(0x12 AS BINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 6',
-    CAST(0x345678 AS BINARY(8)) AS Value2,
+    CAST(0x345678 AS BINARY(8)) AS Value,
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2281,13 +2285,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 7' AS Test,
-    CAST(0x12 AS VARBINARY(4)) AS Value1,
+    CAST(0x12 AS VARBINARY(4)) AS Value,
     DATALENGTH(CAST(0x12 AS VARBINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 7',
-    CAST(0x345678 AS VARBINARY(max)) AS Value2,
+    CAST(0x345678 AS VARBINARY(max)) AS Value,
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2300,13 +2304,13 @@ GO
 select t.* into temp_tbl from
 (
 SELECT 'UNION Test 8' AS Test,
-    CAST(0x12 AS BINARY(4)) AS Value1,
+    CAST(0x12 AS BINARY(4)) AS Value,
     DATALENGTH(CAST(0x12 AS BINARY(4))) AS Length1
 UNION
 SELECT 'UNION Test 8',
-    CAST(0x345678 AS VARBINARY(max)) AS Value2,
+    CAST(0x345678 AS VARBINARY(max)) AS Value,
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2319,13 +2323,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and VARCHAR' AS Test,
-    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value,
     DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
 UNION
 SELECT 'VARBINARY and VARCHAR',
-    CAST('World' AS VARCHAR(10)) AS Value2,
+    CAST('World' AS VARCHAR(10)) AS Value,
     DATALENGTH(CAST('World' AS VARCHAR(10))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2338,13 +2342,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and INT' AS Test,
-    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    CAST(0x0064 AS VARBINARY(10)) AS Value,
     DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
 UNION
 SELECT 'VARBINARY and INT',
-    CAST(200 AS INT) AS Value2,
+    CAST(200 AS INT) AS Value,
     DATALENGTH(CAST(200 AS VARCHAR(10))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2357,13 +2361,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and DATETIME' AS Test,
-    CAST(0x0000AB0C AS VARBINARY(10)) AS Value1,
+    CAST(0x0000AB0C AS VARBINARY(10)) AS Value,
     DATALENGTH(CAST(0x0000AB0C AS VARBINARY(10))) AS Length1
 UNION
 SELECT 'VARBINARY and DATETIME',
-    CAST('2024-01-16' AS DATETIME) AS Value2,
+    CAST('2024-01-16' AS DATETIME) AS Value,
     DATALENGTH(CAST('2024-01-16' AS DATETIME)) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2376,13 +2380,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and DECIMAL' AS Test,
-    CAST(0x0064 AS VARBINARY(10)) AS Value1,
+    CAST(0x0064 AS VARBINARY(10)) AS Value,
     DATALENGTH(CAST(0x0064 AS VARBINARY(10))) AS Length1
 UNION
 SELECT 'VARBINARY and DECIMAL',
-    CAST(200.00 AS DECIMAL(10,2)) AS Value2,
+    CAST(200.00 AS DECIMAL(10,2)) AS Value,
     DATALENGTH(CAST(200.00 AS DECIMAL(10,2))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2395,13 +2399,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and UNIQUEIDENTIFIER' AS Test,
-    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16)) AS Value1,
+    CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16)) AS Value,
     DATALENGTH(CAST('12345678-1234-1234-1234-123456789012' AS VARBINARY(16))) AS Length1
 UNION
 SELECT 'VARBINARY and UNIQUEIDENTIFIER',
-    CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER) AS Value2,
+    CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER) AS Value,
     DATALENGTH(CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER)) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2414,13 +2418,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and BIT' AS Test,
-    CAST(0x01 AS VARBINARY(1)) AS Value1,
+    CAST(0x01 AS VARBINARY(1)) AS Value,
     DATALENGTH(CAST(0x01 AS VARBINARY(1))) AS Length1
 UNION
 SELECT 'VARBINARY and BIT',
-    CAST(0 AS BIT) AS Value2,
+    CAST(0 AS BIT) AS Value,
     DATALENGTH(CAST(0 AS BIT)) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2433,13 +2437,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and FLOAT' AS Test,
-    CAST(123.45 AS VARBINARY(8)) AS Value1,
+    CAST(123.45 AS VARBINARY(8)) AS Value,
     DATALENGTH(CAST(123.45 AS VARBINARY(8))) AS Length1
 UNION
 SELECT 'VARBINARY and FLOAT',
-    CAST(567.89 AS FLOAT) AS Value2,
+    CAST(567.89 AS FLOAT) AS Value,
     DATALENGTH(CAST(567.89 AS FLOAT)) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2452,13 +2456,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY and NVARCHAR' AS Test,
-    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value1,
+    CAST(0x48656C6C6F AS VARBINARY(10)) AS Value,
     DATALENGTH(CAST(0x48656C6C6F AS VARBINARY(10))) AS Length1
 UNION
 SELECT 'VARBINARY and NVARCHAR',
-    CAST(N'World' AS NVARCHAR(10)) AS Value2,
+    CAST(N'World' AS NVARCHAR(10)) AS Value,
     DATALENGTH(CAST(N'World' AS NVARCHAR(10))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2471,13 +2475,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'VARBINARY(MAX) and VARBINARY' AS Test,
-    CAST(0x12345678 AS VARBINARY(MAX)) AS Value1,
+    CAST(0x12345678 AS VARBINARY(MAX)) AS Value,
     DATALENGTH(CAST(0x12345678 AS VARBINARY(MAX))) AS Length1
 UNION
 SELECT 'VARBINARY(MAX) and VARBINARY',
-    CAST(0x9ABCDEF0 AS VARBINARY(8)) AS Value2,
+    CAST(0x9ABCDEF0 AS VARBINARY(8)) AS Value,
     DATALENGTH(CAST(0x9ABCDEF0 AS VARBINARY(8))) AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
@@ -2490,13 +2494,13 @@ GO
 SELECT t.* INTO temp_tbl FROM
 (
 SELECT 'BINARY and NULL' AS Test,
-    CAST(0x1234 AS BINARY(4)) AS Value1,
+    CAST(0x1234 AS BINARY(4)) AS Value,
     DATALENGTH(CAST(0x1234 AS BINARY(4))) AS Length1
 UNION
 SELECT 'BINARY and NULL',
-    CAST(NULL AS VARBINARY(4)) AS Value2,
+    CAST(NULL AS VARBINARY(4)) AS Value,
     NULL AS Length2
-) t;
+) t order by value;
 GO
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
