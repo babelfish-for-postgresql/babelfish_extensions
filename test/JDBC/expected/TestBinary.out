@@ -3542,7 +3542,7 @@ SELECT 'MAX with ISNULL',
     DATALENGTH(MAX(ISNULL(BinaryValue, 0x00))) AS MaxLength
 FROM #BinaryData
 GROUP BY GroupID
-) t order by GroupID, MaxValue;
+) t order by GroupID, MaxValue, Test;
 GO
 
 -- Test Case 4: MIN aggregate
@@ -3561,7 +3561,7 @@ SELECT 'MIN with ISNULL',
     DATALENGTH(MIN(ISNULL(BinaryValue, 0xFF))) AS MinLength
 FROM #BinaryData
 GROUP BY GroupID
-) t order by GroupID, MinValue;
+) t order by GroupID, MinValue, Test;
 GO
 
 -- Test Case 5: Combining multiple aggregates
@@ -3610,15 +3610,14 @@ SELECT 'MAX Results' AS ResultType,
     GroupID,
     MaxValue,
     MaxLength
-FROM #MaxResults
-ORDER BY GroupID;
+FROM #MaxResults;
 GO
 ~~START~~
 varchar#!#varchar#!#int#!#bigint#!#int
-MAX Results#!#Regular MAX#!#1#!#15#!#8
 MAX Results#!#MAX with ISNULL#!#1#!#15#!#8
-MAX Results#!#Regular MAX#!#2#!#18#!#8
+MAX Results#!#Regular MAX#!#1#!#15#!#8
 MAX Results#!#MAX with ISNULL#!#2#!#18#!#8
+MAX Results#!#Regular MAX#!#2#!#18#!#8
 MAX Results#!#MAX with ISNULL#!#3#!#10#!#8
 MAX Results#!#Regular MAX#!#3#!#10#!#8
 ~~END~~
@@ -3630,15 +3629,14 @@ SELECT 'MIN Results' AS ResultType,
     GroupID,
     MinValue,
     MinLength
-FROM #MinResults
-ORDER BY GroupID;
+FROM #MinResults;
 GO
 ~~START~~
 varchar#!#varchar#!#int#!#bigint#!#int
 MIN Results#!#MIN with ISNULL#!#1#!#10#!#8
 MIN Results#!#Regular MIN#!#1#!#10#!#8
-MIN Results#!#Regular MIN#!#2#!#18#!#8
 MIN Results#!#MIN with ISNULL#!#2#!#18#!#8
+MIN Results#!#Regular MIN#!#2#!#18#!#8
 MIN Results#!#MIN with ISNULL#!#3#!#10#!#8
 MIN Results#!#Regular MIN#!#3#!#10#!#8
 ~~END~~
