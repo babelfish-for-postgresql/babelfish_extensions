@@ -487,7 +487,6 @@ reseed_identity_post_select_into(Oid relid)
 	const char     *identity_colname = NULL;
 	Relation       rel;
 	TupleDesc      tupdesc;
-	HeapTuple      pgstuple;
 	StringInfoData querybuf;
 
 	rel = RelationIdGetRelation(relid);
@@ -498,30 +497,33 @@ reseed_identity_post_select_into(Oid relid)
 
 	tupdesc = RelationGetDescr(rel);
 
-	for (AttrNumber attnum = 0; attnum < tupdesc->natts; attnum++)
+	for (AttrNumber attnum = 1; attnum <= RelationGetNumberOfAttributes(rel); attnum++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+		Oid               seq_relid;
+		HeapTuple         pgstuple;
 
-		if (attr->attidentity)
-		{
-			pgstuple = SearchSysCache1(SEQRELID, get_table_identity(relid));
-			if (!HeapTupleIsValid(pgstuple))
-				elog(ERROR, "cache lookup failed for sequence %u", relid);
+		if (!attr->attidentity)
+			continue;
 
-			is_identity_increasing = ((Form_pg_sequence) GETSTRUCT(pgstuple))->seqincrement > 0;
-			seq_name = quote_identifier(get_rel_name(((Form_pg_sequence) GETSTRUCT(pgstuple))->seqrelid));
+		seq_relid = getIdentitySequence(rel, attnum, false);
 
-			ReleaseSysCache(pgstuple);
-			identity_colname = quote_identifier(NameStr(attr->attname));
-			break;
-		}
+		pgstuple = SearchSysCache1(SEQRELID, ObjectIdGetDatum(seq_relid));
+		if (!HeapTupleIsValid(pgstuple))
+			elog(ERROR, "cache lookup failed for sequence %u", relid);
+
+		is_identity_increasing = ((Form_pg_sequence) GETSTRUCT(pgstuple))->seqincrement > 0;
+		seq_name = quote_identifier(get_rel_name(seq_relid));
+		identity_colname = quote_identifier(NameStr(attr->attname));
+
+		ReleaseSysCache(pgstuple);
+		break;
 	}
 
-	if (!identity_colname || !schema_name || !table_name || !OidIsValid(relowner))
-	{
-		RelationClose(rel);
+	RelationClose(rel);
+
+	if (!identity_colname || !OidIsValid(relowner))
 		return;
-	}
 
 	initStringInfo(&querybuf);
 
@@ -533,8 +535,6 @@ reseed_identity_post_select_into(Oid relid)
 					 identity_colname,
 					 schema_name,
 					 table_name);
-
-	RelationClose(rel);
 
 	saved_sql_dialect = sql_dialect;
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
