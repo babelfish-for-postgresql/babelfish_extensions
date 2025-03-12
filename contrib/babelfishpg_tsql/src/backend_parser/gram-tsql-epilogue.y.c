@@ -2163,7 +2163,8 @@ get_unpivot_source_alias(Node *table_ref) {
 	{
 		/* Handle case where table_ref is an UNPIVOT node */
 		List *prev_unpivot = (List *)table_ref;
-		if (list_length(prev_unpivot) == 7 &&
+		if (prev_unpivot != NULL &&
+			list_length(prev_unpivot) == 7 &&
 			IsA(linitial(prev_unpivot), String) &&
 			strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
 		{

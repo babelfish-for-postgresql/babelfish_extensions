@@ -5429,7 +5429,8 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
 	else if (IsA(*node_ptr, List))
 	{
 		unpivot_info = (List *)*node_ptr;
-		if (list_length(unpivot_info) == 7 &&
+		if (unpivot_info != NULL &&
+			list_length(unpivot_info) == 7 &&
 			IsA(linitial(unpivot_info), String) &&
 			strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
 		{
