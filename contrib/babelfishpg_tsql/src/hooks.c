@@ -5796,6 +5796,8 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		char	*db_name = get_cur_db_name();
 		char	*dbo_name = get_dbo_role_name(db_name);
 		Oid		dbo_oid = get_role_oid(dbo_name, false);
+		Oid		schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
+
 		/*
 		 * babelfish issue special handing for dbo schema since it is
 		 * owned by db_owner but the correct owner should have been dbo
@@ -5808,20 +5810,25 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		/*
 		 * Object owner should not be same as schema owner
 		 */
-		if (ownerId != nsp_owner)
+		if ((ownerId != nsp_owner) && (schema_db_id == get_cur_db_id()))
 		{
-			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-
 			/*
-			 * Ignore cases when:
-			 * 1. Object owner is dbo AND current user is a member of db_ddladmin
-			 * 2. Schema owner is dbo, It happens when CREATE permission is granted via PG port
+			 * If the schema is dbo, only change the object owner if the current user is a
+			 * member of db_owner or db_ddladmin. That would mean that permission was granted via PG Port.
 			 */
-			if ((schema_db_id == get_cur_db_id()) &&
-				(((ownerId != dbo_oid) && has_privs_of_role(GetUserId(), db_ddladmin))
-				|| (nsp_owner != dbo_oid)))
+			if (nsp_owner == dbo_oid)
+			{
+				Oid		db_ddladmin = get_db_ddladmin_oid(db_name, false);
+				Oid		db_owner = get_db_owner_oid(db_name, false);
+				if (has_privs_of_role(GetUserId(), db_owner) || has_privs_of_role(GetUserId(), db_ddladmin))
+				{
+					ownerId = nsp_owner;
+				}
+			}
+			else
+			{
 				ownerId = nsp_owner;
+			}
 		}
 
 		pfree(db_name);
