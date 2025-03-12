@@ -2408,9 +2408,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				   DestReceiver *dest,
 				   QueryCompletion *qc)
 {
-	Node	   *parsetree = pstmt->utilityStmt;
+	Node	   *parsetree;
 	ParseState *pstate = make_parsestate(NULL);
 
+	/*
+	 * If the given node tree is read-only, make a copy to ensure that parse
+	 * transformations don't damage the original tree.  This could be
+	 * refactored to avoid making unnecessary copies in more cases, but it's
+	 * not clear that it's worth a great deal of trouble over.  Statements
+	 * that are complex enough to be expensive to copy are exactly the ones
+	 * we'd need to copy, so that only marginal savings seem possible.
+	 */
+	if (readOnlyTree)
+		pstmt = copyObject(pstmt);
+
+	parsetree = pstmt->utilityStmt;
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
@@ -3932,8 +3944,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						*/
 						if (!member_can_set_role(GetUserId(), owner_oid) &&
 							(has_privs_of_role(GetUserId(), get_db_accessadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_ddladmin_oid(db_name, false))) &&
+							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false))) &&
 							get_db_principal_kind(owner_oid, db_name))
 						{
 							create_schema->authrole = NULL;
@@ -4363,7 +4374,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_TSQL &&
 					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
 				{
-					char    	*original_name = stmt->idxname != NULL ? pstrdup(stmt->idxname) : NULL;
+					char    	*original_name = stmt->idxname != NULL ? stmt->idxname : NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;
 
 					stmt->excludeOpNames = NIL;
@@ -4391,7 +4402,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 					if (original_name && !stmt->isconstraint)
+					{
+						/* Store the original index name in reloptions */
 						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+						/* Restore the original index name so that cached plan remains valid */
+						stmt->idxname = original_name;
+					}
 					return;
 				}
 				break;
