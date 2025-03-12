@@ -480,7 +480,7 @@ reseed_identity_post_select_into(Oid relid)
 	Oid            save_userid;
 	int            save_sec_context;
 	int            saved_sql_dialect;
-	bool           is_identity_increasing;
+	bool           is_identity_increasing = false;
 	const char     *schema_name;
 	const char     *table_name;
 	const char     *seq_name;

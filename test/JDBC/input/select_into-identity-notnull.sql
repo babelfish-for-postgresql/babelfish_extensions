@@ -339,3 +339,72 @@ GO
 
 DROP TABLE babel_5661_source
 GO
+DROP TABLE #babel_5661_new1, #babel_5661_new2, #babel_5661_new3, #babel_5661_new4
+GO
+
+-- DECREASING IDENTITY
+
+-- id1 represent expected identity value
+CREATE TABLE babel_5661_source (id INT IDENTITY(-1,-1), id1 INT)
+GO
+INSERT INTO babel_5661_source VALUES (-1), (-2), (-3), (-4), (-5), (-6)
+GO
+
+SELECT * INTO #babel_5661_new1 FROM babel_5661_source
+GO
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+-- identity should start from 7
+INSERT INTO #babel_5661_new1 VALUES (-7)
+GO
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+
+-- filter rows using where clause so that new table's identity != source tables's identity
+SELECT * INTO #babel_5661_new2 FROM babel_5661_source WHERE id1 > -4
+GO
+-- identity should start from 4
+INSERT INTO #babel_5661_new2 VALUES (-4)
+GO
+SELECT * FROM #babel_5661_new2 ORDER BY id
+GO
+
+-- Reseed the source table's identity but that should not affect new tables identity next val
+DBCC CHECKIDENT ('dbo.babel_5661_source', RESEED, -9);
+GO
+SELECT * INTO #babel_5661_new3 FROM babel_5661_source
+GO
+-- Identity should start from 7 even though source tables identity next value is 10
+INSERT INTO #babel_5661_new3 VALUES (-7)
+GO
+SELECT * FROM #babel_5661_new3 ORDER BY id
+GO
+
+-- Source table's next identity value should be 10 since we did DBCC reseed previously
+INSERT INTO babel_5661_source VALUES (-10)
+GO
+SELECT * FROM babel_5661_source ORDER BY id
+GO
+
+-- enable SET IDENTITY INSERT on source table and do random inserts
+SET IDENTITY_INSERT dbo.babel_5661_source ON
+GO
+
+INSERT INTO babel_5661_source (id, id1) VALUES (-11, -11)
+GO
+INSERT INTO babel_5661_source (id, id1) VALUES (99, 99)
+GO
+INSERT INTO babel_5661_source (id, id1) VALUES (-99, -99)
+GO
+
+SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id > -99
+GO
+-- Identity should start from 7 even though source tables identity next value is 100
+INSERT INTO #babel_5661_new4 VALUES (-12)
+GO
+SELECT * FROM #babel_5661_new4 ORDER BY id
+GO
+
+
+DROP TABLE babel_5661_source
+GO
