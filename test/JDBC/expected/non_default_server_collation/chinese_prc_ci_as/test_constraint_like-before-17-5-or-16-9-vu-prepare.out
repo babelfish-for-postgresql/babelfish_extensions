@@ -142,7 +142,7 @@ GO
 CREATE VIEW BABEL_5608_vu_prepare_t11_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t11;
 GO
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 CREATE TABLE BABEL_5608_vu_prepare_t12_1 (status varchar(10), CONSTRAINT chk_status CHECK (IIF(status LIKE 'act%', 1, 0) = 1 OR IIF(status = 'inactive', 1, 0) = 1));
 GO
@@ -163,6 +163,41 @@ GO
 
 CREATE VIEW BABEL_5608_vu_prepare_t12_2_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t12_2;
 GO
+
+
+
+
+-- COMPUTED COLUMNS (BABEL-5022)
+-- CREATE TABLE BABEL_5608_vu_prepare_t12_3 (name varchar(10), is_product AS CASE WHEN name LIKE 'PRD%' THEN 1 WHEN name LIKE 'DRP' THEN 2 ELSE 0 END PERSISTED);
+-- GO
+-- CREATE VIEW BABEL_5608_vu_prepare_t12_3_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t12_3;
+-- GO
+-- FUNCTION
+CREATE FUNCTION BABEL_5608_vu_prepare_t12_fun1
+(
+    @pattern varchar(100)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT * FROM BABEL_5608_vu_prepare_t12_2
+    WHERE status LIKE @pattern
+);
+GO
+
+-- PROCEDURE
+CREATE PROCEDURE BABEL_5608_vu_prepare_t12_proc1
+    @pattern varchar(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SELECT * FROM BABEL_5608_vu_prepare_t12_2
+    WHERE status LIKE @pattern
+END;
+GO
+
 
 -- CASE 13: VIEW WITH LIKE
 CREATE VIEW BABEL_5608_13_1_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t12_2 WHERE status LIKE 'ac%';
@@ -187,6 +222,13 @@ GO
 CREATE VIEW BABEL_5608_vu_prepare_t14_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t14;
 GO
 
+
+-- CASE 15: T_Const LIKE T_Const
+CREATE TABLE BABEL_5608_vu_prepare_t15(BABEL_5608_vu_prepare_t15_col1 varchar(max), CONSTRAINT BABEL_5608_vu_prepare_t15_c1 CHECK ('abc' LIKE 'A%'));
+GO
+
+CREATE VIEW BABEL_5608_vu_prepare_t15_VIEW AS SELECT * FROM BABEL_5608_vu_prepare_t15;
+GO
 
 -- psql
 -- CASE 1: T_Const LIKE T_CollateExpr(T_Const)
@@ -376,7 +418,7 @@ CHECK (((sys.remove_accents_internal(((('123'::sys."varchar")::sys.nvarchar(3)):
 ~~END~~
 
 
--- CASE 12: CFL CONDITIONS
+-- CASE 12: CFL CONDITIONS AND MORE
 -- IF ELSE
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_1'::regclass;
 GO
@@ -396,11 +438,83 @@ CHECK ((<newline>CASE<newline>    WHEN ((status)::text ~~* 'act%'::text) THEN 1<
 
 
 
+-- COMPUTED COLUMNS (BABEL-5022)
+-- SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t12_3'::regclass;
+-- GO
+-- FUNCTION
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_fun1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_5608_vu_prepare_t12_fun1("@pattern" sys."varchar")<newline> RETURNS TABLE(status sys."varchar")<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["100", "-1"], "original_probin": ""}', $function$RETURN<newline>(<newline>    SELECT * FROM BABEL_5608_vu_prepare_t12_2<newline>    WHERE status LIKE @pattern<newline>);$function$<newline>
+~~END~~
+
+
+-- PROCEDURE
+SELECT pg_get_functiondef(CAST('master_dbo.BABEL_5608_vu_prepare_t12_proc1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_5608_vu_prepare_t12_proc1(IN "@pattern" sys."varchar")<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["100"], "original_probin": ""}', $procedure$BEGIN<newline>    SET NOCOUNT ON;<newline>    <newline>    SELECT * FROM BABEL_5608_vu_prepare_t12_2<newline>    WHERE status LIKE @pattern<newline>END;$procedure$<newline>
+~~END~~
+
+
+
+-- CASE 13: VIEW WITH LIKE
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_1_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE status::text ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_2_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE (status::text COLLATE sys.estonian_ci_ai) ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_3_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE status::text ~~ ('ac%'::text COLLATE sys.estonian_ci_ai);
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_4_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE sys.upper(status)::text ~~ 'ac%'::text;
+~~END~~
+
+
+SELECT pg_get_viewdef('master_dbo.BABEL_5608_13_5_VIEW', true);
+GO
+~~START~~
+text
+ SELECT status<newline>   FROM master_dbo.babel_5608_vu_prepare_t12_2<newline>  WHERE (sys.upper(status)::text COLLATE sys.chinese_prc_ci_as) ~~ 'ac%'::text;
+~~END~~
+
+
 -- CASE 14: PostFix Pattern match
 SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t14'::regclass;
 GO
 ~~START~~
 text
-CHECK (((sys.remove_accents_internal(((babel_5608_vu_prepare_t14_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai))) ~~* '%abc'::text))
+CHECK (((sys.remove_accents_internal(((babel_5608_vu_prepare_t14_col1)::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text ~~* '%abc'::text))
+~~END~~
+
+
+-- CASE 15: T_Const LIKE T_Const
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo.BABEL_5608_vu_prepare_t15'::regclass;
+GO
+~~START~~
+text
+CHECK (('abc'::text ~~* 'A%'::text))
 ~~END~~
 
