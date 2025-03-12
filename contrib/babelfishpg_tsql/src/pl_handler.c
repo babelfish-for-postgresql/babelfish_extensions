@@ -6765,32 +6765,24 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
 
-		bool persist_identity = true;
+		/*
+		 * currently we only carry over identity and nullability for
+		 * simple query with a single relation in from expression
+		 */
+		bool persist_identity_and_nullability = false;
 
 		/*
 		 * In T-SQL, identity property of column in destination
 		 * table is not persisted if the SELECT ... INTO statement
 		 * does not contain a single base relation
 		 */
-		if (q->jointree && q->jointree->fromlist != NIL)
+		if (q->jointree && q->jointree->fromlist != NIL && list_length(q->jointree->fromlist) == 1)
 		{
-			if (list_length(q->jointree->fromlist) > 1)
-				persist_identity = false;
-			else
+			RangeTblRef		*rtr = linitial(q->jointree->fromlist);
+			if (IsA(rtr, RangeTblRef))
 			{
-				Node *n_from = (Node *) linitial(q->jointree->fromlist);
-
-				if (!IsA(n_from, RangeTblRef))
-					persist_identity = false;
-				else
-				{
-					RangeTblRef		*rtr = (RangeTblRef *) n_from;
-					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
-
-					/* Do not persist identity if not an ordinary relation */
-					if (rte->rtekind != RTE_RELATION)
-						persist_identity = false;
-				}
+				RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+				persist_identity_and_nullability = rte->rtekind == RTE_RELATION;
 			}
 		}
 
@@ -6881,7 +6873,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
-			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
 				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
 
@@ -6902,7 +6894,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
-					if (attrStruct->attidentity && persist_identity)
+					if (attrStruct->attidentity)
 					{
 						Constraint *constraint;
 
@@ -7003,9 +6995,11 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
 		}
-		if (stmts != NIL)
-			CommandCounterIncrement();
+
+		CommandCounterIncrement();
 	}
+
+	reseed_identity_post_select_into(address->objectId);
 }
 
 void

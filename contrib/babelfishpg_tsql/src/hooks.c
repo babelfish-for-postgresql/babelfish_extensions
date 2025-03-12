@@ -904,7 +904,7 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 	Oid userid = GetUserId();
 
 	/* In TDS client, the permissions might need to be checked against session user. */
-	if (IS_TDS_CLIENT())
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperatio())
 	{
 		Oid schema_id = get_func_namespace(funcid);
 
@@ -959,7 +959,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
 	 * if it is valid, otherwise permissions are checked against session user (current login).
 	 */
-	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL)
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL && !InSecurityRestrictedOperation())
 	{
 		ListCell	*lc;
 

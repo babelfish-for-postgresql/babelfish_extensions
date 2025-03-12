@@ -16,6 +16,7 @@
 #include "access/tupdesc.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_sequence.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "parser/parser.h"
@@ -23,6 +24,7 @@
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 #include "multidb.h"
@@ -469,4 +471,101 @@ pltsql_revert_last_scope_identity(int nest_level)
 	old_top = last_used_scope_seq_identity;
 	last_used_scope_seq_identity = old_top->prev;
 	pfree(old_top);
+}
+
+void
+reseed_identity_post_select_into(Oid relid)
+{
+	Oid            relowner;
+	Oid            save_userid;
+	int            save_sec_context;
+	int            saved_sql_dialect;
+	bool           is_identity_increasing;
+	const char     *schema_name;
+	const char     *table_name;
+	const char     *seq_name;
+	const char     *identity_colname = NULL;
+	Relation       rel;
+	TupleDesc      tupdesc;
+	HeapTuple      pgstuple;
+	StringInfoData querybuf;
+
+	rel = RelationIdGetRelation(relid);
+
+	relowner = rel->rd_rel->relowner;
+	schema_name = quote_identifier(get_namespace_name_or_temp(RelationGetNamespace(rel)));
+	table_name = quote_identifier(RelationGetRelationName(rel));
+
+	tupdesc = RelationGetDescr(rel);
+
+	for (AttrNumber attnum = 0; attnum < tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+
+		if (attr->attidentity)
+		{
+			pgstuple = SearchSysCache1(SEQRELID, get_table_identity(relid));
+			if (!HeapTupleIsValid(pgstuple))
+				elog(ERROR, "cache lookup failed for sequence %u", relid);
+
+			is_identity_increasing = ((Form_pg_sequence) GETSTRUCT(pgstuple))->seqincrement > 0;
+			seq_name = quote_identifier(get_rel_name(((Form_pg_sequence) GETSTRUCT(pgstuple))->seqrelid));
+
+			ReleaseSysCache(pgstuple);
+			identity_colname = quote_identifier(NameStr(attr->attname));
+			break;
+		}
+	}
+
+	if (!identity_colname || !schema_name || !table_name || !OidIsValid(relowner))
+	{
+		RelationClose(rel);
+		return;
+	}
+
+	initStringInfo(&querybuf);
+
+	appendStringInfo(&querybuf,
+					 "SELECT pg_catalog.setval('%s.%s', (SELECT pg_catalog.%s(%s) FROM %s.%s))",
+					 schema_name,
+					 seq_name,
+					 is_identity_increasing ? "max" : "min",
+					 identity_colname,
+					 schema_name,
+					 table_name);
+
+	RelationClose(rel);
+
+	saved_sql_dialect = sql_dialect;
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		int 	rc;
+
+		sql_dialect = SQL_DIALECT_PG;
+
+		if ((rc = SPI_connect()) < 0)
+			elog(ERROR, "SPI_connect() failed in SELECT INTO "
+					"with return code %d", rc);
+
+		/* The new table could already be transferred to schema owner and current user may not have privs for it */
+		SetUserIdAndSecContext(relowner, save_sec_context | SECURITY_RESTRICTED_OPERATION);
+
+		rc = SPI_execute(querybuf.data, false, 0);
+		if (rc != SPI_OK_SELECT)
+			elog(ERROR, "SPI_connect() failed in SELECT INTO "
+						"with return code %d", rc);
+
+		if (SPI_finish() != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed");
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		sql_dialect = saved_sql_dialect;
+	}
+	PG_END_TRY();
+
+	pfree(querybuf.data);
 }
