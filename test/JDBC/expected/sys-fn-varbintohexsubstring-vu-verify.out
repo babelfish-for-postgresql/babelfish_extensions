@@ -224,7 +224,7 @@ GO
 SELECT * FROM babel_5654_t1
 GO
 ~~START~~
-int#!#varbinary#!#int#!#int
+bit#!#varbinary#!#int#!#int
 0#!#123486534659789876435656#!#1#!#4
 0#!#123486534659789876435656#!#1#!#4
 1#!#123486534659789876435656#!#1#!#4
@@ -241,8 +241,21 @@ GO
 SELECT * FROM babel_5654_t2 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
 GO
 ~~START~~
-int#!#varbinary#!#int#!#int#!#nvarchar
+bit#!#varbinary#!#int#!#int#!#nvarchar
 1#!#023486534659789876435656#!#3#!#4#!#0x86534659
 ~~END~~
 
+
+-- computed columns with user defined datatypes
+INSERT INTO babel_5654_t3 VALUES (1,0x23486534659789876435656,3,4)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_5654_t3 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
+GO
+~~START~~
+bit#!#varbinary#!#int#!#int#!#nvarchar
+1#!#023486534659789876435656#!#3#!#4#!#0x86534659
+~~END~~
 

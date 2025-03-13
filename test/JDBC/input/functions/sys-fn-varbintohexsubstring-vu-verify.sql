@@ -102,3 +102,9 @@ GO
 SELECT * FROM babel_5654_t2 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
 GO
 
+-- computed columns with user defined datatypes
+INSERT INTO babel_5654_t3 VALUES (1,0x23486534659789876435656,3,4)
+GO
+
+SELECT * FROM babel_5654_t3 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
+GO

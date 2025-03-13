@@ -15,7 +15,7 @@ RETURN sys.fn_varbintohexsubstring(1,0x1234, 1, 4)
 END
 GO
 
-CREATE TABLE babel_5654_t1 (set_prefix INT,
+CREATE TABLE babel_5654_t1 (set_prefix sys.BIT,
                             expression sys.varbinary(MAX),
                             start_offset INT,
                             substr_length INT,
@@ -27,14 +27,39 @@ GO
 ~~ROW COUNT: 1~~
 
 
-CREATE TABLE babel_5654_t2 (setprefix INT,
+CREATE TABLE babel_5654_t2 (set_prefix sys.BIT,
                             expression sys.varbinary(MAX),
-                            startoffset INT,
-                            substrlength INT,
-                            [varbintohexsubstring] AS sys.fn_varbintohexsubstring(setprefix, expression, startoffset, substrlength));
+                            start_offset INT,
+                            substr_length INT,
+                            [varbintohexsubstring] AS sys.fn_varbintohexsubstring(set_prefix, expression, start_offset, substr_length));
 GO
 
 INSERT INTO babel_5654_t2 VALUES (0,0x3486534659789876435656,1,4)
 GO
 ~~ROW COUNT: 1~~
+
+
+CREATE TYPE SetPrefixType from sys.bit;
+GO
+
+CREATE TYPE ExpressionType from sys.varbinary(MAX);
+GO
+
+CREATE TYPE StartOffsetType from int;
+GO
+
+CREATE TYPE SubstrLengthType from int;
+GO
+
+CREATE TABLE babel_5654_t3 (set_prefix SetPrefixType,
+                            expression ExpressionType,
+                            start_offset StartOffsetType,
+                            substr_length SubstrLengthType,
+                            [varbintohexsubstring] AS sys.fn_varbintohexsubstring(set_prefix, expression, start_offset, substr_length));
+GO
+
+INSERT INTO babel_5654_t3 VALUES (0,0x3486534659789876435656,1,4)
+GO
+~~ROW COUNT: 1~~
+
 

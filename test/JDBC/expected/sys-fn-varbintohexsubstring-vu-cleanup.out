@@ -12,3 +12,18 @@ GO
 
 DROP TABLE babel_5654_t2
 GO
+
+DROP TABLE babel_5654_t3
+GO
+
+DROP TYPE SetPrefixType
+GO
+
+DROP TYPE ExpressionType
+GO
+
+DROP TYPE StartOffsetType
+GO
+
+DROP TYPE SubstrLengthType
+GO
