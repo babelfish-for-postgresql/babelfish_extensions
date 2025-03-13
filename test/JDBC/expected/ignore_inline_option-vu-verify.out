@@ -175,3 +175,72 @@ int
 1800
 ~~END~~
 
+
+-- Test SCHEMABINDING
+SELECT [dbo].[TestSchemabinding](5)
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+-- Test EXECUTE AS
+SELECT [dbo].[TestExecuteAs](5)
+GO
+~~START~~
+int
+35
+~~END~~
+
+
+-- Test combinations of options
+SELECT [dbo].[TestInlineAndSchemabinding](5)
+SELECT [dbo].[TestInlineAndExecuteAs](5)
+SELECT [dbo].[TestSchemabindingAndExecuteAs](5)
+SELECT [dbo].[TestAllOptions](5)
+GO
+~~START~~
+int
+40
+~~END~~
+
+~~START~~
+int
+45
+~~END~~
+
+~~START~~
+int
+50
+~~END~~
+
+~~START~~
+int
+55
+~~END~~
+
+
+-- Test RETURNS NULL ON NULL INPUT
+SELECT [dbo].[TestReturnsNullOnNullInput](5)
+SELECT [dbo].[TestReturnsNullOnNullInput](NULL)
+GO
+~~START~~
+int
+60
+~~END~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Test multiple parameters and all options
+SELECT [dbo].[TestMultiParamAllOptions](5, 'Test', 15.75)
+GO
+~~START~~
+varchar
+5,Test,15.75
+~~END~~
+

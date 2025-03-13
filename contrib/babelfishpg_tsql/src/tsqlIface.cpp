@@ -9880,11 +9880,21 @@ CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
 	}
 }
 
+/*
+ * Retrieves the token from a Function_optionContext.
+ * Note: All function options (EXECUTE AS, INLINE, SCHEMABINDING) are currently ignored during parsing time.
+ * This function is used to identify which option is present for potential future implementation.
+ *
+ * @param o The Function_optionContext to examine
+ * @return The corresponding terminal node, or nullptr if no valid option is found
+ */
 static antlr4::tree::TerminalNode *
 getTokenFromFunctionOption(TSqlParser::Function_optionContext* o) {
-    if (o->execute_as_clause())
-        return o->execute_as_clause()->CALLER();
-    if (o->inline_clause())
-        return o->inline_clause()->INLINE();
-    return o->SCHEMABINDING();
+	if (o->execute_as_clause())
+		return o->execute_as_clause()->CALLER();
+	if (o->inline_clause())
+		return o->inline_clause()->INLINE();
+	if (o->SCHEMABINDING())
+		return o->SCHEMABINDING();
+	return nullptr;
 }

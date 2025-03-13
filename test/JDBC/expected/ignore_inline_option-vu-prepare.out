@@ -74,6 +74,92 @@ BEGIN
 END
 GO
 
+-- NOTE: SCHEMABINDING, EXECUTE AS clause and INLINE clause, all should be ignored
+-- Function with SCHEMABINDING
+CREATE FUNCTION [dbo].[TestSchemabinding](@input INT)
+RETURNS INT
+WITH SCHEMABINDING
+AS
+BEGIN
+    RETURN @input * 6
+END
+GO
+
+-- Function with EXECUTE AS
+CREATE FUNCTION [dbo].[TestExecuteAs](@input INT)
+RETURNS INT
+WITH EXECUTE AS CALLER
+AS
+BEGIN
+    RETURN @input * 7
+END
+GO
+
+-- Function with INLINE and SCHEMABINDING
+CREATE FUNCTION [dbo].[TestInlineAndSchemabinding](@input INT)
+RETURNS INT
+WITH INLINE = ON, SCHEMABINDING
+AS
+BEGIN
+    RETURN @input * 8
+END
+GO
+
+-- Function with INLINE and EXECUTE AS
+CREATE FUNCTION [dbo].[TestInlineAndExecuteAs](@input INT)
+RETURNS INT
+WITH INLINE = OFF, EXECUTE AS CALLER
+AS
+BEGIN
+    RETURN @input * 9
+END
+GO
+
+-- Function with SCHEMABINDING and EXECUTE AS
+CREATE FUNCTION [dbo].[TestSchemabindingAndExecuteAs](@input INT)
+RETURNS INT
+WITH SCHEMABINDING, EXECUTE AS CALLER
+AS
+BEGIN
+    RETURN @input * 10
+END
+GO
+
+-- Function with all three options
+CREATE FUNCTION [dbo].[TestAllOptions](@input INT)
+RETURNS INT
+WITH INLINE = ON, SCHEMABINDING, EXECUTE AS CALLER
+AS
+BEGIN
+    RETURN @input * 11
+END
+GO
+
+-- Function with RETURNS NULL ON NULL INPUT
+CREATE FUNCTION [dbo].[TestReturnsNullOnNullInput](@input INT)
+RETURNS INT
+WITH RETURNS NULL ON NULL INPUT, INLINE = ON
+AS
+BEGIN
+    RETURN @input * 12
+END
+GO
+
+-- Function with multiple parameters and all options
+CREATE FUNCTION [dbo].[TestMultiParamAllOptions]
+(
+    @input1 INT,
+    @input2 VARCHAR(50),
+    @input3 DECIMAL(10,2)
+)
+RETURNS VARCHAR(100)
+WITH SCHEMABINDING, EXECUTE AS CALLER, INLINE = OFF
+AS
+BEGIN
+    RETURN CONCAT(CAST(@input1 AS VARCHAR(10)), ',', @input2, ',', CAST(@input3 AS VARCHAR(20)))
+END
+GO
+
 -- Create a test table for use with TestDynamicSQL
 CREATE TABLE TestTable (ID INT)
 GO

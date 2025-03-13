@@ -51,3 +51,27 @@ BEGIN
     SET @i = @i + 1
 END
 GO
+
+-- Test SCHEMABINDING
+SELECT [dbo].[TestSchemabinding](5)
+GO
+
+-- Test EXECUTE AS
+SELECT [dbo].[TestExecuteAs](5)
+GO
+
+-- Test combinations of options
+SELECT [dbo].[TestInlineAndSchemabinding](5)
+SELECT [dbo].[TestInlineAndExecuteAs](5)
+SELECT [dbo].[TestSchemabindingAndExecuteAs](5)
+SELECT [dbo].[TestAllOptions](5)
+GO
+
+-- Test RETURNS NULL ON NULL INPUT
+SELECT [dbo].[TestReturnsNullOnNullInput](5)
+SELECT [dbo].[TestReturnsNullOnNullInput](NULL)
+GO
+
+-- Test multiple parameters and all options
+SELECT [dbo].[TestMultiParamAllOptions](5, 'Test', 15.75)
+GO

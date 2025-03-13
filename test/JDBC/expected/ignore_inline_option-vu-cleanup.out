@@ -23,5 +23,29 @@ GO
 DROP FUNCTION IF EXISTS [dbo].[TestErrorHandling]
 GO
 
+DROP FUNCTION IF EXISTS [dbo].[TestSchemabinding]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestInlineAndSchemabinding]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestInlineAndExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestSchemabindingAndExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestAllOptions]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestReturnsNullOnNullInput]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestMultiParamAllOptions]
+GO
+
 DROP TABLE IF EXISTS TestTable
 GO
