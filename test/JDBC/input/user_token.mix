@@ -1,0 +1,38 @@
+-- Create the login and user 'test'
+-- tsql
+CREATE LOGIN test WITH PASSWORD = '12345678';
+GO
+CREATE USER test FOR LOGIN test;
+GO
+
+-- Log in as user 'test' and run queries
+-- tsql user=test password=12345678
+select name, principal_id, sid, type,usage from sys.login_token where name = 'public'
+go
+SELECT name, user_id(name) FROM sys.user_token WHERE name = 'public';
+GO
+SELECT sid FROM sys.user_token WHERE name = 'public';
+GO
+
+-- Switch back to admin context to clean up
+-- tsql
+
+-- Terminate any active connections for the 'test' user
+-- psql
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test' 
+  AND backend_type = 'client backend' 
+  AND usesysid IS NOT NULL;
+GO
+
+-- Wait to ensure synchronization
+SELECT pg_sleep(1);
+GO
+
+-- Drop the user and login
+-- tsql
+DROP USER test;
+GO
+DROP LOGIN test;
+GO

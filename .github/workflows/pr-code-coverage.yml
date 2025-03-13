@@ -25,7 +25,7 @@ jobs:
 
   run-babelfish-code-coverage-for-pull_request:
     needs: [run-jdbc-tests, run-odbc-tests, run-dotnet-tests, run-python-tests, run-isolation-tests]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     
     - uses: actions/checkout@v2
