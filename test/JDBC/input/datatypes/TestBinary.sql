@@ -2977,15 +2977,15 @@ ORDER BY BinaryValue;
 GO
 
 -- Sort with empty and non-empty values
-SELECT 'Empty Values Sort' AS Test,
+SELECT 'Empty Values Sort1' AS Test,
     CAST(0x AS VARBINARY(4)) AS BinaryValue
 UNION ALL
-SELECT 'Empty Values Sort',
+SELECT 'Empty Values Sort2',
     CAST(0x00 AS VARBINARY(4))
 UNION ALL
 SELECT 'Empty Values Sort',
     CAST(0x0001 AS VARBINARY(4))
-ORDER BY BinaryValue;
+ORDER BY BinaryValue, Test;
 GO
 
 -- Sort with repeated values
