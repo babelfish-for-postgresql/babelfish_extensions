@@ -226,7 +226,7 @@ forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
-fts-contains
+fts-contains-before
 fts-contains-utils
 get_tds_id
 HAS_DBACCESS
