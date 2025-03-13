@@ -6877,6 +6877,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
 				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+				/* set to false if same column appears twice in select list */
+				bool     	persists_identity = true;
 
 				if (HeapTupleIsValid(attrtup))
 				{
@@ -6895,13 +6897,26 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
+					/* We found one identity column but first check if it does not occur again target list */
 					if (attrStruct->attidentity)
 					{
-						Constraint *constraint;
+						ListCell *lc;
 
 						if (seen_identity)
 							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						foreach (lc, q->targetList)
+						{
+							TargetEntry *tle_inner_loop = (TargetEntry *)lfirst(lc);
+							if (tle_inner_loop->resno != tle->resno && tle_inner_loop->expr && IsA(tle_inner_loop->expr, Var) &&
+							    tle_inner_loop->resorigtbl == tle->resorigtbl && tle_inner_loop->resorigcol == tle->resorigcol)
+								persists_identity = false;
+						}
+					}
+					if (attrStruct->attidentity && persists_identity)
+					{
+						Constraint *constraint;
 
 						seen_identity = true;
 

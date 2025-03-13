@@ -431,6 +431,12 @@ GO
 INSERT INTO #t2 values (1, NULL)
 GO
 
+-- if identity column has multiple occurence then we should not carry it to new table
+SELECT id AS a, id AS b INTO #t5 FROM babel_5661_source
+GO
+INSERT INTO #t5 VALUES (1, 1)
+GO
+
 
 DROP VIEW babel_5661_source_view
 GO
