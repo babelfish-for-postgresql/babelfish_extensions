@@ -377,9 +377,9 @@ GO
 
 CREATE TABLE [Sales$Data@2024] (
     [Customer#ID] INT,
-    [Q1$Sales] DECIMAL(10,2),
-    [Q2$Sales] DECIMAL(10,2),
-    [Q3$Sales] DECIMAL(10,2)
+    [q1$sales] DECIMAL(10,2),
+    [q2$sales] DECIMAL(10,2),
+    [q3$sales] DECIMAL(10,2)
 );
 GO
 

@@ -2109,6 +2109,9 @@ generate_unpivot_source_table_alias(const char *base)
  */
 char *
 get_unpivot_source_alias(Node *table_ref) {
+
+	Assert(table_ref != NULL);
+
     if (IsA(table_ref, RangeVar))
 	{
 		/* Source is a table */
@@ -2173,7 +2176,10 @@ get_unpivot_source_alias(Node *table_ref) {
 		}
 
 	}
-	return NULL;
+	/* Future addition: RangeTableSample, when it is supported. */
+	ereport(ERROR,
+		(errcode(ERRCODE_SYNTAX_ERROR),
+		errmsg("Invalid source structure for UNPIVOT operation")));
 }
 
 /*
@@ -2235,11 +2241,6 @@ tsql_unpivot_transformation(List *components)
 	/* Set up left side with alias if not present */
 	source_alias = get_unpivot_source_alias(table_ref);
 
-	if(source_alias == NULL){
-		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("Invalid source structure for UNPIVOT operation")));
-	}
 	n->larg = table_ref;
 	
 	/* Build VALUES list from unpivot source columns */
@@ -2249,6 +2250,7 @@ tsql_unpivot_transformation(List *components)
 		/* Future enhancement: Handle aliased unpivot source columns syntax
 		 * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
 		 * solution: lfirst needs to be essentially llast if aliases are used in values list
+		 * Tracked in BABEL-5677
 		 */
 		List *value_pair;
 		ColumnRef *col_ref;

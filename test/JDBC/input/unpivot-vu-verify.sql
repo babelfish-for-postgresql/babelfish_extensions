@@ -267,7 +267,17 @@ UNPIVOT (revenue FOR quarter IN (q1, q2, q3, q4)) AS u2
     AND turnover > 100;
 GO
 
-    -- 6. UNPIVOT Subquery in JOIN
+    -- 6. Grouped Join
+SELECT * 
+FROM (product_info c
+  JOIN customer_turnover t 
+  ON c.product_id = t.customer_id)
+UNPIVOT (turnover FOR quarter IN 
+        (product_id, q3, q1, q2)
+) AS u;
+GO
+
+    -- 7. UNPIVOT Subquery in JOIN
 SELECT * FROM product_info p 
 JOIN (
     SELECT product_id, sales, quarter
@@ -799,14 +809,16 @@ SELECT [Customer#ID], [Sales $ Amount], [Quarter@Period]
 FROM [Sales$Data@2024]
 UNPIVOT (
     [Sales $ Amount] FOR [Quarter@Period] IN (
-        [Q1$Sales],
-        [Q2$Sales],
-        [Q3$Sales]
+        [q1$sales],
+        [q2$sales],
+        [q3$sales]
     )
 ) AS [Sales@Analysis];
 GO
 
-    -- Test UNPIVOT with Unicode characters
+-- KNOWN ISSUES
+
+    -- BABEL-5676 - Test UNPIVOT with Unicode characters
 SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
 FROM [Global_データ_Sales]
 UNPIVOT (
@@ -816,3 +828,9 @@ UNPIVOT (
     )
 ) AS [Global_分析];
 GO
+
+    -- BABEL-5677 - Support more variations of UNPIVOT Syntax
+SELECT customer_id, turnover, quarter FROM customer_turnover c 
+UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, c.q3, c.q4)) AS unpvt;
+GO
+
