@@ -2,12 +2,13 @@
 SELECT * FROM sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -27,9 +28,10 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -37,9 +39,10 @@ sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -47,9 +50,10 @@ sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -61,12 +65,13 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -78,9 +83,10 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -92,12 +98,13 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -110,12 +117,13 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -128,12 +136,13 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
@@ -146,11 +155,12 @@ GO
 SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#nvarchar#!#nvarchar
-ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL
-jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
-sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
