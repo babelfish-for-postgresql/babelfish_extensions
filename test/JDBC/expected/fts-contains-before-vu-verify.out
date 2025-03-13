@@ -2946,14 +2946,14 @@ select t.name from test_special_char_t t where contains(t.txt, 'one');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid column name 'txt'.)~~
+~~ERROR (Message: column t.txt does not exist)~~
 
 
 select t.name from test_special_char_t t where contains(b, 'one');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid column name 'b'.)~~
+~~ERROR (Message: column "b" does not exist)~~
 
 
 select t.name from test_special_char_t t where .t.name = 'one';
@@ -2973,16 +2973,50 @@ go
 
 select t.name from test_special_char_t t where contains("t.name", '"one two"');
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Incorrect syntax near 't.name'.)~~
+~~START~~
+text
+one two three
+one~two
+one!two
+one@two
+one#two
+one$two
+one%two
+one^two
+one&two
+one*two
+one-two
+one+two
+one=two
+one\two
+one|two
+one;two
+one:two
+one<two
+one>two
+one.two
+one?two
+one/two
+one :) two
+one @ @ @ @ two
+one   @ two    ^ three
+one     @    two
+one @ two @ three @ four
+one # two ' three ` four
+one    @ two    $ three ^ four * five
+one $ two % three * four * five
+one # two : three < four > five
+: one two three
+one: two
+:one two:
+~~END~~
 
 
 select name as txt from test_special_char_t where contains(txt, 'hello');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid column name 'txt'.)~~
+~~ERROR (Message: column "txt" does not exist)~~
 
 
 select * from new_schema_fts_t.test t where contains(t.name, 'one');

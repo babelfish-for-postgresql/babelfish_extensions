@@ -158,7 +158,7 @@ static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List *column_name);
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List **column_name);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -3646,9 +3646,9 @@ static void process_query_specification(
 	}
 
 	bool is_freetext_predicate = false;
-	List *column_name = NULL;
+	List *column_name = NIL;
 	if(qctx->where)
-		is_freetext_predicate = check_freetext_predicate(qctx->where, column_name);
+		is_freetext_predicate = check_freetext_predicate(qctx->where, &column_name);
 
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
@@ -7429,26 +7429,32 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List *column_name)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List **column_name)
 {
     if (ctx && ctx->predicate_br().size() > 0)
     	{
         for (auto pred : ctx->predicate_br())
 		{
-		if (pred && pred->predicate() && pred->predicate()->freetext_predicate()->full_column_name().size() > 0)
+		if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
 			{
-			for(auto col : pred->predicate()->freetext_predicate()->full_column_name())
+			if(pred->predicate()->freetext_predicate()->full_column_name().size() > 0)
 				{
-				if(col && col->column_name)
+				for(auto col : pred->predicate()->freetext_predicate()->full_column_name())
 					{
-					string str = getFullText(col->column_name);
-					StringInfoData buf;
-					initStringInfo(&buf);
-					for (char s : str){
-						appendStringInfoChar(&buf, s);
+					if(col && col->column_name)
+						{
+						string str = getFullText(col->column_name);
+						if(str[0]=='"')
+						{
+							str = stripQuoteFromId(str);
+							ereport(ERROR,
+								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+									errmsg("Incorrect syntax near \'%s\'.",
+										str.c_str())));
+						}
+						char * c_string  = pstrdup(str.c_str());
+						*column_name = lappend(*column_name, c_string);
 					}
-					appendStringInfoChar(&buf, '\0');
-					column_name = lappend(column_name, buf.data);
 				}
 			}
 			return true;

@@ -1,0 +1,63 @@
+-- tsql user=jdbc_user password=12345678
+-- enable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+DROP PROCEDURE fts_contains_vu_prepare_p1;
+GO
+
+DROP FULLTEXT INDEX ON fts_contains_vu_t;
+GO
+
+DROP TABLE fts_contains_vu_t;
+GO
+
+DROP VIEW fts_contains_pgconfig_v1
+GO
+
+drop fulltext index on test_special_char_t;
+go
+
+drop table test_special_char_t;
+go
+
+drop fulltext index on new_schema_fts_t.test;
+go
+
+drop table new_schema_fts_t.test;
+go
+
+drop schema new_schema_fts_t;
+go
+
+use fts_test_db;
+go
+
+drop fulltext index on new_schema_fts.test;
+go
+
+drop table new_schema_fts.test;
+go
+
+drop schema new_schema_fts;
+go
+
+use master;
+go
+
+drop database fts_test_db;
+go
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+
