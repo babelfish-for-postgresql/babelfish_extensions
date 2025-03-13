@@ -1110,6 +1110,7 @@ typedef struct PLtsql_stmt_partition_function
 	bool			is_right;
 	PLtsql_type		*datatype;
 	List			*args;		/* the arguments (list of exprs) */
+	char			*collation;
 } PLtsql_stmt_partition_function;
 
 /*

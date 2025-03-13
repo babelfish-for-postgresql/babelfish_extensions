@@ -24,6 +24,10 @@ inputs:
     description: "ANTLR version to use (based on Extension Branch)"
     required: false
     default: 4.13.2
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -40,6 +44,7 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
     - name: Compile ANTLR
       id: compile-antlr
@@ -228,7 +233,7 @@ runs:
       if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 'v3.10'
 
     - name: Configure Python Environment
       id: configure-python-environment

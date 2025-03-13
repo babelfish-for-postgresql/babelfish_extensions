@@ -9,7 +9,7 @@ jobs:
       INSTALL_DIR: psql
 
     name: Build and test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -24,6 +24,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
+          engine_version: 17.4
 
       - name: Compile ANTLR
         id: compile-antlr
