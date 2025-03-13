@@ -1,0 +1,56 @@
+use master;
+go
+
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_func_mvu%' and nspname = 'alter_func_db_dbo' order by funcname;
+go
+~~START~~
+varchar#!#varchar
+alter_func_mvu_f1#!#alter_func_db_dbo
+alter_func_mvu_f4#!#alter_func_db_dbo
+alter_func_mvu_f5#!#alter_func_db_dbo
+~~END~~
+
+
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_proc%' and nspname = 'alter_proc_db_dbo' order by funcname;
+go
+~~START~~
+varchar#!#varchar
+alter_proc_p1#!#alter_proc_db_dbo
+alter_proc_p3#!#alter_proc_db_dbo
+~~END~~
+
+
+drop database alter_proc_db
+go
+
+drop database alter_func_db
+go
+
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_func_mvu%' and nspname = 'alter_func_db_dbo'
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+SELECT funcname, nspname FROM sys.babelfish_function_ext WHERE funcname LIKE 'alter_proc%' and nspname = 'alter_proc_db_dbo'
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+-- psql currentSchema=master_dbo,public
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_func_db_dbo');
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#varchar
+~~END~~
+
+
+select * from pg_depend where refobjid = (select oid from pg_namespace where nspname = 'alter_proc_db_dbo');
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#varchar
+~~END~~
+

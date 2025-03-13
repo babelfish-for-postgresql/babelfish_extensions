@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   generate-dump-restore-tests:
     name: Generate Dump/Restore Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       dump-restore-path-list: ${{ steps.generate-dump-restore-path.outputs.dump-restore-path-list }}
     steps:
@@ -32,7 +32,7 @@ jobs:
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-dump-restore-tests.outputs.dump-restore-path-list) }}
     name: Dump Restore Test using ${{ matrix.upgrade-path.dump_method }} for ${{ matrix.upgrade-path.title }} - format=${{ matrix.upgrade-path.dump_format }} - type=${{ matrix.upgrade-path.type }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -75,6 +75,7 @@ jobs:
           migration_mode: 'multi-db'
           dump_restore: 'true'
           antlr_version: ${{ (steps.read-base-and-final-version.outputs.base-version == 'source.latest' || fromJSON(steps.read-base-and-final-version.outputs.base-version) >= 16.8 ) && '4.13.2' || '4.9.3' }}
+          engine_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca
