@@ -1975,6 +1975,7 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 			schema_name)));	
 			
 	relid = get_relname_relid((const char *) table_name, schemaOid);
+	
 
 	// Check if table exists
 	if (!OidIsValid(relid))
@@ -1986,17 +1987,14 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 	ft_index_name = get_fulltext_index_name(relid, table_name);
 	if(ft_index_name == NULL)
 		return false;
-
+	
 	ft_column_name = get_fulltext_indexed_columns(relid, ft_index_name);
-
-	check_column_list(relid, column_name);
-
 	for(int i = 0; i < len; i++)
 	{
 		bool flag = false;
 		for(int j = 0; j < ft_column_name->length; j++)
 		{
-			if(strcmp(toLower((char *)(column_name->elements[i]).ptr_value), toLower((char *)(ft_column_name->elements[j]).ptr_value)) == 0)
+			if(strcmp((char *)(column_name->elements[i]).ptr_value, (char *)(ft_column_name->elements[j]).ptr_value) == 0)
 			{
 				flag = true;
 				break;
@@ -2005,8 +2003,8 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 		if(!flag)
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \'%s\' because it is not full-text indexed.",
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \"%s\" because it is not full-text indexed.",
 						(char *)(column_name->elements[i]).ptr_value)));
 		}
 	}
@@ -2075,10 +2073,6 @@ List
     	return column_name;
 }
 
-/* The columns over which GIN index is created the index definition is like:
-* CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts(column_name)))
-* These columns can be of any text based datatype, like: TEXT, CHAR, VARCHAR, VARBINARY, etc.
-*/
 List
 *get_columns(char *index_stmt)
 {
@@ -2093,15 +2087,7 @@ List
 
 		initStringInfo(&bufStr);
 		current += strlen("replace_special_chars_fts(");
-
-		/* The columns that are not of TEXT data type are casted into TEXT data type so the index definition for non TEXT columns is:
-		 * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts((column_name)::text)))
-		 * These columns can be of any text based datatype, like: CHAR, VARCHAR, VARBINARY, etc.
-		 */
-		if(current[i] == '(')
-		{
-			current ++;
-		}
+		
 		// Extract until the closing parenthesis
 		while (current[i] != ')' ) 
 		{
@@ -2325,13 +2311,6 @@ char
 	StringInfoData query;
 
 	initStringInfo(&query);
-
-	if(column_name->length>32)
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				errmsg("Fulltext Index on more than 32 columns is not currently supported in Babelfish")));
-	}
 
 	/*
 	 * We prepare the following query to create a fulltext index.

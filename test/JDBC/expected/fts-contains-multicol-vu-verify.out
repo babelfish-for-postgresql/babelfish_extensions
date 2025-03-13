@@ -386,7 +386,7 @@ SELECT * FROM test_tb WHERE contains((txt1, txt5), '"The Industrial Revolution"'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid column name 'txt5'.)~~
+~~ERROR (Message: column "txt5" does not exist)~~
 
 
 -- negative test

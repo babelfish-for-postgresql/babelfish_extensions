@@ -8,21 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# all
-fts-contains-vu-prepare
-fts-contains-vu-verify
-fts-contains-vu-cleanup
-fts-contains-utils-vu-prepare
-fts-contains-utils-vu-verify
-fts-contains-utils-vu-cleanup
-fts-contains-multicol-vu-prepare
-fts-contains-multicol-vu-verify
-fts-contains-multicol-vu-cleanup
-
-#Ignoring fts-contains before files, that did not have the support for fulltext index validation
-ignore#!#fts-contains-before-vu-prepare
-ignore#!#fts-contains-before-vu-verify
-ignore#!#fts-contains-before-vu-cleanup
+all
 
 #Ignoring fts-contains before files, that did not have the support for fulltext index validation
 ignore#!#fts-contains-before-vu-prepare
