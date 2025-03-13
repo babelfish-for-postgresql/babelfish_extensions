@@ -3360,8 +3360,6 @@ CAST(Base.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Base.default_database_name AS SYS.SYSNAME) AS default_database_name,
 CAST(Base.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(Base.credential_id AS INT) AS credential_id,
-CAST(Base.owning_principal_id AS INT) AS owning_principal_id,
-CAST(Base.is_fixed_role AS sys.BIT) AS is_fixed_role,
 CAST(
   CASE
     WHEN Base.name = (SELECT super_user FROM super_user) THEN 0
