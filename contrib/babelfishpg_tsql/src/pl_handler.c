@@ -6782,7 +6782,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 			if (IsA(rtr, RangeTblRef))
 			{
 				RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
-				persist_identity_and_nullability = rte->rtekind == RTE_RELATION;
+				if (rte->rtekind == RTE_RELATION && rte->relkind == RELKIND_RELATION)
+					persist_identity_and_nullability = true;
 			}
 		}
 

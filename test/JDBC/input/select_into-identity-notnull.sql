@@ -276,7 +276,7 @@ go
 -- INCREASING IDENTITY
 
 -- id1 represent expected identity value
-CREATE TABLE babel_5661_source (id INT IDENTITY(1,1), id1 INT)
+CREATE TABLE babel_5661_source (id INT IDENTITY(1,1), id1 INT NOT NULL)
 GO
 INSERT INTO babel_5661_source VALUES (1), (2), (3), (4), (5), (6)
 GO
@@ -405,6 +405,35 @@ GO
 SELECT * FROM #babel_5661_new4 ORDER BY id
 GO
 
+
+-- Identity and nullability should be carried over when source is temp table
+CREATE TABLE #t (id INT IDENTITY(1,1), id1 INT NOT NULL)
+GO
+SELECT * INTO #t1 FROM #t
+GO
+
+INSERT INTO #t1 values (1)
+GO
+INSERT INTO #t1 values (NULL)
+GO
+SELECT * FROM #t1
+GO
+
+CREATE VIEW babel_5661_source_view AS SELECT * FROM babel_5661_source;
+GO
+
+-- Identity and nullability should NOT be carried over when source is view
+SELECT * INTO #t2 FROM babel_5661_source_view ORDER BY id
+GO
+
+-- this should pass because neither identity nor nullability should be carried over for view as source table
+-- in future we may change this
+INSERT INTO #t2 values (1, NULL)
+GO
+
+
+DROP VIEW babel_5661_source_view
+GO
 
 DROP TABLE babel_5661_source
 GO
