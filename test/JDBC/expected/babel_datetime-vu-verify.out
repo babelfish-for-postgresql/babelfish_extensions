@@ -626,7 +626,7 @@ datetime
 ~~END~~
 
 
--- different input size
+-- different input size for cast
 SELECT CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2E4600000000 AS DateTime);
 GO
 ~~START~~
@@ -719,6 +719,14 @@ GO
 ~~START~~
 datetime
 1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CAST(CAST(0x0 as VARBINARY(MAX)) AS DateTime);
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
 ~~END~~
 
 
@@ -936,8 +944,122 @@ datetime
 ~~END~~
 
 
+-- different input size for convert
+SELECT CONVERT(DateTime, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2E4600000000);
+GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0x1018B81FF);
+GO
+~~START~~
+datetime
+1900-01-02 23:59:59.997
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0x11018B81FF);
+GO
+~~START~~
+datetime
+1900-01-18 23:59:59.997
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0xFFF);
+GO
+~~START~~
+datetime
+1900-01-01 00:00:13.65
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0xF);
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0xFFFF);
+GO
+~~START~~
+datetime
+1900-01-01 00:03:38.45
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0xFFFFFF);
+GO
+~~START~~
+datetime
+1900-01-01 15:32:04.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0x1FFFFFF);
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT CONVERT(DateTime, 0x100FFFFFF);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, CAST(0x100FFFFFF AS VARBINARY(MAX)));
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, 0xFFFF235FFF0000000100FFFFFF);
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, CAST(0xFFFF235FFF0000000100FFFFFF AS VARBINARY(MAX)));
+GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
+
+SELECT CONVERT(DateTime, CAST(0x0 as VARBINARY(MAX)));
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
 -- NULL tests
 SELECT CAST(NULL AS DateTime);
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+SELECT CONVERT(DateTime, NULL);
 GO
 ~~START~~
 datetime
@@ -965,6 +1087,13 @@ GO
 ~~ERROR (Code: 517)~~
 
 ~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT CAST(CAST(0x00008EE600C5C100 AS VARBINARY(0)) AS DateTime);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: length for type varbinary must be at least 1)~~
 
 
 SELECT * from babel_datetime_vu_view1;
