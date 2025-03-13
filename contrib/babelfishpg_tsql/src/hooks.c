@@ -904,7 +904,7 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 	Oid userid = GetUserId();
 
 	/* In TDS client, the permissions might need to be checked against session user. */
-	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperatio())
 	{
 		Oid schema_id = get_func_namespace(funcid);
 

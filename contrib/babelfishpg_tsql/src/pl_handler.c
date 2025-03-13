@@ -6745,21 +6745,37 @@ get_identity_into_args(Node *node)
 static List *
 transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
-	List *result = NIL;
+	List *result;
 	ListCell *elements;
-	AlterTableStmt *altstmt = NULL;
+	AlterTableStmt *altstmt;
+	IntoClause *into;
+	Node *n;
 
-	if (stmt->query && IsA(stmt->query, Query))
+	n = stmt->query;
+	into = stmt->into;
+	result = NIL;
+	altstmt = NULL;
+
+	if (n && n->type == T_Query)
 	{
-		Query *q = (Query *) stmt->query;
+		Query *q = (Query *)n;
 		bool seen_identity = false;
+		bool ordinality_changed = false;
+		AttrNumber current_resno = 0;
+		Index identity_ressortgroupref = 0;
+		List *modifiedTargetList = NIL;
 
 		/*
-		 * currently we only inherit identity and nullability for
-		 * simple query i.e. a single relation in from expression
+		 * currently we only carry over identity and nullability for
+		 * simple query with a single relation in from expression
 		 */
 		bool persist_identity_and_nullability = false;
 
+		/*
+		 * In T-SQL, identity property of column in destination
+		 * table is not persisted if the SELECT ... INTO statement
+		 * does not contain a single base relation
+		 */
 		if (q->jointree && q->jointree->fromlist != NIL && list_length(q->jointree->fromlist) == 1)
 		{
 			RangeTblRef		*rtr = linitial(q->jointree->fromlist);
@@ -6771,7 +6787,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		}
 
 		altstmt = makeNode(AlterTableStmt);
-		altstmt->relation = stmt->into->rel;
+		altstmt->relation = into->rel;
 		altstmt->objtype = OBJECT_TABLE;
 		altstmt->cmds = NIL;
 
@@ -6797,7 +6813,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 
 				if (seen_identity)
 					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", stmt->into->rel->relname)));
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
 					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
@@ -6834,6 +6850,8 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 
 				seen_identity = true;
+				ordinality_changed = true;
+				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
 				/** Add alter table add identity node after Select Into statement */
 				constraint = makeNode(Constraint);
@@ -6854,8 +6872,6 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->missing_ok = false;
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
-
-				tle->resjunk = true;
 			}
 			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
@@ -6884,7 +6900,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 
 						if (seen_identity)
 							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", stmt->into->rel->relname)));
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 						seen_identity = true;
 
@@ -6905,9 +6921,43 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
+					current_resno += 1;
+					tle->resno = current_resno;
+					modifiedTargetList = lappend(modifiedTargetList, tle);
+
 					ReleaseSysCache(attrtup);
 				}
 			}
+			else
+			{
+				current_resno += 1;
+				tle->resno = current_resno;
+				modifiedTargetList = lappend(modifiedTargetList, tle);
+			}
+		}
+		q->targetList = modifiedTargetList;
+
+		if (ordinality_changed)
+		{
+			if (q->sortClause)
+			{
+				List *modifiedSortClause = NIL;
+				ListCell *olitem;
+				foreach (olitem, q->sortClause)
+				{
+					Node *sortnode = (Node *)lfirst(olitem);
+					if (IsA(sortnode, SortGroupClause))
+					{
+						SortGroupClause *sortcl = (SortGroupClause *)sortnode;
+						if (sortcl->tleSortGroupRef != identity_ressortgroupref)
+							modifiedSortClause = lappend(modifiedSortClause, sortcl);
+					}
+				}
+				q->sortClause = modifiedSortClause;
+			}
+
+			if (q->distinctClause && list_length(q->distinctClause) > (identity_ressortgroupref - 1))
+				q->distinctClause = list_delete_nth_cell(q->distinctClause, identity_ressortgroupref - 1);
 		}
 	}
 
