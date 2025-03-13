@@ -227,7 +227,7 @@ forxml-path
 forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
-fts-contains
+fts-contains-before
 fts-contains-utils
 BABEL-4785
 get_tds_id
