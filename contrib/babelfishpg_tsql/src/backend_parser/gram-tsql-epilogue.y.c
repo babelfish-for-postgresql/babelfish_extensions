@@ -2221,6 +2221,9 @@ tsql_unpivot_transformation(List *components)
 	table_ref = (Node *)linitial(components);
 	unpivot_info = (List *)lsecond(components);
 	alias = (Alias *)lthird(components);
+
+	/* An alias for unpivot is mandatory */
+	Assert(alias != NULL);
 	
 	/* Extract unpivot components */
 	measure_col = (Node *)linitial(unpivot_info);
