@@ -305,6 +305,16 @@ transform_funcexpr(Node *node)
 	return node;
 }
 
+static CollateExpr*
+create_collate_expr(Node *arg, Oid collid)
+{
+	CollateExpr *expr = makeNode(CollateExpr);
+	expr->arg = (Expr *) arg;
+	expr->collOid = collid;
+	expr->location = -1;
+	return expr;
+}
+
 /*
  * If the node is OpExpr and the colaltion is ci_as, then
  * transform the LIKE OpExpr to ILIKE OpExpr:
@@ -321,7 +331,7 @@ transform_funcexpr(Node *node)
 static Node *
 transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
-	Node	   *leftop = (Node *) linitial(op->args);
+	Node	   *leftop = copyObject(linitial(op->args));
 	Node	   *rightop = (Node *) lsecond(op->args);
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
@@ -332,12 +342,12 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
+	CollateExpr *prefix_collate;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
 	if (!OidIsValid(database_or_server_collation_oid))
 		return node;
-
 
 	/*
 	 * Find the CS_AS collation corresponding to the CI_AS collation
@@ -388,6 +398,9 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 	{
+		/* update the collation of left and right node*/
+		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
 
@@ -400,8 +413,27 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	/* If there is no constant prefix then there's nothing more to do */
 	if (pstatus == Pattern_Prefix_None)
 	{
+		/* update the collation of left and right node*/
+		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
 	}
+
+	/* 
+	 * We need to do this because the dump considers rightop as Const with COLLATE being added
+	 * whereas during restore, that is considered as CollateExpr while building new expression tree
+	 * which is adding extra parenthesis on rightop when we invoke pg_get_constraintdef() from PG
+	 * We update the righop to equivalent CollateExpr to pick correct collation
+	 * We are clearing collation or else we observe multiple redundant COLLATE
+	 * clause in pg_get_constraintdef(), which will result in error during upgrade/restore
+	 * We also set InvalidOid for highest_sort_key during creation for the same reason,
+	 * later we enclose it withing CollateExpr
+	 */
+	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
+	
+	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
+
+	Assert(ltypeId == rtypeId);
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
@@ -409,14 +441,17 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		op_str = like_entry.is_not_match ? "<>" : "=";
-		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
 		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup)));
+									(Expr *) leftop,
+									(Expr *) prefix_collate,
+									InvalidOid,
+									coll_info_of_inputcollid.oid,
+									oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
 	}
@@ -428,33 +463,45 @@ transform_from_ci_as_for_likenode(Node *node, OpExpr *op, like_ilike_info_t like
 		Node	   *constant_suffix;
 		Const	   *highest_sort_key;
 
+		/* Always create a CollateExpr on top to match with op->inputcollid */
+		linitial(op->args) = (Node*) create_collate_expr(linitial(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+
 		/* construct leftop >= pattern */
-		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
+
+		/* Use the original node to create the operator */
 		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-											(Expr *) leftop, (Expr *) prefix,
-											InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+											(Expr *) leftop, 
+											(Expr *) prefix_collate,
+											InvalidOid,
+											coll_info_of_inputcollid.oid,
+											oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, coll_info_of_inputcollid.oid, -1,
+		highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
+
 		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-										(Expr *) prefix, (Expr *) highest_sort_key,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+										(Expr *) prefix_collate,
+										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
+										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
-		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
+		/* Use the original node to create the operator */
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
