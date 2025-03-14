@@ -499,6 +499,16 @@ CREATE SCHEMA babel_5116_sch3
 GO
 CREATE SCHEMA babel_5116_sch4 AUTHORIZATION babel_5116_r1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be able to SET ROLE "babel_5116_db_babel_5116_r1")~~
+
+CREATE SCHEMA babel_5116_sch4 AUTHORIZATION dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be able to SET ROLE "dbo")~~
+
 
 /********** ALTER DDLs ARE ALLOWED TO DDLADMIN **********/
 ALTER TABLE babel_5116_t1 ADD id_new INT
@@ -1085,8 +1095,6 @@ GO
 DROP SCHEMA babel_5116_sch2
 GO
 DROP SCHEMA babel_5116_sch3
-GO
-DROP SCHEMA babel_5116_sch4
 GO
 
 DROP TABLE babel_5116_pt
