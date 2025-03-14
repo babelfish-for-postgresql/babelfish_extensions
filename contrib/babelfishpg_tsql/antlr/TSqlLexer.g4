@@ -472,6 +472,7 @@ INDEX:                                           I N D E X;
 INFINITE:                                        I N F I N I T E;
 INIT:                                            I N I T;
 INITIATOR:                                       I N I T I A T O R;
+INLINE:                                          I N L I N E;   
 INNER:                                           I N N E R;
 INPUT:                                           I N P U T;
 INPUTBUFFER:                                     I N P U T B U F F E R;
