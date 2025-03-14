@@ -5335,63 +5335,65 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 static void 
 transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
-	Node *where_clause = stmt->whereClause;
-	ListCell *lc;
-	List *measure_cols = NIL;
-	List *src_cols = NIL;
-	bool has_unpivot = false;
+	if (sql_dialect == SQL_DIALECT_TSQL) {
+		Node *where_clause = stmt->whereClause;
+		ListCell *lc;
+		List *measure_cols = NIL;
+		List *src_cols = NIL;
+		bool has_unpivot = false;
 
 
-	foreach(lc, stmt->fromClause)
-	{
-		has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause, &measure_cols, &src_cols);
-	}
-
-	if (has_unpivot)
-	{
-		stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
-
-		/* Create IS NOT NULL where conditions for all collected columns */
-		if (measure_cols != NIL)
+		foreach(lc, stmt->fromClause)
 		{
-			foreach(lc, measure_cols)
-			{
-				char *measure_col = strVal(lfirst(lc));
-				ColumnRef *measure_ref;
-				NullTest *null_test;
-				
-				/* Create IS NOT NULL condition */
-				measure_ref = makeNode(ColumnRef);
-				measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
-				measure_ref->location = -1;
-
-				null_test = makeNode(NullTest);
-				null_test->arg = (Expr *)measure_ref;
-				null_test->nulltesttype = IS_NOT_NULL;
-				null_test->argisrow = false;
-				null_test->location = -1;
-
-				/* Add to WHERE clause */
-				if (where_clause)
-				{
-					BoolExpr *bool_expr = makeNode(BoolExpr);
-					bool_expr->boolop = AND_EXPR;
-					bool_expr->args = list_make2(where_clause, null_test);
-					bool_expr->location = -1;
-					where_clause = (Node *)bool_expr;
-				}
-				else
-				{
-					where_clause = (Node *)null_test;
-				}
-			}
-			stmt->whereClause = where_clause;
+			has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause, &measure_cols, &src_cols);
 		}
 
-	}
+		if (has_unpivot)
+		{
+			stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
 
-	/* Free allocated memory */
-	list_free_deep(measure_cols);
+			/* Create IS NOT NULL where conditions for all collected columns */
+			if (measure_cols != NIL)
+			{
+				foreach(lc, measure_cols)
+				{
+					char *measure_col = strVal(lfirst(lc));
+					ColumnRef *measure_ref;
+					NullTest *null_test;
+					
+					/* Create IS NOT NULL condition */
+					measure_ref = makeNode(ColumnRef);
+					measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
+					measure_ref->location = -1;
+
+					null_test = makeNode(NullTest);
+					null_test->arg = (Expr *)measure_ref;
+					null_test->nulltesttype = IS_NOT_NULL;
+					null_test->argisrow = false;
+					null_test->location = -1;
+
+					/* Add to WHERE clause */
+					if (where_clause)
+					{
+						BoolExpr *bool_expr = makeNode(BoolExpr);
+						bool_expr->boolop = AND_EXPR;
+						bool_expr->args = list_make2(where_clause, null_test);
+						bool_expr->location = -1;
+						where_clause = (Node *)bool_expr;
+					}
+					else
+					{
+						where_clause = (Node *)null_test;
+					}
+				}
+				stmt->whereClause = where_clause;
+			}
+
+		}
+
+		/* Free allocated memory */
+		list_free_deep(measure_cols);
+	}
 }
 
 /*
