@@ -609,3 +609,4 @@ sys-login-property
 sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
+unpivot
