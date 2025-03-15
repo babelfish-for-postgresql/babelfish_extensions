@@ -790,25 +790,55 @@ is_json_query(List *name)
 * ... CONTAINS(column_name, '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
 * to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* for column_list
+* to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* ...
+* * to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
-TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
+TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
-    A_Expr *fts;
-    Node *to_tsvector_call, *to_tsquery_call;
-    Node *result_pgconfig;
-    List *args_pgconfig;
+	Node *fts = NULL;
+	A_Expr *column_clause;
+	Node *result_pgconfig;
+	List *args_pgconfig;
+	int colSize = colId->length;
+ 
+	args_pgconfig = list_make1(search_expr);
+	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+	for(int i = 0; i < colSize; i++)
+	{
+		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+		Node * vec = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
+		column_clause = createClause(vec, query);
+		if(fts != NULL)
+		{
+			fts = concatClause((Node *) fts, (Node *) column_clause);
+		}
+		else
+		{
+			fts = (Node *)column_clause;
+		}
+	}
+	return (Node *) fts;
+}
 
-    args_pgconfig = list_make1(search_expr);
-    result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+static A_Expr *
+createClause(Node *lexpr, Node *rexpr)
+{
+	A_Expr *fts;
+	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
+	return fts;
+}
 
-    to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
-    to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-    
-    fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
-
-    return (Node *)fts;
+static Node *
+concatClause(Node *lexpr, Node *rexpr)
+{
+	Node *fts;
+	fts = makeOrExpr(lexpr, rexpr, -1);
+	return fts;
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */

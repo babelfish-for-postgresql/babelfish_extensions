@@ -1956,12 +1956,14 @@ gen_schema_name_for_fulltext_index(const char *schema_name)
  * during execution of CONTAINS() statement
  */
 bool
-check_fulltext_exist(const char *schema_name, const char *table_name)
+check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name)
 {
 	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
 	char		*ft_index_name;
-	Oid			schemaOid;
-	Oid			relid;
+	Oid		schemaOid;
+	Oid		relid;
+	List 		*ft_column_name = NIL;
+	int 		len = column_name->length;
 
 	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
 
@@ -1983,7 +1985,173 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
 					table_name)));
 	
 	ft_index_name = get_fulltext_index_name(relid, table_name);
-	return ft_index_name != NULL;
+	if(ft_index_name == NULL)
+		return false;
+
+	ft_column_name = get_fulltext_indexed_columns(relid, ft_index_name);
+	if(ft_column_name == NULL)
+		return false;
+				
+
+	check_column_list(relid, column_name);
+
+	for(int i = 0; i < len; i++)
+	{
+		bool flag = false;
+		for(int j = 0; j < ft_column_name->length; j++)
+		{
+			if(strcmp(toLower((char *)(column_name->elements[i]).ptr_value), toLower((char *)(ft_column_name->elements[j]).ptr_value)) == 0)
+			{
+				flag = true;
+				break;
+			}
+		}
+		if(!flag)
+		{
+			list_free(ft_column_name);
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \'%s\' because it is not full-text indexed.",
+						(char *)(column_name->elements[i]).ptr_value)));
+		}
+	}
+	list_free(ft_column_name);
+	return true;
+}
+
+ 
+/* Check if the columns provided in the freetext predicate query exist or not
+ * The check for the columns existence is handled in BISON, but we require to 
+ * check it before checking if they are fulltext indexed or not
+ */
+void check_column_list(Oid relid, const List *column_name)
+{
+ 	Relation 	relation = RelationIdGetRelation(relid);
+ 	TupleDesc	tupledesc = RelationGetDescr(relation);
+ 
+ 	for(int i = 0; i < column_name->length; i++)
+ 	{
+ 		bool flag = false;
+ 		for (int j = 0; j < tupledesc->natts; j++) 
+ 		{
+ 			Form_pg_attribute attr = TupleDescAttr(tupledesc, j);
+ 			if (!attr->attisdropped) 
+ 			{ 
+ 				char *str = NameStr(attr->attname);
+ 				if(strcmp(toLower((char *)(column_name->elements[i]).ptr_value), toLower(str)) == 0)
+ 				{
+ 					flag = true;
+ 					break;
+ 				}
+ 			}
+ 		}
+ 		if(!flag)
+ 		ereport(ERROR,
+ 			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+ 				errmsg("column \"%s\" does not exist.",
+ 					(char *)(column_name->elements[i]).ptr_value)));
+ 	}
+	
+	RelationClose(relation);
+	return;
+}
+ 
+List
+*get_fulltext_indexed_columns(Oid relid, char *ft_index_name)
+{
+ 	Relation        relation  = RelationIdGetRelation(relid);
+ 	List            *indexoidlist = RelationGetIndexList(relation);
+ 	List 		*column_name = NULL;
+ 	ListCell	*cell;
+ 	char		*idx;
+ 	Datum 		result;
+ 
+ 	foreach(cell, indexoidlist)
+ 	{
+ 		Oid indexOid = lfirst_oid(cell);
+ 		char *name = get_rel_name(indexOid);
+ 
+ 		if (strcmp(name, ft_index_name) == 0)
+ 		{
+ 			result = DirectFunctionCall1(pg_get_indexdef, ObjectIdGetDatum(indexOid));
+ 			if(DatumGetPointer(result) == NULL)
+ 				return NULL;
+ 			idx = text_to_cstring(DatumGetTextP(result));
+ 			column_name = get_columns(idx);
+ 			break;
+ 		}
+ 	}
+
+	RelationClose(relation);
+	list_free(indexoidlist);
+
+     	return column_name;
+}
+ 
+/* The columns over which GIN index is created the index definition is like:
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, column_name)), for babelfish version before 16.2
+ * and
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts(column_name))), for babelfish version 16.2 onwards
+ * These columns can be of any text based datatype, like: TEXT, CHAR, VARCHAR, VARBINARY, etc.
+ */
+List
+*get_columns(char *index_stmt)
+{
+ 	List	 *column_name = NULL;
+ 	// Find the starting point after "to_tsvector"
+ 	const char* indexdf = index_stmt;
+ 
+ 	while ((indexdf = strstr(indexdf, "regconfig, ")) != NULL) 
+ 	{
+ 		int i = 0;
+ 		StringInfoData bufStr;
+ 
+ 		initStringInfo(&bufStr);
+ 		indexdf += strlen("regconfig, ");
+		
+		/* From  version 16.2 and onwards, the column names are processed for special characters before creating index,
+		 * so they are passed as replace_special_chars_fts(column_name) in the index definition
+		 * which is being checked before assigning the pointer to 'indexdf' 
+		 * as it will return NULL for version before 16.2
+		 */
+		if((strstr(indexdf, "replace_special_chars_fts(")) != NULL)
+		{
+			indexdf = strstr(indexdf, "replace_special_chars_fts(");
+			indexdf += strlen("replace_special_chars_fts(");
+		}
+		/* The columns that are not of TEXT data type are casted into TEXT data type so the index definition for non TEXT columns is:
+		* CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, (column_name)::text)), for version before 16.2
+		* CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts((column_name)::text))), for version 16.2 and onwards  
+		* so an extra '(' needs to be taken care of for these columns
+		* These columns can be of any text based datatype, like: CHAR, VARCHAR, VARBINARY, etc.
+		*/
+		if(indexdf[i] == '(')
+		{
+			i++;
+		}
+ 		// Extract until the closing parenthesis
+ 		while (indexdf[i] != ')' ) 
+ 		{
+ 			appendStringInfoChar(&bufStr, indexdf[i]);
+ 			i++;
+ 		}
+ 		appendStringInfoChar(&bufStr, '\0');
+ 		column_name = lappend(column_name, bufStr.data);
+ 	}
+ 	return column_name;
+}
+ 
+/* To match all the strings in lower case
+ * This ensures that case insesitivity.
+ */
+char
+*toLower(char *str)
+{
+ 	for(int k = 0; k < strlen(str); k++)
+ 	{
+ 		str[k] = tolower(str[k]);
+ 	}
+ 	return str;
 }
 
 /*
@@ -2183,6 +2351,20 @@ char
 	StringInfoData query;
 
 	initStringInfo(&query);
+
+	if(column_name->length>32)
+ 	{
+ 		ereport(ERROR,
+ 			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+ 				errmsg("Fulltext Index on more than 32 columns is not currently supported in Babelfish")));
+ 	}
+
+	if(column_name->length>32)
+ 	{
+ 		ereport(ERROR,
+ 			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+ 				errmsg("Fulltext Index on more than 32 columns is not currently supported in Babelfish")));
+ 	}
 
 	/*
 	 * We prepare the following query to create a fulltext index.
