@@ -2013,6 +2013,10 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 	return true;
 }
 
+/* Check if the columns provided in the freetext predicate query exist or not
+ * The check for the columns existence is handled in BISON, but we require to 
+ * check it before checking if they are fulltext indexed or not
+ */
 void check_column_list(Oid relid, const List *column_name)
 {
 	Relation 	relation = RelationIdGetRelation(relid);
@@ -2111,6 +2115,9 @@ List
 	return column_name;
 }
 
+/* To match all the strings in lower case
+ * This ensures that case insesitivity.
+ */
 char
 *toLower(char *str)
 {
