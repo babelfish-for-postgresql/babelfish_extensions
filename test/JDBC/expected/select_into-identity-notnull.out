@@ -1,3 +1,4 @@
+-- tsql
 create database db_select_into
 go
 
@@ -741,7 +742,7 @@ GO
 
 ~~ERROR (Message: null value in column "id1" of relation "#t1" violates not-null constraint)~~
 
-SELECT * FROM #t1
+SELECT * FROM #t1 ORDER BY id
 GO
 ~~START~~
 int#!#int
@@ -771,9 +772,89 @@ GO
 ~~ROW COUNT: 1~~
 
 
-
-DROP VIEW babel_5661_source_view
+-- db_ddladmin should be able to run SELECT INTO
+CREATE LOGIN babel_5661_login WITH PASSWORD = '12345678'
+GO
+CREATE USER babel_5661_user FOR LOGIN babel_5661_login
+GO
+ALTER ROLE db_ddladmin ADD MEMBER babel_5661_user
 GO
 
-DROP TABLE babel_5661_source
+GRANT SELECT ON babel_5661_source TO babel_5661_user
+GO
+
+-- tsql user=babel_5661_login password=12345678
+SELECT * INTO #t1 FROM babel_5661_source
+GO
+INSERT INTO #t1 VALUES (-100)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #t1 ORDER BY id
+GO
+~~START~~
+int#!#int
+-100#!#-100
+-99#!#-99
+-11#!#-11
+-10#!#-10
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+99#!#99
+~~END~~
+
+
+-- terminate-tsql-conn user=babel_5661_login password=12345678
+
+-- tsql
+-- Left Join should not carry over nullability
+CREATE TABLE babel_5661_SourceTable (
+    ID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE babel_5661_ConfigTable (
+    ConfigID INT PRIMARY KEY,
+    IsActive BIT NOT NULL
+);
+GO
+
+INSERT INTO babel_5661_SourceTable (ID, Name, Value)
+VALUES 
+    (1, 'Item 1', 100),
+    (2, 'Item 2', 200);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel_5661_ConfigTable (ConfigID, IsActive)
+VALUES 
+    (1, 1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT 
+    s.ID,
+    s.Name,
+    c.IsActive  -- This will be NULL for row 2
+INTO babel_5661_NewTable
+FROM babel_5661_SourceTable s
+LEFT JOIN babel_5661_ConfigTable c ON s.ID = c.ConfigID;
+GO
+
+
+DROP VIEW IF EXISTS babel_5661_source_view
+GO
+DROP TABLE IF EXISTS babel_5661_source, babel_5661_SourceTable, babel_5661_ConfigTable, babel_5661_NewTable
+GO
+DROP LOGIN babel_5661_login
+GO
+DROP USER babel_5661_user
 GO
