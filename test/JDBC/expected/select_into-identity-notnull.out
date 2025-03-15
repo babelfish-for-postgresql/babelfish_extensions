@@ -551,7 +551,7 @@ GO
 
 SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id < 99
 GO
--- Identity should start from 7 even though source tables identity next value is 100
+-- Identity should start from 12 even though source tables identity next value is 100
 INSERT INTO #babel_5661_new4 VALUES (12)
 GO
 ~~ROW COUNT: 1~~
@@ -703,7 +703,7 @@ GO
 
 SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id > -99
 GO
--- Identity should start from 7 even though source tables identity next value is 100
+-- Identity should start from 12 even though source tables identity next value is 100
 INSERT INTO #babel_5661_new4 VALUES (-12)
 GO
 ~~ROW COUNT: 1~~
