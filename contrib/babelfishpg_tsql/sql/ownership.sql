@@ -906,6 +906,7 @@ BEGIN
         r2.rolname,
         CASE c.relkind
             WHEN 'r' THEN 'table'
+            WHEN 'p' THEN 'table'
             WHEN 'v' THEN 'view'
             WHEN 'S' THEN 'sequence'
             ELSE c.relkind::text
@@ -921,7 +922,7 @@ BEGIN
     JOIN
         pg_roles r2 ON c.relowner = r2.oid
     WHERE 
-        c.relkind IN ('r', 'v', 'S')
+        c.relkind IN ('r', 'p', 'v', 'S')
         AND c.relname NOT LIKE '@%' -- Ignore temporary tables
         AND r1.rolname <> r2.rolname
     UNION ALL

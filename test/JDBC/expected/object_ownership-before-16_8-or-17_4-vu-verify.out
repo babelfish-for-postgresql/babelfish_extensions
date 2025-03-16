@@ -141,6 +141,12 @@ bigint
 
 ~~ERROR (Message: permission denied for sequence old_sq)~~
 
+select * from object_ownership_s2.pt2;
+go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
 use master
 go
 
@@ -169,6 +175,7 @@ object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u
 object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_t#!#object_ownership_db_dbo#!#table
 object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_t_id_seq#!#object_ownership_db_dbo#!#sequence
 object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#old_v#!#object_ownership_db_dbo#!#view
+object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#pt2#!#object_ownership_db_dbo#!#table
 object_ownership_db_object_ownership_s2#!#object_ownership_db_object_ownership_u1#!#pt2_saleid_seq#!#object_ownership_db_dbo#!#sequence
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f#!#object_ownership_db_dbo#!#function
 object_ownership_db_object_ownership_s3#!#object_ownership_db_object_ownership_r1#!#old_f1#!#object_ownership_db_object_ownership_u1#!#function
@@ -209,6 +216,7 @@ ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_t_id_seq OWNER TO obj
 SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
 ALTER VIEW object_ownership_db_object_ownership_s2.old_v OWNER TO object_ownership_db_object_ownership_u1;
 SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+ALTER TABLE object_ownership_db_object_ownership_s2.pt2 OWNER TO object_ownership_db_object_ownership_u1;
 ALTER SEQUENCE object_ownership_db_object_ownership_s2.pt2_saleid_seq OWNER TO object_ownership_db_object_ownership_u1;
 ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f OWNER TO object_ownership_db_object_ownership_r1;
 ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f1 OWNER TO object_ownership_db_object_ownership_r1;
@@ -384,5 +392,9 @@ bigint
 
 select * from object_ownership_s2.pt2;
 go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
 use master
 go
