@@ -35,6 +35,21 @@ go
 create sequence object_ownership_s1.old_sq start with 1 increment by 1 ;
 go
 
+/** CREATE PARTITION FUNCTION AND SCHEME **/
+create partition function pf2 (datetime)
+as range right for values 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+go
+
+create partition scheme ps2
+as partition pf2 
+all to ([primary]);
+go
+
 /*** OBJECT OWNER WILL NOT BE SAME AS SCHEMA OWNER ***/
 /*** SCHEMA OWNED BY USER, OBJECT OWNER BY DBO ***/
 create table object_ownership_s2.old_t(a int, b int);
@@ -52,6 +67,16 @@ alter table object_ownership_s2.old_t add c as (a + b);
 go
 -- Add the identity column
 alter table object_ownership_s2.old_t add id int identity(1,1);
+go
+/***** SHOULD BE ABLE TO CREATE PARTITION TABLES **********/
+create table object_ownership_s2.pt2
+(
+    saleid int identity(1,1),
+    saledate datetime,
+    amount decimal(10,2),
+    customerid int,
+    productid int
+) on ps2(saledate);  -- specify the partitioning column
 go
 
 /*** OBJECT OWNER WILL NOT BE SAME AS SCHEMA OWNER ***/

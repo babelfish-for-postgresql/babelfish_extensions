@@ -24,6 +24,12 @@ drop function object_ownership_s2.old_f
 go
 drop sequence object_ownership_s2.old_sq;
 go
+drop table object_ownership_s2.pt2
+go
+drop partition scheme ps2
+go
+drop partition function pf2
+go
 
 drop table object_ownership_s2.old_t1;
 go

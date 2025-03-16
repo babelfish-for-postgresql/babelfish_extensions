@@ -18,6 +18,8 @@ create login object_ownership_l3 with password = '123';
 go
 create user object_ownership_u3 for login object_ownership_l3;
 go
+create login object_ownership_l4 with password = '123';
+go
 
 /** CREATE SCHEMAS WITH DIFFERENT OWNERS **/
 create schema object_ownership_s1;
@@ -38,6 +40,35 @@ go
 create function object_ownership_s1.f() returns int begin declare @a int; set @a = 1; return @a; END
 go
 create sequence object_ownership_s1.sq start with 1 increment by 1 ;
+go
+
+/** CREATE PARTITION FUNCTION AND SCHEME **/
+create partition function pf2 (datetime)
+as range right for values 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+go
+
+create partition scheme ps2
+as partition pf2 
+all to ([primary]);
+go
+
+/** CREATE OBJECTS IN DBO SCHEMA USING DBO USER **/
+create table guest.t(a int, b int);
+go
+create view guest.v as select 1;
+go
+create proc guest.p as select 2;
+go
+create function guest.f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence guest.sq start with 1 increment by 1 ;
+go
+grant connect to guest;
 go
 
 /** SCHEMA OWNER IS ROLE, CURRENT USER IS DBO **/
@@ -176,6 +207,17 @@ go
 create type object_ownership_s3.ttype2 as table (id int)
 go
 
+/***** SHOULD BE ABLE TO CREATE PARTITION TABLES **********/
+create table object_ownership_s3.pt2
+(
+    saleid int identity(1,1),
+    saledate datetime,
+    amount decimal(10,2),
+    customerid int,
+    productid int
+) on ps2(saledate);  -- specify the partitioning column
+go
+
 /*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
 /*** SCHEMA OWNER IS A ROLE AND CURRENT USER IS A MEMBER OF THAT ROLE ***/
 select * from object_ownership_s3.t;
@@ -289,6 +331,66 @@ bigint
 1
 ~~END~~
 
+select * from object_ownership_s3.pt2;
+go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
+use master
+go
+
+-- tsql user=object_ownership_l4 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+guest
+~~END~~
+
+
+/*** GUEST SHOULD HAVE ACCESS TO THESE OBJECTS IN GUEST SCHEMA ***/
+/*** SCHEMA ONWER AND CURRENT OWNER ARE SAME ***/
+select * from guest.t;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from guest.v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec guest.p;
+go
+~~START~~
+int
+2
+~~END~~
+
+select guest.f();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into guest.t values (2, 3);
+go
+~~ROW COUNT: 1~~
+
+select next value for guest.sq;
+go
+~~START~~
+bigint
+1
+~~END~~
+
 use master
 go
 
@@ -341,6 +443,12 @@ int
 
 ~~ROW COUNT: 1~~
 
+select * from object_ownership_s3.pt2;
+go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
 use master
 go
 
@@ -372,6 +480,17 @@ text
 
 
 /** DROP OBJECTS **/
+drop table guest.t;
+go
+drop view guest.v;
+go
+drop procedure guest.p;
+go
+drop function guest.f
+go
+drop sequence guest.sq;
+go
+
 drop table object_ownership_s1.t;
 go
 drop view object_ownership_s1.v;
@@ -460,6 +579,12 @@ drop procedure object_ownership_s3.p2;
 go
 drop function object_ownership_s3.f2
 go
+drop table object_ownership_s3.pt2
+go
+drop partition scheme ps2
+go
+drop partition function pf2
+go
 
 /** DROP REMAINING OBJECTS **/
 drop schema object_ownership_s1
@@ -542,6 +667,25 @@ void
 ~~END~~
 
 
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'object_ownership_l4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
 use master
 go
@@ -550,6 +694,8 @@ go
 drop login object_ownership_l2;
 go
 drop login object_ownership_l3;
+go
+drop login object_ownership_l4;
 go
 drop database object_ownership_db
 go
