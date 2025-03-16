@@ -225,6 +225,7 @@ static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);	
 static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
+static antlr4::tree::TerminalNode *getTokenFromFunctionOption(TSqlParser::Function_optionContext* o);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -710,13 +711,12 @@ void PLtsql_expr_query_mutator::run()
 					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
-			// Note: the test below does not work, and has never worked, because size_t will not be negative, 
-			// and the result of the subtraction is also of type size_t.
-			// This test has been in the code since day 1. 
-			// When making the test work, some test cases will start failing as they run into this condition 
-			// (test table_variable_xact_errors and two variants). Therefore, not touching the test for now.
-			if (offset - cursor < 0)
-				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to multiple mutations on the same position", 0, 0);
+			/* detect multiple mutations on the same position */
+			if (offset < cursor)
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, 
+					"Can't mutate an internal query: detected multiple mutations on the same position", 0, 0);
+			}
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
 				rewritten_query += query.substr(cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
 			rewritten_query += repl_text;
@@ -4130,11 +4130,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4147,11 +4143,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4183,11 +4175,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4200,11 +4188,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -7845,6 +7829,10 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
+	if (ctx->collation())
+		stmt->collation = pstrdup(getFullText(ctx->collation()->id()).c_str());
+	else
+		stmt->collation = NULL;
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->datatype = type;
 	stmt->lineno = getLineNo(ctx);
@@ -9893,4 +9881,23 @@ CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
 	{
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", name.c_str()), lineNr, 0);
 	}
+}
+
+/*
+ * Retrieves the token from a Function_optionContext.
+ * Note: All function options (EXECUTE AS, INLINE, SCHEMABINDING) are currently ignored during parsing time.
+ * This function is used to identify which option is present for potential future implementation.
+ *
+ * @param o The Function_optionContext to examine
+ * @return The corresponding terminal node, or nullptr if no valid option is found
+ */
+static antlr4::tree::TerminalNode *
+getTokenFromFunctionOption(TSqlParser::Function_optionContext* o) {
+	if (o->execute_as_clause())
+		return o->execute_as_clause()->CALLER();
+	if (o->inline_clause())
+		return o->inline_clause()->INLINE();
+	if (o->SCHEMABINDING())
+		return o->SCHEMABINDING();
+	return nullptr;
 }
