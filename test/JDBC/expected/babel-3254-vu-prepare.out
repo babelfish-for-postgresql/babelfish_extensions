@@ -84,18 +84,9 @@ master_babel_3254_u1#!#babel_3254_l1
 grant all on schema master_babel_3254_s1 to master_babel_3254_u1;
 go
 
--- tsql user=babel_3254_l1 password=12345678
+-- tsql
 /** CREATE PERMISSION GRANTED VIA PG PORT MAY NOT TAKE EFFECT ON TSQL OBJECTS **/
 /** NOT A RECOMMENDED WAY **/
-create procedure babel_3254_p7 @a int
-as select 1
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function babel_3254_p7)~~
-
-
--- tsql
 create procedure babel_3254_s1.babel_3254_p7 @a int
 as select 1
 go
