@@ -600,6 +600,5 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 test_conv_float_to_varchar_char
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
-object_ownership
 alter-mvu-test
 test_constraint_like
