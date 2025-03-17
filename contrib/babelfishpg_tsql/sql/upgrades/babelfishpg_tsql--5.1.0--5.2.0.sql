@@ -3,6 +3,34 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+
+ -- Drops an object if it does not have any dependent objects.
+ -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+ -- Please have this be one of the first statements executed in this upgrade script. 
+ CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+ $$
+ DECLARE
+     error_msg text;
+     query1 text;
+     query2 text;
+ BEGIN
+ 
+     query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+ 
+     execute query1;
+     execute query2;
+ EXCEPTION
+     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+     when dependent_objects_still_exist then --if 'drop view' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+ end
+ $$
+ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -801,6 +829,15 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
+ALTER FUNCTION sys.json_query RENAME TO json_query_deprecated_in_5_2_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_query_deprecated_in_5_2_0');
+
+
+CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
+RETURNS sys.NVARCHAR_JSON
+AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 
 -- After upgrade, always run analyze for all babelfish catalogs.
