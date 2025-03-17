@@ -246,6 +246,7 @@ ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
 key_column_usage
+ignore_inline_option
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
@@ -602,6 +603,7 @@ test_conv_money_to_varchar
 sp_xml_preparedocument
 sp_xml_removedocument
 fixeddecimal_modulo
+BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
 sys_credentials
 sys_server_permissions
@@ -609,3 +611,5 @@ sys_sql_logins
 sys-login-property
 sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
+alter-mvu-test
+test_constraint_like

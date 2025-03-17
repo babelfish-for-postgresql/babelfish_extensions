@@ -1163,7 +1163,7 @@ alter_partition_function
     ;
 
 create_partition_function
-    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
+    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type collation? RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-partition-scheme-transact-sql
@@ -2054,6 +2054,7 @@ function_option
     | RETURNS NULL_P ON NULL_P INPUT
     | CALLED ON NULL_P INPUT
     | execute_as_clause
+    | inline_clause
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188038.aspx
@@ -3189,6 +3190,10 @@ checkident_new_value
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
+    ;
+
+inline_clause
+    : INLINE EQUAL on_off
     ;
 
 execute_as_statement

@@ -315,6 +315,7 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
 no_securityadmin_login1#!#SQL LOGIN#!#GRANT OR DENY
+public#!#SERVER ROLE#!#GRANT OR DENY
 ~~END~~
 
 
@@ -368,6 +369,7 @@ select name, type, usage from sys.login_token order by name;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
+public#!#SERVER ROLE#!#GRANT OR DENY
 securityadmin#!#SERVER ROLE#!#GRANT OR DENY
 securityadmin_login1#!#SQL LOGIN#!#GRANT OR DENY
 ~~END~~

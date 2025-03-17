@@ -11004,9 +11004,9 @@ BEGIN
 
 	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
-		RETURN v_result;
+		RETURN ltrim(v_result);
 	ELSE
-		RETURN rpad(v_result,  v_res_length, ' ');
+		RETURN rpad(ltrim(v_result),  v_res_length, ' ');
 	END IF;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
