@@ -150,18 +150,22 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE VIEW dummy.sysdatabases AS SELECT * FROM sys.sysdatabases; ");
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 
-	/* create guest schema in the database. This has to be the last statement */
+	/* create guest schema in the database and revoke create permission */
+	/* from guest user on gurst schema. This has to be the last statement */
 	if (guest)
+	{
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+	}
 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
 	{
 		if (!owner_is_sa)
-			expected_stmt_num = list_length(logins) > 0 ? 18 : 17;
+			expected_stmt_num = list_length(logins) > 0 ? 19 : 18;
 		else
-			expected_stmt_num = list_length(logins) > 0 ? 17 : 16;
+			expected_stmt_num = list_length(logins) > 0 ? 18 : 17;
 	}
 	else
 	{
@@ -244,6 +248,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
 		update_CreateSchemaStmt(stmt, guest_schema, guest);
+
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantStmt(stmt, guest_schema, NULL, guest, NULL);
 	}
 
 	pfree((char *) schema);
@@ -743,7 +750,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
 			stmt_number++;
-			if (list_length(parsetree_list) == stmt_number)
+			if (list_length(parsetree_list) - 1 == stmt_number)
 				wrapper->stmt_len = 19;
 			else
 				wrapper->stmt_len = 18;
