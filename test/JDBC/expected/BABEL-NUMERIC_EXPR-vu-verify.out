@@ -1,0 +1,1893 @@
+-- basic operator testing
+-- test 1
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2
+go
+~~START~~
+numeric
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
+~~END~~
+
+
+SELECT COL2_T2 * COL3_T2 FROM BABEL_5454_T2
+GO
+~~START~~
+numeric
+0.1348148136
+50.6869133386
+345.1419741900
+5.1543209750
+5.1234567800
+~~END~~
+
+
+SELECT COL2_T2 - COL3_T2 FROM BABEL_5454_T2
+go
+~~START~~
+numeric
+-1.00345678
+21.74654322
+107.37654322
+-2.87345678
+-4.12345678
+~~END~~
+
+
+SELECT COL2_T2 / COL3_T2 FROM BABEL_5454_T2
+go
+~~START~~
+numeric
+0.106813187775
+11.241104704754
+35.377470470393
+0.303143713319
+0.195180723277
+~~END~~
+
+
+-- test 2 : with ORDER BY
+SELECT COL2_T2 + COL3_T2 FROM BABEL_5454_T2 ORDER BY COL2_T2
+go
+~~START~~
+numeric
+1.24345678
+6.12345678
+5.37345678
+25.99345678
+113.62345678
+~~END~~
+
+-- test 3 : subquery
+SELECT val1 FROM (SELECT COL2_T2 + COL3_T2 AS val1 FROM BABEL_5454_T2)
+go
+~~START~~
+numeric
+1.24345678
+25.99345678
+113.62345678
+5.37345678
+6.12345678
+~~END~~
+
+
+
+-- Selecting varchar and numeric, JIRA QUERY
+SELECT * FROM BABEL_5454_V2 ORDER BY sum_num;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Selecting only numeric
+SELECT
+    COL3_T1 + COL3_T2 AS val
+FROM (
+    SELECT
+        COL3_T1,
+        COL2_T2 + COL3_T2,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        1 AS aw1,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY val;
+GO
+~~START~~
+numeric
+2.10000000
+2.22345678
+3.10000000
+4.10000000
+5.10000000
+5.22345678
+6.10000000
+7.22345678
+7.22345678
+9.22345678
+~~END~~
+
+
+-- Nested operator query
+SELECT
+    sum + COL3_T2 AS val
+FROM (
+    SELECT
+        COL3_T1,
+        COL2_T2 + COL3_T2 AS sum,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        1 AS aw1,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY val;
+GO
+~~START~~
+numeric
+2.10000000
+2.36691356
+3.10000000
+4.10000000
+5.10000000
+6.10000000
+9.49691356
+11.24691356
+28.11691356
+116.74691356
+~~END~~
+
+
+-- aggregate function and nested query
+SELECT
+    AVG(sum_num)
+FROM (
+    SELECT
+        sum + COL3_T2 AS sum_num
+    FROM (
+        SELECT
+            COL3_T1,
+            COL2_T2 + COL3_T2 AS sum,
+            COL2_T1 AS value2,
+            COL2_T1,
+            COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2
+            ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT
+            1 AS aw,
+            1 AS aw1,
+            COL2_T1 AS cr,
+            COL2_T1,
+            COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) subquery
+) a;
+GO
+~~START~~
+numeric
+18.84745678
+~~END~~
+
+
+-- selecting 1
+SELECT
+    1,
+    value2 AS description,
+    value1 + COL3_T2 AS value1
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        COL3_T1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY value1
+GO
+~~START~~
+int#!#nvarchar#!#numeric
+1#!#Eu#!#1.24345678
+1#!#Eu#!#2.20000000
+1#!#US#!#4.20000000
+1#!#Ca#!#5.37345678
+1#!#US#!#6.12345678
+1#!#Br#!#6.20000000
+1#!#Ja#!#8.20000000
+1#!#Ca#!#10.20000000
+1#!#Br#!#25.99345678
+1#!#Ja#!#113.62345678
+~~END~~
+
+
+-- Testing inner query with operator
+-- union of decimal
+SELECT
+    COL2_T2 + COL3_T2 AS value1,
+    COL2_T1 AS value2,
+    COL2_T1
+FROM BABEL_5454_T1
+INNER JOIN BABEL_5454_T2
+    ON COL1_T2 = COL1_T1
+UNION ALL
+SELECT
+    COL3_T1 AS aw,
+    COL2_T1 AS cr,
+    COL2_T1
+FROM BABEL_5454_T1
+ORDER BY value1;
+GO
+~~START~~
+numeric#!#nvarchar#!#nvarchar
+1.10000000#!#Eu#!#Eu
+1.24345678#!#Eu#!#Eu
+2.10000000#!#US#!#US
+3.10000000#!#Br#!#Br
+4.10000000#!#Ja#!#Ja
+5.10000000#!#Ca#!#Ca
+5.37345678#!#Ca#!#Ca
+6.12345678#!#US#!#US
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
+~~END~~
+
+
+-- union with t_const
+SELECT
+    COL2_T2 + COL3_T2 AS value1,
+    COL2_T1 AS value2,
+    COL2_T1
+FROM BABEL_5454_T1
+INNER JOIN BABEL_5454_T2
+    ON COL1_T2 = COL1_T1
+UNION ALL
+SELECT
+    1 AS aw,
+    COL2_T1 AS cr,
+    COL2_T1
+FROM BABEL_5454_T1
+ORDER BY value1, value2, COL2_T1;
+GO
+~~START~~
+numeric#!#nvarchar#!#nvarchar
+1.00000000#!#Br#!#Br
+1.00000000#!#Ca#!#Ca
+1.00000000#!#Eu#!#Eu
+1.00000000#!#Ja#!#Ja
+1.00000000#!#US#!#US
+1.24345678#!#Eu#!#Eu
+5.37345678#!#Ca#!#Ca
+6.12345678#!#US#!#US
+25.99345678#!#Br#!#Br
+113.62345678#!#Ja#!#Ja
+~~END~~
+
+
+-- Testing with different order of inner columns in union
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
+FROM (
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+)
+ORDER BY sum_num
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Testing with where clause
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num
+FROM (
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+WHERE value2 = 'US'
+ORDER BY sum_num;
+GO
+~~START~~
+nvarchar#!#numeric
+US#!#3.10000000
+US#!#6.12345678
+~~END~~
+
+
+-- Testing with different order of inner columns in union
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_numeric
+FROM (
+    SELECT COL2_T1 AS value2, COL2_T2 AS value1, COL3_T2, COL2_T1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT COL2_T1 AS cr, 1 AS aw, COL3_T1 AS aw1, COL2_T1
+    FROM BABEL_5454_T1
+) a
+ORDER BY sum_numeric;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Testing with more columns in unions
+SELECT
+    value2 AS description,
+    value1 + COL3_T2 AS sum_numeric
+FROM (
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T1 AS cr2, COL2_T2 AS value1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL2_T1 AS cr3, COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY sum_numeric;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Multiple alias and t_const in union
+SELECT
+    description AS d1,
+    value2 + h2 AS test1
+FROM (
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
+    FROM (
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+)
+ORDER BY test1;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.10000000
+US#!#3.10000000
+Br#!#4.10000000
+Ja#!#5.10000000
+Ca#!#5.37345678
+Ca#!#6.10000000
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Multiple alias and decimal in union
+SELECT
+    description AS d1,
+    value2 + h2 AS test1
+FROM (
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
+    FROM (
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT COL3_T1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) AS a
+)
+ORDER BY test1;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Eu#!#2.20000000
+US#!#4.20000000
+Ca#!#5.37345678
+US#!#6.12345678
+Br#!#6.20000000
+Ja#!#8.20000000
+Ca#!#10.20000000
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Nested query and alias
+SELECT
+    description AS d1,
+    value2 + h2 AS test1
+FROM (
+    SELECT COL2_T1 AS description, value1 AS value2, h1 AS h2
+    FROM (
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2 AS h1
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, 1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+)
+ORDER BY test1, d1;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#1.24345678
+Br#!#2.00000000
+Ca#!#2.00000000
+Eu#!#2.00000000
+Ja#!#2.00000000
+US#!#2.00000000
+Ca#!#5.37345678
+US#!#6.12345678
+Br#!#25.99345678
+Ja#!#113.62345678
+~~END~~
+
+
+-- Selecting same column without alias in inner query
+SELECT
+    value2 AS description,
+    COL3_T1 + COL3_T1 AS sum_num
+FROM (
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
+    FROM BABEL_5454_T1
+)
+ORDER BY description, sum_num;
+GO
+~~START~~
+nvarchar#!#numeric
+Br#!#6.2
+Br#!#6.2
+Ca#!#10.2
+Ca#!#10.2
+Eu#!#2.2
+Eu#!#2.2
+Ja#!#8.2
+Ja#!#8.2
+US#!#4.2
+US#!#4.2
+~~END~~
+
+
+-- Operator with a constant value
+SELECT
+    value2 AS description,
+    COL3_T1 + 5.2 AS sum_num
+FROM (
+    SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
+    FROM BABEL_5454_T1
+)
+ORDER BY description, sum_num;
+GO
+~~START~~
+nvarchar#!#numeric
+Br#!#8.3
+Br#!#8.3
+Ca#!#10.3
+Ca#!#10.3
+Eu#!#6.3
+Eu#!#6.3
+Ja#!#9.3
+Ja#!#9.3
+US#!#7.3
+US#!#7.3
+~~END~~
+
+
+-- Nested query
+SELECT
+    description,
+    sum_num + sum_num AS result
+FROM (
+    SELECT value2 AS description, COL3_T1 + COL3_T1 AS sum_num
+    FROM (
+        SELECT COL3_T2, COL2_T1 AS value2, COL2_T1, COL2_T2 AS value1, COL3_T1
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1, COL3_T1
+        FROM BABEL_5454_T1
+    )
+)
+ORDER BY result;
+GO
+~~START~~
+nvarchar#!#numeric
+Eu#!#4.4
+Eu#!#4.4
+US#!#8.4
+US#!#8.4
+Br#!#12.4
+Br#!#12.4
+Ja#!#16.4
+Ja#!#16.4
+Ca#!#20.4
+Ca#!#20.4
+~~END~~
+
+
+-- selecting only numeric
+SELECT
+    sum_num + sum_num AS result
+FROM (
+    SELECT value2 AS description, value1 + COL3_T2 AS sum_num
+    FROM (
+        SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+)
+ORDER BY result;
+GO
+~~START~~
+numeric
+2.48691356
+4.20000000
+6.20000000
+8.20000000
+10.20000000
+10.74691356
+12.20000000
+12.24691356
+51.98691356
+227.24691356
+~~END~~
+
+
+-- Query with CASE and UNION ALL
+SELECT
+    result + result AS sum_result
+FROM (
+    SELECT
+        CASE
+            WHEN 1 = 1 THEN CAST(1.12343 AS DECIMAL(5,2))
+        END AS result
+    UNION ALL
+    SELECT COL3_T2
+    FROM BABEL_5454_T2
+) AS derived_table
+ORDER BY sum_result
+GO
+~~START~~
+numeric
+2.24000000
+2.24691356
+4.24691356
+6.24691356
+8.24691356
+10.24691356
+~~END~~
+
+
+-- Multiple UNION ALL query
+SELECT
+    value5 + value5 AS value_result
+FROM (
+    SELECT COL1_T2, COL2_T2 AS value5
+    FROM BABEL_5454_T2
+    UNION ALL
+    (
+        SELECT
+            value2 AS description,
+            value1 + COL3_T2 AS value1
+        FROM (
+            SELECT COL2_T2 AS value1, COL2_T1 AS value2, COL2_T1, COL3_T2
+            FROM BABEL_5454_T1
+            INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+            UNION ALL
+            SELECT COL3_T1 AS aw, COL2_T1 AS cr, COL2_T1, COL3_T1 AS aw1
+            FROM BABEL_5454_T1
+        ) a
+    )
+) AS subquery
+ORDER BY value_result
+GO
+~~START~~
+numeric
+0.24000000
+2.00000000
+2.48691356
+2.50000000
+4.40000000
+8.40000000
+10.74691356
+12.24691356
+12.40000000
+16.40000000
+20.40000000
+47.74000000
+51.98691356
+221.00000000
+227.24691356
+~~END~~
+
+
+-- UDT
+-- Test Case 1: Multiple UNION ALLs with different combinations
+SELECT 
+    CASE WHEN IntCol > 150 THEN FloatCol ELSE SmallIntCol END AS result,
+    NumericCol + UDTCol AS sum_result
+FROM TestTypes
+UNION ALL
+SELECT 
+    CAST(NumericCol AS float) AS result,
+    IntCol + FloatCol AS sum_result
+FROM TestTypes
+UNION ALL
+SELECT 
+    COALESCE(SmallIntCol, 0) AS result,
+    CAST(UDTCol AS numeric(12,6)) + NumericCol AS sum_result
+FROM TestTypes
+ORDER BY sum_result, result;
+GO
+~~START~~
+float#!#float
+10.0#!#200.24685
+10.0#!#200.24685
+100.12345#!#200.5
+20.0#!#400.24685
+200.5#!#400.24685
+200.12345#!#400.5
+~~END~~
+
+
+-- Test Case 2: Nested queries with decimal and numeric operations
+SELECT outer_result + inner_result AS final_result
+FROM (
+    SELECT
+        (SELECT AVG(NumericCol) FROM TestTypes) AS outer_result,
+        (
+            SELECT TOP 1 UDTCol + FloatCol 
+            FROM TestTypes 
+            ORDER BY IntCol DESC
+        ) AS inner_result
+) AS nested_query
+ORDER BY final_result;
+GO
+~~START~~
+float
+550.74685
+~~END~~
+
+
+-- Test Case 3: Decimal + Numeric with different scales and precisions
+SELECT 
+    CAST(12345.6789 AS decimal(10,4)) + NumericCol AS dec_num_sum,
+    CAST(12345.6789 AS decimal(10,4)) * NumericCol AS dec_num_product
+FROM TestTypes
+UNION ALL
+SELECT 
+    CAST(9876.54321 AS numeric(12,8)) + UDTCol,
+    CAST(9876.54321 AS numeric(12,8)) * UDTCol
+FROM TestTypes
+ORDER BY dec_num_sum;
+GO
+~~START~~
+numeric#!#numeric
+9976.66661000#!#988873.0864321140000000
+10076.66661000#!#1976527.4074321140000000
+12445.80235000#!#1236091.9640602050000000
+12545.80235000#!#2470659.8540602050000000
+~~END~~
+
+
+-- Test Case 4: UDT operations
+SELECT 
+    UDTCol + IntCol AS udt_int_sum,
+    UDTCol * FloatCol AS udt_float_product,
+    UDTCol / NULLIF(SmallIntCol, 0) AS udt_smallint_div
+FROM TestTypes;
+GO
+~~START~~
+numeric#!#float#!#numeric
+200.12340000#!#10062.4017#!#10.01234000
+400.12340000#!#40124.7417#!#10.00617000
+~~END~~
+
+
+-- Test Case 5: Mixed type operations with CAST
+SELECT 
+    CAST(IntCol AS decimal(10,2)) + FloatCol AS int_float_sum,
+    CAST(SmallIntCol AS numeric(8,4)) * NumericCol AS smallint_numeric_product,
+    CAST(UDTCol AS float) / NULLIF(IntCol, 0) AS udt_int_div
+FROM TestTypes
+UNION ALL
+SELECT 
+    CAST(12.34 AS decimal(5,2)) + CAST(56.78 AS numeric(6,3)),
+    CAST(100 AS smallint) * CAST(2.5 AS float),
+    CAST(1000 AS numeric(10,4)) / NULLIF(CAST(3 AS int), 0)
+FROM TestTypes
+ORDER BY int_float_sum;
+GO
+~~START~~
+float#!#float#!#float
+69.12#!#250.0#!#333.3333333333333
+69.12#!#250.0#!#333.3333333333333
+200.5#!#1001.2345#!#1.001234
+400.5#!#4002.469#!#1.000617
+~~END~~
+
+
+-- Test Case 6: All possible operations
+SELECT
+    IntCol + FloatCol AS addition,
+    NumericCol - UDTCol AS subtraction,
+    SmallIntCol * FloatCol AS multiplication,
+    CAST(NumericCol AS float) / NULLIF(IntCol, 0) AS division,
+    POWER(FloatCol, 2) AS exponentiation,
+    IntCol % 3 AS modulo
+FROM TestTypes;
+GO
+~~START~~
+float#!#numeric#!#float#!#float#!#float#!#int
+200.5#!#0.00005#!#1005.0#!#1.0012345#!#10100.25#!#1
+400.5#!#0.00005#!#4010.0#!#1.00061725#!#40200.25#!#2
+~~END~~
+
+
+-- Test Case 7: UNION with different scales and precisions
+SELECT CAST(IntCol AS decimal(10,2)) AS result
+FROM TestTypes
+UNION
+SELECT CAST(FloatCol AS decimal(12,4))
+FROM TestTypes
+UNION
+SELECT NumericCol
+FROM TestTypes
+UNION
+SELECT UDTCol
+FROM TestTypes
+ORDER BY result;
+GO
+~~START~~
+numeric
+100.00000
+100.12340
+100.12345
+100.50000
+200.00000
+200.12340
+200.12345
+200.50000
+~~END~~
+
+
+-- inner query is selecting same column with and without alias, large numbers
+SELECT
+    result1 + result1 AS result2,
+    a
+FROM
+    (
+        SELECT
+            a,
+            a AS result1
+        FROM
+            BABEL_5454_T4
+        UNION ALL
+        SELECT
+            in4,
+            in4 + in5 AS result
+        FROM
+            BABEL_5454_T3
+    ) a
+ORDER BY result2;
+GO
+~~START~~
+numeric#!#numeric
+199999999999998.222222#!#99999999999999.111111
+222222222222222.222220#!#99999999999999.111111
+~~END~~
+
+
+-- test union all
+SELECT a FROM BABEL_5454_T7
+UNION All
+SELECT amount + 100 FROM BABEL_5454_T8
+where id = 1
+ORDER BY a
+GO
+~~START~~
+numeric
+<NULL>
+1.2000
+4.0000
+10.1234
+5100.0000
+~~END~~
+
+
+-- multiple union all, same column on top
+SELECT sum_num + sum_num
+FROM (
+    SELECT value1 + COL3_T2 AS sum_num
+    FROM (
+        SELECT COL2_T2 AS value1, COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT 1 AS aw, COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+    UNION ALL
+    SELECT COL2_T2
+    FROM BABEL_5454_T2
+)
+ORDER BY sum_num;
+GO
+~~START~~
+numeric
+0.24000000
+2.00000000
+2.48691356
+2.50000000
+4.20000000
+6.20000000
+8.20000000
+10.20000000
+10.74691356
+12.20000000
+12.24691356
+47.74000000
+51.98691356
+221.00000000
+227.24691356
+~~END~~
+
+
+-- random node test - windowAGG
+SELECT 
+    IntCol,
+    FloatCol,
+    SmallIntCol,
+    NumericCol,
+    UDTCol,
+    AVG(NumericCol) OVER (ORDER BY IntCol ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
+FROM TestTypes
+ORDER BY IntCol;
+GO
+~~START~~
+int#!#float#!#smallint#!#numeric#!#numeric#!#numeric
+100#!#100.5#!#10#!#100.12345#!#100.1234#!#150.12345000
+200#!#200.5#!#20#!#200.12345#!#200.1234#!#150.12345000
+~~END~~
+
+
+-- windowAGG and union
+SELECT 
+    IntCol,
+    FloatCol,
+    SmallIntCol,
+    NumericCol,
+    UDTCol,
+    AVG(NumericCol) OVER (ORDER BY IntCol ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS moving_avg
+FROM (
+    SELECT IntCol, FloatCol, SmallIntCol, NumericCol, UDTCol
+    FROM TestTypes
+    UNION ALL
+    SELECT IntCol + 1000, FloatCol + 1000, SmallIntCol + 100, NumericCol + 1000, UDTCol + 1000
+    FROM TestTypes
+) AS combined_data
+ORDER BY IntCol;
+GO
+~~START~~
+int#!#float#!#int#!#numeric#!#numeric#!#numeric
+100#!#100.5#!#10#!#100.12345#!#100.1234#!#150.12345000
+200#!#200.5#!#20#!#200.12345#!#200.1234#!#466.79011666
+1100#!#1100.5#!#110#!#1100.12345#!#1100.1234#!#833.45678333
+1200#!#1200.5#!#120#!#1200.12345#!#1200.1234#!#1150.12345000
+~~END~~
+
+
+-- limit
+SELECT
+    TOP 2
+    COL3_T1 + COL3_T2 AS val
+FROM (
+    SELECT
+        COL3_T1,
+        COL2_T2 + COL3_T2,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2
+        ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        1 AS aw1,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY val;
+GO
+~~START~~
+numeric
+2.10000000
+2.22345678
+~~END~~
+
+
+-- selecting limit and windowAgg on top
+SELECT TOP 1
+    description,
+    sum_num,
+    ROW_NUMBER() OVER (ORDER BY sum_num) AS row_num
+FROM (
+    SELECT
+        value2 AS description,
+        value1 + COL3_T2 AS sum_num
+    FROM (
+        SELECT
+            COL2_T2 AS value1,
+            COL2_T1 AS value2,
+            COL2_T1,
+            COL3_T2
+        FROM BABEL_5454_T1
+        INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+        UNION ALL
+        SELECT
+            1 AS aw,
+            COL2_T1 AS cr,
+            COL2_T1,
+            COL3_T1 AS aw1
+        FROM BABEL_5454_T1
+    ) a
+) b
+ORDER BY sum_num, description, row_num;
+GO
+~~START~~
+nvarchar#!#numeric#!#bigint
+Eu#!#1.24345678#!#1
+~~END~~
+
+
+-- limit, and windowAgg togther with operator
+SELECT
+    TOP 5
+    value2 AS description,
+    value1 + COL3_T2 AS sum_num,
+    ROW_NUMBER() OVER (ORDER BY COL3_T2) AS row_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+ORDER BY sum_num;
+Go
+~~START~~
+nvarchar#!#numeric#!#bigint
+Eu#!#1.24345678#!#2
+Eu#!#2.10000000#!#1
+US#!#3.10000000#!#3
+Br#!#4.10000000#!#5
+Ja#!#5.10000000#!#7
+~~END~~
+
+
+-- columns having agg and column operator
+SELECT
+    value2 AS description,
+    SUM(value1) AS sum_value,
+    value1 + COL3_T2 AS sum_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+GROUP BY value2, value1, COL3_T2
+ORDER BY sum_num;
+GO
+~~START~~
+nvarchar#!#numeric#!#numeric
+Eu#!#0.12#!#1.24345678
+Eu#!#1.00#!#2.10000000
+US#!#1.00#!#3.10000000
+Br#!#1.00#!#4.10000000
+Ja#!#1.00#!#5.10000000
+Ca#!#1.25#!#5.37345678
+Ca#!#1.00#!#6.10000000
+US#!#1.00#!#6.12345678
+Br#!#23.87#!#25.99345678
+Ja#!#110.50#!#113.62345678
+~~END~~
+
+
+-- combination of agg and addition
+SELECT
+    value2 AS description,
+    SUM(value1) + MAX(COL3_T2) AS sum_num
+FROM (
+    SELECT
+        COL2_T2 AS value1,
+        COL2_T1 AS value2,
+        COL2_T1,
+        COL3_T2
+    FROM BABEL_5454_T1
+    INNER JOIN BABEL_5454_T2 ON COL1_T2 = COL1_T1
+    UNION ALL
+    SELECT
+        1 AS aw,
+        COL2_T1 AS cr,
+        COL2_T1,
+        COL3_T1 AS aw1
+    FROM BABEL_5454_T1
+) a
+GROUP BY value2
+ORDER BY sum_num;
+Go
+~~START~~
+nvarchar#!#numeric
+Eu#!#2.24345678
+US#!#7.12345678
+Ca#!#7.35000000
+Br#!#27.97000000
+Ja#!#115.60000000
+~~END~~
+
+
+
+-- edge case of scale and precision
+-- multiply and divide
+-- the integral part is less than 32, The result might be rounded in this case.
+-- (10, 7) * (4, 0)
+SELECT COL4_T12 * COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+0.1234567
+1233.3321000
+99899.9001000
+152317.9746962
+~~END~~
+
+-- (10, 7) / (4,0)
+SELECT COL4_T12 / COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+0.100027827633
+0.100100000000
+0.100100000000
+0.123456700000
+~~END~~
+
+-- The scale isn't changed if it's less than 6 and if the integral part is greater than 32.
+-- (30, 5) * (4, 0)
+SELECT COL6_T12 * COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+1234567.34000
+1233333333333333333333.21000
+1523456776412345678724.26000
+998999999999999999999990.01000
+~~END~~
+
+-- (30, 5) / (4, 0)
+SELECT COL6_T12 / COL5_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+1234567.3400000000
+1000460202693238.8897000000
+100100100100100100.1000900000
+1001001001001001001.0009900000
+~~END~~
+
+-- The scale is set to 6 if it's greater than 6 and if the integral part is greater than 32.
+-- (38,5) * (10, 7)
+SELECT COL6_T12 * COL4_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+152415.609724178
+123456666666666666666.654321000
+152388071838383884292.171069677
+99999899999999999999999.000001000
+~~END~~
+
+-- (38,5) / (10, 7)
+SELECT COL6_T12 / COL4_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+10000002.754002
+10001818757444078.528721
+1000001000001000000.999901
+10000010000010000009.999910
+~~END~~
+
+
+-- (38,6) / (38,6)
+SELECT COL2_T12 / COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+1.000000
+1.000000
+1.000000
+1.000000
+~~END~~
+
+
+-- addition and subtraction
+--  (38,6) + (38, 0)
+SELECT COL2_T12 + COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+12469242.123456
+1234567890123456790.000000
+11111121111111111111111111.000001
+100000099999999999999999998.999999
+~~END~~
+
+--  (38,6) - (38, 0)
+SELECT COL2_T12 - COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+-99999899999999999999999999.000001
+-11111101111111111111111110.999999
+-1234567890123456788.000000
+-12222113.876544
+~~END~~
+
+-- (38, 0) + (38, 0)
+SELECT COL3_T12 + COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+24691356
+2469135780246913578
+22222222222222222222222222
+199999999999999999999999998
+~~END~~
+
+-- (38, 0) + (38, 0)
+SELECT COL3_T12 - COL3_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+0
+0
+0
+0
+~~END~~
+
+
+-- (38,6) + (38,6)
+SELECT COL2_T12 + COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+2.000000
+247128.246912
+20000000000000000000.000002
+199999999999999999999.999998
+~~END~~
+
+-- (38,6) - (38,6)
+SELECT COL2_T12 - COL2_T12 AS Result FROM BABEL_5454_T11 ORDER BY RESULT
+GO
+~~START~~
+numeric
+0.000000
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+-- edge case with union
+-- (38,5) * (10, 7)
+SELECT COL6_T12 * COL4_T12 AS RESULT FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
+GO
+~~START~~
+numeric
+152415.609724178
+152415.609724178
+123456666666666666666.654321000
+123456666666666666666.654321000
+152388071838383884292.171069677
+152388071838383884292.171069677
+99999899999999999999999.000001000
+99999899999999999999999.000001000
+~~END~~
+
+
+-- (38,6) / (38,6)
+SELECT COL2_T12 / COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
+GO
+~~START~~
+numeric
+1.000000
+1.000000
+1.000000
+1.000000
+1.000000
+1.000000
+1.000000
+1.000000
+~~END~~
+
+
+-- (38,6) + (38,6)
+SELECT COL2_T12 + COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
+GO
+~~START~~
+numeric
+2.000000
+2.000000
+247128.246912
+247128.246912
+20000000000000000000.000002
+20000000000000000000.000002
+199999999999999999999.999998
+199999999999999999999.999998
+~~END~~
+
+
+-- (38,6) - (38,6)
+SELECT COL2_T12 - COL2_T12 AS Result FROM (SELECT * FROM BABEL_5454_T11 UNION ALL SELECT * FROM BABEL_5454_T11) ORDER BY RESULT
+GO
+~~START~~
+numeric
+0.000000
+0.000000
+0.000000
+0.000000
+0.000000
+0.000000
+0.000000
+0.000000
+~~END~~
+
+
+-- view with CTE and limit node, BABEL-5588
+SELECT * FROM BABEL_5454_V3;
+GO
+~~START~~
+int#!#numeric
+1#!#52
+~~END~~
+
+
+-- BABEL-5588
+SELECT * FROM BABEL_5454_V1 ORDER BY volume;
+GO
+~~START~~
+bigint#!#text#!#numeric
+1#!#Thursday#!#1875
+2#!#Friday#!#2815
+~~END~~
+
+
+-- SubqueryScan on top
+SELECT id + 10 FROM (SELECT TOP 5 ROW_NUMBER() OVER(ORDER BY id) AS srNo, id + 1.0 AS id FROM BABEL_5454_T10) AS BABEL_5454_T10
+GO
+~~START~~
+numeric
+12.00
+~~END~~
+
+
+-- INNER_VAR with CTE
+SELECT * FROM BABEL_5454_V4;
+GO
+~~START~~
+numeric#!#numeric
+12.00#!#12.00
+~~END~~
+
+
+-- CTE with window function and self-join
+WITH CTE AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS row_num 
+    FROM BABEL_5454_T9 
+    WHERE id <= 50
+)
+SELECT c1.id, c1.row_num, c2.id AS next_id 
+FROM CTE c1 
+LEFT JOIN CTE c2 ON c1.row_num = c2.row_num - 1
+ORDER BY c1.row_num
+GO
+~~START~~
+numeric#!#bigint#!#numeric
+1#!#1#!#2
+2#!#2#!#3
+3#!#3#!#4
+4#!#4#!#5
+5#!#5#!#6
+6#!#6#!#7
+7#!#7#!#8
+8#!#8#!#9
+9#!#9#!#10
+10#!#10#!#11
+11#!#11#!#12
+12#!#12#!#13
+13#!#13#!#14
+14#!#14#!#15
+15#!#15#!#16
+16#!#16#!#17
+17#!#17#!#18
+18#!#18#!#19
+19#!#19#!#20
+20#!#20#!#21
+21#!#21#!#22
+22#!#22#!#23
+23#!#23#!#24
+24#!#24#!#25
+25#!#25#!#26
+26#!#26#!#27
+27#!#27#!#28
+28#!#28#!#29
+29#!#29#!#30
+30#!#30#!#31
+31#!#31#!#32
+32#!#32#!#33
+33#!#33#!#34
+34#!#34#!#35
+35#!#35#!#36
+36#!#36#!#37
+37#!#37#!#38
+38#!#38#!#39
+39#!#39#!#40
+40#!#40#!#41
+41#!#41#!#42
+42#!#42#!#43
+43#!#43#!#44
+44#!#44#!#45
+45#!#45#!#46
+46#!#46#!#47
+47#!#47#!#48
+48#!#48#!#49
+49#!#49#!#50
+50#!#50#!#<NULL>
+~~END~~
+
+
+-- CTE with aggregation and outer join
+WITH CTE AS (
+    SELECT (id/10) AS group_id, AVG(id) AS avg_id 
+    FROM BABEL_5454_T9 
+    GROUP BY (id/10)
+)
+SELECT t.id, c.avg_id 
+FROM BABEL_5454_T9 t 
+LEFT JOIN CTE c ON (t.id/10) = c.group_id
+WHERE t.id % 10 = 0
+ORDER BY t.id
+GO
+~~START~~
+numeric#!#numeric
+10#!#10.000000
+20#!#20.000000
+30#!#30.000000
+40#!#40.000000
+50#!#50.000000
+60#!#60.000000
+70#!#70.000000
+80#!#80.000000
+90#!#90.000000
+100#!#100.000000
+~~END~~
+
+
+-- Nested CTEs with UNION ALL
+WITH cte1 AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id <= 50
+),
+cte2 AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id > 50
+),
+combined AS (
+    SELECT id, 'Lower' AS category FROM cte1
+    UNION ALL
+    SELECT id, 'Upper' AS category FROM cte2
+)
+SELECT category, AVG(id) AS avg_id
+FROM combined
+GROUP BY category
+Order BY avg_id
+GO
+~~START~~
+varchar#!#numeric
+Lower#!#25.500000
+Upper#!#75.500000
+~~END~~
+
+
+-- CTE with subquery and CROSS APPLY
+WITH CTE AS (
+    SELECT id FROM BABEL_5454_T9 WHERE id % 10 = 0
+)
+SELECT c.id, t.multiplied_id 
+FROM CTE c
+CROSS APPLY (SELECT c.id * 2 AS multiplied_id) t
+ORDER BY c.id
+GO
+~~START~~
+numeric#!#numeric
+10#!#20
+20#!#40
+30#!#60
+40#!#80
+50#!#100
+60#!#120
+70#!#140
+80#!#160
+90#!#180
+100#!#200
+~~END~~
+
+
+-- CTE with PIVOT-like operation
+WITH CTE AS (
+    SELECT id, 
+           CASE WHEN id % 3 = 0 THEN 'Fizz'
+                WHEN id % 5 = 0 THEN 'Buzz'
+                ELSE 'Other' END AS category
+    FROM BABEL_5454_T9
+    WHERE id <= 30
+)
+SELECT 
+    category,
+    COUNT(*) AS count,
+    STRING_AGG(CAST(id AS VARCHAR), ',') AS ids
+FROM CTE
+GROUP BY category
+ORDER BY count
+GO
+~~START~~
+varchar#!#int#!#varchar
+Buzz#!#4#!#5,10,20,25
+Fizz#!#10#!#3,6,9,12,15,18,21,24,27,30
+Other#!#16#!#1,2,4,7,8,11,13,14,16,17,19,22,23,26,28,29
+~~END~~
+
+
+-- CTE with self-join and arithmetic operations
+WITH CTE AS (
+    SELECT id, id * 2 AS double_id, id * id AS squared_id
+    FROM BABEL_5454_T10
+)
+SELECT 
+    t1.id AS original_id,
+    t1.double_id,
+    t1.squared_id,
+    t2.id AS next_id,
+    t1.id + t2.id AS sum_ids
+FROM CTE t1
+LEFT JOIN CTE t2 ON t1.id < t2.id
+ORDER BY t1.id
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1.00#!#2.00000000#!#1.00000000#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- CTE with running total
+WITH CTE AS (
+    SELECT id,
+           SUM(id) OVER (ORDER BY id) AS running_total
+    FROM BABEL_5454_T10
+)
+SELECT 
+    id,
+    running_total,
+    running_total - id AS previous_total
+FROM CTE
+ORDER BY id
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+1.00#!#1.00000000#!#0.00
+~~END~~
+
+
+-- CTE with multiple levels and join
+WITH 
+cte1 AS (
+    SELECT id, CAST(id AS INT) AS int_id
+    FROM BABEL_5454_T10
+),
+cte2 AS (
+    SELECT DISTINCT int_id
+    FROM cte1
+)
+SELECT 
+    c1.id,
+    c2.int_id AS floor_id,
+    c1.id * c2.int_id AS product
+FROM cte1 c1
+JOIN cte2 c2 ON c1.int_id = c2.int_id
+ORDER BY c1.id, c2.int_id;
+GO
+~~START~~
+numeric#!#int#!#numeric
+1.00#!#1#!#1.0000
+~~END~~
+
+
+-- CTE with pivoting (simulated)
+WITH CTE AS (
+    SELECT 
+        id,
+        CASE 
+            WHEN id < 1 THEN 'Low'
+            WHEN id >= 1 AND id < 2 THEN 'Medium'
+            ELSE 'High'
+        END AS category
+    FROM BABEL_5454_T10
+)
+SELECT 
+    SUM(CASE WHEN category = 'Low' THEN id ELSE 0 END) AS Low_Total,
+    SUM(CASE WHEN category = 'Medium' THEN id ELSE 0 END) AS Medium_Total,
+    SUM(CASE WHEN category = 'High' THEN id ELSE 0 END) AS High_Total
+FROM CTE
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+0.00#!#1.00#!#0.00
+~~END~~
+
+
+-- CTE with window functions
+WITH CTE AS (
+    SELECT 
+        id,
+        ROW_NUMBER() OVER (ORDER BY id) AS row_num,
+        NTILE(3) OVER (ORDER BY id) AS ntile,
+        LAG(id) OVER (ORDER BY id) AS prev_id,
+        LEAD(id) OVER (ORDER BY id) AS next_id
+    FROM BABEL_5454_T10
+)
+SELECT *
+FROM CTE
+ORDER BY id
+GO
+~~START~~
+numeric#!#bigint#!#int#!#numeric#!#numeric
+1.00#!#1#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- CTE with UNION, LIMIT, and window aggregation
+WITH number_categories AS (
+    SELECT id, 
+           id % 10 AS category,
+           CASE 
+               WHEN id <= 33 THEN 'Low'
+               WHEN id <= 66 THEN 'Medium'
+               ELSE 'High'
+           END AS range_category
+    FROM BABEL_5454_T9
+),
+ranked_data AS (
+    SELECT 
+        id, 
+        category,
+        range_category,
+        ROW_NUMBER() OVER (PARTITION BY category ORDER BY id DESC) AS rank_in_category,
+        SUM(id) OVER (PARTITION BY category) AS category_total,
+        AVG(id) OVER (PARTITION BY range_category) AS range_avg
+    FROM number_categories
+)
+SELECT TOP 20
+    id,
+    category,
+    range_category,
+    rank_in_category,
+    category_total,
+    range_avg,
+    CAST(id AS FLOAT) / NULLIF(category_total, 0) * 100 AS percent_of_category
+FROM ranked_data
+WHERE rank_in_category <= 3  -- Top 3 values in each category
+UNION ALL
+SELECT 
+    NULL AS id,
+    category,
+    'Total' AS range_category,
+    NULL AS rank_in_category,
+    category_total,
+    NULL AS range_avg,
+    100 AS percent_of_category
+FROM ranked_data
+WHERE rank_in_category = 1  -- To get one row per category for totals
+ORDER BY category, rank_in_category;
+GO
+~~START~~
+numeric#!#numeric#!#varchar#!#bigint#!#numeric#!#numeric#!#float
+<NULL>#!#0E-8#!#Total#!#<NULL>#!#550.00000000#!#<NULL>#!#100.0
+100#!#0E-8#!#High#!#1#!#550.00000000#!#83.50000000#!#18.181818181818183
+90#!#0E-8#!#High#!#2#!#550.00000000#!#83.50000000#!#16.363636363636363
+80#!#0E-8#!#High#!#3#!#550.00000000#!#83.50000000#!#14.545454545454545
+<NULL>#!#1.00000000#!#Total#!#<NULL>#!#460.00000000#!#<NULL>#!#100.0
+91#!#1.00000000#!#High#!#1#!#460.00000000#!#83.50000000#!#19.782608695652172
+81#!#1.00000000#!#High#!#2#!#460.00000000#!#83.50000000#!#17.608695652173914
+71#!#1.00000000#!#High#!#3#!#460.00000000#!#83.50000000#!#15.434782608695652
+<NULL>#!#2.00000000#!#Total#!#<NULL>#!#470.00000000#!#<NULL>#!#100.0
+92#!#2.00000000#!#High#!#1#!#470.00000000#!#83.50000000#!#19.574468085106382
+82#!#2.00000000#!#High#!#2#!#470.00000000#!#83.50000000#!#17.4468085106383
+72#!#2.00000000#!#High#!#3#!#470.00000000#!#83.50000000#!#15.319148936170212
+<NULL>#!#3.00000000#!#Total#!#<NULL>#!#480.00000000#!#<NULL>#!#100.0
+93#!#3.00000000#!#High#!#1#!#480.00000000#!#83.50000000#!#19.375
+83#!#3.00000000#!#High#!#2#!#480.00000000#!#83.50000000#!#17.291666666666668
+73#!#3.00000000#!#High#!#3#!#480.00000000#!#83.50000000#!#15.208333333333332
+<NULL>#!#4.00000000#!#Total#!#<NULL>#!#490.00000000#!#<NULL>#!#100.0
+94#!#4.00000000#!#High#!#1#!#490.00000000#!#83.50000000#!#19.183673469387756
+84#!#4.00000000#!#High#!#2#!#490.00000000#!#83.50000000#!#17.142857142857142
+74#!#4.00000000#!#High#!#3#!#490.00000000#!#83.50000000#!#15.10204081632653
+<NULL>#!#5.00000000#!#Total#!#<NULL>#!#500.00000000#!#<NULL>#!#100.0
+95#!#5.00000000#!#High#!#1#!#500.00000000#!#83.50000000#!#19.0
+85#!#5.00000000#!#High#!#2#!#500.00000000#!#83.50000000#!#17.0
+75#!#5.00000000#!#High#!#3#!#500.00000000#!#83.50000000#!#15.0
+<NULL>#!#6.00000000#!#Total#!#<NULL>#!#510.00000000#!#<NULL>#!#100.0
+96#!#6.00000000#!#High#!#1#!#510.00000000#!#83.50000000#!#18.823529411764707
+86#!#6.00000000#!#High#!#2#!#510.00000000#!#83.50000000#!#16.862745098039216
+<NULL>#!#7.00000000#!#Total#!#<NULL>#!#520.00000000#!#<NULL>#!#100.0
+<NULL>#!#8.00000000#!#Total#!#<NULL>#!#530.00000000#!#<NULL>#!#100.0
+<NULL>#!#9.00000000#!#Total#!#<NULL>#!#540.00000000#!#<NULL>#!#100.0
+~~END~~
+
+
+-- CTE and edge case of precision/scale
+-- CTE with multiplication and division operations
+WITH cte_mult_div AS (
+    SELECT 
+        COL1_T12,
+        COL4_T12 * COL5_T12 AS mult_result_1, -- (10, 7) * (4, 0)
+        COL4_T12 / COL5_T12 AS div_result_1,  -- (10, 7) / (4, 0)
+        COL6_T12 * COL5_T12 AS mult_result_2, -- (30, 5) * (4, 0)
+        COL6_T12 / COL5_T12 AS div_result_2,  -- (30, 5) / (4, 0)
+        COL6_T12 * COL4_T12 AS mult_result_3, -- (30, 5) * (10, 7)
+        COL6_T12 / COL4_T12 AS div_result_3,  -- (30, 5) / (10, 7)
+        COL2_T12 / COL2_T12 AS div_result_4   -- (38, 6) / (38, 6)
+    FROM BABEL_5454_T11
+)
+SELECT 
+    COL1_T12,
+    mult_result_1, div_result_1,
+    mult_result_2, div_result_2,
+    mult_result_3, div_result_3,
+    div_result_4
+FROM cte_mult_div
+ORDER BY COL1_T12;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#99899.9001000#!#0.100100000000#!#998999999999999999999990.01000#!#1001001001001001001.0009900000#!#99999899999999999999999.000001000#!#10000010000010000009.999910#!#1.000000
+2#!#1233.3321000#!#0.100100000000#!#1233333333333333333333.21000#!#100100100100100100.1000900000#!#123456666666666666666.654321000#!#1000001000001000000.999901#!#1.000000
+3#!#152317.9746962#!#0.100027827633#!#1523456776412345678724.26000#!#1000460202693238.8897000000#!#152388071838383884292.171069677#!#10001818757444078.528721#!#1.000000
+4#!#0.1234567#!#0.123456700000#!#1234567.34000#!#1234567.3400000000#!#152415.609724178#!#10000002.754002#!#1.000000
+~~END~~
+
+
+-- CTE with addition and subtraction operations
+WITH cte_add_sub AS (
+    SELECT 
+        COL1_T12,
+        COL2_T12 + COL3_T12 AS add_result_1,  -- (38, 6) + (38, 0)
+        COL2_T12 - COL3_T12 AS sub_result_1,  -- (38, 6) - (38, 0)
+        COL3_T12 + COL3_T12 AS add_result_2,  -- (38, 0) + (38, 0)
+        COL3_T12 - COL3_T12 AS sub_result_2,  -- (38, 0) - (38, 0)
+        COL2_T12 + COL2_T12 AS add_result_3,  -- (38, 6) + (38, 6)
+        COL2_T12 - COL2_T12 AS sub_result_3   -- (38, 6) - (38, 6)
+    FROM BABEL_5454_T11
+)
+SELECT 
+    COL1_T12,
+    add_result_1, sub_result_1,
+    add_result_2, sub_result_2,
+    add_result_3, sub_result_3
+FROM cte_add_sub
+ORDER BY COL1_T12;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#100000099999999999999999998.999999#!#-99999899999999999999999999.000001#!#199999999999999999999999998#!#0#!#199999999999999999999.999998#!#0.000000
+2#!#11111121111111111111111111.000001#!#-11111101111111111111111110.999999#!#22222222222222222222222222#!#0#!#20000000000000000000.000002#!#0.000000
+3#!#12469242.123456#!#-12222113.876544#!#24691356#!#0#!#247128.246912#!#0.000000
+4#!#1234567890123456790.000000#!#-1234567890123456788.000000#!#2469135780246913578#!#0#!#2.000000#!#0.000000
+~~END~~
+
+
+-- CTE with edge cases using UNION ALL
+WITH cte_union AS (
+    SELECT * FROM BABEL_5454_T11
+    UNION ALL
+    SELECT * FROM BABEL_5454_T11
+)
+SELECT 
+    COL1_T12,
+    COL6_T12 * COL4_T12 AS mult_result,  -- (30, 5) * (10, 7)
+    COL2_T12 / COL2_T12 AS div_result,   -- (38, 6) / (38, 6)
+    COL2_T12 + COL2_T12 AS add_result,   -- (38, 6) + (38, 6)
+    COL2_T12 - COL2_T12 AS sub_result    -- (38, 6) - (38, 6)
+FROM cte_union
+ORDER BY COL1_T12, mult_result;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#99999899999999999999999.000001000#!#1.000000#!#199999999999999999999.999998#!#0.000000
+1#!#99999899999999999999999.000001000#!#1.000000#!#199999999999999999999.999998#!#0.000000
+2#!#123456666666666666666.654321000#!#1.000000#!#20000000000000000000.000002#!#0.000000
+2#!#123456666666666666666.654321000#!#1.000000#!#20000000000000000000.000002#!#0.000000
+3#!#152388071838383884292.171069677#!#1.000000#!#247128.246912#!#0.000000
+3#!#152388071838383884292.171069677#!#1.000000#!#247128.246912#!#0.000000
+4#!#152415.609724178#!#1.000000#!#2.000000#!#0.000000
+4#!#152415.609724178#!#1.000000#!#2.000000#!#0.000000
+~~END~~
+
+
+-- CTE with complex calculations breaching precision/scale limits
+WITH cte_complex AS (
+    SELECT 
+        COL1_T12,
+        (COL2_T12 * COL3_T12) / (COL4_T12 + COL5_T12) AS complex_result_1,
+        (COL6_T12 * COL6_T12) + (COL2_T12 * COL2_T12) AS complex_result_2,
+        (COL3_T12 / COL4_T12) * (COL5_T12 + COL6_T12) AS complex_result_3
+    FROM BABEL_5454_T11
+)
+SELECT 
+    COL1_T12,
+    complex_result_1,
+    complex_result_2,
+    complex_result_3
+FROM cte_complex
+ORDER BY COL1_T12;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+-- CTE with window , aggerate and operations breaching precision/scale
+WITH cte_window AS (
+    SELECT 
+        COL1_T12,
+        COL2_T12,
+        COL3_T12,
+        SUM(COL2_T12) OVER (ORDER BY COL1_T12) AS running_sum,
+        AVG(COL3_T12) OVER (ORDER BY COL1_T12) AS running_avg
+    FROM BABEL_5454_T11
+)
+SELECT 
+    COL1_T12,
+    running_sum / COL2_T12 AS ratio_1,
+    running_avg * COL3_T12 AS product_1,
+    running_sum + running_avg AS sum_1
+FROM cte_window
+ORDER BY COL1_T12;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+

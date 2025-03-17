@@ -147,7 +147,6 @@ static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static bool is_numeric_cast(Oid func_oid);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 static bool is_this_a_vector_datatype(Oid oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
 static bool is_tsql_numeric_fixeddecimal(Oid oid);
@@ -427,109 +426,6 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
-static int32
-resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
-{
-	ListCell	*lc;
-	int32		max_precision = 0,
-				max_scale = 0,
-				precision = 0,
-				scale = 0,
-				integralDigitCount = 0,
-				typmod = -1,
-				result_typmod = -1;
-	List		*planlist = NIL;
-	if (IsA(plan, Append))
-	{
-		planlist = ((Append *) plan)->appendplans;
-	}
-	else if(IsA(plan, MergeAppend))
-	{
-		planlist = ((MergeAppend *) plan)->mergeplans; 
-	}
-
-	Assert(planlist != NIL);
-	foreach(lc, planlist)
-	{
-		TargetEntry *tle;
-		Plan 		*outerplan = (Plan *) lfirst(lc);
-
-		/* if outerplan is SubqueryScan then use actual subplan */
-		if (IsA(outerplan, SubqueryScan))
-			outerplan = ((SubqueryScan *)outerplan)->subplan;
-
-		tle = get_tle_by_resno(outerplan->targetlist, attno);
-		if (IsA(tle->expr, Var))
-		{
-			Var *var = (Var *)tle->expr;
-			if (var->varno == OUTER_VAR)
-			{
-				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
-			}
-			else
-			{
-				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
-			}
-		}
-		else
-		{
-			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
-		}
-		if (typmod == -1)
-			continue;
-		scale = (typmod - VARHDRSZ) & 0xffff;
-		precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
-		integralDigitCount = Max(precision - scale, max_precision - max_scale);
-		max_scale = Max(max_scale, scale);
-		max_precision = integralDigitCount + max_scale;
-		/*
-		 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
-		 * to TDS_MAX_NUM_PRECISION at the cost of scale.
-		 */
-		if (max_precision > TDS_MAX_NUM_PRECISION)
-		{
-			max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
-			max_precision = TDS_MAX_NUM_PRECISION;
-		}
-		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
-	}
-	/* If max_precision is still default then use tds specific defaults */
-	if (result_typmod == -1)
-	{
-		result_typmod = ((tds_default_numeric_precision << 16) | tds_default_numeric_scale) + VARHDRSZ;
-	}
-	return result_typmod;
-}
-
-static int32
-resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
-{
-	TargetEntry	*tle;
-	Plan		*outerplan = NULL;
-
-	if (IsA(plan, Append) || IsA(plan, MergeAppend))
-		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
-	else
-		outerplan = outerPlan(plan);
-
-	/* if outerplan is SubqueryScan then use actual subplan */
-	if (IsA(outerplan, SubqueryScan))
-		outerplan = ((SubqueryScan *)outerplan)->subplan;
-
-	/* outerplan must not be NULL */
-	Assert(outerplan);
-	tle = get_tle_by_resno(outerplan->targetlist, attno);
-	if (IsA(tle->expr, Var))
-	{
-		Var *var = (Var *)tle->expr;
-		if (var->varno == OUTER_VAR)
-		{
-			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
-		}
-	}
-	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
-}
-
 static Oid
 LookupCastFuncName(Oid castsource, Oid casttarget)
 {
@@ -695,13 +591,65 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 			}
 		case T_Var:
 			{
-				Var		   *var = (Var *) expr;
+				Var		    *var = (Var *) expr;
+				TargetEntry	*tle;
 
-				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (plan != NULL && var->varno == OUTER_VAR)
+				/* If the current node is a subqueryscan,
+				 * find the original target list entry from subplan.
+				 */
+				if (plan && IsA(plan, SubqueryScan))
+				{	Plan		*subplan;
+					Assert(plan);
+					subplan = ((SubqueryScan *)plan)->subplan;
+					if (subplan)
+					{
+						tle = get_tle_by_resno(subplan->targetlist, var->varattno);
+						if (!tle)
+							elog(ERROR, "bogus varattno for SubqueryScan's subplan: %d", var->varattno);
+						return resolve_numeric_typmod_from_exp(subplan, (Node *)tle->expr);
+					}
+					else
+					{
+						elog(ERROR, "subplan is NULL for SubqueryScan");
+					}
+				}
+				/* If the current node is a not UNION node and it has either
+				 * Outer/Inner query,find the original target list entry from
+				 * Outer/Inner plan.
+				 */
+				if (plan && (!IsA(plan, Append) && !IsA(plan, MergeAppend)))
 				{
 					Assert(plan);
-					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+					if (var->varno == OUTER_VAR)
+					{	Plan		*outerplan;
+						outerplan = outerPlan(plan);
+						if (outerplan)
+						{
+							tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
+							return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+						}
+						else
+						{
+							elog(ERROR, "outerplan is NULL for OUTER_VAR");
+						}
+					}
+					else if (var->varno == INNER_VAR)
+					{	Plan		*innerplan;
+						innerplan = innerPlan(plan);
+						if (innerplan)
+						{
+							tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
+							return resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr);
+						}
+						else
+						{
+							elog(ERROR, "innerplan is NULL for INNER_VAR");
+						}
+					}
 				}
 				return var->vartypmod;
 			}
