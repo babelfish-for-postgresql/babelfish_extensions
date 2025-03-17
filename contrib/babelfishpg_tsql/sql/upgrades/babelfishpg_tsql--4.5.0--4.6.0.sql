@@ -782,12 +782,9 @@ BEGIN
         pg_proc p ON n.oid = p.pronamespace
     JOIN 
         pg_roles r2 ON p.proowner = r2.oid
-    LEFT JOIN
-        pg_trigger t ON p.oid = t.tgfoid
     WHERE 
         p.prokind IN ('f', 'p')
         AND r1.rolname <> r2.rolname
-        AND t.oid IS NULL  -- Exclude trigger functions
     UNION ALL
     -- Third query is for types(excluding table types)
     SELECT 
