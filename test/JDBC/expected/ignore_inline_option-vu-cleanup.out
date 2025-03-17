@@ -1,0 +1,51 @@
+-- Drop all test functions
+DROP FUNCTION IF EXISTS [dbo].[TestInlineOn]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestInlineOff]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestNoInline]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestNullHandling]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestNested]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestDataTypes]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestTableVariable]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestErrorHandling]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestSchemabinding]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestInlineAndSchemabinding]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestInlineAndExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestSchemabindingAndExecuteAs]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestAllOptions]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestReturnsNullOnNullInput]
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[TestMultiParamAllOptions]
+GO
+
+DROP TABLE IF EXISTS TestTable
+GO

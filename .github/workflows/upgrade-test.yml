@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   generate-version-upgrade-tests:
     name: Generate Version Upgrade Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       upgrade-path-list: ${{ steps.generate-upgrade-path.outputs.upgrade-path-list }}
     steps:
@@ -25,7 +25,7 @@ jobs:
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
     name: Run Version Upgrade Test for ${{ matrix.upgrade-path.title }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -68,6 +68,7 @@ jobs:
           migration_mode: 'multi-db'
           server_collation_name: ${{ matrix.upgrade-path.server_collation_name }}
           antlr_version: ${{ (steps.read-base-and-final-version.outputs.base-version == 'source.latest' || fromJSON(steps.read-base-and-final-version.outputs.base-version) >= 16.8 ) && '4.13.2' || '4.9.3' }}
+          engine_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca
