@@ -30,7 +30,7 @@ GO
 ~~START~~
 text
 (scc_first_number * scc_second_number)
-COALESCE(CAST((scc_first_number) AS money), scc_second_number)
+COALESCE(CAST((scc_first_number) AS fixeddecimal), scc_second_number)
 ~~END~~
 
 
