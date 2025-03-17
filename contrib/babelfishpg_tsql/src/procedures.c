@@ -47,6 +47,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
+#include "utils/xml.h"
 
 #include "catalog.h"
 #include "extendedproperty.h"
@@ -80,6 +81,7 @@ PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 PG_FUNCTION_INFO_V1(sp_xml_preparedocument);
 PG_FUNCTION_INFO_V1(sp_xml_removedocument);
+PG_FUNCTION_INFO_V1(init_tsql_xml_handle_hash_tab);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -109,6 +111,29 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
+
+/* xml handle hash table */
+static HTAB         *XMLHandleHashTable = NULL;
+static MemoryContext XMLHashtabContext = NULL;
+const uint32         XML_HANDLE_START = 0;
+const uint32         XML_HANDLE_INVALID = 0x80000000; 
+const uint32         MAX_XML_HANDLES_PER_SESSION = 4000;  /* Maximum xml handles per session (size of hash table)*/ 
+static int           current_xml_handle;
+uint32		         get_next_xml_handle(void);
+void                 pltsql_create_xml_handle_htab(void);
+void                 pltsql_delete_xml_handle_entry(uint32 handle);
+uint32               pltsql_insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int32 xml_data_length, int32 ns_data_length);
+
+typedef struct XMLHandleHashEnt           /* Entries of hash table */
+{
+	uint32		document_id;
+	uint32      namespace_id;
+	uint32      original_document_size_bytes;
+	uint32      original_namespace_document_size_bytes;
+	bool        is_namespace_null;
+	xmltype    *xml_data; 
+	xmltype    *ns_data; 
+} XMLHandleHashEnt;
 
 /* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
@@ -4293,89 +4318,229 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/* Function to generate the xml handles */
+uint32
+get_next_xml_handle()
+{
+    uint32 old_handle = current_xml_handle;
+
+    while (true)
+    {
+        ++current_xml_handle;
+        
+        if (current_xml_handle == XML_HANDLE_INVALID)
+            current_xml_handle = XML_HANDLE_START + 1;
+            
+        if (unlikely(current_xml_handle == old_handle))
+            elog(ERROR, "out of XML handles");
+            
+        if (hash_search(XMLHandleHashTable, &current_xml_handle, 
+                       HASH_FIND, NULL) == NULL)
+            break;  /* found */
+    }
+
+    return current_xml_handle;
+}
+
+void pltsql_create_xml_handle_htab()    /* Creating the hash table */
+{
+    HASHCTL ctl;
+
+    if (XMLHashtabContext == NULL)    /* intialize memory context */
+    {
+        XMLHashtabContext = AllocSetContextCreateInternal(NULL,
+                           "PLtsql XML handle hashtab Memory Context",
+                            ALLOCSET_DEFAULT_SIZES);
+    }
+
+    /* XMLHandleHashTable */
+    MemSet(&ctl, 0, sizeof(ctl));
+    ctl.keysize = sizeof(uint32);
+    ctl.entrysize = sizeof(XMLHandleHashEnt);
+    ctl.hcxt = XMLHashtabContext;
+
+    XMLHandleHashTable = hash_create("T-SQL XML prepared handle",
+                                    MAX_XML_HANDLES_PER_SESSION,
+                                    &ctl,
+                                    HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+
+    current_xml_handle = XML_HANDLE_INVALID;
+}
+
+uint32 pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, 
+                                     int32 xml_data_length, int32 ns_data_length)
+{
+    XMLHandleHashEnt *hentry;
+    bool found;
+    uint32 handle;
+    uint32 document_id;
+    
+    handle = get_next_xml_handle();      /* get the next handle */
+    document_id = 2*handle - 1;          /* document_id is always odd and unique */
+   
+    hentry = (XMLHandleHashEnt *) hash_search(XMLHandleHashTable, &document_id, 
+                                             HASH_ENTER, &found);
+    if (found)
+        ereport(ERROR, errmsg("Duplicate XML handles"));
+
+    hentry->xml_data = xml_data;
+    hentry->ns_data = ns_data;
+    hentry->document_id = document_id;
+	hentry->original_document_size_bytes = xml_data_length;  /* store the size of the xml text and xpath namespaces */
+    hentry->original_namespace_document_size_bytes = ns_data_length;
+    
+    if (ns_data_length > 0)
+    {
+        hentry->namespace_id = 2*handle;    /* namespace_id is always even and unique if namespace is present */
+        hentry->is_namespace_null = false;
+    }
+    else
+    {
+        hentry->namespace_id = 0;  
+        hentry->is_namespace_null = true;
+    }
+
+    return hentry->document_id;
+}
+
+void pltsql_delete_xml_handle_entry(uint32 document_id)
+{
+    XMLHandleHashEnt *hentry;
+
+    /* First find the entry */
+    hentry = (XMLHandleHashEnt *) hash_search(XMLHandleHashTable, &document_id, 
+                                             HASH_FIND, NULL);
+    if (hentry == NULL)
+    {
+        ereport(ERROR, errmsg("Could not find prepared statement with handle %d", document_id));
+        return;
+    }
+
+    /* Remove the entry from hash table */
+    hash_search(XMLHandleHashTable, &document_id, HASH_REMOVE, NULL);
+}
+
+/* Function to initialise the hash table */
+Datum
+init_tsql_xml_handle_hash_tab(PG_FUNCTION_ARGS)
+{
+    /* Skip to set up if already created */
+    if (XMLHandleHashTable != NULL)
+        PG_RETURN_INT32(0);
+
+    pltsql_create_xml_handle_htab();
+    
+    PG_RETURN_INT32(0);
+}
+
+/*
+ * reset_cached_xml_handle:
+ *		Cleans up all the stale states and resets the xml handles.
+ *		This function should be called when a connection is cancelled or terminated.
+ */
+void
+reset_cached_xml_handle(void)
+{
+    hash_destroy(XMLHandleHashTable);
+    XMLHandleHashTable = NULL;
+
+    /* Re-create the xml handles-related data structures. */
+    pltsql_create_xml_handle_htab();
+    
+    current_xml_handle = XML_HANDLE_INVALID;     /* Reset xml handles. */
+}
+
 Datum
 sp_xml_preparedocument(PG_FUNCTION_ARGS)
 {
-	char	   *xml_text = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	char	   *xpath_namespaces = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
-	bool 	   is_xml_text_well_formed;
-	bool       is_xpath_namespaces_well_formed;
-	Datum      xml_data;
-	Datum      ns_data;
-	int32      document_id;
-	
-	HeapTuple	tuple;
-	HeapTupleHeader result;
-	TupleDesc	tupdesc;
-	bool		isnull = false;
-	Datum		values[1];
+    char     *xml_text = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+    char     *xpath_namespaces = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+    bool      is_xml_text_well_formed;
+    bool      is_xpath_namespaces_well_formed;
+    xmltype  *xml_data;
+	xmltype  *ns_data;
+    int32     document_id;
+	int32     xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
+	int32     ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
+    
+    HeapTuple        tuple;
+    HeapTupleHeader  result;
+    TupleDesc        tupdesc;
+    bool             isnull = false;
+    Datum            values[1];
 
-	/* Validating the given xml text string */
-	if (xml_text == NULL) {
-		xml_data = (Datum) 0;  // Handle NULL case
-	} else if (strlen(xml_text) == 0) {
-		xml_data = (Datum) 0;  // Handle empty string case
-	} else {
-		is_xml_text_well_formed = DatumGetBool(
-			DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(1))
-		);
-	
-		if (is_xml_text_well_formed) {
-			xml_data = DirectFunctionCall1(xml_in, CStringGetDatum(xml_text)); 
-		} else {
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_XML_DOCUMENT),
-				 errmsg("The XML input is not well-formed.")));
-		}
-	}
-	
-	/* Validating the given namespaces */
-	if (xpath_namespaces == NULL) {
-		ns_data = (Datum) 0;  // Handle NULL case
-	} else if (strlen(xpath_namespaces) == 0) {
-		ns_data = (Datum) 0;  // Handle empty string case
-	} else {
-		is_xpath_namespaces_well_formed = DatumGetBool(
-			DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(2))
-		);
-	
-		if (is_xpath_namespaces_well_formed) {
-			ns_data = DirectFunctionCall1(xml_in, CStringGetDatum(xpath_namespaces));
-		} else {
-			ereport(ERROR, 
-				(errcode(ERRCODE_INVALID_XML_DOCUMENT),
-				 errmsg("The XPath namespace declarations are not well-formed.")));
-		}
-	}
-	
-    /* Fetch the document_id(handle) and then insert the values into the xml_handles catalog table */
-	document_id = get_available_xml_handles_id();
-	add_entry_to_bbf_xml_handles(document_id,xml_data,ns_data ,xml_text, xpath_namespaces);
+    /* Validating the given xml text string */
+    if (xml_data_length == 0)
+    {
+        xml_data = NULL;  // Handle NULL case
+    }
+    else
+    {
+        is_xml_text_well_formed = DatumGetBool(
+            DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(1))
+        );
+    
+        if (is_xml_text_well_formed)
+        {
+            xml_data = DatumGetXmlP(DirectFunctionCall1(xml_in, CStringGetDatum(xml_text))); 
+			xml_data_length = strlen(xml_text);
+        }
+        else
+        {
+            ereport(ERROR, 
+                (errcode(ERRCODE_INVALID_XML_DOCUMENT),
+                 errmsg("The XML input is not well-formed.")));
+        }
+    }
+    
+    /* Validating the given namespaces */
+    if (ns_data_length == 0) 
+    {
+        ns_data = NULL;  // Handle NULL case
+    }
+    else
+    {
+        is_xpath_namespaces_well_formed = DatumGetBool(
+            DirectFunctionCall1(xml_is_well_formed_document, PG_GETARG_DATUM(2))
+        );
+    
+        if (is_xpath_namespaces_well_formed)
+        {
+            ns_data = DatumGetXmlP(DirectFunctionCall1(xml_in, CStringGetDatum(xpath_namespaces)));
+        }
+        else
+        {
+            ereport(ERROR, 
+                (errcode(ERRCODE_INVALID_XML_DOCUMENT),
+                 errmsg("The XPath namespace declarations are not well-formed.")));
+        }
+    }
+    
+    /* Insert the entries into hash table and return the document_id */
+    document_id = pltsql_insert_xml_handle_entry(xml_data, ns_data, xml_data_length, ns_data_length);
      
-	/* Return back the handle */
-	tupdesc = CreateTemplateTupleDesc(1);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
-	tupdesc = BlessTupleDesc(tupdesc);
-	values[0] = Int32GetDatum(document_id);
-	tuple = heap_form_tuple(tupdesc, values, &isnull);
+    /* Return back the handle */
+    tupdesc = CreateTemplateTupleDesc(1);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
+    tupdesc = BlessTupleDesc(tupdesc);
+    values[0] = Int32GetDatum(document_id);
+    tuple = heap_form_tuple(tupdesc, values, &isnull);
 
-	result = (HeapTupleHeader) palloc(tuple->t_len);
+    result = (HeapTupleHeader) palloc(tuple->t_len);
+    memcpy(result, tuple->t_data, tuple->t_len);
 
-	memcpy(result, tuple->t_data, tuple->t_len);
+    heap_freetuple(tuple);
+    ReleaseTupleDesc(tupdesc);
 
-	heap_freetuple(tuple);
-	ReleaseTupleDesc(tupdesc);
-
-	PG_RETURN_HEAPTUPLEHEADER(result);
+    PG_RETURN_HEAPTUPLEHEADER(result);
 }
 
 Datum
 sp_xml_removedocument(PG_FUNCTION_ARGS)
 {
     int32_t doc_handle;
-    int32_t session_id;
-
-	TSQLInstrumentation(INSTR_TSQL_SP_XML_REMOVEDOCUMENT);
+    TSQLInstrumentation(INSTR_TSQL_SP_XML_REMOVEDOCUMENT);
+    
     /* Check if document handle argument is NULL */
     if (PG_ARGISNULL(0))
     {
@@ -4386,12 +4551,9 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
 
     /* Get the document handle */
     doc_handle = PG_GETARG_INT32(0);
-    
-    /* Get the session ID */
-    session_id = MyProcPid;
 
     /* Remove the entry */
-    remove_entry_from_bbf_xml_handles(doc_handle, session_id);
+    pltsql_delete_xml_handle_entry(doc_handle);
 
     PG_RETURN_VOID();
 }

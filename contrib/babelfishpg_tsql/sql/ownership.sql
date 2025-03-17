@@ -258,7 +258,6 @@ BEGIN
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
-  EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_xml_handles_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
 	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
@@ -284,7 +283,6 @@ BEGIN
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_function_seq RESTART';
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_scheme_seq RESTART';
-  EXECUTE 'ALTER SEQUENCE sys.babelfish_xml_handles_seq RESTART';
 	DROP OWNED BY sysadmin;
 	DROP ROLE sysadmin;
 	DROP OWNED BY bbf_role_admin;

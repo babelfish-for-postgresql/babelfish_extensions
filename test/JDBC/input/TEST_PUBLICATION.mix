@@ -18,7 +18,6 @@ BEGIN
         END;
         IF is_publishable THEN
             RAISE EXCEPTION 'Babelfish extended catalog table sys.% is not marked as a catalog relation.', tab;
-            -- Add the OID of the catalog table to the IsPLtsqlExtendedCatalog function in the catalog.c file to mark it as an extended catalog table.
         END IF;
     END LOOP;
     RAISE WARNING 'cannot add relations to publication: %', tab_names;

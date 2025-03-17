@@ -73,7 +73,6 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/guc.h"
-#include "storage/ipc.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -113,6 +112,7 @@ extern Datum init_like_ilike_table(PG_FUNCTION_ARGS);
 extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
+extern Datum init_tsql_xml_handle_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
@@ -182,8 +182,6 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
-static void clean_xml_handles(int code, Datum arg);
-
 typedef struct {
 	int oid;
 	char *alias;
@@ -5146,6 +5144,7 @@ _PG_init(void)
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
 	init_tsql_cursor_hash_tab(fcinfo);
+	init_tsql_xml_handle_hash_tab(fcinfo);
 	RegisterXactCallback(pltsql_xact_cb, NULL);
 	RegisterSubXactCallback(pltsql_subxact_cb, NULL);
 	assign_object_access_hook_drop_relation();
@@ -5299,7 +5298,6 @@ _PG_init(void)
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook =  pltsql_support_tsql_transactions;
-    before_shmem_exit(clean_xml_handles, 0);
 
 	inited = true;
 }
@@ -7309,19 +7307,4 @@ gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 				(revoke_createrole ? "nocreaterole" : ""), grant_createdb ? "createdb" : 
 					(revoke_createdb ? "nocreatedb" : ""));
 
-}
-
-/* Clean up function which removes all the entries from the catalog corresponding to a given session id automatically
-   when a session is closed.
-*/
-static void
-clean_xml_handles(int code, Datum arg)
-{
-    
-	AbortOutOfAnyTransaction();
-	StartTransactionCommand();
-	PushActiveSnapshot(GetTransactionSnapshot());	
-    clean_up_babelfish_xml_handles(MyProcPid);
-	PopActiveSnapshot();
-	CommitTransactionCommand();
 }

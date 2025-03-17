@@ -228,30 +228,15 @@ SELECT @hdoc as handle;
 EXEC sp_xml_removedocument @hdoc;
 GO
 
---If we try to create the same table name and then run the query
-CREATE TABLE sys.babelfish_xml_handles (
-    handle int NOT NULL PRIMARY KEY,
-    doc_id int NOT NULL,
-    doc_text xml
-);
-INSERT INTO sys.babelfish_xml_handles (handle, doc_id, doc_text) VALUES
-(1, 101, '<a>1</a>'),
-(2, 102, '<b>2</b>');
-GO
-
-DECLARE @hdoc INT;
-EXEC sp_xml_preparedocument @hdoc OUTPUT,'<root/>';
-SELECT @hdoc as handle;
-EXEC sp_xml_removedocument @hdoc;
-GO
-
---Test with parameter by name syntax
+--Test with parameter by name syntax 1
 DECLARE @z int;
 EXEC sp_xml_preparedocument @hdoc = @z OUTPUT, @xmltext = '<root><child>value</child></root>', @xpath_namespaces = '';
 SELECT @z as handle;
 EXEC sp_xml_removedocument @z;
 GO
 
+--Test with parameter by name syntax 2
+DECLARE @z int;
 DECLARE @hdoc int;
 EXEC sp_xml_preparedocument @hdoc OUTPUT, 
                            @xmltext = '<root><child>value</child></root>', 

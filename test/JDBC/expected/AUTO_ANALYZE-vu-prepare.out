@@ -30,7 +30,6 @@ babelfish_server_options
 babelfish_sysdatabases
 babelfish_syslanguages
 babelfish_view_def
-babelfish_xml_handles
 service_settings
 spt_datatype_info_table
 versions

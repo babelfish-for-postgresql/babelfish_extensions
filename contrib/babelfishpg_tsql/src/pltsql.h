@@ -1801,7 +1801,6 @@ typedef struct PLtsql_protocol_plugin
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
 	
-	void        (*clean_up_babelfish_xml_handles)(int32 session_id);
 												
 	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
 	/* Session level GUCs */
@@ -2298,6 +2297,7 @@ int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 void		reset_cached_cursor(void);
+void        reset_cached_xml_handle(void);
 
 /*
  * Functions in string.c
