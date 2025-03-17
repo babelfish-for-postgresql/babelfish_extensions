@@ -1811,6 +1811,10 @@ public:
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
 		}
+		else if(ctx->TRIGGER() && ctx->ALL())
+		{
+			rewritten_query_fragment.emplace(std::make_pair(ctx->ALL()->getSymbol()->getStartIndex(),std::make_pair(::getFullText(ctx->ALL()), "USER")));
+		}
 	}
 
 	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
@@ -7845,6 +7849,10 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
+	if (ctx->collation())
+		stmt->collation = pstrdup(getFullText(ctx->collation()->id()).c_str());
+	else
+		stmt->collation = NULL;
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->datatype = type;
 	stmt->lineno = getLineNo(ctx);

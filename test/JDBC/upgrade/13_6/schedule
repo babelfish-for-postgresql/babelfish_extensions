@@ -363,4 +363,5 @@ smalldatetime_date_cmp-before-15_5-16_1
 datareader_datawriter
 test_conv_money_to_varchar
 fixeddecimal_modulo
+BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char_before_17_4

@@ -521,11 +521,11 @@ tsql_enable_disable_trigger:
 
 					if ($1)
 					{
-						n1->subtype = AT_EnableTrigAll;
+						n1->subtype = AT_EnableTrigUser;
 					}
 					else
 					{
-						n1->subtype = AT_DisableTrigAll;
+						n1->subtype = AT_DisableTrigUser;
 					}
 
 					n2->relation = $5;
