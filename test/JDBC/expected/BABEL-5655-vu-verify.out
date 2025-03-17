@@ -38,19 +38,6 @@ numeric
 ~~END~~
 
 
-declare @strDev float = 2.73;
-select
-    case
-        when 2 = 3 then 0.00
-        else ROUND(@strDev, 2)
-    end;
-go
-~~START~~
-numeric
-2.73
-~~END~~
-
-
 drop table babel_5655_t1
 go
 

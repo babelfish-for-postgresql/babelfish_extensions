@@ -760,14 +760,25 @@ numeric_get_typmod(Numeric num)
 	int32_t		precision;
 
 	/*
-	 * We can identify a zero without any scale by weight < 0 means the integral part of 
-	 * the number is 0 and scale = 0. In case of zero, both precision and scale will be 
-	 * evaluated to zero, so we will set (precision,scale) to T-SQL default (18,0).
+	 * We can identify a zero by the fact that there are no digits at all.
 	 */
-	if (weight < 0 && scale == 0)
+	if (NUMERIC_NDIGITS(num) == 0)
 	{
-		precision = 18;
-		scale = 0;
+		/*
+		 * In case of zero with 
+		 * 1. scale zero both precision and scale will be evaluated to zero, so we
+		 *  will set (precision,scale) to T-SQL default (18,0). 
+		 * 2. scale non-zero both precision and scale should be (scale, scale)
+		 */
+		if (scale == 0)
+		{
+			precision = 18;
+			scale = 0;
+		}
+		else
+		{
+			precision = scale;
+		}
 	}
 	else if (weight >= 0)
 	{

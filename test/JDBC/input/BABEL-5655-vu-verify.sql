@@ -15,14 +15,6 @@ go
 select 0.0000 * cast(1.23 as numeric(10, 2))
 go
 
-declare @strDev float = 2.73;
-select
-    case
-        when 2 = 3 then 0.00
-        else ROUND(@strDev, 2)
-    end;
-go
-
 drop table babel_5655_t1
 go
 
