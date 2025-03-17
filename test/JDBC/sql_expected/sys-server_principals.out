@@ -69,3 +69,82 @@ varchar#!#char#!#nvarchar#!#varchar#!#varchar
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
 ~~END~~
 
+
+select name, principal_id, sid, type, type_desc
+from sys.server_principals where name = 'public'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#char#!#nvarchar
+public#!#2#!#00000002#!#R#!#SERVER_ROLE
+~~END~~
+
+
+select name, principal_id, sid,
+suser_name(principal_id) as suser_name,
+suser_sid(name) as suser_sid,
+suser_sname(sid) as suser_sname,
+suser_sname(suser_sid(name)) as name2
+from sys.server_principals
+where name = 'public'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#public#!#00000002#!#public#!#public
+~~END~~
+
+
+select suser_sid('public')
+GO
+~~START~~
+varbinary
+00000002
+~~END~~
+
+
+select name, principal_id, sid, suser_name(principal_id) as suser_name, suser_sid(name) as suser_sid, suser_sname(sid) as suser_sname, suser_sname(suser_sid(name)) as name2 from sys.server_principals where name = 'pUbLiC'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#public#!#00000002#!#public#!#public
+~~END~~
+
+
+select suser_name(002)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select suser_name(0000002)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select suser_sid('PuBlIC')
+GO
+~~START~~
+varbinary
+00000002
+~~END~~
+
+
+select user_name(1)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select user_id('public')
+GO
+~~START~~
+int
+1
+~~END~~
+

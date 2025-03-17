@@ -16,7 +16,7 @@ This package includes 5 extensions:
 
 # How do I build the extensions?
 
-The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 environment.
+The following build instructions comply with Ubuntu 22.04 and Amazon Linux 2 environment.
 
 ## Build the Postgres engine
 
@@ -27,8 +27,8 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     You'll also need to install `gcc`, `gcc-c++`, `java` and `bison`.
     
     ```
-    sudo apt-get install uuid-dev openjdk-21-jre \
-                        libicu-dev libxml2-dev openssl libssl-dev python-dev \
+    sudo apt-get install uuid-dev flex openjdk-21-jre \
+                        libicu-dev libxml2-dev openssl libssl-dev python3-dev \
                         libossp-uuid-dev libpq-dev pkg-config g++ build-essential bison 
     ```
 
