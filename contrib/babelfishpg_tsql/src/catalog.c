@@ -1879,53 +1879,6 @@ get_bbf_partition_depend_idx_oid()
 	return bbf_partition_depend_idx_oid;
 }
 
-
-/*****************************************
- *			XML_HANDLES
- *****************************************/
-
- Oid
- get_babelfish_xml_handles_oid()
- {
-	 if (!OidIsValid(babelfish_xml_handles_oid))
-		 babelfish_xml_handles_oid = get_relname_relid(BBF_XML_HANDLES_TABLE_NAME,
-											  get_namespace_oid("sys", false));
- 
-	 return babelfish_xml_handles_oid;
- }
- 
- Oid
- get_babelfish_xml_handles_idx_oid()
- {
-	 if (!OidIsValid(babelfish_xml_handles_idx_oid))
-		 babelfish_xml_handles_idx_oid = get_relname_relid(BBF_XML_HANDLES_IDX_NAME,
-												  get_namespace_oid("sys", false));
- 
-	 return babelfish_xml_handles_idx_oid;
- }
- 
- Oid
- get_babelfish_xml_handles_id_idx_oid()
- {
-	 if (!OidIsValid(babelfish_xml_handles_id_idx_oid))
-	 babelfish_xml_handles_id_idx_oid = get_relname_relid(BBF_XML_HANDLES_ID_IDX_NAME,
-									 get_namespace_oid("sys", false));
- 
-	 return babelfish_xml_handles_id_idx_oid;
- }
- 
- Oid
- get_babelfish_xml_handles_seq_oid()
- {
-	 if (!OidIsValid(babelfish_xml_handles_seq_oid))
-	 {
-		 babelfish_xml_handles_seq_oid = get_relname_relid(BBF_XML_HANDLES_SEQ_NAME,
-									 get_namespace_oid("sys", false));
-	 }
- 
-	 return babelfish_xml_handles_seq_oid;
- }
- 
 /*****************************************
  * 			Metadata Check
  * ---------------------------------------
