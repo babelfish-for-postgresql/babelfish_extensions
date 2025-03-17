@@ -459,7 +459,7 @@ SELECT count(*) FROM sys.babelfish_partition_function;
 GO
 ~~START~~
 int8
-0
+1
 ~~END~~
 
 
@@ -467,7 +467,7 @@ SELECT count(*) FROM sys.babelfish_partition_scheme
 GO
 ~~START~~
 int8
-0
+1
 ~~END~~
 
 
@@ -475,6 +475,6 @@ SELECT count(*) FROM sys.babelfish_partition_depend
 GO
 ~~START~~
 int8
-0
+1
 ~~END~~
 
