@@ -1705,37 +1705,6 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static void
-exec_revoke_create_privilege_from_guest_user(List *stmt_list)
-{
-	ListCell	*parsetree_item;
-
-	/* Run the subcommand */
-	foreach(parsetree_item, stmt_list)
-	{
-		Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-		PlannedStmt *wrapper;	
-		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = stmt;
-		wrapper->stmt_location = 0;
-		wrapper->stmt_len = 0;	
-		/* do this step */
-		ProcessUtility(wrapper,
-					 ALTER_DEFAULT_PRIVILEGES,
-					 false,
-					 PROCESS_UTILITY_SUBCOMMAND,
-					 NULL,
-					 NULL,
-					 None_Receiver,
-					 NULL);
-	}
-	CommandCounterIncrement();
-
-}
-
 PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
 Datum
 revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
@@ -1788,6 +1757,8 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 
 			if (physical_schema != NULL && guest_role != NULL)
 			{
+				ListCell	*parsetree_item;
+
 				initStringInfo(&query);
 				/* Revoke CREATE from guest on the specified schema */
 				appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
@@ -1795,7 +1766,29 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 				stmt = parsetree_nth_stmt(stmt_list, 0);
 				update_GrantStmt(stmt, physical_schema, NULL, guest_role, NULL);
 	
-				exec_revoke_create_privilege_from_guest_user(stmt_list);
+				/* Run the subcommand */
+				foreach(parsetree_item, stmt_list)
+				{
+					Node *curr_stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+					PlannedStmt *wrapper;	
+					/* need to make a wrapper PlannedStmt */
+					wrapper = makeNode(PlannedStmt);
+					wrapper->commandType = CMD_UTILITY;
+					wrapper->canSetTag = false;
+					wrapper->utilityStmt = curr_stmt;
+					wrapper->stmt_location = 0;
+					wrapper->stmt_len = 0;	
+					/* do this step */
+					ProcessUtility(wrapper,
+								 ALTER_DEFAULT_PRIVILEGES,
+								 false,
+								 PROCESS_UTILITY_SUBCOMMAND,
+								 NULL,
+								 NULL,
+								 None_Receiver,
+								 NULL);
+				}
+				CommandCounterIncrement();
 				pfree(query.data);
 			}
 		}
