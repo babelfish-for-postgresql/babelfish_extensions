@@ -522,8 +522,10 @@ reseed_identity_post_select_into(Oid relid)
 
 	RelationClose(rel);
 
-	if (!identity_colname || !OidIsValid(relowner))
+	if (!identity_colname)
 		return;
+	if (!OidIsValid(relowner))
+		elog(ERROR, "Invalid owner for relation with oid %u", relid);
 
 	initStringInfo(&querybuf);
 

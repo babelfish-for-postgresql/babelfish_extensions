@@ -437,6 +437,33 @@ SELECT id AS a, id AS b INTO #t5 FROM babel_5661_source
 GO
 INSERT INTO #t5 VALUES (1, 1)
 GO
+-- mix of identity function and duplicate identity columns should
+-- simply skip identity column and pick identity function
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
+go
+
+SELECT id AS a, id AS b, IDENTITY(int, 1, 1) AS c INTO #t15 FROM babel_5661_source
+GO
+SELECT id AS a, IDENTITY(int, 1, 1) AS c, id AS b INTO #t16 FROM babel_5661_source
+GO
+SELECT IDENTITY(int, 1, 1) AS c, id AS b, id AS a INTO #t17 FROM babel_5661_source
+GO
+
+INSERT INTO #t15 VALUES (1, 1)
+GO
+INSERT INTO #t16 VALUES (1, 1)
+GO
+INSERT INTO #t17 VALUES (1, 1)
+GO
+
+-- Single identity column and identity function is not okay
+SELECT id AS a, IDENTITY(int, 1, 1) AS c INTO #t15 FROM babel_5661_source
+GO
+SELECT IDENTITY(int, 1, 1) AS c, id AS b INTO #t16 FROM babel_5661_source
+GO
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'strict';
+go
+
 
 -- db_ddladmin should be able to run SELECT INTO
 CREATE LOGIN babel_5661_login WITH PASSWORD = '12345678'

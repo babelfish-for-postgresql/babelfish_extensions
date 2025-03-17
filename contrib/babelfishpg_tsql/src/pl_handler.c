@@ -6897,15 +6897,16 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
-					/* We found one identity column but first check if it does not occur again target list */
 					if (attrStruct->attidentity)
 					{
 						ListCell *lc;
 
-						if (seen_identity)
-							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
-
+						/*
+						 * Validate that this column does not appear again in the target list
+						 * For cases like SELECT id, id INTO new_table FROM source_table; and
+						 * id is an identity column, we do not want to throw an error for
+						 * multiple identity instead silently skip persisting the identity property
+						 */
 						foreach (lc, q->targetList)
 						{
 							TargetEntry *tle_inner_loop = (TargetEntry *)lfirst(lc);
@@ -6917,6 +6918,11 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					if (attrStruct->attidentity && persists_identity)
 					{
 						Constraint *constraint;
+
+						/* Identity function already seen in target list */
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 						seen_identity = true;
 
