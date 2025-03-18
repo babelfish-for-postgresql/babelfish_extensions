@@ -2,10 +2,24 @@
 USE msdb;
 GO
 
-SELECT nspname FROM babelfish_namespace_ext ORDER BY nspname;
+SELECT DISTINCT f.nspname, f.funcname
+FROM babelfish_function_ext f
+WHERE EXISTS (
+    SELECT 1 
+    FROM babelfish_namespace_ext n 
+    WHERE n.nspname = f.nspname
+)
+ORDER BY f.nspname, f.funcname;
 GO
 
-SELECT nspname, funcname FROM babelfish_function_ext ORDER BY nspname;
+SELECT DISTINCT f.nspname, f.funcname
+FROM babelfish_function_ext f
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM babelfish_namespace_ext n 
+    WHERE n.nspname = f.nspname
+)
+ORDER BY f.nspname, f.funcname;
 GO
 
 REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
