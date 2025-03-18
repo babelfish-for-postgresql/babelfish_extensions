@@ -2332,6 +2332,7 @@ extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 extern int64 last_scope_identity_value(void);
 extern Oid	get_table_identity(Oid tableOid);
+extern void reseed_identity_post_select_into(Oid relid);
 
 /*
  * Functions in linked_servers.c
