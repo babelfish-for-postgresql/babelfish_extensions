@@ -258,6 +258,7 @@ objectpropertyex
 openjson
 openquery_upgrd_before_15_4
 orderby
+object_id_index_conflict
 routines_definition
 rowcount
 schema_resolution_func
