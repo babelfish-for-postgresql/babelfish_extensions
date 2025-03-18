@@ -25,6 +25,7 @@ DROP TYPE isc_domains_vu_prepare_s.smalldatetime_t
 DROP TYPE isc_domains_vu_prepare_s.datetimeoffset_t
 DROP TYPE isc_domains_vu_prepare_s.sql_variant_t
 DROP TYPE isc_domains_vu_prepare_s.my_tbl_type 
+DROP TYPE isc_domains_vu_prepare_s.nvarchar_json_t
 DROP SCHEMA isc_domains_vu_prepare_s
 DROP DATABASE isc_domains_vu_prepare_db
 go

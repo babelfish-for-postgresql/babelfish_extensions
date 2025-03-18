@@ -3665,6 +3665,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						RoleSpec   *headrol = linitial(stmt->roles);
 
+						if (headrol->roletype == ROLESPEC_PUBLIC)
+							headrol->rolename = PUBLIC_ROLE_NAME;
+
 						if (strcmp(headrol->rolename, "is_user") == 0)
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
@@ -3689,9 +3692,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(item, stmt->roles)
 								{
 									RoleSpec	*rolspec = lfirst(item);
-									char		*user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
-									int		role_oid = get_role_oid(user_name, true);
+									int			role_oid;
+
+									if (rolspec->roletype == ROLESPEC_PUBLIC)
+										rolspec->rolename = PUBLIC_ROLE_NAME;
+									
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
