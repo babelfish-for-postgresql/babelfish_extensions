@@ -150,18 +150,22 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "CREATE VIEW dummy.sysdatabases AS SELECT * FROM sys.sysdatabases; ");
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 
-	/* create guest schema in the database. This has to be the last statement */
+	/* create guest schema in the database and revoke create permission */
+	/* from guest user on guest schema. This has to be the last statement */
 	if (guest)
+	{
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+		appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+	}
 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
 	{
 		if (!owner_is_sa)
-			expected_stmt_num = list_length(logins) > 0 ? 18 : 17;
+			expected_stmt_num = list_length(logins) > 0 ? 19 : 18;
 		else
-			expected_stmt_num = list_length(logins) > 0 ? 17 : 16;
+			expected_stmt_num = list_length(logins) > 0 ? 18 : 17;
 	}
 	else
 	{
@@ -244,6 +248,9 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
 		update_CreateSchemaStmt(stmt, guest_schema, guest);
+
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantStmt(stmt, guest_schema, NULL, guest, NULL);
 	}
 
 	pfree((char *) schema);
@@ -743,7 +750,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
 			stmt_number++;
-			if (list_length(parsetree_list) == stmt_number)
+			if (list_length(parsetree_list) - 1 == stmt_number)
 				wrapper->stmt_len = 19;
 			else
 				wrapper->stmt_len = 18;
@@ -1697,4 +1704,110 @@ create_db_roles_during_upgrade(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
+PG_FUNCTION_INFO_V1(revoke_create_privilege_from_guest_user);
+Datum
+revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
+{
+	Relation		db_rel;
+	TableScanDesc		scan;
+	HeapTuple		tuple;
+	bool			is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Datum			db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+									db_rel->rd_att, &is_null);
+		char 			*db_name = TextDatumGetCString(db_name_datum);
+		char 			*physical_schema = NULL;
+		char 			*guest_role = NULL;
+		StringInfoData 		query;
+		int 			pltsql_save_nestlevel;
+		MigrationMode 		mode; 
+		List 			*stmt_list;
+		Node 			*stmt;
+	
+		pltsql_save_nestlevel = pltsql_new_guc_nest_level();
+	
+		PG_TRY();
+		{
+			/* Set the SQL dialect to TSQL first */
+			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							 GUC_CONTEXT_CONFIG,
+							 PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);	
+			/* Now that the SQL dialect is set, determine the migration mode */
+			mode = is_user_database_singledb(db_name) ? SINGLE_DB : MULTI_DB;	
+			/* Get the physical schema name for the guest schema */
+			physical_schema = get_physical_schema_name_by_mode(db_name, "guest", mode);
+			/* Get the guest role name */
+			guest_role = get_guest_role_name(db_name); 
+
+			if (physical_schema == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						 errmsg("Guest schema does not exist in database \"%s\"", db_name)));
+
+			if (guest_role == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("Guest role does not exist in database \"%s\"", db_name)));
+
+			if (physical_schema != NULL && guest_role != NULL)
+			{
+				ListCell	*parsetree_item;
+
+				initStringInfo(&query);
+				/* Revoke CREATE from guest on the specified schema */
+				appendStringInfo(&query, "REVOKE CREATE ON SCHEMA dummy FROM dummy; ");
+				stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+				stmt = parsetree_nth_stmt(stmt_list, 0);
+				update_GrantStmt(stmt, physical_schema, NULL, guest_role, NULL);
+	
+				/* Run the subcommand */
+				foreach(parsetree_item, stmt_list)
+				{
+					Node *curr_stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+					PlannedStmt *wrapper;	
+					/* need to make a wrapper PlannedStmt */
+					wrapper = makeNode(PlannedStmt);
+					wrapper->commandType = CMD_UTILITY;
+					wrapper->canSetTag = false;
+					wrapper->utilityStmt = curr_stmt;
+					wrapper->stmt_location = 0;
+					wrapper->stmt_len = 0;	
+					/* do this step */
+					ProcessUtility(wrapper,
+								 ALTER_DEFAULT_PRIVILEGES,
+								 false,
+								 PROCESS_UTILITY_SUBCOMMAND,
+								 NULL,
+								 NULL,
+								 None_Receiver,
+								 NULL);
+				}
+				CommandCounterIncrement();
+				pfree(query.data);
+			}
+		}
+		PG_FINALLY();
+		{
+			pltsql_revert_guc(pltsql_save_nestlevel);
+		}
+		PG_END_TRY();
+
+		pfree(db_name);
+		if (physical_schema)
+			pfree(physical_schema);
+		if(guest_role)
+			pfree(guest_role);
+
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
 

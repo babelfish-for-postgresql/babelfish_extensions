@@ -3997,8 +3997,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						*/
 						if (!member_can_set_role(GetUserId(), owner_oid) &&
 							(has_privs_of_role(GetUserId(), get_db_accessadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_ddladmin_oid(db_name, false))) &&
+							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false))) &&
 							get_db_principal_kind(owner_oid, db_name))
 						{
 							create_schema->authrole = NULL;
