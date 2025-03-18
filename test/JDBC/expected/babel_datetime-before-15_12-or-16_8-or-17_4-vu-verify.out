@@ -1105,3 +1105,9 @@ datetime
 2000-02-29 12:00:00.0
 ~~END~~
 
+
+SELECT babel_datetime_vu_function1(0x0000B02200EF28C1)
+GO
+Msg 206, Level 16, State 1, Server BABELFISH, Line 1
+
+The function babel_datetime_vu_function1 is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.
