@@ -35,7 +35,7 @@ babel_object_id_v1
 SELECT * FROM babel_object_id_trg_view
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -638,7 +638,7 @@ CREATE TABLE babel_object_id_table_in_guest_schema (a int);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for schema babel_object_id_db_guest)~~
+~~ERROR (Message: permission denied for schema guest)~~
 
 
 
