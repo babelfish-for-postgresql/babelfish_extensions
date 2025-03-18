@@ -342,10 +342,6 @@ GO
 SELECT OBJECT_NAME(OBJECT_ID('dbo.babel_object_id_table_in_dbo_schema'))
 GO
 
--- cleanup guest schema
-DROP TABLE babel_object_id_table_in_guest_schema
-GO
-
 -- tsql
 USE babel_object_id_db;
 GO
