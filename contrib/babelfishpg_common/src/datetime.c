@@ -789,8 +789,8 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 	if (days < 0)
 	{
 		/* Handle pre-1900 dates */
-		int64 day_value = (int64) (((int64) days) & ((int64) 0xFFFFFFFF));
-		int64 total_usecs = (day_value - 0xFFFF2E46LL) * USECS_PER_DAY + usecs;
+		int64 day_value = days & ((int64) 0xFFFFFFFF);
+		int64 total_usecs = (day_value - MIN_DATE_MASK) * USECS_PER_DAY + usecs;
 		result = MIN_DATETIME + total_usecs;
 	}
 	else

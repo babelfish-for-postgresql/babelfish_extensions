@@ -21,6 +21,9 @@
 /* Check precision is valid for datetime */
 #define IS_VALID_DT_PRECISION(j) (j % (int) DT_PREC_INV == 0)
 
+/* Represents the minimum allowed date: 1753-01-01 */
+#define MIN_DATE_MASK	0xFFFF2E46LL
+
 /* Datetime limits */
 /* lower bound: 1753-01-01 00:00:00.000 */
 #define MIN_DATETIME	INT64CONST(-7794489600000000)
