@@ -506,7 +506,7 @@ reseed_identity_post_select_into(Oid relid)
 		if (!attr->attidentity)
 			continue;
 
-		seq_relid = getIdentitySequence(rel, attnum, false);
+		seq_relid = getIdentitySequence(relid, attnum, false);
 
 		pgstuple = SearchSysCache1(SEQRELID, ObjectIdGetDatum(seq_relid));
 		if (!HeapTupleIsValid(pgstuple))
