@@ -10,6 +10,8 @@ create user object_ownership_u2 for login object_ownership_l2;
 go
 alter role object_ownership_r1 add member object_ownership_u2;
 go
+alter role object_ownership_r1 drop member object_ownership_u1;
+go
 -- Add the computed column
 alter table object_ownership_s3.old_t add c as (a + b);
 go
@@ -69,6 +71,21 @@ go
 select next value for object_ownership_s2.old_sq;
 go
 select * from object_ownership_s2.pt2;
+go
+
+/*** USER WILL HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY CURRENT_USER ***/
+select * from object_ownership_s3.old_t1;
+go
+select * from object_ownership_s3.old_v1;
+go
+exec object_ownership_s3.old_p1;
+go
+select object_ownership_s3.old_f1();
+go
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+select next value for object_ownership_s3.old_sq1;
 go
 use master
 go
@@ -173,6 +190,22 @@ go
 select next value for object_ownership_s2.old_sq;
 go
 select * from object_ownership_s2.pt2;
+go
+
+/*** REDUCTION OF PRIVILEGE ***/
+/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY CURRENT_USER ***/
+select * from object_ownership_s3.old_t1;
+go
+select * from object_ownership_s3.old_v1;
+go
+exec object_ownership_s3.old_p1;
+go
+select object_ownership_s3.old_f1();
+go
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+select next value for object_ownership_s3.old_sq1;
 go
 use master
 go

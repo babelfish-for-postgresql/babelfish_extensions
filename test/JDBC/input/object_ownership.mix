@@ -57,7 +57,7 @@ as partition pf2
 all to ([primary]);
 go
 
-/** CREATE OBJECTS IN DBO SCHEMA USING DBO USER **/
+/** CREATE OBJECTS IN GUEST SCHEMA USING DBO USER **/
 create table guest.t(a int, b int);
 go
 create view guest.v as select 1;
@@ -118,6 +118,22 @@ go
 create function object_ownership_s2.f1() returns int begin declare @a int; set @a = 1; return @a; END
 go
 create sequence object_ownership_s2.sq1 start with 1 increment by 1 ;
+go
+create index idx1 on object_ownership_s2.t1(a);
+go
+create trigger object_ownership_s2.tr1 on object_ownership_s2.t1 after insert as select 1;
+go
+create function object_ownership_s2.tvf1() returns table as return (select '1' as col);
+go
+create function object_ownership_s2.mtvf1()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s2.type1 from sys.varchar(10)
+go
+create type object_ownership_s2.ttype1 as table (id int)
 go
 
 /** SCHEMA OWNER IS A ROLE AND CURRENT USER IS MEMBER OF THAT ROLE **/
@@ -251,6 +267,10 @@ select next value for object_ownership_s2.sq1;
 go
 select * from object_ownership_s3.pt2;
 go
+select * from object_ownership_s2.tvf1();
+go
+select * from object_ownership_s2.mtvf1();
+go
 use master
 go
 
@@ -337,6 +357,18 @@ go
 drop sequence object_ownership_s1.sq;
 go
 
+drop index idx1 on object_ownership_s2.t1;
+go
+drop trigger object_ownership_s2.tr1;
+go
+drop function object_ownership_s2.tvf1;
+go
+drop function object_ownership_s2.mtvf1;
+go
+drop type object_ownership_s2.type1;
+go
+drop type object_ownership_s2.ttype1;
+go
 drop table object_ownership_s2.t1;
 go
 drop view object_ownership_s2.v1;
