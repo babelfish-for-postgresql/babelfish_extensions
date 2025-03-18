@@ -41,7 +41,6 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
--- The sys.round functions here are created depending on the number of arguments and return type
 DO $$
 DECLARE
     exception_message text;
