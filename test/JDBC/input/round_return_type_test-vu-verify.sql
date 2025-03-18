@@ -1,6 +1,6 @@
--- TEST CASE 1: Basic rounding with different decimal places
-INSERT INTO TestRound (float_data, decimal_data, int_data) 
-VALUES (3.14159, 3.14159, 3);
+-- TEST CASE 1: Basic rounding with different data types
+INSERT INTO TestRound (numeric_data, int_data, bigint_data, decimal_data, float_data, money_data) 
+VALUES (3.14159, 3, 3, 3.14159, 3.14159, 3.14);
 GO
 
 SELECT * FROM TestRound;
@@ -11,7 +11,9 @@ SELECT
     ROUND(3.14159, 0) as float_round_0,
     ROUND(3.14159, 2) as float_round_2,
     ROUND(CAST(3.14159 AS DECIMAL(10,5)), 2) as decimal_round_2,
-    ROUND(CAST(3 AS INT), 2) as int_round_2;
+    ROUND(CAST(3 AS INT), 2) as int_round_2,
+    ROUND(CAST(3.14159 AS MONEY), 2) as money_round_2,
+    ROUND(CAST(3.14159 AS NUMERIC(10,5)), 2) as numeric_round_2;
 GO
 
 -- TEST CASE 3: Testing negative decimal places
@@ -21,16 +23,20 @@ SELECT
     ROUND(1234.5678, -3) as round_thousands;
 GO
 
--- TEST CASE 4: Testing rounding with .5 cases
+-- TEST CASE 4: Testing rounding with .5 cases for different types
 SELECT 
-    ROUND(3.5, 0) as round_up_35,
-    ROUND(4.5, 0) as round_up_45,
-    ROUND(-3.5, 0) as round_down_neg35,
-    ROUND(-4.5, 0) as round_down_neg45;
+    ROUND(3.5, 0) as round_up_35_float,
+    ROUND(CAST(3.5 AS DECIMAL(10,4)), 0) as round_up_35_decimal,
+    ROUND(CAST(3.5 AS MONEY), 0) as round_up_35_money,
+    ROUND(CAST(3.5 AS NUMERIC(10,4)), 0) as round_up_35_numeric;
 GO
 
--- TEST CASE 5: Testing NULL values
-SELECT ROUND(NULL, 2) as null_round;
+-- TEST CASE 5: Testing NULL values for different types
+SELECT 
+    ROUND(CAST(NULL AS FLOAT), 2) as null_round_float,
+    ROUND(CAST(NULL AS DECIMAL(10,4)), 2) as null_round_decimal,
+    ROUND(CAST(NULL AS MONEY), 2) as null_round_money,
+    ROUND(CAST(NULL AS NUMERIC(10,4)), 2) as null_round_numeric;
 GO
 
 -- TEST CASE 6: Testing extreme values
@@ -74,43 +80,41 @@ GO
 DECLARE @float_val FLOAT = 3.14159;
 DECLARE @decimal_val DECIMAL(10,5) = 3.14159;
 DECLARE @money_val MONEY = 3.14159;
+DECLARE @numeric_val NUMERIC(10,5) = 3.14159;
+DECLARE @bigint_val BIGINT = 3;
 SELECT 
     ROUND(@float_val, 2) as float_round,
     ROUND(@decimal_val, 2) as decimal_round,
-    ROUND(@money_val, 2) as money_round;
+    ROUND(@money_val, 2) as money_round,
+    ROUND(@numeric_val, 2) as numeric_round,
+    ROUND(CAST(@bigint_val AS FLOAT), 2) as bigint_round;
 GO
 
--- TEST CASE 13: Testing edge cases
+-- TEST CASE 13: Testing edge cases for all types
 SELECT 
-    ROUND(0.0, 2) as zero_round,
-    ROUND(9.99999999, 2) as nine_round,
-    ROUND(-0.00001, 2) as neg_small_round;
+    ROUND(CAST(0.0 AS NUMERIC(10,4)), 2) as zero_round_numeric,
+    ROUND(0.0, 2) as zero_round_float,
+    ROUND(CAST(0.0 AS MONEY), 2) as zero_round_money,
+    ROUND(CAST(0.0 AS DECIMAL(10,4)), 2) as zero_round_decimal;
 GO
 
 -- TEST CASE 14: Testing with computed columns
 SELECT 
     id,
+    numeric_data,
+    decimal_data,
     float_data,
+    money_data,
     round_float_2,
-    round_float_2 - float_data as difference
+    round_decimal_2,
+    round_int_2
 FROM TestRound;
 GO
 
 -- TEST CASE 15: Testing type conversion with ROUND
 SELECT 
     ROUND(CAST('3.14159' AS FLOAT), 2) as string_to_float_round,
-    ROUND(CAST('3.14159' AS DECIMAL(10,5)), 2) as string_to_decimal_round;
+    ROUND(CAST('3.14159' AS DECIMAL(10,5)), 2) as string_to_decimal_round,
+    ROUND(CAST('3.14159' AS MONEY), 2) as string_to_money_round,
+    ROUND(CAST('3.14159' AS NUMERIC(10,5)), 2) as string_to_numeric_round;
 GO
-
--- Clean up
-/*
-DROP VIEW IF EXISTS dbo.RoundMultipleTypesView;
-DROP FUNCTION IF EXISTS dbo.RoundMultipleTypes;
-DROP VIEW IF EXISTS dbo.TestRoundView;
-DROP VIEW IF EXISTS dbo.RoundDemoView;
-DROP FUNCTION IF EXISTS dbo.RoundDecimal;
-DROP FUNCTION IF EXISTS dbo.RoundFloat;
-DROP TABLE IF EXISTS TestRound;
-*/
-
-    

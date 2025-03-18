@@ -1,9 +1,12 @@
 -- Create a table to test ROUND function with various data types
 CREATE TABLE TestRound(
     id INT IDENTITY(1,1) PRIMARY KEY,
-    float_data FLOAT NOT NULL,
-    decimal_data DECIMAL(10,4) NOT NULL,
+    numeric_data NUMERIC(10, 4) NOT NULL,
     int_data INT NOT NULL,
+    bigint_data BIGINT NOT NULL,
+    decimal_data DECIMAL(10,4) NOT NULL,
+    float_data FLOAT NOT NULL,
+    money_data MONEY NOT NULL,
     round_float_0 AS (ROUND(float_data, 0)) PERSISTED,
     round_float_2 AS (ROUND(float_data, 2)) PERSISTED,
     round_decimal_0 AS (ROUND(decimal_data, 0)) PERSISTED,
@@ -49,12 +52,12 @@ SELECT
 GO
 
 -- Insert sample data into TestRound table
-INSERT INTO TestRound (float_data, decimal_data, int_data)
+INSERT INTO TestRound (numeric_data, int_data, bigint_data, decimal_data, float_data, money_data)
 VALUES 
-(3.14159, 3.14159, 3),
-(2.71828, 2.71828, 3),
-(1.41421, 1.41421, 1),
-(9.99999, 9.99999, 10);
+(3.14159, 3, 3, 3.14159, 3.14159, 3.14),
+(2.71828, 3, 3, 2.71828, 2.71828, 2.72),
+(1.41421, 1, 1, 1.41421, 1.41421, 1.41),
+(9.99999, 10, 10, 9.99999, 9.99999, 10.00);
 GO
 
 -- View to demonstrate rounding in TestRound table
@@ -62,15 +65,19 @@ CREATE VIEW dbo.TestRoundView
 AS
 SELECT 
     id,
-    float_data,
-    decimal_data,
-    int_data,
-    round_float_0,
-    round_float_2,
-    round_decimal_0,
-    round_decimal_2,
-    round_int_0,
-    round_int_2
+    (ROUND(numeric_data, 0)) as round_numeric_0,
+    (ROUND(int_data, 0)) as round_int_0,
+    (ROUND(bigint_data, 0)) as round_bigint_0,
+    (ROUND(decimal_data, 0)) as round_decimal_0,
+    (ROUND(float_data, 0)) as round_float_0,
+    (ROUND(money_data, 0)) as round_money_0,
+    (ROUND(numeric_data, 0, 0)) as round_numeric_0_0,
+    (ROUND(int_data, 0, 0)) as round_int_0_0,
+    (ROUND(bigint_data, 0, 0)) as round_bigint_0_0,
+    (ROUND(decimal_data, 0, 0)) as round_decimal_0_0,
+    (ROUND(float_data, 0, 0)) as round_float_0_0,
+    (ROUND(money_data, 0, 0)) as round_money_0_0
+
 FROM TestRound
 GO
 
@@ -100,11 +107,3 @@ SELECT *
 FROM dbo.RoundMultipleTypes(3.14159, 3.14159, 3, 2)
 GO
 
--- Cleanup
--- DROP VIEW dbo.RoundMultipleTypesView;
--- DROP FUNCTION dbo.RoundMultipleTypes;
--- DROP VIEW dbo.TestRoundView;
--- DROP VIEW dbo.RoundDemoView;
--- DROP FUNCTION dbo.RoundDecimal;
--- DROP FUNCTION dbo.RoundFloat;
--- DROP TABLE TestRound;
