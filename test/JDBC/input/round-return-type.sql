@@ -220,11 +220,11 @@ go
 select round(cast(748.58 as int), 1, 0)
 go
 
--- Add a round test from BABEL-1193.sql to here, expected to throw error
+-- Add a round test from BABEL-1193.sql to here
 select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
 GO
 
--- Add a rount test from babel_function.sql to here, expected to throw error
+-- Add a rount test from babel_function.sql to here
 select ROUND(NULL, -3);
 GO
 

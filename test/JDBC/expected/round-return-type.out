@@ -564,20 +564,22 @@ int
 ~~END~~
 
 
--- Add a round test from BABEL-1193.sql to here, expected to throw error
+-- Add a round test from BABEL-1193.sql to here
 select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+float#!#float#!#float
+123.0#!#123.0#!#123.0
+~~END~~
 
-~~ERROR (Message: function round(text, integer) is not unique)~~
 
-
--- Add a rount test from babel_function.sql to here, expected to throw error
+-- Add a rount test from babel_function.sql to here
 select ROUND(NULL, -3);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function round(unknown, integer) is not unique)~~
+~~START~~
+float
+<NULL>
+~~END~~
 
 
 IF OBJECT_ID('sample_table', 'U') IS NOT NULL

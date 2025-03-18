@@ -1924,9 +1924,10 @@ GO
 -- test NULL input
 select ROUND(NULL, -3);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function round(unknown, integer) is not unique)~~
+~~START~~
+float
+<NULL>
+~~END~~
 
 select ROUND(748.58, NULL);
 GO

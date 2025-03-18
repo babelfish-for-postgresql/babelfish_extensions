@@ -253,9 +253,10 @@ varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 
 select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function round(text, integer) is not unique)~~
+~~START~~
+float#!#float#!#float
+123.0#!#123.0#!#123.0
+~~END~~
 
 
 DROP TABLE t1;
