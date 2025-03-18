@@ -365,14 +365,3 @@ WITH FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICI
 
 CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
 WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;
-
-CREATE FUNCTION sys.bttextcmp(sys.VARCHAR, pg_catalog.TEXT) 
-RETURNS INTEGER
-AS 'bttextcmp'
-LANGUAGE internal STRICT IMMUTABLE PARALLEL SAFE;
-
-ALTER OPERATOR FAMILY varchar_ops USING btree ADD
-    OPERATOR    1   pg_catalog.<  (TEXT, TEXT),
-    OPERATOR    3   pg_catalog.=  (TEXT, TEXT),
-    OPERATOR    4   pg_catalog.>= (TEXT, TEXT),
-    FUNCTION    1   sys.bttextcmp(sys.VARCHAR, pg_catalog.TEXT);

@@ -139,16 +139,6 @@ RETURNS INT4
 AS 'hashbpchar'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
--- CREATE FUNCTION sys.bpcharcmppg(sys.BPCHAR, pg_catalog.BPCHAR) 
--- RETURNS INTEGER
--- AS 'pg_catalog.bpcharcmp'
--- LANGUAGE internal STRICT IMMUTABLE PARALLEL SAFE;
-
--- CREATE FUNCTION sys.btbpchar_pattern_cmp(sys.bpchar, pg_catalog.bpchar) 
--- RETURNS INTEGER
--- AS 'btbpchar_pattern_cmp'
--- LANGUAGE internal STRICT IMMUTABLE PARALLEL SAFE;
-
 CREATE OPERATOR CLASS bpchar_ops
     DEFAULT FOR TYPE sys.BPCHAR USING btree AS
     OPERATOR    1   pg_catalog.<  (sys.BPCHAR, sys.BPCHAR),
@@ -357,13 +347,3 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.NCHAR)
   combinefunc = sys.nchar_smaller,
   parallel = safe
 );
-
--- CREATE FUNCTION sys.btcharcmp(sys.bpchar, pg_catalog.bpchar) 
--- RETURNS INTEGER
--- AS 'btcharcmp'
--- LANGUAGE internal STRICT IMMUTABLE PARALLEL SAFE;
-
--- ALTER OPERATOR FAMILY bpchar_ops USING btree ADD
---     OPERATOR    1   pg_catalog.<  (pg_catalog.bpchar, pg_catalog.bpchar),
---     OPERATOR    3   pg_catalog.=  (pg_catalog.bpchar, pg_catalog.bpchar),
---     OPERATOR    4   pg_catalog.>= (pg_catalog.bpchar, pg_catalog.bpchar);
