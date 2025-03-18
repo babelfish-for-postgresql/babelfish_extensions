@@ -543,7 +543,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		*found = true;
 
 	if (expr == NULL)
+	{
+		if (found != NULL) *found = false;
 		return -1;
+	}
 	switch (nodeTag(expr))
 	{
 		case T_Param:
@@ -552,10 +555,15 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */
+					if (found != NULL) *found = false;
 					return -1;
 				}
 				else
 				{
+					if (param->paramtypmod == -1)
+					{
+						if (found != NULL) *found = false;
+					}
 					return param->paramtypmod;
 				}
 			}
@@ -571,6 +579,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if ((!(con->consttype == INT4OID) && !is_numeric_datatype(con->consttype)) ||
 					con->constisnull)
 				{
+					if (found != NULL) *found = false;
 					/* typmod is undefined */
 					return -1;
 				}
@@ -616,7 +625,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						if (!found_typmod)
 						{
 							if (found != NULL) *found = false;
-							return -1;
 						}
 						return rettypmod;
 					}
@@ -644,7 +652,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							if (!found_typmod)
 							{
 								if (found != NULL) *found = false;
-								return -1;
 							}
 							return rettypmod;
 						}
@@ -665,7 +672,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							if (!found_typmod)
 							{
 								if (found != NULL) *found = false;
-								return -1;
 							}
 							return rettypmod;
 						}
@@ -679,9 +685,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
 				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
 				{
-					if (found != NULL)
-						*found = false;
+					if (found != NULL) *found = false;
 					return -1;
+				}
+
+				if (var->vartypmod == -1)
+				{
+					if (found != NULL) *found = false;
 				}
 				return var->vartypmod;
 			}
@@ -720,13 +730,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2, &found_typmod);
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
@@ -740,7 +748,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
@@ -783,6 +790,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						scale = tds_default_numeric_scale;
 						return ((precision << 16) | scale) + VARHDRSZ;
 					}
+
+					if (found != NULL) *found = false;
 					return -1;
 				}
 				else if (typmod1 == -1)
@@ -854,6 +863,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						precision = precision1;
 						break;
 					default:
+						if (found != NULL) *found = false;
 						return -1;
 				}
 
@@ -890,6 +900,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * Control reaching here for only arithmetic overflow
 					 * cases
 					 */
+					else
+					{
+						if (found != NULL) *found = false;
+					}
 				}
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
@@ -902,7 +916,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				Node	   *arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
+				{
+					if (rettypmod == -1)
+					{
+						if (found != NULL) *found = false;
+					}
 					return rettypmod;
+				}
 
 				/*
 				 * Look up the return type typmod from a persistent store
@@ -930,9 +950,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					return rettypmod;
+				}
+
+				if (rettypmod == -1)
+				{
+					if (found != NULL) *found = false;
 				}
 				return rettypmod;
 			}
@@ -955,7 +979,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (!found_typmod)
 				{
 					if (found != NULL) *found = false;
-					return -1;
 				}
 				return rettypmod;
 			}
@@ -985,7 +1008,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					/* return -1 if we fail to resolve one of the arg's typmod */
 					if (arg_typmod == -1)
@@ -1032,7 +1054,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 
 					/*
@@ -1067,7 +1088,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				bool        found_typmod;
 
 				if (aggref->aggstar)
+				{
+					if (found != NULL) *found = false;
 					typmod = -1;
+				}
 				else
 				{
 					Assert(aggref->args != NIL);
@@ -1077,7 +1101,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 
 					scale = (typmod - VARHDRSZ) & 0xffff;
@@ -1132,7 +1155,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (!found_typmod)
 				{
 					if (found != NULL) *found = false;
-					return -1;
 				}
 				return rettypmod;
 			}
@@ -1150,7 +1172,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					return rettypmod;
 				}
@@ -1170,7 +1191,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					return rettypmod;
 				}
@@ -1197,16 +1217,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (!found_typmod)
 					{
 						if (found != NULL) *found = false;
-						return -1;
 					}
 					return rettypmod;
 					/* note we don't need to care if it's an array */
 				}
+
+				if (found != NULL) *found = false;
 				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
 				return -1;
 			}
 			/* TODO handle more Expr types if needed */
 		default:
+			if (found != NULL) *found = false;
 			return -1;
 	}
 }

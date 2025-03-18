@@ -6121,9 +6121,8 @@ static int32
 pltsql_exprTypmod(Plan *plan, Node *expr)
 {
 	int32       result_typmod = -1;
-	uint8_t     scale;
-	uint8_t     precision;
 	Oid         expr_type;
+	bool		found_typmod;
 	
 	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
 		return -1;
@@ -6140,21 +6139,9 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
  		 * from the expression node, when the expression type is numeric.
 		 */ 
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
-			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, NULL);
-		if (result_typmod != -1)
-		{
-			/* 
-			 * If we are unable to get correct precision and scale for overflow cases
-			 * then return -1
-			 */
-			scale = (result_typmod - VARHDRSZ) & 0xffff;
-			precision = ((result_typmod - VARHDRSZ) >> 16) & 0xffff;
-			if (precision > TDS_NUMERIC_MAX_PRECISION)
-			{
-				if (!(precision - scale > 32 && scale > 6) && !(precision - scale <= TDS_NUMERIC_MAX_PRECISION))
-					return -1;
-			}
-		}
+			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, &found_typmod);
+		if (!found_typmod)
+			return -1;
 	}
 	return result_typmod;
 }

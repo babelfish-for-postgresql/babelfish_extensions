@@ -1,0 +1,1187 @@
+
+------------------------------------------------------------------------
+---- 1. Basic Tests
+------------------------------------------------------------------------
+-- Create a comprehensive test table with various NUMERIC and DECIMAL data types
+CREATE TABLE numeric_decimal_test_suite (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    
+    -- Small precision/scale
+    numeric_1_0 NUMERIC(1,0),
+    decimal_1_0 DECIMAL(1,0),
+    numeric_2_1 NUMERIC(2,1),
+    decimal_2_1 DECIMAL(2,1),
+    numeric_3_2 NUMERIC(3,2),
+    decimal_3_2 DECIMAL(3,2),
+    
+    -- Medium precision/scale
+    numeric_5_2 NUMERIC(5,2),
+    decimal_5_2 DECIMAL(5,2),
+    numeric_9_4 NUMERIC(9,4),
+    decimal_9_4 DECIMAL(9,4),
+    numeric_10_5 NUMERIC(10,5),
+    decimal_10_5 DECIMAL(10,5),
+    
+    -- High precision
+    numeric_17_2 NUMERIC(17,2),
+    decimal_17_2 DECIMAL(17,2),
+    numeric_18_2 NUMERIC(18,2),
+    decimal_18_2 DECIMAL(18,2),
+    numeric_19_2 NUMERIC(19,2),
+    decimal_19_2 DECIMAL(19,2),
+    numeric_28_10 NUMERIC(28,10),
+    decimal_28_10 DECIMAL(28,10),
+    
+    -- Maximum precision
+    numeric_38_0 NUMERIC(38,0),
+    decimal_38_0 DECIMAL(38,0),
+    numeric_38_10 NUMERIC(38,10),
+    decimal_38_10 DECIMAL(38,10),
+    numeric_38_38 NUMERIC(38,38),
+    decimal_38_38 DECIMAL(38,38),
+    
+    -- Default precision/scale (18,0)
+    numeric_default NUMERIC,
+    decimal_default DECIMAL
+);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "numeric_decimal_test_suite" already exists)~~
+
+
+-- Test default values (NULL)
+INSERT INTO numeric_decimal_test_suite DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test zero values
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test small positive values
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    1, 1, 0.1, 0.1, 0.01, 0.01,
+    1.23, 1.23, 1.2345, 1.2345, 1.23456, 1.23456,
+    12345.67, 12345.67, 12345.67, 12345.67, 12345.67, 12345.67,
+    12345.1234567890, 12345.1234567890, 12345, 12345, 12345.1234567890, 12345.1234567890,
+    0.00000000000000000000000000000000000001, 0.00000000000000000000000000000000000001, 1, 1
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test small negative values
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    -1, -1, -0.1, -0.1, -0.01, -0.01,
+    -1.23, -1.23, -1.2345, -1.2345, -1.23456, -1.23456,
+    -12345.67, -12345.67, -12345.67, -12345.67, -12345.67, -12345.67,
+    -12345.1234567890, -12345.1234567890, -12345, -12345, -12345.1234567890, -12345.1234567890,
+    -0.00000000000000000000000000000000000001, -0.00000000000000000000000000000000000001, -1, -1
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test smallest positive values
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    0, 0, 0.1, 0.1, 0.01, 0.01,
+    0.01, 0.01, 0.0001, 0.0001, 0.00001, 0.00001,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.0000000001, 0.0000000001, 1, 1, 0.0000000001, 0.0000000001,
+    0.00000000000000000000000000000000000001, 0.00000000000000000000000000000000000001, 0, 0
+);
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- Test rounding behavior
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    5, 5, 1.5, 1.5, 1.55, 1.55,
+    123.45, 123.45, 1234.5678, 1234.5678, 1234.56789, 1234.56789,
+    12345678901234.56, 12345678901234.56, 123456789012345.67, 123456789012345.67, 1234567890123456.78, 1234567890123456.78,
+    1234567890123.4567890123, 1234567890123.4567890123, 12345678901234567890, 12345678901234567890, 
+    12345678901234567890.1234567890, 12345678901234567890.1234567890,
+    0.12345678901234567890123456789012345678, 0.12345678901234567890123456789012345678, 5, 5
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Test largest negative values (closest to zero)
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    -1, -1, -0.1, -0.1, -0.01, -0.01,
+    -0.01, -0.01, -0.0001, -0.0001, -0.00001, -0.00001,
+    -0.01, -0.01, -0.01, -0.01, -0.01, -0.01,
+    -0.0000000001, -0.0000000001, -1, -1, -0.0000000001, -0.0000000001,
+    -0.00000000000000000000000000000000000001, -0.00000000000000000000000000000000000001, -0.1, -0.1
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Verify all inserted values
+SELECT * FROM numeric_decimal_test_suite ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#9#!#9#!#9.9#!#9.9#!#9.99#!#9.99#!#999.99#!#999.99#!#99999.9999#!#99999.9999#!#99999.99999#!#99999.99999#!#999999999999999.99#!#999999999999999.99#!#9999999999999999.99#!#9999999999999999.99#!#99999999999999999.99#!#99999999999999999.99#!#99999999999999999.9999999999#!#99999999999999999.9999999999#!#99999999999999999999999999999999999999#!#99999999999999999999999999999999999999#!#9999999999999999999999999999.9999999999#!#9999999999999999999999999999.9999999999#!#0.99999999999999999999999999999999999999#!#0.99999999999999999999999999999999999999#!#9#!#9
+2#!#-9#!#-9#!#-0.9#!#-0.9#!#-0.09#!#-0.09#!#-999.99#!#-999.99#!#-99999.9999#!#-99999.9999#!#-99999.99999#!#-99999.99999#!#-999999999999999.99#!#-999999999999999.99#!#-9999999999999999.99#!#-9999999999999999.99#!#-99999999999999999.99#!#-99999999999999999.99#!#-99999999999999999.9999999999#!#-99999999999999999.9999999999#!#-99999999999999999999999999999999999999#!#-99999999999999999999999999999999999999#!#-9999999999999999999999999999.9999999999#!#-9999999999999999999999999999.9999999999#!#-0.99999999999999999999999999999999999999#!#-0.99999999999999999999999999999999999999#!#-9#!#-9
+3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#0#!#0#!#0.0#!#0.0#!#0.00#!#0.00#!#0.00#!#0.00#!#0.0000#!#0.0000#!#0.00000#!#0.00000#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0.00#!#0E-10#!#0E-10#!#0#!#0#!#0E-10#!#0E-10#!#0E-38#!#0E-38#!#0#!#0
+5#!#1#!#1#!#0.1#!#0.1#!#0.01#!#0.01#!#1.23#!#1.23#!#1.2345#!#1.2345#!#1.23456#!#1.23456#!#12345.67#!#12345.67#!#12345.67#!#12345.67#!#12345.67#!#12345.67#!#12345.1234567890#!#12345.1234567890#!#12345#!#12345#!#12345.1234567890#!#12345.1234567890#!#1E-38#!#1E-38#!#1#!#1
+6#!#-1#!#-1#!#-0.1#!#-0.1#!#-0.01#!#-0.01#!#-1.23#!#-1.23#!#-1.2345#!#-1.2345#!#-1.23456#!#-1.23456#!#-12345.67#!#-12345.67#!#-12345.67#!#-12345.67#!#-12345.67#!#-12345.67#!#-12345.1234567890#!#-12345.1234567890#!#-12345#!#-12345#!#-12345.1234567890#!#-12345.1234567890#!#-1E-38#!#-1E-38#!#-1#!#-1
+7#!#0#!#0#!#0.1#!#0.1#!#0.01#!#0.01#!#0.01#!#0.01#!#0.0001#!#0.0001#!#0.00001#!#0.00001#!#0.01#!#0.01#!#0.01#!#0.01#!#0.01#!#0.01#!#1E-10#!#1E-10#!#1#!#1#!#1E-10#!#1E-10#!#1E-38#!#1E-38#!#0#!#0
+8#!#5#!#5#!#1.5#!#1.5#!#1.55#!#1.55#!#123.45#!#123.45#!#1234.5678#!#1234.5678#!#1234.56789#!#1234.56789#!#12345678901234.56#!#12345678901234.56#!#123456789012345.67#!#123456789012345.67#!#1234567890123456.78#!#1234567890123456.78#!#1234567890123.4567890123#!#1234567890123.4567890123#!#12345678901234567890#!#12345678901234567890#!#12345678901234567890.1234567890#!#12345678901234567890.1234567890#!#0.12345678901234567890123456789012345678#!#0.12345678901234567890123456789012345678#!#5#!#5
+9#!#-1#!#-1#!#-0.1#!#-0.1#!#-0.01#!#-0.01#!#-0.01#!#-0.01#!#-0.0001#!#-0.0001#!#-0.00001#!#-0.00001#!#-0.01#!#-0.01#!#-0.01#!#-0.01#!#-0.01#!#-0.01#!#-1E-10#!#-1E-10#!#-1#!#-1#!#-1E-10#!#-1E-10#!#-1E-38#!#-1E-38#!#0#!#0
+~~END~~
+
+
+TRUNCATE TABLE numeric_decimal_test_suite
+GO
+
+
+
+------------------------------------------------------------------------
+---- 2. Maximum and Minimum values Tests
+------------------------------------------------------------------------
+-- Test maximum values for each precision
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    9, 9, 9.9, 9.9, 9.99, 9.99,
+    999.99, 999.99, 99999.9999, 99999.9999, 99999.99999, 99999.99999,
+    999999999999999.99, 999999999999999.99, 9999999999999999.99, 9999999999999999.99, 99999999999999999.99, 99999999999999999.99,
+    99999999999999999.9999999999, 99999999999999999.9999999999, 99999999999999999999999999999999999999, 99999999999999999999999999999999999999, 
+    9999999999999999999999999999.9999999999, 9999999999999999999999999999.9999999999,
+    0.99999999999999999999999999999999999999, 0.99999999999999999999999999999999999999, 9, 9
+);
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- Test minimum values for each precision
+INSERT INTO numeric_decimal_test_suite (
+    numeric_1_0, decimal_1_0, numeric_2_1, decimal_2_1, numeric_3_2, decimal_3_2,
+    numeric_5_2, decimal_5_2, numeric_9_4, decimal_9_4, numeric_10_5, decimal_10_5,
+    numeric_17_2, decimal_17_2, numeric_18_2, decimal_18_2, numeric_19_2, decimal_19_2,
+    numeric_28_10, decimal_28_10, numeric_38_0, decimal_38_0, numeric_38_10, decimal_38_10,
+    numeric_38_38, decimal_38_38, numeric_default, decimal_default
+) VALUES (
+    -9, -9, -0.9, -0.9, -0.09, -0.09,
+    -999.99, -999.99, -99999.9999, -99999.9999, -99999.99999, -99999.99999,
+    -999999999999999.99, -999999999999999.99, -9999999999999999.99, -9999999999999999.99, -99999999999999999.99, -99999999999999999.99,
+    -99999999999999999.9999999999, -99999999999999999.9999999999, -99999999999999999999999999999999999999, -99999999999999999999999999999999999999, 
+    -9999999999999999999999999999.9999999999, -9999999999999999999999999999.9999999999,
+    -0.99999999999999999999999999999999999999, -0.99999999999999999999999999999999999999, -9, -9
+);
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- Verify all inserted values
+SELECT * FROM numeric_decimal_test_suite ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#9#!#9#!#9.9#!#9.9#!#9.99#!#9.99#!#999.99#!#999.99#!#99999.9999#!#99999.9999#!#99999.99999#!#99999.99999#!#999999999999999.99#!#999999999999999.99#!#9999999999999999.99#!#9999999999999999.99#!#99999999999999999.99#!#99999999999999999.99#!#99999999999999999.9999999999#!#99999999999999999.9999999999#!#99999999999999999999999999999999999999#!#99999999999999999999999999999999999999#!#9999999999999999999999999999.9999999999#!#9999999999999999999999999999.9999999999#!#0.99999999999999999999999999999999999999#!#0.99999999999999999999999999999999999999#!#9#!#9
+2#!#-9#!#-9#!#-0.9#!#-0.9#!#-0.09#!#-0.09#!#-999.99#!#-999.99#!#-99999.9999#!#-99999.9999#!#-99999.99999#!#-99999.99999#!#-999999999999999.99#!#-999999999999999.99#!#-9999999999999999.99#!#-9999999999999999.99#!#-99999999999999999.99#!#-99999999999999999.99#!#-99999999999999999.9999999999#!#-99999999999999999.9999999999#!#-99999999999999999999999999999999999999#!#-99999999999999999999999999999999999999#!#-9999999999999999999999999999.9999999999#!#-9999999999999999999999999999.9999999999#!#-0.99999999999999999999999999999999999999#!#-0.99999999999999999999999999999999999999#!#-9#!#-9
+~~END~~
+
+
+
+------------------------------------------------------------------------
+---- 3. Overflow and Precision Loss Tests
+------------------------------------------------------------------------
+-- Testing addition overflow with NUMERIC(1,0) - Expects overflow error when adding 9 + 1
+SELECT CAST(9 AS NUMERIC(1,0)) + CAST(1 AS NUMERIC(1,0)) AS result;
+GO
+~~START~~
+numeric
+10
+~~END~~
+
+
+-- Testing addition with NUMERIC(5,2) - Verifies correct handling when result reaches maximum precision (999.99 + 0.01 = 1000.00)
+SELECT CAST(999.99 AS NUMERIC(5,2)) + CAST(0.01 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+1000.00
+~~END~~
+
+
+-- Testing addition with NUMERIC(19,2) - Tests behavior near maximum value limits
+SELECT CAST(99999999999999999.99 AS NUMERIC(19,2)) + CAST(0.01 AS NUMERIC(19,2)) AS result;
+GO
+~~START~~
+numeric
+100000000000000000.00
+~~END~~
+
+
+-- Testing addition with maximum NUMERIC(38,0) - Verifies overflow at absolute maximum precision
+SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) + CAST(1 AS NUMERIC(38,0)) AS result;
+GO
+~~START~~
+numeric
+10000000000000000000000000000000000000
+~~END~~
+
+
+-- Testing subtraction with NUMERIC(1,0) - Expects overflow error when result exceeds negative range
+SELECT CAST(-9 AS NUMERIC(1,0)) - CAST(1 AS NUMERIC(1,0)) AS result;
+GO
+~~START~~
+numeric
+-10
+~~END~~
+
+
+-- Testing subtraction with NUMERIC(5,2) - Verifies handling of negative results with decimal places
+SELECT CAST(-999.99 AS NUMERIC(5,2)) - CAST(0.01 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+-1000.00
+~~END~~
+
+
+-- Testing subtraction with NUMERIC(19,2) - Tests behavior with large negative numbers
+SELECT CAST(-99999999999999999.99 AS NUMERIC(19,2)) - CAST(0.01 AS NUMERIC(19,2)) AS result;
+GO
+~~START~~
+numeric
+-100000000000000000.00
+~~END~~
+
+
+-- Testing multiplication with NUMERIC(1,0) - Expects overflow error when multiplying 9 * 2
+SELECT CAST(9 AS NUMERIC(1,0)) * CAST(2 AS NUMERIC(1,0)) AS result;
+GO
+~~START~~
+numeric
+18
+~~END~~
+
+
+-- Testing multiplication with NUMERIC(5,2) - Verifies handling of decimal multiplication near limits
+SELECT CAST(999.99 AS NUMERIC(5,2)) * CAST(2 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+1999.9800
+~~END~~
+
+
+-- Testing multiplication with NUMERIC(19,2) - Tests overflow with large numbers
+SELECT CAST(99999999999999999.99 AS NUMERIC(19,2)) * CAST(2 AS NUMERIC(19,2)) AS result;
+GO
+~~START~~
+numeric
+199999999999999999.980
+~~END~~
+
+
+-- Testing multiplication scale expansion - Verifies correct decimal place handling (99.99 * 99.99)
+SELECT CAST(99.99 AS NUMERIC(4,2)) * CAST(99.99 AS NUMERIC(4,2)) AS result;
+GO
+~~START~~
+numeric
+9998.0001
+~~END~~
+
+
+-- Testing maximum precision multiplication - Tests behavior at maximum allowed precision
+SELECT CAST(9999999999999999999 AS NUMERIC(19,0)) * CAST(9999999999999999999 AS NUMERIC(19,0)) AS result;
+GO
+~~START~~
+numeric
+99999999999999999980000000000000000001
+~~END~~
+
+
+-- Testing simple division with potential precision loss (1/3)
+SELECT CAST(1 AS NUMERIC(5,2)) / CAST(3 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+0.33333333
+~~END~~
+
+
+-- Testing division with scale expansion - Verifies decimal place handling in division
+SELECT CAST(10 AS NUMERIC(2,0)) / CAST(3 AS NUMERIC(2,0)) AS result;
+GO
+~~START~~
+numeric
+3.333333
+~~END~~
+
+
+-- Testing division by zero - Verifies error handling for divide by zero operation
+SELECT CAST(1 AS NUMERIC(5,2)) / CAST(0 AS NUMERIC(5,2)) AS result;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- Testing casting with truncation - Verifies behavior when reducing decimal places
+SELECT CAST(CAST(123.456 AS NUMERIC(6,3)) AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+123.46
+~~END~~
+
+
+-- Testing casting with different rounding behaviors - Compares truncation vs rounding results
+SELECT CAST(CAST(123.456 AS NUMERIC(6,3)) AS NUMERIC(5,2)) AS result_truncated,
+       ROUND(CAST(123.456 AS NUMERIC(6,3)), 2) AS result_rounded;
+GO
+~~START~~
+numeric#!#numeric
+123.46#!#123.46
+~~END~~
+
+
+-- Testing casting from larger to smaller precision - Verifies overflow handling
+SELECT CAST(CAST(12345.6789 AS NUMERIC(10,4)) AS NUMERIC(6,2)) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+-- Testing power function overflow - Tests behavior with large exponents
+SELECT POWER(CAST(10 AS NUMERIC(2,0)), CAST(38 AS NUMERIC(2,0))) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+-- Testing exponential function overflow - Verifies handling of large exponential results
+SELECT EXP(CAST(100 AS NUMERIC(3,0))) AS result;
+GO
+~~START~~
+float
+2.6881171418161356E43
+~~END~~
+
+
+-- Testing aggregate function precision - Tests SUM and AVG with values near precision limits
+CREATE TABLE numeric_aggregate_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    value_a NUMERIC(9,2),
+    value_b NUMERIC(9,2)
+);
+GO
+
+-- Insert test data for aggregate function testing
+INSERT INTO numeric_aggregate_test (value_a, value_b)
+VALUES 
+(9999999.99, 0.01),
+(9999999.99, 0.01),
+(9999999.99, 0.01),
+(9999999.99, 0.01),
+(9999999.99, 0.01);
+GO
+~~ROW COUNT: 5~~
+
+
+-- Testing SUM aggregate function with values near precision limits
+SELECT SUM(value_a) AS sum_result FROM numeric_aggregate_test;
+GO
+~~START~~
+numeric
+49999999.95
+~~END~~
+
+
+-- Testing AVG aggregate function with potential precision loss
+SELECT AVG(value_a) AS avg_result FROM numeric_aggregate_test;
+GO
+~~START~~
+numeric
+9999999.990000
+~~END~~
+
+
+
+-- Testing precision loss in product calculation and aggregation
+SELECT value_a * value_b AS individual_product,
+       SUM(value_a * value_b) AS sum_of_products
+FROM numeric_aggregate_test;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "numeric_aggregate_test.value_a" must appear in the GROUP BY clause or be used in an aggregate function)~~
+
+
+
+-- -- Testing overflow in complex expressions with multiple operations (multiplication, power, and division)
+-- SELECT CAST(9999999.99 AS NUMERIC(9,2)) * 
+--        POWER(CAST(10 AS NUMERIC(2,0)), CAST(10 AS NUMERIC(2,0))) / 
+--        CAST(0.01 AS NUMERIC(3,2)) AS result;
+-- GO
+-- Testing precision loss in addition with different scales (NUMERIC(5,2) + NUMERIC(5,3))
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(67.891 AS NUMERIC(5,3)) AS result;
+GO
+~~START~~
+numeric
+191.341
+~~END~~
+
+
+-- Testing precision loss in multiplication with different scales (NUMERIC(4,2) * NUMERIC(5,3))
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56.789 AS NUMERIC(5,3)) AS result;
+GO
+~~START~~
+numeric
+700.77626
+~~END~~
+
+
+-- Testing precision loss in division with different scales (NUMERIC(5,2) / NUMERIC(4,4))
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.0067 AS NUMERIC(4,4)) AS result;
+GO
+~~START~~
+numeric
+18425.3731343
+~~END~~
+
+
+-- Testing boundary case for maximum precision addition with DECIMAL(38,0)
+SELECT CAST(9999999999999999999999999999999999999 AS DECIMAL(38,0)) + 
+       CAST(0 AS DECIMAL(38,0)) AS result;
+GO
+~~START~~
+numeric
+9999999999999999999999999999999999999
+~~END~~
+
+
+-- Testing boundary case for maximum scale multiplication with DECIMAL(38,37)
+SELECT CAST(0.9999999999999999999999999999999999999 AS DECIMAL(38,37)) * 
+       CAST(0.9999999999999999999999999999999999999 AS DECIMAL(38,37)) AS result;
+GO
+~~START~~
+numeric
+1.00000000000000000000000000000000000
+~~END~~
+
+
+-- Testing scale change behavior in multiplication of DECIMAL values
+SELECT CAST(123.45 AS DECIMAL(5,2)) * CAST(67.89 AS DECIMAL(4,2)) AS result;
+GO
+~~START~~
+numeric
+8381.0205
+~~END~~
+
+
+-- Testing scale change behavior in division of DECIMAL values
+SELECT CAST(123.45 AS DECIMAL(5,2)) / CAST(67.89 AS DECIMAL(4,2)) AS result;
+GO
+~~START~~
+numeric
+1.8183826
+~~END~~
+
+
+-- Testing mixed type arithmetic between INTEGER and DECIMAL
+SELECT CAST(2147483647 AS INT) * CAST(1.1 AS DECIMAL(2,1)) AS result;
+GO
+~~START~~
+numeric
+2362232011.7
+~~END~~
+
+
+-- Testing mixed type arithmetic between FLOAT and DECIMAL
+SELECT CAST(1.79E+308 AS FLOAT) * CAST(1.1 AS DECIMAL(2,1)) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
+
+
+-- TODO: CREATE JIRA
+-- Testing mixed type arithmetic between MONEY and DECIMAL
+-- SELECT CAST(922337203685477.5807 AS MONEY) * CAST(1.1 AS DECIMAL(2,1)) AS result;
+-- GO
+-- Cleanup test table
+DROP TABLE numeric_aggregate_test;
+GO
+
+
+------------------------------------------------------------------------
+---- 4. Arithmetic Operations Tests
+------------------------------------------------------------------------
+-- Addition (+) operator tests
+SELECT 'Addition (+) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Addition (+) Operator Tests
+~~END~~
+
+
+-- NUMERIC + NUMERIC (Same Type)
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- DECIMAL + DECIMAL (Same Type)
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(678.90 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- NUMERIC + NUMERIC (Different Precision/Scale)
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(6789.012 AS NUMERIC(8,3)) AS result;
+GO
+~~START~~
+numeric
+6912.462
+~~END~~
+
+
+-- DECIMAL + DECIMAL (Different Precision/Scale)
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(6789.012 AS DECIMAL(8,3)) AS result;
+GO
+~~START~~
+numeric
+6912.462
+~~END~~
+
+
+-- NUMERIC + NUMERIC (Maximum Precision)
+SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) + CAST(1 AS NUMERIC(38,0)) AS NUMERIC(38,0) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '38' at line 2 and character position 106)~~
+
+
+-- DECIMAL + DECIMAL (Maximum Precision)
+SELECT CAST(9999999999999999999999999999999999999 AS DECIMAL(38,0)) + CAST(1 AS DECIMAL(38,0)) AS DECIMAL(38,0) AS result;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '38' at line 2 and character position 106)~~
+
+
+-- NUMERIC + NUMERIC (Maximum Scale)
+SELECT CAST(0.9999999999999999999999999999999999999 AS NUMERIC(38,37)) + CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
+GO
+~~START~~
+numeric
+1.0000000000000000000000000000000000000
+~~END~~
+
+
+-- NUMERIC + INT
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678 AS INT) AS result;
+GO
+~~START~~
+numeric
+801.45
+~~END~~
+
+
+-- DECIMAL + BIGINT
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(9223372036854775807 AS BIGINT) AS result;
+GO
+~~START~~
+numeric
+9223372036854775930.45
+~~END~~
+
+
+-- NUMERIC + SMALLINT
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(32767 AS SMALLINT) AS result;
+GO
+~~START~~
+numeric
+32890.45
+~~END~~
+
+
+-- DECIMAL + TINYINT
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(255 AS TINYINT) AS result;
+GO
+~~START~~
+numeric
+378.45
+~~END~~
+
+
+-- NUMERIC + FLOAT
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS FLOAT) AS result;
+GO
+~~START~~
+float
+802.35
+~~END~~
+
+
+-- DECIMAL + REAL
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(678.90 AS REAL) AS result;
+GO
+~~START~~
+real
+802.35004
+~~END~~
+
+
+-- NUMERIC + MONEY
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS MONEY) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- DECIMAL + SMALLMONEY
+SELECT CAST(123.45 AS DECIMAL(5,2)) + CAST(678.90 AS SMALLMONEY) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- NUMERIC + BIT
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(1 AS BIT) AS result;
+GO
+~~START~~
+numeric
+124.45
+~~END~~
+
+
+-- Subtraction (-) operator tests
+SELECT 'Subtraction (-) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Subtraction (-) Operator Tests
+~~END~~
+
+
+-- NUMERIC - NUMERIC (Same Type)
+SELECT CAST(678.90 AS NUMERIC(5,2)) - CAST(123.45 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+555.45
+~~END~~
+
+
+-- DECIMAL - DECIMAL (Same Type)
+SELECT CAST(678.90 AS DECIMAL(5,2)) - CAST(123.45 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+555.45
+~~END~~
+
+
+-- NUMERIC - NUMERIC (Different Precision/Scale)
+SELECT CAST(6789.012 AS NUMERIC(8,3)) - CAST(123.45 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+6665.562
+~~END~~
+
+
+-- NUMERIC - INT
+SELECT CAST(678.90 AS NUMERIC(5,2)) - CAST(123 AS INT) AS result;
+GO
+~~START~~
+numeric
+555.90
+~~END~~
+
+
+-- DECIMAL - FLOAT
+SELECT CAST(678.90 AS DECIMAL(5,2)) - CAST(123.45 AS FLOAT) AS result;
+GO
+~~START~~
+float
+555.4499999999999
+~~END~~
+
+
+-- NUMERIC - MONEY
+SELECT CAST(678.90 AS NUMERIC(5,2)) - CAST(123.45 AS MONEY) AS result;
+GO
+~~START~~
+numeric
+555.45
+~~END~~
+
+
+-- Multiplication (*) operator tests
+SELECT 'Multiplication (*) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Multiplication (*) Operator Tests
+~~END~~
+
+
+-- NUMERIC * NUMERIC (Same Type)
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56.78 AS NUMERIC(4,2)) AS result;
+GO
+~~START~~
+numeric
+700.6652
+~~END~~
+
+
+-- DECIMAL * DECIMAL (Same Type)
+SELECT CAST(12.34 AS DECIMAL(4,2)) * CAST(56.78 AS DECIMAL(4,2)) AS result;
+GO
+~~START~~
+numeric
+700.6652
+~~END~~
+
+
+-- NUMERIC * NUMERIC (Different Precision/Scale)
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(567.890 AS NUMERIC(6,3)) AS result;
+GO
+~~START~~
+numeric
+7007.76260
+~~END~~
+
+
+-- NUMERIC * NUMERIC (Potential Overflow)
+SELECT TRY_CAST(CAST(9999999999 AS NUMERIC(10,0)) * CAST(9999999999 AS NUMERIC(10,0)) AS NUMERIC(20,0)) AS result;
+GO
+~~START~~
+numeric
+99999999980000000001.00000000
+~~END~~
+
+
+-- NUMERIC * INT
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56 AS INT) AS result;
+GO
+~~START~~
+numeric
+691.04
+~~END~~
+
+
+-- DECIMAL * FLOAT
+SELECT CAST(12.34 AS DECIMAL(4,2)) * CAST(56.78 AS FLOAT) AS result;
+GO
+~~START~~
+float
+700.6652
+~~END~~
+
+
+-- NUMERIC * MONEY
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56.78 AS MONEY) AS result;
+GO
+~~START~~
+numeric
+700.6652
+~~END~~
+
+
+-- Division (/) operator tests
+SELECT 'Division (/) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Division (/) Operator Tests
+~~END~~
+
+
+-- NUMERIC / NUMERIC (Same Type)
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(2.50 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+49.38000000
+~~END~~
+
+
+-- DECIMAL / DECIMAL (Same Type)
+SELECT CAST(123.45 AS DECIMAL(5,2)) / CAST(2.50 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+49.38000000
+~~END~~
+
+
+-- NUMERIC / NUMERIC (Different Precision/Scale)
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.25 AS NUMERIC(3,2)) AS result;
+GO
+~~START~~
+numeric
+493.800000
+~~END~~
+
+
+-- NUMERIC / NUMERIC (Small Divisor)
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.01 AS NUMERIC(3,2)) AS result;
+GO
+~~START~~
+numeric
+12345.000000
+~~END~~
+
+
+-- NUMERIC / NUMERIC (Division by Zero)
+SELECT TRY_CAST(CAST(123.45 AS NUMERIC(5,2)) / CAST(0.00 AS NUMERIC(3,2)) AS NUMERIC(10,2)) AS result;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- NUMERIC / INT
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(5 AS INT) AS result;
+GO
+~~START~~
+numeric
+24.690000
+~~END~~
+
+
+-- DECIMAL / FLOAT
+SELECT CAST(123.45 AS DECIMAL(5,2)) / CAST(5.0 AS FLOAT) AS result;
+GO
+~~START~~
+float
+24.69
+~~END~~
+
+
+-- NUMERIC / MONEY
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(5.0 AS MONEY) AS result;
+GO
+~~START~~
+numeric
+24.69000000
+~~END~~
+
+
+-- Modulo (%) operator tests
+SELECT 'Modulo (%) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Modulo (%) Operator Tests
+~~END~~
+
+
+-- NUMERIC % NUMERIC (Same Type)
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10.00 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- DECIMAL % DECIMAL (Same Type)
+SELECT CAST(123.45 AS DECIMAL(5,2)) % CAST(10.00 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- NUMERIC % NUMERIC (Different Precision/Scale)
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10.500 AS NUMERIC(5,3)) AS result;
+GO
+~~START~~
+numeric
+7.950
+~~END~~
+
+
+-- NUMERIC % NUMERIC (Modulo by Zero)
+SELECT TRY_CAST(CAST(123.45 AS NUMERIC(5,2)) % CAST(0.00 AS NUMERIC(3,2)) AS NUMERIC(5,2)) AS result;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- NUMERIC % INT
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10 AS INT) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- DECIMAL % FLOAT
+SELECT CAST(123.45 AS DECIMAL(5,2)) % CAST(10.0 AS FLOAT) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- NUMERIC % MONEY
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10.0 AS MONEY) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- Unary minus (-) operator tests
+SELECT 'Unary Minus (-) Operator Tests' AS test_description;
+GO
+~~START~~
+varchar
+Unary Minus (-) Operator Tests
+~~END~~
+
+
+-- Unary Minus NUMERIC
+SELECT -CAST(123.45 AS NUMERIC(5,2)) AS result;
+GO
+~~START~~
+numeric
+-123.45
+~~END~~
+
+
+-- Unary Minus DECIMAL
+SELECT -CAST(123.45 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+-123.45
+~~END~~
+
+
+-- Unary Minus Maximum Negative NUMERIC
+SELECT -CAST(-9999999999999999999999999999999999999 AS NUMERIC(38,0)) AS result;
+GO
+~~START~~
+numeric
+9999999999999999999999999999999999999
+~~END~~
+
+
+-- Complex arithmetic expressions
+SELECT 'Complex Arithmetic Expressions' AS test_description;
+GO
+~~START~~
+varchar
+Complex Arithmetic Expressions
+~~END~~
+
+
+-- Complex Expression 1: NUMERIC + (NUMERIC * INT)
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS NUMERIC(5,2)) * CAST(2 AS INT) AS result;
+GO
+~~START~~
+numeric
+1481.25
+~~END~~
+
+
+-- Complex Expression 2: (NUMERIC + NUMERIC) * INT
+SELECT (CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS NUMERIC(5,2))) * CAST(2 AS INT) AS result;
+GO
+~~START~~
+numeric
+1604.70
+~~END~~
+
+
+-- Complex Expression 3: NUMERIC + (NUMERIC / INT) - INT
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS NUMERIC(5,2)) / CAST(2 AS INT) - CAST(50 AS INT) AS result;
+GO
+~~START~~
+numeric
+412.900000
+~~END~~
+
+
+-- Complex Expression 4: (NUMERIC * NUMERIC) / (INT + INT)
+SELECT CAST(123.45 AS NUMERIC(5,2)) * CAST(678.90 AS NUMERIC(5,2)) / (CAST(2 AS INT) + CAST(3 AS INT)) AS result;
+GO
+~~START~~
+numeric
+16762.0410000000000000
+~~END~~
+
+
+-- Complex Expression 5: (NUMERIC % INT) + (NUMERIC * FLOAT)
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10 AS INT) + CAST(678.90 AS NUMERIC(5,2)) * CAST(0.5 AS FLOAT) AS result;
+GO
+~~START~~
+float
+342.9
+~~END~~
+
+
+-- Mixed NUMERIC and DECIMAL operations
+SELECT 'Mixed NUMERIC and DECIMAL Operations' AS test_description;
+GO
+~~START~~
+varchar
+Mixed NUMERIC and DECIMAL Operations
+~~END~~
+
+
+-- NUMERIC + DECIMAL
+SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+802.35
+~~END~~
+
+
+-- NUMERIC - DECIMAL
+SELECT CAST(678.90 AS NUMERIC(5,2)) - CAST(123.45 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+555.45
+~~END~~
+
+
+-- NUMERIC * DECIMAL
+SELECT CAST(12.34 AS NUMERIC(4,2)) * CAST(56.78 AS DECIMAL(4,2)) AS result;
+GO
+~~START~~
+numeric
+700.6652
+~~END~~
+
+
+-- NUMERIC / DECIMAL
+SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(2.50 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+49.38000000
+~~END~~
+
+
+-- NUMERIC % DECIMAL
+SELECT CAST(123.45 AS NUMERIC(5,2)) % CAST(10.00 AS DECIMAL(5,2)) AS result;
+GO
+~~START~~
+numeric
+3.45
+~~END~~
+
+
+-- Operations with extreme values
+SELECT 'Operations with Extreme Values' AS test_description;
+GO
+~~START~~
+varchar
+Operations with Extreme Values
+~~END~~
+
+
+-- Smallest Positive NUMERIC + Smallest Positive NUMERIC
+SELECT CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) + 
+       CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
+GO
+~~START~~
+numeric
+2E-37
+~~END~~
+
+
+-- Largest NUMERIC - Smallest Positive NUMERIC
+SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) - 
+       CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 0)~~
+
+Remote server might have crashed.
+Error: 0
+SQL State: 08S01
+Error message: The TDS protocol stream is not valid.
