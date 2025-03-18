@@ -11,15 +11,15 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 DO
 $body$
 BEGIN
-	IF NOT EXISTS (
-		SELECT  *
-		  FROM pg_type 
-		WHERE typname = 'nvarchar_json')
-	THEN
-		SET enable_domain_typmod = TRUE;
+    IF NOT EXISTS (
+        SELECT  *
+            FROM pg_type 
+        WHERE typname = 'nvarchar_json')
+    THEN
+        SET enable_domain_typmod = TRUE;
         CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
         RESET enable_domain_typmod;
-	END IF;
+    END IF;
 END
 $body$;
 
