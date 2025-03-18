@@ -1716,10 +1716,10 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 	bool			is_null;
 
 	if (!creating_extension)
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
-					"revoke_create_privilege_from_guest_user()")));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"revoke_create_privilege_from_guest_user()")));
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
