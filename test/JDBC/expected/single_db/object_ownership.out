@@ -508,13 +508,9 @@ ORDER BY r2.rolname, c.relname;
 go
 ~~START~~
 char#!#char#!#char
-object_ownership_db_db_owner                                     #!#sysdatabases                                                     #!#object_ownership_db_db_owner                                     
-object_ownership_db_dbo                                          #!#sq                                                               #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#t                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#v                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_guest                                        #!#sq                                                               #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#t                                                                #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#v                                                                #!#object_ownership_db_guest                                        
+dbo                                                              #!#sq                                                               #!#dbo                                                              
+dbo                                                              #!#t                                                                #!#dbo                                                              
+dbo                                                              #!#v                                                                #!#dbo                                                              
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_0                     #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_1                     #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_2                     #!#object_ownership_db_object_ownership_r1                          
@@ -557,10 +553,8 @@ ORDER BY r2.rolname, p.proname;
 go
 ~~START~~
 char#!#char#!#char
-object_ownership_db_dbo                                          #!#f                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#p                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_guest                                        #!#f                                                                #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#p                                                                #!#object_ownership_db_guest                                        
+dbo                                                              #!#f                                                                #!#dbo                                                              
+dbo                                                              #!#p                                                                #!#dbo                                                              
 object_ownership_db_object_ownership_r1                          #!#f                                                                #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#f1                                                               #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#f2                                                               #!#object_ownership_db_object_ownership_r1                          
@@ -594,16 +588,10 @@ ORDER BY r2.rolname, t.typname;
 go
 ~~START~~
 char#!#char#!#char
-object_ownership_db_db_owner                                     #!#_sysdatabases                                                    #!#object_ownership_db_db_owner                                     
-object_ownership_db_db_owner                                     #!#sysdatabases                                                     #!#object_ownership_db_db_owner                                     
-object_ownership_db_dbo                                          #!#_t                                                               #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#_v                                                               #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#t                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_dbo                                          #!#v                                                                #!#object_ownership_db_dbo                                          
-object_ownership_db_guest                                        #!#_t                                                               #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#_v                                                               #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#t                                                                #!#object_ownership_db_guest                                        
-object_ownership_db_guest                                        #!#v                                                                #!#object_ownership_db_guest                                        
+dbo                                                              #!#_t                                                               #!#dbo                                                              
+dbo                                                              #!#_v                                                               #!#dbo                                                              
+dbo                                                              #!#t                                                                #!#dbo                                                              
+dbo                                                              #!#v                                                                #!#dbo                                                              
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_0                     #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_1                     #!#object_ownership_db_object_ownership_r1                          
 object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_2                     #!#object_ownership_db_object_ownership_r1                          

@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- tsql
 /** CREATE DATABASE **/
 create database object_ownership_db;
@@ -331,7 +332,7 @@ FROM pg_class c
 JOIN pg_namespace n ON n.oid = c.relnamespace
 JOIN pg_roles r1 ON n.nspowner = r1.oid
 JOIN pg_roles r2 ON c.relowner = r2.oid
-WHERE n.nspname like 'object_ownership_db_object_ownership_%'
+WHERE n.nspname like 'object_ownership_%'
 ORDER BY r2.rolname, c.relname;
 go
 
@@ -340,7 +341,7 @@ FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 JOIN pg_roles r1 ON n.nspowner = r1.oid
 JOIN pg_roles r2 ON p.proowner = r2.oid
-WHERE n.nspname LIKE 'object_ownership_db_object_ownership_%'
+WHERE n.nspname LIKE 'object_ownership_%'
 ORDER BY r2.rolname, p.proname;
 go
 
@@ -349,7 +350,7 @@ FROM pg_type t
 JOIN pg_namespace n ON n.oid = t.typnamespace
 JOIN pg_roles r1 ON n.nspowner = r1.oid
 JOIN pg_roles r2 ON t.typowner = r2.oid
-WHERE n.nspname LIKE 'object_ownership_db_object_ownership_%'
+WHERE n.nspname LIKE 'object_ownership_%'
 ORDER BY r2.rolname, t.typname;
 go
 
