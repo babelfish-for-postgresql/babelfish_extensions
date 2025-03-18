@@ -46,6 +46,9 @@ GO
 INSERT INTO MoneyTestTable1 (SmallMoneyVal, Description) VALUES (-214748.3649, 'Underflow SMALLMONEY test'); -- Below minimum
 GO
 
+DROP TABLE MoneyTestTable1
+GO
+
 -- Try Overflow with Arithematic Operators
 -- +
 SELECT CAST(922337203685477.5807 AS MONEY) + CAST(1 AS MONEY);
@@ -2388,11 +2391,11 @@ GO
 SELECT ID, MoneyVal, 'MONEY' as Type
 FROM MoneyComparisonTest
 WHERE MoneyVal > 0
-UNION
+UNION ALL
 SELECT ID, SmallMoneyVal, 'SMALLMONEY' as Type
 FROM MoneyComparisonTest
 WHERE SmallMoneyVal > 0
-ORDER BY MoneyVal;
+ORDER BY MoneyVal, ID, Type;
 GO
 
 -- Intersection test
@@ -2509,7 +2512,8 @@ GROUP BY
         WHEN MoneyVal BETWEEN -1000 AND 1000 THEN 'Normal Range'
         WHEN MoneyVal > 1000 THEN 'High Range'
         ELSE 'Low Range'
-    END;
+    END
+ORDER BY ValueRange;
 GO
 
 -- String formatting and comparison tests
@@ -3753,24 +3757,2325 @@ GO
 ---- 7. Aggregate Function Tests
 ------------------------------------------------------------------------
 
+-- Create test table with various MONEY values
+CREATE TABLE money_aggregate_test (
+    id INT IDENTITY(1,1),
+    money_small MONEY,
+    money_large MONEY,
+    money_negative MONEY,
+    money_zero MONEY,
+    money_null MONEY,
+    smallmoney_small SMALLMONEY,
+    smallmoney_large SMALLMONEY,
+    smallmoney_negative SMALLMONEY,
+    smallmoney_zero SMALLMONEY,
+    smallmoney_null SMALLMONEY,
+    category VARCHAR(10)
+);
 
+-- Insert test data
+INSERT INTO money_aggregate_test (
+    money_small, money_large, money_negative, money_zero, money_null,
+    smallmoney_small, smallmoney_large, smallmoney_negative, smallmoney_zero, smallmoney_null,
+    category
+)
+VALUES
+    (123.45, 922337203685477.00, -123.45, 0.00, NULL,
+     123.45, 214748.3647, -123.45, 0.00, NULL,
+     'A'),
+    (234.56, 922337203685400.00, -234.56, 0.00, NULL,
+     234.56, 214748.3640, -234.56, 0.00, NULL,
+     'A'),
+    (345.67, 922337203685300.00, -345.67, 0.00, NULL,
+     345.67, 214748.3630, -345.67, 0.00, NULL,
+     'B'),
+    (456.78, 922337203685200.00, -456.78, 0.00, NULL,
+     456.78, 214748.3620, -456.78, 0.00, NULL,
+     'B'),
+    (567.89, 922337203685100.00, -567.89, 0.00, NULL,
+     567.89, 214748.3610, -567.89, 0.00, NULL,
+     'C'),
+    (NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL,
+     'C');
 
-
-
-
-
--- CLEANUP
-DROP TABLE MoneyTestTable1
+-- SUM function tests
+SELECT 'SUM Function Tests' AS test_description;
 GO
 
--- FK-PK testing
+-- SUM with MONEY types
+SELECT 
+    SUM(money_small) AS sum_money_small,
+    SUM(money_large) AS sum_money_large,
+    SUM(money_negative) AS sum_money_negative,
+    SUM(money_zero) AS sum_money_zero,
+    SUM(money_null) AS sum_money_null
+FROM money_aggregate_test;
+GO
 
--- delete pkey which is referenced by fkey
+-- SUM with SMALLMONEY types
+SELECT 
+    SUM(smallmoney_small) AS sum_smallmoney_small,
+    SUM(smallmoney_large) AS sum_smallmoney_large,
+    SUM(smallmoney_negative) AS sum_smallmoney_negative,
+    SUM(smallmoney_zero) AS sum_smallmoney_zero,
+    SUM(smallmoney_null) AS sum_smallmoney_null
+FROM money_aggregate_test;
+GO
 
--- partitioned table testing on money/smallmoney
+-- SUM with GROUP BY
+SELECT 
+    category,
+    SUM(money_small) AS sum_money_small,
+    SUM(smallmoney_small) AS sum_smallmoney_small
+FROM money_aggregate_test
+GROUP BY category;
+GO
 
--- money/smallmoney as default, check constraints
+-- AVG function tests
+SELECT 'AVG Function Tests' AS test_description;
+GO
 
--- ability to use money/smallmoney as part of table variable
+-- AVG with MONEY types
+SELECT 
+    AVG(money_small) AS avg_money_small,
+    AVG(money_large) AS avg_money_large,
+    AVG(money_negative) AS avg_money_negative,
+    AVG(money_zero) AS avg_money_zero,
+    AVG(money_null) AS avg_money_null
+FROM money_aggregate_test;
+GO
 
--- select into testing
+-- AVG with SMALLMONEY types
+SELECT 
+    AVG(smallmoney_small) AS avg_smallmoney_small,
+    AVG(smallmoney_large) AS avg_smallmoney_large,
+    AVG(smallmoney_negative) AS avg_smallmoney_negative,
+    AVG(smallmoney_zero) AS avg_smallmoney_zero,
+    AVG(smallmoney_null) AS avg_smallmoney_null
+FROM money_aggregate_test;
+GO
+
+
+-- MIN function tests
+SELECT 'MIN Function Tests' AS test_description;
+GO
+
+-- MIN with MONEY types
+SELECT 
+    MIN(money_small) AS min_money_small,
+    MIN(money_large) AS min_money_large,
+    MIN(money_negative) AS min_money_negative,
+    MIN(money_zero) AS min_money_zero,
+    MIN(money_null) AS min_money_null
+FROM money_aggregate_test;
+GO
+
+-- MIN with SMALLMONEY types
+SELECT 
+    MIN(smallmoney_small) AS min_smallmoney_small,
+    MIN(smallmoney_large) AS min_smallmoney_large,
+    MIN(smallmoney_negative) AS min_smallmoney_negative,
+    MIN(smallmoney_zero) AS min_smallmoney_zero,
+    MIN(smallmoney_null) AS min_smallmoney_null
+FROM money_aggregate_test;
+GO
+
+-- MAX function tests
+SELECT 'MAX Function Tests' AS test_description;
+GO
+
+-- MAX with MONEY types
+SELECT 
+    MAX(money_small) AS max_money_small,
+    MAX(money_large) AS max_money_large,
+    MAX(money_negative) AS max_money_negative,
+    MAX(money_zero) AS max_money_zero,
+    MAX(money_null) AS max_money_null
+FROM money_aggregate_test;
+GO
+
+-- MAX with SMALLMONEY types
+SELECT 
+    MAX(smallmoney_small) AS max_smallmoney_small,
+    MAX(smallmoney_large) AS max_smallmoney_large,
+    MAX(smallmoney_negative) AS max_smallmoney_negative,
+    MAX(smallmoney_zero) AS max_smallmoney_zero,
+    MAX(smallmoney_null) AS max_smallmoney_null
+FROM money_aggregate_test;
+GO
+
+-- COUNT function tests
+SELECT 'COUNT Function Tests' AS test_description;
+GO
+
+-- COUNT with MONEY types
+SELECT 
+    COUNT(money_small) AS count_money_small,
+    COUNT(money_large) AS count_money_large,
+    COUNT(money_negative) AS count_money_negative,
+    COUNT(money_zero) AS count_money_zero,
+    COUNT(money_null) AS count_money_null,
+    COUNT(*) AS count_all_rows
+FROM money_aggregate_test;
+GO
+
+-- COUNT with SMALLMONEY types
+SELECT 
+    COUNT(smallmoney_small) AS count_smallmoney_small,
+    COUNT(smallmoney_large) AS count_smallmoney_large,
+    COUNT(smallmoney_negative) AS count_smallmoney_negative,
+    COUNT(smallmoney_zero) AS count_smallmoney_zero,
+    COUNT(smallmoney_null) AS count_smallmoney_null,
+    COUNT(*) AS count_all_rows
+FROM money_aggregate_test;
+GO
+
+
+-- COUNT DISTINCT tests
+SELECT 
+    COUNT(DISTINCT money_small) AS count_distinct_money_small,
+    COUNT(DISTINCT money_zero) AS count_distinct_money_zero,
+    COUNT(DISTINCT smallmoney_small) AS count_distinct_smallmoney_small,
+    COUNT(DISTINCT smallmoney_zero) AS count_distinct_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- STDEV and STDEVP function tests
+SELECT 'STDEV and STDEVP Function Tests' AS test_description;
+GO
+
+-- STDEV with MONEY types
+SELECT 
+    STDEV(money_small) AS stdev_money_small,
+    STDEV(money_large) AS stdev_money_large,
+    STDEV(money_negative) AS stdev_money_negative,
+    STDEV(money_zero) AS stdev_money_zero
+FROM money_aggregate_test;
+GO
+
+-- STDEV with SMALLMONEY types
+SELECT 
+    STDEV(smallmoney_small) AS stdev_smallmoney_small,
+    STDEV(smallmoney_large) AS stdev_smallmoney_large,
+    STDEV(smallmoney_negative) AS stdev_smallmoney_negative,
+    STDEV(smallmoney_zero) AS stdev_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- STDEVP with MONEY types
+SELECT 
+    STDEVP(money_small) AS stdevp_money_small,
+    STDEVP(money_large) AS stdevp_money_large,
+    STDEVP(money_negative) AS stdevp_money_negative,
+    STDEVP(money_zero) AS stdevp_money_zero
+FROM money_aggregate_test;
+GO
+
+-- STDEVP with SMALLMONEY types
+SELECT 
+    STDEVP(smallmoney_small) AS stdevp_smallmoney_small,
+    STDEVP(smallmoney_large) AS stdevp_smallmoney_large,
+    STDEVP(smallmoney_negative) AS stdevp_smallmoney_negative,
+    STDEVP(smallmoney_zero) AS stdevp_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+
+-- VAR and VARP function tests
+SELECT 'VAR and VARP Function Tests' AS test_description;
+GO
+
+-- VAR with MONEY types
+SELECT 
+    VAR(money_small) AS var_money_small,
+    VAR(money_large) AS var_money_large,
+    VAR(money_negative) AS var_money_negative,
+    VAR(money_zero) AS var_money_zero
+FROM money_aggregate_test;
+GO
+
+-- VAR with SMALLMONEY types
+SELECT 
+    VAR(smallmoney_small) AS var_smallmoney_small,
+    VAR(smallmoney_large) AS var_smallmoney_large,
+    VAR(smallmoney_negative) AS var_smallmoney_negative,
+    VAR(smallmoney_zero) AS var_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- VARP with MONEY types
+SELECT 
+    VARP(money_small) AS varp_money_small,
+    VARP(money_large) AS varp_money_large,
+    VARP(money_negative) AS varp_money_negative,
+    VARP(money_zero) AS varp_money_zero
+FROM money_aggregate_test;
+GO
+
+-- VARP with SMALLMONEY types
+SELECT 
+    VARP(smallmoney_small) AS varp_smallmoney_small,
+    VARP(smallmoney_large) AS varp_smallmoney_large,
+    VARP(smallmoney_negative) AS varp_smallmoney_negative,
+    VARP(smallmoney_zero) AS varp_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- STRING_AGG function tests
+SELECT 'STRING_AGG Function Tests' AS test_description;
+GO
+
+-- STRING_AGG with MONEY types
+SELECT 
+    STRING_AGG(CAST(money_small AS VARCHAR(50)), ', ') AS string_agg_money_small,
+    STRING_AGG(CAST(money_large AS VARCHAR(50)), ', ') AS string_agg_money_large
+FROM money_aggregate_test
+WHERE money_small IS NOT NULL;
+GO
+
+-- STRING_AGG with SMALLMONEY types
+SELECT 
+    STRING_AGG(CAST(smallmoney_small AS VARCHAR(50)), ', ') AS string_agg_smallmoney_small,
+    STRING_AGG(CAST(smallmoney_large AS VARCHAR(50)), ', ') AS string_agg_smallmoney_large
+FROM money_aggregate_test
+WHERE smallmoney_small IS NOT NULL;
+GO
+
+-- STRING_AGG with GROUP BY
+SELECT 
+    category,
+    STRING_AGG(CAST(money_small AS VARCHAR(50)), ', ') AS string_agg_money,
+    STRING_AGG(CAST(smallmoney_small AS VARCHAR(50)), ', ') AS string_agg_smallmoney
+FROM money_aggregate_test
+WHERE money_small IS NOT NULL
+GROUP BY category;
+GO
+
+-- STRING_AGG with ORDER BY
+SELECT 
+    STRING_AGG(CAST(money_small AS VARCHAR(50)), ', ') 
+        WITHIN GROUP (ORDER BY money_small) AS ordered_string_agg_money,
+    STRING_AGG(CAST(smallmoney_small AS VARCHAR(50)), ', ') 
+        WITHIN GROUP (ORDER BY smallmoney_small) AS ordered_string_agg_smallmoney
+FROM money_aggregate_test
+WHERE money_small IS NOT NULL;
+GO
+
+SELECT 'Aggregate Functions with DISTINCT' AS test_description;
+GO
+
+-- SUM with DISTINCT
+SELECT 
+    SUM(DISTINCT money_small) AS sum_distinct_money_small,
+    SUM(DISTINCT money_zero) AS sum_distinct_money_zero,
+    SUM(DISTINCT smallmoney_small) AS sum_distinct_smallmoney_small,
+    SUM(DISTINCT smallmoney_zero) AS sum_distinct_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- AVG with DISTINCT
+SELECT 
+    AVG(DISTINCT money_small) AS avg_distinct_money_small,
+    AVG(DISTINCT money_zero) AS avg_distinct_money_zero,
+    AVG(DISTINCT smallmoney_small) AS avg_distinct_smallmoney_small,
+    AVG(DISTINCT smallmoney_zero) AS avg_distinct_smallmoney_zero
+FROM money_aggregate_test;
+GO
+
+-- MIN with DISTINCT
+SELECT 
+    MIN(DISTINCT money_small) AS min_distinct_money_small,
+    MIN(DISTINCT smallmoney_small) AS min_distinct_smallmoney_small
+FROM money_aggregate_test;
+GO
+
+-- MAX with DISTINCT
+SELECT 
+    MAX(DISTINCT money_small) AS max_distinct_money_small,
+    MAX(DISTINCT smallmoney_small) AS max_distinct_smallmoney_small
+FROM money_aggregate_test;
+GO
+
+SELECT 'Aggregate Functions with Filtering' AS test_description;
+GO
+
+-- SUM with WHERE clause
+SELECT 
+    SUM(money_small) AS sum_money_small,
+    SUM(smallmoney_small) AS sum_smallmoney_small,
+FROM money_aggregate_test
+WHERE money_small > 300.00;
+GO
+
+-- AVG with WHERE clause
+SELECT 
+    AVG(money_small) AS avg_money_small,
+    AVG(smallmoney_small) AS avg_smallmoney_small,
+FROM money_aggregate_test
+WHERE money_small > 300.00;
+GO
+
+-- MIN/MAX with WHERE clause
+SELECT 
+    MIN(money_small) AS min_money_small,
+    MIN(smallmoney_small) AS min_smallmoney_small,
+    MAX(money_small) AS max_money_small,
+    MAX(smallmoney_small) AS max_smallmoney_small
+FROM money_aggregate_test
+WHERE category = 'A';
+GO
+
+-- COUNT with WHERE clause
+SELECT 
+    COUNT(money_small) AS count_money_small,
+    COUNT(smallmoney_small) AS count_smallmoney_small,
+    COUNT(*) AS count_all
+FROM money_aggregate_test
+WHERE money_small BETWEEN 200.00 AND 400.00;
+GO
+
+-- Aggregate with HAVING clause
+SELECT 
+    category,
+    SUM(money_small) AS sum_money_small,
+    AVG(money_small) AS avg_money_small
+FROM money_aggregate_test
+GROUP BY category
+HAVING SUM(money_small) > 500.00;
+GO
+
+SELECT 'Aggregate Functions with Expressions' AS test_description;
+GO
+
+-- SUM with expressions
+SELECT 
+    SUM(money_small * 2) AS sum_double_money,
+    SUM(money_small + smallmoney_small) AS sum_money_plus_smallmoney,
+    SUM(money_small - money_negative) AS sum_money_minus_negative,
+    SUM(CASE WHEN category = 'A' THEN money_small ELSE 0 END) AS sum_category_a,
+    SUM(ABS(money_negative)) AS sum_absolute_negative
+FROM money_aggregate_test
+WHERE money_small IS NOT NULL;
+GO
+
+-- AVG with expressions
+SELECT 
+    AVG(money_small * 2) AS avg_double_money,
+    AVG(money_small + smallmoney_small) AS avg_money_plus_smallmoney,
+    AVG(CASE WHEN money_small > 300 THEN money_small ELSE NULL END) AS avg_conditional,
+    AVG(CAST(money_small AS FLOAT) / 100.0) AS avg_percentage
+FROM money_aggregate_test
+WHERE money_small IS NOT NULL;
+GO
+
+-- Complex calculations
+SELECT 
+    category,
+    SUM(money_small) AS total_amount,
+    AVG(money_small) AS average_amount,
+    SUM(money_small) / COUNT(*) AS computed_average,
+    MAX(money_small) - MIN(money_small) AS amount_range,
+    SUM(CASE WHEN money_small > AVG(money_small) OVER() 
+             THEN money_small ELSE 0 END) AS sum_above_average
+FROM money_aggregate_test
+GROUP BY category;
+GO
+
+-- Create table for extreme value tests
+CREATE TABLE money_extreme_test (
+    id INT IDENTITY(1,1),
+    max_money MONEY,
+    min_money MONEY,
+    max_smallmoney SMALLMONEY,
+    min_smallmoney SMALLMONEY
+);
+GO
+
+-- Insert extreme values
+INSERT INTO money_extreme_test (
+    max_money, min_money, 
+    max_smallmoney, min_smallmoney
+)
+VALUES 
+    (922337203685477.5807, -922337203685477.5808,
+     214748.3647, -214748.3648),
+    (922337203685477.5806, -922337203685477.5807,
+     214748.3646, -214748.3647),
+    (922337203685477.5805, -922337203685477.5806,
+     214748.3645, -214748.3646);
+
+-- Test aggregates with extreme values
+SELECT 
+    SUM(max_money) AS sum_max_money,
+    SUM(min_money) AS sum_min_money,
+    SUM(max_smallmoney) AS sum_max_smallmoney,
+    SUM(min_smallmoney) AS sum_min_smallmoney,
+    AVG(max_money) AS avg_max_money,
+    AVG(min_money) AS avg_min_money,
+    AVG(max_smallmoney) AS avg_max_smallmoney,
+    AVG(min_smallmoney) AS avg_min_smallmoney
+FROM money_extreme_test;
+GO
+
+-- Test statistical functions with extreme values
+SELECT 
+    STDEV(max_money) AS stdev_max_money,
+    STDEV(min_money) AS stdev_min_money,
+    VAR(max_money) AS var_max_money,
+    VAR(min_money) AS var_min_money,
+    STDEVP(max_smallmoney) AS stdevp_max_smallmoney,
+    STDEVP(min_smallmoney) AS stdevp_min_smallmoney,
+    VARP(max_smallmoney) AS varp_max_smallmoney,
+    VARP(min_smallmoney) AS varp_min_smallmoney
+FROM money_extreme_test;
+GO
+
+SELECT 'Error Condition and Edge Case Tests' AS test_description;
+GO
+
+-- Create table for error testing
+CREATE TABLE money_error_test (
+    id INT IDENTITY(1,1),
+    test_case VARCHAR(100),
+    money_val MONEY,
+    smallmoney_val SMALLMONEY
+);
+GO
+
+-- Insert test cases for overflow conditions
+INSERT INTO money_error_test (test_case) VALUES 
+('Overflow Test - Addition'),
+('Overflow Test - Multiplication'),
+('Overflow Test - Type Conversion'),
+('Division by Zero Test'),
+('NULL Aggregation Test');
+GO
+
+-- Test overflow conditions with TRY_CONVERT
+BEGIN TRY
+    -- Attempt to overflow MONEY
+    UPDATE money_error_test
+    SET money_val = TRY_CONVERT(MONEY, 922337203685477.5808)
+    WHERE test_case = 'Overflow Test - Type Conversion';
+
+    -- Attempt to overflow SMALLMONEY
+    UPDATE money_error_test
+    SET smallmoney_val = TRY_CONVERT(SMALLMONEY, 214748.3648)
+    WHERE test_case = 'Overflow Test - Type Conversion';
+END TRY
+BEGIN CATCH
+    INSERT INTO money_error_test (test_case, money_val)
+    VALUES ('Error: ' + ERROR_MESSAGE(), NULL);
+END CATCH;
+GO
+
+-- Test arithmetic overflow conditions
+BEGIN TRY
+    -- Test MONEY overflow through addition
+    WITH MaxValues AS (
+        SELECT CAST(922337203685477.5807 AS MONEY) AS max_money
+    )
+    SELECT SUM(max_money) 
+    FROM MaxValues CROSS JOIN (SELECT TOP 2 1 AS n FROM sys.objects) t;
+END TRY
+BEGIN CATCH
+    INSERT INTO money_error_test (test_case, money_val)
+    VALUES ('Error in Addition: ' + ERROR_MESSAGE(), NULL);
+END CATCH;
+GO
+
+-- Test multiplication overflow
+BEGIN TRY
+    WITH LargeValues AS (
+        SELECT CAST(922337203685477.5807 AS MONEY) AS large_money
+    )
+    SELECT large_money * 2
+    FROM LargeValues;
+END TRY
+BEGIN CATCH
+    INSERT INTO money_error_test (test_case, money_val)
+    VALUES ('Error in Multiplication: ' + ERROR_MESSAGE(), NULL);
+END CATCH;
+GO
+
+-- Edge case tests with aggregate functions
+SELECT 'Edge Case Aggregate Tests' AS test_description;
+GO
+
+-- Test aggregates with single row
+SELECT
+    SUM(money_val) AS single_sum,
+    AVG(money_val) AS single_avg,
+    MIN(money_val) AS single_min,
+    MAX(money_val) AS single_max,
+    COUNT(money_val) AS single_count
+FROM money_error_test
+WHERE id = 1;
+GO
+
+-- Test aggregates with all NULL values
+SELECT
+    SUM(money_val) AS null_sum,
+    AVG(money_val) AS null_avg,
+    MIN(money_val) AS null_min,
+    MAX(money_val) AS null_max,
+    COUNT(money_val) AS null_count,
+    COUNT(*) AS total_rows
+FROM money_error_test
+WHERE money_val IS NULL;
+GO
+
+-- Test aggregates with mixed NULL and non-NULL values
+SELECT
+    COUNT(*) AS total_count,
+    COUNT(money_val) AS non_null_count,
+    COUNT(CASE WHEN money_val IS NULL THEN 1 END) AS null_count,
+    ISNULL(SUM(money_val), 0) AS sum_with_default,
+    COALESCE(AVG(money_val), 0) AS avg_with_default
+FROM money_error_test;
+GO
+
+-- Test boundary conditions
+CREATE TABLE money_boundary_test (
+    id INT IDENTITY(1,1),
+    test_case VARCHAR(100),
+    money_val MONEY,
+    smallmoney_val SMALLMONEY
+);
+GO
+
+-- Insert boundary test cases
+INSERT INTO money_boundary_test (test_case, money_val, smallmoney_val)
+VALUES
+('Maximum MONEY', 922337203685477.5807, 214748.3647),
+('Minimum MONEY', -922337203685477.5808, -214748.3648),
+('Near Maximum MONEY', 922337203685477.5806, 214748.3646),
+('Near Minimum MONEY', -922337203685477.5807, -214748.3647),
+('Zero', 0.0000, 0.0000),
+('Small Positive', 0.0001, 0.0001),
+('Small Negative', -0.0001, -0.0001);
+
+-- Test aggregates with boundary values
+SELECT
+    SUM(money_val) AS boundary_sum_money,
+    SUM(smallmoney_val) AS boundary_sum_smallmoney,
+    AVG(money_val) AS boundary_avg_money,
+    AVG(smallmoney_val) AS boundary_avg_smallmoney,
+    MIN(money_val) AS boundary_min_money,
+    MIN(smallmoney_val) AS boundary_min_smallmoney,
+    MAX(money_val) AS boundary_max_money,
+    MAX(smallmoney_val) AS boundary_max_smallmoney
+FROM money_boundary_test;
+GO
+
+-- Test precision handling
+SELECT
+    AVG(CAST(money_val AS FLOAT)) AS float_avg,
+    CAST(AVG(money_val) AS MONEY) AS money_avg,
+    AVG(CAST(smallmoney_val AS FLOAT)) AS float_avg_small,
+    CAST(AVG(smallmoney_val) AS SMALLMONEY) AS smallmoney_avg
+FROM money_boundary_test;
+GO
+
+-- Cleanup operations
+DROP TABLE IF EXISTS money_aggregate_test;
+GO
+DROP TABLE IF EXISTS money_extreme_test;
+GO
+DROP TABLE IF EXISTS money_error_test;
+GO
+DROP TABLE IF EXISTS money_boundary_test;
+GO
+
+
+------------------------------------------------------------------------
+---- 8. User Defined Type Tests for Money Types
+------------------------------------------------------------------------
+
+-- Create user-defined types based on MONEY and SMALLMONEY
+CREATE TYPE StandardMoneyUDT FROM MONEY;
+GO
+
+CREATE TYPE LimitedMoneyUDT FROM SMALLMONEY;
+GO
+
+CREATE TYPE BusinessMoneyUDT FROM MONEY;
+GO
+
+CREATE TYPE RetailMoneyUDT FROM SMALLMONEY;
+GO
+
+CREATE TYPE PriceUDT FROM MONEY;
+GO
+
+CREATE TYPE DiscountUDT FROM SMALLMONEY;
+GO
+
+CREATE TYPE CostUDT FROM MONEY;
+GO
+
+CREATE TYPE TaxUDT FROM SMALLMONEY;
+GO
+
+
+-- Basic UDT Tests
+CREATE TABLE udt_money_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    standard_amount StandardMoneyUDT,
+    limited_amount LimitedMoneyUDT,
+    business_amount BusinessMoneyUDT,
+    retail_amount RetailMoneyUDT
+);
+GO
+
+-- Test NULL values
+INSERT INTO udt_money_test (standard_amount, limited_amount, business_amount, retail_amount)
+VALUES (NULL, NULL, NULL, NULL);
+GO
+
+-- Validate NULL insertions
+SELECT CASE 
+    WHEN standard_amount IS NULL AND limited_amount IS NULL 
+    AND business_amount IS NULL AND retail_amount IS NULL THEN 'NULL test passed'
+    ELSE 'NULL test failed'
+END AS null_test_result
+FROM udt_money_test WHERE id = 1;
+GO
+
+-- Test zero values
+INSERT INTO udt_money_test (standard_amount, limited_amount, business_amount, retail_amount)
+VALUES (0.00, 0.00, 0.00, 0.00);
+GO
+
+-- Validate zero insertions
+SELECT CASE 
+    WHEN standard_amount = 0.00 AND limited_amount = 0.00 
+    AND business_amount = 0.00 AND retail_amount = 0.00 THEN 'Zero test passed'
+    ELSE 'Zero test failed'
+END AS zero_test_result
+FROM udt_money_test WHERE id = 2;
+GO
+
+-- Test positive values within range
+INSERT INTO udt_money_test (standard_amount, limited_amount, business_amount, retail_amount)
+VALUES (123456.7890, 123.4567, 987654.3210, 214.7483);
+GO
+
+-- Validate positive value insertions
+SELECT CASE 
+    WHEN standard_amount = 123456.7890 AND limited_amount = 123.4567 
+    AND business_amount = 987654.3210 AND retail_amount = 214.7483 THEN 'Positive value test passed'
+    ELSE 'Positive value test failed'
+END AS positive_test_result
+FROM udt_money_test WHERE id = 3;
+GO
+
+-- Test negative values
+INSERT INTO udt_money_test (standard_amount, limited_amount, business_amount, retail_amount)
+VALUES (-123456.7890, -123.4567, -987654.3210, -214.7483);
+GO
+
+-- Validate negative value insertions
+SELECT CASE 
+    WHEN standard_amount = -123456.7890 AND limited_amount = -123.4567 
+    AND business_amount = -987654.3210 AND retail_amount = -214.7483 THEN 'Negative value test passed'
+    ELSE 'Negative value test failed'
+END AS negative_test_result
+FROM udt_money_test WHERE id = 4;
+GO
+
+-- Complex UDT Scenarios
+CREATE TABLE udt_complex_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    price PriceUDT,
+    discount DiscountUDT,
+    cost CostUDT,
+    tax TaxUDT,
+    description VARCHAR(100)
+);
+GO
+
+-- Test maximum values
+INSERT INTO udt_complex_test (price, discount, cost, tax, description)
+VALUES 
+    (922337203685477.5807, 214748.3647, 922337203685477.5807, 214748.3647, 'Maximum values test');
+GO
+
+-- Test minimum values
+INSERT INTO udt_complex_test (price, discount, cost, tax, description)
+VALUES 
+    (-922337203685477.5808, -214748.3648, -922337203685477.5808, -214748.3648, 'Minimum values test');
+GO
+
+-- Validate boundary value tests
+SELECT 
+    CASE 
+        WHEN price = 922337203685477.5807 AND discount = 214748.3647 
+        AND cost = 922337203685477.5807 AND tax = 214748.3647 
+        THEN 'Maximum values test passed'
+        ELSE 'Maximum values test failed'
+    END AS max_value_test_result,
+    CASE 
+        WHEN price = -922337203685477.5808 AND discount = -214748.3648 
+        AND cost = -922337203685477.5808 AND tax = -214748.3648 
+        THEN 'Minimum values test passed'
+        ELSE 'Minimum values test failed'
+    END AS min_value_test_result
+FROM udt_complex_test 
+WHERE description IN ('Maximum values test', 'Minimum values test');
+GO
+
+-- Test precision handling
+INSERT INTO udt_complex_test (price, discount, cost, tax, description)
+VALUES 
+    (1234.5678, 123.4567, 1234.5678, 123.4567, 'Precision test');
+GO
+
+-- Validate precision handling
+SELECT 
+    CASE 
+        WHEN CAST(price AS VARCHAR(20)) = '1234.5678' 
+        AND CAST(discount AS VARCHAR(20)) = '123.4567'
+        AND CAST(cost AS VARCHAR(20)) = '1234.5678'
+        AND CAST(tax AS VARCHAR(20)) = '123.4567' 
+        THEN 'Precision test passed'
+        ELSE 'Precision test failed'
+    END AS precision_test_result
+FROM udt_complex_test 
+WHERE description = 'Precision test';
+GO
+
+-- Test rounding behavior
+INSERT INTO udt_complex_test (price, discount, cost, tax, description)
+VALUES 
+    (1234.56789, 123.45678, 1234.56789, 123.45678, 'Rounding test');
+GO
+
+-- Validate rounding behavior
+SELECT 
+    CASE 
+        WHEN price = 1234.5679 AND discount = 123.4568 
+        AND cost = 1234.5679 AND tax = 123.4568 
+        THEN 'Rounding test passed'
+        ELSE 'Rounding test failed'
+    END AS rounding_test_result
+FROM udt_complex_test 
+WHERE description = 'Rounding test';
+GO
+
+-- UDT Function Tests
+-- Create function to calculate total price with tax
+CREATE FUNCTION calculate_total_price
+(
+    @base_price PriceUDT,
+    @tax_rate TaxUDT
+)
+RETURNS PriceUDT
+AS
+BEGIN
+    RETURN @base_price + (@base_price * (@tax_rate / 100));
+END;
+GO
+
+-- Create function to calculate discounted price
+CREATE FUNCTION calculate_discounted_price
+(
+    @original_price PriceUDT,
+    @discount_amount DiscountUDT
+)
+RETURNS PriceUDT
+AS
+BEGIN
+    RETURN @original_price - @discount_amount;
+END;
+GO
+
+-- Test functions with various scenarios
+DECLARE @test_price PriceUDT = 100.00;
+DECLARE @test_tax TaxUDT = 10.00;
+DECLARE @test_discount DiscountUDT = 20.00;
+
+-- Test total price calculation
+SELECT 
+    CASE 
+        WHEN dbo.calculate_total_price(@test_price, @test_tax) = 110.00 
+        THEN 'Total price calculation test passed'
+        ELSE 'Total price calculation test failed'
+    END AS total_price_test_result;
+GO
+
+-- Test discount calculation
+SELECT 
+    CASE 
+        WHEN dbo.calculate_discounted_price(100.00, 20.00) = 80.00 
+        THEN 'Discount calculation test passed'
+        ELSE 'Discount calculation test failed'
+    END AS discount_test_result;
+GO
+
+-- Test functions with edge cases
+DECLARE @max_price PriceUDT = 922337203685477.5807;
+DECLARE @max_tax TaxUDT = 214748.3647;
+
+-- Test boundary conditions
+BEGIN TRY
+    DECLARE @result PriceUDT = dbo.calculate_total_price(@max_price, @max_tax);
+    PRINT 'Edge case test failed - Should have thrown overflow error';
+END TRY
+BEGIN CATCH
+    PRINT 'Edge case test passed - Overflow error caught as expected';
+END CATCH;
+GO
+
+-- UDT Arithmetic Tests
+CREATE TABLE udt_arithmetic_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    value1 StandardMoneyUDT,
+    value2 LimitedMoneyUDT,
+    business_val BusinessMoneyUDT,
+    retail_val RetailMoneyUDT
+);
+GO
+
+-- Insert test values
+INSERT INTO udt_arithmetic_test (value1, value2, business_val, retail_val) 
+VALUES (1000.00, 100.00, 2000.00, 200.00);
+GO
+
+-- Test basic arithmetic operations
+SELECT 
+    -- Addition tests
+    CASE WHEN value1 + value2 = 1100.00 THEN 'Addition test 1 passed'
+         ELSE 'Addition test 1 failed' END AS addition_test_1,
+    CASE WHEN business_val + retail_val = 2200.00 THEN 'Addition test 2 passed'
+         ELSE 'Addition test 2 failed' END AS addition_test_2,
+
+    -- Subtraction tests
+    CASE WHEN value1 - value2 = 900.00 THEN 'Subtraction test 1 passed'
+         ELSE 'Subtraction test 1 failed' END AS subtraction_test_1,
+    CASE WHEN business_val - retail_val = 1800.00 THEN 'Subtraction test 2 passed'
+         ELSE 'Subtraction test 2 failed' END AS subtraction_test_2,
+
+    -- Multiplication tests
+    CASE WHEN value1 * 2 = 2000.00 THEN 'Multiplication test 1 passed'
+         ELSE 'Multiplication test 1 failed' END AS multiplication_test_1,
+    CASE WHEN value2 * 0.5 = 50.00 THEN 'Multiplication test 2 passed'
+         ELSE 'Multiplication test 2 failed' END AS multiplication_test_2,
+
+    -- Division tests
+    CASE WHEN value1 / 2 = 500.00 THEN 'Division test 1 passed'
+         ELSE 'Division test 1 failed' END AS division_test_1,
+    CASE WHEN business_val / 4 = 500.00 THEN 'Division test 2 passed'
+         ELSE 'Division test 2 failed' END AS division_test_2
+FROM udt_arithmetic_test;
+GO
+
+-- Test arithmetic overflow conditions
+CREATE TABLE udt_arithmetic_overflow_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    result_money StandardMoneyUDT,
+    result_smallmoney LimitedMoneyUDT
+);
+GO
+
+-- Test overflow scenarios
+BEGIN TRY
+    INSERT INTO udt_arithmetic_overflow_test (result_money, result_smallmoney)
+    SELECT 
+        CAST(922337203685477.5807 AS StandardMoneyUDT) + CAST(0.0001 AS StandardMoneyUDT),
+        CAST(214748.3647 AS LimitedMoneyUDT) + CAST(0.0001 AS LimitedMoneyUDT);
+    PRINT 'Overflow test failed - Should have thrown error';
+END TRY
+BEGIN CATCH
+    PRINT 'Overflow test passed - Error caught as expected';
+    PRINT 'Error: ' + ERROR_MESSAGE();
+END CATCH;
+GO
+
+-- UDT Constraint Tests
+CREATE TABLE udt_constraint_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    retail_price RetailMoneyUDT,
+    wholesale_price BusinessMoneyUDT,
+    discount_amt DiscountUDT,
+    tax_amt TaxUDT,
+    CONSTRAINT valid_retail_price CHECK (retail_price > 0),
+    CONSTRAINT valid_discount CHECK (discount_amt >= 0 AND discount_amt <= retail_price),
+    CONSTRAINT valid_wholesale CHECK (wholesale_price <= retail_price),
+    CONSTRAINT valid_tax CHECK (tax_amt >= 0 AND tax_amt <= retail_price * 0.25)
+);
+GO
+
+-- Test valid constraints
+BEGIN TRY
+    INSERT INTO udt_constraint_test (retail_price, wholesale_price, discount_amt, tax_amt)
+    VALUES (100.00, 80.00, 20.00, 10.00);
+    PRINT 'Valid constraint test passed';
+END TRY
+BEGIN CATCH
+    PRINT 'Valid constraint test failed: ' + ERROR_MESSAGE();
+END CATCH;
+GO
+
+-- Test invalid constraints
+BEGIN TRY
+    -- Test negative retail price
+    INSERT INTO udt_constraint_test (retail_price, wholesale_price, discount_amt, tax_amt)
+    VALUES (-100.00, 80.00, 20.00, 10.00);
+    PRINT 'Negative retail price constraint test failed';
+END TRY
+BEGIN CATCH
+    PRINT 'Negative retail price constraint test passed';
+END CATCH;
+GO
+
+BEGIN TRY
+    -- Test discount greater than retail price
+    INSERT INTO udt_constraint_test (retail_price, wholesale_price, discount_amt, tax_amt)
+    VALUES (100.00, 80.00, 120.00, 10.00);
+    PRINT 'Invalid discount constraint test failed';
+END TRY
+BEGIN CATCH
+    PRINT 'Invalid discount constraint test passed';
+END CATCH;
+GO
+
+BEGIN TRY
+    -- Test wholesale price greater than retail price
+    INSERT INTO udt_constraint_test (retail_price, wholesale_price, discount_amt, tax_amt)
+    VALUES (100.00, 120.00, 20.00, 10.00);
+    PRINT 'Invalid wholesale price constraint test failed';
+END TRY
+BEGIN CATCH
+    PRINT 'Invalid wholesale price constraint test passed';
+END CATCH;
+GO
+
+BEGIN TRY
+    -- Test tax amount too high
+    INSERT INTO udt_constraint_test (retail_price, wholesale_price, discount_amt, tax_amt)
+    VALUES (100.00, 80.00, 20.00, 30.00);
+    PRINT 'Invalid tax amount constraint test failed';
+END TRY
+BEGIN CATCH
+    PRINT 'Invalid tax amount constraint test passed';
+END CATCH;
+GO
+
+-- UDT Computed Column Tests
+CREATE TABLE udt_computed_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    base_price PriceUDT,
+    discount_rate DiscountUDT,
+    tax_rate TaxUDT,
+    discount_amount AS (base_price * (discount_rate / 100)) PERSISTED,
+    tax_amount AS (base_price * (tax_rate / 100)) PERSISTED,
+    net_price AS (base_price - (base_price * (discount_rate / 100))) PERSISTED,
+    final_price AS (
+        (base_price - (base_price * (discount_rate / 100))) * (1 + (tax_rate / 100))
+    ) PERSISTED
+);
+GO
+
+-- Test computed columns with different scenarios
+INSERT INTO udt_computed_test (base_price, discount_rate, tax_rate)
+VALUES 
+    (100.00, 10.00, 20.00),  -- Standard case
+    (1000.00, 0.00, 20.00),  -- No discount
+    (500.00, 50.00, 0.00),   -- No tax
+    (200.00, 0.00, 0.00);    -- No discount and no tax
+GO
+
+-- Validate computed columns
+SELECT 
+    id,
+    base_price,
+    discount_rate,
+    tax_rate,
+    discount_amount,
+    tax_amount,
+    net_price,
+    final_price,
+    CASE 
+        WHEN discount_amount = base_price * (discount_rate / 100) 
+        AND tax_amount = base_price * (tax_rate / 100)
+        AND net_price = base_price - (base_price * (discount_rate / 100))
+        AND final_price = (base_price - (base_price * (discount_rate / 100))) * (1 + (tax_rate / 100))
+        THEN 'Computed columns test passed'
+        ELSE 'Computed columns test failed'
+    END AS computation_test_result
+FROM udt_computed_test;
+GO
+
+-- UDT Conversion Tests
+-- Test explicit conversions between money UDTs
+CREATE TABLE udt_conversion_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    original_price PriceUDT,
+    converted_standard StandardMoneyUDT,
+    converted_limited LimitedMoneyUDT,
+    converted_business BusinessMoneyUDT,
+    converted_retail RetailMoneyUDT
+);
+GO
+
+-- Test various conversion scenarios
+INSERT INTO udt_conversion_test (
+    original_price,
+    converted_standard,
+    converted_limited,
+    converted_business,
+    converted_retail
+)
+VALUES
+    -- Standard conversion within range
+    (123.45, 
+     CAST(123.45 AS StandardMoneyUDT),
+     CAST(123.45 AS LimitedMoneyUDT),
+     CAST(123.45 AS BusinessMoneyUDT),
+     CAST(123.45 AS RetailMoneyUDT)),
+    
+    -- Test maximum values for SMALLMONEY types
+    (214748.3647,
+     CAST(214748.3647 AS StandardMoneyUDT),
+     TRY_CAST(214748.3647 AS LimitedMoneyUDT),
+     CAST(214748.3647 AS BusinessMoneyUDT),
+     TRY_CAST(214748.3647 AS RetailMoneyUDT));
+GO
+
+-- Test conversions from string
+BEGIN TRY
+    DECLARE @string_price VARCHAR(20) = '1234.56';
+    INSERT INTO udt_conversion_test (
+        original_price,
+        converted_standard,
+        converted_limited,
+        converted_business,
+        converted_retail
+    )
+    VALUES (
+        CAST(@string_price AS PriceUDT),
+        CAST(@string_price AS StandardMoneyUDT),
+        CAST(@string_price AS LimitedMoneyUDT),
+        CAST(@string_price AS BusinessMoneyUDT),
+        CAST(@string_price AS RetailMoneyUDT)
+    );
+    PRINT 'String conversion test passed';
+END TRY
+BEGIN CATCH
+    PRINT 'String conversion test failed: ' + ERROR_MESSAGE();
+END CATCH;
+GO
+
+-- Test conversions from numeric types
+BEGIN TRY
+    DECLARE @int_val INT = 1234;
+    DECLARE @decimal_val DECIMAL(10,2) = 1234.56;
+    DECLARE @float_val FLOAT = 1234.56;
+    
+    INSERT INTO udt_conversion_test (
+        original_price,
+        converted_standard,
+        converted_limited,
+        converted_business,
+        converted_retail
+    )
+    VALUES
+    -- From INT
+    (CAST(@int_val AS PriceUDT),
+     CAST(@int_val AS StandardMoneyUDT),
+     CAST(@int_val AS LimitedMoneyUDT),
+     CAST(@int_val AS BusinessMoneyUDT),
+     CAST(@int_val AS RetailMoneyUDT)),
+    
+    -- From DECIMAL
+    (CAST(@decimal_val AS PriceUDT),
+     CAST(@decimal_val AS StandardMoneyUDT),
+     CAST(@decimal_val AS LimitedMoneyUDT),
+     CAST(@decimal_val AS BusinessMoneyUDT),
+     CAST(@decimal_val AS RetailMoneyUDT)),
+    
+    -- From FLOAT
+    (CAST(@float_val AS PriceUDT),
+     CAST(@float_val AS StandardMoneyUDT),
+     CAST(@float_val AS LimitedMoneyUDT),
+     CAST(@float_val AS BusinessMoneyUDT),
+     CAST(@float_val AS RetailMoneyUDT));
+    
+    PRINT 'Numeric conversion tests passed';
+END TRY
+BEGIN CATCH
+    PRINT 'Numeric conversion tests failed: ' + ERROR_MESSAGE();
+END CATCH;
+GO
+
+-- Cleanup
+-- Drop all test tables
+DROP TABLE IF EXISTS udt_money_test;
+DROP TABLE IF EXISTS udt_complex_test;
+DROP TABLE IF EXISTS udt_arithmetic_test;
+DROP TABLE IF EXISTS udt_arithmetic_overflow_test;
+DROP TABLE IF EXISTS udt_constraint_test;
+DROP TABLE IF EXISTS udt_computed_test;
+DROP TABLE IF EXISTS udt_conversion_test;
+GO
+
+-- Drop all functions
+DROP FUNCTION IF EXISTS calculate_total_price;
+DROP FUNCTION IF EXISTS calculate_discounted_price;
+GO
+
+-- Drop all user-defined types
+DROP TYPE IF EXISTS StandardMoneyUDT;
+DROP TYPE IF EXISTS LimitedMoneyUDT;
+DROP TYPE IF EXISTS BusinessMoneyUDT;
+DROP TYPE IF EXISTS RetailMoneyUDT;
+DROP TYPE IF EXISTS PriceUDT;
+DROP TYPE IF EXISTS DiscountUDT;
+DROP TYPE IF EXISTS CostUDT;
+DROP TYPE IF EXISTS TaxUDT;
+GO
+
+------------------------------------------------------------------------
+---- 9. UNION Tests with Money Types
+------------------------------------------------------------------------
+
+---- 9.1 Create User-Defined Types for UNION testing
+CREATE TYPE StandardMoneyUDT FROM MONEY;
+GO
+
+CREATE TYPE LimitedMoneyUDT FROM SMALLMONEY;
+GO
+
+CREATE TYPE BusinessMoneyUDT FROM MONEY;
+GO
+
+CREATE TYPE RetailMoneyUDT FROM SMALLMONEY;
+GO
+
+---- 9.2 Basic UNION Tests with Direct SELECT and CAST
+-- Test: UNION between different money types
+SELECT 'MONEY' as source_type, CAST(123456.7890 AS MONEY) as val
+UNION
+SELECT 'SMALLMONEY', CAST(123456.7890 AS SMALLMONEY)
+UNION
+SELECT 'MONEYUDT', CAST(123456.7890 AS StandardMoneyUDT)
+UNION
+SELECT 'SMALLMONEYUDT', CAST(123456.7890 AS LimitedMoneyUDT)
+ORDER BY val;
+GO
+
+---- 9.3 Complex UNION Tests with Expressions
+-- Test: UNION with complex expressions and different money types
+SELECT 'EXPR1' as source_type, 
+       CAST(1234.56 AS MONEY) * CAST(2.5 AS FLOAT) as val
+UNION
+SELECT 'EXPR2', 
+       CAST(1234.56 AS SMALLMONEY) * CAST(1.5 AS FLOAT)
+UNION
+SELECT 'EXPR3', 
+       CAST(1234.56 AS StandardMoneyUDT) * CAST(3.0 AS FLOAT)
+UNION
+SELECT 'EXPR4', 
+       CAST(1234.56 AS LimitedMoneyUDT) * CAST(2.0 AS FLOAT)
+ORDER BY val;
+GO
+
+---- 9.4 UNION with UDTs and Mixed Money Types
+DECLARE @money_val MONEY = 123456.7890;
+DECLARE @smallmoney_val SMALLMONEY = 123.4567;
+DECLARE @moneyudt_val StandardMoneyUDT = 123456.7890;
+DECLARE @smallmoneyudt_val LimitedMoneyUDT = 123.4567;
+
+-- Test: UNION between money types and UDTs
+SELECT 'MONEY_STD' as source_type, @money_val as val
+UNION
+SELECT 'SMALLMONEY', @smallmoney_val
+UNION
+SELECT 'MONEYUDT', @moneyudt_val
+UNION
+SELECT 'SMALLMONEYUDT', @smallmoneyudt_val
+ORDER BY val;
+GO
+
+---- 9.5 UNION with Mathematical Operations
+-- Test: UNION with mathematical operations on money types
+SELECT 'MATH1' as source_type,
+       CAST(CAST(1234.56 AS MONEY) * 2 AS MONEY) as val
+UNION
+SELECT 'MATH2',
+       CAST(CAST(1234.56 AS SMALLMONEY) / 2 AS SMALLMONEY)
+UNION
+SELECT 'MATH3',
+       CAST(CAST(1234.56 AS StandardMoneyUDT) + 500 AS StandardMoneyUDT)
+UNION
+SELECT 'MATH4',
+       CAST(CAST(1234.56 AS LimitedMoneyUDT) - 500 AS LimitedMoneyUDT)
+ORDER BY val;
+GO
+
+---- 9.6 UNION with Nested Calculations
+-- Test: UNION with CASE expressions for money types
+SELECT 'NESTED1' as source_type,
+       CASE 
+           WHEN CAST(1234.56 AS MONEY) > 1000 
+           THEN CAST(1234.56 AS MONEY) * 1.1
+           ELSE CAST(1234.56 AS MONEY) * 0.9
+       END as val
+UNION
+SELECT 'NESTED2',
+       CASE 
+           WHEN CAST(123.45 AS SMALLMONEY) > 100 
+           THEN CAST(123.45 AS SMALLMONEY) * 1.2
+           ELSE CAST(123.45 AS SMALLMONEY) * 0.8
+       END
+ORDER BY val;
+GO
+
+---- 9.7 UNION with Extreme Values and Calculations
+-- Test: UNION with boundary values for money types
+SELECT 'MAX_MONEY' as source_type,
+       CAST(922337203685477.5807 AS MONEY) as val
+UNION
+SELECT 'MIN_MONEY',
+       CAST(-922337203685477.5808 AS MONEY)
+UNION
+SELECT 'MAX_SMALLMONEY',
+       CAST(214748.3647 AS SMALLMONEY)
+UNION
+SELECT 'MIN_SMALLMONEY',
+       CAST(-214748.3648 AS SMALLMONEY)
+ORDER BY val;
+GO
+
+-- Test near-boundary values
+SELECT 'NEAR_MAX_MONEY' as source_type,
+       CAST(922337203685477.5806 AS MONEY) as val
+UNION
+SELECT 'NEAR_MIN_MONEY',
+       CAST(-922337203685477.5807 AS MONEY)
+UNION
+SELECT 'NEAR_MAX_SMALLMONEY',
+       CAST(214748.3646 AS SMALLMONEY)
+UNION
+SELECT 'NEAR_MIN_SMALLMONEY',
+       CAST(-214748.3647 AS SMALLMONEY)
+ORDER BY val;
+GO
+
+---- 9.8 UNION with Mixed Scale Calculations
+-- Test: UNION with different scale calculations for money types
+SELECT 'SCALE1' as source_type,
+       CAST(CAST(123.45 AS MONEY) * 0.01 AS MONEY) as val
+UNION
+SELECT 'SCALE2',
+       CAST(CAST(123.45 AS SMALLMONEY) * 0.001 AS SMALLMONEY)
+UNION
+SELECT 'SCALE3',
+       CAST(CAST(123.45 AS StandardMoneyUDT) * 0.0001 AS StandardMoneyUDT)
+UNION
+SELECT 'SCALE4',
+       CAST(CAST(123.45 AS LimitedMoneyUDT) * 0.00001 AS LimitedMoneyUDT)
+ORDER BY val;
+GO
+
+---- 9.9 UNION with NULL and Zero Values
+-- Test: UNION with NULL and zero values for money types
+SELECT 'NULL_MONEY' as source_type, CAST(NULL AS MONEY) as val
+UNION
+SELECT 'NULL_SMALLMONEY', CAST(NULL AS SMALLMONEY)
+UNION
+SELECT 'ZERO_MONEY', CAST(0 AS MONEY)
+UNION
+SELECT 'ZERO_SMALLMONEY', CAST(0 AS SMALLMONEY)
+UNION
+SELECT 'ZERO_MONEYUDT', CAST(0 AS StandardMoneyUDT)
+UNION
+SELECT 'ZERO_SMALLMONEYUDT', CAST(0 AS LimitedMoneyUDT)
+ORDER BY CASE WHEN val IS NULL THEN 1 ELSE 0 END, val;
+GO
+
+---- 9.10 UNION ALL vs UNION Tests with Money Types
+-- Test: Compare UNION ALL with UNION for duplicate money values
+SELECT 'MONEY_VAL' as source_type, CAST(123.45 AS MONEY) as val
+UNION ALL
+SELECT 'SMALLMONEY_VAL', CAST(123.45 AS SMALLMONEY)
+UNION ALL
+SELECT 'MONEYUDT_VAL', CAST(123.45 AS StandardMoneyUDT)
+UNION ALL
+SELECT 'SMALLMONEYUDT_VAL', CAST(123.45 AS LimitedMoneyUDT)
+ORDER BY source_type;
+GO
+
+-- Compare with UNION (removes duplicates)
+SELECT 'MONEY_VAL' as source_type, CAST(123.45 AS MONEY) as val
+UNION
+SELECT 'SMALLMONEY_VAL', CAST(123.45 AS SMALLMONEY)
+UNION
+SELECT 'MONEYUDT_VAL', CAST(123.45 AS StandardMoneyUDT)
+UNION
+SELECT 'SMALLMONEYUDT_VAL', CAST(123.45 AS LimitedMoneyUDT)
+ORDER BY source_type;
+GO
+
+---- 9.11 UNION with Mixed Money and Numeric Types
+-- Test: UNION between money types and other numeric types
+SELECT 'MONEY_VAL' as source_type, CAST(123.456 AS MONEY) as val
+UNION
+SELECT 'INT_VAL', CAST(123 AS INT)
+UNION
+SELECT 'DECIMAL_VAL', CAST(123.456 AS DECIMAL(10,3))
+UNION
+SELECT 'FLOAT_VAL', CAST(123.456 AS FLOAT)
+ORDER BY val;
+GO
+
+---- 9.12 UNION with Calculated Columns for Money Types
+-- Test: UNION with arithmetic operations on money columns
+SELECT 
+    'CALC_MONEY' as source_type,
+    val,
+    val * 2 as doubled,
+    val / 2 as halved,
+    val + CAST(100 AS MONEY) as added,
+    val - CAST(100 AS MONEY) as subtracted
+FROM (
+    SELECT CAST(123.45 AS MONEY) as val
+    UNION
+    SELECT CAST(456.78 AS MONEY)
+    UNION
+    SELECT CAST(123.45 AS SMALLMONEY)
+    UNION
+    SELECT CAST(456.78 AS StandardMoneyUDT)
+) t
+ORDER BY val;
+GO
+
+---- 9.13 UNION with Rounding Operations
+-- Test: UNION with different rounding scenarios
+SELECT 'ROUND_MONEY' as source_type, 
+       ROUND(CAST(123.456 AS MONEY), 2) as val
+UNION
+SELECT 'ROUND_SMALLMONEY', 
+       ROUND(CAST(123.456 AS SMALLMONEY), 2)
+UNION
+SELECT 'ROUND_MONEYUDT', 
+       ROUND(CAST(123.456 AS StandardMoneyUDT), 2)
+UNION
+SELECT 'ROUND_SMALLMONEYUDT', 
+       ROUND(CAST(123.456 AS LimitedMoneyUDT), 2)
+ORDER BY val;
+GO
+
+---- 9.14 UNION with Mixed Data Types Resolution
+-- Test: Complex type resolution scenarios
+DECLARE @money_val MONEY = 123.45;
+DECLARE @smallmoney_val SMALLMONEY = 123.45;
+DECLARE @moneyudt_val StandardMoneyUDT = 123.45;
+DECLARE @smallmoneyudt_val LimitedMoneyUDT = 123.45;
+
+-- Test with different numeric types
+SELECT 'MONEY_CONV' as source_type, 
+       @money_val as val
+UNION
+SELECT 'INT_CONV', 
+       CAST(123 AS INT)
+UNION
+SELECT 'DECIMAL_CONV', 
+       CAST(123.45 AS DECIMAL(10,2))
+UNION
+SELECT 'FLOAT_CONV', 
+       CAST(123.45 AS FLOAT)
+UNION
+SELECT 'SMALLMONEY_CONV',
+       @smallmoney_val
+UNION
+SELECT 'MONEYUDT_CONV',
+       @moneyudt_val
+UNION
+SELECT 'SMALLMONEYUDT_CONV',
+       @smallmoneyudt_val
+ORDER BY val;
+GO
+
+-- Test with mathematical functions
+SELECT 'MATH_MONEY' as source_type,
+       ABS(CAST(-123.45 AS MONEY)) as val
+UNION
+SELECT 'MATH_SMALLMONEY',
+       ABS(CAST(-123.45 AS SMALLMONEY))
+UNION
+SELECT 'MATH_MONEYUDT',
+       ABS(CAST(-123.45 AS StandardMoneyUDT))
+UNION
+SELECT 'MATH_SMALLMONEYUDT',
+       ABS(CAST(-123.45 AS LimitedMoneyUDT))
+ORDER BY val;
+GO
+
+---- 9.15 UNION with Aggregate Functions
+-- Create temporary table for aggregate testing
+CREATE TABLE MoneyAggregateTest (
+    id INT IDENTITY(1,1),
+    money_val MONEY,
+    smallmoney_val SMALLMONEY,
+    moneyudt_val StandardMoneyUDT,
+    smallmoneyudt_val LimitedMoneyUDT
+);
+
+INSERT INTO MoneyAggregateTest (money_val, smallmoney_val, moneyudt_val, smallmoneyudt_val)
+VALUES 
+    (100.00, 100.00, 100.00, 100.00),
+    (200.00, 200.00, 200.00, 200.00),
+    (300.00, 300.00, 300.00, 300.00);
+
+-- Test aggregates with UNION
+SELECT 'SUM' as agg_type,
+       SUM(val) as result
+FROM (
+    SELECT money_val as val FROM MoneyAggregateTest
+    UNION
+    SELECT smallmoney_val FROM MoneyAggregateTest
+    UNION
+    SELECT moneyudt_val FROM MoneyAggregateTest
+    UNION
+    SELECT smallmoneyudt_val FROM MoneyAggregateTest
+) t
+UNION
+SELECT 'AVG',
+       AVG(val)
+FROM (
+    SELECT money_val as val FROM MoneyAggregateTest
+    UNION
+    SELECT smallmoney_val FROM MoneyAggregateTest
+    UNION
+    SELECT moneyudt_val FROM MoneyAggregateTest
+    UNION
+    SELECT smallmoneyudt_val FROM MoneyAggregateTest
+) t
+ORDER BY agg_type;
+GO
+
+DROP TABLE MoneyAggregateTest;
+GO
+
+---- 9.16 UNION with Currency Conversions and Calculations
+-- Test: Currency conversion scenarios
+CREATE TABLE CurrencyRates (
+    currency_code VARCHAR(3),
+    exchange_rate MONEY
+);
+
+INSERT INTO CurrencyRates VALUES 
+('USD', 1.00),
+('EUR', 0.85),
+('GBP', 0.73),
+('JPY', 110.25);
+
+-- Test currency conversions with different money types
+SELECT 'USD_MONEY' as conversion_type,
+       CAST(100.00 AS MONEY) * exchange_rate as converted_amount
+FROM CurrencyRates WHERE currency_code = 'EUR'
+UNION
+SELECT 'USD_SMALLMONEY',
+       CAST(100.00 AS SMALLMONEY) * exchange_rate
+FROM CurrencyRates WHERE currency_code = 'EUR'
+UNION
+SELECT 'USD_MONEYUDT',
+       CAST(100.00 AS StandardMoneyUDT) * exchange_rate
+FROM CurrencyRates WHERE currency_code = 'EUR'
+UNION
+SELECT 'USD_SMALLMONEYUDT',
+       CAST(100.00 AS LimitedMoneyUDT) * exchange_rate
+FROM CurrencyRates WHERE currency_code = 'EUR'
+ORDER BY converted_amount;
+GO
+
+DROP TABLE CurrencyRates;
+GO
+
+---- 9.17 UNION with Complex Financial Calculations
+-- Test: Financial calculations with different money types
+-- Create table for financial calculations
+CREATE TABLE FinancialData (
+    product_id INT,
+    base_price MONEY,
+    discount_rate SMALLMONEY,
+    tax_rate SMALLMONEY
+);
+
+INSERT INTO FinancialData VALUES
+(1, 1000.00, 0.10, 0.08),
+(2, 2000.00, 0.15, 0.08),
+(3, 3000.00, 0.20, 0.08);
+
+-- Complex calculations with UNION
+SELECT 'MONEY_CALC' as calc_type,
+       (base_price * (1 - discount_rate) * (1 + tax_rate)) as final_price
+FROM FinancialData
+UNION
+SELECT 'SMALLMONEY_CALC',
+       CAST((CAST(base_price AS SMALLMONEY) * (1 - discount_rate) * (1 + tax_rate)) AS MONEY)
+FROM FinancialData
+UNION
+SELECT 'MONEYUDT_CALC',
+       CAST((CAST(base_price AS StandardMoneyUDT) * (1 - discount_rate) * (1 + tax_rate)) AS MONEY)
+FROM FinancialData
+UNION
+SELECT 'SMALLMONEYUDT_CALC',
+       CAST((CAST(base_price AS LimitedMoneyUDT) * (1 - discount_rate) * (1 + tax_rate)) AS MONEY)
+FROM FinancialData
+ORDER BY final_price;
+GO
+
+DROP TABLE FinancialData;
+GO
+
+---- 9.18 UNION with Error Handling and Edge Cases
+-- Test: Error handling scenarios
+BEGIN TRY
+    SELECT 'OVERFLOW_TEST' as test_type,
+           CAST(922337203685477.5807 AS MONEY) + CAST(0.0001 AS MONEY) as result
+    UNION
+    SELECT 'NORMAL_TEST',
+           CAST(100.00 AS MONEY)
+    ORDER BY result;
+END TRY
+BEGIN CATCH
+    SELECT 'OVERFLOW_ERROR' as test_type,
+           ERROR_MESSAGE() as result;
+END CATCH;
+GO
+
+-- Test smallmoney overflow
+BEGIN TRY
+    SELECT 'SMALLMONEY_OVERFLOW' as test_type,
+           CAST(214748.3647 AS SMALLMONEY) + CAST(0.0001 AS SMALLMONEY) as result
+    UNION
+    SELECT 'NORMAL_TEST',
+           CAST(100.00 AS SMALLMONEY)
+    ORDER BY result;
+END TRY
+BEGIN CATCH
+    SELECT 'SMALLMONEY_ERROR' as test_type,
+           ERROR_MESSAGE() as result;
+END CATCH;
+GO
+
+---- 9.19 UNION with Dynamic SQL and Money Types
+-- Test: Dynamic SQL scenarios
+DECLARE @sql NVARCHAR(MAX);
+DECLARE @money_val MONEY = 123.45;
+DECLARE @smallmoney_val SMALLMONEY = 123.45;
+
+SET @sql = N'
+SELECT ''DYNAMIC_MONEY'' as source_type, CAST(' + CAST(@money_val AS NVARCHAR(20)) + ' AS MONEY) as val
+UNION
+SELECT ''DYNAMIC_SMALLMONEY'', CAST(' + CAST(@smallmoney_val AS NVARCHAR(20)) + ' AS SMALLMONEY)
+UNION
+SELECT ''STATIC_MONEY'', CAST(123.45 AS MONEY)
+ORDER BY val;
+';
+
+EXEC sp_executesql @sql;
+GO
+
+---- 9.20 UNION with Conditional Aggregates
+-- Create test table for conditional aggregates
+CREATE TABLE MoneyConditionalTest (
+    id INT IDENTITY(1,1),
+    money_val MONEY,
+    smallmoney_val SMALLMONEY,
+    category CHAR(1)
+);
+
+INSERT INTO MoneyConditionalTest (money_val, smallmoney_val, category)
+VALUES 
+(100.00, 100.00, 'A'),
+(200.00, 200.00, 'A'),
+(300.00, 300.00, 'B'),
+(400.00, 400.00, 'B'),
+(500.00, 500.00, 'C');
+
+-- Test conditional aggregates with UNION
+SELECT 'MONEY_AGG' as agg_type,
+       category,
+       SUM(money_val) as total
+FROM MoneyConditionalTest
+GROUP BY category
+UNION
+SELECT 'SMALLMONEY_AGG',
+       category,
+       SUM(smallmoney_val)
+FROM MoneyConditionalTest
+GROUP BY category
+ORDER BY category, agg_type;
+GO
+
+DROP TABLE MoneyConditionalTest;
+GO
+
+---- 9.21 UNION with Window Functions and Money Types
+-- Create test table for window functions
+CREATE TABLE MoneyWindowTest (
+    transaction_id INT IDENTITY(1,1),
+    transaction_date DATE,
+    money_amount MONEY,
+    smallmoney_amount SMALLMONEY,
+    moneyudt_amount StandardMoneyUDT,
+    smallmoneyudt_amount LimitedMoneyUDT,
+    department VARCHAR(10)
+);
+
+INSERT INTO MoneyWindowTest (
+    transaction_date, 
+    money_amount, 
+    smallmoney_amount, 
+    moneyudt_amount, 
+    smallmoneyudt_amount, 
+    department
+)
+VALUES 
+('2024-01-01', 1000.00, 100.00, 1000.00, 100.00, 'Sales'),
+('2024-01-02', 2000.00, 200.00, 2000.00, 200.00, 'Sales'),
+('2024-01-03', 3000.00, 300.00, 3000.00, 300.00, 'IT'),
+('2024-01-04', 4000.00, 400.00, 4000.00, 400.00, 'IT'),
+('2024-01-05', 5000.00, 500.00, 5000.00, 500.00, 'HR');
+
+-- Test window functions with different money types
+SELECT 'MONEY_WINDOW' as window_type,
+       department,
+       money_amount as amount,
+       SUM(money_amount) OVER(PARTITION BY department) as dept_total,
+       money_amount / SUM(money_amount) OVER(PARTITION BY department) as percentage
+FROM MoneyWindowTest
+UNION
+SELECT 'SMALLMONEY_WINDOW',
+       department,
+       smallmoney_amount,
+       SUM(smallmoney_amount) OVER(PARTITION BY department),
+       smallmoney_amount / SUM(smallmoney_amount) OVER(PARTITION BY department)
+FROM MoneyWindowTest
+UNION
+SELECT 'MONEYUDT_WINDOW',
+       department,
+       moneyudt_amount,
+       SUM(moneyudt_amount) OVER(PARTITION BY department),
+       moneyudt_amount / SUM(moneyudt_amount) OVER(PARTITION BY department)
+FROM MoneyWindowTest
+ORDER BY department, window_type;
+GO
+
+---- 9.22 UNION with Pivot Operations
+-- Test pivot operations with different money types
+SELECT * FROM (
+    SELECT 'MONEY' as money_type, department, money_amount
+    FROM MoneyWindowTest
+    UNION
+    SELECT 'SMALLMONEY', department, smallmoney_amount
+    FROM MoneyWindowTest
+    UNION
+    SELECT 'MONEYUDT', department, moneyudt_amount
+    FROM MoneyWindowTest
+    UNION
+    SELECT 'SMALLMONEYUDT', department, smallmoneyudt_amount
+    FROM MoneyWindowTest
+) AS SourceTable
+PIVOT (
+    SUM(money_amount)
+    FOR department IN ([Sales], [IT], [HR])
+) AS PivotTable;
+GO
+
+---- 9.23 UNION with Running Totals
+-- Test running totals with different money types
+SELECT 'MONEY_RUNNING' as total_type,
+       transaction_date,
+       money_amount as amount,
+       SUM(money_amount) OVER(ORDER BY transaction_date) as running_total
+FROM MoneyWindowTest
+UNION
+SELECT 'SMALLMONEY_RUNNING',
+       transaction_date,
+       smallmoney_amount,
+       SUM(smallmoney_amount) OVER(ORDER BY transaction_date)
+FROM MoneyWindowTest
+ORDER BY transaction_date, total_type;
+GO
+
+---- 9.24 UNION with String Formatting and Conversion
+-- Test string formatting and conversion scenarios
+SELECT 'MONEY_FORMAT' as format_type,
+       CAST(money_amount AS VARCHAR(20)) as string_amount,
+       CAST(CAST(money_amount AS VARCHAR(20)) AS MONEY) as converted_back
+FROM MoneyWindowTest
+UNION
+SELECT 'SMALLMONEY_FORMAT',
+       CAST(smallmoney_amount AS VARCHAR(20)),
+       CAST(CAST(smallmoney_amount AS VARCHAR(20)) AS SMALLMONEY)
+FROM MoneyWindowTest
+UNION
+SELECT 'MONEYUDT_FORMAT',
+       CAST(moneyudt_amount AS VARCHAR(20)),
+       CAST(CAST(moneyudt_amount AS VARCHAR(20)) AS StandardMoneyUDT)
+FROM MoneyWindowTest
+ORDER BY string_amount;
+GO
+
+---- 9.25 UNION with Complex Type Comparisons
+-- Test various type comparison scenarios
+SELECT 'TYPE_COMPARE' as compare_type,
+       CASE 
+           WHEN money_amount = CAST(smallmoney_amount AS MONEY) THEN 'Equal'
+           WHEN money_amount > CAST(smallmoney_amount AS MONEY) THEN 'Greater'
+           ELSE 'Less'
+       END as comparison_result,
+       money_amount,
+       smallmoney_amount
+FROM MoneyWindowTest
+UNION
+SELECT 'UDT_COMPARE',
+       CASE 
+           WHEN moneyudt_amount = CAST(smallmoneyudt_amount AS StandardMoneyUDT) THEN 'Equal'
+           WHEN moneyudt_amount > CAST(smallmoneyudt_amount AS StandardMoneyUDT) THEN 'Greater'
+           ELSE 'Less'
+       END,
+       CAST(moneyudt_amount AS MONEY),
+       CAST(smallmoneyudt_amount AS MONEY)
+FROM MoneyWindowTest
+ORDER BY money_amount;
+GO
+
+DROP TABLE MoneyWindowTest;
+GO
+
+---- 9.26 Cleanup Operations
+-- Drop all user-defined types
+DROP TYPE IF EXISTS StandardMoneyUDT;
+GO
+DROP TYPE IF EXISTS LimitedMoneyUDT;
+GO
+DROP TYPE IF EXISTS BusinessMoneyUDT;
+GO
+DROP TYPE IF EXISTS RetailMoneyUDT;
+GO
+
+
+------------------------------------------------------------------------
+---- 10.FK-PK Tests for Money Types
+------------------------------------------------------------------------
+
+CREATE TABLE MONEY_dt_pkey(
+    amount MONEY PRIMARY KEY
+);
+GO
+
+INSERT INTO MONEY_dt_pkey(amount) VALUES (NULL);
+GO
+INSERT INTO MONEY_dt_pkey(amount) VALUES (1234.56);
+GO
+INSERT INTO MONEY_dt_pkey(amount) VALUES (0.00);
+GO
+INSERT INTO MONEY_dt_pkey(amount) VALUES (-9876.54);
+GO
+
+CREATE TABLE MONEY_dt_fkey (
+    amount MONEY,
+    FOREIGN KEY (amount) REFERENCES MONEY_dt_pkey(amount)
+);
+GO
+
+INSERT INTO MONEY_dt_fkey(amount) VALUES (NULL);
+GO
+INSERT INTO MONEY_dt_fkey(amount) VALUES (1234.56);
+GO
+INSERT INTO MONEY_dt_fkey(amount) VALUES (0.00);
+GO
+INSERT INTO MONEY_dt_fkey(amount) VALUES (-9876.54);
+GO
+
+SELECT * FROM MONEY_dt_fkey ORDER BY amount;
+GO
+
+SELECT t1.amount, t2.amount 
+FROM MONEY_dt_pkey t1 
+JOIN MONEY_dt_fkey t2 ON t1.amount = t2.amount 
+ORDER BY t1.amount;
+GO
+
+-- Delete pkey which is referenced by fkey
+DELETE FROM MONEY_dt_pkey WHERE amount = 1234.56;
+GO
+
+DELETE FROM MONEY_dt_fkey WHERE amount = -9876.54;
+GO
+
+SELECT * FROM MONEY_dt_fkey ORDER BY amount;
+GO
+
+-- FK-PK testing for SMALLMONEY
+CREATE TABLE SMALLMONEY_dt_pkey(
+    amount SMALLMONEY PRIMARY KEY
+);
+GO
+
+INSERT INTO SMALLMONEY_dt_pkey(amount) VALUES (NULL);
+GO
+INSERT INTO SMALLMONEY_dt_pkey(amount) VALUES (123.45);
+GO
+INSERT INTO SMALLMONEY_dt_pkey(amount) VALUES (0.00);
+GO
+INSERT INTO SMALLMONEY_dt_pkey(amount) VALUES (-987.65);
+GO
+
+CREATE TABLE SMALLMONEY_dt_fkey (
+    amount SMALLMONEY,
+    FOREIGN KEY (amount) REFERENCES SMALLMONEY_dt_pkey(amount)
+);
+GO
+
+INSERT INTO SMALLMONEY_dt_fkey(amount) VALUES (NULL);
+GO
+INSERT INTO SMALLMONEY_dt_fkey(amount) VALUES (123.45);
+GO
+INSERT INTO SMALLMONEY_dt_fkey(amount) VALUES (0.00);
+GO
+INSERT INTO SMALLMONEY_dt_fkey(amount) VALUES (-987.65);
+GO
+
+SELECT * FROM SMALLMONEY_dt_fkey ORDER BY amount;
+GO
+
+SELECT t1.amount, t2.amount 
+FROM SMALLMONEY_dt_pkey t1 
+JOIN SMALLMONEY_dt_fkey t2 ON t1.amount = t2.amount 
+ORDER BY t1.amount;
+GO
+
+DROP TABLE MONEY_dt_fkey;
+DROP TABLE MONEY_dt_pkey;
+DROP TABLE SMALLMONEY_dt_fkey;
+DROP TABLE SMALLMONEY_dt_pkey;
+GO
+
+------------------------------------------------------------------------
+---- 11.Partition Table Tests for Money Types
+------------------------------------------------------------------------
+CREATE PARTITION FUNCTION MONEY_dt_partition_func (MONEY)
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        1000.00,
+        10000.00,
+        100000.00
+    );
+GO
+
+CREATE PARTITION SCHEME MONEY_dt_partition_scheme
+    AS PARTITION MONEY_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE MONEY_dt_partition(
+    amount MONEY,
+    category VARCHAR(20)
+)
+ON MONEY_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO MONEY_dt_partition (amount, category) VALUES 
+(-1000.00, 'Negative'),
+(-500.00, 'Negative'),
+(0.00, 'Zero'),
+(500.00, 'Small'),
+(1500.00, 'Medium'),
+(5000.00, 'Medium'),
+(15000.00, 'Large'),
+(50000.00, 'Large'),
+(150000.00, 'Extra Large'),
+(200000.00, 'Extra Large');
+GO
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.MONEY_dt_partition_func(amount) AS PartitionNumber
+FROM MONEY_dt_partition 
+ORDER BY PartitionNumber;
+GO
+
+-- Query to show count by partition
+SELECT $PARTITION.MONEY_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM MONEY_dt_partition
+GROUP BY $PARTITION.MONEY_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+
+-- Partitioned table testing for SMALLMONEY
+CREATE PARTITION FUNCTION SMALLMONEY_dt_partition_func (SMALLMONEY)
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        100.00,
+        1000.00,
+        10000.00
+    );
+GO
+
+CREATE PARTITION SCHEME SMALLMONEY_dt_partition_scheme
+    AS PARTITION SMALLMONEY_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE SMALLMONEY_dt_partition(
+    amount SMALLMONEY,
+    category VARCHAR(20)
+)
+ON SMALLMONEY_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO SMALLMONEY_dt_partition (amount, category) VALUES 
+(-100.00, 'Negative'),
+(-50.00, 'Negative'),
+(0.00, 'Zero'),
+(50.00, 'Small'),
+(150.00, 'Medium'),
+(500.00, 'Medium'),
+(1500.00, 'Large'),
+(5000.00, 'Large'),
+(15000.00, 'Extra Large'),
+(20000.00, 'Extra Large');
+GO
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.SMALLMONEY_dt_partition_func(amount) AS PartitionNumber
+FROM SMALLMONEY_dt_partition 
+ORDER BY PartitionNumber;
+GO
+
+-- Query to show count by partition
+SELECT $PARTITION.SMALLMONEY_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM SMALLMONEY_dt_partition
+GROUP BY $PARTITION.SMALLMONEY_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+
+-- Cleanup
+
+DROP TABLE MONEY_dt_partition;
+DROP TABLE SMALLMONEY_dt_partition;
+DROP PARTITION SCHEME MONEY_dt_partition_scheme;
+DROP PARTITION SCHEME SMALLMONEY_dt_partition_scheme;
+DROP PARTITION FUNCTION MONEY_dt_partition_func;
+DROP PARTITION FUNCTION SMALLMONEY_dt_partition_func;
+GO
+
+------------------------------------------------------------------------
+---- 12. Money types as default and check constraints
+------------------------------------------------------------------------
+CREATE TABLE MONEY_dt(
+    a MONEY DEFAULT 100.00, 
+    b MONEY, 
+    c INT, 
+    CHECK (b > 1000.00)
+);
+GO
+
+INSERT INTO MONEY_dt (b,c) VALUES (1500.00, 1);
+GO
+INSERT INTO MONEY_dt (b,c) VALUES (500.00, 2);  -- Should fail check constraint
+GO
+
+SELECT * FROM MONEY_dt;
+GO
+
+DROP TABLE MONEY_dt;
+GO
+
+CREATE TABLE SMALLMONEY_dt(
+    a SMALLMONEY DEFAULT 100.00, 
+    b SMALLMONEY, 
+    c INT, 
+    CHECK (b > 100.00)
+);
+GO
+
+INSERT INTO SMALLMONEY_dt (b,c) VALUES (150.00, 1);
+GO
+INSERT INTO SMALLMONEY_dt (b,c) VALUES (50.00, 2);  -- Should fail check constraint
+GO
+
+SELECT * FROM SMALLMONEY_dt;
+GO
+
+DROP TABLE SMALLMONEY_dt;
+GO
+
+------------------------------------------------------------------------
+---- 13. Ability to use money types as part of table variable
+------------------------------------------------------------------------
+DECLARE @MONEY_dt TABLE (
+    a MONEY,
+    b SMALLMONEY,
+    c MONEY
+);
+
+INSERT INTO @MONEY_dt VALUES 
+(0.00, 0.00, 0.00),
+(NULL, NULL, NULL),
+(100.00, 100.00, 100.00),
+(922337203685477.5807, 214748.3647, 922337203685477.5807);
+
+SELECT * FROM @MONEY_dt;
+GO
+
+-- Select into testing
+CREATE TABLE MONEY_dt (
+    a MONEY,
+    b SMALLMONEY,
+    c MONEY,
+    d SMALLMONEY,
+    e MONEY
+);
+GO
+
+INSERT INTO MONEY_dt (a, b, c, d, e)
+VALUES
+(NULL, NULL, NULL, NULL, NULL),
+(0.00, 0.00, 0.00, 0.00, 0.00),
+(NULL, 0.00, NULL, 0.00, NULL),
+(0.00, NULL, 0.00, NULL, 0.00),
+(100.00, 100.00, 1000.00, 100.00, 10000.00),
+(250.50, 200.50, 2500.50, 200.50, 25000.50),
+(500.75, 300.75, 5000.75, 300.75, 50000.75),
+(750.25, 400.25, 7500.25, 400.25, 75000.25),
+(1000.00, 500.00, 10000.00, 500.00, 100000.00),
+(-100.00, -100.00, -1000.00, -100.00, -10000.00),
+(922337203685477.5807, 214748.3647, 922337203685477.5807, 214748.3647, 922337203685477.5807),
+(-922337203685477.5808, -214748.3648, -922337203685477.5808, -214748.3648, -922337203685477.5808),
+(1234.5678, 123.4567, 12345.6789, 123.4567, 123456.7890),
+(9999.9999, 999.9999, 99999.9999, 999.9999, 999999.9999);
+GO
+
+SELECT * INTO MONEY_dt_derived FROM MONEY_dt;
+GO
+
+-- Check column attributes for derived table
+SELECT attname, atttypmod 
+FROM pg_attribute 
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'money_dt_derived') 
+AND attnum > 0;
+GO
+
+-- Check column attributes for original table
+SELECT attname, atttypmod 
+FROM pg_attribute 
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'money_dt') 
+AND attnum > 0;
+GO
+
+-- Cleanup
+DROP TABLE MONEY_dt_derived;
+DROP TABLE MONEY_dt;
+GO
+
+------------------------------------------------------------------------
+---- 14. Index Tests with MONEY and SMALLMONEY Types
+------------------------------------------------------------------------
+
+-- Create test tables with money types and indexes
+CREATE TABLE money_index_test (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    money_col MONEY,
+    smallmoney_col SMALLMONEY,
+    int_col INT,
+    decimal_col DECIMAL(19,4),
+    float_col FLOAT,
+    numeric_col NUMERIC(19,4),
+    category VARCHAR(10)
+);
+GO
+
+-- Create indexes on money columns
+CREATE INDEX idx_money ON money_index_test(money_col);
+CREATE INDEX idx_smallmoney ON money_index_test(smallmoney_col);
+CREATE INDEX idx_composite_money_cat ON money_index_test(money_col, category);
+GO
+
+-- Store test values
+INSERT INTO money_index_test (
+    money_col, smallmoney_col, int_col, decimal_col, float_col, numeric_col, category
+) VALUES 
+(123.4567, 123.4567, 123, 123.4567, 123.4567, 123.4567, 'CAT-1'),
+(500.0000, 500.0000, 500, 500.0000, 500.0000, 500.0000, 'CAT-2'),
+(9999.99, 9999.99, 9999, 9999.99, 9999.99, 9999.99, 'CAT-3'),
+(100000.00, 100000.00, 100000, 100000.00, 100000.00, 100000.00, 'CAT-4');
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+SET babelfish_showplan_all ON;
+GO
+
+-- Test 1: Direct MONEY comparison (baseline)
+SELECT * FROM money_index_test 
+WHERE money_col = 123.4567;
+GO
+
+-- Test 2: MONEY compared with INTEGER
+SELECT * FROM money_index_test 
+WHERE money_col = 500;
+GO
+
+-- Test 3: MONEY compared with DECIMAL
+SELECT * FROM money_index_test 
+WHERE money_col = CAST(9999.99 AS DECIMAL(19,4));
+GO
+
+-- Test 4: MONEY compared with SMALLMONEY
+SELECT * FROM money_index_test 
+WHERE money_col = CAST(123.4567 AS SMALLMONEY);
+GO
+
+
+-- Test 5: Range queries with different types
+SELECT * FROM money_index_test 
+WHERE money_col BETWEEN 100.00 AND 1000.00;
+GO
+
+SELECT * FROM money_index_test 
+WHERE smallmoney_col BETWEEN CAST(100.00 AS SMALLMONEY) AND CAST(1000.00 AS SMALLMONEY);
+GO
+
+-- Test 6: JOIN conditions with different money types
+SELECT a.*, b.* 
+FROM money_index_test a
+JOIN money_index_test b ON a.money_col = b.smallmoney_col;
+GO
+
+-- Test 7: Complex conditions mixing types
+SELECT * FROM money_index_test 
+WHERE money_col = smallmoney_col 
+   OR money_col = CAST(float_col AS MONEY)
+   OR money_col = CAST(decimal_col AS MONEY);
+GO
+
+-- Test 8: Composite index tests
+SELECT * FROM money_index_test 
+WHERE money_col = 500.00
+  AND category = 'CAT-2';
+GO
+
+-- Test 9: Index usage with calculations
+SELECT * FROM money_index_test 
+WHERE money_col = smallmoney_col * 2;
+GO
+
+-- Test 10: Index usage with CAST operations
+SELECT * FROM money_index_test 
+WHERE CAST(money_col AS DECIMAL(19,4)) = decimal_col;
+GO
+
+-- Test 11: Implicit conversions
+SELECT * FROM money_index_test 
+WHERE money_col IN (123.4567, 500.0000, 9999.99);
+GO
+
+-- Test 12: SMALLMONEY range tests
+SELECT * FROM money_index_test 
+WHERE smallmoney_col BETWEEN -214748.3648 AND 214748.3647;
+GO
+
+-- Test 13: Index intersection possibilities
+SELECT * FROM money_index_test 
+WHERE money_col = 123.4567
+  AND smallmoney_col = 123.4567;
+GO
+
+-- Test 14: ORDER BY with different money types
+SELECT * FROM money_index_test 
+WHERE money_col > 100
+ORDER BY smallmoney_col;
+GO
+
+-- Test 15: GROUP BY with money types
+SELECT money_col, 
+       COUNT(*) as cnt
+FROM money_index_test 
+GROUP BY money_col;
+GO
+
+-- Test 16: Covering index scenarios
+SELECT money_col, category 
+FROM money_index_test 
+WHERE money_col = 500.00;
+GO
+
+-- Test 17: Index usage with NULL values
+INSERT INTO money_index_test (
+    money_col, smallmoney_col, category
+) VALUES (NULL, NULL, 'CAT-N');
+GO
+
+SELECT * FROM money_index_test 
+WHERE money_col IS NULL;
+GO
+
+-- Test 18: Index usage with arithmetic operations
+SELECT * FROM money_index_test 
+WHERE money_col * 2 = smallmoney_col;
+GO
+
+-- Test 19: Index usage with string conversions
+SELECT * FROM money_index_test 
+WHERE CAST(money_col AS VARCHAR(20)) LIKE '123.%';
+GO
+
+-- Test 20: Maximum/Minimum value tests
+SELECT * FROM money_index_test 
+WHERE money_col = 922337203685477.5807;  -- Max MONEY value
+GO
+
+SELECT * FROM money_index_test 
+WHERE smallmoney_col = 214748.3647;      -- Max SMALLMONEY value
+GO
+
+-- Test 21: Rounding behavior tests
+SELECT * FROM money_index_test 
+WHERE money_col = 123.4567891;           -- Should round to 123.4568
+GO
+
+-- Test 22: Aggregate function index usage
+SELECT 
+    MAX(money_col) as max_money,
+    MIN(smallmoney_col) as min_smallmoney,
+    AVG(CAST(money_col AS FLOAT)) as avg_money
+FROM money_index_test;
+GO
+
+-- Reset settings
+SET babelfish_showplan_all OFF;
+GO
+SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'off', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false);
+GO
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+
+-- Cleanup
+DROP TABLE money_index_test;
+GO
