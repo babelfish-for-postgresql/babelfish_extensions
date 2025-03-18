@@ -38,7 +38,6 @@ jobs:
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
-          version: 4.9.3
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - uses: actions/checkout@v2
@@ -137,17 +136,13 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
           release_mode: 'yes'
-      
-      - name: Compile new ANTLR
-        id: compile-new-antlr
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
-        with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - name: Copy ANTLR
+        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.compile-new-antlr.outcome == 'success'
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
