@@ -2036,6 +2036,17 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 	return commontype;
 }
 
+static bool
+is_tsql_exact_numeric_type(Oid type)
+{
+	return	getBaseType(type) == INT2OID ||
+			getBaseType(type) == INT4OID ||
+			getBaseType(type) == INT8OID ||
+			getBaseType(type) == NUMERICOID ||
+			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (type)) ||
+			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (getBaseType(type)));
+}
+
 /* 
  * When we must merge types together (i.e. UNION, CASE), if the target 
  * type is CHAR, NCHAR, BINARY, NUMERIC or DECIMAL make the typmod 
@@ -2090,7 +2101,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
 				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
 			
-			if (typmod == -1 || getBaseType(type) != NUMERICOID)
+			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
 				continue;
 			
 			scale = (typmod - VARHDRSZ) & 0xffff;
