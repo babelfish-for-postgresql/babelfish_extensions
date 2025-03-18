@@ -3,29 +3,35 @@ CREATE LOGIN login_babel5119_1 WITH PASSWORD = '12345678'
 CREATE LOGIN login_babel5119_2 WITH PASSWORD = '12345678'
 ALTER authorization on database::BABEL5119_db TO login_babel5119_1
 GO
+CREATE USER user_babel5119_1 FOR LOGIN login_babel5119_1;
+go
+ALTER ROLE db_owner ADD MEMBER user_babel5119_1;
+go
 -- terminate-tsql-conn
 
 -- tsql user=login_babel5119_1 password=12345678
 -- Creating objects in the guest schema
 USE master
 GO
-CREATE TABLE BABEL5119_t4(a int)
+select current_user;
+go
+CREATE TABLE guest.BABEL5119_t4(a int)
 GO
-CREATE TABLE BABEL5119_t5(a int)
+CREATE TABLE guest.BABEL5119_t5(a int)
 GO
-CREATE TABLE BABEL5119_t6(a int)
+CREATE TABLE guest.BABEL5119_t6(a int)
 GO
-CREATE VIEW BABEL5119_v4 AS SELECT 1
+CREATE VIEW guest.BABEL5119_v4 AS SELECT 1
 GO
-CREATE VIEW BABEL5119_v5 AS SELECT 1
+CREATE VIEW guest.BABEL5119_v5 AS SELECT 1
 GO
-CREATE VIEW BABEL5119_v6 AS SELECT 1
+CREATE VIEW guest.BABEL5119_v6 AS SELECT 1
 GO
-CREATE PROCEDURE BABEL5119_p4 AS SELECT 1
+CREATE PROCEDURE guest.BABEL5119_p4 AS SELECT 1
 GO
-CREATE PROCEDURE BABEL5119_p5 AS SELECT 1
+CREATE PROCEDURE guest.BABEL5119_p5 AS SELECT 1
 GO
-CREATE PROCEDURE BABEL5119_p6 AS SELECT 1
+CREATE PROCEDURE guest.BABEL5119_p6 AS SELECT 1
 GO
 -- terminate-tsql-conn user=login_babel5119_1 password=12345678
 
@@ -62,10 +68,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
+SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 
-SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
+SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 
 -- Using crossdb query data
@@ -114,10 +120,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
+SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 
-SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
+SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 
 -- Using crossdb query data
@@ -170,10 +176,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
+SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 
-SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
+SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 
 -- Using crossdb query data
@@ -222,10 +228,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
+SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 
-SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
+SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 
 -- Using crossdb query data
@@ -278,10 +284,10 @@ ORDER BY TABLE_NAME
 GO
 
 -- General crossdb queries
-SELECT tb_1.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1
+SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABEL5119_t4 tb_2
 GO
 
-SELECT vw_1.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1
+SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 
 -- Using crossdb query data

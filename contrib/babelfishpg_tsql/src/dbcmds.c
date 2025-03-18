@@ -151,7 +151,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 
 	/* create guest schema in the database and revoke create permission */
-	/* from guest user on gurst schema. This has to be the last statement */
+	/* from guest user on guest schema. This has to be the last statement */
 	if (guest)
 	{
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
