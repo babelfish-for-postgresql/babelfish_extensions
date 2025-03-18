@@ -93,6 +93,7 @@ _ci_sysname#!#chinese_prc_ci_as
 _nchar#!#chinese_prc_ci_as
 _ntext#!#default
 _nvarchar#!#chinese_prc_ci_as
+_nvarchar_json#!#chinese_prc_ci_as
 _sql_variant#!#chinese_prc_ci_as
 _sysname#!#chinese_prc_ci_as
 _varchar#!#chinese_prc_ci_as
@@ -100,6 +101,7 @@ bpchar#!#chinese_prc_ci_as
 nchar#!#chinese_prc_ci_as
 ntext#!#default
 nvarchar#!#chinese_prc_ci_as
+nvarchar_json#!#chinese_prc_ci_as
 sql_variant#!#chinese_prc_ci_as
 sysname#!#chinese_prc_ci_as
 varchar#!#chinese_prc_ci_as

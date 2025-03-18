@@ -93,6 +93,7 @@ _ci_sysname#!#japanese_ci_as
 _nchar#!#japanese_ci_as
 _ntext#!#default
 _nvarchar#!#japanese_ci_as
+_nvarchar_json#!#japanese_ci_as
 _sql_variant#!#japanese_ci_as
 _sysname#!#japanese_ci_as
 _varchar#!#japanese_ci_as
@@ -100,6 +101,7 @@ bpchar#!#japanese_ci_as
 nchar#!#japanese_ci_as
 ntext#!#default
 nvarchar#!#japanese_ci_as
+nvarchar_json#!#japanese_ci_as
 sql_variant#!#japanese_ci_as
 sysname#!#japanese_ci_as
 varchar#!#japanese_ci_as

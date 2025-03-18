@@ -18,6 +18,7 @@ master#!#isc_domains_vu_prepare_s#!#my_tbl_type#!#table type#!#<NULL>#!#<NULL>#!
 master#!#isc_domains_vu_prepare_s#!#nchar_t#!#char#!#9#!#9#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains_vu_prepare_s#!#ntext_t#!#ntext#!#1073741823#!#2147483646#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains_vu_prepare_s#!#numeric_t#!#numeric#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#3#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#nvarchar_json_t#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains_vu_prepare_s#!#nvarchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains_vu_prepare_s#!#real_t#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#24#!#2#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains_vu_prepare_s#!#smalldatetime_t#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>

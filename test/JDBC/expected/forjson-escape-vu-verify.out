@@ -1,0 +1,480 @@
+
+
+/*
+*
+* Below scenerios tried on both AUTO and PATH mode      
+* For scenerios where auto Mode will fail, it is mentioned in expectation column. 
+* Those scenerios not been supported yet.
+* 
+*            |              Scenerios                  |       Expectation 
+* -----------------------------------------------------------------------------------------------------
+* Test 1     |     FOR JSON - both AUTO & PATH mode    |         Escape 
+* Test 2     |     JSON_QUERY                          |        Not escape         
+* Test 3     |     JSON_QUERY + FOR JSON               |        Not escape
+* Test 4     |     where clause                        |          Escape
+* Test 5     |     Subquery                            |        PATH - Not Escape , AUTO - Fail
+* Test 6     |     Comparison Operator                 |        Not Escape 
+* Test 7     |     Union                               |        PATH - Not Escape , AUTO - Fail
+* Test 8     |     Append String                       |          Escape
+* Test 9     |     Views                               |        Not escape
+* Test 10    |     Adding JSON_QUERY                   |          Escape
+* Test 11    |     Complex Scenerios                   |        Not Escape , Fail for nested AUTO
+* Test 12    |     Nested FOR JSON                     |        Escape only once 
+* Test 13    |     Functions                           |          Escape
+* Test 14    |     Stored Procedure                    |          Escape 
+* Test 15    |     CAST                                |          Escape
+* Test 16    |     Unicode Char                        |        Not Escape, support multi-language
+* 
+*/
+---------------------------------------------      Test 1 - FOR JSON ONLY    -------------------------------------------------
+select EmployeeDetails as json_auto FROM babel_5112_test1 FOR JSON AUTO;
+go
+~~START~~
+nvarchar
+[{"json_auto": "{\"name\": \"Sasuke\", \"age\": 28}"}, {"json_auto": "{\"name\": \"Ken kaneki\", \"age\": 35}"}]
+~~END~~
+
+
+select EmployeeDetails as json_without_array_wrapper FROM babel_5112_test1 for json path, WITHOUT_ARRAY_WRAPPER;
+go
+~~START~~
+nvarchar
+{"json_without_array_wrapper": "{\"name\": \"Sasuke\", \"age\": 28}"}, {"json_without_array_wrapper": "{\"name\": \"Ken kaneki\", \"age\": 35}"}
+~~END~~
+
+
+
+
+ 
+---------------------------------------------      Test 2  - JSON_QUERY ONLY    -------------------------------------------------
+select JSON_QUERY(EmployeeDetails, '$.skills') as test_json_query from babel_5112_test2;
+go
+~~START~~
+nvarchar
+["SQL", "Python"]
+["C++"]
+~~END~~
+
+select JSON_QUERY(EmployeeDetails, '$.contact') as test_json_query from babel_5112_test2;
+go
+~~START~~
+nvarchar
+{"email": "naruto@example.com", "phone": "123-456-7890"}
+{"email": "sasuke@example.com", "phone": "923-456-777"}
+~~END~~
+
+select JSON_QUERY(EmpId) as test_json_query from babel_5112_test2;
+go
+~~START~~
+nvarchar
+{"age": 17, "name": "Naruto"}
+{"age": 19, "name": "Sasuke"}
+~~END~~
+
+select JSON_QUERY(EmpID, '$.name') as test_json_query from babel_5112_test2;
+go
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+~~END~~
+
+
+
+---------------------------------------------      Test 3  - JSON_QUERY + FOR JSON ONLY    -------------------------------------------------
+select JSON_QUERY(EmployeeDetails, '$.skills') as test_both from babel_5112_test3 for json auto;
+go
+~~START~~
+nvarchar
+[{"test_both": ["SQL", "Python"]}, {"test_both": ["C++"]}]
+~~END~~
+
+select JSON_QUERY(EmployeeDetails, '$.contact') as test_both from babel_5112_test3 for json path;
+go
+~~START~~
+nvarchar
+[{"test_both": {"email": "naruto@example.com", "phone": "123-456-7890"}}, {"test_both": {"email": "sasuke@example.com", "phone": "923-456-777"}}]
+~~END~~
+
+select JSON_QUERY(EmpId) as test_both from babel_5112_test3 for json path, without_array_wrapper;
+go
+~~START~~
+nvarchar
+{"test_both": {"age": 17, "name": "Naruto"}}, {"test_both": {"age": 19, "name": "Sasuke"}}
+~~END~~
+
+select JSON_QUERY(EmpID, '$.name') as test_both from babel_5112_test3 for json path, INCLUDE_NULL_VALUES;
+go
+~~START~~
+nvarchar
+[{"test_both": null}, {"test_both": null}]
+~~END~~
+
+
+SELECT 
+    JSON_QUERY(empID, '$') AS 'employee.name',
+    JSON_QUERY(EmployeeDetails, '$.contact') AS 'employee.contact.email'
+FROM 
+    babel_5112_test1
+FOR JSON PATH
+go
+~~START~~
+nvarchar
+[{"employee": {"name": {"age": 25, "name": "Naruto"}}}, {"employee": {"name": {"age": 35, "name": "Uchiha"}}}]
+~~END~~
+
+
+
+---------------------------------------------      Test 4  - where clause   -------- -------------------------------------------------
+SELECT  ID, EmployeeDetails as non_json_query_col , JSON_QUERY(EmpID) as json_query_col FROM babel_5112_test4
+WHERE JSON_QUERY(EmployeeDetails, '$.skills')  = '["C++"]'  
+for json path;
+go
+~~START~~
+nvarchar
+[{"ID": 2, "non_json_query_col": "{\"skills\": [\"C++\"] , \"contact\": {\"email\": \"sasuke@example.com\", \"phone\": \"923-456-777\"}}", "json_query_col": {"age": 19, "name": "Sasuke"}}]
+~~END~~
+
+
+SELECT  ID, EmployeeDetails as non_json_query_col , JSON_QUERY(EmpID) as json_query_col FROM babel_5112_test4
+WHERE JSON_QUERY(EmployeeDetails, '$.skills')  = '["C++"]'  
+for json auto, without_array_wrapper;
+go
+~~START~~
+nvarchar
+{"ID": 2, "non_json_query_col": "{\"skills\": [\"C++\"] , \"contact\": {\"email\": \"sasuke@example.com\", \"phone\": \"923-456-777\"}}", "json_query_col": {"age": 19, "name": "Sasuke"}}
+~~END~~
+
+
+
+---------------------------------------------      Test 5  - Subquery check    -------------------------------------------------
+SELECT ID, child.child_col as json_query_parent_col 
+from 
+  (select ID ,JSON_QUERY(EmployeeDetails,'$.contact') as child_col from babel_5112_test5 ) child
+FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"ID": 1, "json_query_parent_col": {"email": "naruto@example.com", "phone": "123-456-7890"}}, {"ID": 2, "json_query_parent_col": {"email": "sasuke@example.com", "phone": "923-456-777"}}]
+~~END~~
+
+
+SELECT 
+    ID, 
+    (SELECT JSON_QUERY(EmployeeDetails, '$.contact') as child_col FROM babel_5112_test5 e1 WHERE e1.id = e2.id) as parent_json_query_col
+FROM 
+    babel_5112_test5 e2
+FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"ID": 1, "parent_json_query_col": {"email": "naruto@example.com", "phone": "123-456-7890"}}, {"ID": 2, "parent_json_query_col": {"email": "sasuke@example.com", "phone": "923-456-777"}}]
+~~END~~
+
+
+-- FAIL (KNOWN CASE)
+SELECT ID, child.child_col as json_query_parent_col 
+from 
+  (select ID ,JSON_QUERY(EmployeeDetails,'$.contact') as child_col from babel_5112_test5 ) child
+FOR JSON AUTO;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+-- FAIL (KNOWN CASE)
+SELECT ID, child.child_col as json_query_parent_col
+from
+  (select ID, JSON_QUERY(EmployeeDetails, '$.contact') as child_col from babel_5112_test5) child)
+SELECT 
+    ID, 
+    (SELECT JSON_QUERY(EmployeeDetails, '$.contact') as child_col FROM babel_5112_test5 e1 WHERE e1.id = e2.id) as parent_json_query_col
+FROM 
+    babel_5112_test5 e2
+FOR JSON AUTO;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ')' at line 4 and character position 96)~~
+
+
+
+---------------------------------------------      Test 6  - Comparator Op    -------------------------------------------------
+select
+case when JSON_QUERY(EmployeeDetails,'$.skills') > '["C++"]' then '["yes"]' else '["no"]' end as cmp_json_query 
+from babel_5112_test6
+for json auto; 
+go
+~~START~~
+nvarchar
+[{"cmp_json_query": "[\"yes\"]"}, {"cmp_json_query": "[\"no\"]"}]
+~~END~~
+
+
+SELECT CASE WHEN JSON_QUERY(EmployeeDetails, '$.skills') = '["C++"]' THEN 'true' ELSE 'false' END AS compare_using_json_query FROM babel_5112_test6 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+go
+~~START~~
+nvarchar
+{"compare_using_json_query": "false"}, {"compare_using_json_query": "true"}
+~~END~~
+
+
+
+---------------------------------------------      Test 7  - Union   -----------------------------------------------------------
+select top 1 * from (
+    SELECT JSON_QUERY(EmployeeDetails, '$.skills') as test_union FROM babel_5112_test7
+    UNION
+    SELECT JSON_QUERY(EmployeeDetails, '$.contact') as test_union FROM babel_5112_test7
+) as union_query
+order by test_union
+FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"test_union": ["C++"]}]
+~~END~~
+
+
+--FAIL (KNOWN CASE)
+select * from (
+    SELECT JSON_QUERY(EmployeeDetails, '$.skills') as test_union FROM babel_5112_test7
+    UNION 
+    SELECT JSON_QUERY(EmployeeDetails, '$.contact') as test_union FROM babel_5112_test7
+) as union_query
+FOR JSON AUTO;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+
+---------------------------------------------      Test 8  - Append String to JSON_QUERY    -------------------------------------------------
+select JSON_QUERY(EmpID,'$') + 'add' as test_append from babel_5112_test8 for json path;
+go
+~~START~~
+nvarchar
+[{"test_append": "{\"age\": 17, \"name\": \"Naruto\"}add"}, {"test_append": "{\"age\": 19, \"name\": \"Sasuke\"}add"}]
+~~END~~
+
+
+select JSON_QUERY(EmpID,'$') + 'add' as test_append from babel_5112_test8 for json auto;
+go
+~~START~~
+nvarchar
+[{"test_append": "{\"age\": 17, \"name\": \"Naruto\"}add"}, {"test_append": "{\"age\": 19, \"name\": \"Sasuke\"}add"}]
+~~END~~
+
+
+
+
+---------------------------------------------      Test 9  - Views      ---------------------------------------------------------------
+SELECT * FROM test_babel_5112_view FOR JSON PATH;
+GO
+~~START~~
+nvarchar
+[{"json_query_col": {"age": 17, "name": "Naruto"}}, {"json_query_col": {"age": 19, "name": "Sasuke"}}]
+~~END~~
+
+
+SELECT * FROM test_babel_5112_view FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"json_query_col": {"age": 17, "name": "Naruto"}}, {"json_query_col": {"age": 19, "name": "Sasuke"}}]
+~~END~~
+
+
+
+---------------------------------------------      Test 10  - Adding JSON_QUERY      -----------------------------------------------------------
+select JSON_QUERY(EmpID) + JSON_QUERY(EmployeeDetails) as add_json_query from babel_5112_test10 for json path;
+GO
+~~START~~
+nvarchar
+[{"add_json_query": "{\"age\": 17, \"name\": \"Naruto\"}{\"skills\": [\"SQL\", \"Python\"], \"contact\": {\"email\": \"naruto@example.com\", \"phone\": \"123-456-7890\"}}"}, {"add_json_query": "{\"age\": 19, \"name\": \"Sasuke\"}{\"skills\": [\"C++\"], \"contact\": {\"email\": \"sasuke@example.com\", \"phone\": \"923-456-777\"}}"}]
+~~END~~
+
+
+
+---------------------------------------------      Test 11  - Complex Cases      ----------------------------------------------------------------
+SELECT 
+    ID,
+    JSON_QUERY(
+        (SELECT name = JSON_VALUE(e2.EmpID, '$.name')
+         FROM babel_5112_test11 e2 
+         WHERE e2.ID = e1.ID 
+         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
+    ) as employee_info
+FROM babel_5112_test11 e1
+FOR JSON PATH;
+GO
+~~START~~
+nvarchar
+[{"ID": 1, "employee_info": {"name": "Naruto"}}, {"ID": 2, "employee_info": {"name": "Sasuke"}}]
+~~END~~
+
+
+-- FAIL ( KNOWN CASE )
+SELECT 
+    ID,
+    JSON_QUERY(
+        (SELECT name = JSON_VALUE(e2.EmpID, '$.name')
+         FROM babel_5112_test11 e2 
+         WHERE e2.ID = e1.ID 
+         FOR JSON AUTO, WITHOUT_ARRAY_WRAPPER)
+    ) as employee_info
+FROM babel_5112_test11 e1
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+SELECT 
+    ID,
+    JSON_QUERY(
+        (SELECT name = JSON_VALUE(e2.EmpID, '$.name')
+         FROM babel_5112_test11 e2 
+         WHERE e2.ID = e1.ID 
+         FOR JSON AUTO, WITHOUT_ARRAY_WRAPPER)
+    ) as employee_info
+FROM babel_5112_test11 e1
+FOR JSON PATH;
+GO
+~~START~~
+nvarchar
+[{"ID": 1, "employee_info": {"name": "Naruto"}}, {"ID": 2, "employee_info": {"name": "Sasuke"}}]
+~~END~~
+
+
+
+---------------------------------------------      Test 12  - Nested FOR JSON      -----------------------------------------------------------
+SELECT 
+    ID,
+    (select JSON_QUERY( EmployeeDetails, '$.contact') as inside_json_path from babel_5112_test12 FOR JSON AUTO ) as test_nested_for_json
+FROM babel_5112_test12
+FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"ID": 1, "test_nested_for_json": "[{\"inside_json_path\": {\"email\": \"naruto@example.com\", \"phone\": \"123-456-7890\"}}, {\"inside_json_path\": {\"email\": \"sasuke@example.com\", \"phone\": \"923-456-777\"}}]"}, {"ID": 2, "test_nested_for_json": "[{\"inside_json_path\": {\"email\": \"naruto@example.com\", \"phone\": \"123-456-7890\"}}, {\"inside_json_path\": {\"email\": \"sasuke@example.com\", \"phone\": \"923-456-777\"}}]"}]
+~~END~~
+
+
+SELECT 
+    ID,
+    (select JSON_QUERY( EmployeeDetails, '$.contact') as inside_json_path from babel_5112_test12 FOR JSON AUTO ) as test_nested_for_json
+FROM babel_5112_test12
+FOR JSON AUTO;
+go
+~~START~~
+nvarchar
+[{"ID": 1, "test_nested_for_json": [{"inside_json_path": {"email": "naruto@example.com", "phone": "123-456-7890"}}, {"inside_json_path": {"email": "sasuke@example.com", "phone": "923-456-777"}}]}, {"ID": 2, "test_nested_for_json": [{"inside_json_path": {"email": "naruto@example.com", "phone": "123-456-7890"}}, {"inside_json_path": {"email": "sasuke@example.com", "phone": "923-456-777"}}]}]
+~~END~~
+
+
+
+---------------------------------------------      Test 13 - Functions      --------------------------------------------------------------
+CREATE FUNCTION dbo.GetEmployeeSkills
+(
+    @EmployeeID INT
+)
+RETURNS NVARCHAR(MAX)
+AS
+BEGIN
+    RETURN (
+        SELECT JSON_QUERY(EmployeeDetails, '$.skills')
+        FROM babel_5112_test13
+        WHERE ID = @EmployeeID
+    );
+END;
+GO
+
+SELECT e.ID, dbo.GetEmployeeSkills(e.ID) AS skills
+FROM  babel_5112_test13 e
+FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"ID": 1, "skills": "[\"SQL\", \"Python\"]"}, {"ID": 2, "skills": "[\"C++\"]"}]
+~~END~~
+
+
+
+---------------------------------------------      Test 14 -  Stored Procedure      --------------------------------------------------------------
+CREATE PROCEDURE GetEmployeeBasicInfo
+    @EmployeeID INT
+AS
+BEGIN
+    SELECT ID, JSON_QUERY(EmployeeDetails, '$.skills') AS skills 
+    FROM babel_5112_test14 
+    WHERE ID = @EmployeeID
+    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+END;
+GO
+
+-- Execute the procedure and get the JSON result directly
+EXEC GetEmployeeBasicInfo @EmployeeID = 1;
+GO
+~~START~~
+nvarchar
+{"ID": 1, "skills": ["SQL", "Python"]}
+~~END~~
+
+
+
+---------------------------------------------      Test 15 - CAST      --------------------------------------------------------------
+select CAST(JSON_QUERY(EmployeeDetails, '$.skills') AS NVARCHAR(100) ) as test_cast from babel_5112_test15 for json PATH;
+go
+~~START~~
+nvarchar
+[{"test_cast": "[\"SQL\", \"Python\"]"}, {"test_cast": "[\"C++\"]"}]
+~~END~~
+
+select CAST(JSON_QUERY(EmployeeDetails, '$.skills') AS VARCHAR(100) ) as test_cast from babel_5112_test15 for json AUTO;
+go
+~~START~~
+nvarchar
+[{"test_cast": "[\"SQL\", \"Python\"]"}, {"test_cast": "[\"C++\"]"}]
+~~END~~
+
+
+
+---------------------------------------------      Test 16 -  Testing Nvarchar Unicode      --------------------------------------------------------------
+SELECT 
+    JSON_QUERY(EmployeeDetails, '$.skills') as skills,
+    JSON_VALUE(EmployeeDetails, '$.skills[0]') as first_skill
+FROM  babel_5112_test16 FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"skills": ["SQL", "Python", "日本語", "Español"], "first_skill": "SQL"}, {"skills": ["C++", "русский язык", "中文"], "first_skill": "C++"}, {"skills": ["JavaScript", "العربية", "हिन्दी"], "first_skill": "JavaScript"}]
+~~END~~
+
+
+SELECT 
+    JSON_QUERY(EmployeeDetails, '$.skills') as skills,
+    JSON_VALUE(EmployeeDetails, '$.skills[0]') as first_skill
+FROM  babel_5112_test16 FOR JSON PATH;
+go
+~~START~~
+nvarchar
+[{"skills": ["SQL", "Python", "日本語", "Español"], "first_skill": "SQL"}, {"skills": ["C++", "русский язык", "中文"], "first_skill": "C++"}, {"skills": ["JavaScript", "العربية", "हिन्दी"], "first_skill": "JavaScript"}]
+~~END~~
+
+
+
+--------------------------------------------   Test 17 - Testing Nvarchar_JSON Casting  -----------------------------------------------
+select CAST(JSON_QUERY(EmployeeDetails) as nvarchar_json) as test_cast from babel_5112_test16;
+go
+~~START~~
+nvarchar
+{"skills": ["SQL", "Python", "日本語", "Español"]}
+{"skills": ["C++", "русский язык", "中文"]}
+{"skills": ["JavaScript", "العربية", "हिन्दी"]}
+~~END~~
+

@@ -365,3 +365,8 @@ WITH FUNCTION sys.float82varchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICI
 
 CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
 WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;
+
+-- For JSON Functions
+SET enable_domain_typmod = TRUE;
+CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
+RESET enable_domain_typmod;

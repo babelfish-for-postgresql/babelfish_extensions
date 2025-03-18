@@ -93,6 +93,7 @@ _ci_sysname#!#bbf_unicode_cp1_ci_as
 _nchar#!#bbf_unicode_cp1_ci_as
 _ntext#!#default
 _nvarchar#!#bbf_unicode_cp1_ci_as
+_nvarchar_json#!#bbf_unicode_cp1_ci_as
 _sql_variant#!#bbf_unicode_cp1_ci_as
 _sysname#!#bbf_unicode_cp1_ci_as
 _varchar#!#bbf_unicode_cp1_ci_as
@@ -100,6 +101,7 @@ bpchar#!#bbf_unicode_cp1_ci_as
 nchar#!#bbf_unicode_cp1_ci_as
 ntext#!#default
 nvarchar#!#bbf_unicode_cp1_ci_as
+nvarchar_json#!#bbf_unicode_cp1_ci_as
 sql_variant#!#bbf_unicode_cp1_ci_as
 sysname#!#bbf_unicode_cp1_ci_as
 varchar#!#bbf_unicode_cp1_ci_as
