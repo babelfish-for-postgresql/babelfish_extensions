@@ -2,26 +2,6 @@
 USE msdb;
 GO
 
-SELECT DISTINCT f.nspname, f.funcname
-FROM babelfish_function_ext f
-WHERE EXISTS (
-    SELECT 1 
-    FROM babelfish_namespace_ext n 
-    WHERE n.nspname = f.nspname
-)
-ORDER BY f.nspname, f.funcname;
-GO
-
-SELECT DISTINCT f.nspname, f.funcname
-FROM babelfish_function_ext f
-WHERE NOT EXISTS (
-    SELECT 1 
-    FROM babelfish_namespace_ext n 
-    WHERE n.nspname = f.nspname
-)
-ORDER BY f.nspname, f.funcname;
-GO
-
 REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
 GO
 
@@ -40,27 +20,7 @@ GO
 DROP PROCEDURE IF EXISTS babel_5146_prepare_p3;
 GO
 
--- tsql user=babel_5146_user_l1 password=abc
-USE msdb;
-GO
-
-DROP FUNCTION IF EXISTS babel_5146_test_schema_s1.fn_syspolicy_is_automation_enabled();
-GO
-
-DROP VIEW IF EXISTS babel_5146_test_schema_s1.syspolicy_configuration;
-GO
-
-DROP VIEW IF EXISTS babel_5146_test_schema_s1.syspolicy_system_health_state;
-GO
-
--- tsql
-USE msdb;
-GO
-
-DROP SCHEMA IF EXISTS babel_5146_test_schema_s1;
-GO
-
-DROP USER IF EXISTS babel_5146_user_u1;
+REVOKE CONNECT FROM guest;
 GO
 
 -- psql
@@ -71,4 +31,11 @@ GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE msdb
+GO
+
+DROP LOGIN babel_5146_user_l1;
 GO

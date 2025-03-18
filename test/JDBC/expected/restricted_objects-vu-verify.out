@@ -1,18 +1,11 @@
 -- tsql
--- reset the login password
 USE msdb
 GO
 
 ALTER LOGIN babel_5146_user_l1 WITH PASSWORD = 'abc';
 GO
 
-ALTER LOGIN babel_5146_user_l2 WITH PASSWORD = 'abc';
-GO
-
-GRANT CONNECT TO guest;
-GO
-
--- tsql user=babel_5146_user_l2 password=abc
+-- tsql user=babel_5146_user_l1 password=abc
 -- should throw error
 USE msdb
 GO
@@ -38,7 +31,7 @@ GO
 ~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
 
 
--- psql user=babel_5146_user_l2 password=abc
+-- psql user=babel_5146_user_l1 password=abc
 -- should throw error
 DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
 GO
@@ -62,25 +55,4 @@ GO
 
 ~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
     Server SQLState: 42501)~~
-
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) IN ('babel_5146_user_l1', 'babel_5146_user_l2') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-~~START~~
-bool
-t
-t
-~~END~~
-
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
 
