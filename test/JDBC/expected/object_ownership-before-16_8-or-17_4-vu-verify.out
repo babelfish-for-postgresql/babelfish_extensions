@@ -10,6 +10,8 @@ create user object_ownership_u2 for login object_ownership_l2;
 go
 alter role object_ownership_r1 add member object_ownership_u2;
 go
+alter role object_ownership_r1 drop member object_ownership_u1;
+go
 -- Add the computed column
 alter table object_ownership_s3.old_t add c as (a + b);
 go
@@ -145,6 +147,52 @@ select * from object_ownership_s2.pt2;
 go
 ~~START~~
 int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
+
+/*** USER WILL HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY CURRENT_USER ***/
+select * from object_ownership_s3.old_t1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s3.old_v1;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s3.old_p1;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s3.old_f1();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s3.old_sq1;
+go
+~~START~~
+bigint
+1
 ~~END~~
 
 use master
@@ -407,6 +455,48 @@ go
 ~~START~~
 int#!#datetime#!#numeric#!#int#!#int
 ~~END~~
+
+
+/*** REDUCTION OF PRIVILEGE ***/
+/*** USER WILL NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA AND OBJECT OWNED BY ROLE, CURRENT USER IS NOT A PART OF THE ROLE ***/
+select * from object_ownership_s3.old_t1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table old_t1)~~
+
+select * from object_ownership_s3.old_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view old_v1)~~
+
+exec object_ownership_s3.old_p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure old_p1)~~
+
+select object_ownership_s3.old_f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function old_f1)~~
+
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table old_t1)~~
+
+select next value for object_ownership_s3.old_sq1;
+go
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence old_sq1)~~
 
 use master
 go

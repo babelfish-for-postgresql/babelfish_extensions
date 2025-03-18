@@ -265,11 +265,11 @@ insert into object_ownership_s2.t1 values (2, 3);
 go
 select next value for object_ownership_s2.sq1;
 go
-select * from object_ownership_s3.pt2;
-go
 select * from object_ownership_s2.tvf1();
 go
 select * from object_ownership_s2.mtvf1();
+go
+select * from object_ownership_s3.pt2;
 go
 use master
 go
@@ -324,6 +324,33 @@ go
 use object_ownership_db;
 go
 select current_user;
+go
+/** SCHEMA OWNER SHOULD BE SAME AS THE OBJECT OWNER **/
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(c.relname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON c.relowner = r2.oid
+WHERE n.nspname like 'object_ownership_db_object_ownership_%'
+ORDER BY r2.rolname, c.relname;
+go
+
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(p.proname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON p.proowner = r2.oid
+WHERE n.nspname LIKE 'object_ownership_db_object_ownership_%'
+ORDER BY r2.rolname, p.proname;
+go
+
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(t.typname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_type t
+JOIN pg_namespace n ON n.oid = t.typnamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON t.typowner = r2.oid
+WHERE n.nspname LIKE 'object_ownership_db_object_ownership_%'
+ORDER BY r2.rolname, t.typname;
 go
 
 /**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/

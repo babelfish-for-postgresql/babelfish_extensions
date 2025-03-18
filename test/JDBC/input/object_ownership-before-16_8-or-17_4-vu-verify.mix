@@ -193,8 +193,8 @@ select * from object_ownership_s2.pt2;
 go
 
 /*** REDUCTION OF PRIVILEGE ***/
-/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
-/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY CURRENT_USER ***/
+/*** USER WILL NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA AND OBJECT OWNED BY ROLE, CURRENT USER IS NOT A PART OF THE ROLE ***/
 select * from object_ownership_s3.old_t1;
 go
 select * from object_ownership_s3.old_v1;
