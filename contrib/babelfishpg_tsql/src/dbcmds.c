@@ -163,7 +163,7 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	if (guest)
 	{
-		if (!owner_is_sa)
+		if (!owner_is_sa_or_superuser)
 			expected_stmt_num = list_length(logins) > 0 ? 19 : 18;
 		else
 			expected_stmt_num = list_length(logins) > 0 ? 18 : 17;
@@ -1714,6 +1714,12 @@ revoke_create_privilege_from_guest_user(PG_FUNCTION_ARGS)
 	TableScanDesc		scan;
 	HeapTuple		tuple;
 	bool			is_null;
+
+	if (!creating_extension)
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+					"revoke_create_privilege_from_guest_user()")));
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
