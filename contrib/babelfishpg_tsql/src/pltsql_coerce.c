@@ -1392,8 +1392,8 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("money");
 			}
 			/* float and real will have return type float */
-			else if (new_input_typeids[0] == FLOAT8OID
-			|| new_input_typeids[0] == FLOAT4OID)
+			/* in all other cases it will default to float data type */
+			else
 			{
 				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("float");
 			}
