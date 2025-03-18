@@ -2,6 +2,12 @@
 USE msdb;
 GO
 
+SELECT nspname FROM babelfish_namespace_ext ORDER BY nspname;
+GO
+
+SELECT nspname, funcname FROM babelfish_function_ext ORDER BY nspname;
+GO
+
 REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
 GO
 
