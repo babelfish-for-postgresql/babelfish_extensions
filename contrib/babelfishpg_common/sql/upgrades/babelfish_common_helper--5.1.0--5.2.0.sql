@@ -8,9 +8,20 @@
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
 -- For JSON Functions
-SET enable_domain_typmod = TRUE;
-CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
-RESET enable_domain_typmod;
+DO
+$body$
+BEGIN
+    IF NOT EXISTS (
+        SELECT  *
+            FROM pg_type 
+        WHERE typname = 'nvarchar_json')
+    THEN
+        SET enable_domain_typmod = TRUE;
+        CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
+        RESET enable_domain_typmod;
+    END IF;
+END
+$body$;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
