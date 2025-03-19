@@ -5370,142 +5370,144 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 static void 
 transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
-	List *measure_cols;
-	List *src_cols;
-	bool has_unpivot;
-	Node *where_clause;
-	ListCell *lc;
+    List *measure_cols;
+    List *src_cols;
+    bool has_unpivot;
+    Node *where_clause;
+    ListCell *lc;
 
-	measure_cols = NIL;
-	src_cols = NIL;
-	has_unpivot = false;
-	where_clause = stmt->whereClause;
+    measure_cols = NIL;
+    src_cols = NIL;
+    has_unpivot = false;
+    where_clause = stmt->whereClause;
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
-	return;
+    if (sql_dialect != SQL_DIALECT_TSQL)
+    return;
 
-	foreach(lc, stmt->fromClause)
-		has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), 
-														  &where_clause, 
-														  &measure_cols, 
-														  &src_cols);
+    foreach(lc, stmt->fromClause)
+        has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), 
+                                                          &where_clause, 
+                                                          &measure_cols, 
+                                                          &src_cols);
 
-	if (has_unpivot)
-	{
-		stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
+    if (has_unpivot)
+    {
+        stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
 
-		/* Create IS NOT NULL where conditions for all collected columns */
-		if (measure_cols != NIL)
-		{
-			foreach(lc, measure_cols)
-			{
-				char *measure_col = strVal(lfirst(lc));
-				ColumnRef *measure_ref;
-				NullTest *null_test;
+        /* Create IS NOT NULL where conditions for all collected columns */
+        if (measure_cols != NIL)
+        {
+            foreach(lc, measure_cols)
+            {
+                char *measure_col = strVal(lfirst(lc));
+                ColumnRef *measure_ref;
+                NullTest *null_test;
 
-				/* Create IS NOT NULL condition */
-				measure_ref = makeNode(ColumnRef);
-				measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
-				measure_ref->location = -1;
+                /* Create IS NOT NULL condition */
+                measure_ref = makeNode(ColumnRef);
+                measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
+                measure_ref->location = -1;
 
-				null_test = makeNode(NullTest);
-				null_test->arg = (Expr *)measure_ref;
-				null_test->nulltesttype = IS_NOT_NULL;
-				null_test->argisrow = false;
-				null_test->location = -1;
+                null_test = makeNode(NullTest);
+                null_test->arg = (Expr *)measure_ref;
+                null_test->nulltesttype = IS_NOT_NULL;
+                null_test->argisrow = false;
+                null_test->location = -1;
 
-				/* Add to WHERE clause */
-				if (where_clause)
-				{
-					BoolExpr *bool_expr = makeNode(BoolExpr);
-					bool_expr->boolop = AND_EXPR;
-					bool_expr->args = list_make2(where_clause, null_test);
-					bool_expr->location = -1;
-					where_clause = (Node *)bool_expr;
-				}
-				else
-				{
-					where_clause = (Node *)null_test;
-				}
-			}
-			stmt->whereClause = where_clause;
-		}
-	}		
-	/* Free allocated memory */
-	list_free_deep(measure_cols);
+                /* Add to WHERE clause */
+                if (where_clause)
+                {
+                    BoolExpr *bool_expr = makeNode(BoolExpr);
+                    bool_expr->boolop = AND_EXPR;
+                    bool_expr->args = list_make2(where_clause, null_test);
+                    bool_expr->location = -1;
+                    where_clause = (Node *)bool_expr;
+                }
+                else
+                {
+                    where_clause = (Node *)null_test;
+                }
+            }
+            stmt->whereClause = where_clause;
+        }
+    }		
+    /* Free allocated memory */
+    list_free_deep(measure_cols);
 }
 
 /*
- * Recursively process UNPIVOT list nodes in FROM clause tree.
- * Traverses nodes to find and process UNPIVOT transformations.
- * Extracts metadata from List and reassigns JoinExpr node to pointer.
+ * Recursively find and process UNPIVOT list nodes in FROM clause tree.
  *
- * Parameters:
- *   node_ptr - Current node being processed
- *   where_clause - Accumulating WHERE conditions
- *   measure_cols - List of measure columns for NULL handling
- *   unpivot_src_cols - Source columns for SELECT * filtering
+ * node_ptr - Current node being processed
+ * where_clause - Accumulating WHERE conditions
+ * measure_cols - List of measure columns for NULL handling
+ * unpivot_src_cols - Source columns for SELECT * filtering
  *
- * Returns: true if UNPIVOT found and processed
+ * Returns: true if UNPIVOT found and processed; else false
+ * 
+ * Note:
+ *   1. Traverses down Join nodes in a DFS fashion to find and process
+ *      UNPIVOT transformations.
+ *   2. Extracts metadata from List and reassigns JoinExpr node to pointer.
  */
 static bool 
 transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **measure_cols, List **unpivot_src_cols)
 {
-	JoinExpr *join;
-	List *unpivot_info;
-	char *measure_col;
-	Node *transformed_node;
-	List *cols;
-	bool found_unpivot = false;
+    JoinExpr *join;
+    List *unpivot_info;
+    char *measure_col;
+    Node *transformed_node;
+    List *cols;
+    bool found_unpivot = false;
 
 
-	if (node_ptr == NULL || *node_ptr == NULL)
-		return false;
+    if (node_ptr == NULL || *node_ptr == NULL)
+        return false;
 
-	if (IsA(*node_ptr, JoinExpr))
-	{
-		join = (JoinExpr *)*node_ptr;
-		found_unpivot |= transform_unpivot_clause_recursive(&join->larg, where_clause, measure_cols, unpivot_src_cols);
-		found_unpivot |= transform_unpivot_clause_recursive(&join->rarg, where_clause, measure_cols, unpivot_src_cols);
-	}
-	else if (IsA(*node_ptr, List))
-	{
-		unpivot_info = (List *)*node_ptr;
-		if (unpivot_info != NULL &&
-			list_length(unpivot_info) == 7 &&
-			IsA(linitial(unpivot_info), String) &&
-			strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
-		{
-			measure_col = strVal(list_nth(unpivot_info,3));
-			transformed_node = list_nth(unpivot_info, 6);
+    if (IsA(*node_ptr, JoinExpr))
+    {
+        join = (JoinExpr *)*node_ptr;
+        found_unpivot |= transform_unpivot_clause_recursive(&join->larg, where_clause, measure_cols, unpivot_src_cols);
+        found_unpivot |= transform_unpivot_clause_recursive(&join->rarg, where_clause, measure_cols, unpivot_src_cols);
+    }
+    else if (IsA(*node_ptr, List))
+    {
+        unpivot_info = (List *)*node_ptr;
+        if (unpivot_info != NULL &&
+            list_length(unpivot_info) == 7 &&
+            IsA(linitial(unpivot_info), String) &&
+            strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
+        {
+            measure_col = strVal(list_nth(unpivot_info,3));
+            transformed_node = list_nth(unpivot_info, 6);
 
-			/* Add this measure column to the list */
-			*measure_cols = lappend(*measure_cols, makeString(measure_col));
+            /* Add this measure column to the list */
+            *measure_cols = lappend(*measure_cols, makeString(measure_col));
 
-			/* Get source columns */
-			cols = (List *)list_nth(unpivot_info, 5);
-			if (*unpivot_src_cols == NIL)
-				*unpivot_src_cols = copyObject(cols);
-			else
-				*unpivot_src_cols = list_concat(*unpivot_src_cols, copyObject(cols));
+            /* Get source columns */
+            cols = (List *)list_nth(unpivot_info, 5);
+            if (*unpivot_src_cols == NIL)
+                *unpivot_src_cols = copyObject(cols);
+            else
+                *unpivot_src_cols = list_concat(*unpivot_src_cols, copyObject(cols));
 
-			/* Replace UNPIVOT info with transformed node */
-			*node_ptr = transformed_node;
-			found_unpivot = true;
-			/* Recurse down unpivot join node to look for additional unpivots */
-			found_unpivot |= transform_unpivot_clause_recursive(node_ptr, where_clause, measure_cols, unpivot_src_cols);
-		}
-	}
+            /* Replace UNPIVOT info with transformed node */
+            *node_ptr = transformed_node;
+            found_unpivot = true;
+            /* Recurse down unpivot join node to look for additional unpivots */
+            found_unpivot |= transform_unpivot_clause_recursive(node_ptr, where_clause, measure_cols, unpivot_src_cols);
+        }
+    }
 
-	return found_unpivot;
+    return found_unpivot;
 }
 
 /*
  * Process SELECT * for UNPIVOT queries by removing source columns.
  *
- *   pstate - Parser state
- *   stmt - Statement containing target list
- *   source_cols - List of columns to exclude
+ * pstate - Parser state
+ * stmt - Statement containing target list
+ * source_cols - List of columns to exclude
  *
  * Returns: Filtered target list excluding unpivot source columns
  * Note: Only processes if target list contains * 
@@ -5513,66 +5515,68 @@ transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **
 static List *
 filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols)
 {
-	Query *temp_query;
-	List *result_targetlist = NIL;
-	ListCell *lc;
-	
-	/* 
-	 * Return if not 'SELECT *'
-	 *
-	 * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
-	 * Does not check: `SELECT unpivot_alias.* ...`
-	 * Validate against more variations of targetlist
-	 */
-	if (stmt->targetList == NIL || 
-		!IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
-		!IsA(linitial(((ColumnRef *)((ResTarget *)linitial(stmt->targetList))->val)->fields), A_Star))
-	{
-		return stmt->targetList;
-	}
+    Query *temp_query;
+    List *result_targetlist;
+    ListCell *lc;
+    
+    /* 
+     * Return if not 'SELECT *'
+     *
+     * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
+     * Does not check: `SELECT unpivot_alias.* ...`
+     * Validate against more variations of targetlist
+     */
+    if (stmt->targetList == NIL || 
+        !IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
+        !IsA(linitial(((ColumnRef *)((ResTarget *)linitial(stmt->targetList))->val)->fields), A_Star))
+    {
+        return stmt->targetList;
+    }
 
-	/* Analyze to expand * */
-	temp_query = parse_sub_analyze((Node *)copyObject(stmt), 
-								 pstate, 
-								 NULL, 
-								 false, 
-								 false);
+    result_targetlist = NIL;
 
-	/* Filter out source columns from TargetList */
-	foreach(lc, temp_query->targetList)
-	{
-		TargetEntry *te;
-		bool skip_column;
-	    ListCell *source_lc;
+    /* Analyze to expand * */
+    temp_query = parse_sub_analyze((Node *)copyObject(stmt), 
+                                 pstate, 
+                                 NULL, 
+                                 false, 
+                                 false);
 
-		te = (TargetEntry *)lfirst(lc);
-		skip_column = false;
+    /* Filter out source columns from TargetList */
+    foreach(lc, temp_query->targetList)
+    {
+        TargetEntry *te;
+        bool skip_column;
+        ListCell *source_lc;
 
-		/* Check if this column is in source_cols */
-		for (source_lc = list_head(source_cols); source_lc != NULL;)
-		{
-			String *source_col = (String *)lfirst(source_lc);
-			ListCell *next_lc = lnext(source_cols, source_lc);
+        te = (TargetEntry *)lfirst(lc);
+        skip_column = false;
 
-			if (strcmp(te->resname, strVal(source_col)) == 0)
-			{
-				skip_column = true;
-				/* Remove the matched source column to avoid duplicate removal */
-				source_cols = list_delete_cell(source_cols, source_lc);
-				break;
-			}
-			source_lc = next_lc;
-		}
-		
-		if (!skip_column)
-		{
-			/* Create new ResTarget for this column */
-			ResTarget *rt = make_restarget_from_cstr_list(list_make1(makeString(te->resname)));
-			result_targetlist = lappend(result_targetlist, rt);
-		}
-	}
-	
-	return result_targetlist;
+        /* Check if this column is in source_cols */
+        for (source_lc = list_head(source_cols); source_lc != NULL;)
+        {
+            String *source_col = (String *)lfirst(source_lc);
+            ListCell *next_lc = lnext(source_cols, source_lc);
+
+            if (strcmp(te->resname, strVal(source_col)) == 0)
+            {
+                skip_column = true;
+                /* Remove the matched source column to avoid duplicate removal */
+                source_cols = list_delete_cell(source_cols, source_lc);
+                break;
+            }
+            source_lc = next_lc;
+        }
+        
+        if (!skip_column)
+        {
+            /* Create new ResTarget for this column */
+            ResTarget *rt = make_restarget_from_cstr_list(list_make1(makeString(te->resname)));
+            result_targetlist = lappend(result_targetlist, rt);
+        }
+    }
+    
+    return result_targetlist;
 }
 
 static inline bool
