@@ -1,0 +1,66 @@
+CREATE TABLE alter_t (a INT PRIMARY KEY, b VARCHAR(50), c VARCHAR(50), d INT);
+GO
+
+CREATE TABLE alter_t1 (a INT PRIMARY KEY, b VARCHAR(50));
+GO
+
+CREATE TABLE alter_t2 (c INT PRIMARY KEY, d VARCHAR(50));
+GO
+
+CREATE TABLE alter_t3 (e INT PRIMARY KEY, f VARCHAR(50));
+GO
+
+CREATE TABLE alter_t4 (a int, b varchar(20), c decimal(10,2), d datetime, e char(10) );
+GO
+
+Insert into alter_t VALUES (1, 'a', 'a', 1), (2, 'b', 'b', 2), (3, 'c', 'c', 3), (4, 'd', 'd', 4), (5, 'e', 'e', 5), (6, 'f', 'f', 6), (7, 'g', 'g', 7), (8, 'h', 'h', 8), (9, 'i', 'i', 9), (10, 'j', 'j', 10);
+GO
+~~ROW COUNT: 10~~
+
+
+INSERT INTO alter_t1 VALUES (1, 'foo'), (2, 'bar');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO alter_t2 VALUES (1, 'baz'), (2, 'qux');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO alter_t3 VALUES (1, 'alpha'), (2, 'beta');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO alter_t4 VALUES (1, 'test1', 10.5, '2024-01-01', 'CHAR1'), (2, 'test2', 20.5, '2024-01-02', 'CHAR2');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE VIEW alter_v1 AS SELECT a, b, c FROM alter_t;
+GO
+
+CREATE VIEW alter_v2 AS SELECT alter_t1.a, alter_t1.b, alter_t2.d FROM alter_t1 JOIN alter_t2 ON alter_t1.a = alter_t2.c;
+GO
+
+CREATE VIEW alter_v3 AS SELECT alter_t1.a, alter_t1.b, alter_t2.d, alter_t3.f FROM alter_t1 JOIN alter_t2 ON alter_t1.a = alter_t2.c JOIN alter_t3 ON alter_t2.c = alter_t3.e;
+GO
+
+CREATE VIEW guest.alter_v1 AS SELECT a, b, c FROM alter_t;
+GO
+
+CREATE VIEW alter_v7 AS SELECT a, b, c, d, e FROM alter_t4;
+GO
+
+CREATE VIEW alter_v8 AS SELECT a, b, c, d, e FROM alter_t4;
+GO
+
+CREATE VIEW alter_v24 AS SELECT a, b, c, d FROM alter_t;
+GO
+
+CREATE VIEW alter_v25 AS SELECT a, b FROM alter_v24;
+GO
+
+CREATE VIEW alter_v26 AS SELECT a, b, c, d FROM alter_t;
+GO
