@@ -321,6 +321,7 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 				case PROCEDURE:
 				case TSQL_PROC:
 				case FUNCTION:
+				case VIEW:
 					cur_token = TSQL_ALTER;
 					break;
 			}

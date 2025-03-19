@@ -2476,6 +2476,7 @@ tsql_stmt :
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
 			| tsql_AlterUserStmt
+			| tsql_AlterViewStmt
 			| AnalyzeStmt
 			| CallStmt
 			| CheckPointStmt
@@ -4110,6 +4111,35 @@ tsql_AlterFunctionStmt:
                 }
 		;
 
+tsql_AlterViewStmt: 
+            TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $3;
+                    n->aliases = $4;
+                    n->query = $7;
+                    n->replace = true;
+                    n->options = $5;
+                    n->withCheckOption = $8;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+            | CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $5;
+                    n->aliases = $6;
+                    n->query = $9;
+                    n->replace = false;
+                    n->options = $7;
+                    n->withCheckOption = $10;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+        ;
+		
 /*
  * These rules define the WITH clause in a CREATE PROCEDURE
  * or CREATE FUNCTION statement.  This is very similar to

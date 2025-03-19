@@ -1,0 +1,315 @@
+-- psql
+SHOW babelfishpg_tsql.sql_dialect;
+GO
+~~START~~
+text
+postgres
+~~END~~
+
+
+
+
+
+
+--Check psql syntax
+-- Create test tables
+CREATE TABLE psql_test_table1 (
+    id INT,
+    name VARCHAR(50),
+    value DECIMAL(10,2)
+);
+CREATE TABLE psql_test_table2 (
+    id INT,
+    description TEXT,
+    date_field TIMESTAMP
+);
+INSERT INTO psql_test_table1 VALUES 
+    (1, 'Test1', 10.5),
+    (2, 'Test2', 20.5);
+INSERT INTO psql_test_table2 VALUES 
+    (1, 'Desc1', '2024-03-18 10:00:00'),
+    (2, 'Desc2', '2024-03-18 11:00:00');
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+
+CREATE VIEW psql_view1 AS SELECT * FROM psql_test_table1;
+GO
+
+-- ALTER VIEW with column names
+CREATE VIEW psql_view2 (col1, col2, col3) AS 
+    SELECT id, name, value FROM psql_test_table1;
+GO
+
+ALTER VIEW psql_view2 RENAME col1 TO id_column;
+GO
+
+select * from psql_view2;
+GO
+~~START~~
+int4#!#varchar#!#numeric
+1#!#Test1#!#10.50
+2#!#Test2#!#20.50
+~~END~~
+
+
+-- ALTER VIEW OWNER
+CREATE ROLE test_role;
+GO
+
+ALTER VIEW psql_view2 OWNER TO test_role;
+GO
+
+SELECT pg_get_userbyid(relowner) AS view_owner
+FROM pg_class
+WHERE relname = 'psql_view2' AND relkind = 'v';
+GO
+~~START~~
+name
+test_role
+~~END~~
+
+
+-- ALTER VIEW SET SCHEMA
+CREATE SCHEMA psql_test_schema;
+GO
+
+ALTER VIEW psql_view2 SET SCHEMA psql_test_schema;
+GO
+
+DROP VIEW IF EXISTS psql_view1;
+GO
+DROP VIEW IF EXISTS psql_test_schema.psql_view2;
+GO
+DROP SCHEMA IF EXISTS psql_test_schema;
+GO
+DROP ROLE IF EXISTS test_role;
+GO
+DROP TABLE IF EXISTS psql_test_table1;
+GO
+DROP TABLE IF EXISTS psql_test_table2;
+GO
+
+-- tsql
+CREATE LOGIN view_owner_login WITH PASSWORD = '12345678';
+CREATE LOGIN view_user_login WITH PASSWORD = '12345678';
+GO
+
+ALTER ROLE sysadmin ADD MEMBER view_owner_login;;
+GO
+
+-- tsql user=view_owner_login password=12345678
+CREATE DATABASE view_perm_db;
+GO
+
+USE view_perm_db;
+GO
+
+CREATE USER view_user FOR LOGIN view_user_login;
+GO
+
+CREATE SCHEMA test_schema;
+GO
+
+CREATE TABLE test_schema.base_table (id INT PRIMARY KEY, name VARCHAR(50), email VARCHAR(100));
+GO
+
+INSERT INTO test_schema.base_table VALUES (1, 'John', 'john@test.com'), (2, 'Jane', 'jane@test.com');
+GO
+~~ROW COUNT: 2~~
+
+
+-- Create view as view_owner
+CREATE VIEW test_schema.test_view as select * from test_schema.base_table
+GO
+
+-- Verify view_owner can select from view
+SELECT * FROM test_schema.test_view;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#John#!#john@test.com
+2#!#Jane#!#jane@test.com
+~~END~~
+
+
+-- tsql user=view_user_login password=12345678
+-- Verify view_user cannot access the view yet
+USE view_perm_db;
+GO
+
+-- This should fail with permission denied
+SELECT * FROM test_schema.test_view;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view test_view)~~
+
+
+-- tsql user=view_owner_login password=12345678
+-- Grant permission to view_user
+USE view_perm_db;
+GO
+
+GRANT SELECT ON test_schema.test_view TO view_user;
+GO
+
+-- tsql user=view_user_login password=12345678
+-- Now view_user should be able to select
+USE view_perm_db;
+GO
+
+-- This should succeed
+SELECT * FROM test_schema.test_view;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#John#!#john@test.com
+2#!#Jane#!#jane@test.com
+~~END~~
+
+
+-- tsql user=view_owner_login password=12345678
+-- Alter view as view_owner
+USE view_perm_db;
+GO
+
+ALTER VIEW test_schema.test_view 
+AS 
+    SELECT id, name FROM test_schema.base_table;
+GO
+
+-- Verify view_owner can still access
+SELECT * FROM test_schema.test_view;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+-- tsql user=view_user_login password=12345678
+-- Verify view_user can still access after alter
+USE view_perm_db;
+GO
+
+-- This should succeed as permissions are retained
+SELECT * FROM test_schema.test_view;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+-- tsql user=view_owner_login password=12345678
+-- Revoke permission to view_user
+USE view_perm_db;
+GO
+
+REVOKE SELECT ON test_schema.test_view FROM view_user;
+GO
+
+-- tsql user=view_user_login password=12345678
+-- Now view_user should not be able to select
+USE view_perm_db;
+GO
+
+-- [Error]
+SELECT * FROM test_schema.test_view;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view test_view)~~
+
+
+-- tsql user=view_owner_login password=12345678
+-- Alter view as view_owner
+USE view_perm_db;
+GO
+
+ALTER VIEW test_schema.test_view 
+AS 
+    SELECT id, name FROM test_schema.base_table;
+GO
+
+-- Verify view_owner can still access
+SELECT * FROM test_schema.test_view;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+-- tsql user=view_user_login password=12345678
+-- Verify view_user cannot access after alter
+USE view_perm_db;
+GO
+
+-- Error out as permissions are retained
+SELECT * FROM test_schema.test_view;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view test_view)~~
+
+
+-- psql
+
+
+-- Test ALTER VIEW from PSQL endpoint
+set babelfishpg_tsql.sql_dialect = "tsql";
+-- This should throw an error
+ALTER VIEW alter_view_schema.test_view AS SELECT id FROM alter_view_table;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: TSQL ALTER VIEW is not supported from PostgreSQL endpoint.
+    Server SQLState: 0A000)~~
+
+
+-- tsql user=view_owner_login password=12345678
+-- Clean up
+USE view_perm_db;
+GO
+
+DROP VIEW test_schema.test_view;
+GO
+
+DROP TABLE test_schema.base_table;
+GO
+
+DROP SCHEMA test_schema;
+GO
+
+USE master;
+GO
+
+-- psql
+-- Terminate active sessions
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('view_owner_login', 'view_user_login')
+  AND backend_type = 'client backend' 
+  AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+~~END~~
+
+
+-- tsql
+DROP LOGIN view_owner_login;
+DROP LOGIN view_user_login;
+GO
+
+DROP database view_perm_db;
+go

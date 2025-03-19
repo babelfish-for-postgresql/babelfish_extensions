@@ -148,7 +148,10 @@ gen_createdb_subcmds(const char *dbname, const char *owner)
 
 	/* create sysdatabases under current DB's DBO schema */
 	appendStringInfo(&query, "CREATE VIEW dummy.sysdatabases AS SELECT * FROM sys.sysdatabases; ");
-	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
+
+	/* Changed ALTER VIEW to ALTER TABLE or we will get a syntax error due to different
+	 * ALTER VIEW behavior between PG and TSQL */
+	appendStringInfo(&query, "ALTER TABLE dummy.sysdatabases OWNER TO dummy; ");
 
 	/* create guest schema in the database and revoke create permission */
 	/* from guest user on guest schema. This has to be the last statement */
