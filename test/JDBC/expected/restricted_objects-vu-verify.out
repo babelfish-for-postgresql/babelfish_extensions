@@ -5,6 +5,9 @@ GO
 ALTER LOGIN babel_5146_user_l1 WITH PASSWORD = 'abc';
 GO
 
+GRANT CONNECT TO guest;
+GO
+
 -- tsql user=babel_5146_user_l1 password=abc
 -- should throw error
 USE msdb
