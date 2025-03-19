@@ -604,4 +604,5 @@ BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like
 forjson-escape
+round_return_type_test
 alter-view

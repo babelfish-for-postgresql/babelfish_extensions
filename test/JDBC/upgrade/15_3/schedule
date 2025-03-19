@@ -500,4 +500,5 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char_before_17_4
+round_return_type_test-before-16_9-or-17_5
 alter-view

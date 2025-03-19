@@ -254,7 +254,7 @@ varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
 GO
 ~~START~~
-numeric#!#numeric#!#numeric
+float#!#float#!#float
 123.0#!#123.0#!#123.0
 ~~END~~
 

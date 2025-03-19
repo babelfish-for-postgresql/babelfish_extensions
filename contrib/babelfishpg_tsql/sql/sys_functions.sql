@@ -1570,11 +1570,84 @@ AS 'babelfishpg_tsql', 'datalength' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 -- TODO: in MSSQL datalength against varchar(max) will return BIGINT instead of INTEGER. However in PG we ignore typmods in functions.
 -- However this is not a critical issue so we will just leave it. We may come back to this difference later once we find out solution to typmods.
 
+-- The sys.round functions here are created depending on the number of arguments and return type
 CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
-RETURNS NUMERIC AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER)
-RETURNS NUMERIC AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.day(date ANYELEMENT)
 RETURNS INTEGER AS
