@@ -579,3 +579,4 @@ fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char_before_17_4
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
+alter-view

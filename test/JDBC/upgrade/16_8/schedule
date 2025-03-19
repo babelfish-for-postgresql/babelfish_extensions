@@ -605,3 +605,4 @@ fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
 test_constraint_like-before-17-5-or-16-9
+alter-view

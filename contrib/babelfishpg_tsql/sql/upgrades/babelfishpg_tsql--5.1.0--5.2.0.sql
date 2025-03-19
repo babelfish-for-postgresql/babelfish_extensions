@@ -478,6 +478,17 @@ BEGIN
 END;
 $$;
 
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on guest the schemas where the schema owner is guest
+CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_create_privilege_from_guest_user';
+
+CALL sys.babelfish_revoke_create_privilege_from_guest_user();
+
+-- Drop this procedure after it gets executed once.
+
+DROP PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user();
 DO $$
 BEGIN
 IF NOT EXISTS(
