@@ -108,3 +108,17 @@ GO
 
 SELECT * FROM babel_5654_t3 WHERE [varbintohexsubstring] = sys.fn_varbintohexsubstring(1,0x23486534659789876435656,3,4)
 GO
+
+-- implicit conversion testcases
+SELECT sys.fn_varbintohexsubstring(1,8673456, 1, 3);  
+GO
+
+SELECT sys.fn_varbintohexsubstring(1,CAST(96652445787 AS REAL),1,4);
+GO
+
+-- explicit conversion testcases
+select sys.fn_varbintohexsubstring(1,CAST(CAST('A' AS CHAR) AS sys.varbinary),1,4);
+GO
+
+select sys.fn_varbintohexsubstring(1,CAST(CAST('AGHICYFUK' AS VARCHAR) AS sys.varbinary),1,4);
+GO

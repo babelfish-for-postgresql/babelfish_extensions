@@ -143,7 +143,7 @@ AS 'babelfishpg_common', 'int4varbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (INT4 AS sys.BBF_VARBINARY)
-WITH FUNCTION sys.int4varbinary (INT4, integer, boolean) AS ASSIGNMENT;
+WITH FUNCTION sys.int4varbinary (INT4, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.int8varbinary(INT8, integer, boolean)
 RETURNS sys.BBF_VARBINARY
@@ -159,7 +159,7 @@ AS 'babelfishpg_common', 'float4varbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (REAL AS sys.BBF_VARBINARY)
-WITH FUNCTION sys.float4varbinary (REAL, integer, boolean) AS ASSIGNMENT;
+WITH FUNCTION sys.float4varbinary (REAL, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.float8varbinary(DOUBLE PRECISION, integer, boolean)
 RETURNS sys.BBF_VARBINARY
