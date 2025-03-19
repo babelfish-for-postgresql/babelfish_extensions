@@ -5332,68 +5332,101 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
 
+/*
+ * Transform tsql UNPIVOT clauses in SELECT statement's FROM clause
+ *
+ * pstate - current parser state
+ * stmt - SelectStmt being transformed
+ *
+ * Note: 
+ *   Called for every SELECT Stmt (because UNPIVOT can appear anywhere in the
+ *   FROM clause) to find UNPIVOT nodes and perform required post processing.
+ *   During parsing stage, each UNPIVOT clause was transformed to equivalent
+ *   CROSS JOIN LATERAL node and wrapped as a List node with other metadata.
+ *
+ * Processing:
+ *   1. DFS traversal of Join nodes in fromClause tree to find UNPIVOT List nodes
+ *   2. Extract metadata and replace with transformed JoinExpr node
+ *   3. Filter targetList for 'SELECT *' case to exclude UNPIVOT source columns
+ *   4. Add IS NOT NULL checks for measure columns to WHERE clause
+ * 
+ * Supported Syntax for UNPIVOT:
+ *     SELECT <TargetList> 
+ *     FROM <table_ref> 
+ *     UNPIVOT (
+ *         <measure_col>            -- column to hold values
+ *         FOR <dimension_col>      -- column to hold names
+ *         IN (<col1>, ...)         -- souce columns to unpivot
+ *     ) AS <unpivot_alias>
+ *     [WHERE ...]
+ *     [ORDER BY ...];
+ */
 static void 
 transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL) {
-		Node *where_clause = stmt->whereClause;
-		ListCell *lc;
-		List *measure_cols = NIL;
-		List *src_cols = NIL;
-		bool has_unpivot = false;
+	List *measure_cols;
+	List *src_cols;
+	bool has_unpivot;
+	Node *where_clause;
+	ListCell *lc;
 
+	measure_cols = NIL;
+	src_cols = NIL;
+	has_unpivot = false;
+	where_clause = stmt->whereClause;
 
-		foreach(lc, stmt->fromClause)
+	if (sql_dialect != SQL_DIALECT_TSQL)
+	return;
+
+	foreach(lc, stmt->fromClause)
+		has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), 
+														  &where_clause, 
+														  &measure_cols, 
+														  &src_cols);
+
+	if (has_unpivot)
+	{
+		stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
+
+		/* Create IS NOT NULL where conditions for all collected columns */
+		if (measure_cols != NIL)
 		{
-			has_unpivot |= transform_unpivot_clause_recursive((Node**)&(lc->ptr_value), &where_clause, &measure_cols, &src_cols);
-		}
-
-		if (has_unpivot)
-		{
-			stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
-
-			/* Create IS NOT NULL where conditions for all collected columns */
-			if (measure_cols != NIL)
+			foreach(lc, measure_cols)
 			{
-				foreach(lc, measure_cols)
+				char *measure_col = strVal(lfirst(lc));
+				ColumnRef *measure_ref;
+				NullTest *null_test;
+
+				/* Create IS NOT NULL condition */
+				measure_ref = makeNode(ColumnRef);
+				measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
+				measure_ref->location = -1;
+
+				null_test = makeNode(NullTest);
+				null_test->arg = (Expr *)measure_ref;
+				null_test->nulltesttype = IS_NOT_NULL;
+				null_test->argisrow = false;
+				null_test->location = -1;
+
+				/* Add to WHERE clause */
+				if (where_clause)
 				{
-					char *measure_col = strVal(lfirst(lc));
-					ColumnRef *measure_ref;
-					NullTest *null_test;
-					
-					/* Create IS NOT NULL condition */
-					measure_ref = makeNode(ColumnRef);
-					measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
-					measure_ref->location = -1;
-
-					null_test = makeNode(NullTest);
-					null_test->arg = (Expr *)measure_ref;
-					null_test->nulltesttype = IS_NOT_NULL;
-					null_test->argisrow = false;
-					null_test->location = -1;
-
-					/* Add to WHERE clause */
-					if (where_clause)
-					{
-						BoolExpr *bool_expr = makeNode(BoolExpr);
-						bool_expr->boolop = AND_EXPR;
-						bool_expr->args = list_make2(where_clause, null_test);
-						bool_expr->location = -1;
-						where_clause = (Node *)bool_expr;
-					}
-					else
-					{
-						where_clause = (Node *)null_test;
-					}
+					BoolExpr *bool_expr = makeNode(BoolExpr);
+					bool_expr->boolop = AND_EXPR;
+					bool_expr->args = list_make2(where_clause, null_test);
+					bool_expr->location = -1;
+					where_clause = (Node *)bool_expr;
 				}
-				stmt->whereClause = where_clause;
+				else
+				{
+					where_clause = (Node *)null_test;
+				}
 			}
-
+			stmt->whereClause = where_clause;
 		}
-
-		/* Free allocated memory */
-		list_free_deep(measure_cols);
-	}
+	}		
+	/* Free allocated memory */
+	list_free_deep(measure_cols);
 }
 
 /*
@@ -5409,7 +5442,8 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
  *
  * Returns: true if UNPIVOT found and processed
  */
-static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **measure_cols, List **unpivot_src_cols)
+static bool 
+transform_unpivot_clause_recursive(Node **node_ptr, Node **where_clause, List **measure_cols, List **unpivot_src_cols)
 {
 	JoinExpr *join;
 	List *unpivot_info;
@@ -5449,9 +5483,10 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
 			else
 				*unpivot_src_cols = list_concat(*unpivot_src_cols, copyObject(cols));
 
-			/* Replace UNPIVOT info with transformed node and recurse on it */
+			/* Replace UNPIVOT info with transformed node */
 			*node_ptr = transformed_node;
 			found_unpivot = true;
+			/* Recurse down unpivot join node to look for additional unpivots */
 			found_unpivot |= transform_unpivot_clause_recursive(node_ptr, where_clause, measure_cols, unpivot_src_cols);
 		}
 	}
@@ -5461,9 +5496,7 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
 
 /*
  * Process SELECT * for UNPIVOT queries by removing source columns.
- * Expands * and filters out columns used in UNPIVOT operation.
  *
- * Parameters:
  *   pstate - Parser state
  *   stmt - Statement containing target list
  *   source_cols - List of columns to exclude
@@ -5471,15 +5504,19 @@ static bool transform_unpivot_clause_recursive(Node **node_ptr, Node **where_cla
  * Returns: Filtered target list excluding unpivot source columns
  * Note: Only processes if target list contains * 
  */
-static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols)
+static List *
+filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols)
 {
 	Query *temp_query;
 	List *result_targetlist = NIL;
 	ListCell *lc;
 	
-	/* Only process if target list contains * 
-	 * Does not handle: `SELECT unpivot_alias.* ...`
-	 * Future enhancement: Validate agains more targetlist variations
+	/* 
+	 * Return if not 'SELECT *'
+	 *
+	 * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
+	 * Does not check: `SELECT unpivot_alias.* ...`
+	 * Validate against more variations of targetlist
 	 */
 	if (stmt->targetList == NIL || 
 		!IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
@@ -5498,9 +5535,12 @@ static List * filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt 
 	/* Filter out source columns from TargetList */
 	foreach(lc, temp_query->targetList)
 	{
-		TargetEntry *te = (TargetEntry *)lfirst(lc);
-		bool skip_column = false;
+		TargetEntry *te;
+		bool skip_column;
 	    ListCell *source_lc;
+
+		te = (TargetEntry *)lfirst(lc);
+		skip_column = false;
 
 		/* Check if this column is in source_cols */
 		for (source_lc = list_head(source_cols); source_lc != NULL;)
