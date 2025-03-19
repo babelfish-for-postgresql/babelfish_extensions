@@ -6724,32 +6724,25 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
 
-		bool persist_identity = true;
+		/*
+		 * currently we only carry over identity and nullability for
+		 * simple query with a single relation in from expression
+		 */
+		bool persist_identity_and_nullability = false;
 
 		/*
 		 * In T-SQL, identity property of column in destination
 		 * table is not persisted if the SELECT ... INTO statement
 		 * does not contain a single base relation
 		 */
-		if (q->jointree && q->jointree->fromlist != NIL)
+		if (q->jointree && q->jointree->fromlist != NIL && list_length(q->jointree->fromlist) == 1)
 		{
-			if (list_length(q->jointree->fromlist) > 1)
-				persist_identity = false;
-			else
+			RangeTblRef		*rtr = linitial(q->jointree->fromlist);
+			if (IsA(rtr, RangeTblRef))
 			{
-				Node *n_from = (Node *) linitial(q->jointree->fromlist);
-
-				if (!IsA(n_from, RangeTblRef))
-					persist_identity = false;
-				else
-				{
-					RangeTblRef		*rtr = (RangeTblRef *) n_from;
-					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
-
-					/* Do not persist identity if not an ordinary relation */
-					if (rte->rtekind != RTE_RELATION)
-						persist_identity = false;
-				}
+				RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+				if (rte->rtekind == RTE_RELATION && rte->relkind == RELKIND_RELATION)
+					persist_identity_and_nullability = true;
 			}
 		}
 
@@ -6840,9 +6833,11 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
-			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
 				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+				/* set to false if same column appears twice in select list */
+				bool     	persists_identity = true;
 
 				if (HeapTupleIsValid(attrtup))
 				{
@@ -6861,10 +6856,29 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
-					if (attrStruct->attidentity && persist_identity)
+					if (attrStruct->attidentity)
+					{
+						ListCell *lc;
+
+						/*
+						 * Validate that this column does not appear again in the target list
+						 * For cases like SELECT id, id INTO new_table FROM source_table; and
+						 * id is an identity column, we do not want to throw an error for
+						 * multiple identity instead silently skip persisting the identity property
+						 */
+						foreach (lc, q->targetList)
+						{
+							TargetEntry *tle_inner_loop = (TargetEntry *)lfirst(lc);
+							if (tle_inner_loop->resno != tle->resno && tle_inner_loop->expr && IsA(tle_inner_loop->expr, Var) &&
+							    tle_inner_loop->resorigtbl == tle->resorigtbl && tle_inner_loop->resorigcol == tle->resorigcol)
+								persists_identity = false;
+						}
+					}
+					if (attrStruct->attidentity && persists_identity)
 					{
 						Constraint *constraint;
 
+						/* Identity function already seen in target list */
 						if (seen_identity)
 							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
@@ -6962,9 +6976,11 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
 		}
-		if (stmts != NIL)
-			CommandCounterIncrement();
+
+		CommandCounterIncrement();
 	}
+
+	reseed_identity_post_select_into(address->objectId);
 }
 
 void
