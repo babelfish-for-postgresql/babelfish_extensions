@@ -851,6 +851,85 @@ numeric#!#numeric#!#numeric
 ~~END~~
 
 
+
+-- Tests with other Mathematical functions which returns numeric/decimal type
+select abs(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go 
+select CEILING(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+~~START~~
+numeric
+122999999999999999998.9176
+~~END~~
+
+~~START~~
+numeric
+123000000000000000000.00
+~~END~~
+
+
+select degrees(cast((PI() * 99999999999999) as decimal(18,2))) * cast(1.23 as numeric(3,2)) 
+go
+~~START~~
+numeric
+22139999999999760.389050076289792126
+~~END~~
+
+
+select FLOOR(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+~~START~~
+numeric
+122999999999999999998.77
+~~END~~
+
+
+select POWER(99999999999999999999.12, 1) * cast(1.23 as numeric(3,2)) 
+go
+~~START~~
+numeric
+122999999999999999998.9176
+~~END~~
+
+
+select RADIANS(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+select ROUND(99999999999999999999.12, 2) * cast(1.23 as numeric(3,2)) 
+go
+~~START~~
+numeric
+122999999999999999998.9176
+~~END~~
+
+
+-- Test with UDT on DECIMAL/NUMERIC
+CREATE TYPE dbo.NUMERICUDT_38_4 FROM numeric(38,4)
+GO
+
+CREATE TYPE dbo.DECIMALUDT_38_4 FROM decimal(38,4)
+GO
+
+SELECT cast(999999999999999.9999 as dbo.NUMERICUDT_38_4) * cast(1.23 as decimal(3,2))
+GO
+~~START~~
+numeric
+1230000000000000.00
+~~END~~
+
+
+SELECT cast(999999999999999.9999 as dbo.DECIMALUDT_38_4) * cast(1.23 as decimal(3,2))
+GO
+~~START~~
+numeric
+1230000000000000.00
+~~END~~
+
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -885,4 +964,6 @@ go
 
 drop type DECIMALUDT_38_6
 drop type DECIMALUDT
+drop type dbo.NUMERICUDT_38_4
+drop type dbo.DECIMALUDT_38_4
 GO

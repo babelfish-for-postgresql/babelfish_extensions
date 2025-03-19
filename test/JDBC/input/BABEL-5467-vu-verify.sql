@@ -433,6 +433,41 @@ go
 select avg(((a / b) * c) + d), avg((a / b) * c), avg(a / b) from babel_5467_t11
 go
 
+-- Tests with other Mathematical functions which returns numeric/decimal type
+select abs(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go 
+
+select CEILING(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+
+select degrees(cast((PI() * 99999999999999) as decimal(18,2))) * cast(1.23 as numeric(3,2)) 
+go
+
+select FLOOR(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+
+select POWER(99999999999999999999.12, 1) * cast(1.23 as numeric(3,2)) 
+go
+
+select RADIANS(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 
+go
+
+select ROUND(99999999999999999999.12, 2) * cast(1.23 as numeric(3,2)) 
+go
+
+-- Test with UDT on DECIMAL/NUMERIC
+CREATE TYPE dbo.NUMERICUDT_38_4 FROM numeric(38,4)
+GO
+
+CREATE TYPE dbo.DECIMALUDT_38_4 FROM decimal(38,4)
+GO
+
+SELECT cast(999999999999999.9999 as dbo.NUMERICUDT_38_4) * cast(1.23 as decimal(3,2))
+GO
+
+SELECT cast(999999999999999.9999 as dbo.DECIMALUDT_38_4) * cast(1.23 as decimal(3,2))
+GO
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -467,4 +502,6 @@ go
 
 drop type DECIMALUDT_38_6
 drop type DECIMALUDT
+drop type dbo.NUMERICUDT_38_4
+drop type dbo.DECIMALUDT_38_4
 GO
