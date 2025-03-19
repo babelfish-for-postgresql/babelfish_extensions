@@ -392,10 +392,6 @@ view_ansinullon#!#-- flag_values should be 3 as uses_quoted_identifier = true an
 -- TODO: Add support when alter view is supported
 alter view def_v1 as select 2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER VIEW' is not currently supported in Babelfish)~~
-
 
 -- TODO: Add support when alter schema is supported
 alter schema def_sch1 transfer dbo.def_v1;
