@@ -575,3 +575,4 @@ smalldatetime_date_cmp
 test_conv_money_to_varchar
 fixeddecimal_modulo
 test_conv_string_to_datetime
+round_return_type_test
