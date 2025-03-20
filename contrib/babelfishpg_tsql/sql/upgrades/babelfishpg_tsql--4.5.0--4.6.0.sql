@@ -872,9 +872,165 @@ CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
 CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
 
-
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
+/* Shows the list of objects where the object owner is not same as schema owner */
+/* Covers tables, views, functions, procedures, sequences, types */
+CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
+RETURNS TABLE (
+    schema_name name,
+    schema_owner_name name,
+    object_name name,
+    object_owner_name name,
+    object_type text
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    WITH common_schemas AS (
+      SELECT
+          b.nspname AS schema_name
+      FROM
+          sys.babelfish_namespace_ext b
+      JOIN
+          pg_namespace n ON b.nspname = n.nspname
+      JOIN
+          pg_roles r ON n.nspowner = r.oid
+      JOIN
+          sys.babelfish_authid_user_ext u ON r.rolname = u.rolname
+      WHERE
+          u.orig_username <> 'db_owner'
+    )
+    -- First query for tables, views, index, types and sequences
+    -- table types are considered as tables
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        c.relname,
+        r2.rolname,
+        CASE c.relkind
+            WHEN 'r' THEN 'table'
+            WHEN 'p' THEN 'table'
+            WHEN 'v' THEN 'view'
+            WHEN 'S' THEN 'sequence'
+            ELSE c.relkind::text
+        END
+    FROM
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN
+        pg_class c ON n.oid = c.relnamespace
+    JOIN
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN
+        pg_roles r2 ON c.relowner = r2.oid
+    WHERE 
+        c.relkind IN ('r', 'p', 'v', 'S')
+        AND c.relname NOT LIKE '@%' -- Ignore temporary tables
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Second query for functions and procedures
+    -- triggers are considered as functions
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        p.proname,
+        r2.rolname,
+        CASE p.prokind
+            WHEN 'f' THEN 'function'
+            WHEN 'p' THEN 'procedure'
+            ELSE p.prokind::text
+        END
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_proc p ON n.oid = p.pronamespace
+    JOIN 
+        pg_roles r2 ON p.proowner = r2.oid
+    WHERE 
+        p.prokind IN ('f', 'p')
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Third query is for types(excluding table types)
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        t.typname,
+        r2.rolname,
+        'type'::text
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_type t ON n.oid = t.typnamespace
+    JOIN 
+        pg_roles r2 ON t.typowner = r2.oid
+    WHERE 
+        t.typtype = 'd' -- Only show domain data type
+        AND r1.rolname <> r2.rolname
+    ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+ * Gives a list of ALTER statements that, when executed,
+ * will change the ownership of all the objects to match their schema owners.
+ */
+CREATE OR REPLACE FUNCTION sys.generate_alter_ownership_statements()
+RETURNS TABLE (alter_statement text)
+AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM sys.get_schema_object_ownership()
+    LOOP
+        CASE obj.object_type
+            WHEN 'table' THEN
+                alter_statement := format('ALTER TABLE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'view' THEN
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;';
+				RETURN NEXT;
+
+                alter_statement := format('ALTER VIEW %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;';
+                RETURN NEXT;
+            WHEN 'sequence' THEN
+                alter_statement := format('ALTER SEQUENCE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'function' THEN
+                alter_statement := format('ALTER FUNCTION %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'procedure' THEN
+                alter_statement := format('ALTER PROCEDURE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'type' THEN
+                alter_statement := format('ALTER TYPE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            ELSE
+                alter_statement := format('-- Unsupported object type: %s for %I.%I',
+                                          obj.object_type, obj.schema_name, obj.object_name);
+                RETURN NEXT;
+        END CASE;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
 ALTER FUNCTION sys.json_query RENAME TO json_query_deprecated_in_5_2_0;
 

@@ -86,45 +86,31 @@ guest
 
 select * from guest.babel_2571_gt;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
+~~START~~
+int
+~~END~~
 
 
 INSERT INTO guest.babel_2571_gt(a) values(2);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
+~~ROW COUNT: 1~~
 
 
 INSERT INTO guest.babel_2571_gt(a) values(8);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
+~~ROW COUNT: 1~~
 
 
 DELETE FROM guest.babel_2571_gt WHERE a > 10;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
-
 
 UPDATE guest.babel_2571_gt SET a = a + 5 WHERE a IS NOT NULL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
+~~ROW COUNT: 2~~
 
 
 TRUNCATE TABLE guest.babel_2571_gt;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table babel_2571_gt)~~
-
 
 drop table guest.babel_2571_gt
 GO

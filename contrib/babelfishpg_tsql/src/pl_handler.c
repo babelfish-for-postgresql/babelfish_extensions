@@ -4199,16 +4199,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						exec_database_roles_subcmds(create_schema->schemaname);
 					}
 
-					/* Grant ALL schema privileges to the user.*/
-					if (rolspec && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0)
-					{
-						int i;
-						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
-						{
-							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
-						}
-					}
 					return;
 				}
 				else

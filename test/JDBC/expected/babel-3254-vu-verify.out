@@ -397,8 +397,6 @@ sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7'
 go
 ~~START~~
 varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
-@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -415,8 +413,6 @@ sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7', @procedure_sc
 go
 ~~START~~
 varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
-@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 

@@ -1,4 +1,4 @@
--- tsql user=jira_babel_3504_log1 password=123456789
+-- tsql
 
 use jira_babel_3504_dbone;
 go

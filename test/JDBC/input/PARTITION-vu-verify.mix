@@ -624,13 +624,12 @@ GO
 SELECT CURRENT_USER
 GO
 
+/** CREATE PERMISSION GRANTED VIA PG PORT MAY NOT TAKE EFFECT ON TSQL OBJECTS **/
+/** NOT A RECOMMENDED WAY **/
 CREATE TABLE PartitionDb_TestPartitionTable (
     Id INT,
     Value sys.varchar(20)
 ) ON PartitionDb_PartitionScheme(Id);
-GO
-
-DROP TABLE PartitionDb_TestPartitionTable
 GO
 
 -- revoke create permission from user on schema

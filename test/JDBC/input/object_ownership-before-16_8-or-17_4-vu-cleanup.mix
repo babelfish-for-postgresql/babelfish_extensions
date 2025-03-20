@@ -1,0 +1,117 @@
+/** DROP NEW OBJECTS **/
+use object_ownership_db;
+go
+
+/** DROP OLD OBJECTS **/
+drop table object_ownership_s1.old_t;
+go
+drop view object_ownership_s1.old_v;
+go
+drop procedure object_ownership_s1.old_p;
+go
+drop function object_ownership_s1.old_f
+go
+drop sequence object_ownership_s1.old_sq;
+go
+
+drop table object_ownership_s2.old_t;
+go
+drop view object_ownership_s2.old_v;
+go
+drop procedure object_ownership_s2.old_p;
+go
+drop function object_ownership_s2.old_f
+go
+drop sequence object_ownership_s2.old_sq;
+go
+drop table object_ownership_s2.pt2
+go
+drop partition scheme ps2
+go
+drop partition function pf2
+go
+
+drop table object_ownership_s2.old_t1;
+go
+drop view object_ownership_s2.old_v1;
+go
+drop procedure object_ownership_s2.old_p1;
+go
+drop function object_ownership_s2.old_f1
+go
+drop sequence object_ownership_s2.old_sq1;
+go
+
+drop index old_idx on object_ownership_s3.old_t;
+go
+drop trigger object_ownership_s3.old_tr;
+go
+drop function object_ownership_s3.old_tvf;
+go
+drop function object_ownership_s3.old_mtvf;
+go
+drop type object_ownership_s3.old_type;
+go
+drop type object_ownership_s3.old_ttype;
+go
+drop table object_ownership_s3.old_t;
+go
+drop view object_ownership_s3.old_v;
+go
+drop procedure object_ownership_s3.old_p;
+go
+drop function object_ownership_s3.old_f
+go
+drop sequence object_ownership_s3.old_sq;
+go
+
+drop index old_idx1 on object_ownership_s3.old_t1;
+go
+drop trigger object_ownership_s3.old_tr1;
+go
+drop function object_ownership_s3.old_tvf1;
+go
+drop function object_ownership_s3.old_mtvf1;
+go
+drop type object_ownership_s3.old_type1;
+go
+drop type object_ownership_s3.old_ttype1;
+go
+drop table object_ownership_s3.old_t1;
+go
+drop view object_ownership_s3.old_v1;
+go
+drop procedure object_ownership_s3.old_p1;
+go
+drop function object_ownership_s3.old_f1
+go
+drop sequence object_ownership_s3.old_sq1;
+go
+
+/** DROP REMAINING OBJECTS **/
+drop schema object_ownership_s1
+go
+drop schema object_ownership_s2;
+go
+drop schema object_ownership_s3;
+go
+
+alter role object_ownership_r1 drop member object_ownership_u1;
+go
+alter role object_ownership_r1 drop member object_ownership_u2;
+go
+drop role object_ownership_r1
+go
+drop user object_ownership_u1
+go
+drop login object_ownership_l1;
+go
+drop user object_ownership_u2
+go
+drop login object_ownership_l2;
+go
+
+use master
+go
+drop database object_ownership_db
+go
