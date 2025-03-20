@@ -9725,7 +9725,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE PARALLEL SAFE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
                                                                   IN try BOOL,
