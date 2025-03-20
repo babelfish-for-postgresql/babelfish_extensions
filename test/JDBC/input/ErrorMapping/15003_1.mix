@@ -3,16 +3,18 @@ GO
 
 -- simple batch
 -- pre setup
-create schema error_mapping;
-GO
-
 CREATE LOGIN login_15003 WITH PASSWORD = '123456789'
 GO
 
-CREATE USER user_15003 FOR LOGIN login_15003 WITH DEFAULT_SCHEMA = error_mapping
+CREATE USER user_15003 FOR LOGIN login_15003;
+GO
+
+create schema error_mapping authorization user_15003;
 GO
 
 -- psql
+/** CREATE PERMISSION GRANTED VIA PG PORT MAY NOT TAKE EFFECT ON TSQL OBJECTS **/
+/** NOT A RECOMMENDED WAY **/
 GRANT ALL ON  SCHEMA master_error_mapping TO master_user_15003;
 GO
 
@@ -236,11 +238,11 @@ REVOKE ALL ON SCHEMA master_error_mapping FROM master_user_15003;
 GO
 
 -- tsql
-DROP LOGIN login_15003
+DROP SCHEMA error_mapping
 GO
 
 DROP USER user_15003
 GO
 
-DROP SCHEMA error_mapping
+DROP LOGIN login_15003
 GO
