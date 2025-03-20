@@ -713,6 +713,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
 
+				/*
+				 * If one of the operands is part of aggregate function SUM()
+				 * or AVG(), set has_aggregate_operand to true; in those cases
+				 * resultant precision and scale calculation would be a bit
+				 * different
+				 */
+				 bool		has_aggregate_operand = false;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
 				if (list_length(op->args) == 2)
@@ -803,6 +810,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * following link:
 				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
 				 */
+				 has_aggregate_operand = arg1->type == T_Aggref ||
+					(list_length(op->args) == 2 && arg2->type == T_Aggref);
+
 				switch (op->opfuncid)
 				{
 					case NUMERIC_ADD_OID:
@@ -834,7 +844,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						 * atleast one of the operands is part of aggregate
 						 * function
 						 */
-						if (precision > TDS_MAX_NUM_PRECISION)
+						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
 							precision = TDS_MAX_NUM_PRECISION;
 						break;
 					case NUMERIC_DIV_OID:
