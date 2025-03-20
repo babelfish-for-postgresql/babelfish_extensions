@@ -341,19 +341,9 @@ CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b FROM alter_t;
 GO
 SELECT * FROM guest.alter_v1;
 GO
-~~START~~
-int#!#varchar
-1#!#a
-2#!#b
-3#!#c
-4#!#d
-5#!#e
-6#!#f
-7#!#g
-8#!#h
-9#!#i
-10#!#j
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table alter_t)~~
 
 
 SELECT * FROM dbo.alter_v1;
