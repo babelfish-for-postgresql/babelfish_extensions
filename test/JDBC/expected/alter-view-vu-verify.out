@@ -1,0 +1,828 @@
+-- Basic Alter View
+CREATE OR ALTER VIEW alter_v1 AS SELECT a, b FROM alter_t;
+GO
+SELECT * FROM alter_v1;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+CREATE OR ALTER VIEW alter_v2 AS SELECT a, b, c, d, e, f FROM alter_t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "e" does not exist)~~
+
+SELECT * FROM alter_v2;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#foo#!#baz
+2#!#bar#!#qux
+~~END~~
+
+
+-- Alter View with Additional Columns
+CREATE OR ALTER VIEW alter_v3 AS SELECT a, b, c FROM alter_t;
+GO
+SELECT * FROM alter_v3;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#a#!#a
+2#!#b#!#b
+3#!#c#!#c
+4#!#d#!#d
+5#!#e#!#e
+6#!#f#!#f
+7#!#g#!#g
+8#!#h#!#h
+9#!#i#!#i
+10#!#j#!#j
+~~END~~
+
+
+-- Alter View with Less Columns
+CREATE OR ALTER VIEW alter_v4 AS SELECT a FROM alter_t;
+GO
+SELECT * FROM alter_v4;
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+
+-- Alter View with Different Column Order
+CREATE OR ALTER VIEW alter_v5 AS SELECT c, b, a FROM alter_t;
+GO
+SELECT * FROM alter_v5;
+GO
+~~START~~
+varchar#!#varchar#!#int
+a#!#a#!#1
+b#!#b#!#2
+c#!#c#!#3
+d#!#d#!#4
+e#!#e#!#5
+f#!#f#!#6
+g#!#g#!#7
+h#!#h#!#8
+i#!#i#!#9
+j#!#j#!#10
+~~END~~
+
+
+-- Alter View with Column Aliases
+CREATE OR ALTER VIEW alter_v6 AS SELECT a AS col1, b AS col2, c AS col3 FROM alter_t;
+GO
+SELECT * FROM alter_v6;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#a#!#a
+2#!#b#!#b
+3#!#c#!#c
+4#!#d#!#d
+5#!#e#!#e
+6#!#f#!#f
+7#!#g#!#g
+8#!#h#!#h
+9#!#i#!#i
+10#!#j#!#j
+~~END~~
+
+
+-- Alter View with Complex Query
+CREATE OR ALTER VIEW alter_v7 AS SELECT a, b, c, (SELECT COUNT(*) FROM alter_t) AS cnt FROM alter_t;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int
+1#!#a#!#a#!#10
+2#!#b#!#b#!#10
+3#!#c#!#c#!#10
+4#!#d#!#d#!#10
+5#!#e#!#e#!#10
+6#!#f#!#f#!#10
+7#!#g#!#g#!#10
+8#!#h#!#h#!#10
+9#!#i#!#i#!#10
+10#!#j#!#j#!#10
+~~END~~
+
+
+-- Alter View with Join
+CREATE OR ALTER VIEW alter_v8 AS SELECT alter_t1.a, alter_t1.b, alter_t2.d FROM alter_t1 JOIN alter_t2 ON alter_t1.b = alter_t2.d;
+GO
+SELECT * FROM alter_v8;
+GO
+~~START~~
+int#!#varchar#!#varchar
+~~END~~
+
+
+-- Alter View with Subquery
+CREATE OR ALTER VIEW alter_v9 AS SELECT a, b, (SELECT MAX(d) FROM alter_t) AS max_d FROM alter_t;
+GO
+SELECT * FROM alter_v9;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#a#!#10
+2#!#b#!#10
+3#!#c#!#10
+4#!#d#!#10
+5#!#e#!#10
+6#!#f#!#10
+7#!#g#!#10
+8#!#h#!#10
+9#!#i#!#10
+10#!#j#!#10
+~~END~~
+
+
+-- Alter View with Aggregation
+CREATE OR ALTER VIEW alter_v10 AS SELECT a, b, SUM(d) AS total_d FROM alter_t GROUP BY a, b ORDER BY a DESC, b DESC;
+GO
+SELECT * FROM alter_v10;
+GO
+~~START~~
+int#!#varchar#!#int
+10#!#j#!#10
+9#!#i#!#9
+8#!#h#!#8
+7#!#g#!#7
+6#!#f#!#6
+5#!#e#!#5
+4#!#d#!#4
+3#!#c#!#3
+2#!#b#!#2
+1#!#a#!#1
+~~END~~
+
+
+-- Alter View with Window Function
+CREATE OR ALTER VIEW alter_v11 AS SELECT a, b, ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS row_num FROM alter_t;
+GO
+SELECT * FROM alter_v11;
+GO
+~~START~~
+int#!#varchar#!#bigint
+1#!#a#!#1
+2#!#b#!#1
+3#!#c#!#1
+4#!#d#!#1
+5#!#e#!#1
+6#!#f#!#1
+7#!#g#!#1
+8#!#h#!#1
+9#!#i#!#1
+10#!#j#!#1
+~~END~~
+
+
+-- Alter View with Case Statement
+CREATE OR ALTER VIEW alter_v12 AS SELECT a, b, CASE WHEN d > 10 THEN 'High' ELSE 'Low' END AS d_category FROM alter_t;
+GO
+SELECT * FROM alter_v12;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#a#!#Low
+2#!#b#!#Low
+3#!#c#!#Low
+4#!#d#!#Low
+5#!#e#!#Low
+6#!#f#!#Low
+7#!#g#!#Low
+8#!#h#!#Low
+9#!#i#!#Low
+10#!#j#!#Low
+~~END~~
+
+
+-- Alter View with Multiple Joins
+CREATE OR ALTER VIEW alter_v13 AS SELECT alter_t1.a, alter_t1.b, alter_t2.d, alter_t3.f FROM alter_t1 JOIN alter_t2 ON alter_t1.b = alter_t2.d JOIN alter_t3 ON alter_t2.c = alter_t3.e;
+GO
+SELECT * FROM alter_v13;;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+-- Alter View with Nested Subqueries
+CREATE OR ALTER VIEW alter_v14 AS SELECT a, b, (SELECT MAX(d) FROM (SELECT d FROM alter_t WHERE d > 5) sub) AS max_d FROM alter_t;
+GO
+SELECT * FROM alter_v14;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#a#!#10
+2#!#b#!#10
+3#!#c#!#10
+4#!#d#!#10
+5#!#e#!#10
+6#!#f#!#10
+7#!#g#!#10
+8#!#h#!#10
+9#!#i#!#10
+10#!#j#!#10
+~~END~~
+
+
+-- Alter View with Union
+CREATE OR ALTER VIEW alter_v15 AS SELECT a, b FROM alter_t UNION SELECT a, b FROM alter_t1 ORDER BY a DESC, b ASC;
+GO
+SELECT * FROM alter_v15;
+GO
+~~START~~
+int#!#varchar
+10#!#j
+9#!#i
+8#!#h
+7#!#g
+6#!#f
+5#!#e
+4#!#d
+3#!#c
+2#!#b
+2#!#bar
+1#!#a
+1#!#foo
+~~END~~
+
+
+-- Alter View with Intersect
+CREATE OR ALTER VIEW alter_v16 AS SELECT a, b FROM alter_t INTERSECT SELECT a, b FROM alter_t1 ORDER BY a, b ASC;
+GO
+SELECT * FROM alter_v16;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- Alter View with Except
+CREATE OR ALTER VIEW alter_v17 AS SELECT a, b FROM alter_t EXCEPT SELECT a, b FROM alter_t1 ORDER BY a, b ASC;
+GO
+SELECT * FROM alter_v17;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+-- Drop and create with same name
+Drop view alter_v1;
+GO
+
+CREATE OR ALTER VIEW alter_v1 AS SELECT a, b FROM alter_t;
+GO
+
+-- Create view with existing object name [Error]
+CREATE VIEW alter_v1 AS SELECT a, b FROM alter_t;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "alter_v1" already exists)~~
+
+
+-- Error as dependent view exists
+Drop table alter_t;
+GO
+~~ERROR (Code: 3726)~~
+
+~~ERROR (Message: cannot drop table alter_t because other objects depend on it)~~
+
+
+-- Alter non-exisitng view [Error]
+Alter view non_existent_view AS SELECT a, b FROM alter_t;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "non_existent_view" does not exist)~~
+
+
+-- Alter View with Schema name (Checking views with same name in different schemas)
+CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b FROM alter_t;
+GO
+SELECT * FROM guest.alter_v1;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+SELECT * FROM dbo.alter_v1;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+-- Alter View having dependent view [Error]
+ALTER VIEW alter_v24 AS SELECT a,b FROM alter_t;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop view alter_v24 because other objects depend on it)~~
+
+
+SELECT * FROM alter_v24;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int
+1#!#a#!#a#!#1
+2#!#b#!#b#!#2
+3#!#c#!#c#!#3
+4#!#d#!#d#!#4
+5#!#e#!#e#!#5
+6#!#f#!#f#!#6
+7#!#g#!#g#!#7
+8#!#h#!#h#!#8
+9#!#i#!#i#!#9
+10#!#j#!#j#!#10
+~~END~~
+
+
+-- Verify dependent view after Alter on underlying view fails
+SELECT * FROM alter_v25;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+-- Change int to bigint
+ALTER VIEW alter_v7 AS SELECT CAST(a AS bigint) AS a, b, c, d, e FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+bigint#!#varchar#!#numeric#!#datetime#!#char
+1#!#test1#!#10.50#!#2024-01-01 00:00:00.0#!#CHAR1     
+2#!#test2#!#20.50#!#2024-01-02 00:00:00.0#!#CHAR2     
+~~END~~
+
+
+-- Change varchar to nvarchar
+ALTER VIEW alter_v7 AS SELECT a, CAST(b AS nvarchar(20)) AS b, c, d, e FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+int#!#nvarchar#!#numeric#!#datetime#!#char
+1#!#test1#!#10.50#!#2024-01-01 00:00:00.0#!#CHAR1     
+2#!#test2#!#20.50#!#2024-01-02 00:00:00.0#!#CHAR2     
+~~END~~
+
+
+-- Change nvarchar to binary
+ALTER VIEW alter_v7 as select CAST(b AS binary) AS invalid_binary FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+binary
+746573743100000000000000000000000000000000000000000000000000
+746573743200000000000000000000000000000000000000000000000000
+~~END~~
+
+
+-- Change nvarchar to varbinary
+ALTER VIEW alter_v8 as select CAST(b AS varbinary) AS b FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+binary
+746573743100000000000000000000000000000000000000000000000000
+746573743200000000000000000000000000000000000000000000000000
+~~END~~
+
+
+-- Change decimal precision
+ALTER VIEW alter_v7 AS SELECT a, b, CAST(c AS decimal(15,4)) AS c, d, e FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+int#!#varchar#!#numeric#!#datetime#!#char
+1#!#test1#!#10.5000#!#2024-01-01 00:00:00.0#!#CHAR1     
+2#!#test2#!#20.5000#!#2024-01-02 00:00:00.0#!#CHAR2     
+~~END~~
+
+
+-- Change datetime to smalldatetime
+ALTER VIEW alter_v7 AS SELECT a, b, c, CAST(d AS smalldatetime) AS d, e FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+int#!#varchar#!#numeric#!#smalldatetime#!#char
+1#!#test1#!#10.50#!#2024-01-01 00:00:00.0#!#CHAR1     
+2#!#test2#!#20.50#!#2024-01-02 00:00:00.0#!#CHAR2     
+~~END~~
+
+
+-- Type Conversion with Computations
+ALTER VIEW alter_v7 AS
+SELECT 
+    CAST(a * 1.5 AS decimal(10,2)) AS computed_a,
+    CAST(CAST(a AS float) * c AS decimal(15,4)) AS mult_result,
+    CAST(DATEADD(day, a, d) AS datetime2) AS computed_date,
+    CAST(CONCAT(b, e) AS nvarchar(50)) AS concat_string
+FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+numeric#!#numeric#!#datetime2#!#nvarchar
+1.50#!#10.5000#!#2024-01-02 00:00:00.0000000#!#test1CHAR1     
+3.00#!#41.0000#!#2024-01-04 00:00:00.0000000#!#test2CHAR2     
+~~END~~
+
+
+-- Type Conversion with Aggregations
+ALTER VIEW alter_v7 AS
+SELECT 
+    CAST(SUM(a) AS decimal(15,2)) AS sum_a,
+    CAST(AVG(c) AS float) AS avg_c,
+    CAST(MAX(d) AS date) AS max_date,
+    CAST(COUNT(*) AS bigint) AS row_count
+FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+numeric#!#float#!#date#!#bigint
+3.00#!#15.5#!#2024-01-02#!#2
+~~END~~
+
+
+
+-- Error Cases for type conversions
+-- Change decimal to date [Error]
+ALTER VIEW alter_v7 AS SELECT a, b, CAST(c AS date) AS c, d, e FROM alter_t4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to date)~~
+
+
+-- Change decimal to binary [Error]
+ALTER VIEW alter_v7 AS SELECT a, b, CAST(c AS binary) AS c, d, e FROM alter_t4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to "binary")~~
+
+
+-- Change decimal to varbinary [Error]
+ALTER VIEW alter_v7 AS SELECT a, b, CAST(c AS varbinary) AS c, d, e FROM alter_t4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to varbinary)~~
+
+
+-- Change varchar to date [Error]
+ALTER VIEW alter_v7 as select CAST(b AS date) AS invalid_date FROM alter_t4;
+GO
+SELECT * FROM alter_v7;
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type date: "test1")~~
+
+
+-- Alter View with a Long Select Statement
+CREATE OR ALTER VIEW alter_v5 AS
+SELECT alter_t.a, alter_t.b, alter_t.c, alter_t.d, alter_t1.b AS t1_b, alter_t2.d AS t2_d, alter_t3.f AS alter_t3_f
+FROM alter_t
+JOIN alter_t1 ON alter_t.a = alter_t1.a
+JOIN alter_t2 ON alter_t.a = alter_t2.c
+JOIN alter_t3 ON alter_t.a = alter_t3.e
+WHERE alter_t.a IN (SELECT a FROM alter_t WHERE d > 5)
+AND alter_t.b IN (SELECT b FROM alter_t1 WHERE b LIKE 'f%')
+AND alter_t.c IN (SELECT c FROM alter_t WHERE c IS NOT NULL)
+AND alter_t.d IN (SELECT d FROM alter_t WHERE d BETWEEN 1 AND 10)
+ORDER BY alter_t.a, alter_t.b, alter_t.c, alter_t.d, alter_t1.b, alter_t2.d, alter_t3.f;
+GO
+SELECT * FROM alter_v5;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int#!#varchar#!#varchar#!#varchar
+~~END~~
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Test Case: Transaction - begin, alter, rollback
+--                        - expect alter to not go through
+BEGIN TRANSACTION;
+GO
+
+CREATE OR ALTER view alter_v23 as select a,b from alter_t;
+GO
+
+ROLLBACK;
+GO
+
+-- Error as the transaction was rolled back                   
+SELECT * FROM alter_v23;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "alter_v23" does not exist)~~
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+BEGIN TRANSACTION;
+GO
+
+CREATE OR ALTER view alter_v10 as select a,b from alter_t;
+GO
+
+COMMIT;
+GO
+
+SELECT * FROM alter_v10;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Test Case: Complex Transaction - begin, alter, rollback
+BEGIN TRANSACTION;
+GO
+
+-- Perform the view alteration
+CREATE OR ALTER VIEW alter_v21 AS SELECT a, b FROM alter_t;
+GO
+
+DROP TABLE non_existent_table; -- This will cause an error
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "non_existent_table" does not exist)~~
+
+
+-- Perform another view alteration
+CREATE OR ALTER VIEW alter_v22 AS SELECT a, b,c FROM alter_t;
+GO
+
+-- Commit the outer transaction
+COMMIT;
+GO
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT * from alter_v22;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#a#!#a
+2#!#b#!#b
+3#!#c#!#c
+4#!#d#!#d
+5#!#e#!#e
+6#!#f#!#f
+7#!#g#!#g
+8#!#h#!#h
+9#!#i#!#i
+10#!#j#!#j
+~~END~~
+
+
+SELECT * FROM alter_v21;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+
+-- Ensure no orphaned entries left behind
+-- Check pg and bbf catalogs
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v9';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v9#!#-- Alter View with Subquery<newline>CREATE VIEW alter_v9 AS SELECT a, b, (SELECT MAX(d) FROM alter_t) AS max_d FROM alter_t;<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v9';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v9#!#-- Alter View with Subquery<newline>CREATE VIEW alter_v9 AS SELECT a, b, (SELECT MAX(d) FROM alter_t) AS max_d FROM alter_t;<newline>
+~~END~~
+
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v10';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v10#!#CREATE view alter_v10 as select a,b from alter_t;<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v10';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v10#!#CREATE view alter_v10 as select a,b from alter_t;<newline>
+~~END~~
+
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v21';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v21#!#-- Perform the view alteration<newline>CREATE VIEW alter_v21 AS SELECT a, b FROM alter_t;<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v21';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v21#!#-- Perform the view alteration<newline>CREATE VIEW alter_v21 AS SELECT a, b FROM alter_t;<newline>
+~~END~~
+
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v22';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v22#!#-- Perform another view alteration<newline>CREATE VIEW alter_v22 AS SELECT a, b,c FROM alter_t;<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v22';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v22#!#-- Perform another view alteration<newline>CREATE VIEW alter_v22 AS SELECT a, b,c FROM alter_t;<newline>
+~~END~~
+
+
+
+-- Replacing view definitons from 'ALTER' to 'CREATE'
+--test comment
+CREATE or alter view alter_v18
+AS -- test
+    select 1
+GO
+
+
+create view alter_v19 as select 1
+GO
+
+alter  --test comment
+    view alter_v19
+as --test
+    select 2
+GO
+
+-- definiton will get replaced to 'CREATE VIEW'
+create view alter_v20 as select 1
+GO
+
+alter 
+/*
+ * test comment 1
+ */
+-- test comment 2
+view alter_v20 as select 3
+GO
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v18';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v18#!#-- Replacing view definitons from 'ALTER' to 'CREATE'<newline>--test comment<newline>CREATE view alter_v18<newline>AS -- test<newline>    select 1<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v18';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v18#!#-- Replacing view definitons from 'ALTER' to 'CREATE'<newline>--test comment<newline>CREATE view alter_v18<newline>AS -- test<newline>    select 1<newline>
+~~END~~
+
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v19';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v19#!#CREATE  --test comment<newline>    view alter_v19<newline>as --test<newline>    select 2<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v19';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v19#!#CREATE  --test comment<newline>    view alter_v19<newline>as --test<newline>    select 2<newline>
+~~END~~
+
+
+SELECT dbid, schema_name, object_name, definition, flag_validity, flag_values FROM babelfish_view_def WHERE object_name = 'alter_v20';
+GO
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#alter_v20#!#CREATE <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>view alter_v20 as select 3<newline>#!#3#!#3
+~~END~~
+
+
+SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION FROM information_schema.views WHERE TABLE_NAME = 'alter_v20';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#alter_v20#!#CREATE <newline>/*<newline> * test comment 1<newline> */<newline>-- test comment 2<newline>view alter_v20 as select 3<newline>
+~~END~~
+
