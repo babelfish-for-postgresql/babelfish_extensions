@@ -51,6 +51,9 @@
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
+#define FLAG_Z         1 << 0
+#define FLAG_M         1 << 1
+
 #define VARCHAR_MAX 2147483647
 /* TODO: need to add for other geometry types when introduced */
 #define POINTTYPE 1
@@ -4214,60 +4217,132 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
-    int    rc = EOF,
-           npoints,
-           len,             /* number of bytes used to store the string. */
-           actualLen;       /* Number of bytes that would be needed to
-                             * store given string in given encoding. */
-    char   *destBuf,
-           *buf,
-           *itr;
-
-	int32_t   srid;
+    int 		rc = EOF,
+            	npoints,
+            	len,
+            	pointSize,
+            	hasZ,
+            	hasM,
+            	actualLen;
+    char 		*destBuf,
+            	*buf,
+            	*itr;
+	uint64_t 	zeroPadding,
+				sentinel;
+	uint32_t 	geom_type,
+				emptyFlag;
+	int32_t 	srid;
 
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-    GSERIALIZED *gser;          /* Used to Store the bytes in the Format which is stored in PostGIS */
+    GSERIALIZED *gser;
 
     gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);
-    npoints = *((int *)gser->data);
-    /*
-     * Row chunck length expected by the driver is:
-     * 16 * (No. of Points) + 6
-     * 16 -> 2 8-Byte float coordinates (TODO: Need to change when Z and M flags are defined for N-dimension Points)
-     * 6 -> 4 Byte SRID + 2 Byte Geometry Type (01 0C -> for Point Type)
-    */
-    len = npoints*16 + 6;
-    buf = (char *) palloc0(len);
 
-	/* Driver Expects 4 Byte SRID */
+    /* Get SRID */
     srid = get_srid(gser->srid);
 
-    *((int32_t*)buf) = srid;
-    itr = buf + 4;
+	/* Check for Z and M dimensions */
+	hasZ = (gser->gflags & FLAG_Z) ? 1 : 0;
+    hasM = (gser->gflags & FLAG_M) ? 1 : 0;
 
-	/* Driver Expects 01 0C for 2-D Point Type as 2 constant Bytes to identify the Geometry Type */
-	/* TODO: Will need to introduce for Different Geometry Data Types */
-	switch (*((uint32_t*)gser->data))
+    /* Check geometry type */
+    geom_type = *((uint32_t *)gser->data);
+
+	/* Get number of points */
+	npoints = *((int *)((char*)gser->data + 4));
+
+	/* EMPTY GEOMETRY case */
+	if (npoints == 0) 
 	{
-		case POINTTYPE:
-			*itr = 1;
-			itr++;
-			*itr = 12;
-			itr++;
-			break;
-		default:
-			elog(ERROR, "Unsupported geometry type");
+		/* Fixed length for expected output */
+        len = 27;
+        buf = (char *) palloc0(len);
+        itr = buf;
+
+		/* Set SRID */
+		*((int32_t*)buf) = srid;
+		itr = buf + 4;
+
+        /* Geometry type: Point */
+        *itr = 1;
+        itr++;
+
+		/* Empty indicator */
+        *itr = 4;
+        itr++;
+
+        /* Zero padding (8 bytes) */
+        zeroPadding = 0x0000000000000000;
+        memcpy(itr, &zeroPadding, sizeof(uint64_t));
+        itr += 8;
+
+        /* Empty flag (4 bytes) */
+        emptyFlag = 0x00000001;
+        memcpy(itr, &emptyFlag, sizeof(uint32_t));
+        itr += 4;
+
+		/* Sentinel value (8 bytes) */
+		sentinel = 0xFFFFFFFFFFFFFFFF;
+		memcpy(itr, &sentinel, sizeof(uint64_t));
+		itr += 8;
+
+        /* Final byte for POINT EMPTY*/
+		if (geom_type == POINTTYPE)
+        	*itr = 0x01;
+	}
+	else if (geom_type == POINTTYPE)
+    {
+		/* Handle non-empty POINT */
+
+		/*
+     	* Row chunck length expected by the driver is:
+    	* pointSize * (No. of Points) + 6
+     	* pointSize -> 16(8 bytes for X + 8 bytes for Y) + 8(if Z exists) + 8(if M exists)
+     	* 6 -> 4 Byte SRID + 2 Byte Geometry Type
+    	*/
+		pointSize = 16;
+		
+		/* Add 8 bytes for Z coordinate */
+        if (hasZ)
+            pointSize += 8;
+
+		/* Add 8 bytes for M coordinate */
+        if (hasM)
+            pointSize += 8;
+
+		len = npoints * pointSize + 6;
+        buf = (char *) palloc0(len);
+
+		/* Set SRID */
+		*((int32_t*)buf) = srid;
+		itr = buf + 4; 
+
+		/* Point type */
+        *itr = 1;
+        itr++;
+
+		/* 
+    	* Set the geometry type bytes
+    	* 01 0F for 3D Point with M (XYZM)
+    	* 01 0E for 2D Point with M (XYM)
+    	* 01 0D for 3D Point (XYZ)
+    	* 01 0C for 2D Point (XY)
+    	*/
+        if (hasZ && hasM)
+            *itr = 15;
+        else if (hasM)
+            *itr = 14;
+        else if (hasZ)
+            *itr = 13;
+        else
+            *itr = 12;
+        itr++;
+
+		/* Copy coordinate data */
+        memcpy(itr, (char *)gser->data + 8, len - 6);
 	}
 
-    /* Data part of the Row has length 16 * (No. of Points) */
-    /*
-     * First 8 Bytes of gser->data are fixed in PostGIS:
-     * 4 Bytes -> Represents the Type
-     * 4 Bytes -> Represents the npoints
-    */
-    memcpy(itr, (char *) gser->data + 8, len - 6);
-
-    destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
     TDSInstrumentation(TdsInstr);
 
