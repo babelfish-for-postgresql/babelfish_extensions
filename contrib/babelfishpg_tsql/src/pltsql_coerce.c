@@ -2090,7 +2090,7 @@ is_tsql_exact_numeric_type(Oid type)
 			basetype == INT4OID ||
 			basetype == INT8OID ||
 			basetype == NUMERICOID ||
-			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (type)) ||
+			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (basetype)) ||
 			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (basetype));
 }
 
