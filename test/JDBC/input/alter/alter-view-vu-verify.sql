@@ -126,6 +126,11 @@ GO
 SELECT * FROM guest.alter_v1;
 GO
 
+ALTER VIEW guest.alter_v1 AS SELECT a FROM alter_t;
+GO
+SELECT * FROM guest.alter_v1;
+GO
+
 SELECT * FROM dbo.alter_v1;
 GO
 

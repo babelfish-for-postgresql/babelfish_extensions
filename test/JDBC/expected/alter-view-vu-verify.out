@@ -358,6 +358,25 @@ int#!#varchar#!#varchar
 ~~END~~
 
 
+ALTER VIEW guest.alter_v1 AS SELECT a FROM alter_t;
+GO
+SELECT * FROM guest.alter_v1;
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
+
+
 SELECT * FROM dbo.alter_v1;
 GO
 ~~START~~
