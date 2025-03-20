@@ -424,6 +424,9 @@ GO
 SELECT * from babel_datetime_vu_view2;
 GO
 
+SELECT CONVERT(DateTime, cast(0x0 as binary));
+GO
+
 EXEC babel_datetime_vu_procedure
 GO
 

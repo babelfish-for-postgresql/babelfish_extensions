@@ -9702,7 +9702,14 @@ DECLARE
 	resdatetime sys.DATETIME;
 BEGIN
 	IF try THEN
-		resdatetime := sys.babelfish_try_conv_to_datetime(arg);
+		BEGIN
+			resdatetime := CAST(arg AS sys.DATETIME);
+		EXCEPTION
+			WHEN cannot_coerce THEN
+				RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+			WHEN OTHERS THEN
+				RETURN NULL;
+		END;
 	ELSE
 		BEGIN
 			resdatetime := CAST(arg AS sys.DATETIME);
@@ -9718,23 +9725,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-	RETURN CAST(arg AS sys.DATETIME);
-	EXCEPTION
-		WHEN cannot_coerce THEN
-			RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
-		WHEN OTHERS THEN
-			RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
+STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
                                                                   IN try BOOL,

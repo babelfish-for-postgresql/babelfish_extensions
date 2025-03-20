@@ -1098,6 +1098,15 @@ GO
 ~~ERROR (Message: relation "babel_datetime_vu_view2" does not exist)~~
 
 
+SELECT CONVERT(DateTime, cast(0x0 as binary));
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type "binary" to datetime is not allowed.)~~
+
+
 EXEC babel_datetime_vu_procedure
 GO
 ~~START~~
