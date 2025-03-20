@@ -2085,12 +2085,13 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 static bool
 is_tsql_exact_numeric_type(Oid type)
 {
-	return	getBaseType(type) == INT2OID ||
-			getBaseType(type) == INT4OID ||
-			getBaseType(type) == INT8OID ||
-			getBaseType(type) == NUMERICOID ||
+	Oid basetype = getBaseType(type);
+	return	basetype == INT2OID ||
+			basetype == INT4OID ||
+			basetype == INT8OID ||
+			basetype == NUMERICOID ||
 			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (type)) ||
-			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (getBaseType(type)));
+			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (basetype));
 }
 
 /* 
