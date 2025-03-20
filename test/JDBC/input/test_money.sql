@@ -3945,6 +3945,7 @@ GO
 SELECT 'STDEV and STDEVP Function Tests' AS test_description;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- STDEV with MONEY types
 SELECT 
     STDEV(money_small) AS stdev_money_small,
@@ -3954,6 +3955,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- STDEV with SMALLMONEY types
 SELECT 
     STDEV(smallmoney_small) AS stdev_smallmoney_small,
@@ -3963,6 +3965,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- STDEVP with MONEY types
 SELECT 
     STDEVP(money_small) AS stdevp_money_small,
@@ -3972,6 +3975,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- STDEVP with SMALLMONEY types
 SELECT 
     STDEVP(smallmoney_small) AS stdevp_smallmoney_small,
@@ -3986,6 +3990,7 @@ GO
 SELECT 'VAR and VARP Function Tests' AS test_description;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- VAR with MONEY types
 SELECT 
     VAR(money_small) AS var_money_small,
@@ -3995,6 +4000,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- VAR with SMALLMONEY types
 SELECT 
     VAR(smallmoney_small) AS var_smallmoney_small,
@@ -4004,6 +4010,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- VARP with MONEY types
 SELECT 
     VARP(money_small) AS varp_money_small,
@@ -4013,6 +4020,7 @@ SELECT
 FROM money_aggregate_test;
 GO
 
+-- TODO: File JIRA, Output Difference
 -- VARP with SMALLMONEY types
 SELECT 
     VARP(smallmoney_small) AS varp_smallmoney_small,
@@ -4103,7 +4111,7 @@ GO
 -- SUM with WHERE clause
 SELECT 
     SUM(money_small) AS sum_money_small,
-    SUM(smallmoney_small) AS sum_smallmoney_small,
+    SUM(smallmoney_small) AS sum_smallmoney_small
 FROM money_aggregate_test
 WHERE money_small > 300.00;
 GO
@@ -4111,7 +4119,7 @@ GO
 -- AVG with WHERE clause
 SELECT 
     AVG(money_small) AS avg_money_small,
-    AVG(smallmoney_small) AS avg_smallmoney_small,
+    AVG(smallmoney_small) AS avg_smallmoney_small
 FROM money_aggregate_test
 WHERE money_small > 300.00;
 GO
@@ -5015,6 +5023,7 @@ SELECT 'MATH4',
 ORDER BY val;
 GO
 
+-- TODO: File JIRA, Output Difference
 ---- 9.6 UNION with Nested Calculations
 -- Test: UNION with CASE expressions for money types
 SELECT 'NESTED1' as source_type,
