@@ -809,7 +809,7 @@ varbinary_datetime(PG_FUNCTION_ARGS)
 		int64 total_usecs = days * USECS_PER_DAY + usecs;
 		result = TSQL_DEFAULT_DATETIME + total_usecs;
 	}
-	CheckDatetimeRange(result);
+	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
