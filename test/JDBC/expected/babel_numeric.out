@@ -486,3 +486,48 @@ drop type decimal_7_2;
 drop type numeric_18_2;
 drop type numeric_7_2;
 go
+
+-- Tests for BABEL-5655
+select 0 as a, 0.0 as b, 0.00 as c, 0.000 as d into babel_5655_t1
+go
+
+select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
+from information_schema.columns 
+where TABLE_NAME = 'babel_5655_t1' order by COLUMN_NAME
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
+master#!#dbo#!#babel_5655_t1#!#a#!#10#!#10#!#0
+master#!#dbo#!#babel_5655_t1#!#b#!#<NULL>#!#10#!#<NULL>
+master#!#dbo#!#babel_5655_t1#!#c#!#<NULL>#!#10#!#<NULL>
+master#!#dbo#!#babel_5655_t1#!#d#!#<NULL>#!#10#!#<NULL>
+~~END~~
+
+
+select 0.00 * cast(1.23 as numeric(10, 3))
+go
+~~START~~
+numeric
+0.00000
+~~END~~
+
+
+select 0.00 * cast(1.23 as numeric(10, 2))
+go
+~~START~~
+numeric
+0.0000
+~~END~~
+
+
+select 0.0000 * cast(1.23 as numeric(10, 2))
+go
+~~START~~
+numeric
+0.000000
+~~END~~
+
+
+drop table babel_5655_t1
+go
+
