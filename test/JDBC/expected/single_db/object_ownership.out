@@ -1,0 +1,895 @@
+-- tsql
+/** CREATE DATABASE **/
+create database object_ownership_db;
+go
+use object_ownership_db;
+go
+
+/** CREATE LOGIN, USER AND ROLE **/
+create login object_ownership_l1 with password = '123';
+go
+create user object_ownership_u1 for login object_ownership_l1;
+go
+create role object_ownership_r1;
+go
+alter role object_ownership_r1 add member object_ownership_u1;
+go
+create login object_ownership_l3 with password = '123';
+go
+create user object_ownership_u3 for login object_ownership_l3;
+go
+create login object_ownership_l4 with password = '123';
+go
+
+/** CREATE SCHEMAS WITH DIFFERENT OWNERS **/
+create schema object_ownership_s1;
+go
+create schema object_ownership_s2 authorization object_ownership_u1;
+go
+create schema object_ownership_s3 authorization object_ownership_r1;
+go
+
+/** CREATE OBJECTS IN DIFFERENT SCHEMAS USING DBO **/
+/** SCHEMA OWNER AND CURRENT USER ARE SAME **/
+create table object_ownership_s1.t(a int, b int);
+go
+create view object_ownership_s1.v as select 1;
+go
+create proc object_ownership_s1.p as select 2;
+go
+create function object_ownership_s1.f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s1.sq start with 1 increment by 1 ;
+go
+
+/** CREATE PARTITION FUNCTION AND SCHEME **/
+create partition function pf2 (datetime)
+as range right for values 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+go
+
+create partition scheme ps2
+as partition pf2 
+all to ([primary]);
+go
+
+/** CREATE OBJECTS IN GUEST SCHEMA USING DBO USER **/
+create table guest.t(a int, b int);
+go
+create view guest.v as select 1;
+go
+create proc guest.p as select 2;
+go
+create function guest.f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence guest.sq start with 1 increment by 1 ;
+go
+grant connect to guest;
+go
+
+/** SCHEMA OWNER IS ROLE, CURRENT USER IS DBO **/
+create table object_ownership_s3.t(a int, b int);
+go
+create view object_ownership_s3.v as select 1;
+go
+create proc object_ownership_s3.p as select 2;
+go
+create function object_ownership_s3.f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s3.sq start with 1 increment by 1 ;
+go
+create index idx on object_ownership_s3.t(a);
+go
+create trigger object_ownership_s3.tr on object_ownership_s3.t after insert as select 1;
+go
+create function object_ownership_s3.tvf() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.mtvf()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.type from sys.varchar(10)
+go
+create type object_ownership_s3.ttype as table (id int)
+go
+use master
+go
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user
+go
+~~START~~
+varchar
+object_ownership_u1
+~~END~~
+
+
+/** CURRENT USER CAN CREATE OBJECT IN THESE SCHEMAS **/
+/** SCHEMA OWNER AND CURRENT USER ARE SAME **/
+create table object_ownership_s2.t1(a int, b int);
+go
+create view object_ownership_s2.v1 as select 1;
+go
+create proc object_ownership_s2.p1 as select 2;
+go
+create function object_ownership_s2.f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s2.sq1 start with 1 increment by 1 ;
+go
+create index idx1 on object_ownership_s2.t1(a);
+go
+create trigger object_ownership_s2.tr1 on object_ownership_s2.t1 after insert as select 1;
+go
+create function object_ownership_s2.tvf1() returns table as return (select '1' as col);
+go
+create function object_ownership_s2.mtvf1()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s2.type1 from sys.varchar(10)
+go
+create type object_ownership_s2.ttype1 as table (id int)
+go
+
+/** SCHEMA OWNER IS A ROLE AND CURRENT USER IS MEMBER OF THAT ROLE **/
+create table object_ownership_s3.t1(a int, b int);
+go
+create view object_ownership_s3.v1 as select 1;
+go
+create proc object_ownership_s3.p1 as select 2;
+go
+create function object_ownership_s3.f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s3.sq1 start with 1 increment by 1 ;
+go
+create index idx1 on object_ownership_s3.t1(a);
+go
+create trigger object_ownership_s3.tr1 on object_ownership_s3.t1 after insert as select 1;
+go
+create function object_ownership_s3.tvf1() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.mtvf1()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.type1 from sys.varchar(10)
+go
+create type object_ownership_s3.ttype1 as table (id int)
+go
+use master
+go
+
+-- tsql
+create login object_ownership_l2 with password = '123'
+go
+use object_ownership_db;
+go
+create user object_ownership_u2 for login object_ownership_l2;
+go
+alter role object_ownership_r1 add member object_ownership_u2;
+go
+grant SELECT, INSERT, UPDATE, DELETE, EXECUTE on schema::object_ownership_s3 to object_ownership_u3;
+go
+use master;
+go
+
+-- tsql user=object_ownership_l2 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u2
+~~END~~
+
+
+/** USER SHOULD CREATE OBJECTS IN THIS SCHEMA **/
+/** SCHEMA OWNER IS A ROLE AND CURRENT USER IS MEMBER OF THAT ROLE **/
+create table object_ownership_s3.t2(a int, b int);
+go
+create view object_ownership_s3.v2 as select 1;
+go
+create proc object_ownership_s3.p2 as select 2;
+go
+create function object_ownership_s3.f2() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create index idx1 on object_ownership_s3.t2(a);
+go
+create trigger object_ownership_s3.tr2 on object_ownership_s3.t2 after insert as select 1;
+go
+create function object_ownership_s3.tvf2() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.mtvf2()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.type2 from sys.varchar(10)
+go
+create type object_ownership_s3.ttype2 as table (id int)
+go
+
+/***** SHOULD BE ABLE TO CREATE PARTITION TABLES **********/
+create table object_ownership_s3.pt2
+(
+    saleid int identity(1,1),
+    saledate datetime,
+    amount decimal(10,2),
+    customerid int,
+    productid int
+) on ps2(saledate);  -- specify the partitioning column
+go
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNER IS A ROLE AND CURRENT USER IS A MEMBER OF THAT ROLE ***/
+select * from object_ownership_s3.t;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s3.v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s3.p;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s3.f();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s3.t values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s3.sq;
+go
+~~START~~
+bigint
+1
+~~END~~
+
+select * from object_ownership_s3.tvf();
+go
+~~START~~
+varchar
+1
+~~END~~
+
+select * from object_ownership_s3.mtvf();
+go
+~~START~~
+int
+1
+~~END~~
+
+use master
+go
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u1
+~~END~~
+
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA ONWER AND CURRENT OWNER ARE SAME ***/
+select * from object_ownership_s2.t1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s2.v1;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s2.p1;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s2.f1();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s2.t1 values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select next value for object_ownership_s2.sq1;
+go
+~~START~~
+bigint
+1
+~~END~~
+
+select * from object_ownership_s2.tvf1();
+go
+~~START~~
+varchar
+1
+~~END~~
+
+select * from object_ownership_s2.mtvf1();
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from object_ownership_s3.pt2;
+go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
+use master
+go
+
+-- tsql user=object_ownership_l4 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+guest
+~~END~~
+
+
+/*** GUEST SHOULD HAVE ACCESS TO THESE OBJECTS IN GUEST SCHEMA ***/
+/*** SCHEMA ONWER AND CURRENT OWNER ARE SAME ***/
+select * from guest.t;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from guest.v;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec guest.p;
+go
+~~START~~
+int
+2
+~~END~~
+
+select guest.f();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into guest.t values (2, 3);
+go
+~~ROW COUNT: 1~~
+
+select next value for guest.sq;
+go
+~~START~~
+bigint
+1
+~~END~~
+
+use master
+go
+
+-- tsql user=object_ownership_l3 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+object_ownership_u3
+~~END~~
+
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA ONWER AND CURRENT OWNER ARE SAME ***/
+select * from object_ownership_s3.t2;
+go
+~~START~~
+int#!#int
+~~END~~
+
+select * from object_ownership_s3.v2;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec object_ownership_s3.p2;
+go
+~~START~~
+int
+2
+~~END~~
+
+select object_ownership_s3.f2();
+go
+~~START~~
+int
+1
+~~END~~
+
+insert into object_ownership_s3.t2 values (2, 3);
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+select * from object_ownership_s3.pt2;
+go
+~~START~~
+int#!#datetime#!#numeric#!#int#!#int
+~~END~~
+
+use master
+go
+
+-- tsql
+use object_ownership_db;
+go
+select current_user;
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+/** SCHEMA OWNER SHOULD BE SAME AS THE OBJECT OWNER **/
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(c.relname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON c.relowner = r2.oid
+WHERE n.nspname like 'object_ownership_%'
+ORDER BY r2.rolname, c.relname;
+go
+~~START~~
+char#!#char#!#char
+dbo                                                              #!#sq                                                               #!#dbo                                                              
+dbo                                                              #!#t                                                                #!#dbo                                                              
+dbo                                                              #!#v                                                                #!#dbo                                                              
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_0                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_1                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_2                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_3                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf                                                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf1                                                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf2                                                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#idx1t1645826a2684a0937f93b08935f31319f                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#idx1t2645826a2684a0937f93b08935f31319f                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#idxt7f9bec28bc8902d45d905788d7aa59a1                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#pt2                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#pt2_saleid_seq                                                   #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#sq                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#sq1                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype1                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype2                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_u1                          #!#@result_mtvf1                                                    #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#idx1t1645826a2684a0937f93b08935f31319f                           #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#sq1                                                              #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#t1                                                               #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#ttype1                                                           #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#v1                                                               #!#object_ownership_db_object_ownership_u1                          
+~~END~~
+
+
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(p.proname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON p.proowner = r2.oid
+WHERE n.nspname LIKE 'object_ownership_%'
+ORDER BY r2.rolname, p.proname;
+go
+~~START~~
+char#!#char#!#char
+dbo                                                              #!#f                                                                #!#dbo                                                              
+dbo                                                              #!#p                                                                #!#dbo                                                              
+object_ownership_db_object_ownership_r1                          #!#f                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#f1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#f2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#mtvf                                                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#mtvf1                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#mtvf2                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#p                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#p1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#p2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tr                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tr1                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tr2                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tvf                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tvf1                                                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#tvf2                                                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_u1                          #!#f1                                                               #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#mtvf1                                                            #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#p1                                                               #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#tr1                                                              #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#tvf1                                                             #!#object_ownership_db_object_ownership_u1                          
+~~END~~
+
+
+SELECT CAST(r1.rolname AS CHAR(65)), CAST(t.typname AS CHAR(65)), CAST(r2.rolname AS CHAR(65))
+FROM pg_type t
+JOIN pg_namespace n ON n.oid = t.typnamespace
+JOIN pg_roles r1 ON n.nspowner = r1.oid
+JOIN pg_roles r2 ON t.typowner = r2.oid
+WHERE n.nspname LIKE 'object_ownership_%'
+ORDER BY r2.rolname, t.typname;
+go
+~~START~~
+char#!#char#!#char
+dbo                                                              #!#_t                                                               #!#dbo                                                              
+dbo                                                              #!#_v                                                               #!#dbo                                                              
+dbo                                                              #!#t                                                                #!#dbo                                                              
+dbo                                                              #!#v                                                                #!#dbo                                                              
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_0                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_1                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_2                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#2bc43500e5a904447227cb4121181c74_partition_3                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf                                                     #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf1                                                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#@result_mtvf2                                                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_2bc43500e5a904447227cb4121181c74_partition_0                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_2bc43500e5a904447227cb4121181c74_partition_1                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_2bc43500e5a904447227cb4121181c74_partition_2                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_2bc43500e5a904447227cb4121181c74_partition_3                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_@result_mtvf                                                    #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_@result_mtvf1                                                   #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_@result_mtvf2                                                   #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_pt2                                                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_t                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_t1                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_t2                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_ttype                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_ttype1                                                          #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_ttype2                                                          #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_type                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_type1                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_type2                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_v                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_v1                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#_v2                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#pt2                                                              #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#t2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype1                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#ttype2                                                           #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#type                                                             #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#type1                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#type2                                                            #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v                                                                #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v1                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_r1                          #!#v2                                                               #!#object_ownership_db_object_ownership_r1                          
+object_ownership_db_object_ownership_u1                          #!#@result_mtvf1                                                    #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#_@result_mtvf1                                                   #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#_t1                                                              #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#_ttype1                                                          #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#_type1                                                           #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#_v1                                                              #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#t1                                                               #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#ttype1                                                           #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#type1                                                            #!#object_ownership_db_object_ownership_u1                          
+object_ownership_db_object_ownership_u1                          #!#v1                                                               #!#object_ownership_db_object_ownership_u1                          
+~~END~~
+
+
+/**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+select * from get_schema_object_ownership();
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+~~END~~
+
+
+/*** SHOWS THE LIST OF ALTER STATEMENTS TO BE EXECUTED ***/
+select * from generate_alter_ownership_statements();
+go
+~~START~~
+text
+~~END~~
+
+
+/** DROP OBJECTS **/
+drop table guest.t;
+go
+drop view guest.v;
+go
+drop procedure guest.p;
+go
+drop function guest.f
+go
+drop sequence guest.sq;
+go
+
+drop table object_ownership_s1.t;
+go
+drop view object_ownership_s1.v;
+go
+drop procedure object_ownership_s1.p;
+go
+drop function object_ownership_s1.f
+go
+drop sequence object_ownership_s1.sq;
+go
+
+drop index idx1 on object_ownership_s2.t1;
+go
+drop trigger object_ownership_s2.tr1;
+go
+drop function object_ownership_s2.tvf1;
+go
+drop function object_ownership_s2.mtvf1;
+go
+drop type object_ownership_s2.type1;
+go
+drop type object_ownership_s2.ttype1;
+go
+drop table object_ownership_s2.t1;
+go
+drop view object_ownership_s2.v1;
+go
+drop procedure object_ownership_s2.p1;
+go
+drop function object_ownership_s2.f1
+go
+drop sequence object_ownership_s2.sq1;
+go
+
+drop index idx on object_ownership_s3.t;
+go
+drop trigger object_ownership_s3.tr;
+go
+drop function object_ownership_s3.tvf;
+go
+drop function object_ownership_s3.mtvf;
+go
+drop type object_ownership_s3.type;
+go
+drop type object_ownership_s3.ttype;
+go
+drop table object_ownership_s3.t;
+go
+drop view object_ownership_s3.v;
+go
+drop procedure object_ownership_s3.p;
+go
+drop function object_ownership_s3.f
+go
+drop sequence object_ownership_s3.sq;
+go
+
+drop index idx1 on object_ownership_s3.t1;
+go
+drop trigger object_ownership_s3.tr1;
+go
+drop function object_ownership_s3.tvf1;
+go
+drop function object_ownership_s3.mtvf1;
+go
+drop type object_ownership_s3.type1;
+go
+drop type object_ownership_s3.ttype1;
+go
+drop table object_ownership_s3.t1;
+go
+drop view object_ownership_s3.v1;
+go
+drop procedure object_ownership_s3.p1;
+go
+drop function object_ownership_s3.f1
+go
+drop sequence object_ownership_s3.sq1;
+go
+
+drop index idx1 on object_ownership_s3.t2;
+go
+drop trigger object_ownership_s3.tr2;
+go
+drop function object_ownership_s3.tvf2;
+go
+drop function object_ownership_s3.mtvf2;
+go
+drop type object_ownership_s3.type2;
+go
+drop type object_ownership_s3.ttype2;
+go
+drop table object_ownership_s3.t2;
+go
+drop view object_ownership_s3.v2;
+go
+drop procedure object_ownership_s3.p2;
+go
+drop function object_ownership_s3.f2
+go
+drop table object_ownership_s3.pt2
+go
+drop partition scheme ps2
+go
+drop partition function pf2
+go
+
+/** DROP REMAINING OBJECTS **/
+drop schema object_ownership_s1
+go
+drop schema object_ownership_s2;
+go
+drop schema object_ownership_s3;
+go
+
+alter role object_ownership_r1 drop member object_ownership_u1;
+go
+alter role object_ownership_r1 drop member object_ownership_u2;
+go
+drop role object_ownership_r1
+go
+drop user object_ownership_u1
+go
+drop user object_ownership_u2
+go
+drop user object_ownership_u3
+go
+use master
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'object_ownership_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'object_ownership_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'object_ownership_l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'object_ownership_l4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+use master
+go
+drop login object_ownership_l1;
+go
+drop login object_ownership_l2;
+go
+drop login object_ownership_l3;
+go
+drop login object_ownership_l4;
+go
+drop database object_ownership_db
+go
