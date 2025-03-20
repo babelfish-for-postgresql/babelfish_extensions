@@ -1224,26 +1224,16 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 }
 
 /*
- * get_func_id_from_exp
- *  For expressions T_FuncExpr, T_OpExpr, T_Aggref returns its function Oid
+ * contains_truncation_functions_checker
+ *  For Numeric Division and Numeric Average, truncation of
+ *  results needs to be done. Following function identifies 
+ *  all such functions which requires result truncation.
  */
-static Oid
-get_func_id_from_exp(Node *expr)
+static bool
+contains_truncation_functions_checker(Oid func_id, void *context)
 {
-	if (expr == NULL)
-		return InvalidOid;
-
-	switch(nodeTag(expr))
-	{
-		case T_FuncExpr:
-			return ((FuncExpr *) expr)->funcid;
-		case T_OpExpr:
-			return ((OpExpr *) expr)->opfuncid;
-		case T_Aggref:
-			return ((Aggref *) expr)->aggfnoid;
-		default:
-			return InvalidOid;
-	}
+	return (func_id == F_NUMERIC_DIV || func_id == F_AVG_NUMERIC);
+	
 }
 
 /*
@@ -1255,7 +1245,6 @@ static Datum
 adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
 {
 	int32       scale;
-	Oid         func_id;
 
 	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
 		return result;
@@ -1271,9 +1260,12 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 		if (result_typmod != -1)
 		{
 			scale = (result_typmod - VARHDRSZ) & 0xffff; 
-			func_id = get_func_id_from_exp(expr);
 
-			if (func_id == F_NUMERIC_DIV || func_id == F_AVG_NUMERIC)
+			/*
+			 * For Numeric Division and Numeric Average, 
+			 * we need to do a truncation and for rest we need to do rounding
+			 */
+			if (check_functions_in_node(expr, contains_truncation_functions_checker, NULL))
 				return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
 			else
 				return DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
