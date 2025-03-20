@@ -9,3 +9,5 @@ drop view babel_datetime_vu_view2
 go
 drop procedure babel_datetime_vu_procedure
 go
+drop function babel_datetime_vu_function1
+go
