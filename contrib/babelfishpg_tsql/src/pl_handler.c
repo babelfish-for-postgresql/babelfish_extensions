@@ -39,6 +39,7 @@
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/user.h"
+#include "commands/view.h"
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -48,6 +49,7 @@
 #include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -62,6 +64,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc_tables.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
@@ -141,7 +144,8 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
-static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl);
+static Acl *get_old_view_acl(Oid oldViewOid);
+static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -1382,13 +1386,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 					}
 				}
 				break;
-			case T_IndexStmt:
-				{
-					IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-				}
-				break;
 			case T_CreateTableAsStmt:
 				{
 					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
@@ -2414,9 +2411,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				   DestReceiver *dest,
 				   QueryCompletion *qc)
 {
-	Node	   *parsetree = pstmt->utilityStmt;
+	Node	   *parsetree;
 	ParseState *pstate = make_parsestate(NULL);
 
+	/*
+	 * If the given node tree is read-only, make a copy to ensure that parse
+	 * transformations don't damage the original tree.  This could be
+	 * refactored to avoid making unnecessary copies in more cases, but it's
+	 * not clear that it's worth a great deal of trouble over.  Statements
+	 * that are complex enough to be expensive to copy are exactly the ones
+	 * we'd need to copy, so that only marginal savings seem possible.
+	 */
+	if (readOnlyTree)
+		pstmt = copyObject(pstmt);
+
+	parsetree = pstmt->utilityStmt;
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
@@ -2545,6 +2554,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					bool 				with_recompile = false;
 					Node                *tbltypStmt = NULL;
 					ListCell            *parameter;
+					HeapTuple 			proctup;
 
 					cfs = makeNode(CreateFunctionStmt);
 					cfs->returnType = NULL;
@@ -2626,13 +2636,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						originalFunc.objectId = oldoid;
 						originalFunc.classId = ProcedureRelationId;
 						originalFunc.objectSubId = 0;
-						if(get_bbf_function_tuple_from_proctuple(SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid))) == NULL)
+						proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(oldoid));
+						if (!HeapTupleIsValid(proctup))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_OBJECT),
+										errmsg("cache lookup failed for procedure %u", oldoid)));
+						}
+						if (get_bbf_function_tuple_from_proctuple(proctup) == NULL)
 						{
 							/* Detect PSQL functions and throw error */
 							ereport(ERROR,
-								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-									errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
+									(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+										errmsg("No existing TSQL procedure found with the name for ALTER PROCEDURE")));
 						}
+						ReleaseSysCache(proctup);
+
 						if(!cfs->is_procedure)
 						{
 							/*
@@ -2646,6 +2665,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else if (!isSameProc) /* i.e. different signature */
 						{
 							performDeletion(&originalFunc, DROP_RESTRICT, 0);
+							CommandCounterIncrement();
 						}
 
 						if(tbltypStmt)
@@ -2700,7 +2720,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							/* Need CCI between commands */
 							CommandCounterIncrement();
+						}
 
+						/* if this is the same procedure, it will update the existing one */
+						address = CreateFunction(pstate, cfs);
+						if (tbltypStmt)
+						{
 							/*
 							 * Update dependency on oldoid
 							 */
@@ -2708,27 +2733,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							tbltyp.objectId = typenameTypeId(pstate,
 															cfs->returnType);
 							tbltyp.objectSubId = 0;
-							recordDependencyOn(&tbltyp, &originalFunc, DEPENDENCY_INTERNAL);
+							recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
 						}
-
-						/* if this is the same procedure, it will update the existing one */
-						address = CreateFunction(pstate, cfs);
 						/* Update function/procedure related metadata in babelfish catalog */
 						pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location, with_recompile);
 						/* Increase counter after bbf_func_ext modified in pltsql_store_func_default_positions*/
 						CommandCounterIncrement();
-						pg_proc_update_oid_acl(address, oldoid, proacl);
-						if (!isSameProc) {
-						       /*
+						/* Clean up table entries for the create function statement if applicable*/
+						if (address.objectId != oldoid)
+						{
+							/*
+							 * if this is the same procedure, it'll update the existing one,
+							 * in such case, should not delete dependent records
+							 */
+							deleteDependencyRecordsFor(DefaultAclRelationId, oldoid, false);
+							deleteDependencyRecordsFor(ProcedureRelationId, oldoid, false);
+							deleteSharedDependencyRecordsFor(ProcedureRelationId, oldoid, 0);
+						}
+						if (!isSameProc) 
+						{
+						    /*
 							* When the signatures differ we need to manually update the 'function_args' column in 
 							* the 'bbf_schema_permissions' catalog
 							*/
-							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype, oldoid);
+							alter_bbf_schema_permissions_catalog(stmt->func, cfs->parameters, stmt->objtype);
 						}
-						/* Clean up table entries for the create function statement */
-						deleteDependencyRecordsFor(DefaultAclRelationId, address.objectId, false);
-						deleteDependencyRecordsFor(ProcedureRelationId, address.objectId, false);
-						deleteSharedDependencyRecordsFor(ProcedureRelationId, address.objectId, 0);
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
@@ -2741,6 +2770,123 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				break;
 			}
+
+			/* 
+			* This case handles the `ALTER VIEW` and `CREATE OR ALTER VIEW` statements in Babelfish.
+			*/
+			case T_ViewStmt:
+			{
+				ViewStmt *stmt = (ViewStmt *) parsetree;
+
+				/*
+				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
+				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
+				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
+				 *
+				 * Since both CREATE VIEW and CREATE OR ALTER VIEW set replace = false initially,
+				 * we use the 'createOrAlter' flag to distinguish between them and implement the
+				 * correct behavior when a view already exists
+				 */
+
+				if (sql_dialect == SQL_DIALECT_TSQL && (stmt->createOrAlter))    
+				{
+					/*
+					 * 1. Retrieve the OID of the old view using `RangeVarGetRelid()`.
+					 * 2. If the old view does not exist, create the new view using `DefineView()` and increment the command counter.
+ 					 * 3. If the old view exists:
+					 *    a. Save the ACL information of the current view.
+					 *    b. Drop the current view using `performDeletion()`.
+					 *    c. Create the new view using `DefineView()` and increment the command counter.
+					 *    f. Store the new view definition in the `bbf_view_def` catalog using `store_view_definition_hook()`.
+					 *    g. Update the ACL information for the new view using `pg_class_update_acl()`.
+					 */
+					ObjectAddress address, originalView;
+					Oid oldViewOid;
+					Acl *oldViewAcl = NULL;
+					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+					bool needCleanup;
+			
+					if (!IS_TDS_CLIENT())
+					{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										errmsg("TSQL ALTER VIEW is not supported from PostgreSQL endpoint.")));
+					}
+
+					needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+			
+					PG_TRY();
+					{
+						StartTransactionCommand();
+						
+						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
+						 * Currently T-SQL DDL triggers are not supported, but this code block is required for PostgreSQL DDL event triggers. 
+						 * This will be used later when T-SQL DDL trigger support is implemented.*/
+						
+						if (isCompleteQuery)
+							EventTriggerDDLCommandStart(parsetree);
+
+						/* Get the old view's OID and verify it exists */
+						oldViewOid = RangeVarGetRelid(stmt->view, AccessExclusiveLock, true);
+						
+						/* If the view does not exist, check if the stmt is CREATE OR ALTER VIEW / ALTER VIEW */
+						if (!OidIsValid(oldViewOid))
+						{
+							if(stmt->replace)	/* we have set replace to false for CREATE OR ALTER VIEW to avoid view does not exist error */
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_TABLE),
+											errmsg("view \"%s\" does not exist", 
+												stmt->view->relname)));
+							}
+							/* View doesn't exist - create it */
+							address = DefineView(stmt, queryString, pstmt->stmt_location, pstmt->stmt_len);
+							CommandCounterIncrement();
+						}
+						/* View exists */
+						else
+						{
+							/* Save ACL before dropping the view */
+							oldViewAcl = get_old_view_acl(oldViewOid);
+							CacheInvalidateRelcacheByRelid(oldViewOid);
+			
+							/* Drop the old view */
+							originalView.objectId = oldViewOid;
+							originalView.classId = RelationRelationId;
+							originalView.objectSubId = 0;
+							performDeletion(&originalView, DROP_RESTRICT, 0);
+							CommandCounterIncrement();
+			
+							/* Create new view */
+							stmt->replace = true; 
+							address = DefineView(stmt, queryString, pstmt->stmt_location, pstmt->stmt_len);
+							CommandCounterIncrement();
+							
+							/* Store the view definition in babelfish_view_def */
+							if(store_view_definition_hook)
+								store_view_definition_hook(queryString, address);
+
+							/* Update ACL info */
+							pg_class_update_acl(address.objectId, oldViewAcl);
+
+							if(oldViewAcl != NULL)
+								pfree(oldViewAcl);
+						}
+						CommitTransactionCommand();
+					}
+					PG_FINALLY();
+					{
+						if (needCleanup)
+							EventTriggerEndCompleteQuery();
+					}
+					PG_END_TRY();
+					return; 
+				}
+				/* check that no T-SQL ALTER VIEW operations reach this point because they should have been handled earlier in the code.*/
+				Assert(!(sql_dialect == SQL_DIALECT_TSQL && stmt->createOrAlter));
+				break;
+			}
+
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
@@ -3606,7 +3752,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 						PG_END_TRY();
 
-						set_session_properties(db_name);
+						set_cur_user_db_and_path(db_name, true);
 						pfree(db_name);
 
 						return;
@@ -3640,6 +3786,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						RoleSpec   *headrol = linitial(stmt->roles);
 
+						if (headrol->roletype == ROLESPEC_PUBLIC)
+							headrol->rolename = PUBLIC_ROLE_NAME;
+
 						if (strcmp(headrol->rolename, "is_user") == 0)
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
@@ -3664,9 +3813,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(item, stmt->roles)
 								{
 									RoleSpec	*rolspec = lfirst(item);
-									char		*user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
-									int		role_oid = get_role_oid(user_name, true);
+									int			role_oid;
+
+									if (rolspec->roletype == ROLESPEC_PUBLIC)
+										rolspec->rolename = PUBLIC_ROLE_NAME;
+									
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
@@ -3919,8 +4074,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						*/
 						if (!member_can_set_role(GetUserId(), owner_oid) &&
 							(has_privs_of_role(GetUserId(), get_db_accessadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false)) ||
-							has_privs_of_role(GetUserId(), get_db_ddladmin_oid(db_name, false))) &&
+							has_privs_of_role(GetUserId(), get_db_securityadmin_oid(db_name, false))) &&
 							get_db_principal_kind(owner_oid, db_name))
 						{
 							create_schema->authrole = NULL;
@@ -4001,16 +4155,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						exec_database_roles_subcmds(create_schema->schemaname);
 					}
 
-					/* Grant ALL schema privileges to the user.*/
-					if (rolspec && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0)
-					{
-						int i;
-						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
-						{
-							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
-						}
-					}
 					return;
 				}
 				else
@@ -4345,30 +4489,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_IndexStmt:
 			{
-				if (sql_dialect == SQL_DIALECT_TSQL)
-				{
-					IndexStmt *stmt = (IndexStmt *) parsetree;
+				IndexStmt	*stmt = (IndexStmt *) parsetree;
 
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
+				{
+					char    	*original_name = stmt->idxname != NULL ? stmt->idxname : NULL;
+					List    	*partition_schemes = stmt->excludeOpNames;
+
+					stmt->excludeOpNames = NIL;
+					if (stmt->idxname && !stmt->isconstraint)
+						stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
+					/*
+					 * Create the index first so that columns and table name
+					 * checks get done before index alignment check.
+					 */
+					call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					/*
 					 * Create partitioned index if partition scheme is specified.
 					 * Allow only aligned-index.
 					 */
-					if (stmt->excludeOpNames != NIL)
-					{
-						List *partition_schemes = stmt->excludeOpNames;
-						stmt->excludeOpNames = NIL;
-
-						/*
-						 * Create the index first so that columns and table name
-						 * checks get done before index alignment check.
-						 */
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-											queryEnv, dest, qc);
-						
+					if (partition_schemes != NIL)
+					{	
 						stmt->excludeOpNames = partition_schemes;
 
 						/* Validate that index is aligned-index. */
@@ -4378,8 +4520,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
 									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
-						return;
 					}
+					if (original_name && !stmt->isconstraint)
+					{
+						/* Store the original index name in reloptions */
+						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+						/* Restore the original index name so that cached plan remains valid */
+						stmt->idxname = original_name;
+					}
+					return;
 				}
 				break;
 			}
@@ -4528,7 +4677,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4566,7 +4715,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 										exec_pg_command = true;
 
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
@@ -4636,7 +4785,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									return;
 							}
 						}
@@ -4674,7 +4823,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
-								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, OBJ_SCHEMA))
 									exec_pg_command = true;
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
@@ -4786,62 +4935,70 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 }
 
 /*
- * Update the oid and acl of a pg_proc entry given its address
+ * Get the acl of view from pg_class given its oid
+ */
+static Acl *
+get_old_view_acl(Oid oldViewOid)
+{
+	HeapTuple tuple;
+	Datum aclDatum;
+	bool isNull;
+	Acl *oldViewAcl = NULL;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(oldViewOid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+					errmsg("cache lookup failed for relation %u", oldViewOid)));
+
+	aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl, &isNull);
+	if (!isNull)
+		oldViewAcl = DatumGetAclPCopy(aclDatum);
+
+	ReleaseSysCache(tuple);
+
+	return oldViewAcl;
+}
+
+/*
+ * Update the acl info of view in pg_class given its oid and acl info
  */
 static void
-pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl *acl)
+pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
 {
-	Relation		rel;
-	HeapTuple		proctup;
-	Form_pg_proc	form_proctup;
-	char		*physical_schemaname;
+	Relation pg_class_rel;
+	HeapTuple classtup;
 
-	Datum		values[Natts_pg_proc];
-	bool		nulls[Natts_pg_proc];
-	bool		replaces[Natts_pg_proc];
-	HeapTuple	newtup;
+	Datum values[Natts_pg_class];
+	bool nulls[Natts_pg_class];
+	bool replaces[Natts_pg_class];
+	HeapTuple newtup;
 
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-	if (!HeapTupleIsValid(proctup))
-		return;
+	/* Get the tuple from syscache */
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(newViewOid));
+	if (!HeapTupleIsValid(classtup))
+		elog(ERROR, "cache lookup failed for relation %u", newViewOid);
 
-	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-
-	if (!is_pltsql_language_oid(form_proctup->prolang))
-	{
-		ReleaseSysCache(proctup);
-		return;
-	}
-
-	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
-	if (physical_schemaname == NULL)
-	{
-		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form_proctup->pronamespace);
-	}
-
-	rel = table_open(ProcedureRelationId, RowExclusiveLock);
+	pg_class_rel = table_open(RelationRelationId, RowExclusiveLock);
 
 	memset(values, 0, sizeof(values));
-	memset(nulls, 0, sizeof(nulls));
-	memset(replaces, 0, sizeof(replaces));
-	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
-	replaces[Anum_pg_proc_oid - 1] = true;
-	if(acl)
-		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(acl);
+	memset(nulls, false, sizeof(nulls));
+	memset(replaces, false, sizeof(replaces));
+
+	if (oldViewAcl != NULL)
+		values[Anum_pg_class_relacl - 1] = PointerGetDatum(oldViewAcl);
 	else
-		nulls[Anum_pg_proc_proacl - 1] = true;
-	replaces[Anum_pg_proc_proacl - 1] = true;
+		nulls[Anum_pg_class_relacl - 1] = true;
+	replaces[Anum_pg_class_relacl - 1] = true;    
 
-	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
-	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+	newtup = heap_modify_tuple(classtup, RelationGetDescr(pg_class_rel),
+							values, nulls, replaces);
 
-	/* Clean up */
-	ReleaseSysCache(proctup);
+	CatalogTupleUpdate(pg_class_rel, &newtup->t_self, newtup);
+
+	ReleaseSysCache(classtup);
 	heap_freetuple(newtup);
-
-	table_close(rel, RowExclusiveLock);
+	table_close(pg_class_rel, RowExclusiveLock);
 }
 
 /*
@@ -5356,7 +5513,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 	
 	if (current_spi_stack_depth > SPI_depth)
-		elog(WARNING, "SPI connection leak found, expected count:%d, current count:%d",
+		elog(LOG, "SPI connection leak found, expected count:%d, current count:%d",
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
@@ -5512,6 +5669,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
+	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
+	int16		saved_dbid = get_cur_db_id();
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -5569,6 +5728,10 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(func->fn_oid);
 
+			/* for cross db func/proc calls switch to that db */
+			if (DbidIsValid(func->fn_dbid) && get_cur_db_id() != func->fn_dbid)
+				set_cur_user_db_and_path(get_db_name(func->fn_dbid), false);
+
 			/*
 			 * Determine if called as function or trigger and call appropriate
 			 * subhandler
@@ -5603,7 +5766,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
-			
+
 			send_error = true;
 		}
 		PG_END_TRY(2);
@@ -5616,10 +5779,23 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		pltsql_remove_current_query_env();
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
+
+		/* reset db context must always be the last line in this block */
+		if (get_cur_db_id() != saved_dbid)
+			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
+		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
+			&& !IsAbortedTransactionBlockState())
+		{
+			pltsql_check_search_path = false;
+			SetConfigOption("search_path", saved_search_path,
+							PGC_SUSET, PGC_S_SESSION);
+		}
+		pfree(saved_search_path);
 	}
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+		pltsql_check_search_path = true;
 
 		/* If func is NULL then we have encountered a parser error. */
 		if (!func)
@@ -6721,15 +6897,44 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		bool ordinality_changed = false;
 		AttrNumber current_resno = 0;
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
+
+		/*
+		 * currently we only carry over identity and nullability for
+		 * simple query with a single relation in from expression
+		 */
+		bool persist_identity_and_nullability = false;
+
+		/*
+		 * In T-SQL, identity property of column in destination
+		 * table is not persisted if the SELECT ... INTO statement
+		 * does not contain a single base relation
+		 */
+		if (q->jointree && q->jointree->fromlist != NIL && list_length(q->jointree->fromlist) == 1)
+		{
+			RangeTblRef		*rtr = linitial(q->jointree->fromlist);
+			if (IsA(rtr, RangeTblRef))
+			{
+				RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+				if (rte->rtekind == RTE_RELATION && rte->relkind == RELKIND_RELATION)
+					persist_identity_and_nullability = true;
+			}
+		}
+
+		altstmt = makeNode(AlterTableStmt);
+		altstmt->relation = into->rel;
+		altstmt->objtype = OBJECT_TABLE;
+		altstmt->cmds = NIL;
 
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			if(tle->resname != NULL && !tle->resjunk)
 				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -6783,18 +6988,15 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				}
 
 				seen_identity = true;
+				ordinality_changed = true;
 				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
 				/** Add alter table add identity node after Select Into statement */
-				altstmt = makeNode(AlterTableStmt);
-				altstmt->relation = into->rel;
-				altstmt->objtype = OBJECT_TABLE;
-				altstmt->cmds = NIL;
-
 				constraint = makeNode(Constraint);
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
 				constraint->options = seqoptions;
+				constraint->location = -1;
 
 				def = makeNode(ColumnDef);
 				def->colname = tle->resname;
@@ -6809,6 +7011,82 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			{
+				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+				/* set to false if same column appears twice in select list */
+				bool     	persists_identity = true;
+
+				if (HeapTupleIsValid(attrtup))
+				{
+					AlterTableCmd *lcmd;
+					Form_pg_attribute attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+
+					if (attrStruct->attnotnull)
+					{
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... SET NOT NULL
+						 * after SELECT INTO statement
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_SetNotNull;
+						lcmd->name = tle->resname;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					if (attrStruct->attidentity)
+					{
+						ListCell *lc;
+
+						/*
+						 * Validate that this column does not appear again in the target list
+						 * For cases like SELECT id, id INTO new_table FROM source_table; and
+						 * id is an identity column, we do not want to throw an error for
+						 * multiple identity instead silently skip persisting the identity property
+						 */
+						foreach (lc, q->targetList)
+						{
+							TargetEntry *tle_inner_loop = (TargetEntry *)lfirst(lc);
+							if (tle_inner_loop->resno != tle->resno && tle_inner_loop->expr && IsA(tle_inner_loop->expr, Var) &&
+							    tle_inner_loop->resorigtbl == tle->resorigtbl && tle_inner_loop->resorigcol == tle->resorigcol)
+								persists_identity = false;
+						}
+					}
+					if (attrStruct->attidentity && persists_identity)
+					{
+						Constraint *constraint;
+
+						/* Identity function already seen in target list */
+						if (seen_identity)
+							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+						seen_identity = true;
+
+						constraint = makeNode(Constraint);
+						constraint->contype = CONSTR_IDENTITY;
+						constraint->generated_when = attrStruct->attidentity;
+						constraint->options = sequence_options(get_table_identity(tle->resorigtbl));
+						constraint->location = -1;
+
+						/*
+						 * Add ALTER TABLE ... ALTER COLUMN ... after SELECT INTO
+						 * statement where the column is made an IDENTITY column
+						 */
+						lcmd = makeNode(AlterTableCmd);
+						lcmd->subtype = AT_AddIdentity;
+						lcmd->name = tle->resname;
+						lcmd->def = (Node *) constraint;
+						altstmt->cmds = lappend(altstmt->cmds, lcmd);
+					}
+
+					current_resno += 1;
+					tle->resno = current_resno;
+					modifiedTargetList = lappend(modifiedTargetList, tle);
+
+					ReleaseSysCache(attrtup);
+				}
+			}
 			else
 			{
 				current_resno += 1;
@@ -6818,7 +7096,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		}
 		q->targetList = modifiedTargetList;
 
-		if (seen_identity)
+		if (ordinality_changed)
 		{
 			if (q->sortClause)
 			{
@@ -6843,7 +7121,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
-	if (altstmt)
+	if (altstmt && list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
 	return result;
@@ -6876,9 +7154,11 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
 		}
-		if (stmts != NIL)
-			CommandCounterIncrement();
+
+		CommandCounterIncrement();
 	}
+
+	reseed_identity_post_select_into(address->objectId);
 }
 
 void

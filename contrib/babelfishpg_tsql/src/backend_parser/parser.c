@@ -29,8 +29,6 @@
 #include "src/pltsql.h"
 #include "tcop/tcopprot.h"
 
-int			pgtsql_base_yydebug;
-
 List	   *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 
 /*
@@ -323,6 +321,7 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 				case PROCEDURE:
 				case TSQL_PROC:
 				case FUNCTION:
+				case VIEW:
 					cur_token = TSQL_ALTER;
 					break;
 			}

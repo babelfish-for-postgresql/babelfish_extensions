@@ -225,6 +225,7 @@ static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);	
 static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
+static antlr4::tree::TerminalNode *getTokenFromFunctionOption(TSqlParser::Function_optionContext* o);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -710,13 +711,12 @@ void PLtsql_expr_query_mutator::run()
 					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
-			// Note: the test below does not work, and has never worked, because size_t will not be negative, 
-			// and the result of the subtraction is also of type size_t.
-			// This test has been in the code since day 1. 
-			// When making the test work, some test cases will start failing as they run into this condition 
-			// (test table_variable_xact_errors and two variants). Therefore, not touching the test for now.
-			if (offset - cursor < 0)
-				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to multiple mutations on the same position", 0, 0);
+			/* detect multiple mutations on the same position */
+			if (offset < cursor)
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, 
+					"Can't mutate an internal query: detected multiple mutations on the same position", 0, 0);
+			}
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
 				rewritten_query += query.substr(cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
 			rewritten_query += repl_text;
@@ -1420,8 +1420,6 @@ public:
 	bool is_cross_db = false;
 	std::string schema_name;
 	std::string db_name;
-	bool is_function = false;
-	bool is_schema_specified = false;	
 	bool in_func_body_return_select_body = false;	
 	
 	// We keep a stack of the containers that are active during a traversal.
@@ -1813,6 +1811,10 @@ public:
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
 		}
+		else if(ctx->TRIGGER() && ctx->ALL())
+		{
+			rewritten_query_fragment.emplace(std::make_pair(ctx->ALL()->getSymbol()->getStartIndex(),std::make_pair(::getFullText(ctx->ALL()), "USER")));
+		}
 	}
 
 	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
@@ -1908,11 +1910,10 @@ public:
 				if (ctx_name->database)
 				{
 					db_name = stripQuoteFromId(ctx_name->database);
-					if (!string_matches(db_name.c_str(), get_cur_db_name()))
-					{
-						is_cross_db = true;
-					}
+					is_cross_db = true;
 				}
+				if (ctx_name->schema)
+					schema_name = stripQuoteFromId(ctx_name->schema);
 			}
 		}
 
@@ -1922,20 +1923,12 @@ public:
 			stmt->is_cross_db = true;
 			is_cross_db = false;
 		}
-		// record that the stmt is dml
-	 	stmt->is_dml = true;
-		// record if a function call
-		if (is_function)
-			stmt->func_call = true;
 
 		if (!schema_name.empty())
 			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		// record db name for the cross db query
 		if (!db_name.empty())
 			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		// record if the SQL object is schema qualified
-		if (is_schema_specified)
-			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -2670,10 +2663,7 @@ public:
 		if (ctx && (ctx->DOT().size() <= 2) && ctx->schema)
 		{
 			schema_name = stripQuoteFromId(ctx->schema);
-			is_schema_specified = true;
 		}
-		else
-			is_schema_specified = false;
 
 		// The flag setSysSchema is used exclusively in case of rewriting a cross-DB catalog reference
 		// that uses 'dbo' as schema: this puts 'sys' in tsqlBuilder::schema_name, which ends up
@@ -2743,7 +2733,6 @@ public:
 
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
-		is_function = true;
 		if (ctx->NEXT() && ctx->full_object_name())
 		{
 			TSqlParser::Full_object_nameContext *fctx = (TSqlParser::Full_object_nameContext *) ctx->full_object_name();
@@ -4145,11 +4134,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4162,11 +4147,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4198,11 +4179,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4215,11 +4192,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4387,6 +4360,7 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 {
 	int startIndex = -1;
 	int endIndex = -1;
+	int alterIndex = -1;
 	std::string originalQueryCopy = originalQuery;
 
 	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
@@ -4401,6 +4375,26 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 		startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
 		endIndex = startIndex + 5;
 		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	/* Replace ALTER VIEW definitions with CREATE VIEW */
+	else if (ctx->create_or_alter_view() && ctx->create_or_alter_view()->ALTER())
+	{
+		startIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		/* if the statement is "ALTER VIEW" */
+		if (!ctx->create_or_alter_view()->CREATE())
+		{
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
+		/* if the statement is "CREATE OR ALTER VIEW" */
+		else
+		{
+			startIndex = ctx->create_or_alter_view()->CREATE()->getSymbol()->getStartIndex();
+			alterIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+			endIndex = alterIndex + 5;
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
 		return pstrdup(originalQueryCopy.c_str());
 	}
 	else
@@ -6814,7 +6808,6 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	std::string proc_name;
 	std::string db_name;
 	std::string name;		
-	bool is_cross_db = false;		
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
 	std::string execKeywd = "EXEC"; // DO NOT CHANGE!
@@ -6877,12 +6870,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		if (ctx_name->database)
 		{
 			db_name = stripQuoteFromId(ctx_name->database);
-			if (!string_matches(db_name.c_str(), get_cur_db_name()))
-			{
-				is_cross_db = true;
-			}
 		}
-		
+
 		if (ctx_name->schema)
 		{
 			schema_name = stripQuoteFromId(ctx_name->schema);
@@ -6895,32 +6884,26 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Note: previous code performed rewriting here for procedure names with leading dots (EXEC ..proc1)
 		// This is now performed in exitFunc_proc_name_server_database_schema() which is called via the mutator (previously, it wasn't).
-		
-		// For sp_* procs, truncate proc name to sp_* if the schema is "dbo" or "sys" or has leading dots
-		// ToDo: handle 'EXEC mydb..sp_proc' where sp_proc gets executed in the context of 'mydb', even when the current DB is not 'mydb'	
-		if ((pg_strncasecmp(name.c_str(), "..dbo.sp_", 9) == 0) || (pg_strncasecmp(name.c_str(), "..sys.sp_", 9) == 0))
+
+		if ((!proc_name.empty() && pg_strncasecmp(proc_name.c_str(), "sp_", 3) == 0) &&
+			(schema_name.empty() || pg_strcasecmp(schema_name.c_str(), "dbo") == 0))
 		{
-			name.erase(name.begin() + 0, name.begin() + 6);
+			/*
+			 * For sp_ prefixed procedures remove database and schema portion if schema name is empty or dbo
+			 * We do this because db.dbo.sp_proc should be searched in sys and master.dbo schema as well
+			 */
+			name.replace(name.begin(), name.end(), proc_name);
+			name_length = proc_name.length();
 		}
-		else if ((pg_strncasecmp(name.c_str(), ".dbo.sp_", 8) == 0) || (pg_strncasecmp(name.c_str(), ".sys.sp_", 8) == 0))
+		else if (is_sp_proc(proc_name) && !schema_name.empty() && pg_strcasecmp(schema_name.c_str(), "sys") == 0)
 		{
-			name.erase(name.begin() + 0, name.begin() + 5);
-		}
-		else if ((pg_strncasecmp(name.c_str(), "dbo.sp_", 7) == 0) || (pg_strncasecmp(name.c_str(), "sys.sp_", 7) == 0))
-		{
-			name.erase(name.begin() + 0, name.begin() + 4);
-		}
-		else if (pg_strncasecmp(name.c_str(), ".sp_", 4) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 1);
-		}
-		else if (pg_strncasecmp(name.c_str(), "..sp_", 5) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 2);
-		}
-		else if (pg_strncasecmp(name.c_str(), "...sp_", 6) == 0)
-		{
-			name.erase(name.begin() + 0, name.begin() + 3);
+			/*
+			 * These sys.sp_procs do not actually exists in sys schema
+			 * We handle them as different statement in iterative executor
+			 * so only keep the proc name and discard everything else
+			 */
+			name.replace(name.begin(), name.end(), proc_name);
+			name_length = proc_name.length();
 		}
 	}	
 			
@@ -6958,7 +6941,6 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->return_code_dno = return_code_dno;
 	result->paramno = 0;
 	result->params = NIL;
-	result->is_cross_db = is_cross_db;  // Record whether this is a cross-db call
 	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
@@ -6966,6 +6948,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	{
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
 	}
+	else
+		result->proc_name = pstrdup("");
 	if (!schema_name.empty())
 	{
 		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
@@ -7870,6 +7854,10 @@ makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
+	if (ctx->collation())
+		stmt->collation = pstrdup(getFullText(ctx->collation()->id()).c_str());
+	else
+		stmt->collation = NULL;
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->datatype = type;
 	stmt->lineno = getLineNo(ctx);
@@ -9918,4 +9906,23 @@ CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
 	{
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", name.c_str()), lineNr, 0);
 	}
+}
+
+/*
+ * Retrieves the token from a Function_optionContext.
+ * Note: All function options (EXECUTE AS, INLINE, SCHEMABINDING) are currently ignored during parsing time.
+ * This function is used to identify which option is present for potential future implementation.
+ *
+ * @param o The Function_optionContext to examine
+ * @return The corresponding terminal node, or nullptr if no valid option is found
+ */
+static antlr4::tree::TerminalNode *
+getTokenFromFunctionOption(TSqlParser::Function_optionContext* o) {
+	if (o->execute_as_clause())
+		return o->execute_as_clause()->CALLER();
+	if (o->inline_clause())
+		return o->inline_clause()->INLINE();
+	if (o->SCHEMABINDING())
+		return o->SCHEMABINDING();
+	return nullptr;
 }

@@ -4,6 +4,7 @@ GO
 CREATE TABLE sys_computed_columns_vu_prepare_t1 ( 
   scc_first_number smallint,
   scc_second_number money,
-  scc_multiplied AS scc_first_number * scc_second_number
+  scc_multiplied AS scc_first_number * scc_second_number,
+  scc_coalesce_col AS COALESCE(scc_first_number, 10) PERSISTED
 )
 GO

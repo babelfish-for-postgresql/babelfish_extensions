@@ -10,6 +10,7 @@ CREATE TABLE sys.babelfish_partition_function
   range_values sys.sql_variant[] CHECK (array_length(range_values, 1) < 15000), -- boundary values
   create_date SYS.DATETIME NOT NULL,
   modify_date SYS.DATETIME NOT NULL,
+  input_parameter_collation NAME, -- collation of the input parameter
   PRIMARY KEY(dbid, partition_function_name)
 );
 

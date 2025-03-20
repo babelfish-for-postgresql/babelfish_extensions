@@ -295,7 +295,7 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
 AS $$
-    SELECT sys.suser_name_internal(NULL);
+    SELECT sys.suser_name_internal(suser_id());
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
@@ -1570,11 +1570,84 @@ AS 'babelfishpg_tsql', 'datalength' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 -- TODO: in MSSQL datalength against varchar(max) will return BIGINT instead of INTEGER. However in PG we ignore typmods in functions.
 -- However this is not a critical issue so we will just leave it. We may come back to this difference later once we find out solution to typmods.
 
+-- The sys.round functions here are created depending on the number of arguments and return type
 CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
-RETURNS NUMERIC AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER)
-RETURNS NUMERIC AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.day(date ANYELEMENT)
 RETURNS INTEGER AS
@@ -2395,7 +2468,7 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_id() RETURNS SMALLINT
 AS 'babelfishpg_tsql', 'babelfish_db_id'
-LANGUAGE C PARALLEL SAFE IMMUTABLE;
+LANGUAGE C PARALLEL SAFE STABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_name(int) RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
@@ -2403,7 +2476,7 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
-LANGUAGE C PARALLEL SAFE IMMUTABLE;
+LANGUAGE C PARALLEL SAFE STABLE;
 
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
@@ -3747,7 +3820,7 @@ RETURNS sys.NVARCHAR(4000)
 AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
-RETURNS sys.NVARCHAR
+RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 /*
@@ -4125,6 +4198,24 @@ BEGIN
 END
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,

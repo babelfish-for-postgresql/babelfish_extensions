@@ -12,6 +12,7 @@
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "pltsql.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
@@ -1291,29 +1292,6 @@ varchar_to_cstring(const VarChar *varchar)
 	return result;
 }
 
-/*
- * Convert list of schema OIDs to schema names.
- */
-
-char *
-flatten_search_path(List *oid_list)
-{
-	StringInfoData pathbuf;
-	ListCell   *lc;
-
-	initStringInfo(&pathbuf);
-
-	foreach(lc, oid_list)
-	{
-		Oid			schema_oid = lfirst_oid(lc);
-		char	   *schema_name = get_namespace_name(schema_oid);
-
-		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
-	}
-	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
-	return pathbuf.data;
-}
-
 char *
 get_pltsql_function_signature_internal(const char *funcname,
 									   int nargs, const Oid *argtypes)
@@ -1882,6 +1860,56 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+void
+exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+	AlterTableStmt *atstmt;
+	AlterTableCmd *cmd_orig_name;
+	char *query_str = "ALTER INDEX dummy SET (dummy=dummy)";
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	atstmt = castNode(AlterTableStmt, stmt);
+	atstmt->relation->relname = idxname;
+	if (schemaname != NULL)
+		atstmt->relation->schemaname = schemaname;
+	cmd_orig_name = castNode(AlterTableCmd, linitial(atstmt->cmds));
+	cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	ProcessUtility(wrapper,
+				   "(ALTER INDEX )",
+				   false,
+				   PROCESS_UTILITY_QUERY,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+}
+
 Oid get_sys_varcharoid(void)
 {
 	Oid sys_oid;
@@ -2257,7 +2285,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
 static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	StringInfoData query;
 	List	   *stmt_list;
@@ -2272,11 +2300,10 @@ static List
 
 	/*
 	 * Don't need multiple ALTER DEFAULT PRIVILEGE statements, if:
-	 * 1. It's a part of CREATE SCHEMA statement
-	 * 2. If the schema owner is dbo
-	 * 3. If the schema owner is db_owner (dbo_schema owner is a db_owner)
+	 * 1. If the schema owner is dbo
+	 * 2. If the schema owner is db_owner (dbo_schema owner is a db_owner)
 	 */
-	if (!is_create_schema && (strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
+	if ((strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
 	{
 		owner_other_than_dbo = true;
 	}
@@ -2367,7 +2394,7 @@ static List
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
@@ -2384,7 +2411,7 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege, is_create_schema);
+		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
 		{

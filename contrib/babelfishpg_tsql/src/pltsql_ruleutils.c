@@ -398,11 +398,16 @@ PG_FUNCTION_INFO_V1(tsql_get_expr);
 Datum
 tsql_get_expr(PG_FUNCTION_ARGS)
 {
-	text	   *expr = PG_GETARG_TEXT_PP(0);
-	Oid			relid = PG_GETARG_OID(1);
+	text	   *expr;
+	Oid			relid;
 	int			prettyFlags;
 	char	   *relname;
-
+	
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	
+	expr = PG_GETARG_TEXT_PP(0);
+	relid = PG_GETARG_OID(1);
 	prettyFlags = PRETTYFLAG_INDENT;
 
 	if (OidIsValid(relid))
@@ -526,7 +531,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if (!isnull)
 		probin_c = TextDatumGetCString(tmp);
 	if (!probin_c || probin_c[0] != '{')
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	number_args = proc->pronargs;
 	if (isfunction)
@@ -537,7 +545,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	if (isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
@@ -1443,7 +1454,17 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, ')');
 			}
 			break;
+		
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 
+				appendStringInfoString(buf, "COALESCE(");
+				get_rule_expr((Node *) coalesceexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+		
 		case T_SetToDefault:
 			appendStringInfoString(buf, "DEFAULT");
 			break;

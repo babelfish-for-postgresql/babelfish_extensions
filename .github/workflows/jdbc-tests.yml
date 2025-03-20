@@ -5,7 +5,7 @@ jobs:
   run-babelfish-jdbc-tests:
     env:
       INSTALL_DIR: psql
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -99,6 +99,20 @@ jobs:
           path: |
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
+
+      - name: Check for unexpected warnings
+        if: always()
+        id: check-warnings
+        run: |
+            bash ./.github/scripts/scan-warnings.sh
+
+      - name: Upload Unexpected Warning
+        if: always() && steps.check-warnings.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unexpected_warnings.log
+          path: |
+            actual-leak-warnings.out
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files

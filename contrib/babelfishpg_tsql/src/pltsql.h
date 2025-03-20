@@ -1110,6 +1110,7 @@ typedef struct PLtsql_stmt_partition_function
 	bool			is_right;
 	PLtsql_type		*datatype;
 	List			*args;		/* the arguments (list of exprs) */
+	char			*collation;
 } PLtsql_stmt_partition_function;
 
 /*
@@ -1166,12 +1167,9 @@ typedef struct PLtsql_stmt_execsql
 											 * SELECT @a=1) */
 	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
-	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
-	bool		func_call;		/* Function call? */
 	char	   *schema_name;	/* Schema specified */
 	char	   *db_name;		/* db_name: only for cross db query */
-	bool		is_schema_specified;	/* is schema name specified? */
 	bool		is_create_view; /* CREATE VIEW? */
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
@@ -1306,6 +1304,8 @@ typedef struct PLtsql_function
 	int			fetch_status_varno;
 	int			new_varno;
 	int			old_varno;
+	int16			fn_dbid;         /* logical db which contains the function */
+	char			*fn_search_path;
 
 	TupleDesc	fn_tupdesc;		/* tuple descriptor for return info */
 
@@ -1537,8 +1537,6 @@ typedef struct PLtsql_execstate
 	bool		insert_exec;
 
 	List	   *explain_infos;
-	char	   *schema_name;
-	const char *db_name;
 	instr_time	planning_start;
 	instr_time	planning_end;
 	instr_time	execution_start;
@@ -1995,6 +1993,8 @@ extern bool insert_bulk_check_constraints;
 #define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
 #define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
 #define INTERNAL_ALTER_ROLE "(ALTER ROLE ADD )"
+#define CREATE_FULLTEXT_INDEX "(CREATE FULLTEXT INDEX STATEMENT )"
+#define DELETE_FULLTEXT_INDEX "(DELETE FULLTEXT INDEX STATEMENT )"
 
 /* FIXED DB PRINCIPALS */
 #define DBO "dbo"
@@ -2022,6 +2022,8 @@ extern bool insert_bulk_check_constraints;
 /**********************************************************************
  * Function declarations
  **********************************************************************/
+
+# define PLTSQL_SEARCH_PATH_BUFFER "%s, %s, sys, pg_catalog"
 
 /*
  * Functions in pl_comp.c
@@ -2170,7 +2172,8 @@ extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
-extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema);
+extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
+extern void exec_add_original_index_name(char *idxname, char *schemaname, char *original_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2188,7 +2191,6 @@ extern void pltsql_read_procedure_info(StringInfo inout_str,
 void PLTsqlProcessTransaction(Node *parsetree,
 						            ParamListInfo params,
 						 			QueryCompletion *qc);
-
 
 extern void PLTsqlStartTransaction(char *txnName);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);
@@ -2225,7 +2227,6 @@ extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
-extern char *flatten_search_path(List *oid_list);
 extern char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char *message);
 extern void init_and_check_common_utility(void);
@@ -2330,6 +2331,8 @@ extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 extern int64 last_scope_identity_value(void);
+extern Oid	get_table_identity(Oid tableOid);
+extern void reseed_identity_post_select_into(Oid relid);
 
 /*
  * Functions in linked_servers.c

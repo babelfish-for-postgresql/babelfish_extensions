@@ -35,6 +35,8 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "executor/execExpr.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -98,6 +100,12 @@ typedef enum PltsqlInitPrivsOptions
 	DISCARD_INIT_PRIVS,
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
+
+/*****************************************
+ * 			General Hooks
+ *****************************************/
+
+static bool is_bbf_tds_connection(void);
 
 /*****************************************
  * 			Catalog Hooks
@@ -188,7 +196,6 @@ static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 extern bool called_from_tsql_insert_exec();
 extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
@@ -196,6 +203,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
+static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -290,7 +298,6 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
@@ -305,6 +312,7 @@ static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_p
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
+static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -474,9 +482,6 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
-	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
-
 	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
 	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 
@@ -534,6 +539,10 @@ InstallExtendedHooks(void)
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
 
 	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
+
+	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
+	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
+	is_bbf_tds_connection_hook = is_bbf_tds_connection;
 }
 
 void
@@ -590,7 +599,6 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
@@ -605,7 +613,7 @@ UninstallExtendedHooks(void)
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
-
+	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -613,6 +621,7 @@ UninstallExtendedHooks(void)
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
 	pltsql_allow_storing_init_privs_hook = NULL;
+	is_bbf_tds_connection_hook = NULL;
 }
 
 /*****************************************
@@ -894,8 +903,13 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 {
 	Oid userid = GetUserId();
 
-	/* In TDS client, the permissions might need to be checked against session user. */
-	if (IS_TDS_CLIENT())
+	/*
+	 * In TDS client, the permissions might need to be checked against session user.
+	 * Do not do this when in SECURITY_RESTRICTED_OPERATION because in this context
+	 * we temprorarily switch to a different user to execute some internal subcommands.
+	 * For example see reseed_identity_post_select_into
+	 */
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 	{
 		Oid schema_id = get_func_namespace(funcid);
 
@@ -949,8 +963,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/*
 	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
 	 * if it is valid, otherwise permissions are checked against session user (current login).
+	 * For SECURITY_RESTRICTED_OPERATION handling see comments in pltsql_ExecFuncProc_AclCheck
 	 */
-	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL)
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL && !InSecurityRestrictedOperation())
 	{
 		ListCell	*lc;
 
@@ -3715,7 +3730,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
  * Update 'function_args' in 'sys.babelfish_schema_permissions' 
  */
 void
-alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt, Oid oid)
+alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
@@ -5099,37 +5114,6 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-
-static char *
-get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
-{
-	HeapTuple 	 	tuple;
-	char 			*func_schema_name = NULL,
-					*new_search_path = NULL;
-	char  			*func_dbo_schema;
-	const char		*cur_dbname = get_cur_db_name();
-	
-	tuple = SearchSysCache1(NAMESPACEOID,
-						ObjectIdGetDatum(proc_nsp_oid));
-	if(HeapTupleIsValid(tuple))
-	{
-		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
-		func_dbo_schema = get_dbo_schema_name(cur_dbname);
-
-		if(strcmp(func_schema_name, func_dbo_schema) != 0
-			&& strcmp(func_schema_name, "sys") != 0)
-			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
-										quote_identifier(func_schema_name),
-										quote_identifier(func_dbo_schema));
-		
-		ReleaseSysCache(tuple);
-		
-		pfree(func_dbo_schema);
-	}
-
-	return new_search_path;
-}
-
 static ResTarget *
 make_restarget_from_cstr_list(List * l)
 {
@@ -5718,7 +5702,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
 	 *    This means already the best grantor has been selected using select_best_grantor().
 	 */
-	if (!MyProcPort->is_tds_conn ||
+	if (!IS_TDS_CONN() ||
 		sql_dialect != SQL_DIALECT_TSQL ||
 		*grantorId == ownerId ||
 		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
@@ -5756,7 +5740,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		schema_oid = get_object_namespace(&address);
 	}
 
-	if (OidIsValid(schema_oid))
+	if (OidIsValid(schema_oid) && !isTempOrTempToastNamespace(schema_oid))
 	{
 		/*
 		 * Don't allow if object's schema is not from current database OR
@@ -5790,7 +5774,6 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
  * Objects are always owned by current user in postgres but in babelfish
  * schema contained objects should be owned by the schema owner by default
  * Use this hook to pick schema owner as object owner during object creation
- * We currently only do this if current user is member of db_ddladmin or db_owner
  */
 static Oid
 pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
@@ -5801,13 +5784,19 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return ownerId;
 
 	if (!OidIsValid(ownerId))
 		ownerId = GetUserId();
 
 	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema with OID %u does not exist", namespaceId)));
+
 	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
 
 	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
@@ -5818,6 +5807,8 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		char	*db_name = get_cur_db_name();
 		char	*dbo_name = get_dbo_role_name(db_name);
 		Oid		dbo_oid = get_role_oid(dbo_name, false);
+		Oid		schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
+
 		/*
 		 * babelfish issue special handing for dbo schema since it is
 		 * owned by db_owner but the correct owner should have been dbo
@@ -5827,17 +5818,12 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		else
 			nsp_owner = nsptup->nspowner;
 
-		if (ownerId != nsp_owner)
+		/*
+		 * Object owner should not be same as schema owner
+		 */
+		if ((ownerId != nsp_owner) && (schema_db_id == get_cur_db_id()))
 		{
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-			Oid 	db_owner = get_db_owner_oid(db_name, false);
-			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
-
-			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
-			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
-				(has_privs_of_role(GetUserId(), db_owner) ||
-				has_privs_of_role(GetUserId(), db_ddladmin)))
-				ownerId = nsp_owner;
+			ownerId = nsp_owner;
 		}
 
 		pfree(db_name);
@@ -5862,10 +5848,14 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return false;
 
 	nspname = get_namespace_name(namespaceId);
+
+	if (nspname == NULL)
+		return false;
+
 	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
 	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
 
@@ -6038,4 +6028,26 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 	pfree(splited_object_name);
 
 	return (const char *)pstrdup(object_name + prefix_len);
+}
+
+/* Check if current connection is a tds connection */
+static bool
+is_bbf_tds_connection(void)
+{
+	return IS_TDS_CONN();
+}
+static bool
+pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
+{
+	ListCell   *lc;
+
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		if (!SearchPathMatchesCurrentEnvironment(plansource->search_path))
+			return false;
+	}
+	return true;
+	
 }

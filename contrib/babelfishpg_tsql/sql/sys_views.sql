@@ -834,7 +834,16 @@ with index_id_map as MATERIALIZED(
 )
 select
   cast(X.indrelid as int) as object_id
-  , cast(I.relname as sys.sysname) as name
+  , cast(
+		coalesce(
+			(select pg_catalog.string_agg(
+				case
+					when option like 'bbf_original_rel_name=%' then substring(option, 23 /* prefix length */)
+					else null
+				end, ',')
+			from unnest(I.reloptions) as option),
+			I.relname)
+		AS sys.sysname) AS name
   , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
   , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
   , cast(X.indisunique as sys.bit) as is_unique
@@ -3289,6 +3298,56 @@ JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_defa
 JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_permissions 
+AS
+SELECT
+  CAST(0 as sys.tinyint) AS class,
+  CAST(NULL as sys.nvarchar(60)) AS class_desc,
+  CAST(NULL as INT) AS major_id,
+  CAST(NULL as INT) AS minor_id,
+  CAST(NULL as INT) AS grantee_principal_id,
+  CAST(NULL as INT) AS grantor_principal_id,
+  CAST(NULL as sys.BPCHAR(4)) AS type,
+  CAST(NULL as sys.nvarchar(128)) AS permission_name,
+  CAST(NULL as sys.BPCHAR(1)) AS state,
+  CAST(NULL as sys.nvarchar(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.server_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.credentials 
+AS
+SELECT
+  CAST(NULL as INT) AS credential_id,
+  CAST(NULL as sys.sysname) AS name,
+  CAST(NULL as sys.nvarchar(4000)) AS credential_identity,
+  CAST(NULL as sys.datetime) AS create_date,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(NULL as sys.nvarchar(100)) AS target_type,
+  CAST(NULL as INT) AS target_id
+WHERE FALSE;
+GRANT SELECT ON sys.credentials TO PUBLIC;
+
+CREATE VIEW sys.sql_logins AS
+SELECT
+    CAST(NULL as sys.sysname) AS name,
+    CAST(NULL as INT) AS principal_id,
+    CAST(NULL as sys.VARBINARY(85)) AS sid,
+    CAST(NULL as sys.BPCHAR(1)) AS type,
+    CAST(NULL as sys.nvarchar(60)) AS type_desc,
+    CAST(NULL as INT) AS is_disabled,
+    CAST(NULL as sys.DATETIME) AS create_date,
+    CAST(NULL as sys.DATETIME) AS modify_date,
+    CAST(NULL as sys.sysname) AS default_database_name,
+    CAST(NULL as sys.sysname) AS default_language_name,
+    CAST(NULL as INT) AS credential_id,
+    CAST(NULL as INT) AS owning_principal_id,
+    CAST(0 as sys.BIT) AS is_fixed_role,
+    CAST(0 as sys.BIT) AS is_policy_checked,
+    CAST(0 as sys.BIT) AS is_expiration_checked,
+    CAST(NULL as sys.varbinary(256)) AS password_hash
+WHERE FALSE;
+GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.trigger_events
 AS
