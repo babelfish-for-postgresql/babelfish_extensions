@@ -713,13 +713,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
 
-				/*
-				 * If one of the operands is part of aggregate function SUM()
-				 * or AVG(), set has_aggregate_operand to true; in those cases
-				 * resultant precision and scale calculation would be a bit
-				 * different
-				 */
-				bool		has_aggregate_operand = false;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
 				if (list_length(op->args) == 2)
@@ -826,8 +819,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						 * when none of the operands is part of any aggregate
 						 * function
 						 */
-						if (has_aggregate_operand &&
-							integralDigitCount < (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+						if (integralDigitCount > (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
@@ -845,7 +837,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						 * atleast one of the operands is part of aggregate
 						 * function
 						 */
-						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
+						if (precision > TDS_MAX_NUM_PRECISION)
 							precision = TDS_MAX_NUM_PRECISION;
 						break;
 					case NUMERIC_DIV_OID:
