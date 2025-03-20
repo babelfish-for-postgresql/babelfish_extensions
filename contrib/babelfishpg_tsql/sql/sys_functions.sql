@@ -3747,7 +3747,7 @@ RETURNS sys.NVARCHAR(4000)
 AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
-RETURNS sys.NVARCHAR
+RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 /*
