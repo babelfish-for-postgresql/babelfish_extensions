@@ -1454,7 +1454,17 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, ')');
 			}
 			break;
+		
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 
+				appendStringInfoString(buf, "COALESCE(");
+				get_rule_expr((Node *) coalesceexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+		
 		case T_SetToDefault:
 			appendStringInfoString(buf, "DEFAULT");
 			break;
