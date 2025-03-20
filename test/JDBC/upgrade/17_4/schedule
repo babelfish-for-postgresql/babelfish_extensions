@@ -604,3 +604,4 @@ test_conv_float_to_varchar_char
 test_constraint_like-before-17-5-or-16-9
 round_return_type_test-before-16_9-or-17_5
 alter-view
+object_ownership-before-16_8-or-17_4
