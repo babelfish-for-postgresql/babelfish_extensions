@@ -608,3 +608,5 @@ test_conv_float_to_varchar_char
 BABEL-5467
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 test_constraint_like
+round_return_type_test
+alter-view
