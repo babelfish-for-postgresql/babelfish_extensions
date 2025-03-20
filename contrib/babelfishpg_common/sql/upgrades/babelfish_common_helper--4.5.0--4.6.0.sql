@@ -12,5 +12,13 @@ SET enable_domain_typmod = TRUE;
 CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
 RESET enable_domain_typmod;
 
+CREATE OR REPLACE FUNCTION sys.varbinary2datetime(sys.BBF_VARBINARY)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'varbinary_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.BBF_VARBINARY AS sys.DATETIME)
+WITH FUNCTION sys.varbinary2datetime(sys.BBF_VARBINARY) AS IMPLICIT;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
