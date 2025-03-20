@@ -73,6 +73,7 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 Selectivity *rest_selec);
 
 static Node *transform_likenode_for_AI(OpExpr *op);
+static Node *convert_node_to_funcexpr_for_like(Node *node);
 
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
@@ -334,13 +335,13 @@ static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = (Node *) lsecond(op->args);
+	Node	   *rightop = copyObject(lsecond(op->args));
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
 	Node	   *ret;
 	Const	   *patt;
-	Const	   *prefix;
+	Const	   *prefix, *prefix_ai;
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
@@ -419,6 +420,22 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	}
 
 	/* 
+	 * Obtain the original typeId of leftop so that we can find the compatible =, >= and <
+	 * operator for the original typeId. Else we will always obtain the operators compatible
+	 * with TEXT datatype as the operands get type coerced into TEXT as LIKE is defined for it
+	 * Make the typeId of rightop same as leftop so that we obtain expected operator
+	 * Similarly, update the type of prefix to have appropriate datatypes of operands
+	 * 
+	 * Optimiser will remove Relabel Node during Index scan, see match_index_to_operand
+	 */
+	if (IsA(leftop, RelabelType))
+	{
+		RelabelType	*relabel = (RelabelType *) leftop;
+		leftop = copyObject((Node*) relabel->arg);
+		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
+	}
+
+	/* 
 	 * We need to do this because the dump considers rightop as Const with COLLATE being added
 	 * whereas during restore, that is considered as CollateExpr while building new expression tree
 	 * which is adding extra parenthesis on rightop when we invoke pg_get_constraintdef() from PG
@@ -431,20 +448,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
 	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
-
-	/* 
-	 * Obtain the original typeId of leftop so that we can find the compatible =, >= and <
-	 * operator for the original typeId. Else we will always obtain the operators compatible
-	 * with TEXT datatype as the operands get type coerced into TEXT as LIKE is defined for it
-	 * 
-	 * Optimiser will remove Relabel Node during Index scan, see match_index_to_operand
-	 */
-	if (IsA(leftop, RelabelType))
-	{
-		RelabelType	*relabel = (RelabelType *) leftop;
-		leftop = copyObject((Node*) relabel->arg);
-		ltypeId = exprType(leftop);
-	}
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
@@ -464,14 +467,25 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
 
+		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		{
+			prefix_ai = copyObject(prefix);
+			prefix_ai = (Const *) convert_node_to_funcexpr_for_like((Node *) prefix_ai);
+			ret = make_or_qual(ret, (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
+									(Expr *) leftop,
+									(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
+									InvalidOid,
+									coll_info_of_inputcollid.oid,
+									oprfuncid(optup))));
+		}
 		ReleaseSysCache(optup);
 	}
 	else
 	{
-		Expr	   *greater_equal,
-					*less_equal,
-					*concat_expr;
-		Node	   *constant_suffix;
+		Expr	   *greater_equal, *greater_equal_ai,
+					*less_equal, *less_equal_ai,
+					*concat_expr, *concat_expr_ai;
+		Node	   *constant_suffix, *constant_suffix_ai;
 		Const	   *highest_sort_key;
 
 		/* Always create a CollateExpr on top to match with op->inputcollid */
@@ -491,9 +505,22 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 											InvalidOid,
 											coll_info_of_inputcollid.oid,
 											oprfuncid(optup));
+
+		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		{
+			prefix_ai = copyObject(prefix);
+			prefix_ai = (Const *) convert_node_to_funcexpr_for_like((Node *) prefix_ai);
+			greater_equal_ai = make_op_with_func(oprid(optup), BOOLOID, false,
+									(Expr *) leftop,
+									(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
+									InvalidOid,
+									coll_info_of_inputcollid.oid,
+									oprfuncid(optup));
+		}
+
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
+		highest_sort_key = makeConst(ltypeId, -1, InvalidOid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
 		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
@@ -505,6 +532,13 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 										(Expr *) prefix_collate,
 										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
 										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		{
+			concat_expr_ai = make_op_with_func(oprid(optup), rtypeId, false,
+												(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
+												(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
+												coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+		}
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
 		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
@@ -516,14 +550,36 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+
+		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		{
+			less_equal_ai = make_op_with_func(oprid(optup), BOOLOID, false,
+												(Expr *) leftop, (Expr *) concat_expr_ai,
+												InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
+		}
+
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+		{
+			constant_suffix_ai = make_and_qual((Node *) greater_equal_ai, (Node *) less_equal_ai);
+		}
+
 		if (like_entry.is_not_match)
 		{
 			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
+			if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+			{
+				constant_suffix_ai = (Node *) make_notclause((Expr *) constant_suffix_ai);
+				constant_suffix = make_or_qual(constant_suffix, constant_suffix_ai);
+			}
 			ret = make_or_qual(node, constant_suffix);
 		}
 		else
 		{
+			if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
+			{
+				constant_suffix = make_or_qual(constant_suffix, constant_suffix_ai);
+			}
 			ret = make_and_qual(node, constant_suffix);
 		}
 		ReleaseSysCache(optup);
@@ -838,6 +894,15 @@ convert_node_to_funcexpr_for_like(Node *node)
 				if (IsA(new_node, Const))
 				{
 					con = (Const *) new_node;
+					if (con->constisnull)
+						return new_node;
+					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					return (Node *) con;
+				}
+				else if (IsA(new_node, RelabelType))
+				{
+					RelabelType *relabel = (RelabelType*) new_node;
+					con = (Const *) (relabel->arg);
 					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
