@@ -803,9 +803,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * following link:
 				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
 				 */
-				has_aggregate_operand = arg1->type == T_Aggref ||
-					(list_length(op->args) == 2 && arg2->type == T_Aggref);
-
 				switch (op->opfuncid)
 				{
 					case NUMERIC_ADD_OID:
@@ -819,7 +816,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						 * when none of the operands is part of any aggregate
 						 * function
 						 */
-						if (integralDigitCount > (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+						if (integralDigitCount >= (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
