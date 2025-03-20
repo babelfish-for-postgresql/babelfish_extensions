@@ -2414,16 +2414,8 @@ CREATE VIEW v_babel_2017 AS SELECT * FROM t_babel_2017;
 GO
 ALTER VIEW v_babel_2017 AS SELECT a FROM t_babel_2017;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER VIEW' is not currently supported in Babelfish)~~
-
 CREATE OR ALTER VIEW v_babel_2017 AS SELECT b FROM t_babel_2017;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER VIEW' is not currently supported in Babelfish)~~
-
 DROP VIEW v_babel_2017;
 GO
 DROP TABLE t_babel_2017;

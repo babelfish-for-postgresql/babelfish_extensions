@@ -1,0 +1,8 @@
+DROP LOGIN babel_5127_test_sysadmin;
+GO
+
+DROP LOGIN babel_5127_test_securityadmin;
+GO
+
+DROP LOGIN babel_5127_test_regularuser;
+GO

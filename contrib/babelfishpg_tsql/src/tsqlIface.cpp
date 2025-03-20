@@ -1811,6 +1811,10 @@ public:
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
 		}
+		else if(ctx->TRIGGER() && ctx->ALL())
+		{
+			rewritten_query_fragment.emplace(std::make_pair(ctx->ALL()->getSymbol()->getStartIndex(),std::make_pair(::getFullText(ctx->ALL()), "USER")));
+		}
 	}
 
 	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
@@ -4356,6 +4360,7 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 {
 	int startIndex = -1;
 	int endIndex = -1;
+	int alterIndex = -1;
 	std::string originalQueryCopy = originalQuery;
 
 	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
@@ -4370,6 +4375,26 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 		startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
 		endIndex = startIndex + 5;
 		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	/* Replace ALTER VIEW definitions with CREATE VIEW */
+	else if (ctx->create_or_alter_view() && ctx->create_or_alter_view()->ALTER())
+	{
+		startIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		/* if the statement is "ALTER VIEW" */
+		if (!ctx->create_or_alter_view()->CREATE())
+		{
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
+		/* if the statement is "CREATE OR ALTER VIEW" */
+		else
+		{
+			startIndex = ctx->create_or_alter_view()->CREATE()->getSymbol()->getStartIndex();
+			alterIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+			endIndex = alterIndex + 5;
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
 		return pstrdup(originalQueryCopy.c_str());
 	}
 	else

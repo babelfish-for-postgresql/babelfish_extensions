@@ -1,3 +1,4 @@
+-- tsql
 create database db_select_into
 go
 
@@ -119,7 +120,7 @@ go
 int#!#nvarchar
 1#!#First
 1#!#First_dup
-2#!#Second
+3#!#Second
 ~~END~~
 
 
@@ -142,7 +143,7 @@ go
 ~~START~~
 smallint#!#numeric
 2#!#2.222
-4#!#3.333
+6#!#3.333
 ~~END~~
 
 
@@ -165,7 +166,7 @@ go
 ~~START~~
 smallint#!#nvarchar
 3#!#Third
-6#!#Fourth
+9#!#Fourth
 ~~END~~
 
 
@@ -188,7 +189,7 @@ go
 ~~START~~
 float#!#bigint
 4.4#!#4
-5.5#!#8
+5.5#!#12
 ~~END~~
 
 
@@ -211,12 +212,12 @@ go
 ~~START~~
 bigint#!#real
 5#!#5.567
-10#!#6.789
+15#!#6.789
 ~~END~~
 
 
 -- FROM clause contains joins from multiple tables
--- Should not fail as identity should not be persisted but nullability should
+-- Should not fail as identity & nullability should not be persisted
 select *
 into dest_table_join
 from dest_table_1 t1
@@ -230,24 +231,20 @@ go
 int#!#nvarchar#!#smallint#!#numeric
 1#!#First#!#2#!#2.222
 1#!#First_dup#!#2#!#2.222
-2#!#Second#!#4#!#3.333
+3#!#Second#!#6#!#3.333
 ~~END~~
 
 
--- Should fail. Violate NOT NULL constraint
+-- Should not fail. Violate NOT NULL constraint
 insert into dest_table_join ([Col2]) values (NULL)
 go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "col1" of relation "dest_table_join" violates not-null constraint)~~
+~~ROW COUNT: 1~~
 
 
--- Should fail. Violate NOT NULL constraint on other column
+-- Should not fail. Violate NOT NULL constraint on other column
 insert into dest_table_join ([Col2]) values ('Join')
 go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "col1" of relation "dest_table_join" violates not-null constraint)~~
+~~ROW COUNT: 1~~
 
 
 insert into dest_table_join ([Col1], [Col2], [Col3], [Col4]) values (99, 'Join', 88, 9.867)
@@ -259,9 +256,11 @@ select * from dest_table_join order by [Col1], [Col2]
 go
 ~~START~~
 int#!#nvarchar#!#smallint#!#numeric
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#Join#!#<NULL>#!#<NULL>
 1#!#First#!#2#!#2.222
 1#!#First_dup#!#2#!#2.222
-2#!#Second#!#4#!#3.333
+3#!#Second#!#6#!#3.333
 99#!#Join#!#88#!#9.867
 ~~END~~
 
@@ -283,9 +282,9 @@ go
 int#!#nvarchar
 1#!#First
 1#!#First_dup
-2#!#Second
+3#!#Second
 3#!#Third
-6#!#Fourth
+9#!#Fourth
 ~~END~~
 
 
@@ -306,13 +305,13 @@ select * from dest_table_union order by [Col1]
 go
 ~~START~~
 int#!#nvarchar
-<NULL>#!#<NULL>
 <NULL>#!#Union
+<NULL>#!#<NULL>
 1#!#First_dup
 1#!#First
-2#!#Second
 3#!#Third
-6#!#Fourth
+3#!#Second
+9#!#Fourth
 ~~END~~
 
 
@@ -332,24 +331,20 @@ go
 int#!#nvarchar#!#smallint#!#numeric
 1#!#First#!#2#!#2.222
 1#!#First_dup#!#2#!#2.222
-2#!#Second#!#4#!#3.333
+3#!#Second#!#6#!#3.333
 ~~END~~
 
 
--- Should fail. Violate NOT NULL constraint
+-- Should not fail. Violate NOT NULL constraint
 insert into dest_table_sub_join ([Col1]) values (NULL)
 go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "col1" of relation "dest_table_sub_join" violates not-null constraint)~~
+~~ROW COUNT: 1~~
 
 
--- Should fail. Violate NOT NULL constraint on other column
+-- Should not fail. Violate NOT NULL constraint on other column
 insert into dest_table_sub_join ([Col1]) values (200)
 go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "col2" of relation "dest_table_sub_join" violates not-null constraint)~~
+~~ROW COUNT: 1~~
 
 
 insert into dest_table_sub_join ([Col1], [Col2], [Col3], [Col4]) values (209, 'Sub-Join', 78, 8.567)
@@ -361,9 +356,11 @@ select * from dest_table_sub_join order by [Col1], [Col2]
 go
 ~~START~~
 int#!#nvarchar#!#smallint#!#numeric
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 1#!#First#!#2#!#2.222
 1#!#First_dup#!#2#!#2.222
-2#!#Second#!#4#!#3.333
+3#!#Second#!#6#!#3.333
+200#!#<NULL>#!#<NULL>#!#<NULL>
 209#!#Sub-Join#!#78#!#8.567
 ~~END~~
 
@@ -418,3 +415,487 @@ go
 
 drop schema sch_select_into_master
 go
+
+
+
+
+
+--------------------------------------
+------------- BABEL-5661 -------------
+--------------------------------------
+-- New table created using SELECT INTO should reseed its identity column
+-- to max or min value of its identity column depending upon wheter the 
+-- identity is increasing or decreasing. The new tables identity sequence
+-- next value does not depend upon the source tables identity sequecne
+-- current value
+-- INCREASING IDENTITY
+-- id1 represent expected identity value
+CREATE TABLE babel_5661_source (id INT IDENTITY(1,1), id1 INT NOT NULL)
+GO
+INSERT INTO babel_5661_source VALUES (1), (2), (3), (4), (5), (6)
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT * INTO #babel_5661_new1 FROM babel_5661_source
+GO
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#6
+~~END~~
+
+-- identity should start from 7
+INSERT INTO #babel_5661_new1 VALUES (7)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#6
+7#!#7
+~~END~~
+
+
+-- filter rows using where clause so that new table's identity != source tables's identity
+SELECT * INTO #babel_5661_new2 FROM babel_5661_source WHERE id1 < 4
+GO
+-- identity should start from 4
+INSERT INTO #babel_5661_new2 VALUES (4)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new2 ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+~~END~~
+
+
+-- Reseed the source table's identity but that should not affect new tables identity next val
+DBCC CHECKIDENT ('dbo.babel_5661_source', RESEED, 9);
+GO
+SELECT * INTO #babel_5661_new3 FROM babel_5661_source
+GO
+-- Identity should start from 7 even though source tables identity next value is 10
+INSERT INTO #babel_5661_new3 VALUES (7)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new3 ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#6
+7#!#7
+~~END~~
+
+
+-- Source table's next identity value should be 10 since we did DBCC reseed previously
+INSERT INTO babel_5661_source VALUES (10)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_5661_source ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#6
+10#!#10
+~~END~~
+
+
+-- enable SET IDENTITY INSERT on source table and do random inserts
+SET IDENTITY_INSERT dbo.babel_5661_source ON
+GO
+
+INSERT INTO babel_5661_source (id, id1) VALUES (11, 11)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5661_source (id, id1) VALUES (99, 99)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5661_source (id, id1) VALUES (-99, -99)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id < 99
+GO
+-- Identity should start from 12 even though source tables identity next value is 100
+INSERT INTO #babel_5661_new4 VALUES (12)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new4 ORDER BY id
+GO
+~~START~~
+int#!#int
+-99#!#-99
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#6
+10#!#10
+11#!#11
+12#!#12
+~~END~~
+
+
+
+DROP TABLE babel_5661_source
+GO
+DROP TABLE #babel_5661_new1, #babel_5661_new2, #babel_5661_new3, #babel_5661_new4
+GO
+
+
+-- DECREASING IDENTITY
+-- id1 represent expected identity value
+CREATE TABLE babel_5661_source (id INT IDENTITY(-1,-1), id1 INT)
+GO
+INSERT INTO babel_5661_source VALUES (-1), (-2), (-3), (-4), (-5), (-6)
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT * INTO #babel_5661_new1 FROM babel_5661_source
+GO
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+~~START~~
+int#!#int
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+~~END~~
+
+-- identity should start from 7
+INSERT INTO #babel_5661_new1 VALUES (-7)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new1 ORDER BY id
+GO
+~~START~~
+int#!#int
+-7#!#-7
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+~~END~~
+
+
+-- filter rows using where clause so that new table's identity != source tables's identity
+SELECT * INTO #babel_5661_new2 FROM babel_5661_source WHERE id1 > -4
+GO
+-- identity should start from 4
+INSERT INTO #babel_5661_new2 VALUES (-4)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new2 ORDER BY id
+GO
+~~START~~
+int#!#int
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+~~END~~
+
+
+-- Reseed the source table's identity but that should not affect new tables identity next val
+DBCC CHECKIDENT ('dbo.babel_5661_source', RESEED, -9);
+GO
+SELECT * INTO #babel_5661_new3 FROM babel_5661_source
+GO
+-- Identity should start from 7 even though source tables identity next value is 10
+INSERT INTO #babel_5661_new3 VALUES (-7)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new3 ORDER BY id
+GO
+~~START~~
+int#!#int
+-7#!#-7
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+~~END~~
+
+
+-- Source table's next identity value should be 10 since we did DBCC reseed previously
+INSERT INTO babel_5661_source VALUES (-10)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_5661_source ORDER BY id
+GO
+~~START~~
+int#!#int
+-10#!#-10
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+~~END~~
+
+
+-- enable SET IDENTITY INSERT on source table and do random inserts
+SET IDENTITY_INSERT dbo.babel_5661_source ON
+GO
+
+INSERT INTO babel_5661_source (id, id1) VALUES (-11, -11)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5661_source (id, id1) VALUES (99, 99)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_5661_source (id, id1) VALUES (-99, -99)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id > -99
+GO
+-- Identity should start from 12 even though source tables identity next value is 100
+INSERT INTO #babel_5661_new4 VALUES (-12)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #babel_5661_new4 ORDER BY id
+GO
+~~START~~
+int#!#int
+-12#!#-12
+-11#!#-11
+-10#!#-10
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+99#!#99
+~~END~~
+
+
+
+-- Identity and nullability should be carried over when source is temp table
+CREATE TABLE #t (id INT IDENTITY(1,1), id1 INT NOT NULL)
+GO
+SELECT * INTO #t1 FROM #t
+GO
+
+INSERT INTO #t1 values (1)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO #t1 values (NULL)
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "id1" of relation "#t1" violates not-null constraint)~~
+
+SELECT * FROM #t1 ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+CREATE VIEW babel_5661_source_view AS SELECT * FROM babel_5661_source;
+GO
+
+-- Identity and nullability should NOT be carried over when source is view
+SELECT * INTO #t2 FROM babel_5661_source_view ORDER BY id
+GO
+
+-- this should pass because neither identity nor nullability should be carried over for view as source table
+-- in future we may change this
+INSERT INTO #t2 values (1, NULL)
+GO
+~~ROW COUNT: 1~~
+
+
+-- if identity column has multiple occurence then we should not carry it to new table
+SELECT id AS a, id AS b INTO #t5 FROM babel_5661_source
+GO
+INSERT INTO #t5 VALUES (1, 1)
+GO
+~~ROW COUNT: 1~~
+
+-- mix of identity function and duplicate identity columns should
+-- simply skip identity column and pick identity function
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
+go
+
+SELECT id AS a, id AS b, IDENTITY(int, 1, 1) AS c INTO #t15 FROM babel_5661_source
+GO
+SELECT id AS a, IDENTITY(int, 1, 1) AS c, id AS b INTO #t16 FROM babel_5661_source
+GO
+SELECT IDENTITY(int, 1, 1) AS c, id AS b, id AS a INTO #t17 FROM babel_5661_source
+GO
+
+INSERT INTO #t15 VALUES (1, 1)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO #t16 VALUES (1, 1)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO #t17 VALUES (1, 1)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Single identity column and identity function is not okay
+SELECT id AS a, IDENTITY(int, 1, 1) AS c INTO #t15 FROM babel_5661_source
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempting to add multiple identity columns to table "#t15" using the SELECT INTO statement.)~~
+
+SELECT IDENTITY(int, 1, 1) AS c, id AS b INTO #t16 FROM babel_5661_source
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempting to add multiple identity columns to table "#t16" using the SELECT INTO statement.)~~
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'strict';
+go
+
+
+-- db_ddladmin should be able to run SELECT INTO
+CREATE LOGIN babel_5661_login WITH PASSWORD = '12345678'
+GO
+CREATE USER babel_5661_user FOR LOGIN babel_5661_login
+GO
+ALTER ROLE db_ddladmin ADD MEMBER babel_5661_user
+GO
+
+GRANT SELECT ON babel_5661_source TO babel_5661_user
+GO
+
+-- tsql user=babel_5661_login password=12345678
+SELECT * INTO #t1 FROM babel_5661_source
+GO
+INSERT INTO #t1 VALUES (-100)
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM #t1 ORDER BY id
+GO
+~~START~~
+int#!#int
+-100#!#-100
+-99#!#-99
+-11#!#-11
+-10#!#-10
+-6#!#-6
+-5#!#-5
+-4#!#-4
+-3#!#-3
+-2#!#-2
+-1#!#-1
+99#!#99
+~~END~~
+
+
+-- terminate-tsql-conn user=babel_5661_login password=12345678
+
+-- tsql
+-- Left Join should not carry over nullability
+CREATE TABLE babel_5661_SourceTable (
+    ID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE babel_5661_ConfigTable (
+    ConfigID INT PRIMARY KEY,
+    IsActive BIT NOT NULL
+);
+GO
+
+INSERT INTO babel_5661_SourceTable (ID, Name, Value)
+VALUES 
+    (1, 'Item 1', 100),
+    (2, 'Item 2', 200);
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel_5661_ConfigTable (ConfigID, IsActive)
+VALUES 
+    (1, 1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT 
+    s.ID,
+    s.Name,
+    c.IsActive  -- This will be NULL for row 2
+INTO babel_5661_NewTable
+FROM babel_5661_SourceTable s
+LEFT JOIN babel_5661_ConfigTable c ON s.ID = c.ConfigID;
+GO
+
+
+DROP VIEW IF EXISTS babel_5661_source_view
+GO
+DROP TABLE IF EXISTS babel_5661_source, babel_5661_SourceTable, babel_5661_ConfigTable, babel_5661_NewTable
+GO
+DROP LOGIN babel_5661_login
+GO
+DROP USER babel_5661_user
+GO

@@ -1,0 +1,181 @@
+-- setup
+CREATE TABLE parent(a int primary key);
+GO
+CREATE TABLE child(b int, foreign key (b) references parent(a) ON UPDATE CASCADE);
+GO
+CREATE TRIGGER trig1 on child AFTER UPDATE AS BEGIN SELECT 1 END
+GO
+INSERT INTO parent values(1)
+INSERT INTO child values(1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- check metadata
+select name,is_disabled from sys.triggers
+GO
+~~START~~
+varchar#!#bit
+trig1#!#0
+~~END~~
+
+
+-- check if trigger enabled, as well as fkey action works
+UPDATE parent set a=2 where a=1
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from parent;select * from child;
+GO
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+
+ALTER TABLE child disable trigger all
+GO
+
+-- check metadata
+select name,is_disabled from sys.triggers
+GO
+~~START~~
+varchar#!#bit
+trig1#!#1
+~~END~~
+
+
+-- check if only trigger disabled and not fkey action
+UPDATE parent set a=3 where a=2
+GO
+~~ROW COUNT: 1~~
+
+SELECT * from parent;select * from child;
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+
+ALTER TABLE child enable trigger all
+GO
+
+-- check metadata
+select name,is_disabled from sys.triggers
+GO
+~~START~~
+varchar#!#bit
+trig1#!#0
+~~END~~
+
+
+-- check  if trigger renabled
+UPDATE parent set a=4 where a=3
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from parent;select * from child;
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+
+DISABLE trigger all on child;
+GO
+
+-- check metadata
+select name,is_disabled from sys.triggers
+GO
+~~START~~
+varchar#!#bit
+trig1#!#1
+~~END~~
+
+
+-- check  if only trigger disabled and not fkey action
+UPDATE parent set a=5 where a=4
+GO
+~~ROW COUNT: 1~~
+
+SELECT * from parent;select * from child;
+GO
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+ENABLE trigger all on child;
+GO
+
+-- check metadata
+select name,is_disabled from sys.triggers
+GO
+~~START~~
+varchar#!#bit
+trig1#!#0
+~~END~~
+
+
+-- check  if trigger renabled
+UPDATE parent set a=6 where a=5
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from parent;select * from child;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+
+-- cleanup
+DROP TABLE child;DROP TABLE parent;
+GO
