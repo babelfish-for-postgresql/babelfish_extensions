@@ -5396,7 +5396,7 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
     stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
 
     if (measure_cols == NIL)
-        goto cleanup;
+        return;
 
     /* Create IS NOT NULL where conditions for all collected columns */
     foreach(lc, measure_cols)
@@ -5497,7 +5497,7 @@ transform_unpivot_clause_recursive(Node **node_ptr, List **measure_cols, List **
             *node_ptr = transformed_node;
             found_unpivot = true;
             /* Recurse down unpivot join node to look for additional unpivots */
-            found_unpivot |= transform_unpivot_clause_recursive(node_ptr, measure_cols, unpivot_src_cols);
+            transform_unpivot_clause_recursive(node_ptr, measure_cols, unpivot_src_cols);
         }
     }
 
@@ -5550,24 +5550,20 @@ filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *s
         TargetEntry *te;
         bool skip_column;
         ListCell *source_lc;
+        String *source_col;
 
         te = (TargetEntry *)lfirst(lc);
         skip_column = false;
 
         /* Check if this column is in source_cols */
-        for (source_lc = list_head(source_cols); source_lc != NULL;)
-        {
-            String *source_col = (String *)lfirst(source_lc);
-            ListCell *next_lc = lnext(source_cols, source_lc);
-
-            if (strcmp(te->resname, strVal(source_col)) == 0)
-            {
+        foreach(source_lc, source_cols) {
+            source_col = (String *)lfirst(source_lc);
+            if (strcmp(te->resname, strVal(source_col)) == 0) {
                 skip_column = true;
                 /* Remove the matched source column to avoid duplicate removal */
-                source_cols = list_delete_cell(source_cols, source_lc);
+                source_cols = foreach_delete_current(source_cols, source_lc);
                 break;
             }
-            source_lc = next_lc;
         }
         
         if (!skip_column)
