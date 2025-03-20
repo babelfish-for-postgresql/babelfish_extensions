@@ -6110,7 +6110,6 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 {
 	int32       result_typmod = -1;
 	Oid         expr_type;
-	bool		found_typmod;
 	
 	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
 		return -1;
@@ -6122,6 +6121,8 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 
 	if (getBaseType(expr_type) == NUMERICOID)
 	{
+		bool        found_typmod;
+
 		/*
 		 * use get_numeric_typmod_from_exp function to get the typmod
  		 * from the expression node, when the expression type is numeric.
@@ -6166,7 +6167,7 @@ pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc)
 		TargetEntry *tle = lfirst(l);
 		Form_pg_attribute attr = TupleDescAttr(desc, cur_resno - 1);
 
-		if (getBaseType(attr->atttypid) == NUMERICOID)
+		if (attr->atttypid == NUMERICOID || getBaseType(attr->atttypid) == NUMERICOID)
 		{
 			attr->atttypmod = pltsql_exprTypmod(planstate->plan, (Node *) tle->expr);
 		}

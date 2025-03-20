@@ -468,6 +468,22 @@ GO
 SELECT cast(999999999999999.9999 as dbo.DECIMALUDT_38_4) * cast(1.23 as decimal(3,2))
 GO
 
+-- numeric subtraction overflow
+SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) - CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
+GO
+
+-- numeric addition overflow
+SELECT CAST(111.111111 as numeric(38,6)) + CAST(111.11111111 as numeric(38, 8))
+GO
+
+-- numeric multiplication overflow
+create table babel_5467_t13(a numeric (38, 37));
+insert into babel_5467_t13 values (6);
+go
+
+select sum(a) * CAST(10.00 AS NUMERIC(38,0)) from babel_5467_t13
+go
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -498,6 +514,7 @@ drop table babel_5467_t9
 drop table babel_5467_t10
 drop table babel_5467_t11
 drop table babel_5467_t12
+drop table babel_5467_t13
 go
 
 drop type DECIMALUDT_38_6

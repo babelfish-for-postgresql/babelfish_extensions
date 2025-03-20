@@ -299,7 +299,7 @@ select * from babel_5467_t8
 go
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-10.6666666666666667#!#100.22376#!#35.33331#!#29.11109
+10.6666666666666667#!#100.22376#!#35.3333#!#29.1111
 ~~END~~
 
 
@@ -311,8 +311,8 @@ go
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
 master#!#dbo#!#babel_5467_t8#!#a#!#18#!#10#!#16
 master#!#dbo#!#babel_5467_t8#!#b#!#8#!#10#!#5
-master#!#dbo#!#babel_5467_t8#!#c#!#38#!#10#!#5
-master#!#dbo#!#babel_5467_t8#!#d#!#38#!#10#!#5
+master#!#dbo#!#babel_5467_t8#!#c#!#38#!#10#!#4
+master#!#dbo#!#babel_5467_t8#!#d#!#38#!#10#!#4
 ~~END~~
 
 
@@ -581,7 +581,7 @@ SELECT count(*), avg(amount) * 100 FROM babel_5467_t5;
 GO
 ~~START~~
 int#!#numeric
-3#!#1066.666600
+3#!#1066.67
 ~~END~~
 
 
@@ -779,7 +779,7 @@ select cast(10.6666666666 as decimal(38, 10)) + cast(5.11111111 as decimal(38, 8
 go
 ~~START~~
 numeric
-15.7777777766
+15.77777778
 ~~END~~
 
 
@@ -789,7 +789,7 @@ select cast(10.6666666666 as decimal(38, 10)) - cast(5.11111111 as decimal(38, 8
 go
 ~~START~~
 numeric
-5.5555555566
+5.55555556
 ~~END~~
 
 
@@ -823,7 +823,7 @@ select ((32.0/3.0)*10.666666) + 10.22, ((cast(32 as decimal(38, 6)) / cast(3 as 
 go
 ~~START~~
 numeric#!#numeric
-123.997763555556#!#123.997764
+123.997763555556#!#124.00
 ~~END~~
 
 
@@ -837,9 +837,9 @@ select (((a / b) * c) + d), ((a / b) * c), (a / b) from babel_5467_t11
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-123.997764#!#113.777764#!#10.666666
-3.997776#!#2.777776#!#1.666666
-7.664443#!#5.444443#!#2.333333
+124.00#!#113.777764#!#10.666666
+4.00#!#2.777776#!#1.666666
+7.66#!#5.444443#!#2.333333
 ~~END~~
 
 
@@ -847,7 +847,7 @@ select avg(((a / b) * c) + d), avg((a / b) * c), avg(a / b) from babel_5467_t11
 go
 ~~START~~
 numeric#!#numeric#!#numeric
-45.219994#!#40.666661#!#4.888888
+45.220000#!#40.666661#!#4.888888
 ~~END~~
 
 
@@ -930,6 +930,39 @@ numeric
 ~~END~~
 
 
+-- numeric subtraction overflow
+SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) - CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
+GO
+~~START~~
+numeric
+9999999999999999999999999999999999999
+~~END~~
+
+
+-- numeric addition overflow
+SELECT CAST(111.111111 as numeric(38,6)) + CAST(111.11111111 as numeric(38, 8))
+GO
+~~START~~
+numeric
+222.222222
+~~END~~
+
+
+-- numeric multiplication overflow
+create table babel_5467_t13(a numeric (38, 37));
+insert into babel_5467_t13 values (6);
+go
+~~ROW COUNT: 1~~
+
+
+select sum(a) * CAST(10.00 AS NUMERIC(38,0)) from babel_5467_t13
+go
+~~START~~
+numeric
+60.000000
+~~END~~
+
+
 -- cleanup
 drop table babel_5467_avgdata_1
 drop table babel_5467_avgdata_2
@@ -960,6 +993,7 @@ drop table babel_5467_t9
 drop table babel_5467_t10
 drop table babel_5467_t11
 drop table babel_5467_t12
+drop table babel_5467_t13
 go
 
 drop type DECIMALUDT_38_6

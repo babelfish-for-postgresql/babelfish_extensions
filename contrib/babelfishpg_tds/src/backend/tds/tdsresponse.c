@@ -668,7 +668,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
 							if (!tle)
 								elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
-							return resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr, &found_typmod);
+							rettypmod = resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr, &found_typmod);
 							if (!found_typmod)
 							{
 								if (found != NULL) *found = false;
@@ -712,14 +712,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							precision;
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
-
-				/*
-				 * If one of the operands is part of aggregate function SUM()
-				 * or AVG(), set has_aggregate_operand to true; in those cases
-				 * resultant precision and scale calculation would be a bit
-				 * different
-				 */
-				 bool		has_aggregate_operand = false;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
 				if (list_length(op->args) == 2)
@@ -805,14 +797,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					scale2 = scale1;
 				}
 
-				/*
-				 * Refer to details of precision and scale calculation in the
-				 * following link:
-				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
-				 */
-				 has_aggregate_operand = arg1->type == T_Aggref ||
-					(list_length(op->args) == 2 && arg2->type == T_Aggref);
-
 				switch (op->opfuncid)
 				{
 					case NUMERIC_ADD_OID:
@@ -822,11 +806,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						precision = integralDigitCount + 1 + scale;
 
 						/*
-						 * For addition and subtraction, skip scale adjustment
-						 * when none of the operands is part of any aggregate
-						 * function
+						 * For addition and subtraction, adjust the scale
+						 * and precision, in precision overflow cases.
 						 */
-						if (integralDigitCount >= (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+						if (integralDigitCount > (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
@@ -838,14 +821,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					case NUMERIC_MUL_OID:
 						scale = scale1 + scale2;
 						precision = precision1 + precision2 + 1;
-
-						/*
-						 * For multiplication, skip scale adjustment when
-						 * atleast one of the operands is part of aggregate
-						 * function
-						 */
-						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
-							precision = TDS_MAX_NUM_PRECISION;
 						break;
 					case NUMERIC_DIV_OID:
 						scale = Max(6, scale1 + precision2 + 1);
