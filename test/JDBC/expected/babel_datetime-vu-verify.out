@@ -822,8 +822,6 @@ datetime
 -- 12-byte varbinary
 SELECT CONVERT(DateTime, 0x0000B022018B81FF0000B022);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -832,8 +830,6 @@ datetime
 -- Before min value
 SELECT CONVERT(DateTime, 0xFFFF2E4500000000);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -842,8 +838,6 @@ datetime
 -- After max value
 SELECT CONVERT(DateTime, 0x002D247F018B8200);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -1003,8 +997,6 @@ datetime
 
 SELECT CONVERT(DateTime, 0x1FFFFFF);
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
@@ -1114,8 +1106,6 @@ datetime
 
 SELECT CONVERT(DateTime, cast(0x0 as binary));
 GO
-~~START~~
-datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Explicit conversion from data type "binary" to datetime is not allowed.)~~

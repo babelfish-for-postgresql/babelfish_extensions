@@ -32,8 +32,6 @@
 /* TSQL default datetime: 1900-01-01 00:00:00.000 */
 #define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
 
-#define strtoi64(str, endptr, base) ((int64) strtol(str, endptr, base))
-
 extern Timestamp initializeToDefaultDatetime(void);
 /** Utility function to calculate days from '1900-01-01 00:00:00' */
 extern double calculateDaysFromDefaultDatetime(Timestamp timestamp_left); 
