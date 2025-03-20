@@ -289,6 +289,9 @@ Oid			tsql_sqlvariant_oid = InvalidOid;
 Oid			tsql_geography_oid = InvalidOid;
 Oid			tsql_geometry_oid = InvalidOid;
 Oid			tsql_sysname_oid = InvalidOid;
+Oid			tsql_tinyint_oid = InvalidOid;
+Oid			tsql_money_oid = InvalidOid;
+Oid			tsql_smallmoney_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -490,6 +493,30 @@ is_tsql_sqlvariant_datatype(Oid oid)
 	if (tsql_sqlvariant_oid == InvalidOid)
 		tsql_sqlvariant_oid = lookup_tsql_datatype_oid("sql_variant");
 	return tsql_sqlvariant_oid == oid;
+}
+
+bool
+is_tsql_tinyint_datatype(Oid oid)
+{
+	if (tsql_tinyint_oid == InvalidOid)
+		tsql_tinyint_oid = lookup_tsql_datatype_oid("tinyint");
+	return tsql_tinyint_oid == oid;
+}
+
+bool
+is_tsql_money_datatype(Oid oid)
+{
+	if (tsql_money_oid == InvalidOid)
+		tsql_money_oid = lookup_tsql_datatype_oid("money");
+	return tsql_money_oid == oid;
+}
+
+bool
+is_tsql_smallmoney_datatype(Oid oid)
+{
+	if (tsql_smallmoney_oid == InvalidOid)
+		tsql_smallmoney_oid = lookup_tsql_datatype_oid("smallmoney");
+	return tsql_smallmoney_oid == oid;
 }
 
 /*
