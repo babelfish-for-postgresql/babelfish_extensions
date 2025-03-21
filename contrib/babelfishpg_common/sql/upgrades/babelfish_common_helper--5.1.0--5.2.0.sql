@@ -30,6 +30,12 @@ RETURNS sys.BBF_VARBINARY
 AS 'babelfishpg_common', 'float4varbinary'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- (INT4 AS sys.BBF_VARBINARY)
+DROP CAST (INT4 AS sys.BBF_VARBINARY);
+
+-- (REAL AS sys.BBF_VARBINARY)
+DROP CAST (REAL AS sys.BBF_VARBINARY);
+
 DO $$
 DECLARE
     exception_message text;
