@@ -27,6 +27,9 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
      when dependent_objects_still_exist then --if 'drop view' statement fails
          GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
          raise warning '%', error_msg;
+     when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
  end
  $$
  LANGUAGE plpgsql;
@@ -1141,7 +1144,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.VARCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.VARCHAR, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -1156,7 +1159,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NVARCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_NVARCHAR_deprecated_5_2_0;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.NVARCHAR, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_NVARCHAR_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -1171,7 +1174,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.bpchar, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_bpchar_deprecated_5_2_0;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.bpchar, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_bpchar_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -1186,7 +1189,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0;
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.NCHAR, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -1196,21 +1199,6 @@ END;
 $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
