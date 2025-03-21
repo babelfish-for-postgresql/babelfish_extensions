@@ -157,7 +157,7 @@ static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
 static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
-static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols);
+static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -5393,7 +5393,7 @@ transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
         goto cleanup;
 
     /* Filter SELECT * to exclude UNPIVOT source columns */
-    stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, src_cols);
+    stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, &src_cols);
 
     if (measure_cols == NIL)
         return;
@@ -5515,7 +5515,7 @@ transform_unpivot_clause_recursive(Node **node_ptr, List **measure_cols, List **
  * Note: Only processes if target list contains * 
  */
 static List *
-filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *source_cols)
+filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols)
 {
     Query *temp_query;
     List *result_targetlist;
@@ -5556,12 +5556,12 @@ filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List *s
         skip_column = false;
 
         /* Check if this column is in source_cols */
-        foreach(source_lc, source_cols) {
+        foreach(source_lc, *source_cols) {
             source_col = (String *)lfirst(source_lc);
             if (strcmp(te->resname, strVal(source_col)) == 0) {
                 skip_column = true;
                 /* Remove the matched source column to avoid duplicate removal */
-                source_cols = foreach_delete_current(source_cols, source_lc);
+                *source_cols = foreach_delete_current(*source_cols, source_lc);
                 break;
             }
         }
