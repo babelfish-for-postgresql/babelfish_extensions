@@ -59,6 +59,8 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_smalldatetime_datatype) (Oid oid);
 	bool		(*is_tsql_datetimeoffset_datatype) (Oid oid);
 	bool		(*is_tsql_decimal_datatype) (Oid oid);
+	bool		(*is_tsql_fixeddecimal_datatype) (Oid oid);
+	bool		(*is_tsql_bit_datatype) (Oid oid);
 	bool		(*is_tsql_rowversion_or_timestamp_datatype) (Oid oid);
 	Datum		(*datetime_in_str) (char *str);
 	bool		(*is_tsql_tinyint_datatype) (Oid oid);
