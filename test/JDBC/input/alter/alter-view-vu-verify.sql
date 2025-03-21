@@ -118,8 +118,15 @@ GO
 Alter view non_existent_view AS SELECT a, b FROM alter_t;
 GO
 
+GRANT SELECT on alter_t TO guest;
+GO
 -- Alter View with Schema name (Checking views with same name in different schemas)
-CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b FROM alter_t;
+CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b, c FROM alter_t;
+GO
+SELECT * FROM guest.alter_v1;
+GO
+
+ALTER VIEW guest.alter_v1 AS SELECT a FROM alter_t;
 GO
 SELECT * FROM guest.alter_v1;
 GO
