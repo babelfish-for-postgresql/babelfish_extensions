@@ -164,6 +164,8 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
+static Datum adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod);
+static void pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -196,6 +198,7 @@ static void revoke_func_permission_from_public(Oid objectId);
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
+static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -221,10 +224,13 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
+static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
+static ExecUpdateResultTypeTL_hook_type prev_ExecUpdateResultTypeTL_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
+static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -343,6 +349,12 @@ InstallExtendedHooks(void)
 	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
 	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger;
 
+	prev_adjust_numeric_result_hook = adjust_numeric_result_hook;
+	adjust_numeric_result_hook = adjust_numeric_result;
+
+	prev_ExecUpdateResultTypeTL_hook = ExecUpdateResultTypeTL_hook;
+	ExecUpdateResultTypeTL_hook = pltsql_ExecUpdateResultTypeTL;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -354,6 +366,9 @@ InstallExtendedHooks(void)
 
 	prev_replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults;
+
+	prev_exprTypmod_hook = exprTypmod_hook;
+	exprTypmod_hook = pltsql_exprTypmod;
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
@@ -476,10 +491,13 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
+	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
+	ExecUpdateResultTypeTL_hook = prev_ExecUpdateResultTypeTL_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
+	exprTypmod_hook = prev_exprTypmod_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -900,6 +918,58 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			break;
 	}
 	return false;
+}
+
+/*
+ * contains_truncation_functions_checker
+ *  For Numeric Division and Numeric Average, truncation of
+ *  results needs to be done. Following function identifies 
+ *  all such functions which requires result truncation.
+ */
+static bool
+contains_truncation_functions_checker(Oid func_id, void *context)
+{
+	return (func_id == F_NUMERIC_DIV || func_id == F_AVG_NUMERIC);
+	
+}
+
+/*
+ * adjust_numeric_result
+ *  truncates/rounds the result value to the correct scale based on result_typmod.
+ *  for result_typmod = -1, computes the result_typmod using pltsql_exprTypmod function.
+ */
+static Datum
+adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
+{
+	int32       scale;
+
+	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
+		return result;
+
+	if (!OidIsValid(result_type))
+		result_type = exprType(expr);
+
+	if (result && OidIsValid(result_type) && getBaseType(result_type) == NUMERICOID)
+	{
+		if (expr != NULL && result_typmod == -1)
+			result_typmod = pltsql_exprTypmod(plan, expr);
+
+		if (result_typmod != -1)
+		{
+			scale = (result_typmod - VARHDRSZ) & 0xffff; 
+
+			/*
+			 * For Numeric Division and Numeric Average, 
+			 * we need to do a truncation and for rest we need to do rounding
+			 */
+			if (check_functions_in_node(expr, contains_truncation_functions_checker, NULL))
+				return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+			else
+				return DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
+		}
+	}
+
+	return result;
 }
 
 /*
@@ -5077,3 +5147,80 @@ pltsql_get_object_identity_event_trigger(ObjectAddress* address)
     }
     return identity;
 }
+
+/*
+ * pltsql_exprTypmod -
+ *  returns the type-specific modifier of the expression's result type,
+ *  if it can be determined, else we return -1.
+ */
+static int32
+pltsql_exprTypmod(Plan *plan, Node *expr)
+{
+	int32       result_typmod = -1;
+	Oid         expr_type;
+	
+	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
+		return -1;
+
+	expr_type = exprType(expr);
+
+	if (!OidIsValid(expr_type))
+		return -1;
+
+	if (getBaseType(expr_type) == NUMERICOID)
+	{
+		bool        found_typmod;
+
+		/*
+		 * use get_numeric_typmod_from_exp function to get the typmod
+ 		 * from the expression node, when the expression type is numeric.
+		 */ 
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
+		{
+			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, &found_typmod);
+			if (!found_typmod)
+				return -1;
+		}
+	}
+	return result_typmod;
+}
+
+/*
+ * pltsql_ExecUpdateResultTypeTL
+ *
+ * Update typmod of all the entries of a previously initialized tuple descriptor, 
+ * using pltsql_exprTypmod when attribute type is NUMERIC, DECIMAL and any UDT on NUMERIC, DECIMAL.
+ */
+void
+pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc)
+{
+	ListCell   *l;
+	int         cur_resno = 1;
+	List       *targetList;
+
+	/*
+	 * sanity checks
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!PointerIsValid(desc) ||
+		!PointerIsValid(planstate) ||
+		!PointerIsValid(planstate->plan) ||
+		!PointerIsValid(planstate->plan->targetlist))
+		return;
+
+	targetList = planstate->plan->targetlist;
+
+	foreach(l, targetList)
+	{
+		TargetEntry *tle = lfirst(l);
+		Form_pg_attribute attr = TupleDescAttr(desc, cur_resno - 1);
+
+		if (attr->atttypid == NUMERICOID || getBaseType(attr->atttypid) == NUMERICOID)
+		{
+			attr->atttypmod = pltsql_exprTypmod(planstate->plan, (Node *) tle->expr);
+		}
+
+		cur_resno++;
+	}
+}
+
