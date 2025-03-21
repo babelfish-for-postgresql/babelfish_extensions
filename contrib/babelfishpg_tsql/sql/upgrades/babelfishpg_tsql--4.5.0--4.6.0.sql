@@ -1041,10 +1041,6 @@ CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$
 RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 DO $$
 DECLARE
     old_function_exists boolean;
@@ -1064,7 +1060,6 @@ BEGIN
             IN arg anyelement,
             IN p_style NUMERIC
         ) RENAME TO babelfish_try_conv_to_varbinary_deprecated_in_5_2_0;
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_5_2_0');
         CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(
             IN typmod INTEGER,
             IN arg anyelement,
@@ -1093,6 +1088,7 @@ BEGIN
         $BODY$
         LANGUAGE plpgsql
         IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_5_2_0');
     END IF;
 
 EXCEPTION WHEN OTHERS THEN
@@ -1124,7 +1120,6 @@ BEGIN
             IN p_style NUMERIC
         ) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0;
 
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0');
         CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
             IN typmod INTEGER,
             IN arg sys.VARCHAR,
@@ -1144,6 +1139,7 @@ BEGIN
         $BODY$
         LANGUAGE plpgsql
         IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0');
     END IF;
 
 EXCEPTION WHEN OTHERS THEN
@@ -1201,8 +1197,6 @@ BEGIN
             IN p_style NUMERIC
         ) RENAME TO babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0;
 
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0');
-
         CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
             IN typmod INTEGER,
             IN arg anyelement,
@@ -1233,6 +1227,8 @@ BEGIN
         $BODY$
         LANGUAGE plpgsql
         IMMUTABLE;
+
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0');
     END IF;
 
 EXCEPTION WHEN OTHERS THEN
@@ -1241,6 +1237,10 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
