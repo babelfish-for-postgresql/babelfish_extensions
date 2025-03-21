@@ -5769,7 +5769,6 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
  * Objects are always owned by current user in postgres but in babelfish
  * schema contained objects should be owned by the schema owner by default
  * Use this hook to pick schema owner as object owner during object creation
- * We currently only do this if current user is member of db_ddladmin or db_owner
  */
 static Oid
 pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
@@ -5803,6 +5802,8 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		char	*db_name = get_cur_db_name();
 		char	*dbo_name = get_dbo_role_name(db_name);
 		Oid		dbo_oid = get_role_oid(dbo_name, false);
+		Oid		schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
+
 		/*
 		 * babelfish issue special handing for dbo schema since it is
 		 * owned by db_owner but the correct owner should have been dbo
@@ -5812,17 +5813,12 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		else
 			nsp_owner = nsptup->nspowner;
 
-		if (ownerId != nsp_owner)
+		/*
+		 * Object owner should not be same as schema owner
+		 */
+		if ((ownerId != nsp_owner) && (schema_db_id == get_cur_db_id()))
 		{
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-			Oid 	db_owner = get_db_owner_oid(db_name, false);
-			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
-
-			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
-			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
-				(has_privs_of_role(GetUserId(), db_owner) ||
-				has_privs_of_role(GetUserId(), db_ddladmin)))
-				ownerId = nsp_owner;
+			ownerId = nsp_owner;
 		}
 
 		pfree(db_name);

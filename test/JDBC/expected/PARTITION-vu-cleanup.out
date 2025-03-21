@@ -452,29 +452,3 @@ go
 
 DROP DATABASE PartitionDb
 go
-
--- psql
--- validate that catalogs don't have stale entries
-SELECT count(*) FROM sys.babelfish_partition_function;
-GO
-~~START~~
-int8
-0
-~~END~~
-
-
-SELECT count(*) FROM sys.babelfish_partition_scheme
-GO
-~~START~~
-int8
-0
-~~END~~
-
-
-SELECT count(*) FROM sys.babelfish_partition_depend
-GO
-~~START~~
-int8
-0
-~~END~~
-

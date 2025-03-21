@@ -2285,7 +2285,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
 static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	StringInfoData query;
 	List	   *stmt_list;
@@ -2300,11 +2300,10 @@ static List
 
 	/*
 	 * Don't need multiple ALTER DEFAULT PRIVILEGE statements, if:
-	 * 1. It's a part of CREATE SCHEMA statement
-	 * 2. If the schema owner is dbo
-	 * 3. If the schema owner is db_owner (dbo_schema owner is a db_owner)
+	 * 1. If the schema owner is dbo
+	 * 2. If the schema owner is db_owner (dbo_schema owner is a db_owner)
 	 */
-	if (!is_create_schema && (strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
+	if ((strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
 	{
 		owner_other_than_dbo = true;
 	}
@@ -2395,7 +2394,7 @@ static List
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
@@ -2412,7 +2411,7 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege, is_create_schema);
+		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
 		{
