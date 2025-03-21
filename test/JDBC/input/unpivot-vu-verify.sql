@@ -371,6 +371,7 @@ SELECT customer_desc, turnover, quarter
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt  
 WHERE turnover > 200;
+GO
         
         -- Complex WHERE with multiple conditions
 SELECT customer_id, turnover, quarter 
@@ -379,6 +380,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 WHERE CAST(turnover AS DECIMAL(10,2)) > 150.00 
     AND quarter IN ('q1', 'q2') 
     AND unpvt.customer_id < 1000;
+GO
 
         -- WHERE clause containing unpivot subquery
 SELECT customer_id, turnover, quarter 
@@ -390,6 +392,7 @@ WHERE turnover > (
     UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS t2 
     WHERE t2.quarter = t.quarter 
 );
+GO
 
     -- 2. GROUP BY Clause
         -- GROUP BY with multiple columns
@@ -398,7 +401,9 @@ SELECT customer_type, quarter,
        AVG(turnover) as avg_turnover 
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
-GROUP BY customer_type, quarter;
+GROUP BY customer_type, quarter
+ORDER BY customer_type, quarter DESC;
+GO
 
         -- GROUP BY with HAVING
 SELECT 
@@ -410,6 +415,7 @@ FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 GROUP BY customer_type, quarter 
 HAVING COUNT(*) > 1 AND SUM(turnover) > 500;
+GO
 
     -- 3. ORDER BY Clause
         -- Multiple column ORDER BY
@@ -417,12 +423,14 @@ SELECT customer_id, turnover, quarter
 FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id ASC, turnover, quarter DESC;
+GO
 
         -- ORDER BY with expressions
 SELECT customer_id, turnover, quarter 
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY RIGHT(quarter, 1), turnover * 1.1;
+GO
 
     -- 4. TOP Clause
         -- Simple TOP
@@ -430,6 +438,7 @@ SELECT TOP 5 customer_id, turnover, quarter
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY turnover DESC;
+GO
 
         -- OFFSET-FETCH
 SELECT customer_id, turnover, quarter 
@@ -437,6 +446,7 @@ FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY turnover DESC 
 OFFSET 5 ROWS FETCH NEXT 5 ROWS ONLY;
+GO
 
 
 -- SOURCE OBJECT TYPES
@@ -447,17 +457,16 @@ CREATE TABLE #temp_sales (
     product_name VARCHAR(50), 
     q1_sales DECIMAL(10,2), 
     q2_sales DECIMAL(10,2));
-GO 
 
 INSERT INTO #temp_sales VALUES
 (1, 'Product A', 100.50, 0),
 (2, 'Product B', NULL, 300.00),
 (3, 'Product C', NULL, NULL);
-GO 
 
 SELECT id, product_name, sales_amount, quarter 
 FROM #temp_sales 
 UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
+GO
 
         -- 1.2 TEMPORARY VARIABLES
 DECLARE @sales_data TABLE (
@@ -501,6 +510,9 @@ FROM sales.quarterly_data
 UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales, q3_sales, q4_sales)) AS unpvt;
 GO
 
+SELECT * FROM sales.sales_analysis_view;
+GO
+
 
 -- SUBQURIES
     -- 1. IN/EXISTS
@@ -510,6 +522,7 @@ WHERE customer_id IN (
     UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
     WHERE sales > 300
 );
+GO
 
 SELECT * FROM customer_turnover ct 
 WHERE EXISTS (
@@ -519,6 +532,7 @@ WHERE EXISTS (
     WHERE unpvt.customer_id = ct.customer_id
     AND sales = 0
 );
+GO
 
     -- 2. Correlated Subqueries
 SELECT ct.customer_id,
@@ -543,6 +557,7 @@ SELECT * FROM (
     WHERE customer_type = 'R'
 ) AS source 
 UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
+GO
 
 -- Different source types
     -- 1. Using a table-valued function as source

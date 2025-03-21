@@ -715,19 +715,6 @@ int#!#varchar#!#varchar#!#numeric#!#varchar
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 -- BASIC CLAUSES
     -- 1. WHERE Clause
         -- Basic WHERE on unpivoted column
@@ -735,6 +722,14 @@ SELECT customer_desc, turnover, quarter
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt  
 WHERE turnover > 200;
+GO
+~~START~~
+varchar#!#int#!#varchar
+Cust C#!#400#!#q3
+Cust A#!#400#!#q4
+Cust B#!#250#!#q2
+~~END~~
+
         
         -- Complex WHERE with multiple conditions
 SELECT customer_id, turnover, quarter 
@@ -743,6 +738,14 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 WHERE CAST(turnover AS DECIMAL(10,2)) > 150.00 
     AND quarter IN ('q1', 'q2') 
     AND unpvt.customer_id < 1000;
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#200#!#q2
+2#!#250#!#q2
+~~END~~
+
+
         -- WHERE clause containing unpivot subquery
 SELECT customer_id, turnover, quarter 
 FROM customer_turnover 
@@ -753,6 +756,17 @@ WHERE turnover > (
     UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS t2 
     WHERE t2.quarter = t.quarter 
 );
+GO
+~~START~~
+int#!#int#!#varchar
+3#!#400#!#q3
+1#!#200#!#q2
+1#!#400#!#q4
+2#!#150#!#q1
+2#!#250#!#q2
+~~END~~
+
+
     -- 2. GROUP BY Clause
         -- GROUP BY with multiple columns
 SELECT customer_type, quarter, 
@@ -760,7 +774,21 @@ SELECT customer_type, quarter,
        AVG(turnover) as avg_turnover 
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
-GROUP BY customer_type, quarter;
+GROUP BY customer_type, quarter
+ORDER BY customer_type, quarter DESC;
+GO
+~~START~~
+char#!#varchar#!#int#!#int
+P#!#q3#!#1#!#200
+P#!#q2#!#1#!#250
+P#!#q1#!#1#!#150
+R#!#q4#!#2#!#275
+R#!#q3#!#2#!#250
+R#!#q2#!#2#!#100
+R#!#q1#!#1#!#100
+~~END~~
+
+
         -- GROUP BY with HAVING
 SELECT 
     customer_type,
@@ -771,29 +799,93 @@ FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 GROUP BY customer_type, quarter 
 HAVING COUNT(*) > 1 AND SUM(turnover) > 500;
+GO
+~~START~~
+char#!#varchar#!#int#!#int
+R#!#q4#!#2#!#550
+~~END~~
+
+
     -- 3. ORDER BY Clause
         -- Multiple column ORDER BY
 SELECT customer_id, turnover, quarter
 FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id ASC, turnover, quarter DESC;
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#100#!#q3
+1#!#100#!#q1
+1#!#200#!#q2
+1#!#400#!#q4
+2#!#150#!#q1
+2#!#200#!#q3
+2#!#250#!#q2
+3#!#0#!#q2
+3#!#150#!#q4
+3#!#400#!#q3
+~~END~~
+
+
         -- ORDER BY with expressions
 SELECT customer_id, turnover, quarter 
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY RIGHT(quarter, 1), turnover * 1.1;
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#100#!#q1
+2#!#150#!#q1
+3#!#0#!#q2
+1#!#200#!#q2
+2#!#250#!#q2
+1#!#100#!#q3
+2#!#200#!#q3
+3#!#400#!#q3
+3#!#150#!#q4
+1#!#400#!#q4
+~~END~~
+
+
     -- 4. TOP Clause
         -- Simple TOP
 SELECT TOP 5 customer_id, turnover, quarter
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY turnover DESC;
+GO
+~~START~~
+int#!#int#!#varchar
+3#!#400#!#q3
+1#!#400#!#q4
+2#!#250#!#q2
+1#!#200#!#q2
+2#!#200#!#q3
+~~END~~
+
+
         -- OFFSET-FETCH
 SELECT customer_id, turnover, quarter 
 FROM customer_turnover 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt 
 ORDER BY turnover DESC 
 OFFSET 5 ROWS FETCH NEXT 5 ROWS ONLY;
+GO
+~~START~~
+int#!#int#!#varchar
+3#!#150#!#q4
+2#!#150#!#q1
+1#!#100#!#q3
+1#!#100#!#q1
+3#!#0#!#q2
+~~END~~
+
+
+
+
+
 -- SOURCE OBJECT TYPES
     -- 1. Temporary Objects
         -- 1.1 TEMP TABLE
@@ -802,15 +894,25 @@ CREATE TABLE #temp_sales (
     product_name VARCHAR(50), 
     q1_sales DECIMAL(10,2), 
     q2_sales DECIMAL(10,2));
-GO 
 INSERT INTO #temp_sales VALUES
 (1, 'Product A', 100.50, 0),
 (2, 'Product B', NULL, 300.00),
 (3, 'Product C', NULL, NULL);
-GO 
 SELECT id, product_name, sales_amount, quarter 
 FROM #temp_sales 
 UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar#!#numeric#!#varchar
+1#!#Product A#!#100.50#!#q1_sales
+1#!#Product A#!#0.00#!#q2_sales
+2#!#Product B#!#300.00#!#q2_sales
+~~END~~
+
+
+
         -- 1.2 TEMPORARY VARIABLES
 DECLARE @sales_data TABLE (
     id INT,
@@ -825,9 +927,14 @@ SELECT id, region, revenue, month
 FROM @sales_data 
 UNPIVOT ( revenue FOR month IN (jan_rev, feb_rev)) AS unpvt;
 GO
-~~ERROR (Code: 10727)~~
+~~ROW COUNT: 2~~
 
-~~ERROR (Message: syntax error near 'INSERT' at line 76 and character position 0)~~
+~~START~~
+int#!#varchar#!#money#!#varchar
+1#!#North#!#1000.0000#!#jan_rev
+1#!#North#!#0.0000#!#feb_rev
+2#!#South#!#800.0000#!#jan_rev
+~~END~~
 
 
 
@@ -864,6 +971,21 @@ FROM sales.quarterly_data
 UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales, q3_sales, q4_sales)) AS unpvt;
 GO
 
+SELECT * FROM sales.sales_analysis_view;
+GO
+~~START~~
+int#!#varchar#!#numeric#!#varchar#!#varchar
+1#!#Product A#!#0.55#!#q1_sales#!#First
+1#!#Product A#!#165.83#!#q2_sales#!#Second
+1#!#Product A#!#220.28#!#q3_sales#!#Third
+1#!#Product A#!#193.05#!#q4_sales#!#Fourth
+2#!#Product B#!#220.00#!#q1_sales#!#First
+2#!#Product B#!#330.00#!#q2_sales#!#Second
+2#!#Product B#!#0.00#!#q3_sales#!#Third
+3#!#Product C#!#192.78#!#q1_sales#!#First
+3#!#Product C#!#248.33#!#q2_sales#!#Second
+3#!#Product C#!#275.00#!#q4_sales#!#Fourth
+~~END~~
 
 
 
@@ -875,6 +997,14 @@ WHERE customer_id IN (
     UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
     WHERE sales > 300
 );
+GO
+~~START~~
+int#!#varchar#!#char#!#int#!#int#!#int#!#int
+3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150
+1#!#Cust A#!#R#!#100#!#200#!#100#!#400
+~~END~~
+
+
 SELECT * FROM customer_turnover ct 
 WHERE EXISTS (
     SELECT 1
@@ -883,6 +1013,13 @@ WHERE EXISTS (
     WHERE unpvt.customer_id = ct.customer_id
     AND sales = 0
 );
+GO
+~~START~~
+int#!#varchar#!#char#!#int#!#int#!#int#!#int
+3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150
+~~END~~
+
+
     -- 2. Correlated Subqueries
 SELECT ct.customer_id,
     (SELECT TOP 1 sales
@@ -894,23 +1031,11 @@ SELECT ct.customer_id,
 FROM customer_turnover ct;
 GO
 ~~START~~
-int#!#varchar#!#char#!#int#!#int#!#int#!#int
-3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150
-1#!#Cust A#!#R#!#100#!#200#!#100#!#400
-~~END~~
-
-~~START~~
-int#!#varchar#!#char#!#int#!#int#!#int#!#int
-3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150
-~~END~~
-
-~~START~~
 int#!#int
 3#!#400
 1#!#400
 2#!#250
 ~~END~~
-
 
 
     -- 3. Derived Tables
@@ -925,6 +1050,15 @@ SELECT * FROM (
     WHERE customer_type = 'R'
 ) AS source 
 UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
+GO
+~~START~~
+int#!#char#!#numeric#!#numeric#!#varchar
+3#!#R#!#0.00#!#440.00000000#!#q3 adj
+1#!#R#!#220.00#!#110.00000000#!#q1_adj
+1#!#R#!#220.00#!#110.00000000#!#q3 adj
+~~END~~
+
+
 -- Different source types
     -- 1. Using a table-valued function as source
 CREATE FUNCTION dbo.GetSalesData() 
@@ -932,17 +1066,18 @@ RETURNS TABLE
 AS 
 RETURN ( SELECT product_id, q1_sales, q2_sales  FROM sales_data );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'FUNCTION' at line 15 and character position 7)~~
-
 
 SELECT product_id, quarter, sales FROM dbo.GetSalesData()
 UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.getsalesdata() does not exist)~~
+~~START~~
+int#!#varchar#!#int
+1#!#q1_sales#!#100
+1#!#q2_sales#!#150
+2#!#q1_sales#!#200
+2#!#q2_sales#!#250
+3#!#q2_sales#!#350
+~~END~~
 
 
 
