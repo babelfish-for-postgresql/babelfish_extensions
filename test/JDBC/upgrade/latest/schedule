@@ -606,3 +606,4 @@ test_constraint_like
 forjson-escape
 round_return_type_test
 alter-view
+test_conv_string_to_datetime
