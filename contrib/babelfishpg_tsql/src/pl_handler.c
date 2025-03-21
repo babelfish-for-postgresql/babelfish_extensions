@@ -7085,7 +7085,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				continue;
 			
 			/* Restrict dropping of system views for non-superuser roles */
-			if (stmt->removeType == OBJECT_VIEW && !superuser())
+			if (stmt->removeType == OBJECT_VIEW)
 				check_restricted_object(address.objectId, OBJECT_VIEW);
 
 			/* Get major_name */
@@ -7148,7 +7148,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				continue;
 				
 			/* Restrict dropping of system procedures and functions for non-superuser roles */
-			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION) && !superuser())
+			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION))
 				check_restricted_object(address.objectId, stmt->removeType);
 
 			/* Get major_name */

@@ -378,6 +378,10 @@ check_restricted_object(Oid object_id, ObjectType object_type)
 	char		*schema_name;
 	Oid			schema_oid;
 
+	/* Skip checks for superusers */
+	if (superuser())
+		return;
+
 	/* Get object information */
 	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
 		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
