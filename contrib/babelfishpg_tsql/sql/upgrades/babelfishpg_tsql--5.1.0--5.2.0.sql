@@ -1199,7 +1199,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0');_NCHAR
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0');
 
 DO $$
 DECLARE
