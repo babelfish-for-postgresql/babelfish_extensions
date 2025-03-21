@@ -85,6 +85,8 @@ extern Oid	tsql_datetimeoffset_oid;
 extern Oid	tsql_decimal_oid;
 
 extern Oid	lookup_tsql_datatype_oid(const char *typename);
+extern bool is_tsql_fixeddecimal_datatype(Oid oid);
+extern bool is_tsql_bit_datatype(Oid oid);
 extern bool is_tsql_sysname_datatype(Oid oid);
 extern bool is_tsql_bpchar_datatype(Oid oid);
 extern bool is_tsql_nchar_datatype(Oid oid);
