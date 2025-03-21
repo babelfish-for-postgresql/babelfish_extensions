@@ -1141,6 +1141,81 @@ AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.VARCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NVARCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_NVARCHAR_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NVARCHAR_deprecated_5_2_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.bpchar, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_bpchar_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_bpchar_deprecated_5_2_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NCHAR, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0');_NCHAR
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement, IN try BOOL, IN p_style NUMERIC DEFAULT 0) RENAME TO bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0');
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 -- Reset search_path to not affect any subsequent scripts
