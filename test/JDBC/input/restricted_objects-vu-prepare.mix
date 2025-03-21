@@ -1,0 +1,96 @@
+-- tsql
+USE msdb
+GO
+
+CREATE PROCEDURE babel_5146_prepare_p1 AS
+BEGIN
+    EXEC('DROP FUNCTION dbo.fn_syspolicy_is_automation_enabled()');
+END
+GO
+
+CREATE PROCEDURE babel_5146_prepare_p2 AS
+BEGIN
+    EXEC('DROP VIEW dbo.syspolicy_configuration');
+END
+GO
+
+CREATE PROCEDURE babel_5146_prepare_p3 AS
+BEGIN
+    EXEC('DROP VIEW dbo.syspolicy_system_health_state');
+END
+GO
+
+CREATE LOGIN babel_5146_user_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE LOGIN babel_5146_owner_l WITH PASSWORD = '12345678';
+GO
+
+CREATE LOGIN babel_5146_ddladmin_l WITH PASSWORD = '12345678';
+GO
+
+CREATE LOGIN babel_5146_case_l WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_5146_owner_u FOR LOGIN babel_5146_owner_l;
+GO
+
+CREATE USER babel_5146_ddladmin_u FOR LOGIN babel_5146_ddladmin_l;
+GO
+
+CREATE USER babel_5146_case_u FOR LOGIN babel_5146_case_l;
+GO
+
+ALTER ROLE db_owner ADD MEMBER babel_5146_owner_u;
+GO
+
+ALTER ROLE db_ddladmin ADD MEMBER babel_5146_ddladmin_u;
+GO
+
+GRANT CONNECT TO guest;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p1 TO guest;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p2 TO guest;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p3 TO guest;
+GO
+
+GRANT CONNECT TO babel_5146_owner_u;
+GO
+
+GRANT CONNECT TO babel_5146_ddladmin_u;
+GO
+
+GRANT CONNECT TO babel_5146_case_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p1 TO babel_5146_owner_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p2 TO babel_5146_owner_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p3 TO babel_5146_owner_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p1 TO babel_5146_ddladmin_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p2 TO babel_5146_ddladmin_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p3 TO babel_5146_ddladmin_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p1 TO babel_5146_case_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p2 TO babel_5146_case_u;
+GO
+
+GRANT EXECUTE ON babel_5146_prepare_p3 TO babel_5146_case_u;
+GO
