@@ -292,6 +292,8 @@ Oid			tsql_sysname_oid = InvalidOid;
 Oid			tsql_tinyint_oid = InvalidOid;
 Oid			tsql_money_oid = InvalidOid;
 Oid			tsql_smallmoney_oid = InvalidOid;
+Oid			tsql_fixeddecimal_oid = InvalidOid;
+Oid			tsql_bit_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -321,6 +323,22 @@ resolve_pg_type_to_tsql(Oid oid)
 			return type_infos[entry->persist_id].tsql_typname;
 	}
 	return NULL;
+}
+
+bool
+is_tsql_bit_datatype(Oid oid)
+{
+	if (tsql_bit_oid == InvalidOid)
+		tsql_bit_oid = lookup_tsql_datatype_oid("bit");
+	return tsql_bit_oid == oid;
+}
+
+bool
+is_tsql_fixeddecimal_datatype(Oid oid)
+{
+	if (tsql_fixeddecimal_oid == InvalidOid)
+		tsql_fixeddecimal_oid = lookup_tsql_datatype_oid("fixeddecimal");
+	return tsql_fixeddecimal_oid == oid;
 }
 
 bool
