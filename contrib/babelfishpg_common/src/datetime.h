@@ -21,11 +21,16 @@
 /* Check precision is valid for datetime */
 #define IS_VALID_DT_PRECISION(j) (j % (int) DT_PREC_INV == 0)
 
+/* Represents the minimum allowed date: 1753-01-01 */
+#define MIN_DATE_MASK	0xFFFF2E46LL
+
 /* Datetime limits */
 /* lower bound: 1753-01-01 00:00:00.000 */
 #define MIN_DATETIME	INT64CONST(-7794489600000000)
 /* upper bond: 9999-12-31 23:59:29.999 */
 #define END_DATETIME	INT64CONST(252455615999999000)
+/* TSQL default datetime: 1900-01-01 00:00:00.000 */
+#define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
 
 extern Timestamp initializeToDefaultDatetime(void);
 /** Utility function to calculate days from '1900-01-01 00:00:00' */

@@ -1048,5 +1048,92 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.VARCHAR,
+															IN try BOOL,
+															IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NVARCHAR,
+															IN try BOOL,
+															IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.bpchar,
+															IN try BOOL,
+															IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NCHAR,
+															IN try BOOL,
+															IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement,
+															IN try BOOL,
+															IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+DECLARE
+	resdatetime sys.DATETIME;
+BEGIN
+	IF try THEN
+		BEGIN
+			resdatetime := CAST(arg AS sys.DATETIME);
+		EXCEPTION
+			WHEN cannot_coerce THEN
+				RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+			WHEN OTHERS THEN
+				RETURN NULL;
+		END;
+	ELSE
+		BEGIN
+			resdatetime := CAST(arg AS sys.DATETIME);
+		EXCEPTION
+			WHEN cannot_coerce THEN
+				RAISE USING MESSAGE := pg_catalog.format('Explicit conversion from data type %s to datetime is not allowed.', format_type(pg_typeof(arg)::oid, NULL));
+			WHEN datetime_field_overflow THEN
+				RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type datetime.';
+		END;
+	END IF;
+
+	RETURN resdatetime;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
