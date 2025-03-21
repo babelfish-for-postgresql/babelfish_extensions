@@ -4340,7 +4340,7 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
         /* Copy coordinate data */
         memcpy(itr, (char *)gser->data + 8, len - 6);
     }
-	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
+    destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
     TDSInstrumentation(TdsInstr);
 
