@@ -7419,21 +7419,21 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 
 static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List **column_name)
 {
-    if (ctx && ctx->predicate_br().size() > 0)
+	if (ctx && ctx->predicate_br().size() > 0)
 	{
-        for (auto pred : ctx->predicate_br())
+		for (auto pred : ctx->predicate_br())
 		{
-		if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
-				{
+			if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
+			{
 				if(pred->predicate()->freetext_predicate()->full_column_name().size() > 0)
-					{
+				{
 					for(auto col : pred->predicate()->freetext_predicate()->full_column_name())
- 						{
+					{
 						if(col && col->column_name)
-							{
+						{
 							string str = getFullText(col->column_name);
 							if(str[0]=='"')
-								{
+							{
 								str = stripQuoteFromId(str);
 								ereport(ERROR,
 									(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -7446,15 +7446,15 @@ static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, L
 					}
 				}
 				return true;
-		}
-		if (pred && pred->search_condition()) 
+			}
+			if (pred && pred->search_condition()) 
 			{
-			if (check_freetext_predicate(pred->search_condition(), column_name))
-			return true;
+				if (check_freetext_predicate(pred->search_condition(), column_name))
+				return true;
+			}
 		}
-        }
-    }
-    return false;
+    	}
+   	 return false;
 }
 
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name, bool is_freetext_predicate)

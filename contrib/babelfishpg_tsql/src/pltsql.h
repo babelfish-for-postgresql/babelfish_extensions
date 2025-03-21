@@ -2171,7 +2171,7 @@ extern char *get_fulltext_index_name(Oid relid, const char *table_name);
 extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 extern bool check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name);
 extern List *get_fulltext_indexed_columns(Oid relid, char *ft_index_name);
-extern void check_column_list(Oid relid, const List *column_name);
+extern bool check_column_list(Oid relid, char *column_name);
 extern List *get_columns(char *index_stmt);
 extern char *toLower(char *str);
 extern char *replace_special_chars_fts_impl(char *input_str);

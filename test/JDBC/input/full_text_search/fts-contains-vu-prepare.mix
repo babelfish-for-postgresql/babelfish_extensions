@@ -3092,7 +3092,7 @@ create fulltext index on new_schema_fts.test(name) key index test_idx;
 go
 
 -- Create the test table
-CREATE TABLE test_tb (
+CREATE TABLE fts_contains_multicol_t (
     id INT NOT NULL,
     txt1 text,
     txt2 text,
@@ -3163,7 +3163,7 @@ Combinations AS (
     SELECT 23, 4, 3, 1, 2 UNION ALL
     SELECT 24, 4, 3, 2, 1
 )
-INSERT INTO test_tb (id, txt1, txt2, txt3, txt4)
+INSERT INTO fts_contains_multicol_t (id, txt1, txt2, txt3, txt4)
 SELECT 
     n.id,
     c1.content,
@@ -3187,17 +3187,13 @@ JOIN ContentSet c4 ON c4.topic_id = combo.txt4_topic
 OPTION (MAXRECURSION 1000);
 GO
 
--- Create a unique index on test_tb
-CREATE UNIQUE INDEX uid ON test_tb(id)
-GO
-
--- Create schema
-CREATE SCHEMA fts_schema
+-- Create a unique index on fts_contains_multicol_t
+CREATE UNIQUE INDEX uid ON fts_contains_multicol_t(id)
 GO
 
 -- Create a table over that schema
 
-CREATE TABLE fts_schema.test_tb1 (
+CREATE TABLE new_schema_fts.multicol_tb (
     sr INT NOT NULL,
     txt TEXT,
     chr CHAR(5),
@@ -3253,7 +3249,7 @@ VarcharData AS (
         (10, 'DOC#2024')
     ) AS VarText(n, var_text)
 )
-INSERT INTO fts_schema.test_tb1 (sr, txt, chr, val)
+INSERT INTO new_schema_fts.multicol_tb (sr, txt, chr, val)
 SELECT 
     n.sr,
     -- txt: Rotate through sample texts
@@ -3282,10 +3278,10 @@ FROM
 OPTION (MAXRECURSION 1000);
 GO
 
-CREATE UNIQUE INDEX usr ON fts_schema.test_tb1(sr);
+CREATE UNIQUE INDEX usr ON new_schema_fts.multicol_tb(sr);
 GO
 
-CREATE FULLTEXT INDEX ON fts_schema.test_tb1(txt, val) KEY INDEX usr
+CREATE FULLTEXT INDEX ON new_schema_fts.multicol_tb(txt, val) KEY INDEX usr
 GO
 
 

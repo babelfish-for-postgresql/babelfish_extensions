@@ -812,29 +812,30 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 	{
 		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
 		Node * vec = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
-		column_clause = createClause(vec, query);
-		if(fts != NULL)
-		{
-			fts = concatClause((Node *) fts, (Node *) column_clause);
-		}
-		else
-		{
-			fts = (Node *)column_clause;
-		}
+		column_clause = createTSMatchExpr(vec, query);
+		
+		fts = (fts != NULL)? createTSOrExpr((Node *) fts, (Node *) column_clause) : (Node *)column_clause;
 	}
 	return (Node *) fts;
 }
 
+
+/* Creates and returns the tsvector and tsquery expression 
+ * for the column and search string passed in the argument 
+ */
 static A_Expr *
-createClause(Node *lexpr, Node *rexpr)
+createTSMatchExpr(Node *lexpr, Node *rexpr)
 {
 	A_Expr *fts;
 	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
 	return fts;
 }
 
+/* Combines the nodes together using OR operator
+ * used to create a combined list of tsvector @@ tsquery expression for mulitple columns
+ */
 static Node *
-concatClause(Node *lexpr, Node *rexpr)
+createTSOrExpr(Node *lexpr, Node *rexpr)
 {
 	Node *fts;
 	fts = makeOrExpr(lexpr, rexpr, -1);

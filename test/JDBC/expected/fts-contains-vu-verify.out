@@ -3043,23 +3043,23 @@ go
 
 
 
--- Multiple column Test cases for the relation test_tb
+-- Multiple column Test cases for the relation fts_contains_multicol_t
 -- gives error as fulltext index is still not created
-SELECT * FROM test_tb WHERE contains(txt1, '"human or quantum')
+SELECT * FROM fts_contains_multicol_t WHERE contains(txt1, '"human or quantum')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'test_tb' because it is not full-text indexed.)~~
+~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'fts_contains_multicol_t' because it is not full-text indexed.)~~
 
 
-CREATE FULLTEXT INDEX ON test_tb(
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
         txt1, 
         txt2, 
         txt3, 
         txt4) KEY INDEX uid
 GO
 
-select * from test_tb where contains((txt1, txt2, txt4), '"Artificial Intelligence"' )
+select * from fts_contains_multicol_t where contains((txt1, txt2, txt4), '"Artificial Intelligence"' )
 GO
 ~~START~~
 int#!#text#!#text#!#text#!#text
@@ -3228,15 +3228,15 @@ int#!#text#!#text#!#text#!#text
 ~~END~~
 
 
-DROP FULLTEXT INDEX ON test_tb
+DROP FULLTEXT INDEX ON fts_contains_multicol_t
 GO
 
-CREATE FULLTEXT INDEX ON test_tb(
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
         txt1, 
         txt2) KEY INDEX uid
 GO
 
-SELECT * FROM test_tb WHERE contains((txt1, txt2), '"The human genome"' )
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '"The human genome"' )
 GO
 ~~START~~
 int#!#text#!#text#!#text#!#text
@@ -3353,7 +3353,7 @@ int#!#text#!#text#!#text#!#text
 
 -- negative test
 -- should throw an error as there exists no column with the name txt5
-SELECT * FROM test_tb WHERE contains((txt1, txt5), '"The Industrial Revolution"')
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt5), '"The Industrial Revolution"')
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -3361,7 +3361,7 @@ GO
 
 
 -- negative test
-SELECT * FROM test_tb WHERE contains((txt1, txt2), '')
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '')
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -3370,8 +3370,8 @@ GO
 
 
 
--- Test cases for the relation fts_schema.test_tb1
-SELECT * FROM fts_schema.test_tb1 WHERE contains((txt, val), 'Product-A123')
+-- Test cases for the relation new_schema_fts.multicol_tb
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((txt, val), 'Product-A123')
 GO
 ~~START~~
 int#!#text#!#char#!#varchar
@@ -3479,26 +3479,26 @@ int#!#text#!#char#!#varchar
 
 
 -- should throw an error as the previous full text index is not dropped
-CREATE FULLTEXT INDEX ON fts_schema.test_tb1(
+CREATE FULLTEXT INDEX ON new_schema_fts.multicol_tb(
         val, 
         chr) KEY INDEX usr
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: A full-text index for table or indexed view "test_tb1" has already been created.)~~
+~~ERROR (Message: A full-text index for table or indexed view "multicol_tb" has already been created.)~~
 
 
-DROP FULLTEXT INDEX ON fts_schema.test_tb1
+DROP FULLTEXT INDEX ON new_schema_fts.multicol_tb
 GO
 
-CREATE FULLTEXT INDEX ON fts_schema.test_tb1(
+CREATE FULLTEXT INDEX ON new_schema_fts.multicol_tb(
         txt, 
         val, 
         chr) KEY INDEX usr
 GO
 
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
-        test_tb1.txt, 
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        multicol_tb.txt, 
         val), '"brown fox"')
 GO
 ~~START~~
@@ -3706,9 +3706,9 @@ int#!#text#!#char#!#varchar
 ~~END~~
 
 
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
-        test_tb1.val, 
-        test_tb1.chr), 'TEST-999')
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        multicol_tb.val, 
+        multicol_tb.chr), 'TEST-999')
 GO
 ~~START~~
 int#!#text#!#char#!#varchar
@@ -3815,9 +3815,9 @@ int#!#text#!#char#!#varchar
 ~~END~~
 
 
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
-        fts_schema.test_tb1.txt, 
-        test_tb1.chr), 'three')
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        new_schema_fts.multicol_tb.txt, 
+        multicol_tb.chr), 'three')
 GO
 ~~START~~
 int#!#text#!#char#!#varchar
@@ -3924,9 +3924,9 @@ int#!#text#!#char#!#varchar
 ~~END~~
 
 
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
-        fts_schema.test_tb1.txt, 
-        fts_schema.test_tb1.val, 
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        new_schema_fts.multicol_tb.txt, 
+        new_schema_fts.multicol_tb.val, 
         chr), 'Invoice/001')
 GO
 ~~START~~
@@ -4035,7 +4035,7 @@ int#!#text#!#char#!#varchar
 
 
 -- negative test
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         txt, 
         val, 
         chr), '')
@@ -4046,7 +4046,7 @@ GO
 
 
 -- A stop word used as a predicate, should give warning that only a stop word is used in predicate, but does not give the warning
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         txt, 
         val, 
         chr), 'The')
@@ -4057,7 +4057,7 @@ int#!#text#!#char#!#varchar
 
 
 -- Phrase made of only stop words is used as a predicate, should give warning and no result, but gives ambiguous result result
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         txt,
         val, 
         chr), '"To be"')
@@ -4668,25 +4668,25 @@ int#!#text#!#char#!#varchar
 
 
 -- Throws error as the column name is not valid
-SELECT * FROM fts_schema.test_tb1 WHERE contains(( 
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains(( 
         ,
         val, 
         chr), '"and no play"')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'WHERE' at line 2 and character position 34)~~
+~~ERROR (Message: syntax error near 'WHERE' at line 2 and character position 41)~~
 
 
 -- Throws error as NULL is passed as a column
-SELECT * FROM fts_schema.test_tb1 WHERE contains((
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         txt, 
         NULL, 
         chr), 'Order_789')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'WHERE' at line 2 and character position 34)~~
+~~ERROR (Message: syntax error near 'WHERE' at line 2 and character position 41)~~
 
 
 
