@@ -170,7 +170,6 @@ protected:
 		antlrcpp::Any visitTable_name(TSqlParser::Table_nameContext *ctx) override;
 
 		// common clause in SELECT (and some DML)
-		antlrcpp::Any visitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override;
 		antlrcpp::Any visitFor_clause(TSqlParser::For_clauseContext *ctx) override; // FOR XML, ...
 		antlrcpp::Any visitWith_table_hints(TSqlParser::With_table_hintsContext *ctx) override;
 		antlrcpp::Any visitOption_clause(TSqlParser::Option_clauseContext *ctx) override; // query hints
@@ -1397,16 +1396,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 {
 	handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", &st_escape_hatch_checkpoint, getLineAndPos(ctx));
 	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
-{	
-	if (ctx->UNPIVOT())
-		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
-
-	auto ret = visitChildren(ctx);
-
-	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For_clauseContext *ctx)
