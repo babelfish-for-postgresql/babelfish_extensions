@@ -336,14 +336,45 @@ GO
 ~~ERROR (Message: view "non_existent_view" does not exist)~~
 
 
+GRANT SELECT on alter_t TO guest;
+GO
 -- Alter View with Schema name (Checking views with same name in different schemas)
-CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b FROM alter_t;
+CREATE OR ALTER VIEW guest.alter_v1 AS SELECT a, b, c FROM alter_t;
 GO
 SELECT * FROM guest.alter_v1;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int#!#varchar#!#varchar
+1#!#a#!#a
+2#!#b#!#b
+3#!#c#!#c
+4#!#d#!#d
+5#!#e#!#e
+6#!#f#!#f
+7#!#g#!#g
+8#!#h#!#h
+9#!#i#!#i
+10#!#j#!#j
+~~END~~
 
-~~ERROR (Message: permission denied for table alter_t)~~
+
+ALTER VIEW guest.alter_v1 AS SELECT a FROM alter_t;
+GO
+SELECT * FROM guest.alter_v1;
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+~~END~~
 
 
 SELECT * FROM dbo.alter_v1;
