@@ -396,6 +396,7 @@ GO
 
     -- 2. GROUP BY Clause
         -- GROUP BY with multiple columns
+            -- (Needs ORDER BY to avoid unexpected ordering while grouping (PG behavior))
 SELECT customer_type, quarter, 
        COUNT(*) as count,
        AVG(turnover) as avg_turnover 
