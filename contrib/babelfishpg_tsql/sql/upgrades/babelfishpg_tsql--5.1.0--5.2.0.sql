@@ -1200,6 +1200,21 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_NCHAR_deprecated_5_2_0');
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(anyelement, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_anyelement_deprecated_5_2_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
