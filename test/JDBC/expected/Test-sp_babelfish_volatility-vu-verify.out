@@ -688,21 +688,27 @@ guest
 
 create function test_sp_babelfish_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema test_sp_babelfish_volatility_db1_guest)~~
+
 sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
 go
-~~START~~
-nvarchar#!#varchar#!#text
-guest#!#test_sp_babelfish_volatility_f1#!#stable
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function does not exist)~~
 
 sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'immutable';
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function does not exist)~~
+
 sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
 go
-~~START~~
-nvarchar#!#varchar#!#text
-guest#!#test_sp_babelfish_volatility_f1#!#immutable
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function does not exist)~~
 
 sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
 go
@@ -714,11 +720,8 @@ sp_babelfish_volatility
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-guest#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
-drop function test_sp_babelfish_volatility_f1
-go
 
 -- tsql
 use test_sp_babelfish_volatility_db1

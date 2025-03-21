@@ -3,6 +3,34 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+
+ -- Drops an object if it does not have any dependent objects.
+ -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+ -- Please have this be one of the first statements executed in this upgrade script. 
+ CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+ $$
+ DECLARE
+     error_msg text;
+     query1 text;
+     query2 text;
+ BEGIN
+ 
+     query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+ 
+     execute query1;
+     execute query2;
+ EXCEPTION
+     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+     when dependent_objects_still_exist then --if 'drop view' statement fails
+         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+         raise warning '%', error_msg;
+ end
+ $$
+ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -40,7 +68,138 @@ $$;
  * final behaviour.
  */
 
-CREATE OR REPLACE FUNCTION sys.suser_name() 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) RENAME TO bbf_numeric_round_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_deprecated_5_2_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) RENAME TO bbf_numeric_trunc_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_5_2_0');
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER)
+RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_trunc' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER)
+RETURNS sys.INT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number INTEGER, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER) TO PUBLIC;
+
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER)
+RETURNS sys.BIGINT
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.BIGINT, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER)
+RETURNS sys.money
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.fixeddecimal, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER) TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER)
+RETURNS sys.float
+AS $$
+BEGIN
+    RETURN sys.round(number::PG_CATALOG.NUMERIC, length, function);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.round(number sys.float, length INTEGER, function INTEGER) TO PUBLIC;
+
+
+
+CREATE OR REPLACE FUNCTION sys.suser_name()
 RETURNS sys.NVARCHAR(128)
 AS $$
     SELECT sys.suser_name_internal(suser_id());
@@ -450,6 +609,17 @@ BEGIN
 END;
 $$;
 
+-- This is a temporary procedure which is called during upgrade to alter
+-- default privileges on guest the schemas where the schema owner is guest
+CREATE OR REPLACE PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'revoke_create_privilege_from_guest_user';
+
+CALL sys.babelfish_revoke_create_privilege_from_guest_user();
+
+-- Drop this procedure after it gets executed once.
+
+DROP PROCEDURE sys.babelfish_revoke_create_privilege_from_guest_user();
 DO $$
 BEGIN
 IF NOT EXISTS(
@@ -731,7 +901,6 @@ CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
 CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
 
-
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
@@ -827,7 +996,176 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
+/* Shows the list of objects where the object owner is not same as schema owner */
+/* Covers tables, views, functions, procedures, sequences, types */
+CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
+RETURNS TABLE (
+    schema_name name,
+    schema_owner_name name,
+    object_name name,
+    object_owner_name name,
+    object_type text
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    WITH common_schemas AS (
+      SELECT
+          b.nspname AS schema_name
+      FROM
+          sys.babelfish_namespace_ext b
+      JOIN
+          pg_namespace n ON b.nspname = n.nspname
+      JOIN
+          pg_roles r ON n.nspowner = r.oid
+      JOIN
+          sys.babelfish_authid_user_ext u ON r.rolname = u.rolname
+      WHERE
+          u.orig_username <> 'db_owner'
+    )
+    -- First query for tables, views, index, types and sequences
+    -- table types are considered as tables
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        c.relname,
+        r2.rolname,
+        CASE c.relkind
+            WHEN 'r' THEN 'table'
+            WHEN 'p' THEN 'table'
+            WHEN 'v' THEN 'view'
+            WHEN 'S' THEN 'sequence'
+            ELSE c.relkind::text
+        END
+    FROM
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN
+        pg_class c ON n.oid = c.relnamespace
+    JOIN
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN
+        pg_roles r2 ON c.relowner = r2.oid
+    WHERE 
+        c.relkind IN ('r', 'p', 'v', 'S')
+        AND c.relname NOT LIKE '@%' -- Ignore temporary tables
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Second query for functions and procedures
+    -- triggers are considered as functions
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        p.proname,
+        r2.rolname,
+        CASE p.prokind
+            WHEN 'f' THEN 'function'
+            WHEN 'p' THEN 'procedure'
+            ELSE p.prokind::text
+        END
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_proc p ON n.oid = p.pronamespace
+    JOIN 
+        pg_roles r2 ON p.proowner = r2.oid
+    WHERE 
+        p.prokind IN ('f', 'p')
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Third query is for types(excluding table types)
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        t.typname,
+        r2.rolname,
+        'type'::text
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_type t ON n.oid = t.typnamespace
+    JOIN 
+        pg_roles r2 ON t.typowner = r2.oid
+    WHERE 
+        t.typtype = 'd' -- Only show domain data type
+        AND r1.rolname <> r2.rolname
+    ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
+END;
+$$ LANGUAGE plpgsql;
 
+/*
+ * Gives a list of ALTER statements that, when executed,
+ * will change the ownership of all the objects to match their schema owners.
+ */
+CREATE OR REPLACE FUNCTION sys.generate_alter_ownership_statements()
+RETURNS TABLE (alter_statement text)
+AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM sys.get_schema_object_ownership()
+    LOOP
+        CASE obj.object_type
+            WHEN 'table' THEN
+                alter_statement := format('ALTER TABLE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'view' THEN
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;';
+				RETURN NEXT;
+
+                alter_statement := format('ALTER VIEW %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;';
+                RETURN NEXT;
+            WHEN 'sequence' THEN
+                alter_statement := format('ALTER SEQUENCE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'function' THEN
+                alter_statement := format('ALTER FUNCTION %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'procedure' THEN
+                alter_statement := format('ALTER PROCEDURE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'type' THEN
+                alter_statement := format('ALTER TYPE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            ELSE
+                alter_statement := format('-- Unsupported object type: %s for %I.%I',
+                                          obj.object_type, obj.schema_name, obj.object_name);
+                RETURN NEXT;
+        END CASE;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER FUNCTION sys.json_query RENAME TO json_query_deprecated_in_5_2_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_query_deprecated_in_5_2_0');
+
+
+CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
+RETURNS sys.NVARCHAR_JSON
+AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
