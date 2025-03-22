@@ -2019,6 +2019,252 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	return (Node *)pivot_sl;
 }
 
+/*
+ * Generate unique alias for source table/query in UNPIVOT transformation
+ *
+ * base: Base name to use for the alias (table name/"src"/"subq"/"joined")
+ *
+ * Returns: Unique alias string in format "<base>_XXXXXX" where X is random digit
+ *
+ * Note: Ensures unique alias in query and length within NAMEDATALEN
+ */
+char *
+generate_unpivot_source_table_alias(const char *base)
+{
+    char *result;
+    int base_len;
+    /* Constant for suffix length: underscore + 6 digits */
+    const int ALIAS_SUFFIX_LEN = 7;  
+
+    /* Use "src" as base if none provided */
+    if (!base)
+        base = "src";
+        
+    /* Ensure base name length fits within NAMEDATALEN with suffix */
+    base_len = strlen(base);
+    if (base_len + ALIAS_SUFFIX_LEN > NAMEDATALEN)
+        base_len = NAMEDATALEN - ALIAS_SUFFIX_LEN;
+
+    /* Generate unique name: base_XXXXXX where X is random digit */
+    result = palloc(base_len + ALIAS_SUFFIX_LEN + 1);
+    memcpy(result, base, base_len);
+    sprintf(result + base_len, "_%06d", rand() % 1000000);
+    
+    return result;
+}
+
+/* 
+ * Helper function to get the alias of the unpivot source
+ *
+ * table_ref: Table, Subquery, Join, Function Call, json, another unpivot (List)
+ *
+ * Returns: new alias of the unpivot source; error if unexpected object
+ */
+char *
+get_unpivot_source_alias(Node *table_ref) {
+
+    Assert(table_ref != NULL);
+
+    if (IsA(table_ref, RangeVar))
+    {
+        /* Source is a table */
+        RangeVar *larg = (RangeVar *)table_ref;
+        if (larg->alias == NULL)
+            larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
+
+        return larg->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeSubselect))
+    {
+        /* Source is a subquery */
+        RangeSubselect *rsq = (RangeSubselect *)table_ref;
+        if (rsq->alias == NULL)
+            rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
+
+        return rsq->alias->aliasname;
+    }
+    else if (IsA(table_ref, JoinExpr))
+    {
+        /* For JOIN, we need to ensure the joined tables have a grouped alias */
+        JoinExpr *join = (JoinExpr *)table_ref;
+
+        if (join->alias == NULL) 
+            join->alias = makeAlias(generate_unpivot_source_table_alias("joined"), NIL);
+
+            return join->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeFunction))
+    {
+        /* Source is a function call */
+        RangeFunction *rf = (RangeFunction *)table_ref;
+        if (rf->alias == NULL)
+            rf->alias = makeAlias(generate_unpivot_source_table_alias("func"), NIL);
+
+        return rf->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeTableFunc))
+    {
+        RangeTableFunc *rtf = (RangeTableFunc *)table_ref;
+        if (rtf->alias == NULL)
+            rtf->alias = makeAlias(generate_unpivot_source_table_alias("json"), NIL);
+
+        return rtf->alias->aliasname;
+    }
+    else if (IsA(table_ref, List))
+    {
+        /* Handle case where table_ref is an UNPIVOT node */
+        List *prev_unpivot = (List *)table_ref;
+        if (prev_unpivot != NULL &&
+            list_length(prev_unpivot) == 7 &&
+            IsA(linitial(prev_unpivot), String) &&
+            strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
+        {
+            /* Use the alias from previous UNPIVOT */
+            return strVal(list_nth(prev_unpivot, 1));
+        }
+
+    }
+    /* Future addition: RangeTableSample, when it is supported. */
+    ereport(ERROR,
+            (errcode(ERRCODE_SYNTAX_ERROR),
+             errmsg("Invalid source structure for UNPIVOT operation")));
+}
+
+/*
+ * Transform TSQL UNPIVOT operation into equivalent CROSS JOIN LATERAL structure
+ * Builds a JoinExpr node representing the transformation and returns additional
+ * context for analyzer stage processing.
+ *
+ * components = input list containing nodes: table_ref, unpivot_clause, alias
+ * 
+ * Returns: List node containing:
+ * [ "UNPIVOT",
+ *   unpivot alias name,
+ *   dimension column name,
+ *   measure column name,
+ *   source table/query alias name,
+ *   List of unpivot source columns,
+ *   transformed JoinExpr node representing unpivot operation
+ * ]
+ *
+ * Note:
+ * The function:
+ * - Extracts measure, dimension and source columns from unpivot clause
+ * - Generates/validates source table alias
+ * - Creates VALUES list for LATERAL subquery from source columns
+ * - Builds complete JOIN structure with proper aliases
+ */
+static Node *
+tsql_unpivot_transformation(List *components)
+{
+    Node *table_ref;
+    Node *measure_col;
+    Node *dim_col;
+
+    List *unpivot_info;
+    List *source_cols;
+    List *values_list = NIL;
+    List *value_pair;
+    List *result_info;
+
+    char *source_alias;
+    char *measure_colname;
+    char *dim_colname;
+    char *inner_alias_name;
+
+    Alias *alias;
+    SelectStmt *values_subquery;
+    JoinExpr *n;
+    RangeSubselect *rarg;
+    ListCell *lc;
+    ColumnRef *col_ref;
+    
+    /* Extract components */
+    Assert(components != NULL && list_length(components) == 3);
+    table_ref = (Node *)linitial(components);
+    unpivot_info = (List *)lsecond(components);
+    alias = (Alias *)lthird(components);
+
+    /* An alias for unpivot is mandatory */
+    Assert(alias != NULL);
+    
+    /* Extract unpivot components */
+    measure_col = (Node *)linitial(unpivot_info);
+    dim_col = (Node *)lsecond(unpivot_info);
+    source_cols = (List *)lthird(unpivot_info);
+    
+    measure_colname = strVal(llast(((ColumnRef *)measure_col)->fields));
+    dim_colname = strVal(llast(((ColumnRef *)dim_col)->fields));
+    
+    /* Create basic nodes for equivalent CROSS JOIN LATERAL query tree */
+    n = makeNode(JoinExpr);
+    rarg = makeNode(RangeSubselect);
+    values_subquery = makeNode(SelectStmt);
+    
+    n->jointype = JOIN_INNER;
+    n->isNatural = false;
+
+    /* Set up left side with alias if not present */
+    source_alias = get_unpivot_source_alias(table_ref);
+
+    n->larg = table_ref;
+    
+    /* Build VALUES list from unpivot source columns */
+    foreach(lc, source_cols)
+    {	
+        /* 
+         * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
+         * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
+         * solution: lfirst needs to be "llast" if aliases are used in values list
+         */
+        String *col_name = (String *)lfirst(lc);
+
+        /* Create ColumnRef with pair (source table alias, column name) */
+        col_ref = makeNode(ColumnRef);
+        col_ref->fields = list_make2(makeString(source_alias), col_name);
+        
+        /* Create pair (ColumnRef, column name) and append to VALUES list */
+        value_pair = list_make2(col_ref, makeStringConst(strVal(col_name), -1));
+        values_list = lappend(values_list, value_pair);
+    }
+    
+    /* Set up LATERAL VALUES */
+    rarg->lateral = true;
+    values_subquery->valuesLists = values_list;
+    rarg->subquery = (Node *)values_subquery;
+    
+    /* 
+     * Handle alias for Join-Values (RangeSubSelect) clause: 
+     * Basically, replace unpivot_alias with generated "inner" unpivot_alias_XXXXXX 
+     * and use the unpivot alias as the complete Join operation alias
+     */
+    inner_alias_name = generate_unpivot_source_table_alias(alias->aliasname);
+
+    rarg->alias = makeAlias(inner_alias_name, 
+                            list_make2(makeString(measure_colname),
+                                       makeString(dim_colname)));
+
+    n->rarg = (Node *)rarg;
+    n->usingClause = NIL;
+    n->quals = NULL;
+    /* Rewrite by adding unpivot alias as the complete Join operation alias */
+    n->alias = alias;
+    
+    /* Create result info list */
+    result_info = list_make5(makeString("UNPIVOT"),
+                             makeString(alias->aliasname),
+                             makeString(dim_colname),
+                             makeString(measure_colname),
+                             makeString(source_alias));
+
+    /* Append the unpivot source columns and transformed node */
+    result_info = lappend(result_info, source_cols);
+    result_info = lappend(result_info, n);
+
+    return (Node *) result_info;
+}
+
+
 /* 
  * Adjust index nulls order to match SQL Server behavior.
  * For ASC (or unspecified) index, default should be NULLS FIRST;
