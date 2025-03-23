@@ -1779,6 +1779,11 @@ table_ref:	relation_expr tsql_table_hint_expr
 					 */
 					$$ = (Node *) $1;
 				}
+			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
+				{
+					List *unpivot_info = list_make3($1, (List *)$3, $4);
+                    $$ = tsql_unpivot_transformation(unpivot_info);
+				}
 		;
 
 openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
@@ -1898,6 +1903,13 @@ joined_table:
 					$$ = n;
 				}
 		;
+
+tsql_unpivot_clause:
+            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+                {
+					$$ = (Node *)list_make3($2, $4, $7);
+                }
+            ;
 
 func_expr_common_subexpr:
 			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
