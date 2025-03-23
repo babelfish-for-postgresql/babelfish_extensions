@@ -2146,7 +2146,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 				type = getBaseTypeAndTypmod(type, &typmod);
 			
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
-				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);
 			
 			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
 				continue;
