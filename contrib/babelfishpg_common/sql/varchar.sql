@@ -367,6 +367,17 @@ CREATE CAST (pg_catalog.float8 AS sys.BPCHAR)
 WITH FUNCTION sys.float82bpchar(pg_catalog.float8, integer, BOOLEAN) AS IMPLICIT;
 
 -- For JSON Functions
-SET enable_domain_typmod = TRUE;
-CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
-RESET enable_domain_typmod;
+DO
+$body$
+BEGIN
+    IF NOT EXISTS (
+        SELECT  *
+            FROM pg_type 
+        WHERE typname = 'nvarchar_json')
+    THEN
+        SET enable_domain_typmod = TRUE;
+        CREATE DOMAIN sys.NVARCHAR_JSON AS sys.NVARCHAR;
+        RESET enable_domain_typmod;
+    END IF;
+END
+$body$;
