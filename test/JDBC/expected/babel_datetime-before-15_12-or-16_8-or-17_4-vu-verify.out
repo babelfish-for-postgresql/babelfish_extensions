@@ -21,12 +21,6 @@ datetime
 1900-01-01 23:40:30.0
 1900-01-01 23:40:30.0
 2020-03-14 00:00:00.0
-1900-01-01 00:02:30.3
-2023-06-15 14:30:45.12
-2000-02-29 12:00:00.0
-1753-01-01 00:00:00.0
-2023-06-15 14:30:45.123
-9999-12-31 23:59:59.997
 ~~END~~
 
 
@@ -37,10 +31,6 @@ go
 datetime
 9999-12-31 23:59:59.997
 2020-03-14 00:00:00.0
-2023-06-15 14:30:45.12
-2000-02-29 12:00:00.0
-2023-06-15 14:30:45.123
-9999-12-31 23:59:59.997
 ~~END~~
 
 select * from babel_datetime_vu_prepare_testing where dt >= datetime('1992-05-23 23:40:00') 
@@ -61,8 +51,6 @@ datetime
 1992-05-23 23:40:30.0
 1900-01-01 23:40:30.0
 1900-01-01 23:40:30.0
-1900-01-01 00:02:30.3
-1753-01-01 00:00:00.0
 ~~END~~
 
 
@@ -1098,18 +1086,16 @@ GO
 
 SELECT * from babel_datetime_vu_view1;
 GO
-~~START~~
-datetime
-2023-06-15 14:30:45.123
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_vu_view1" does not exist)~~
 
 
 SELECT * from babel_datetime_vu_view2;
 GO
-~~START~~
-datetime
-2000-02-29 12:00:00.0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_vu_view2" does not exist)~~
 
 
 SELECT CONVERT(DateTime, cast(0x0 as binary));

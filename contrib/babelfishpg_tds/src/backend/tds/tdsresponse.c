@@ -561,8 +561,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				Numeric		num;
 				int64		val;
 				
-				if ((!(con->consttype == INT4OID) && !is_numeric_datatype(con->consttype)) ||
-					con->constisnull)
+				if (con->constisnull || 
+					(!(con->consttype == INT8OID) &&
+					 !(con->consttype == INT4OID) &&
+					 !(con->consttype == INT2OID) &&
+					 !is_numeric_datatype(con->consttype)))
 				{
 					/* typmod is undefined */
 					return -1;
@@ -577,7 +580,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					 * the appropriate typmod. This process ensures correct 
 					 * numeric precision handling in Babelfish TSQL operations.
 					 */
-					if (plan == NULL && con->consttype == INT4OID)
+					if (plan == NULL &&
+						(con->consttype == INT4OID ||
+						 con->consttype == INT8OID ||
+						 con->consttype == INT2OID))
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
