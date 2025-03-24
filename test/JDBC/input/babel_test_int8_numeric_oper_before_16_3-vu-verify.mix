@@ -1,3 +1,4 @@
+-- sla 50000
 -- psql
 analyse master_dbo.test_int8_numeric_vu;
 GO

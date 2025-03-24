@@ -572,10 +572,9 @@ int#!#numeric
 ~~END~~
 
 SELECT count(*), sum(amount) * 100 FROM overflow_test;
-~~START~~
-int#!#numeric
-2#!#1100000.00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT count(*), sum(amount) / 100 FROM overflow_test;
 ~~START~~
@@ -604,7 +603,7 @@ int#!#numeric
 SELECT count(*), avg(amount) * 100 FROM overflow_test;
 ~~START~~
 int#!#numeric
-2#!#550000.000000
+2#!#550000.00
 ~~END~~
 
 SELECT count(*), avg(amount) / 100 FROM overflow_test;
@@ -798,7 +797,7 @@ insert into testdecimal_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
 select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testdecimal_tab;
 ~~START~~
 numeric
-1879323.222200
+1879323.222200000000
 ~~END~~
 
 drop table testdecimal_tab;
@@ -812,7 +811,7 @@ insert into testdecimal_tab values (1879323.2222, 2383823.343, 4.5484, 232.79, 3
 select in1 * in2 from testdecimal_tab;
 ~~START~~
 numeric
-4479974566122.335814
+4479974566122.335815
 ~~END~~
 
 
@@ -820,7 +819,7 @@ numeric
 select in4 * in5 from testdecimal_tab;
 ~~START~~
 numeric
-80367.255
+80367.256
 ~~END~~
 
 
