@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
 #include "catalog/pg_proc.h"
 
 static int
@@ -351,58 +352,88 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 	return exprTypmod((Node *) linitial(cexpr->args));
 }
 
-void
-check_restricted_stored_procedure(Oid proc_id)
+/*
+ * Check if the given object is in the restricted list
+ */
+static bool
+is_object_restricted(const char *objname, const char *schema_name)
 {
-	HeapTuple		proctup;
-	Form_pg_proc		procform;
-	const char		*procname;
-	Oid		schema_oid = InvalidOid;
-	Oid		dbo_oid = InvalidOid;
-	bool		is_restricted = false;
-
-	/*
-	 * List of procedure names that are not allowed to be dropped. These procedures 
-	 * are considered essential or restricted due to security or operational reasons.
-	 */
-	static const char	*restricted_procedures[] = {
-		"xp_qv",
-		"xp_instance_regread",
-		"sp_addlinkedsrvlogin",
-		"sp_droplinkedsrvlogin",
-		"sp_dropserver",
-		"sp_enum_oledb_providers",
-		"sp_testlinkedserver"
-	};
-	static const int	RESTRICTED_PROCEDURES_COUNT = sizeof(restricted_procedures) / sizeof(restricted_procedures[0]);
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_id));
-
-	procform = (Form_pg_proc) GETSTRUCT(proctup);
-	procname = pstrdup(NameStr(procform->proname));
-	schema_oid = procform->pronamespace;
-	dbo_oid = get_namespace_oid("master_dbo", true);
-
-	if (OidIsValid(schema_oid) && OidIsValid(dbo_oid) && schema_oid == dbo_oid)
+	for (int idx = 0; idx < NUM_DB_OBJECTS; idx++)
 	{
-		/* Check if the procedure name is in the restricted list */
-		for (int i = 0; i < RESTRICTED_PROCEDURES_COUNT; i++)
-		{
-			if (pg_strcasecmp(procname, restricted_procedures[i]) == 0)
-			{
-				is_restricted = true;
-				break;
-			}
-		}
+		if (pg_strcasecmp(shipped_objects_not_in_sys_db[idx][0], objname) == 0 &&
+			pg_strcasecmp(shipped_objects_not_in_sys_db[idx][1], schema_name) == 0)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * Main function to check and error out for restricted objects
+ */
+void
+check_restricted_object(Oid object_id, ObjectType object_type)
+{
+	HeapTuple	tuple;
+	char		*objname;
+	char		*schema_name;
+	Oid			schema_oid;
+
+	/* Skip checks for superusers */
+	if (superuser())
+		return;
+
+	/* Get object information */
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+	else
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("object with OID %u does not exist", object_id)));
+
+	/* Get object name and schema */
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
+	{
+		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+		objname = pstrdup(NameStr(procform->proname));
+		schema_oid = procform->pronamespace;
+	}
+	else
+	{
+		Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
+		objname = pstrdup(NameStr(classform->relname));
+		schema_oid = classform->relnamespace;
 	}
 
-	ReleaseSysCache(proctup);
-	if (is_restricted)
+	/* Get schema name */
+	if (OidIsValid(schema_oid))
+		schema_name = get_namespace_name(schema_oid);
+	else
 	{
+		ReleaseSysCache(tuple);
+		return;
+	}
+
+	/* Check if object is restricted and error out if it is */
+	if (is_object_restricted(objname, schema_name))
+	{
+		if (schema_name)
+			pfree(schema_name);
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be owner of procedure %s", procname)));
+				 errmsg("must be owner of %s %s",
+				 		 object_type == OBJECT_PROCEDURE ? "procedure" :
+						 object_type == OBJECT_VIEW ? "view" :
+						 "function",
+						 objname)));
 	}
+	if (schema_name)
+		pfree(schema_name);
+	if (objname)
+		pfree(objname);
+	ReleaseSysCache(tuple);
 }
 
 /* Determine whether a variable name is a predefined T-SQL global variable */

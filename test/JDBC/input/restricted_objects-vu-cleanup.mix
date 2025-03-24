@@ -1,0 +1,96 @@
+-- tsql
+USE msdb;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p1 FROM babel_5146_owner_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p2 FROM babel_5146_owner_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p3 FROM babel_5146_owner_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p1 FROM babel_5146_ddladmin_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p2 FROM babel_5146_ddladmin_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p3 FROM babel_5146_ddladmin_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p1 FROM babel_5146_case_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p2 FROM babel_5146_case_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p3 FROM babel_5146_case_u;
+GO
+
+REVOKE CONNECT FROM babel_5146_owner_u;
+GO
+
+REVOKE CONNECT FROM babel_5146_ddladmin_u;
+GO
+
+REVOKE CONNECT FROM babel_5146_case_u;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p1 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p2 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_5146_prepare_p3 TO guest;
+GO
+
+DROP PROCEDURE IF EXISTS babel_5146_prepare_p1;
+GO
+
+DROP PROCEDURE IF EXISTS babel_5146_prepare_p2;
+GO
+
+DROP PROCEDURE IF EXISTS babel_5146_prepare_p3;
+GO
+
+REVOKE CONNECT FROM guest;
+GO
+
+DROP USER babel_5146_owner_u;
+GO
+
+DROP USER babel_5146_ddladmin_u;
+GO
+
+DROP USER babel_5146_case_u;
+GO
+
+-- Drop test logins
+DROP LOGIN babel_5146_owner_l;
+GO
+
+DROP LOGIN babel_5146_ddladmin_l;
+GO
+
+DROP LOGIN babel_5146_case_l;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_5146_user_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE msdb;
+GO
+
+DROP LOGIN babel_5146_user_l1;
+GO

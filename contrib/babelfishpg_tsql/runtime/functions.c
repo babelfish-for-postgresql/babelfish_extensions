@@ -237,6 +237,19 @@ extern char *replace_special_chars_fts_impl(char *input_str);
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
+const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
+	{"xp_qv","master_dbo"},
+	{"xp_instance_regread","master_dbo"},
+	{"sp_addlinkedserver", "master_dbo"},
+	{"sp_addlinkedsrvlogin", "master_dbo"},
+	{"sp_dropserver", "master_dbo"},
+	{"sp_droplinkedsrvlogin", "master_dbo"},
+	{"sp_testlinkedserver", "master_dbo"},
+	{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
+	{"syspolicy_configuration", "msdb_dbo"},
+	{"syspolicy_system_health_state", "msdb_dbo"},
+	{"sp_enum_oledb_providers", "master_dbo"}
+};
 #define MD5_HASH_LEN 32
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -3873,30 +3886,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	int	i = 0;
 	bool	is_ms_shipped = false;
 	char	*namespace_name = NULL;
+
 	/*
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-#define NUM_DB_OBJECTS 11
-	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
+	static int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
 		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
-	};
-	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
-		{"xp_qv","master_dbo"},
-		{"xp_instance_regread","master_dbo"},
-		{"sp_addlinkedserver", "master_dbo"},
-		{"sp_addlinkedsrvlogin", "master_dbo"},
-		{"sp_dropserver", "master_dbo"},
-		{"sp_droplinkedsrvlogin", "master_dbo"},
-		{"sp_testlinkedserver", "master_dbo"},
-		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
-		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"},
-		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
