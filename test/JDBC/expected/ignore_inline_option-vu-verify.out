@@ -1,0 +1,246 @@
+-- Test basic functions
+SELECT * FROM [dbo].[TestInlineOn](5)
+SELECT * FROM [dbo].[TestInlineOff](5)
+SELECT * FROM [dbo].[TestNoInline](5)
+GO
+~~START~~
+int
+10
+~~END~~
+
+~~START~~
+int
+15
+~~END~~
+
+~~START~~
+int
+20
+~~END~~
+
+
+-- Test NULL handling
+SELECT * FROM [dbo].[TestNullHandling](NULL)
+SELECT * FROM [dbo].[TestNullHandling](10)
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+50
+~~END~~
+
+
+-- Test nested function calls
+SELECT * FROM [dbo].[TestNested](5)
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+-- Test different data types
+SELECT * FROM [dbo].[TestDataTypes](10, 20.5, 'test')
+GO
+~~START~~
+varchar
+10,20.50,test
+~~END~~
+
+
+-- Test table variable
+SELECT * FROM [dbo].[TestTableVariable](5)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@testtable.id" must appear in the GROUP BY clause or be used in an aggregate function)~~
+
+
+-- Test error handling
+BEGIN TRY
+    SELECT * FROM [dbo].[TestErrorHandling](-5)
+END TRY
+BEGIN CATCH
+    SELECT * FROM ERROR_MESSAGE()
+END CATCH
+SELECT * FROM [dbo].[TestErrorHandling](5)
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+nvarchar
+Input must be non-negative
+~~END~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+-- Test with table aliases
+SELECT t.ID, [dbo].[TestInlineOn](t.ID) AS Result
+FROM TestTable t ORDER BY t.ID
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#4
+3#!#6
+~~END~~
+
+
+-- Boundary testing
+SELECT * FROM [dbo].[TestInlineOn](2147483647) -- MAX_INT
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM [dbo].[TestInlineOn](-2147483648) -- MIN_INT
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- Arbitrary input
+DECLARE @i INT = 0
+WHILE @i < 10
+BEGIN
+    SELECT * FROM [dbo].[TestInlineOn](@i * 100)
+    SET @i = @i + 1
+END
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+200
+~~END~~
+
+~~START~~
+int
+400
+~~END~~
+
+~~START~~
+int
+600
+~~END~~
+
+~~START~~
+int
+800
+~~END~~
+
+~~START~~
+int
+1000
+~~END~~
+
+~~START~~
+int
+1200
+~~END~~
+
+~~START~~
+int
+1400
+~~END~~
+
+~~START~~
+int
+1600
+~~END~~
+
+~~START~~
+int
+1800
+~~END~~
+
+
+-- Test SCHEMABINDING
+SELECT [dbo].[TestSchemabinding](5)
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+-- Test EXECUTE AS
+SELECT [dbo].[TestExecuteAs](5)
+GO
+~~START~~
+int
+35
+~~END~~
+
+
+-- Test combinations of options
+SELECT [dbo].[TestInlineAndSchemabinding](5)
+SELECT [dbo].[TestInlineAndExecuteAs](5)
+SELECT [dbo].[TestSchemabindingAndExecuteAs](5)
+SELECT [dbo].[TestAllOptions](5)
+GO
+~~START~~
+int
+40
+~~END~~
+
+~~START~~
+int
+45
+~~END~~
+
+~~START~~
+int
+50
+~~END~~
+
+~~START~~
+int
+55
+~~END~~
+
+
+-- Test RETURNS NULL ON NULL INPUT
+SELECT [dbo].[TestReturnsNullOnNullInput](5)
+SELECT [dbo].[TestReturnsNullOnNullInput](NULL)
+GO
+~~START~~
+int
+60
+~~END~~
+
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Test multiple parameters and all options
+SELECT [dbo].[TestMultiParamAllOptions](5, 'Test', 15.75)
+GO
+~~START~~
+varchar
+5,Test,15.75
+~~END~~
+

@@ -2054,6 +2054,7 @@ function_option
     | RETURNS NULL_P ON NULL_P INPUT
     | CALLED ON NULL_P INPUT
     | execute_as_clause
+    | inline_clause
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188038.aspx
@@ -3189,6 +3190,10 @@ checkident_new_value
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
+    ;
+
+inline_clause
+    : INLINE EQUAL on_off
     ;
 
 execute_as_statement
