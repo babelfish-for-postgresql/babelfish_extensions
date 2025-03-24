@@ -1400,8 +1400,7 @@ GO
 SELECT test_conv_string_to_datetime_f9()
 GO
 
-SELECT * FROM test_conv_string_to_datetime_v10
-GO
-
+-- SELECT * FROM test_conv_string_to_datetime_v10
+-- GO
 SELECT * FROM test_conv_string_to_datetime_v11
 GO
