@@ -1,0 +1,17 @@
+DROP VIEW int_to_varbinary_v1
+DROP VIEW int_to_varbinary_v2
+DROP VIEW int_to_binary_v1
+DROP VIEW int_to_binary_v2
+GO
+
+DROP FUNCTION int_to_varbinary_f1()
+DROP FUNCTION int_to_varbinary_f2()
+DROP FUNCTION int_to_binary_f1()
+DROP FUNCTION int_to_binary_f2()
+GO
+
+DROP PROCEDURE int_to_varbinary_p1
+DROP PROCEDURE int_to_varbinary_p2
+DROP PROCEDURE int_to_binary_p1
+DROP PROCEDURE int_to_binary_p2
+GO
