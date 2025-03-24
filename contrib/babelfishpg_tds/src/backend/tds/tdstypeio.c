@@ -4218,11 +4218,13 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
 {
     int         rc = EOF,
                 npoints,
-                len,
+                len,                    /* number of bytes used to store the string. */
                 pointSize,
                 hasZ,
                 hasM,
-                actualLen;
+                actualLen;              /* Number of bytes that would be needed to
+                                         * store given string in given encoding. */
+
     char        *destBuf,
                 *buf,
                 *itr;

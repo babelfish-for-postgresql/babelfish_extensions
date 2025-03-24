@@ -38,14 +38,11 @@ static YY_BUFFER_STATE scanbufhandle;
 "TRIANGLE"              { yyerror(NULL, " Invalid Geometry ");  return TRIANGLE_TOK; }
 "TIN"                   { yyerror(NULL, " Invalid Geometry ");  return TIN_TOK; }
 
+-?[0-9]+(\.[0-9]+)?     { yylval.val = atof(yytext);  return DOUBLE_TOK; }
+
 "NULL"      { return NULL_TOK; }
 "EMPTY"     { return EMPTY_TOK; }
 ","         { return COMMA_TOK;}
-
--?[0-9]+(\.[0-9]+)?   {
-    yylval.val = atof(yytext);
-    return DOUBLE_TOK;
-}
 
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
@@ -69,11 +66,9 @@ void geo_scanner_init(const char *str)
     if (YY_CURRENT_BUFFER)
         yy_delete_buffer(YY_CURRENT_BUFFER);
 
-    // Check for empty input
-    if (!str || !*str || (strspn(str, " \t\n\r") == slen)) {
+    /* Check for empty input */
+    if (!str || !*str || (strspn(str, " \t\n\r") == slen))
         yyerror(NULL, "Null or empty ");
-        
-    }
 
     scanbuflen = slen;
     scanbuf = palloc(slen + 2);
@@ -85,7 +80,6 @@ void geo_scanner_init(const char *str)
 
 void geo_scanner_finish(void)
 {
- 
     yy_delete_buffer(scanbufhandle);
     pfree(scanbuf);
 }

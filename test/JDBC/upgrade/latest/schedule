@@ -430,6 +430,8 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
+Test_PointZM_geometry
+Test_PointZM_geography
 TestReal
 TestRowVersion
 TestSmallDatetime

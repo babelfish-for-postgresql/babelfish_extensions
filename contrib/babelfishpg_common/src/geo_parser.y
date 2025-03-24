@@ -5,7 +5,7 @@
 #include "postgres.h"
 #include "lib/stringinfo.h"
 #include "utils/elog.h"
-#include "utils/builtins.h"    /* for float8out */
+#include "utils/builtins.h"
 #include "fmgr.h"  
 #include "geo_data.h"
 
@@ -17,7 +17,7 @@ static int      scanbuflen;
 %union {
     char* str;
     double val;
-	POINT coordinatevalue;
+    POINT coordinatevalue;
 }
 
 %token <val> DOUBLE_TOK
@@ -80,4 +80,5 @@ coordinate:
 
 %%
 
+/* Include lexer after parser to avoid circular dependencies and ensure shared context */
 #include "geo_scan.c"
