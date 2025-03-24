@@ -1,0 +1,123 @@
+-- tsql
+-- reset login password
+ALTER LOGIN babel_5127_test_sysadmin WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5127_test_securityadmin WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5127_test_regularuser WITH PASSWORD = 'abc';
+GO
+
+-- 1. Test with master user, should still fail
+DROP LOGIN [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP USER [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'public', because it does not exist or you do not have permission.)~~
+
+
+-- tsql user=babel_5127_test_sysadmin password=abc
+-- 2. Test with sysadmin (should fail again, but due to inability to drop 'public', not privileges)
+DROP LOGIN [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP USER [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'public', because it does not exist or you do not have permission.)~~
+
+
+-- tsql user=babel_5127_test_securityadmin password=abc
+-- 3. Test with securityadmin, should fail again
+DROP LOGIN [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP USER [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'public', because it does not exist or you do not have permission.)~~
+
+
+-- tsql user=babel_5127_test_regularuser password=abc
+-- 4. Test with regular user, should fail again
+DROP LOGIN [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP USER [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the user 'public', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE [public];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the role 'public', because it does not exist or you do not have permission.)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_5127_test_sysadmin', 'babel_5127_test_securityadmin', 'babel_5127_test_regularuser') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+

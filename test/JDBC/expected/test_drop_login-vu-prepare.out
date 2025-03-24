@@ -1,0 +1,17 @@
+-- Create a login with sysadmin privileges
+CREATE LOGIN babel_5127_test_sysadmin WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_5127_test_sysadmin;
+GO
+
+-- Create a login with securityadmin privileges
+CREATE LOGIN babel_5127_test_securityadmin WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE securityadmin ADD MEMBER babel_5127_test_securityadmin;
+GO
+
+-- Create a regular user without special privileges
+CREATE LOGIN babel_5127_test_regularuser WITH PASSWORD = '12345678';
+GO
