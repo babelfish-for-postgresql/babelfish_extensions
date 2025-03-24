@@ -248,6 +248,7 @@ is_srvrolemember
 jira-BABEL-3504-upgrade
 key_column_usage
 linked_servers
+ignore_inline_option
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
@@ -258,6 +259,7 @@ objectpropertyex
 openjson
 openquery_upgrd_before_15_4
 orderby
+object_id_index_conflict
 routines_definition
 rowcount
 schema_resolution_func
@@ -524,6 +526,7 @@ BABEL-4606
 BABEL-4672
 permission_restrictions_from_pg
 restricting_function_overloading
+restricted_objects
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -600,6 +603,7 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
+BABEL-5467
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like

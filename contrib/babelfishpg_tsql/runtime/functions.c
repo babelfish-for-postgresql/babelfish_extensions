@@ -237,6 +237,19 @@ extern char *replace_special_chars_fts_impl(char *input_str);
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
+const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
+	{"xp_qv","master_dbo"},
+	{"xp_instance_regread","master_dbo"},
+	{"sp_addlinkedserver", "master_dbo"},
+	{"sp_addlinkedsrvlogin", "master_dbo"},
+	{"sp_dropserver", "master_dbo"},
+	{"sp_droplinkedsrvlogin", "master_dbo"},
+	{"sp_testlinkedserver", "master_dbo"},
+	{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
+	{"syspolicy_configuration", "msdb_dbo"},
+	{"syspolicy_system_health_state", "msdb_dbo"},
+	{"sp_enum_oledb_providers", "master_dbo"}
+};
 #define MD5_HASH_LEN 32
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -2305,7 +2318,11 @@ object_id(PG_FUNCTION_ARGS)
 				}
 				else if (enr == NULL)
 				{
-					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					Oid relid = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
 				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
@@ -2324,7 +2341,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_class by name and schema oid */
 				Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 				{
 					result = relid;
 				}
@@ -2389,7 +2406,15 @@ object_id(PG_FUNCTION_ARGS)
 			} 
 			else if (enr == NULL)
 			{
-				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				Oid temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+				if (OidIsValid(temp_nsp_oid))
+				{
+					Oid relid = get_relname_relid((const char *) object_name, temp_nsp_oid);
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
+				}
 			}
 		}
 		else
@@ -2397,7 +2422,7 @@ object_id(PG_FUNCTION_ARGS)
 			/* search in pg_class by name and schema oid */
 			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
 				result = relid;
 			}
@@ -3861,30 +3886,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	int	i = 0;
 	bool	is_ms_shipped = false;
 	char	*namespace_name = NULL;
+
 	/*
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-#define NUM_DB_OBJECTS 11
-	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
+	static int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
 		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
-	};
-	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
-		{"xp_qv","master_dbo"},
-		{"xp_instance_regread","master_dbo"},
-		{"sp_addlinkedserver", "master_dbo"},
-		{"sp_addlinkedsrvlogin", "master_dbo"},
-		{"sp_dropserver", "master_dbo"},
-		{"sp_droplinkedsrvlogin", "master_dbo"},
-		{"sp_testlinkedserver", "master_dbo"},
-		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
-		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"},
-		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*

@@ -3839,6 +3839,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						RoleSpec   *headrol = linitial(stmt->roles);
 
+						if (headrol->roletype == ROLESPEC_PUBLIC)
+							headrol->rolename = PUBLIC_ROLE_NAME;
+
 						if (strcmp(headrol->rolename, "is_user") == 0)
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
@@ -3863,9 +3866,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(item, stmt->roles)
 								{
 									RoleSpec	*rolspec = lfirst(item);
-									char		*user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
-									int		role_oid = get_role_oid(user_name, true);
+									int			role_oid;
+
+									if (rolspec->roletype == ROLESPEC_PUBLIC)
+										rolspec->rolename = PUBLIC_ROLE_NAME;
+									
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
@@ -7303,6 +7312,13 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!relation)
 				continue;
 
+			if (!OidIsValid(address.objectId))
+				continue;
+			
+			/* Restrict dropping of system views for non-superuser roles */
+			if (stmt->removeType == OBJECT_VIEW)
+				check_restricted_object(address.objectId, OBJECT_VIEW);
+
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
 			relation_close(relation, AccessShareLock);
@@ -7362,9 +7378,9 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures for non-superuser roles */
-			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
-				check_restricted_stored_procedure(address.objectId);
+			/* Restrict dropping of system procedures and functions for non-superuser roles */
+			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION))
+				check_restricted_object(address.objectId, stmt->removeType);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
