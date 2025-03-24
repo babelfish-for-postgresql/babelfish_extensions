@@ -1144,6 +1144,21 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.VARCHAR, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_VARCHAR_deprecated_5_2_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
     ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(sys.NVARCHAR, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_NVARCHAR_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
