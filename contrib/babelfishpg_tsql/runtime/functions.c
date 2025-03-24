@@ -2305,7 +2305,11 @@ object_id(PG_FUNCTION_ARGS)
 				}
 				else if (enr == NULL)
 				{
-					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					Oid relid = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
 				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
@@ -2324,7 +2328,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_class by name and schema oid */
 				Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 				{
 					result = relid;
 				}
@@ -2389,7 +2393,15 @@ object_id(PG_FUNCTION_ARGS)
 			} 
 			else if (enr == NULL)
 			{
-				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				Oid temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+				if (OidIsValid(temp_nsp_oid))
+				{
+					Oid relid = get_relname_relid((const char *) object_name, temp_nsp_oid);
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
+				}
 			}
 		}
 		else
@@ -2397,7 +2409,7 @@ object_id(PG_FUNCTION_ARGS)
 			/* search in pg_class by name and schema oid */
 			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
 				result = relid;
 			}
