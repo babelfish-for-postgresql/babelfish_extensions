@@ -291,6 +291,9 @@ Oid			tsql_money_oid = InvalidOid;
 Oid			tsql_smallmoney_oid = InvalidOid;
 Oid			tsql_fixeddecimal_oid = InvalidOid;
 Oid			tsql_bit_oid = InvalidOid;
+Oid			tsql_tinyint_oid = InvalidOid;
+Oid			tsql_money_oid = InvalidOid;
+Oid			tsql_smallmoney_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
