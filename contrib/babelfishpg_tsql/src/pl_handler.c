@@ -7259,6 +7259,13 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!relation)
 				continue;
 
+			if (!OidIsValid(address.objectId))
+				continue;
+			
+			/* Restrict dropping of system views for non-superuser roles */
+			if (stmt->removeType == OBJECT_VIEW)
+				check_restricted_object(address.objectId, OBJECT_VIEW);
+
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
 			relation_close(relation, AccessShareLock);
@@ -7318,9 +7325,9 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures for non-superuser roles */
-			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
-				check_restricted_stored_procedure(address.objectId);
+			/* Restrict dropping of system procedures and functions for non-superuser roles */
+			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION))
+				check_restricted_object(address.objectId, stmt->removeType);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
