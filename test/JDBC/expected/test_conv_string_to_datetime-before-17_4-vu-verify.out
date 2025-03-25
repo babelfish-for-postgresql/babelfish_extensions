@@ -3524,8 +3524,14 @@ datetime
 ~~END~~
 
 
--- SELECT * FROM test_conv_string_to_datetime_v10
--- GO
+SELECT * FROM test_conv_string_to_datetime_v10
+GO
+~~START~~
+datetime
+1900-01-21 00:00:00.0
+~~END~~
+
+
 SELECT * FROM test_conv_string_to_datetime_v11
 GO
 ~~START~~
