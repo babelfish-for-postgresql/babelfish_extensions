@@ -106,6 +106,9 @@ GO
 DROP TABLE products;
 GO
 
+DROP TABLE SalesDataPivot;
+GO
+
 DROP TABLE pivot_schema.products_sch;
 GO
 
