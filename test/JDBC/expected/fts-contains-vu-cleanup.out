@@ -63,24 +63,6 @@ GO
 DROP TABLE IF EXISTS new_schema_fts.multicol_tb
 GO
 
-DROP FULLTEXT INDEX ON test_tb
-GO
-
-DROP TABLE IF EXISTS test_tb
-GO
-
-DROP FULLTEXT INDEX ON content_table
-GO
-
-DROP TABLE IF EXISTS content_table
-GO
-
-DROP FULLTEXT INDEX ON fts_schema.test_tb1
-GO
-
-DROP TABLE IF EXISTS fts_schema.test_tb1
-GO
-
 DROP SCHEMA IF EXISTS fts_schema
 GO
 
