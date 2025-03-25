@@ -909,3 +909,16 @@ INSERT INTO SalesDataPivot VALUES
     (4, 14.1, 'E'),
     (NULL, 20.0, 'F');
 GO
+
+CREATE VIEW vw_SalesPivot
+AS
+SELECT extra_column, [0], [1], [2], [3], [4]
+FROM
+    (SELECT pivot_column, aggregate_column, extra_column
+     FROM SalesDataPivot) AS table_source
+PIVOT
+(
+    AVG(aggregate_column)
+    FOR pivot_column IN ([0], [1], [2], [3], [4])
+) AS PivotTable;
+GO

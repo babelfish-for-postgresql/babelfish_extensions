@@ -109,6 +109,9 @@ GO
 DROP TABLE SalesDataPivot;
 GO
 
+DROP VIEW vw_SalesPivot;
+GO
+
 DROP TABLE pivot_schema.products_sch;
 GO
 
