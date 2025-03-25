@@ -102,3 +102,14 @@ GO
 
 CREATE VIEW test_conv_string_to_datetime_v11 as (SELECT CONVERT(datetime, CAST('20' AS INTEGER)));
 GO
+
+CREATE VIEW test_conv_string_to_datetime_v12 as (SELECT CONVERT(datetime, ''));
+GO
+CREATE PROCEDURE test_conv_string_to_datetime_p12 as (SELECT CONVERT(datetime, ''));
+GO
+CREATE FUNCTION test_conv_string_to_datetime_f12()
+RETURNS datetime AS
+BEGIN
+RETURN (SELECT CONVERT(datetime, ''));
+END
+GO

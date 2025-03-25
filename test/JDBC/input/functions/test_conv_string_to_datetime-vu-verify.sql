@@ -1422,3 +1422,14 @@ GO
 
 SELECT * FROM test_conv_string_to_datetime_v11
 GO
+
+DECLARE @emptyString VARCHAR(10) = '';
+SELECT CONVERT(datetime, @emptyString) AS EmptyStringResult;
+GO
+
+SELECT * FROM test_conv_string_to_datetime_v12
+GO
+EXEC test_conv_string_to_datetime_p12
+GO
+SELECT test_conv_string_to_datetime_f12()
+GO

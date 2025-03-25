@@ -3,18 +3,16 @@ SELECT CONVERT(DATETIME, '')
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 SELECT CONVERT(DATETIME, '', 130)
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
+1900-01-01 00:00:00.0
+~~END~~
 
 
 -- -- Numeric: 
@@ -3865,5 +3863,36 @@ GO
 ~~START~~
 datetime
 1900-01-21 00:00:00.0
+~~END~~
+
+
+DECLARE @emptyString VARCHAR(10) = '';
+SELECT CONVERT(datetime, @emptyString) AS EmptyStringResult;
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT * FROM test_conv_string_to_datetime_v12
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+EXEC test_conv_string_to_datetime_p12
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+SELECT test_conv_string_to_datetime_f12()
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
 ~~END~~
 

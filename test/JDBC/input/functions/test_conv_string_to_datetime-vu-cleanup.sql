@@ -66,3 +66,10 @@ GO
 
 DROP VIEW test_conv_string_to_datetime_v11
 GO
+
+DROP VIEW test_conv_string_to_datetime_v12
+GO
+DROP PROCEDURE test_conv_string_to_datetime_p12
+GO
+DROP FUNCTION test_conv_string_to_datetime_f12()
+GO
