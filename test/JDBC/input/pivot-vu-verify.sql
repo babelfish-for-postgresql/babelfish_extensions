@@ -995,3 +995,6 @@ PIVOT
     FOR pivot_column IN ([0], [1], [2], [3], [4])
 ) AS PivotTable;
 GO
+
+SELECT * FROM vw_SalesPivot;
+GO

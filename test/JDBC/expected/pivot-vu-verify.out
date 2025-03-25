@@ -2508,3 +2508,16 @@ E#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#14.1
 F#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+SELECT * FROM vw_SalesPivot;
+GO
+~~START~~
+varchar#!#float#!#float#!#float#!#float#!#float
+A#!#10.5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+B#!#<NULL>#!#15.2#!#<NULL>#!#<NULL>#!#<NULL>
+C#!#<NULL>#!#<NULL>#!#12.8#!#<NULL>#!#<NULL>
+D#!#<NULL>#!#<NULL>#!#<NULL>#!#18.3#!#<NULL>
+E#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#14.1
+F#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
