@@ -521,6 +521,7 @@ BABEL-4606
 BABEL-4672
 permission_restrictions_from_pg
 restricting_function_overloading
+restricted_objects
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -604,6 +605,7 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
+BABEL-5467
 sys_credentials
 sys_server_permissions
 sys_sql_logins
@@ -612,4 +614,7 @@ sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like
+unpivot
 forjson-escape
+round_return_type_test
+alter-view

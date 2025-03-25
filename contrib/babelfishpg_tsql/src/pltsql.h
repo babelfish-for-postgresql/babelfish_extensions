@@ -1801,7 +1801,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_reset_tds_connection_flag) ();
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
-	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr);
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2130,7 +2130,7 @@ extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
-extern void check_restricted_stored_procedure(Oid proc_id);
+extern void check_restricted_object(Oid object_id, ObjectType object_type);
 extern bool is_tsql_atatglobalvar(const char *varname);
 extern bool is_tsql_atatuservar(const char *varname);
 
@@ -2176,7 +2176,7 @@ extern List *get_columns(char *index_stmt);
 extern char *toLower(char *str);
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
-extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema);
+extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
 extern void exec_add_original_index_name(char *idxname, char *schemaname, char *original_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
@@ -2354,5 +2354,9 @@ extern bool validate_special_function(char *proc_nsname, char *proc_name, int na
  * Function in pltsql_ruleutils.c
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
+#define NUM_DB_OBJECTS 11
+
+extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
 
 #endif							/* PLTSQL_H */
