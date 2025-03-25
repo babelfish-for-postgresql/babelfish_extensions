@@ -15,7 +15,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) RENAME TO bbf_numeric_round_deprecated_4_6_0;
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER) RENAME TO bbf_numeric_round_deprecated_3_10_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -24,14 +24,14 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_deprecated_4_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_round_deprecated_3_10_0');
 
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) RENAME TO bbf_numeric_trunc_deprecated_4_6_0;
+    ALTER FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER, function INTEGER) RENAME TO bbf_numeric_trunc_deprecated_3_10_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -40,7 +40,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_4_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_numeric_trunc_deprecated_3_10_0');
 
 CREATE OR REPLACE FUNCTION sys.round(number PG_CATALOG.NUMERIC, length INTEGER)
 RETURNS sys.DECIMAL AS 'babelfishpg_common', 'tsql_numeric_round' LANGUAGE C IMMUTABLE PARALLEL SAFE;
