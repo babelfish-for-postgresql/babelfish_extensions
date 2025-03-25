@@ -794,7 +794,7 @@ is_json_query(List *name)
 * to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
 * to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
 * ...
-* * to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
+* to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
@@ -804,14 +804,14 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 	A_Expr *column_clause;
 	Node *result_pgconfig;
 	List *args_pgconfig;
-	int colSize = colId->length;
+	ListCell *column;
  
 	args_pgconfig = list_make1(search_expr);
 	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
-	for(int i = 0; i < colSize; i++)
+	foreach(column, colId)
 	{
 		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-		Node * vec = makeToTSVectorFuncCall((colId->elements[i]).ptr_value, yyscanner, result_pgconfig);
+		Node * vec = makeToTSVectorFuncCall((column)->ptr_value, yyscanner, result_pgconfig);
 		column_clause = createTSMatchExpr(vec, query);
 		
 		fts = (fts != NULL)? createTSOrExpr((Node *) fts, (Node *) column_clause) : (Node *)column_clause;
