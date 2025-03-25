@@ -172,7 +172,7 @@ runs:
     - if: ${{ inputs.extension_branch != 'latest' && inputs.dump_restore == 'true' }}
       uses: actions/checkout@v2
       with:
-        repository: amazon-aurora/babelfish_extensions
+        repository: babelfish-for-postgresql/babelfish_extensions
         ref: ${{ inputs.extension_branch }}
 
     - if: ${{ inputs.extension_branch == 'latest' || inputs.dump_restore != 'true' }}
