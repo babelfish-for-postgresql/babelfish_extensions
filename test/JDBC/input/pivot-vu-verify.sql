@@ -983,3 +983,18 @@ GO
 -- TEST VIEW HAS SAME SCHEMA NAME AS SOURCE TABLE'S
 SELECT * FROM pivot_schema.QUAL_NAME_VIEW ORDER BY 1
 GO
+
+-- BABEL-5603
+SELECT extra_column, [0], [1], [2], [3], [4]
+FROM
+    (SELECT pivot_column, aggregate_column, extra_column
+     FROM SalesDataPivot) AS table_source
+PIVOT
+(
+    AVG(aggregate_column)
+    FOR pivot_column IN ([0], [1], [2], [3], [4])
+) AS PivotTable;
+GO
+
+SELECT * FROM vw_SalesPivot;
+GO

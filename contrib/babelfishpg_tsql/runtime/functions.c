@@ -4937,15 +4937,14 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 			 * the hash table
 			 */
 			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
-			catname_lower = downcase_identifier(catname, strlen(catname), false, false);
-			if (catname_lower != NULL)
-			{
-				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
+            if (catname != NULL) {
+                catname_lower = downcase_identifier(catname, strlen(catname), false, false);
+                bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
 
-				if (catdesc)
-					values[catdesc->attidx + non_pivot_columns] =
-						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
-			}
+                if (catdesc)
+                    values[catdesc->attidx + non_pivot_columns] =
+                        SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+            }
 
 			if (ncols > 2)
 			{
