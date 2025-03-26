@@ -849,10 +849,10 @@ END
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'INLINE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_inline_function to ignore)~~
+~~ERROR (Message: 'INLINE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_inline_function_option to ignore)~~
 
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function', 'ignore', 'false')
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore', 'false')
 GO
 ~~START~~
 text
@@ -871,7 +871,7 @@ GO
 DROP FUNCTION IF EXISTS [dbo].[t_unsupported_inline_function_f2];
 GO
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function', 'strict', 'false')
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'strict', 'false')
 GO
 ~~START~~
 text
@@ -2080,7 +2080,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_inline_function#!#strict#!#escape hatch for INLINE = {ON|OFF} option in CREATE FUNCTION
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
@@ -2150,7 +2150,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_inline_function#!#strict#!#escape hatch for INLINE = {ON|OFF} option in CREATE FUNCTION
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
@@ -2201,7 +2201,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_inline_function#!#strict#!#escape hatch for INLINE = {ON|OFF} option in CREATE FUNCTION
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language

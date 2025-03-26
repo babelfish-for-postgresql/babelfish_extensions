@@ -1265,7 +1265,7 @@ int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
-int			escape_hatch_inline_function = EH_STRICT;
+int			escape_hatch_inline_function_option = EH_STRICT;
 int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
@@ -1655,10 +1655,10 @@ define_escape_hatch_variables(void)
 							 NULL, NULL, NULL);
 	
 	/* INLINE option */
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_inline_function",
-							 gettext_noop("escape hatch for INLINE = {ON|OFF} option in CREATE FUNCTION"),
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_inline_function_option",
+							 gettext_noop("escape hatch for INLINE option in CREATE FUNCTION"),
 							 NULL,
-							 &escape_hatch_inline_function,
+							 &escape_hatch_inline_function_option,
 							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,

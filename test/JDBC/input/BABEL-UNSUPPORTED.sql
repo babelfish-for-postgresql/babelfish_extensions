@@ -526,7 +526,7 @@ BEGIN
 END
 GO
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function', 'ignore', 'false')
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore', 'false')
 GO
 
 CREATE FUNCTION [dbo].[t_unsupported_inline_function_f2](@input INT)
@@ -540,7 +540,7 @@ GO
 DROP FUNCTION IF EXISTS [dbo].[t_unsupported_inline_function_f2];
 GO
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function', 'strict', 'false')
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'strict', 'false')
 GO
 
 

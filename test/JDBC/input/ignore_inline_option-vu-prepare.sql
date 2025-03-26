@@ -1,4 +1,4 @@
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function', 'ignore';
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore';
 GO
 
 -- Basic function with INLINE = ON
@@ -170,5 +170,5 @@ GO
 INSERT INTO TestTable VALUES (1), (2), (3)
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function', 'strict';
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function_option', 'strict';
 GO
