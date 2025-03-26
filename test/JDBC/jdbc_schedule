@@ -424,3 +424,8 @@ ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
 ignore#!#trim-before-15_12-or-16_8-vu-prepare
 ignore#!#trim-before-15_12-or-16_8-vu-verify
 ignore#!#trim-before-15_12-or-16_8-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_5 or 16_9 release
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
