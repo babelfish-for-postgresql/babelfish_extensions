@@ -9745,8 +9745,7 @@ BEGIN
             IF typmod = -1 THEN
                 RETURN CAST(arg as sys.varbinary);
             ELSE
-                -- Pass typmod-4 (Way typmod for sys.binary/varbinary is stored) to helper functions to use the typmod in initial conversion
-                EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod - 4) INTO result USING arg;
+                EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
                 RETURN result;
             END IF;
         END IF;
@@ -9803,8 +9802,7 @@ BEGIN
         IF typmod = -1 THEN
             RETURN CAST(arg as sys.varbinary);
         ELSE
-            -- Pass typmod-4 (Way typmod for sys.binary/varbinary is stored) to helper functions to use the typmod in initial conversion
-            EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod - 4) INTO result USING arg;
+            EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
             RETURN result;
         END IF;
     END IF;

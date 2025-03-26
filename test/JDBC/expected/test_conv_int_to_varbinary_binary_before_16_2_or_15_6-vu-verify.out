@@ -2,7 +2,7 @@ SELECT * from int_to_varbinary_v1
 GO
 ~~START~~
 varbinary
-0000
+0026
 ~~END~~
 
 
@@ -10,7 +10,15 @@ SELECT * from int_to_varbinary_v2
 GO
 ~~START~~
 varbinary
-000000
+000026
+~~END~~
+
+
+SELECT * from int_to_varbinary_v3
+GO
+~~START~~
+varbinary
+00000026
 ~~END~~
 
 
@@ -18,7 +26,7 @@ SELECT * from int_to_binary_v1
 GO
 ~~START~~
 binary
-0000
+0026
 ~~END~~
 
 
@@ -26,7 +34,7 @@ SELECT * from int_to_binary_v2
 GO
 ~~START~~
 binary
-000000
+00
 ~~END~~
 
 
@@ -44,6 +52,14 @@ GO
 ~~START~~
 varbinary
 000026
+~~END~~
+
+
+SELECT int_to_varbinary_f3()
+GO
+~~START~~
+varbinary
+00000026
 ~~END~~
 
 
@@ -76,6 +92,14 @@ GO
 ~~START~~
 varbinary
 000026
+~~END~~
+
+
+EXEC int_to_varbinary_p3
+GO
+~~START~~
+varbinary
+00000026
 ~~END~~
 
 
@@ -127,6 +151,14 @@ varbinary
 ~~END~~
 
 
+select convert(varbinary(max), 38)
+go
+~~START~~
+varbinary
+00000026
+~~END~~
+
+
 select try_convert(binary(2), 38)
 go
 ~~START~~
@@ -156,5 +188,13 @@ varbinary
 ~~START~~
 varbinary
 000026
+~~END~~
+
+
+select try_convert(varbinary(max), 38)
+go
+~~START~~
+varbinary
+00000026
 ~~END~~
 

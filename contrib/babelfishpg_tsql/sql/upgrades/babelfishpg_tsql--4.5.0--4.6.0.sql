@@ -1059,7 +1059,7 @@ BEGIN
         ALTER FUNCTION sys.babelfish_try_conv_to_varbinary(
             IN arg anyelement,
             IN p_style NUMERIC
-        ) RENAME TO babelfish_try_conv_to_varbinary_deprecated_in_5_2_0;
+        ) RENAME TO babelfish_try_conv_to_varbinary_deprecated_in_4_6_0;
         CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(
             IN typmod INTEGER,
             IN arg anyelement,
@@ -1076,8 +1076,7 @@ BEGIN
                 IF typmod = -1 THEN
                     RETURN CAST(arg as sys.varbinary);
                 ELSE
-                    -- Pass typmod-4 (Way typmod for sys.binary/varbinary is stored) to helper functions to use the typmod in initial conversion
-                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod - 4) INTO result USING arg;
+                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
                     RETURN result;
                 END IF;
             END IF;
@@ -1088,21 +1087,9 @@ BEGIN
         $BODY$
         LANGUAGE plpgsql
         IMMUTABLE;
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_5_2_0');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_4_6_0');
     END IF;
 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-        exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    old_function_exists boolean;
-    exception_message text;
-BEGIN
     SELECT EXISTS (
         SELECT 1 
         FROM pg_proc p 
@@ -1118,7 +1105,7 @@ BEGIN
             IN arg sys.VARCHAR,
             IN try BOOL,
             IN p_style NUMERIC
-        ) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0;
+        ) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_4_6_0;
 
         CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
             IN typmod INTEGER,
@@ -1139,21 +1126,9 @@ BEGIN
         $BODY$
         LANGUAGE plpgsql
         IMMUTABLE;
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_4_6_0');
     END IF;
 
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-        exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-DO $$
-DECLARE
-    old_function_exists boolean;
-    exception_message text;
-BEGIN
     SELECT EXISTS (
         SELECT 1 
         FROM pg_proc p 
@@ -1195,7 +1170,7 @@ BEGIN
             IN arg anyelement,
             IN try BOOL,
             IN p_style NUMERIC
-        ) RENAME TO babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0;
+        ) RENAME TO babelfish_conv_helper_to_varbinary_anyel_deprecated_in_4_6_0;
 
         CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
             IN typmod INTEGER,
@@ -1217,8 +1192,7 @@ BEGIN
                     IF typmod = -1 THEN
                         RETURN CAST(arg as sys.varbinary);
                     ELSE
-                        -- Pass typmod-4 (Way typmod for sys.binary/varbinary is stored) to helper functions to use the typmod in initial conversion
-                        EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod - 4) INTO result USING arg;
+                        EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
                         RETURN result;
                     END IF;
                 END IF;
@@ -1228,7 +1202,7 @@ BEGIN
         LANGUAGE plpgsql
         IMMUTABLE;
 
-        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0');
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_4_6_0');
     END IF;
 
 EXCEPTION WHEN OTHERS THEN
