@@ -10,57 +10,6 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.VARCHAR,
-															IN try BOOL,
-															IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NVARCHAR,
-															IN try BOOL,
-															IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.bpchar,
-															IN try BOOL,
-															IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg sys.NCHAR,
-															IN try BOOL,
-															IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME
-AS
-$BODY$
-BEGIN
-	RETURN sys.babelfish_conv_helper_to_datetime(arg::TEXT, try, p_style);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement,
 															IN try BOOL,
