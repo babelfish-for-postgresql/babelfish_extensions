@@ -4232,7 +4232,6 @@ BEGIN
     END IF;
 
     hex_str := sys.LOWER(pg_catalog.ENCODE(sys.SUBSTRING(expression, start_offset, substr_length)::bytea, 'hex'));
-
     pstrout := CASE 
                 WHEN set_prefix IS NULL THEN N''
                 WHEN set_prefix = 0 THEN N'' 
