@@ -2486,3 +2486,38 @@ varchar#!#int#!#int#!#int#!#int#!#int
 OrderNumbers#!#19#!#19#!#19#!#16#!#14
 ~~END~~
 
+
+-- BABEL-5603
+SELECT extra_column, [0], [1], [2], [3], [4]
+FROM
+    (SELECT pivot_column, aggregate_column, extra_column
+     FROM SalesDataPivot) AS table_source
+PIVOT
+(
+    AVG(aggregate_column)
+    FOR pivot_column IN ([0], [1], [2], [3], [4])
+) AS PivotTable;
+GO
+~~START~~
+varchar#!#float#!#float#!#float#!#float#!#float
+A#!#10.5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+B#!#<NULL>#!#15.2#!#<NULL>#!#<NULL>#!#<NULL>
+C#!#<NULL>#!#<NULL>#!#12.8#!#<NULL>#!#<NULL>
+D#!#<NULL>#!#<NULL>#!#<NULL>#!#18.3#!#<NULL>
+E#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#14.1
+F#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT * FROM vw_SalesPivot;
+GO
+~~START~~
+varchar#!#float#!#float#!#float#!#float#!#float
+A#!#10.5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+B#!#<NULL>#!#15.2#!#<NULL>#!#<NULL>#!#<NULL>
+C#!#<NULL>#!#<NULL>#!#12.8#!#<NULL>#!#<NULL>
+D#!#<NULL>#!#<NULL>#!#<NULL>#!#18.3#!#<NULL>
+E#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#14.1
+F#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
