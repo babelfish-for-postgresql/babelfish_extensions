@@ -68,6 +68,15 @@ static st_point_t st_point_p;
 typedef Datum (*st_isempty_t)(PG_FUNCTION_ARGS);
 static st_isempty_t st_isempty_p;
 
+typedef Datum (*lwgeom_force_2d_t)(PG_FUNCTION_ARGS);
+static lwgeom_force_2d_t lwgeom_force_2d_p;
+
+typedef Datum (*lwgeom_asBinary_t)(PG_FUNCTION_ARGS);
+static lwgeom_asBinary_t lwgeom_asBinary_p;
+
+typedef Datum (*lwgeom_astext_t)(PG_FUNCTION_ARGS);
+static lwgeom_astext_t lwgeom_astext_p;
+
 PG_FUNCTION_INFO_V1(geometry_in);
 PG_FUNCTION_INFO_V1(geography_in);
 PG_FUNCTION_INFO_V1(geometry_rewrite);
@@ -80,6 +89,9 @@ PG_FUNCTION_INFO_V1(geography_rewrite);
 PG_FUNCTION_INFO_V1(get_valid_srids);
 PG_FUNCTION_INFO_V1(charTogeog);
 PG_FUNCTION_INFO_V1(geography_point);
+PG_FUNCTION_INFO_V1(st_as_binary_geometry);
+PG_FUNCTION_INFO_V1(st_as_binary_geography);
+PG_FUNCTION_INFO_V1(st_as_text);
 /*
  * Module to load external PostGIS functions
  */
@@ -121,6 +133,15 @@ load_functions()
 
     if (st_isempty_p == NULL)
         st_isempty_p = (st_isempty_t) load_external_function("$libdir/postgis-3", "LWGEOM_isempty", true, NULL);
+
+    if (lwgeom_force_2d_p == NULL)
+        lwgeom_force_2d_p = (lwgeom_force_2d_t) load_external_function("$libdir/postgis-3", "LWGEOM_force_2d", true, NULL);
+
+    if (lwgeom_asBinary_p == NULL)
+        lwgeom_asBinary_p = (lwgeom_asBinary_t) load_external_function("$libdir/postgis-3", "LWGEOM_asBinary", true, NULL);
+    
+    if (lwgeom_astext_p == NULL)
+        lwgeom_astext_p = (lwgeom_astext_t) load_external_function("$libdir/postgis-3", "LWGEOM_asText", true, NULL);
 }
 
 Datum
@@ -393,7 +414,7 @@ geography_rewrite(PG_FUNCTION_ARGS)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Invalid SRID: %d", srid)));
+                 errmsg("Invalid SRID")));
     }
 
     /* Rewrite WKT */
@@ -434,7 +455,7 @@ geography_rewrite(PG_FUNCTION_ARGS)
         /* Check if latitude is within valid range */
         if ((lat >= -90.0 && lat <= 90.0) || isnan(lat))
         {
-            PG_RETURN_DATUM(geom_datum);
+            PG_RETURN_DATUM(flipped_geom_datum);
         }
         else
         {
@@ -524,7 +545,7 @@ charTogeom(PG_FUNCTION_ARGS)
     Datum   input_text,
             rewritten_wkt,
             geom_datum,
-            geom_type_datum,
+            geom_type_datum;
     char    *geom_type;
     LOCAL_FCINFO(fcinfo_local, 1);
     
@@ -745,7 +766,7 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Unsupported geometry type")));
+                 errmsg("Error converting data type varbinary to geometry.")));
     }
 
     /* Call the underlying function after preprocessing */
@@ -881,14 +902,14 @@ geography_from_bytea(PG_FUNCTION_ARGS)
         {
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("Error converting data type varbinary to geography: Latitude out of range")));
+                     errmsg("Error converting data type varbinary to geography.")));
         }
     }
     else
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Error converting data type varbinary to geography")));
+                 errmsg("Error converting data type varbinary to geography.")));
     }
 
     /* Call the underlying function after preprocessing */
@@ -1072,6 +1093,161 @@ bytea_from_geography(PG_FUNCTION_ARGS)
     }
     /* If no modifications were made, return the original byte */
     PG_RETURN_BYTEA_P(byte);
+}
+
+Datum
+st_as_binary_geometry(PG_FUNCTION_ARGS)
+{
+    Datum   geom,
+            modified_geom,
+            result,
+            geom_type_datum;
+    bool    is_empty;
+    char    *geom_type;
+    bytea   *empty_geom;
+    LOCAL_FCINFO(fcinfo_local, 1);
+
+    /* Load necessary functions */
+    load_functions();
+
+    /* Get input geometry */
+    geom = PG_GETARG_DATUM(0);
+
+    /* Check if geometry is empty */
+    is_empty = DatumGetBool(DirectFunctionCall1(st_isempty_p, geom));
+
+    if (is_empty)
+    {
+        /* Get geometry type */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = geom;
+        fcinfo_local->args[0].isnull = false;
+        geom_type_datum = geometry_type_p(fcinfo_local);
+        geom_type = text_to_cstring(DatumGetTextP(geom_type_datum));
+
+        /* For empty geometries, return the specific binary representation */
+        empty_geom = palloc(VARHDRSZ + 9);
+        SET_VARSIZE(empty_geom, VARHDRSZ + 9);
+        
+        if (strcmp(geom_type, "ST_Point") == 0)
+        {
+            memcpy(VARDATA(empty_geom), "\x01\x04\x00\x00\x00\x00\x00\x00\x00", 9);
+        }
+        pfree(geom_type);
+        PG_RETURN_BYTEA_P(empty_geom);
+
+    }
+    else
+    {
+        /* Create a new geometry without Z and M dimensions */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = geom;
+        fcinfo_local->args[0].isnull = false;
+        modified_geom = lwgeom_force_2d_p(fcinfo_local);
+
+        /* Call the existing ST_AsBinary function with the modified geometry */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = modified_geom;
+        fcinfo_local->args[0].isnull = false;
+        result = lwgeom_asBinary_p(fcinfo_local);
+
+        PG_RETURN_DATUM(result);
+    }
+}
+
+Datum
+st_as_binary_geography(PG_FUNCTION_ARGS)
+{
+    Datum   geom,
+            modified_geom,
+            flipped_geom,
+            result,
+            geom_type_datum;
+    bool    is_empty;
+    char    *geom_type;
+    bytea   *empty_geom;
+    LOCAL_FCINFO(fcinfo_local, 1);
+
+    /* Load necessary functions */
+    load_functions();
+
+    /* Get input geometry */
+    geom = PG_GETARG_DATUM(0);
+
+    /* Check if geometry is empty */
+    is_empty = DatumGetBool(DirectFunctionCall1(st_isempty_p, geom));
+
+    if (is_empty)
+    {
+        /* Get geometry type */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = geom;
+        fcinfo_local->args[0].isnull = false;
+        geom_type_datum = geometry_type_p(fcinfo_local);
+        geom_type = text_to_cstring(DatumGetTextP(geom_type_datum));
+
+        /* For empty geometries, return the specific binary representation */
+        empty_geom = palloc(VARHDRSZ + 9);
+        SET_VARSIZE(empty_geom, VARHDRSZ + 9);
+        
+        if (strcmp(geom_type, "ST_Point") == 0)
+        {
+            memcpy(VARDATA(empty_geom), "\x01\x04\x00\x00\x00\x00\x00\x00\x00", 9);
+        }
+        pfree(geom_type);
+        PG_RETURN_BYTEA_P(empty_geom);
+    }
+    else
+    {
+        /* Create a new geometry without Z and M dimensions */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = geom;
+        fcinfo_local->args[0].isnull = false;
+        modified_geom = lwgeom_force_2d_p(fcinfo_local);
+
+        /* Flip the coordinates */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = modified_geom;
+        fcinfo_local->args[0].isnull = false;
+        flipped_geom = st_flipcoordinates_p(fcinfo_local);
+
+        /* Call the existing ST_AsBinary function with the flipped geometry */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_local->args[0].value = flipped_geom;
+        fcinfo_local->args[0].isnull = false;
+        result = lwgeom_asBinary_p(fcinfo_local);
+
+        PG_RETURN_DATUM(result);
+    }
+}
+
+Datum
+st_as_text(PG_FUNCTION_ARGS)
+{
+    Datum   geom,
+            forced_2d_geom,
+            result;
+    LOCAL_FCINFO(fcinfo_local, 1);
+
+    /* Load necessary functions */
+    load_functions();
+
+    /* Get input geometry */
+    geom = PG_GETARG_DATUM(0);
+
+    /* Force the geometry to 2D */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = geom;
+    fcinfo_local->args[0].isnull = false;
+    forced_2d_geom = lwgeom_force_2d_p(fcinfo_local);
+
+    /* Call the helper function with the 2D geometry */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = forced_2d_geom;
+    fcinfo_local->args[0].isnull = false;
+    result = lwgeom_astext_p(fcinfo_local);
+
+    PG_RETURN_DATUM(result);
 }
 
 #endif

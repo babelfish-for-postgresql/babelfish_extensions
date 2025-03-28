@@ -75,7 +75,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
 	RETURNS TEXT
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
@@ -182,34 +182,26 @@ CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(
 CREATE CAST (sys.bbf_binary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_binary) AS IMPLICIT;
 
 -- Availability: 3.2.0 current supported in APG
-CREATE OR REPLACE FUNCTION sys.STAsBinary(geom sys.GEOMETRY)
-RETURNS bytea 
-AS $$
-DECLARE
-	modified_geom sys.GEOMETRY;
-BEGIN
-	IF STIsEmpty(geom) THEN
-		-- For empty geometries, return the specific binary representation
-		RETURN '\x010400000000000000'::bytea;
-	ELSE
-		-- Create a new geometry without Z and M dimensions
-		modified_geom := ST_Force2D(geom);
-
-		-- Call the existing ST_AsBinary function with the modified geometry
-		RETURN STAsBinary_helper(modified_geom);
-	END IF;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.ST_Force2D(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3', 'LWGEOM_force_2d'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+		srid integer;
+	BEGIN
+		srid := $3;
+		IF srid >= 0 AND srid <= 999999 THEN
+			-- Call the underlying function after preprocessing
+			RETURN (SELECT sys.GeomPoint_helper($1, $2, $3));
+		ELSE
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsBinary_helper(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_asBinary'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	AS 'babelfishpg_common', 'st_as_binary_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
@@ -443,7 +435,8 @@ CREATE OR REPLACE FUNCTION sys.GeomPoint_helper(float8, float8, srid integer)
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
 
--- CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
--- 	RETURNS sys.GEOMETRY
--- 	AS 'babelfishpg_common', 'charTogeom'
--- 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'charTogeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	

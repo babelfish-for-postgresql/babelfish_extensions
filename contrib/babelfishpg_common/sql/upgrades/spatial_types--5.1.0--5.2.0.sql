@@ -1,6 +1,185 @@
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
+
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.stgeomfromtext_helper(text, integer) RENAME TO stgeomfromtext_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeomfromtext_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.stgeogfromtext_helper(text, integer) RENAME TO stgeogfromtext_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeogfromtext_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GEOMETRY_helper(bytea) RENAME TO GEOMETRY_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOMETRY_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GEOGRAPHY_helper(bytea) RENAME TO GEOGRAPHY_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOGRAPHY_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.bytea_helper(sys.GEOMETRY) RENAME TO bytea_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.bytea_helper(sys.GEOGRAPHY) RENAME TO bytea_helperg_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helperg_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.get_valid_srids() RENAME TO get_valid_srids_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_valid_srids_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.bytea_helper(sys.GEOMETRY) RENAME TO bytea_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helper_deprecated_5_0_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GeogPoint_helper(float8, float8, srid integer) RENAME TO GeogPoint_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GeogPoint_helper_deprecated_5_0_0');
+
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STAsBinary_helper(sys.GEOGRAPHY) RENAME TO STAsBinary_helper_deprecated_5_0_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'STAsBinary_helper_deprecated_5_0_0');
+
 -- STDimension
 -- Retrieves spatial dimension
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
@@ -193,123 +372,133 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
         AS '$libdir/postgis-3','LWGEOM_isclosed'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
-	RETURNS sys.GEOGRAPHY
+-- Functions migrated from SQL  to C in Geometry
+CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'geometry_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
+	RETURNS TEXT
+	AS 'babelfishpg_common', 'st_as_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common','geometry_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
+	RETURNS bytea
+	AS 'babelfishpg_common', 'st_as_binary_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'geometry_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
 	AS $$
-	DECLARE
-		srid integer;
-		Geomtype text;
-		geom sys.GEOGRAPHY;
-		valid_srids integer[];
-		lat float8;
-		Zmflag smallint;
 	BEGIN
-		-- Call the function to retrieve the valid SRIDs
-		SELECT sys.get_valid_srids() INTO valid_srids;
-		srid := $2;
-		-- Here we are flipping the coordinates 
-		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		geom = (SELECT sys.stgeogfromtext_helper($1, $2));
-		Geomtype = (SELECT sys.ST_GeometryType(geom));
-		Zmflag = (SELECT sys.ST_Zmflag(geom));
-		IF Geomtype = 'ST_Point' THEN
-			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
-				-- Call the underlying function after preprocessing
-				-- if the point instance has z flag only then Zmflag = 1
-				-- if the point instance has m flag only then Zmflag = 2
-				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
-					-- Here we are flipping the coordinates 
-					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				END IF;
-			ELSEIF lat < -90.0 OR lat > 90.0 THEN
-				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
-			ELSE
-				RAISE EXCEPTION 'Inavalid SRID';
-			END IF;
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+			Return sys.STDistance_helper($1,$2);
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- New function
+CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3', 'ST_Distance'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'charTogeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Functions migrated from SQL  to C in Geography
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common','geography_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
 
 CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'geography_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
+	RETURNS TEXT
 	AS $$
-	DECLARE
-		srid integer;
-		Geomtype text;
-		geom sys.GEOGRAPHY;
-		valid_srids integer[];
-		lat float8;
-		Zmflag smallint;
 	BEGIN
-		-- Call the function to retrieve the valid SRIDs
-		SELECT sys.get_valid_srids() INTO valid_srids;
-		srid := $2;
+		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		geom = (SELECT sys.stgeogfromtext_helper($1, $2));
-		Geomtype = (SELECT sys.ST_GeometryType(geom));
-		Zmflag = (SELECT sys.ST_Zmflag(geom));
-		IF Geomtype = 'ST_Point' THEN
-			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
-			IF srid = ANY(valid_srids) AND ((lat >= -90.0 AND lat <= 90.0) OR lat is NULL) THEN
-				-- Call the underlying function after preprocessing
-				-- if the point instance has z flag only then Zmflag = 1
-				-- if the point instance has m flag only then Zmflag = 2
-				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
-					-- Here we are flipping the coordinates 
-					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
-				END IF;
-			ELSEIF lat < -90.0 OR lat > 90.0 THEN
-				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
-			ELSE
-				RAISE EXCEPTION 'Inavalid SRID';
-			END IF;
+		RETURN (SELECT sys.STAsText_common(sys.Geography__STFlipCoordinates($1)));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common', 'st_as_binary_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'geography_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'geography_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STSrid(geog1) != STSrid(geog2) THEN
+			RETURN NULL;
+
+		ELSEIF STIsEmpty(geog1) = 1 OR STIsEmpty(geog2) = 1  THEN
+			RETURN NULL;
+
 		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
+			RETURN (SELECT sys.STDistance_helper(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+-- New Function
+CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
+	RETURNS TEXT
+	AS 'babelfishpg_common', 'st_as_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	RETURNS sys.GEOGRAPHY
-	AS $$
-	DECLARE
-		Geomtype text;
-		geog sys.GEOGRAPHY;
-		lat float8;
-		Zmflag smallint;
-	BEGIN
-		geog = (SELECT sys.bpcharToGeography_helper($1, 4326));
-		Geomtype = (SELECT sys.ST_GeometryType(geog));
-		Zmflag = (SELECT sys.ST_Zmflag(geog));
-		IF Geomtype = 'ST_Point' THEN
-			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
-			IF (lat >= -90.0 AND lat <= 90.0) OR lat is NULL THEN
-				-- Call the underlying function after preprocessing
-				-- if the point instance has z flag only then Zmflag = 1
-				-- if the point instance has m flag only then Zmflag = 2
-				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
-					RETURN geog;
-				END IF;
-			ELSEIF lat < -90.0 OR lat > 90.0 THEN
-				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
-			END IF;
-		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
-		END IF;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	AS 'babelfishpg_common', 'charTogeog'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

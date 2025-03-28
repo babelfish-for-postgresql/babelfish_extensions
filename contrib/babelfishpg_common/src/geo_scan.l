@@ -23,15 +23,15 @@ static YY_BUFFER_STATE scanbufhandle;
 %%
 
 "POINT"                 { return POINT_TOK; }
-"GEOMETRYCOLLECTION"    { yyerror(NULL, " GEOMETRYCOLLECTION is currently not supported in Babelfish");  return COLLECTION_TOK; }
-"MULTIPOLYGON"          { yyerror(NULL, " MULTIPOLYGON is currently not supported in Babelfish");  return MPOLYGON_TOK; }
-"MULTILINESTRING"       { yyerror(NULL, " MULTILINESTRING is currently not supported in Babelfish"); return MLINESTRING_TOK; }
-"MULTIPOINT"            { yyerror(NULL, " MULTIPOINT is currently not supported in Babelfish");  return MPOINT_TOK; }
-"CURVEPOLYGON"          { yyerror(NULL, " CURVEPOLYGON is currently not supported in Babelfish");  return CURVEPOLYGON_TOK; }
-"POLYGON"               { yyerror(NULL, " POLYGON is currently not supported in Babelfish");  return POLYGON_TOK; }
-"COMPOUNDCURVE"         { yyerror(NULL, " COMPOUNDCURVE is currently not supported in Babelfish");  return COMPOUNDCURVE_TOK; }
-"CIRCULARSTRING"        { yyerror(NULL, " CIRCULARSTRING is currently not supported in Babelfish"); return CIRCULARSTRING_TOK; }
 "LINESTRING"            { yyerror(NULL, " LINESTRING is currently not supported in Babelfish"); return LINESTRING_TOK; }
+"CIRCULARSTRING"        { yyerror(NULL, " CIRCULARSTRING is currently not supported in Babelfish"); return CIRCULARSTRING_TOK; }
+"POLYGON"               { yyerror(NULL, " POLYGON is currently not supported in Babelfish");  return POLYGON_TOK; }
+"MULTIPOINT"            { yyerror(NULL, " MULTIPOINT is currently not supported in Babelfish");  return MPOINT_TOK; }
+"MULTILINESTRING"       { yyerror(NULL, " MULTILINESTRING is currently not supported in Babelfish"); return MLINESTRING_TOK; }
+"MULTIPOLYGON"          { yyerror(NULL, " MULTIPOLYGON is currently not supported in Babelfish");  return MPOLYGON_TOK; }
+"CURVEPOLYGON"          { yyerror(NULL, " CURVEPOLYGON is currently not supported in Babelfish");  return CURVEPOLYGON_TOK; }
+"COMPOUNDCURVE"         { yyerror(NULL, " COMPOUNDCURVE is currently not supported in Babelfish");  return COMPOUNDCURVE_TOK; }
+"GEOMETRYCOLLECTION"    { yyerror(NULL, " GEOMETRYCOLLECTION is currently not supported in Babelfish");  return COLLECTION_TOK; }
 "MULTISURFACE"          { yyerror(NULL, " Invalid Geometry ");  return MSURFACE_TOK; }
 "MULTICURVE"            { yyerror(NULL, " Invalid Geometry ");  return MCURVE_TOK; }
 "POLYHEDRALSURFACE"     { yyerror(NULL, " Invalid Geometry ");  return POLYHEDRALSURFACE_TOK; }

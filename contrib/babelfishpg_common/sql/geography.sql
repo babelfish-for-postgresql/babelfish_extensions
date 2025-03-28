@@ -55,6 +55,16 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.GEOGRAPHY, integer, boolean)
 
 CREATE CAST (sys.GEOGRAPHY AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.GEOGRAPHY, integer, boolean) AS IMPLICIT;
 
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common','geography_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
+
 CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
 	RETURNS sys.GEOGRAPHY
 	AS $$
@@ -160,16 +170,6 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
-	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common','geography_from_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
-	RETURNS bytea
-	AS 'babelfishpg_common','bytea_from_geography'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
-
 CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOGRAPHY AS text) WITH FUNCTION sys.text(sys.GEOGRAPHY);
 CREATE CAST (sys.bpchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bpchar) AS IMPLICIT;
@@ -200,43 +200,18 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN (SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1)));
+		RETURN (SELECT sys.STAsText_common(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
--- 	RETURNS bytea
--- 	AS '$libdir/postgis-3','LWGEOM_asBinary'
--- 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common', 'st_as_binary_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'geography_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STAsBinary(geom sys.GEOGRAPHY)
-	RETURNS bytea
-	AS $$
-	DECLARE
-		modified_geom sys.GEOGRAPHY;
-	BEGIN
-		IF STIsEmpty(geom) THEN
-			-- For empty geometries, return the specific binary representation
-			RETURN '\x010400000000000000'::bytea;
-		ELSE
-			-- Create a new geometry without Z and M dimensions
-			modified_geom := ST_Force2D(geom);
-			-- Call the underlying function after preprocessing
-			-- Here we are flipping the coordinates 
-			-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-			RETURN STAsBinary_helper(modified_geom);
-		END IF;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.ST_Force2D(sys.GEOGRAPHY)
-	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3', 'LWGEOM_force_2d'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
@@ -478,9 +453,9 @@ CREATE OR REPLACE FUNCTION sys.STAsText_helper(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3','LWGEOM_asText'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
 
-CREATE OR REPLACE FUNCTION sys.STAsBinary_helper(sys.GEOGRAPHY)
-	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_asBinary'
+CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
+	RETURNS TEXT
+	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STDistance_helper(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
