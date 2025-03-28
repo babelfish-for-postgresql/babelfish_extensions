@@ -174,6 +174,7 @@ BABEL-USER
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
+babel_datetime-before-15_12-or-16_8-or-17_4
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_inconsistent_metadata
@@ -185,7 +186,7 @@ collation_tests_greek
 collation_tests_mongolian
 collation_tests_polish
 collation_tests
-babel_datetime
+
 babel_char
 BABEL-SQUARE
 BABEL-728
