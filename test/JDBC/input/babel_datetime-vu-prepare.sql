@@ -64,3 +64,15 @@ BEGIN
 	RETURN @inputdate
 END
 GO
+
+-- convert string to datetime test
+CREATE VIEW babel_datetime_empty_string_vw as (SELECT CONVERT(datetime, ''));
+GO
+CREATE PROCEDURE babel_datetime_empty_string_p as (SELECT CONVERT(datetime, ''));
+GO
+CREATE FUNCTION babel_datetime_empty_string_f()
+RETURNS datetime AS
+BEGIN
+RETURN (SELECT CONVERT(datetime, ''));
+END
+GO

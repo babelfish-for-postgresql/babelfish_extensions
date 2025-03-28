@@ -432,3 +432,15 @@ GO
 
 SELECT babel_datetime_vu_function1(0x0000B02200EF28C1)
 GO
+
+-- convert string to datetime test
+DECLARE @emptyString VARCHAR(10) = '';
+SELECT CONVERT(datetime, @emptyString) AS EmptyStringResult;
+GO
+
+SELECT * FROM babel_datetime_empty_string_vw
+GO
+EXEC babel_datetime_empty_string_p
+GO
+SELECT babel_datetime_empty_string_f()
+GO

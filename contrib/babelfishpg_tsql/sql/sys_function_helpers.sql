@@ -1646,7 +1646,7 @@ BEGIN
             v_month := substr(v_datestring, 5, 2);
             v_year := substr(v_datestring, 1, 4);
         END IF;
-    ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP)
+    ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP OR length(v_datetimestring) = 0)
     THEN
         v_day := '01';
         v_month := '01';
