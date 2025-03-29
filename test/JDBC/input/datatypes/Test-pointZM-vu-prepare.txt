@@ -207,6 +207,7 @@ INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (5, 0xE6100000010400000000
 
 CREATE TABLE geometryToBytea (ID INT PRIMARY KEY, geo_point geometry );
 
+# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO geometryToBytea (ID, geo_point) VALUES (1, geometry::STGeomFromText('POINT(1 2 )', 4326));
 INSERT INTO geometryToBytea (ID, geo_point) VALUES (2, geometry::STGeomFromText('POINT(1 2 NULL)', 4326));
 INSERT INTO geometryToBytea (ID, geo_point) VALUES (3, geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326));
@@ -430,6 +431,7 @@ INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (5, 0xE610000001040000000
 
 CREATE TABLE GeographyToBytea (ID INT PRIMARY KEY, geo_point geography );
 
+# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (1, geography::STGeomFromText('POINT(1 2 )', 4326));
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (2, geography::STGeomFromText('POINT(1 2 NULL)', 4326));
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (3, geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326));
