@@ -547,7 +547,7 @@ charTogeom(PG_FUNCTION_ARGS)
             geom_datum,
             geom_type_datum;
     char    *geom_type;
-    LOCAL_FCINFO(fcinfo_local, 1);
+    LOCAL_FCINFO(fcinfo_local, 2);
     
     /* Load necessary functions */
     load_functions();
@@ -604,7 +604,7 @@ charTogeog(PG_FUNCTION_ARGS)
     char    *geom_type;
     bool    is_empty;
     float8  lat;
-    LOCAL_FCINFO(fcinfo_local, 1);
+    LOCAL_FCINFO(fcinfo_local, 2);
 
     /* Load necessary functions */
     load_functions();

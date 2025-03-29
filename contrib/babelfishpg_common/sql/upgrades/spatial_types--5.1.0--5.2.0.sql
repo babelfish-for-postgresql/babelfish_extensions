@@ -138,21 +138,6 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.bytea_helper(sys.GEOMETRY) RENAME TO bytea_helper_deprecated_5_0_0;
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helper_deprecated_5_0_0');
-
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
     ALTER FUNCTION sys.GeogPoint_helper(float8, float8, srid integer) RENAME TO GeogPoint_helper_deprecated_5_0_0;
 
 EXCEPTION WHEN OTHERS THEN
