@@ -786,8 +786,8 @@ is_json_query(List *name)
 }
 
 /*
-* Parse T-SQL CONTAINS predicate. Currently only supports 
-* ... CONTAINS(column_name, '<contains_search_condition>') ...
+* Parse T-SQL CONTAINS predicate. Currently supports 
+* ... CONTAINS(column_name | (column_list), '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
 * to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
 * for column_list
@@ -826,9 +826,7 @@ TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 static A_Expr *
 createTSMatchExpr(Node *lexpr, Node *rexpr)
 {
-	A_Expr *fts;
-	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
-	return fts;
+	return makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
 }
 
 /* Combines the nodes together using OR operator
@@ -837,9 +835,7 @@ createTSMatchExpr(Node *lexpr, Node *rexpr)
 static Node *
 createTSOrExpr(Node *lexpr, Node *rexpr)
 {
-	Node *fts;
-	fts = makeOrExpr(lexpr, rexpr, -1);
-	return fts;
+	return makeOrExpr(lexpr, rexpr, -1);
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */

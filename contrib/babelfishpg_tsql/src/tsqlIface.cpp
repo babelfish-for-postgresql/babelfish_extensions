@@ -7452,8 +7452,8 @@ static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, L
 					{
 						if(col && col->column_name)
 						{
-							string str = getFullText(col->column_name);
-							if(str[0]=='"')
+							std::string str = ::getFullText(col->column_name);
+							if(str[0] == '"')
 							{
 								str = stripQuoteFromId(str);
 								ereport(ERROR,
@@ -7461,7 +7461,7 @@ static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, L
 										errmsg("Incorrect syntax near \'%s\'.",
 											str.c_str())));
 							}
-							char * c_string  = pstrdup(str.c_str());
+							char *c_string  = pstrdup(str.c_str());
 							*column_name = lappend(*column_name, c_string);
 						}
 					}

@@ -1984,6 +1984,18 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 				errmsg("relation \"%s\" does not exist",
 					table_name)));
 	
+	/* Check if column exists */
+	foreach(column_name, column_name_list)
+		{
+		if(!check_column_list(relid, (char *)(column_name)->ptr_value))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("column \"%s\" does not exist.",
+						(char *)(column_name)->ptr_value)));
+		}
+	}
+
 	ft_index_name = get_fulltext_index_name(relid, table_name);
 	if(ft_index_name == NULL)
 		return false;
@@ -1996,25 +2008,16 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 		return false;
 	}
 
-	/* Check if column exists */
-	foreach(column_name, column_name_list)
- 	{
-		if(!check_column_list(relid, (char *)(column_name)->ptr_value))
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					errmsg("column \"%s\" does not exist.",
-						(char *)(column_name)->ptr_value)));
-		}
-	}
 
 	/* Check if column is fulltext indexed */
 	foreach(column_name, column_name_list)
 	{
 		bool flag = false;
+		char *col_name = (char *)(column_name)->ptr_value;
 		foreach(ft_column_name, ft_column_name_list)
 		{
-			if(pg_strcasecmp((char *)(column_name)->ptr_value, (char *)(ft_column_name)->ptr_value) == 0)
+			char *ft_col_name = (char *)(ft_column_name)->ptr_value;
+			if(pg_strcasecmp(col_name, ft_col_name) == 0)
 			{
 				flag = true;
 				break;
@@ -2026,7 +2029,7 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \'%s\' because it is not full-text indexed.",
-						(char *)(column_name)->ptr_value)));
+						col_name)));
 		}
 	}
 	pfree(ft_index_name);
@@ -2037,8 +2040,8 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
  
 /* 
  * Check if the columns provided in the freetext predicate query exist or not
- * The check for the columns existence is handled in BISON, but we require to 
- * check it before checking if they are fulltext indexed or not
+ * The check for the columns existence is handled during query execution from PG side, 
+ * but we require to check it before checking if they are fulltext indexed or not
  */
 bool check_column_list(Oid relid, char *column_name)
 {
@@ -2071,19 +2074,24 @@ List
  	List            *indexoidlist = RelationGetIndexList(relation);
  	List 		*column_name = NIL;
  	ListCell	*cell;
- 	char		*idx;
+ 	char		*idx = NULL;
+	char		*name = NULL;
+	Oid		indexOid;
  	Datum 		result;
  
  	foreach(cell, indexoidlist)
  	{
- 		Oid indexOid = lfirst_oid(cell);
- 		char *name = get_rel_name(indexOid);
+ 		indexOid = lfirst_oid(cell);
+ 		name = get_rel_name(indexOid);
  
  		if (strcmp(name, ft_index_name) == 0)
  		{
  			result = DirectFunctionCall1(pg_get_indexdef, ObjectIdGetDatum(indexOid));
  			if(DatumGetPointer(result) == NULL)
 			{
+				if(name != NULL)
+					pfree(name);
+
 				RelationClose(relation);
 				list_free(indexoidlist);
 				return NIL;
@@ -2093,6 +2101,11 @@ List
  			break;
  		}
  	}
+
+	if(idx != NULL)
+		pfree(idx);
+	if(name != NULL)
+		pfree(name);
 
 	RelationClose(relation);
 	list_free(indexoidlist);
@@ -2111,11 +2124,10 @@ List
 *get_columns(char *index_stmt)
 {
 	
-	List	 *column_name_list = NULL;
-	/* Find the starting point after "to_tsvector" */
-	const char* indexdf = index_stmt;
-	int regconfig = strlen("regconfig, ");
-	int replace_special_chars_fts = strlen("replace_special_chars_fts(");
+	const char 	*indexdf = index_stmt;
+	List		*column_name_list = NULL;
+	size_t 		regconfig_len = strlen("regconfig, ");
+	size_t 		replace_special_chars_fts_len = strlen("replace_special_chars_fts(");
 	
 	if(index_stmt == NULL)
 	{
@@ -2124,11 +2136,11 @@ List
 
  	while ((indexdf = strstr(indexdf, "regconfig, ")) != NULL) 
  	{
- 		StringInfoData bufStr;
-		char 	*closing;
-		char 	*column_name = NULL;
- 		indexdf += regconfig;
-
+ 		StringInfoData 	bufStr;
+		char 		*closing;
+		char 		*column_name = NULL;
+		char		*start_ptr;
+ 		indexdf += regconfig_len;
  		initStringInfo(&bufStr);
 		
 		/* 
@@ -2137,10 +2149,10 @@ List
 		 * which is being checked before assigning the pointer to 'indexdf' 
 		 * as it will return NULL for version before 16.2
 		 */
-		if((strstr(indexdf, "replace_special_chars_fts(")) != NULL)
+		if((start_ptr = strstr(indexdf, "replace_special_chars_fts(")) != NULL)
 		{
-			indexdf = strstr(indexdf, "replace_special_chars_fts(");
-			indexdf += replace_special_chars_fts;
+			indexdf = start_ptr;
+			indexdf += replace_special_chars_fts_len;
 		}
 		/* 
 		 * The columns that are not of TEXT data type are casted into TEXT data type so the index definition for non TEXT columns is:
@@ -2365,11 +2377,11 @@ char
 
 	initStringInfo(&query);
 
-	if(list_length(column_name)>32)
+	if(list_length(column_name) > 32)
  	{
  		ereport(ERROR,
  			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
- 				errmsg("Fulltext Index on more than 32 columns is not currently supported in Babelfish")));
+ 				errmsg("Full-text index creation with more than 32 columns is not currently supported in Babelfish.")));
  	}
 
 	/*

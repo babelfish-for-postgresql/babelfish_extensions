@@ -5106,6 +5106,23 @@ go
 create fulltext index on new_schema_fts.test(name) key index test_idx;
 go
 
+-- Create table with more than 32 text based columns
+CREATE TABLE ft_index_limit_t (
+    id INT NOT NULL,
+    col1 text, col2 text, col3 text, col4 text, col5 text,
+    col6 text, col7 text, col8 text, col9 text, col10 text,
+    col11 text, col12 text, col13 text, col14 text, col15 text,
+    col16 text, col17 text, col18 text, col19 text, col20 text,
+    col21 text, col22 text, col23 text, col24 text, col25 text,
+    col26 text, col27 text, col28 text, col29 text, col30 text,
+    col31 text, col32 text, col33 text, col34 text, col35 text,
+    col36 text
+);
+GO
+
+CREATE UNIQUE INDEX uft ON ft_index_limit_t(id)
+GO
+
 -- Create the test table
 CREATE TABLE fts_contains_multicol_t (
     id INT NOT NULL,
