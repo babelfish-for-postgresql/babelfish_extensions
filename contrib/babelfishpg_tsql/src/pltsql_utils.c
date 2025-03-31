@@ -1986,7 +1986,7 @@ check_fulltext_exist(const char *schema_name, const char *table_name, const List
 	
 	/* Check if column exists */
 	foreach(column_name, column_name_list)
-		{
+	{
 		if(!check_column_list(relid, (char *)(column_name)->ptr_value))
 		{
 			ereport(ERROR,
