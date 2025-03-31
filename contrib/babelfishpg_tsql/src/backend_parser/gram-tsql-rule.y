@@ -1779,6 +1779,11 @@ table_ref:	relation_expr tsql_table_hint_expr
 					 */
 					$$ = (Node *) $1;
 				}
+			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
+				{
+					List *unpivot_info = list_make3($1, (List *)$3, $4);
+                    $$ = tsql_unpivot_transformation(unpivot_info);
+				}
 		;
 
 openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
@@ -1898,6 +1903,13 @@ joined_table:
 					$$ = n;
 				}
 		;
+
+tsql_unpivot_clause:
+            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+                {
+					$$ = (Node *)list_make3($2, $4, $7);
+                }
+            ;
 
 func_expr_common_subexpr:
 			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
@@ -2476,6 +2488,7 @@ tsql_stmt :
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
 			| tsql_AlterUserStmt
+			| tsql_AlterViewStmt
 			| AnalyzeStmt
 			| CallStmt
 			| CheckPointStmt
@@ -4110,6 +4123,35 @@ tsql_AlterFunctionStmt:
                 }
 		;
 
+tsql_AlterViewStmt: 
+            TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $3;
+                    n->aliases = $4;
+                    n->query = $7;
+                    n->replace = true;
+                    n->options = $5;
+                    n->withCheckOption = $8;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+            | CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $5;
+                    n->aliases = $6;
+                    n->query = $9;
+                    n->replace = false;
+                    n->options = $7;
+                    n->withCheckOption = $10;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+        ;
+		
 /*
  * These rules define the WITH clause in a CREATE PROCEDURE
  * or CREATE FUNCTION statement.  This is very similar to

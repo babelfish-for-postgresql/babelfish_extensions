@@ -1,0 +1,196 @@
+/** CREATE DATABASE **/
+create database object_ownership_db;
+go
+use object_ownership_db;
+go
+
+/** CREATE LOGIN, USER AND ROLE **/
+create login object_ownership_l1 with password = '123';
+go
+create user object_ownership_u1 for login object_ownership_l1;
+go
+create role object_ownership_r1;
+go
+alter role object_ownership_r1 add member object_ownership_u1;
+go
+
+/** CREATE SCHEMAS WITH DIFFERENT OWNERS **/
+create schema object_ownership_s1;
+go
+create schema object_ownership_s2 authorization object_ownership_u1;
+go
+create schema object_ownership_s3 authorization object_ownership_r1;
+go
+
+/** CREATE OBJECTS IN DIFFERENT SCHEMAS USING DBO **/
+/** OBJECT OWNER WILL BE SAME AS SCHEMA OWNER **/
+create table object_ownership_s1.old_t(a int, b int);
+go
+create view object_ownership_s1.old_v as select 1;
+go
+create proc object_ownership_s1.old_p as select 2;
+go
+create function object_ownership_s1.old_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s1.old_sq start with 1 increment by 1 ;
+go
+
+/** CREATE PARTITION FUNCTION AND SCHEME **/
+create partition function pf2 (datetime)
+as range right for values 
+(
+    '2023-01-01', 
+    '2024-01-01',
+    '2025-01-01'
+);
+go
+
+create partition scheme ps2
+as partition pf2 
+all to ([primary]);
+go
+
+/*** OBJECT OWNER WILL NOT BE SAME AS SCHEMA OWNER ***/
+/*** SCHEMA OWNED BY USER, OBJECT OWNER BY DBO ***/
+create table object_ownership_s2.old_t(a int, b int);
+go
+create view object_ownership_s2.old_v as select 1;
+go
+create proc object_ownership_s2.old_p as select 2;
+go
+create function object_ownership_s2.old_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s2.old_sq start with 1 increment by 1;
+go
+-- Add the computed column
+alter table object_ownership_s2.old_t add c as (a + b);
+go
+-- Add the identity column
+alter table object_ownership_s2.old_t add id int identity(1,1);
+go
+/***** SHOULD BE ABLE TO CREATE PARTITION TABLES **********/
+create table object_ownership_s2.pt2
+(
+    saleid int identity(1,1),
+    saledate datetime,
+    amount decimal(10,2),
+    customerid int,
+    productid int
+) on ps2(saledate);  -- specify the partitioning column
+go
+
+/*** OBJECT OWNER WILL NOT BE SAME AS SCHEMA OWNER ***/
+/*** SCHEMA OWNED BY ROLE, OBJECT OWNER BY DBO ***/
+create table object_ownership_s3.old_t(a int, b int);
+go
+create view object_ownership_s3.old_v as select 1;
+go
+create proc object_ownership_s3.old_p as select 2;
+go
+create function object_ownership_s3.old_f() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s3.old_sq start with 1 increment by 1 ;
+go
+create index old_idx on object_ownership_s3.old_t(a);
+go
+create trigger object_ownership_s3.old_tr on object_ownership_s3.old_t after insert as select 1;
+go
+create function object_ownership_s3.old_tvf() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.old_mtvf()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.old_type from sys.varchar(10)
+go
+create type object_ownership_s3.old_ttype as table (id int)
+go
+
+-- tsql user=object_ownership_l1 password=123
+/*** CREATE OBJECTS IN DIFFERENT SCHEMAS WITH USER OTHER THAN DBO ***/
+/*** OBJECT OWNER MAY NOT BE SAME AS SCHEMA OWNER ***/
+use object_ownership_db;
+go
+select current_user
+go
+~~START~~
+varchar
+object_ownership_u1
+~~END~~
+
+
+/** CURRENT USER DOESN'T HAVE PERMISSION TO CREATE OBJECT IN THIS SCHEMA ***/
+create table object_ownership_s1.old_t(a int, b int);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema object_ownership_db_object_ownership_s1)~~
+
+create view object_ownership_s1.old_v as select 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema object_ownership_db_object_ownership_s1)~~
+
+create proc object_ownership_s1.old_px as select 2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema object_ownership_db_object_ownership_s1)~~
+
+create function object_ownership_s1.old_fx() returns int begin declare @a int; set @a = 1; return @a; END
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema object_ownership_db_object_ownership_s1)~~
+
+create sequence object_ownership_s1.old_sq start with 1 increment by 1 ;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for schema object_ownership_db_object_ownership_s1)~~
+
+
+/** CURRENT USER CAN CREATE OBJECT IN THESE SCHEMAS **/
+/** OBJECT OWNER SAME AS SCHEMA OWNER **/
+create table object_ownership_s2.old_t1(a int, b int);
+go
+create view object_ownership_s2.old_v1 as select 1;
+go
+create proc object_ownership_s2.old_p1 as select 2;
+go
+create function object_ownership_s2.old_f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s2.old_sq1 start with 1 increment by 1 ;
+go
+
+/** OBJECT OWNER NOT SAME AS SCHEMA OWNER **/
+/** SCHEMA OWNED BY ROLE, OBJECTS OWNER **/
+create table object_ownership_s3.old_t1(a int, b int);
+go
+create view object_ownership_s3.old_v1 as select 1;
+go
+create proc object_ownership_s3.old_p1 as select 2;
+go
+create function object_ownership_s3.old_f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+create sequence object_ownership_s3.old_sq1 start with 1 increment by 1 ;
+go
+create index old_idx1 on object_ownership_s3.old_t1(a);
+go
+create trigger object_ownership_s3.old_tr1 on object_ownership_s3.old_t1 after insert as select 1;
+go
+create function object_ownership_s3.old_tvf1() returns table as return (select '1' as col);
+go
+create function object_ownership_s3.old_mtvf1()
+returns @result table([Id] int) AS
+begin
+    insert into @result values (1) return 
+end
+go
+create type object_ownership_s3.old_type1 from sys.varchar(10)
+go
+create type object_ownership_s3.old_ttype1 as table (id int)
+go

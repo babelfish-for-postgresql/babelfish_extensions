@@ -39,6 +39,7 @@
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/user.h"
+#include "commands/view.h"
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -63,6 +64,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc_tables.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
@@ -143,6 +145,8 @@ static void call_prev_ProcessUtility(PlannedStmt *pstmt,
 						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc, bool is_proc);
+static Acl *get_old_view_acl(Oid oldViewOid);
+static void pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2766,6 +2770,138 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				break;
 			}
+
+			/* 
+			* This case handles the `ALTER VIEW` and `CREATE OR ALTER VIEW` statements in Babelfish.
+			*/
+			case T_ViewStmt:
+			{
+				ViewStmt *stmt = (ViewStmt *) parsetree;
+
+				/*
+				 * We are using PostgreSQL's existing ViewStmt node which is shared between PostgreSQL's
+				 * CREATE VIEW and T-SQL's ALTER VIEW/CREATE OR ALTER VIEW operations. To properly distinguish 
+				 * between these operations and not let CREATE VIEW inside this case we use createOrAlter flag
+				 *
+				 * Since both CREATE VIEW and CREATE OR ALTER VIEW set replace = false initially,
+				 * we use the 'createOrAlter' flag to distinguish between them and implement the
+				 * correct behavior when a view already exists
+				 */
+
+				if (sql_dialect == SQL_DIALECT_TSQL && (stmt->createOrAlter))    
+				{
+					/*
+					 * 1. Retrieve the OID of the old view using `RangeVarGetRelid()`.
+					 * 2. If the old view does not exist, create the new view using `DefineView()` and increment the command counter.
+ 					 * 3. If the old view exists:
+					 *    a. Save the ACL information of the current view.
+					 *    b. Drop the current view using `performDeletion()`.
+					 *    c. Create the new view using `DefineView()` and increment the command counter.
+					 *    f. Store the new view definition in the `bbf_view_def` catalog using `store_view_definition_hook()`.
+					 *    g. Update the ACL information for the new view using `pg_class_update_acl()`.
+					 */
+					ObjectAddress address, originalView;
+					Oid oldViewOid;
+					Acl *oldViewAcl = NULL;
+					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+					bool needCleanup;
+			
+					if (!IS_TDS_CLIENT())
+					{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										errmsg("TSQL ALTER VIEW is not supported from PostgreSQL endpoint.")));
+					}
+
+					needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+			
+					PG_TRY();
+					{
+						StartTransactionCommand();
+						
+						/* Without this, DDL event triggers won't fire for ALTER VIEW operations
+						 * Currently T-SQL DDL triggers are not supported, but this code block is required for PostgreSQL DDL event triggers. 
+						 * This will be used later when T-SQL DDL trigger support is implemented.*/
+						
+						if (isCompleteQuery)
+							EventTriggerDDLCommandStart(parsetree);
+
+						/* Get the old view's OID and verify it exists */
+						oldViewOid = RangeVarGetRelid(stmt->view, AccessExclusiveLock, true);
+						
+						/* If the view does not exist, check if the stmt is CREATE OR ALTER VIEW / ALTER VIEW */
+						if (!OidIsValid(oldViewOid))
+						{
+							if(stmt->replace)	/* we have set replace to false for CREATE OR ALTER VIEW to avoid view does not exist error */
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_TABLE),
+											errmsg("view \"%s\" does not exist", 
+												stmt->view->relname)));
+							}
+							/* View doesn't exist - create it */
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+													queryEnv, dest, qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);							
+							CommandCounterIncrement();
+						}
+						/* View exists */
+						else
+						{
+							/* Save ACL before dropping the view */
+							oldViewAcl = get_old_view_acl(oldViewOid);
+							CacheInvalidateRelcacheByRelid(oldViewOid);
+			
+							/* Drop the old view */
+							originalView.objectId = oldViewOid;
+							originalView.classId = RelationRelationId;
+							originalView.objectSubId = 0;
+							performDeletion(&originalView, DROP_RESTRICT, 0);
+							CommandCounterIncrement();
+			
+							/* Create new view */
+							stmt->replace = true; 
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+													queryEnv, dest, qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);							
+							CommandCounterIncrement();
+
+							/* Get the new view's ObjectAddress */
+							address.objectId = RangeVarGetRelid(stmt->view, NoLock, false);
+							address.classId = RelationRelationId;
+							address.objectSubId = 0;
+							
+							/* Store the view definition in babelfish_view_def */
+							if(store_view_definition_hook)
+								store_view_definition_hook(queryString, address);
+
+							/* Update ACL info */
+							pg_class_update_acl(address.objectId, oldViewAcl);
+
+							if(oldViewAcl != NULL)
+								pfree(oldViewAcl);
+						}
+						CommitTransactionCommand();
+					}
+					PG_FINALLY();
+					{
+						if (needCleanup)
+							EventTriggerEndCompleteQuery();
+					}
+					PG_END_TRY();
+					return; 
+				}
+				/* check that no T-SQL ALTER VIEW operations reach this point because they should have been handled earlier in the code.*/
+				Assert(!(sql_dialect == SQL_DIALECT_TSQL && stmt->createOrAlter));
+				break;
+			}
+
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
@@ -3665,6 +3801,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						RoleSpec   *headrol = linitial(stmt->roles);
 
+						if (headrol->roletype == ROLESPEC_PUBLIC)
+							headrol->rolename = PUBLIC_ROLE_NAME;
+
 						if (strcmp(headrol->rolename, "is_user") == 0)
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
@@ -3689,9 +3828,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(item, stmt->roles)
 								{
 									RoleSpec	*rolspec = lfirst(item);
-									char		*user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									char		*user_name;
 									const char	*db_principal_type = drop_user ? "user" : "role";
-									int		role_oid = get_role_oid(user_name, true);
+									int			role_oid;
+
+									if (rolspec->roletype == ROLESPEC_PUBLIC)
+										rolspec->rolename = PUBLIC_ROLE_NAME;
+									
+									user_name = get_physical_user_name(db_name, rolspec->rolename, false, true);
+									role_oid = get_role_oid(user_name, true);
 
 									if (!OidIsValid(role_oid) ||                        /* Not found */
 									    (drop_user && get_db_principal_kind(role_oid, db_name) != BBF_USER) ||      /* Found but not a user in current logical db */
@@ -4025,16 +4170,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						exec_database_roles_subcmds(create_schema->schemaname);
 					}
 
-					/* Grant ALL schema privileges to the user.*/
-					if (rolspec && strcmp(queryString, CREATE_LOGICAL_DATABASE) != 0)
-					{
-						int i;
-						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
-						{
-							/* Execute the GRANT SCHEMA subcommands. */
-							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i], true);
-						}
-					}
 					return;
 				}
 				else
@@ -4812,6 +4947,73 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, true);
 
 	*isSameFunc = OidIsValid(funcOid);
+}
+
+/*
+ * Get the acl of view from pg_class given its oid
+ */
+static Acl *
+get_old_view_acl(Oid oldViewOid)
+{
+	HeapTuple tuple;
+	Datum aclDatum;
+	bool isNull;
+	Acl *oldViewAcl = NULL;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(oldViewOid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+					errmsg("cache lookup failed for relation %u", oldViewOid)));
+
+	aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl, &isNull);
+	if (!isNull)
+		oldViewAcl = DatumGetAclPCopy(aclDatum);
+
+	ReleaseSysCache(tuple);
+
+	return oldViewAcl;
+}
+
+/*
+ * Update the acl info of view in pg_class given its oid and acl info
+ */
+static void
+pg_class_update_acl(Oid newViewOid, Acl *oldViewAcl)
+{
+	Relation pg_class_rel;
+	HeapTuple classtup;
+
+	Datum values[Natts_pg_class];
+	bool nulls[Natts_pg_class];
+	bool replaces[Natts_pg_class];
+	HeapTuple newtup;
+
+	/* Get the tuple from syscache */
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(newViewOid));
+	if (!HeapTupleIsValid(classtup))
+		elog(ERROR, "cache lookup failed for relation %u", newViewOid);
+
+	pg_class_rel = table_open(RelationRelationId, RowExclusiveLock);
+
+	memset(values, 0, sizeof(values));
+	memset(nulls, false, sizeof(nulls));
+	memset(replaces, false, sizeof(replaces));
+
+	if (oldViewAcl != NULL)
+		values[Anum_pg_class_relacl - 1] = PointerGetDatum(oldViewAcl);
+	else
+		nulls[Anum_pg_class_relacl - 1] = true;
+	replaces[Anum_pg_class_relacl - 1] = true;    
+
+	newtup = heap_modify_tuple(classtup, RelationGetDescr(pg_class_rel),
+							values, nulls, replaces);
+
+	CatalogTupleUpdate(pg_class_rel, &newtup->t_self, newtup);
+
+	ReleaseSysCache(classtup);
+	heap_freetuple(newtup);
+	table_close(pg_class_rel, RowExclusiveLock);
 }
 
 /*
@@ -6716,32 +6918,25 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		Index identity_ressortgroupref = 0;
 		List *modifiedTargetList = NIL;
 
-		bool persist_identity = true;
+		/*
+		 * currently we only carry over identity and nullability for
+		 * simple query with a single relation in from expression
+		 */
+		bool persist_identity_and_nullability = false;
 
 		/*
 		 * In T-SQL, identity property of column in destination
 		 * table is not persisted if the SELECT ... INTO statement
 		 * does not contain a single base relation
 		 */
-		if (q->jointree && q->jointree->fromlist != NIL)
+		if (q->jointree && q->jointree->fromlist != NIL && list_length(q->jointree->fromlist) == 1)
 		{
-			if (list_length(q->jointree->fromlist) > 1)
-				persist_identity = false;
-			else
+			RangeTblRef		*rtr = linitial(q->jointree->fromlist);
+			if (IsA(rtr, RangeTblRef))
 			{
-				Node *n_from = (Node *) linitial(q->jointree->fromlist);
-
-				if (!IsA(n_from, RangeTblRef))
-					persist_identity = false;
-				else
-				{
-					RangeTblRef		*rtr = (RangeTblRef *) n_from;
-					RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
-
-					/* Do not persist identity if not an ordinary relation */
-					if (rte->rtekind != RTE_RELATION)
-						persist_identity = false;
-				}
+				RangeTblEntry	*rte = rt_fetch(rtr->rtindex, q->rtable);
+				if (rte->rtekind == RTE_RELATION && rte->relkind == RELKIND_RELATION)
+					persist_identity_and_nullability = true;
 			}
 		}
 
@@ -6832,9 +7027,11 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				lcmd->def = (Node *)def;
 				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
-			else if (tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
+			else if (persist_identity_and_nullability && tle->expr && IsA(tle->expr, Var) && OidIsValid(tle->resorigtbl))
 			{
 				HeapTuple	attrtup = SearchSysCacheAttNum(tle->resorigtbl, tle->resorigcol);
+				/* set to false if same column appears twice in select list */
+				bool     	persists_identity = true;
 
 				if (HeapTupleIsValid(attrtup))
 				{
@@ -6853,10 +7050,29 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 						altstmt->cmds = lappend(altstmt->cmds, lcmd);
 					}
 
-					if (attrStruct->attidentity && persist_identity)
+					if (attrStruct->attidentity)
+					{
+						ListCell *lc;
+
+						/*
+						 * Validate that this column does not appear again in the target list
+						 * For cases like SELECT id, id INTO new_table FROM source_table; and
+						 * id is an identity column, we do not want to throw an error for
+						 * multiple identity instead silently skip persisting the identity property
+						 */
+						foreach (lc, q->targetList)
+						{
+							TargetEntry *tle_inner_loop = (TargetEntry *)lfirst(lc);
+							if (tle_inner_loop->resno != tle->resno && tle_inner_loop->expr && IsA(tle_inner_loop->expr, Var) &&
+							    tle_inner_loop->resorigtbl == tle->resorigtbl && tle_inner_loop->resorigcol == tle->resorigcol)
+								persists_identity = false;
+						}
+					}
+					if (attrStruct->attidentity && persists_identity)
 					{
 						Constraint *constraint;
 
+						/* Identity function already seen in target list */
 						if (seen_identity)
 							ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
 									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
@@ -6954,9 +7170,11 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
 		}
-		if (stmts != NIL)
-			CommandCounterIncrement();
+
+		CommandCounterIncrement();
 	}
+
+	reseed_identity_post_select_into(address->objectId);
 }
 
 void
@@ -7057,6 +7275,13 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!relation)
 				continue;
 
+			if (!OidIsValid(address.objectId))
+				continue;
+			
+			/* Restrict dropping of system views for non-superuser roles */
+			if (stmt->removeType == OBJECT_VIEW)
+				check_restricted_object(address.objectId, OBJECT_VIEW);
+
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
 			relation_close(relation, AccessShareLock);
@@ -7116,9 +7341,9 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!OidIsValid(address.objectId))
 				continue;
 				
-			/* Restrict dropping of extended stored procedures for non-superuser roles */
-			if (stmt->removeType == OBJECT_PROCEDURE && !superuser())
-				check_restricted_stored_procedure(address.objectId);
+			/* Restrict dropping of system procedures and functions for non-superuser roles */
+			if ((stmt->removeType == OBJECT_PROCEDURE || stmt->removeType == OBJECT_FUNCTION))
+				check_restricted_object(address.objectId, stmt->removeType);
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
