@@ -13,7 +13,7 @@ DECLARE
     query2 text;
 BEGIN
 
-    query1 := pg_catalog.format('alter extension spatial_types drop %s %s.%s', object_type, schema_name, object_name);
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
     execute query1;
@@ -32,6 +32,7 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Functions removed whoch are no longer in use
 DO $$
 DECLARE
     exception_message text;
@@ -66,7 +67,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.GEOMETRY_helper(bytea) RENAME TO GEOMETRY_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.GEOMETRY_helper(bytea) RENAME TO GEOMETRY_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -360,74 +361,20 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
         AS '$libdir/postgis-3','LWGEOM_isclosed'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
--- Functions migrated from SQL  to C in Geometry
+-- Functions migrated from SQL  to C
 CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'geometry_rewrite'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
-	RETURNS TEXT
-	AS 'babelfishpg_common', 'st_as_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
-	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common','geometry_from_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
-
-CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
-	RETURNS bytea
-	AS 'babelfishpg_common','bytea_from_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
-	RETURNS bytea
-	AS 'babelfishpg_common', 'st_as_binary_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
-	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'geometry_rewrite'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
-	RETURNS float8
-	AS $$
-	BEGIN
-		IF STSrid(geom1) != STSrid(geom2) THEN
-			RETURN NULL;
-		ELSE
-			Return sys.STDistance_helper($1,$2);
-		END IF;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
--- New function
-CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3', 'ST_Distance'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
-	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'charTogeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
--- Functions migrated from SQL  to C in Geography
-CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
-	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common','geography_from_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
-	RETURNS bytea
-	AS 'babelfishpg_common','bytea_from_geography'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
-
 CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'geography_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
+	RETURNS TEXT
+	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
@@ -441,9 +388,44 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common','geometry_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common','geography_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
+	RETURNS bytea
+	AS 'babelfishpg_common', 'st_as_binary_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS 'babelfishpg_common', 'st_as_binary_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'geometry_rewrite'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'geography_rewrite'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
@@ -451,10 +433,28 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 	AS 'babelfishpg_common', 'geography_point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
-	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'geography_rewrite'
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'charTogeom'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'charTogeog'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Modified functions
+CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSE
+			Return sys.STDistance_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
 	RETURNS float8
@@ -475,17 +475,16 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
--- New Function
+-- New functions
+CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3', 'ST_Distance'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
 	RETURNS TEXT
 	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
-	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'charTogeog'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
