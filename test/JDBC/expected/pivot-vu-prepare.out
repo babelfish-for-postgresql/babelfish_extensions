@@ -1367,3 +1367,34 @@ PIVOT (
     FOR StoreID IN ([1], [2], [3],[4], [5])
 ) AS pvt
 GO
+
+CREATE TABLE SalesDataPivot (
+    pivot_column INT,
+    aggregate_column FLOAT,
+    extra_column VARCHAR(50)
+);
+GO
+
+INSERT INTO SalesDataPivot VALUES
+    (0, 10.5, 'A'),
+    (1, 15.2, 'B'),
+    (2, 12.8, 'C'),
+    (3, 18.3, 'D'),
+    (4, 14.1, 'E'),
+    (NULL, 20.0, 'F');
+GO
+~~ROW COUNT: 6~~
+
+
+CREATE VIEW vw_SalesPivot
+AS
+SELECT extra_column, [0], [1], [2], [3], [4]
+FROM
+    (SELECT pivot_column, aggregate_column, extra_column
+     FROM SalesDataPivot) AS table_source
+PIVOT
+(
+    AVG(aggregate_column)
+    FOR pivot_column IN ([0], [1], [2], [3], [4])
+) AS PivotTable;
+GO

@@ -27,6 +27,9 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
      when dependent_objects_still_exist then --if 'drop view' statement fails
          GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
          raise warning '%', error_msg;
+     when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
  end
  $$
  LANGUAGE plpgsql;
@@ -1136,6 +1139,21 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_query_depreca
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
 RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(anyelement, BOOL, NUMERIC) RENAME TO bbf_babelfish_conv_helper_to_datetime_with_arg_anyelement_deprecated_5_2_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_with_arg_anyelement_deprecated_5_2_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
