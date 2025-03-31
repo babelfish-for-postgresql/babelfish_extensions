@@ -32,6 +32,13 @@ GO
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE CAST('2023-06-17' AS DATE) <> smalldatetime_col;
 GO
 
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
 -- index scan
 SELECT COUNT(*) FROM smalldate_date_cmp_t1 WHERE smalldatetime_col < CAST('2023-06-14' AS DATE);
 GO
@@ -119,6 +126,13 @@ GO
 SELECT s1.smalldatetime_col FROM smalldate_date_cmp_t1 s1 JOIN smalldate_date_cmp_t1 s2 ON s1.smalldatetime_col = s2.smalldatetime_col
 GO
 
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
 EXEC test_smalldatetime_date_p1;
 GO
 
@@ -135,6 +149,13 @@ EXEC test_smalldatetime_date_p5;
 GO
 
 EXEC test_smalldatetime_date_p6;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 EXEC test_smalldatetime_date_p7;
@@ -179,6 +200,13 @@ GO
 EXEC test_smalldatetime_date_p20;
 GO
 
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
 SELECT * FROM test_smalldatetime_date_v1;
 GO
 
@@ -195,6 +223,13 @@ SELECT * FROM test_smalldatetime_date_v5;
 GO
 
 SELECT * FROM test_smalldatetime_date_v6;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 SELECT * FROM test_smalldatetime_date_v7;
@@ -240,6 +275,8 @@ SELECT * FROM test_smalldatetime_date_v20;
 GO
 
 SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+SELECT set_config('enable_seqscan', 'on', false);
 GO
 
 -- seq scan

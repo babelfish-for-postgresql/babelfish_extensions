@@ -1,434 +1,1114 @@
 -- Test datetime default value
 select a from babel_datetime_vu_prepare_testing_1 where b = 1
 go
+~~START~~
+datetime
+<NULL>
+~~END~~
+
 
 -- Testing inserting into the table
 select * from babel_datetime_vu_prepare_testing
 go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+9999-12-31 23:59:59.997
+1992-05-23 23:40:30.0
+1992-05-23 23:40:30.0
+1999-12-31 23:59:59.997
+2000-01-01 00:00:00.0
+1900-01-01 23:40:30.0
+1900-01-01 23:40:30.0
+2020-03-14 00:00:00.0
+~~END~~
+
 
 -- Test comparision with datetime/smalldatetime/date
 select * from babel_datetime_vu_prepare_testing where dt >= smalldatetime('2000-01-01 00:00:59')
 go
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+2020-03-14 00:00:00.0
+~~END~~
+
 select * from babel_datetime_vu_prepare_testing where dt >= datetime('1992-05-23 23:40:00') 
                     and dt < datetime('1992-05-23 23:41:00')
 go
+~~START~~
+datetime
+1992-05-23 23:40:30.0
+1992-05-23 23:40:30.0
+~~END~~
+
 select * from babel_datetime_vu_prepare_testing where dt < date('1992-05-24')
 go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+1992-05-23 23:40:30.0
+1992-05-23 23:40:30.0
+1900-01-01 23:40:30.0
+1900-01-01 23:40:30.0
+~~END~~
+
+
 
 -- Test rounding (datetime rounds milliseconds to 0.000, 0.003, 0.007)
 -- TODO
-
 -- Test type cast to/from other time formats
 -- Test datetime2
 select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetime2)
 go
+~~START~~
+datetime2
+2020-03-15 23:59:29.9900000
+~~END~~
+
 select CAST(CAST('2079-06-06 23:59:29.99' AS datetime2) AS datetime)
 go
+~~START~~
+datetime
+2079-06-06 23:59:29.99
+~~END~~
+
 select CAST(CAST('2079-06-06 23:59:29.992343' AS datetime2) AS datetime)
 go
+~~START~~
+datetime
+2079-06-06 23:59:29.993
+~~END~~
+
 
 -- Test date
 select CAST(CAST('1999-12-31' AS date) AS datetime)
 go
+~~START~~
+datetime
+1999-12-31 00:00:00.0
+~~END~~
+
 select CAST(CAST('2000-01-01 23:59:59.999' AS datetime) AS date)
 go
+~~START~~
+date
+2000-01-01
+~~END~~
+
 -- out of range
 select CAST(CAST('1752-12-31' AS date) AS datetime)
 go
+~~START~~
+datetime
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 -- Test time
 select CAST(CAST('00:00:00.000' AS time) AS datetime)
 go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 select CAST(CAST('23:59:59.999' AS time) AS datetime)
 go 
 select CAST(CAST('23:59:59.123456' AS time) AS datetime)
 go
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+datetime
+1900-01-01 23:59:59.123
+~~END~~
+
 select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
 go
+~~START~~
+time
+23:59:29.9980000
+~~END~~
+
 select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
 go
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
 select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
 go
+~~START~~
+time
+23:59:29.9980000
+~~END~~
+
 
 -- Test smalldatetime
 select CAST(CAST('2000-06-06 23:59:29.998' AS datetime) AS smalldatetime)
 go
+~~START~~
+smalldatetime
+2000-06-06 23:59:00.0
+~~END~~
+
 select CAST(CAST('2020-03-15 23:59:29.997' AS smalldatetime) AS datetime)
 go
+~~START~~
+datetime
+2020-03-15 23:59:00.0
+~~END~~
+
 select CAST(CAST('2020-03-15 23:59:29.999' AS smalldatetime) AS datetime)
 go
+~~START~~
+datetime
+2020-03-16 00:00:00.0
+~~END~~
+
 -- out of range
 select CAST(CAST('3000-06-06 23:59:29.998' AS datetime) AS smalldatetime)
 go
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
 
 -- Test datetimeoffset
 select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetimeoffset)
 go
+~~START~~
+datetimeoffset
+2020-03-15 23:59:29.9900000 +00:00
+~~END~~
+
 select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime)
 go
+~~START~~
+datetime
+2079-06-06 23:59:29.997
+~~END~~
+
 select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime)
 go
+~~START~~
+datetime
+2079-06-06 23:59:29.997
+~~END~~
+
 select CAST(CAST('2079-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime)
 go
+~~START~~
+datetime
+2079-06-06 23:59:12.347
+~~END~~
+
 -- out of range
 select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime)
 go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 -- Test datetime value ranges
 select cast('1753-01-01' as datetime)
 go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 select cast('9999-12-31' as datetime)
 go
+~~START~~
+datetime
+9999-12-31 00:00:00.0
+~~END~~
+
 select cast('1753-01-01 00:00:00' as datetime)
 go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 select cast('9999-12-31 23:59:29.998' as datetime)
 go
+~~START~~
+datetime
+9999-12-31 23:59:29.997
+~~END~~
+
 -- out of range
 select cast('1752-12-31' as datetime)
 go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 -- out of range
 select cast('10000-00-00' as datetime)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "10000-00-00")~~
+
 select cast('9999-12-31 23:59:29.999' as datetime)
 go
+~~START~~
+datetime
+9999-12-31 23:59:30.0
+~~END~~
+
+
 -- out of range
 select cast('1752-12-31 23:59:29.999' as datetime)
 go 
 -- out of range
 select cast('2021-12-31 23:59:29.1234567' as datetime)
 go 
-
 -- Test datetime as parameter for time related functions
 select day(cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
 select month(cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+5
+~~END~~
+
 select year(cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+2002
+~~END~~
+
 select datepart(quarter, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+2
+~~END~~
+
 select datepart(hour, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+23
+~~END~~
+
 select datepart(dayofyear, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+143
+~~END~~
+
 select datepart(second, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+int
+29
+~~END~~
+
 select datename(year, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+text
+2002
+~~END~~
+
 select datename(dw, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+text
+Thursday
+~~END~~
+
 select datename(month, cast('2002-05-23 23:41:29.998' as datetime))
 go
+~~START~~
+text
+May
+~~END~~
+
 select dateadd(second, 56, cast('2016-12-26 23:29:29' as datetime))
 go
+~~START~~
+datetime
+2016-12-26 23:30:25.0
+~~END~~
+
 select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime))
 go
+~~START~~
+datetime
+2016-12-26 23:29:29.057
+~~END~~
+
 select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime))
 go
+~~START~~
+datetime
+2016-12-27 00:25:29.0
+~~END~~
+
 -- out of range
 select dateadd(year, 150, cast('9900-12-26 23:29:29' as datetime))
 go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: Adding a value to a 'datetime' column caused an overflow.)~~
+
 -- Test data type precedence TODO Fix [BABEL-883] missing TDS support for type regtype (was pg_typeof produces error in sqlcmd)
 select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime) as C1 UNION SELECT cast('2016-12-26 23:30:05' as smalldatetime) as C1) T
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
 select pg_typeof(c1) FROM (SELECT '2016-12-26 23:30:05'::datetime as C1 UNION SELECT '2016-12-26 23:30:05'::datetime2 as C1) T
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 55)~~
+
 select pg_typeof(c1) FROM (SELECT '2016-12-26 23:30:05'::datetime as C1 UNION SELECT '2016-12-26 23:30:05 +08:00:00'::datetimeoffset as C1) T
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 55)~~
+
 select pg_typeof(c1) FROM (SELECT '2016-12-26 23:30:05'::datetime as C1 UNION SELECT '23:30:05'::time as C1) T
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 55)~~
+
 select pg_typeof(c1) FROM (SELECT '2016-12-26 23:30:05'::datetime as C1 UNION SELECT '2016-12-26'::date as C1) T
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ':' at line 1 and character position 55)~~
+
 
 -- Test Varbinary to Datetime conversion using CAST
 -- Min value
 SELECT CAST(0xFFFF2E4600000000 AS DateTime);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 
 -- Max value
 SELECT CAST(0x002D247F018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
 
 -- One tick after min value
 SELECT CAST(0xFFFF2E4600000001 AS DateTime);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.003
+~~END~~
+
 
 -- One tick before max value
 SELECT CAST(0x002D247F018B81FE AS DateTime);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.993
+~~END~~
+
 
 -- Early date
 SELECT CAST(0x00000C8F00000000 AS DateTime);
 GO
+~~START~~
+datetime
+1908-10-21 00:00:00.0
+~~END~~
+
 
 -- Late date
 SELECT CAST(0x0000BC1E00000000 AS DateTime);
 GO
+~~START~~
+datetime
+2031-11-08 00:00:00.0
+~~END~~
+
 
 -- FractionalSecond
 SELECT CAST(0x0000B02200000001 AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.003
+~~END~~
+
 
 SELECT CAST(0x0000B0220000007F AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.423
+~~END~~
+
 
 SELECT CAST(0x0000B022000000FF AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.85
+~~END~~
+
 
 -- 4-byte varbinary
 SELECT CAST(0x0000B022 AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 00:02:30.3
+~~END~~
+
 
 -- 12-byte varbinary
 SELECT CAST(0x0000B022018B81FF0000B022 AS DateTime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 -- Before min value
 SELECT CAST(0xFFFF2E4500000000 AS DateTime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 -- After max value
 SELECT CAST(0x002D247F018B8200 AS DateTime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 -- February 28th on a leap year
 SELECT CAST(0x00008EE600C5C100 AS DateTime);
 GO
+~~START~~
+datetime
+2000-02-28 12:00:00.0
+~~END~~
+
 
 -- February 29th on a leap year
 SELECT CAST(0x00008EE700C5C100 AS DateTime);
 GO
+~~START~~
+datetime
+2000-02-29 12:00:00.0
+~~END~~
+
 
 -- March 1st on a leap year
 SELECT CAST(0x00008F0600C5C100 AS DateTime);
 GO
+~~START~~
+datetime
+2000-03-31 12:00:00.0
+~~END~~
+
 
 -- Last moment of 1999
 SELECT CAST(0x00008EAB018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+1999-12-31 23:59:59.997
+~~END~~
+
 
 -- First moment of 2000
 SELECT CAST(0x00008EAC00000001 AS DateTime);
 GO
+~~START~~
+datetime
+2000-01-01 00:00:00.003
+~~END~~
+
 
 -- time precision
 SELECT CAST(0x0000B02200EF28C1 AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 14:30:45.123
+~~END~~
+
 SELECT CAST(0x0000B02200EF28C0 AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 14:30:45.12
+~~END~~
+
 SELECT CAST(0x00008EE700C5C100 AS DateTime);
 GO
+~~START~~
+datetime
+2000-02-29 12:00:00.0
+~~END~~
+
 
 -- basic tests
 SELECT CAST(0x002D247F018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
 SELECT CAST(0x0000B022018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+2023-06-15 23:59:59.997
+~~END~~
+
 SELECT CAST(0x0000B0E9018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+2023-12-31 23:59:59.997
+~~END~~
+
 
 -- different input size for cast
 SELECT CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2E4600000000 AS DateTime);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 
 SELECT CAST(0x1018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-02 23:59:59.997
+~~END~~
+
 
 SELECT CAST(0x11018B81FF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-18 23:59:59.997
+~~END~~
+
 
 SELECT CAST(0xFFF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 00:00:13.65
+~~END~~
+
 
 SELECT CAST(0xF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 00:00:00.05
+~~END~~
+
 
 SELECT CAST(0xFFFF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 00:03:38.45
+~~END~~
+
 
 SELECT CAST(0xFFFFFF  AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 15:32:04.05
+~~END~~
+
 
 SELECT CAST(0x1FFFFFF AS DateTime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 SELECT CAST(0x100FFFFFF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CAST(CAST(0x100FFFFFF AS VARBINARY(MAX)) AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CAST(0xFFFF235FFF0000000100FFFFFF AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CAST(CAST(0xFFFF235FFF0000000100FFFFFF AS VARBINARY(MAX)) AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CAST(CAST(0x0 as VARBINARY(MAX)) AS DateTime);
 GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 
 -- Test Varbinary to Datetime conversion using CONVERT
 -- Min value
 SELECT CONVERT(DateTime, 0xFFFF2E4600000000);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 
 -- Max value
 SELECT CONVERT(DateTime, 0x002D247F018B81FF);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
 
 -- One tick after min value
 SELECT CONVERT(DateTime, 0xFFFF2E4600000001);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.003
+~~END~~
+
 
 -- One tick before max value
 SELECT CONVERT(DateTime, 0x002D247F018B81FE);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.993
+~~END~~
+
 
 -- Early date
 SELECT CONVERT(DateTime, 0x00000C8F00000000);
 GO
+~~START~~
+datetime
+1908-10-21 00:00:00.0
+~~END~~
+
 
 -- Late date
 SELECT CONVERT(DateTime, 0x0000BC1E00000000);
 GO
+~~START~~
+datetime
+2031-11-08 00:00:00.0
+~~END~~
+
 
 -- FractionalSecond
 SELECT CONVERT(DateTime, 0x0000B02200000001);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.003
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x0000B0220000007F);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.423
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x0000B022000000FF);
 GO
+~~START~~
+datetime
+2023-06-15 00:00:00.85
+~~END~~
+
 
 -- 4-byte varbinary
 SELECT CONVERT(DateTime, 0x0000B022);
 GO
+~~START~~
+datetime
+1900-01-01 00:02:30.3
+~~END~~
+
 
 -- 12-byte varbinary
 SELECT CONVERT(DateTime, 0x0000B022018B81FF0000B022);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
 
 -- Before min value
 SELECT CONVERT(DateTime, 0xFFFF2E4500000000);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
 
 -- After max value
 SELECT CONVERT(DateTime, 0x002D247F018B8200);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
 
 -- February 28th on a leap year
 SELECT CONVERT(DateTime, 0x00008EE600C5C100);
 GO
+~~START~~
+datetime
+2000-02-28 12:00:00.0
+~~END~~
+
 
 -- February 29th on a leap year
 SELECT CONVERT(DateTime, 0x00008EE700C5C100);
 GO
+~~START~~
+datetime
+2000-02-29 12:00:00.0
+~~END~~
+
 
 -- March 1st on a leap year
 SELECT CONVERT(DateTime, 0x00008F0600C5C100);
 GO
+~~START~~
+datetime
+2000-03-31 12:00:00.0
+~~END~~
+
 
 -- Last moment of 1999
 SELECT CONVERT(DateTime, 0x00008EAB018B81FF);
 GO
+~~START~~
+datetime
+1999-12-31 23:59:59.997
+~~END~~
+
 
 -- First moment of 2000
 SELECT CONVERT(DateTime, 0x00008EAC00000001);
 GO
+~~START~~
+datetime
+2000-01-01 00:00:00.003
+~~END~~
+
 
 -- time precision
 SELECT CONVERT(DateTime, 0x0000B02200EF28C1);
 GO
+~~START~~
+datetime
+2023-06-15 14:30:45.123
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x0000B02200EF28C0);
 GO
+~~START~~
+datetime
+2023-06-15 14:30:45.12
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x00008EE700C5C100);
 GO
+~~START~~
+datetime
+2000-02-29 12:00:00.0
+~~END~~
+
 
 -- basic tests
 SELECT CONVERT(DateTime, 0x002D247F018B81FF);
 GO
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x0000B022018B81FF);
 GO
+~~START~~
+datetime
+2023-06-15 23:59:59.997
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x0000B0E9018B81FF);
 GO
+~~START~~
+datetime
+2023-12-31 23:59:59.997
+~~END~~
+
 
 -- different input size for convert
 SELECT CONVERT(DateTime, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2E4600000000);
 GO
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x1018B81FF);
 GO
+~~START~~
+datetime
+1900-01-02 23:59:59.997
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x11018B81FF);
 GO
+~~START~~
+datetime
+1900-01-18 23:59:59.997
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0xFFF);
 GO
+~~START~~
+datetime
+1900-01-01 00:00:13.65
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0xF);
 GO
+~~START~~
+datetime
+1900-01-01 00:00:00.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0xFFFF);
 GO
+~~START~~
+datetime
+1900-01-01 00:03:38.45
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0xFFFFFF);
 GO
+~~START~~
+datetime
+1900-01-01 15:32:04.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0x1FFFFFF);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
 
 SELECT CONVERT(DateTime, 0x100FFFFFF);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, CAST(0x100FFFFFF AS VARBINARY(MAX)));
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, 0xFFFF235FFF0000000100FFFFFF);
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, CAST(0xFFFF235FFF0000000100FFFFFF AS VARBINARY(MAX)));
 GO
+~~START~~
+datetime
+1900-01-02 15:32:04.05
+~~END~~
+
 
 SELECT CONVERT(DateTime, CAST(0x0 as VARBINARY(MAX)));
 GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
 
 -- NULL tests
 SELECT CAST(NULL AS DateTime);
 GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
 
 SELECT CONVERT(DateTime, NULL);
 GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
 
 -- negative tests
 SELECT CAST(0x11111111 AS Datetime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 SELECT CAST(0xFFFFFFFF AS Datetime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 SELECT CAST(0x0101010101010101 AS Datetime);
 GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
 
 SELECT CAST(CAST(0x00008EE600C5C100 AS VARBINARY(0)) AS DateTime);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: length for type varbinary must be at least 1)~~
+
 
 SELECT * from babel_datetime_vu_view1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_vu_view1" does not exist)~~
+
 
 SELECT * from babel_datetime_vu_view2;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_datetime_vu_view2" does not exist)~~
+
 
 SELECT CONVERT(DateTime, cast(0x0 as binary));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Explicit conversion from data type "binary" to datetime is not allowed.)~~
+
 
 EXEC babel_datetime_vu_procedure
 GO
+~~START~~
+datetime
+2000-02-29 12:00:00.0
+~~END~~
+
 
 SELECT babel_datetime_vu_function1(0x0000B02200EF28C1)
 GO
+~~START~~
+varchar
+2023-06-15 14:30:45.123
+~~END~~
+

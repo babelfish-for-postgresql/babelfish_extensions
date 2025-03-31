@@ -47,44 +47,64 @@ go
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B022)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C0)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x00008EE700C5C100)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0xFFFF2E4600000000)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C1)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B81FF)
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B8200)
 go
-~~ERROR (Code: 517)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetime)~~
+~~ERROR (Message: column "dt" is of type datetime but expression is of type varbinary)~~
 
 
 create view babel_datetime_vu_view1
 as
 	select cast(0x0000B02200EF28C1 as datetime)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to datetime)~~
+
 
 create view babel_datetime_vu_view2
 as
 	select cast(0x00008EE700C5C100 as datetime)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to datetime)~~
+
 
 CREATE PROCEDURE babel_datetime_vu_procedure
 AS
