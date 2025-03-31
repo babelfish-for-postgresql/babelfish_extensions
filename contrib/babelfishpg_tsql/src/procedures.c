@@ -119,14 +119,14 @@ const uint32         XML_HANDLE_START = 0;
 const uint32         XML_HANDLE_INVALID = 0x80000000; 
 const uint32         MAX_XML_HANDLES_PER_SESSION = 4000;  /* Maximum xml handles per session (size of hash table)*/ 
 static int           current_xml_handle;
-uint32		         get_next_xml_handle(void);
+uint32     	         get_next_xml_handle(void);
 void                 pltsql_create_xml_handle_htab(void);
 void                 pltsql_delete_xml_handle_entry(uint32 handle);
 uint32               pltsql_insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int32 xml_data_length, int32 ns_data_length);
 
 typedef struct XMLHandleHashEnt           /* Entries of hash table */
 {
-	uint32		document_id;
+	uint32      document_id;
 	uint32      namespace_id;
 	uint32      original_document_size_bytes;
 	uint32      original_namespace_document_size_bytes;
@@ -4323,20 +4323,25 @@ uint32
 get_next_xml_handle()
 {
     uint32 old_handle = current_xml_handle;
+	uint32 current_doc_id;
 
     while (true)
     {
         ++current_xml_handle;
+		current_doc_id = 2*current_xml_handle -1;
         
-        if (current_xml_handle == XML_HANDLE_INVALID)
+        if (current_xml_handle == XML_HANDLE_INVALID || current_xml_handle > MAX_XML_HANDLES_PER_SESSION )
+		{
             current_xml_handle = XML_HANDLE_START + 1;
+			current_doc_id = 2*current_xml_handle -1;
+		}
             
         if (unlikely(current_xml_handle == old_handle))
             elog(ERROR, "out of XML handles");
             
-        if (hash_search(XMLHandleHashTable, &current_xml_handle, 
+        if (hash_search(XMLHandleHashTable, &current_doc_id, 
                        HASH_FIND, NULL) == NULL)
-            break;  /* found */
+            break;  /* handle not found */
     }
 
     return current_xml_handle;
@@ -4386,7 +4391,7 @@ uint32 pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data,
     hentry->xml_data = xml_data;
     hentry->ns_data = ns_data;
     hentry->document_id = document_id;
-	hentry->original_document_size_bytes = xml_data_length;  /* store the size of the xml text and xpath namespaces */
+   	hentry->original_document_size_bytes = xml_data_length;  /* store the size of the xml text and xpath namespaces */
     hentry->original_namespace_document_size_bytes = ns_data_length;
     
     if (ns_data_length > 0)
@@ -4413,7 +4418,6 @@ void pltsql_delete_xml_handle_entry(uint32 document_id)
     if (hentry == NULL)
     {
         ereport(ERROR, errmsg("Could not find prepared statement with handle %d", document_id));
-        return;
     }
 
     /* Remove the entry from hash table */
@@ -4458,10 +4462,10 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     bool      is_xml_text_well_formed;
     bool      is_xpath_namespaces_well_formed;
     xmltype  *xml_data;
-	xmltype  *ns_data;
+    xmltype  *ns_data;
     int32     document_id;
-	int32     xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
-	int32     ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
+    int32     xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
+    int32     ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
     
     HeapTuple        tuple;
     HeapTupleHeader  result;

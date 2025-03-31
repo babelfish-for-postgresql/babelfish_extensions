@@ -5263,7 +5263,7 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
-	check_pltsql_support_tsql_transactions_hook =  pltsql_support_tsql_transactions;
+	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
 	inited = true;
 }
