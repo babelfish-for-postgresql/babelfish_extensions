@@ -13,7 +13,7 @@ DECLARE
     query2 text;
 BEGIN
 
-    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query1 := pg_catalog.format('alter extension spatial_types drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
     execute query1;
@@ -25,6 +25,9 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
 end
 $$
 LANGUAGE plpgsql;
@@ -33,7 +36,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.stgeomfromtext_helper(text, integer) RENAME TO stgeomfromtext_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.stgeomfromtext_helper(text, integer) RENAME TO stgeomfromtext_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -42,13 +45,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeomfromtext_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeomfromtext_helper_deprecated_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.stgeogfromtext_helper(text, integer) RENAME TO stgeogfromtext_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.stgeogfromtext_helper(text, integer) RENAME TO stgeogfromtext_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -57,7 +60,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeogfromtext_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stgeogfromtext_helper_deprecated_5_2_0');
 
 DO $$
 DECLARE
@@ -72,13 +75,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOMETRY_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOMETRY_helper_deprecated_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.GEOGRAPHY_helper(bytea) RENAME TO GEOGRAPHY_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.GEOGRAPHY_helper(bytea) RENAME TO GEOGRAPHY_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -87,13 +90,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOGRAPHY_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GEOGRAPHY_helper_deprecated_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.bytea_helper(sys.GEOMETRY) RENAME TO bytea_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.bytea_helper(sys.GEOMETRY) RENAME TO bytea_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -102,13 +105,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helper_deprecated_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.bytea_helper(sys.GEOGRAPHY) RENAME TO bytea_helperg_deprecated_5_0_0;
+    ALTER FUNCTION sys.bytea_helper(sys.GEOGRAPHY) RENAME TO bytea_helperg_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -117,13 +120,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helperg_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bytea_helperg_deprecated_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.get_valid_srids() RENAME TO get_valid_srids_5_0_0;
+    ALTER FUNCTION sys.get_valid_srids() RENAME TO get_valid_srids_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -132,13 +135,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_valid_srids_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_valid_srids_5_2_0');
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.GeogPoint_helper(float8, float8, srid integer) RENAME TO GeogPoint_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.GeogPoint_helper(float8, float8, srid integer) RENAME TO GeogPoint_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -147,14 +150,14 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GeogPoint_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'GeogPoint_helper_deprecated_5_2_0');
 
 
 DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.STAsBinary_helper(sys.GEOGRAPHY) RENAME TO STAsBinary_helper_deprecated_5_0_0;
+    ALTER FUNCTION sys.STAsBinary_helper(sys.GEOGRAPHY) RENAME TO STAsBinary_helper_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -163,7 +166,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'STAsBinary_helper_deprecated_5_0_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'STAsBinary_helper_deprecated_5_2_0');
 
 -- STDimension
 -- Retrieves spatial dimension

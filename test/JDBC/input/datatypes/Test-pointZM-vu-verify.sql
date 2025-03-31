@@ -1,4 +1,83 @@
+-- STGeomFromText tests
+SELECT geography::STGeomFromText('POINT(45 90)', 4326);
+GO
 
+SELECT geography::STGeomFromText('POINT(45 90 30)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90 NULL)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90 30 1)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90 NULL 1)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90 30 NULL)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90 NULL NULL)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT EMPTY', 4326);
+GO
+
+SELECT geography::STGeomFromText(NULL, 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(45 90)', NULL);
+GO
+
+-- STPointFromText tests
+SELECT geography::STPointFromText('POINT(45 90)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 30)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 NULL)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 30 1)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 NULL 1)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 30 NULL)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90 NULL NULL)', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT EMPTY', 4326);
+GO
+
+SELECT geography::STPointFromText(NULL, 4326);
+GO
+
+-- Geography::Point constructor tests
+SELECT geography::Point(90, 45, 4326);
+GO
+
+SELECT geography::Point(90, 45, 4121);
+GO
+
+SELECT geography::Point(90, 45, 4122);
+GO
+
+SELECT geography::Point(90, 45, 0);
+GO
+
+SELECT geography::Point(90, 45, NULL);
+GO
+
+SELECT geography::Point(NULL, 45, 4326);
+GO
+
+SELECT geography::Point(90, NULL, 4326);
+GO
 
 -- Test with zero values
 SELECT geometry::STGeomFromText('POINT(0 0)', 4326);
@@ -45,9 +124,14 @@ GO
 SELECT geography::STGeomFromText('  POINT  (  1  1  )  ', 4326);
 GO
 
+SELECT geography::STGeomFromText('  POINT  (  1  1  NULL 1  )  ', 4326);
+GO
+
+SELECT geography::STGeomFromText('  POINT  (  1  1  1       NULL )  ', 4326);
+GO
 
 -- Test case sensitivity
-SELECT geometry::STGeomFromText('point(1 1)', 4326);
+SELECT geometry::STGeomFromText('point(1 1 NULL 1)', 4326);
 GO
 
 SELECT geometry::STGeomFromText('Point (1 1 1)', 4326);
@@ -83,6 +167,9 @@ SELECT geometry::STGeomFromText('POINT(1 1)', NULL);
 GO
 
 SELECT geography::STGeomFromText('POINT(1 1)', NULL);
+GO
+
+SELECT geography::STPointFromText('POINT(45 90)', NULL);
 GO
 
 -- Test with unsupported geometry instances (these should raise errors)

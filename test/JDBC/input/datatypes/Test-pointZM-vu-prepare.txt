@@ -65,19 +65,19 @@ CREATE VIEW ValidGeometry AS SELECT location.STIsValid() FROM GEOSPATIALPOINTGEO
 
 CREATE VIEW ClosedGeometry AS SELECT location.STIsClosed() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
 
-CREATE VIEW DisjointTempGeom AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW DisjointTempGeom AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
-CREATE VIEW DistanceTempGeom AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW DistanceTempGeom AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
-CREATE VIEW IntersectsTempGeom AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW IntersectsTempGeom AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
-CREATE VIEW EqualsTempGeom AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW EqualsTempGeom AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
-CREATE VIEW ContainTempGeom AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW ContainTempGeom AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
 
-CREATE VIEW equals_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location;
+CREATE VIEW equals_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
 
-CREATE VIEW notequal_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW notequal_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
 
 
 CREATE TABLE geometryAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
@@ -299,9 +299,9 @@ CREATE VIEW EqualsTempGeog AS SELECT p1.location.STEquals(p2.location) AS equals
 
 CREATE VIEW ContainsTempGeog AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
 
-CREATE VIEW equal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location = p2.location;
+CREATE VIEW equal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.Lat;
 
-CREATE VIEW notequal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location <> p2.location;
+CREATE VIEW notequal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
 
 
 CREATE TABLE GeographyAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
