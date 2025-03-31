@@ -3788,12 +3788,17 @@ GO
 
 ~~ERROR (Message: database "db2" does not exist)~~
 
+
 CREATE TABLE SpatialData
 (
     SpatialPoint GEOMETRY,
     PrimaryKey INT
 );
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "spatialdata" already exists)~~
+
 
 INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
 VALUES
