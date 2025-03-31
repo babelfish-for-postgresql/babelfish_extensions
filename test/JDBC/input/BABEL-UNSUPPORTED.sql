@@ -515,6 +515,34 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
 
+-- escape hatch: INLINE
+-- 'strict' is default, check if throws error when INLINE is used
+
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f1](@input INT)
+RETURNS INT WITH INLINE = ON
+AS
+BEGIN
+    RETURN @input * 2
+END
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore', 'false')
+GO
+
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f2](@input INT)
+RETURNS INT WITH INLINE = OFF
+AS
+BEGIN
+    RETURN @input * 3
+END
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[t_unsupported_inline_function_f2];
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'strict', 'false')
+GO
+
 
 -- escape hatch: schemabinding.
 -- 'ignore' is by default. test if an error is thrown in strict mode if it is not explicitly given

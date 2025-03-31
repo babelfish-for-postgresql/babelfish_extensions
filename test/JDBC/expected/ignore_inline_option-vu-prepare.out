@@ -1,3 +1,6 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore';
+GO
+
 -- Basic function with INLINE = ON
 CREATE FUNCTION [dbo].[TestInlineOn](@input INT)
 RETURNS INT WITH INLINE = ON
@@ -168,3 +171,6 @@ INSERT INTO TestTable VALUES (1), (2), (3)
 GO
 ~~ROW COUNT: 3~~
 
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_inline_function_option', 'strict';
+GO
