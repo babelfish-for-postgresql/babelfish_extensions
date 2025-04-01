@@ -436,7 +436,7 @@ numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testnumeric_vu_prepare_tab1;
 ~~START~~
 numeric
-1879323.222200
+1879323.222200000000
 ~~END~~
 
 
@@ -444,7 +444,7 @@ numeric
 select in1 * in2 from testnumeric_vu_prepare_tab2;
 ~~START~~
 numeric
-4479974566122.335814
+4479974566122.335815
 ~~END~~
 
 
@@ -452,7 +452,7 @@ numeric
 select in4 * in5 from testnumeric_vu_prepare_tab2;
 ~~START~~
 numeric
-80367.255
+80367.256
 ~~END~~
 
 

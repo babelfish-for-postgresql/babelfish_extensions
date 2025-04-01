@@ -426,7 +426,11 @@ tsql_special_function_t tsql_special_function_list[] =
 	{"sys", "lower", "lower", false, 1},
 	{"sys", "upper", "upper", false, 1},
 	{"sys", "concat", "concat", true, 0},
-	{"sys", "concat_ws", "concat_ws", true, 1}
+	{"sys", "concat_ws", "concat_ws", true, 1},
+
+	/* Since sql server round() function can take either 2 or 3 parameters, it doesn't fit into case of variable length of paraemters */
+	{"sys", "round", "round", false, 2},
+	{"sys", "round", "round", false, 3}
 };
 
 #define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
@@ -1353,6 +1357,48 @@ tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_t
 			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bbf_varbinary");
 		}
 	}
+	/* The return type of sys.round() will be based on input argument type */
+	else if (strlen(proc_name) == 5 && strncmp(proc_name, "round", 5) == 0)
+	{
+		/*
+		 * 2 and 3 are the only valid options for nargs of sys.round() in sql server 2022 (version 16), but since the version supported here
+		 * is version 12, will follow the existing behavior.
+		 * The existing behavior throws error message if nargs is not from 1 to 3.
+		 */
+		if (nargs == 2 || nargs == 3)
+		{
+			/* tinyint, smallint and int will have return type int */
+			if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(new_input_typeids[0])
+			|| (new_input_typeids[0] == INT2OID)
+			|| (new_input_typeids[0] == INT4OID))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
+			}
+			/* bigint will have return type bigint */
+			else if (new_input_typeids[0] == INT8OID)
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
+			}
+			/* decimal and numeric(p,s) will have return type decimal(p,s) */
+			else if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype)(new_input_typeids[0])
+			|| (new_input_typeids[0] == NUMERICOID))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("decimal");
+			}
+			/* money and smallmoney will have return type money */
+			else if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(new_input_typeids[0]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("money");
+			}
+			/* float and real will have return type float */
+			/* in all other cases it will default to float data type */
+			else
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("float");
+			}
+		}
+	}
 
 	/* free new_input_typeids, as they are no longer needed */
 	if (new_input_typeids)
@@ -2036,6 +2082,18 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 	return commontype;
 }
 
+static bool
+is_tsql_exact_numeric_type(Oid type)
+{
+	Oid basetype = getBaseType(type);
+	return	basetype == INT2OID ||
+			basetype == INT4OID ||
+			basetype == INT8OID ||
+			basetype == NUMERICOID ||
+			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (basetype)) ||
+			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (basetype));
+}
+
 /* 
  * When we must merge types together (i.e. UNION, CASE), if the target 
  * type is CHAR, NCHAR, BINARY, NUMERIC or DECIMAL make the typmod 
@@ -2088,9 +2146,9 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 				type = getBaseTypeAndTypmod(type, &typmod);
 			
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
-				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr);
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);
 			
-			if (typmod == -1 || getBaseType(type) != NUMERICOID)
+			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
 				continue;
 			
 			scale = (typmod - VARHDRSZ) & 0xffff;

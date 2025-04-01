@@ -1923,7 +1923,7 @@ GO
 select ROUND(NULL, -3);
 GO
 ~~START~~
-numeric
+float
 <NULL>
 ~~END~~
 

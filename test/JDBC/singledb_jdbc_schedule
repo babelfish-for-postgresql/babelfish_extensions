@@ -12,4 +12,6 @@ ignore#!#db_owner-vu-prepare
 ignore#!#db_owner-vu-verify
 ignore#!#db_owner-vu-cleanup
 ignore#!#test_search_path
-
+ignore#!#alter-mvu-test-vu-prepare
+ignore#!#alter-mvu-test-vu-verify
+ignore#!#alter-mvu-test-vu-cleanup

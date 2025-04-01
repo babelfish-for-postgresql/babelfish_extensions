@@ -52,6 +52,8 @@ create type isc_domains_vu_prepare_s.datetimeoffset_t from datetimeoffset(5)
 go
 create type isc_domains_vu_prepare_s.sql_variant_t from sql_variant
 go
+create type isc_domains_vu_prepare_s.nvarchar_json_t from nvarchar_json
+go
 
 -- Create table type
 CREATE TYPE isc_domains_vu_prepare_s.my_tbl_type AS TABLE(a INT)

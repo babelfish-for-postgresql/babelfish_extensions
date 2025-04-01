@@ -62,6 +62,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(escape_hatch_inline_function_option);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -170,7 +171,6 @@ protected:
 		antlrcpp::Any visitTable_name(TSqlParser::Table_nameContext *ctx) override;
 
 		// common clause in SELECT (and some DML)
-		antlrcpp::Any visitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override;
 		antlrcpp::Any visitFor_clause(TSqlParser::For_clauseContext *ctx) override; // FOR XML, ...
 		antlrcpp::Any visitWith_table_hints(TSqlParser::With_table_hintsContext *ctx) override;
 		antlrcpp::Any visitOption_clause(TSqlParser::Option_clauseContext *ctx) override; // query hints
@@ -326,6 +326,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 			if (!exec_as->CALLER())
 				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 		}
+		else if (option->inline_clause() && option->inline_clause()->INLINE())
+			handle(INSTR_UNSUPPORTED_TSQL_CREATE_FUNCTION_INLINE_OPTION, "INLINE", &st_escape_hatch_inline_function_option, getLineAndPos(option->inline_clause()));
 	}
 
 	if(ctx->func_body_returns_table())
@@ -485,9 +487,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
 {
-	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW, "ALTER VIEW", getLineAndPos(ctx->ALTER()));
-
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_view != EH_IGNORE)
 	{
@@ -1400,16 +1399,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 {
 	handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", &st_escape_hatch_checkpoint, getLineAndPos(ctx));
 	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
-{	
-	if (ctx->UNPIVOT())
-		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
-
-	auto ret = visitChildren(ctx);
-
-	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For_clauseContext *ctx)
