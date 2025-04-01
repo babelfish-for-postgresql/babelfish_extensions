@@ -208,6 +208,11 @@ GO
 ------------------------------------------------------------------------
 ---- 3. Overflow and Precision Loss Tests
 ------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+---- 3.1 Using Constant values and table columns
+------------------------------------------------------------------------
+
 -- Testing addition overflow with NUMERIC(1,0) - Expects overflow error when adding 9 + 1
 SELECT CAST(9 AS NUMERIC(1,0)) + CAST(1 AS NUMERIC(1,0)) AS result;
 GO
@@ -379,7 +384,177 @@ GO
 
 
 ------------------------------------------------------------------------
+---- 3.2 Using variables
+------------------------------------------------------------------------
+
+-- Testing addition overflow with NUMERIC(1,0) - Expects overflow error when adding 9 + 1
+DECLARE @num1 NUMERIC(1,0) = 9, @num2 NUMERIC(1,0) = 1;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing addition with NUMERIC(5,2) - Verifies correct handling when result reaches maximum precision (999.99 + 0.01 = 1000.00)
+DECLARE @num1 NUMERIC(5,2) = 999.99, @num2 NUMERIC(5,2) = 0.01;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing addition with NUMERIC(19,2) - Tests behavior near maximum value limits
+DECLARE @num1 NUMERIC(19,2) = 99999999999999999.99, @num2 NUMERIC(19,2) = 0.01;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing addition with maximum NUMERIC(38,0) - Verifies overflow at absolute maximum precision
+DECLARE @num1 NUMERIC(38,0) = 99999999999999999999999999999999999999, @num2 NUMERIC(38,0) = 1;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing subtraction with NUMERIC(1,0) - Expects overflow error when result exceeds negative range
+DECLARE @num1 NUMERIC(1,0) = -9, @num2 NUMERIC(1,0) = 1;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- Testing subtraction with NUMERIC(5,2) - Verifies handling of negative results with decimal places
+DECLARE @num1 NUMERIC(5,2) = -999.99, @num2 NUMERIC(5,2) = 0.01;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- Testing subtraction with NUMERIC(19,2) - Tests behavior with large negative numbers
+DECLARE @num1 NUMERIC(19,2) = -99999999999999999.99, @num2 NUMERIC(19,2) = 0.01;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- Testing multiplication with NUMERIC(1,0) - Expects overflow error when multiplying 9 * 2
+DECLARE @num1 NUMERIC(1,0) = 9, @num2 NUMERIC(1,0) = 2;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing multiplication with NUMERIC(5,2) - Verifies handling of decimal multiplication near limits
+DECLARE @num1 NUMERIC(5,2) = 999.99, @num2 NUMERIC(5,2) = 2;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing multiplication with NUMERIC(19,2) - Tests overflow with large numbers
+DECLARE @num1 NUMERIC(19,2) = 99999999999999999.99, @num2 NUMERIC(19,2) = 2;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing multiplication scale expansion - Verifies correct decimal place handling (99.99 * 99.99)
+DECLARE @num1 NUMERIC(4,2) = 99.99, @num2 NUMERIC(4,2) = 99.99;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing maximum precision multiplication - Tests behavior at maximum allowed precision
+DECLARE @num1 NUMERIC(19,0) = 9999999999999999999, @num2 NUMERIC(19,0) = 9999999999999999999;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing simple division with potential precision loss (1/3)
+DECLARE @num1 NUMERIC(5,2) = 1, @num2 NUMERIC(5,2) = 3;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- Testing division with scale expansion - Verifies decimal place handling in division
+DECLARE @num1 NUMERIC(2,0) = 10, @num2 NUMERIC(2,0) = 3;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- Testing division by zero - Verifies error handling for divide by zero operation
+DECLARE @num1 NUMERIC(5,2) = 1, @num2 NUMERIC(5,2) = 0;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- Testing casting with truncation - Verifies behavior when reducing decimal places
+DECLARE @num NUMERIC(6,3) = 123.456;
+SELECT CAST(@num AS NUMERIC(5,2)) AS result;
+GO
+
+-- Testing casting with different rounding behaviors - Compares truncation vs rounding results
+DECLARE @num NUMERIC(6,3) = 123.456;
+SELECT
+CAST(@num AS NUMERIC(5,2)) AS result_truncated,
+ROUND(@num, 2) AS result_rounded;
+GO
+
+-- Testing casting from larger to smaller precision - Verifies overflow handling
+DECLARE @num NUMERIC(10,4) = 12345.6789;
+SELECT CAST(@num AS NUMERIC(6,2)) AS result;
+GO
+
+-- TODO: CREATE JIRA
+-- Testing power function overflow - Tests behavior with large exponents
+-- DECLARE @base NUMERIC(2,0) = 10, @exp NUMERIC(2,0) = 38;
+-- SELECT POWER(@base, @exp) AS result;
+-- GO
+
+-- Testing exponential function overflow - Verifies handling of large exponential results
+DECLARE @num NUMERIC(3,0) = 100;
+SELECT EXP(@num) AS result;
+GO
+
+-- TODO: CREATE JIRA
+-- Testing overflow in complex expressions with multiple operations (multiplication, power, and division)
+-- DECLARE @num1 NUMERIC(9,2) = 9999999.99, @num2 NUMERIC(2,0) = 10, @num3 NUMERIC(3,2) = 0.01;
+-- SELECT @num1 * POWER(@num2, @num2) / @num3 AS result;
+-- GO
+
+-- Testing precision loss in addition with different scales (NUMERIC(5,2) + NUMERIC(5,3))
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,3) = 67.891;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing precision loss in multiplication with different scales (NUMERIC(4,2) * NUMERIC(5,3))
+DECLARE @num1 NUMERIC(4,2) = 12.34, @num2 NUMERIC(5,3) = 56.789;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing precision loss in division with different scales (NUMERIC(5,2) / NUMERIC(4,4))
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(4,4) = 0.0067;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- Testing boundary case for maximum precision addition with DECIMAL(38,0)
+DECLARE @num1 DECIMAL(38,0) = 9999999999999999999999999999999999999, @num2 DECIMAL(38,0) = 0;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Testing boundary case for maximum scale multiplication with DECIMAL(38,37)
+DECLARE @num1 DECIMAL(38,37) = 0.9999999999999999999999999999999999999, @num2 DECIMAL(38,37) = 0.9999999999999999999999999999999999999;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing scale change behavior in multiplication of DECIMAL values
+DECLARE @num1 DECIMAL(5,2) = 123.45, @num2 DECIMAL(4,2) = 67.89;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- Testing scale change behavior in division of DECIMAL values
+DECLARE @num1 DECIMAL(5,2) = 123.45, @num2 DECIMAL(4,2) = 67.89;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- TODO: CREATE JIRA
+-- Testing mixed type arithmetic between INTEGER and DECIMAL
+-- DECLARE @num1 INT = 2147483647, @num2 DECIMAL(2,1) = 1.1;
+-- SELECT @num1 * @num2 AS result;
+-- GO
+
+-- Testing mixed type arithmetic between FLOAT and DECIMAL
+DECLARE @num1 FLOAT = 1.79E+308, @num2 DECIMAL(2,1) = 1.1;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- TODO: CREATE JIRA
+-- Testing mixed type arithmetic between MONEY and DECIMAL
+-- DECLARE @num1 MONEY = 922337203685477.5807, @num2 DECIMAL(2,1) = 1.1;
+-- SELECT @num1 * @num2 AS result;
+-- GO
+
+
+------------------------------------------------------------------------
 ---- 4. Arithmetic Operations Tests
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+---- 4.1 Using Constant values 
 ------------------------------------------------------------------------
 -- Addition (+) operator tests
 SELECT 'Addition (+) Operator Tests' AS test_description;
@@ -660,6 +835,343 @@ SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) /
        CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) AS result;
 GO
 
+------------------------------------------------------------------------
+---- 4.2 Using variables
+------------------------------------------------------------------------
+
+-- NUMERIC + NUMERIC (Same Type)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- DECIMAL + DECIMAL (Same Type)
+DECLARE @dec1 DECIMAL(5,2) = 123.45, @dec2 DECIMAL(5,2) = 678.90;
+SELECT @dec1 + @dec2 AS result;
+GO
+
+-- NUMERIC + NUMERIC (Different Precision/Scale)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(8,3) = 6789.012;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- DECIMAL + DECIMAL (Different Precision/Scale)
+DECLARE @dec1 DECIMAL(5,2) = 123.45, @dec2 DECIMAL(8,3) = 6789.012;
+SELECT @dec1 + @dec2 AS result;
+GO
+
+-- NUMERIC + NUMERIC (Maximum Precision)
+DECLARE @num1 NUMERIC(38,0) = 9999999999999999999999999999999999999, @num2 NUMERIC(38,0) = 1;
+SELECT @num1 + @num2 AS NUMERIC(38,0) AS result;
+GO
+
+-- DECIMAL + DECIMAL (Maximum Precision)
+DECLARE @dec1 DECIMAL(38,0) = 9999999999999999999999999999999999999, @dec2 DECIMAL(38,0) = 1;
+SELECT @dec1 + @dec2 AS DECIMAL(38,0) AS result;
+GO
+
+-- NUMERIC + NUMERIC (Maximum Scale)
+DECLARE @num1 NUMERIC(38,37) = 0.9999999999999999999999999999999999999, @num2 NUMERIC(38,37) = 0.0000000000000000000000000000000000001;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- NUMERIC + INT
+DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 678;
+SELECT @num + @int AS result;
+GO
+
+-- TODO: CREATE JIRA 
+-- DECIMAL + BIGINT
+-- DECLARE @dec DECIMAL(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
+-- SELECT @dec + @bigint AS result;
+-- GO
+
+-- TODO: CREATE JIRA 
+-- NUMERIC + SMALLINT
+-- DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
+-- SELECT @num + @smallint AS result;
+-- GO
+
+-- DECIMAL + TINYINT
+DECLARE @dec DECIMAL(5,2) = 123.45, @tinyint TINYINT = 255;
+SELECT @dec + @tinyint AS result;
+GO
+
+-- NUMERIC + FLOAT
+DECLARE @num NUMERIC(5,2) = 123.45, @float FLOAT = 678.90;
+SELECT @num + @float AS result;
+GO
+
+-- DECIMAL + REAL
+DECLARE @dec DECIMAL(5,2) = 123.45, @real REAL = 678.90;
+SELECT @dec + @real AS result;
+GO
+
+-- NUMERIC + MONEY
+DECLARE @num NUMERIC(5,2) = 123.45, @money MONEY = 678.90;
+SELECT @num + @money AS result;
+GO
+
+-- DECIMAL + SMALLMONEY
+DECLARE @dec DECIMAL(5,2) = 123.45, @smallmoney SMALLMONEY = 678.90;
+SELECT @dec + @smallmoney AS result;
+GO
+
+-- NUMERIC + BIT
+DECLARE @num NUMERIC(5,2) = 123.45, @bit BIT = 1;
+SELECT @num + @bit AS result;
+GO
+
+-- Subtraction (-) operator tests
+SELECT 'Subtraction (-) Operator Tests' AS test_description;
+GO
+
+-- NUMERIC - NUMERIC (Same Type)
+DECLARE @num1 NUMERIC(5,2) = 678.90, @num2 NUMERIC(5,2) = 123.45;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- DECIMAL - DECIMAL (Same Type)
+DECLARE @dec1 DECIMAL(5,2) = 678.90, @dec2 DECIMAL(5,2) = 123.45;
+SELECT @dec1 - @dec2 AS result;
+GO
+
+-- NUMERIC - NUMERIC (Different Precision/Scale)
+DECLARE @num1 NUMERIC(8,3) = 6789.012, @num2 NUMERIC(5,2) = 123.45;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- NUMERIC - INT
+DECLARE @num NUMERIC(5,2) = 678.90, @int INT = 123;
+SELECT @num - @int AS result;
+GO
+
+-- DECIMAL - FLOAT
+DECLARE @dec DECIMAL(5,2) = 678.90, @float FLOAT = 123.45;
+SELECT @dec - @float AS result;
+GO
+
+-- NUMERIC - MONEY
+DECLARE @num NUMERIC(5,2) = 678.90, @money MONEY = 123.45;
+SELECT @num - @money AS result;
+GO
+
+-- Multiplication (*) operator tests
+SELECT 'Multiplication (*) Operator Tests' AS test_description;
+GO
+
+-- NUMERIC * NUMERIC (Same Type)
+DECLARE @num1 NUMERIC(4,2) = 12.34, @num2 NUMERIC(4,2) = 56.78;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- DECIMAL * DECIMAL (Same Type)
+DECLARE @dec1 DECIMAL(4,2) = 12.34, @dec2 DECIMAL(4,2) = 56.78;
+SELECT @dec1 * @dec2 AS result;
+GO
+
+-- NUMERIC * NUMERIC (Different Precision/Scale)
+DECLARE @num1 NUMERIC(4,2) = 12.34, @num2 NUMERIC(6,3) = 567.890;
+SELECT @num1 * @num2 AS result;
+GO
+
+-- NUMERIC * NUMERIC (Potential Overflow)
+DECLARE @num1 NUMERIC(10,0) = 9999999999, @num2 NUMERIC(10,0) = 9999999999;
+SELECT TRY_CAST(@num1 * @num2 AS NUMERIC(20,0)) AS result;
+GO
+
+-- NUMERIC * INT
+DECLARE @num NUMERIC(4,2) = 12.34, @int INT = 56;
+SELECT @num * @int AS result;
+GO
+
+-- DECIMAL * FLOAT
+DECLARE @dec DECIMAL(4,2) = 12.34, @float FLOAT = 56.78;
+SELECT @dec * @float AS result;
+GO
+
+-- NUMERIC * MONEY
+DECLARE @num NUMERIC(4,2) = 12.34, @money MONEY = 56.78;
+SELECT @num * @money AS result;
+GO
+
+-- Division (/) operator tests
+SELECT 'Division (/) Operator Tests' AS test_description;
+GO
+
+-- NUMERIC / NUMERIC (Same Type)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 2.50;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- DECIMAL / DECIMAL (Same Type)
+DECLARE @dec1 DECIMAL(5,2) = 123.45, @dec2 DECIMAL(5,2) = 2.50;
+SELECT @dec1 / @dec2 AS result;
+GO
+
+-- NUMERIC / NUMERIC (Different Precision/Scale)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(3,2) = 0.25;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- NUMERIC / NUMERIC (Small Divisor)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(3,2) = 0.01;
+SELECT @num1 / @num2 AS result;
+GO
+
+-- NUMERIC / NUMERIC (Division by Zero)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(3,2) = 0.00;
+SELECT TRY_CAST(@num1 / @num2 AS NUMERIC(10,2)) AS result;
+GO
+
+-- NUMERIC / INT
+DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 5;
+SELECT @num / @int AS result;
+GO
+
+-- DECIMAL / FLOAT
+DECLARE @dec DECIMAL(5,2) = 123.45, @float FLOAT = 5.0;
+SELECT @dec / @float AS result;
+GO
+
+-- NUMERIC / MONEY
+DECLARE @num NUMERIC(5,2) = 123.45, @money MONEY = 5.0;
+SELECT @num / @money AS result;
+GO
+
+-- Modulo (%) operator tests
+SELECT 'Modulo (%) Operator Tests' AS test_description;
+GO
+
+-- NUMERIC % NUMERIC (Same Type)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 10.00;
+SELECT @num1 % @num2 AS result;
+GO
+
+-- DECIMAL % DECIMAL (Same Type)
+DECLARE @dec1 DECIMAL(5,2) = 123.45, @dec2 DECIMAL(5,2) = 10.00;
+SELECT @dec1 % @dec2 AS result;
+GO
+
+-- NUMERIC % NUMERIC (Different Precision/Scale)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,3) = 10.500;
+SELECT @num1 % @num2 AS result;
+GO
+
+-- NUMERIC % NUMERIC (Modulo by Zero)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(3,2) = 0.00;
+SELECT TRY_CAST(@num1 % @num2 AS NUMERIC(5,2)) AS result;
+GO
+
+-- NUMERIC % INT
+DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 10;
+SELECT @num % @int AS result;
+GO
+
+-- DECIMAL % FLOAT
+DECLARE @dec DECIMAL(5,2) = 123.45, @float FLOAT = 10.0;
+SELECT @dec % @float AS result;
+GO
+
+-- NUMERIC % MONEY
+DECLARE @num NUMERIC(5,2) = 123.45, @money MONEY = 10.0;
+SELECT @num % @money AS result;
+GO
+
+-- Unary minus (-) operator tests
+SELECT 'Unary Minus (-) Operator Tests' AS test_description;
+GO
+
+-- Unary Minus NUMERIC
+DECLARE @num NUMERIC(5,2) = 123.45;
+SELECT -@num AS result;
+GO
+
+-- Unary Minus DECIMAL
+DECLARE @dec DECIMAL(5,2) = 123.45;
+SELECT -@dec AS result;
+GO
+
+-- Unary Minus Maximum Negative NUMERIC
+DECLARE @num NUMERIC(38,0) = -9999999999999999999999999999999999999;
+SELECT -@num AS result;
+GO
+
+-- Complex arithmetic expressions
+SELECT 'Complex Arithmetic Expressions' AS test_description;
+GO
+
+-- Complex Expression 1: NUMERIC + (NUMERIC * INT)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int INT = 2;
+SELECT @num1 + @num2 * @int AS result;
+GO
+
+-- Complex Expression 2: (NUMERIC + NUMERIC) * INT
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int INT = 2;
+SELECT (@num1 + @num2) * @int AS result;
+GO
+
+-- Complex Expression 3: NUMERIC + (NUMERIC / INT) - INT
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int INT = 2, @int2 INT = 50;
+SELECT @num1 + @num2 / @int - @int2 AS result;
+GO
+
+-- Complex Expression 4: (NUMERIC * NUMERIC) / (INT + INT)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @num2 NUMERIC(5,2) = 678.90, @int1 INT = 2, @int2 INT = 3;
+SELECT (@num1 * @num2) / (@int1 + @int2) AS result;
+GO
+
+-- Complex Expression 5: (NUMERIC % INT) + (NUMERIC * FLOAT)
+DECLARE @num1 NUMERIC(5,2) = 123.45, @int INT = 10, @float FLOAT = 0.5;
+SELECT @num1 % @int + @num1 * @float AS result;
+GO
+
+-- Mixed NUMERIC and DECIMAL operations
+SELECT 'Mixed NUMERIC and DECIMAL Operations' AS test_description;
+GO
+
+-- NUMERIC + DECIMAL
+DECLARE @num NUMERIC(5,2) = 123.45, @dec DECIMAL(5,2) = 678.90;
+SELECT @num + @dec AS result;
+GO
+
+-- NUMERIC - DECIMAL
+DECLARE @num NUMERIC(5,2) = 678.90, @dec DECIMAL(5,2) = 123.45;
+SELECT @num - @dec AS result;
+GO
+
+-- NUMERIC * DECIMAL
+DECLARE @num NUMERIC(4,2) = 12.34, @dec DECIMAL(4,2) = 56.78;
+SELECT @num * @dec AS result;
+GO
+
+-- NUMERIC / DECIMAL
+DECLARE @num NUMERIC(5,2) = 123.45, @dec DECIMAL(5,2) = 2.50;
+SELECT @num / @dec AS result;
+GO
+
+-- NUMERIC % DECIMAL
+DECLARE @num NUMERIC(5,2) = 123.45, @dec DECIMAL(5,2) = 10.00;
+SELECT @num % @dec AS result;
+GO
+
+-- Operations with extreme values
+SELECT 'Operations with Extreme Values' AS test_description;
+GO
+
+-- Smallest Positive NUMERIC + Smallest Positive NUMERIC
+DECLARE @num1 NUMERIC(38,37) = 0.0000000000000000000000000000000000001, @num2 NUMERIC(38,37) = 0.0000000000000000000000000000000000001;
+SELECT @num1 + @num2 AS result;
+GO
+
+-- Largest NUMERIC - Smallest Positive NUMERIC
+DECLARE @num1 NUMERIC(38,0) = 9999999999999999999999999999999999999, @num2 NUMERIC(38,37) = 0.0000000000000000000000000000000000001;
+SELECT @num1 - @num2 AS result;
+GO
+
+-- Largest NUMERIC / Largest NUMERIC
+DECLARE @num1 NUMERIC(38,0) = 9999999999999999999999999999999999999, @num2 NUMERIC(38,0) = 9999999999999999999999999999999999999;
+SELECT @num1 / @num2 AS result;
+GO
 
 ------------------------------------------------------------------------
 ---- 5. Mathematical Functions Tests
