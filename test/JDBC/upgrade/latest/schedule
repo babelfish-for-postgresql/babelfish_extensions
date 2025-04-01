@@ -574,4 +574,5 @@ BABEL-2736
 smalldatetime_date_cmp
 test_conv_money_to_varchar
 fixeddecimal_modulo
+round_return_type_test
 BABEL-NUMERIC_EXPR
