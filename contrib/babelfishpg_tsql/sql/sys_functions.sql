@@ -5018,3 +5018,21 @@ CREATE OR REPLACE AGGREGATE sys.string_agg(TEXT, TEXT) (
 CREATE OR REPLACE FUNCTION sys.pltsql_assign_var(dno INT, val ANYELEMENT)
 RETURNS ANYELEMENT
 AS 'babelfishpg_tsql', 'pltsql_assign_var' LANGUAGE C PARALLEL UNSAFE;
+
+CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;

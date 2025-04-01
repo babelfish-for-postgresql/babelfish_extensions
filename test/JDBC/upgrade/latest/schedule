@@ -611,3 +611,8 @@ unpivot
 forjson-escape
 round_return_type_test
 alter-view
+sys_credentials
+sys_server_permissions
+sys_sql_logins
+sys-login-property
+sys-fn-varbintohexsubstring
