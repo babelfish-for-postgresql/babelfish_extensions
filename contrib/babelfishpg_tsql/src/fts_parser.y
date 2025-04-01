@@ -237,7 +237,8 @@ static char
     trim(trimmedInputStr, false);
     inputLength = strlen(trimmedInputStr);
   
-    /* removing leading spaces, for the phrase enclosed in double quotes
+    /* 
+     * removing leading spaces, for the phrase enclosed in double quotes
      * search string with trailing spaces are identified as simple terms by the lexer
      */
     trim(trimmedInputStr, true);
@@ -254,7 +255,13 @@ static char
                 errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
         }
         if (outputStr[i] == ' ') {
-            /* Removing multiple spaces and * from the search string */
+            /* 
+             * Removing multiple spaces and * from the search string 
+             * If a space is encountered, we remove all the next occurances of * and spaces 
+             * before end of the input or if next word is encountered
+             * Case 1: '"word1   * * ** *"' = 'word1:*'
+             * Case 2: '"word1   * * ** * word2*"' = 'word1:*<->word2:*'
+             */
             while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
                 i++;
             }
@@ -269,6 +276,13 @@ static char
                   continue;
             }
         } else if(outputStr[i] == '*') {
+            /* 
+             * Removing multiple * and spaces from the search string 
+             * If a * is encountered, we remove all the next occurances of * and spaces 
+             * before end of the input or if next word is encountered
+             * Case 1: '"word1* * ** *"' = 'word1:*'
+             * Case 2: '"word1* * *      *** * word2*"' = 'word1:*<->word2:*'
+             */
                 while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
                     i++;
                 }

@@ -10,11 +10,6 @@
 
 all
 
-# Ignore fts-contains-before files as they don't have test cases that support prefix term support
-ignore#!#fts-contains-before-vu-prepare
-ignore#!#fts-contains-before-vu-verify
-ignore#!#fts-contains-before-vu-cleanup
-
 # TODO
 ignore#!#charindex_and_replace_CIAI_collations
 
