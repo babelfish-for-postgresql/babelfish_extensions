@@ -200,6 +200,10 @@ GO
 SELECT * FROM numeric_decimal_test_suite ORDER BY id;
 GO
 
+-- Cleanup
+DROP TABLE numeric_decimal_test_suite
+GO
+
 
 ------------------------------------------------------------------------
 ---- 3. Overflow and Precision Loss Tests
@@ -313,8 +317,10 @@ GO
 
 
 -- Testing precision loss in product calculation and aggregation
-SELECT value_a * value_b AS individual_product,
-       SUM(value_a * value_b) AS sum_of_products
+SELECT value_a,
+       value_b,
+       value_a * value_b AS individual_product,
+       SUM(value_a * value_b) OVER () AS sum_of_products
 FROM numeric_aggregate_test;
 GO
 
@@ -3342,31 +3348,25 @@ CREATE TABLE #numeric_extreme_test (
     decimal_max DECIMAL(38,10),
     decimal_min DECIMAL(38,10),
     numeric_small_scale NUMERIC(38,38),
-    decimal_small_scale DECIMAL(38,38),
-    numeric_negative_scale NUMERIC(38,-10),
-    decimal_negative_scale DECIMAL(38,-10)
+    decimal_small_scale DECIMAL(38,38)
 );
 GO
 
 -- Insert extreme values
 INSERT INTO #numeric_extreme_test (
     numeric_max, numeric_min, decimal_max, decimal_min,
-    numeric_small_scale, decimal_small_scale,
-    numeric_negative_scale, decimal_negative_scale
+    numeric_small_scale, decimal_small_scale
 )
 VALUES 
     (9999999999999999999999999999.9999999999, -9999999999999999999999999999.9999999999, 
      9999999999999999999999999999.9999999999, -9999999999999999999999999999.9999999999,
-     0.0000000000000000000000000000000000001, 0.0000000000000000000000000000000000001,
-     12345678900000000000, 12345678900000000000),
+     0.0000000000000000000000000000000000001, 0.0000000000000000000000000000000000001),
     (1234567890123456789012345678.1234567890, -1234567890123456789012345678.1234567890, 
      1234567890123456789012345678.1234567890, -1234567890123456789012345678.1234567890,
-     0.0000000000000000000000000000000000002, 0.0000000000000000000000000000000000002,
-     23456789000000000000, 23456789000000000000),
+     0.0000000000000000000000000000000000002, 0.0000000000000000000000000000000000002),
     (9876543210987654321098765432.0987654321, -9876543210987654321098765432.0987654321, 
      9876543210987654321098765432.0987654321, -9876543210987654321098765432.0987654321,
-     0.0000000000000000000000000000000000003, 0.0000000000000000000000000000000000003,
-     34567890000000000000, 34567890000000000000);
+     0.0000000000000000000000000000000000003, 0.0000000000000000000000000000000000003);
 GO
 
 -- Aggregate maximum precision/scale values
@@ -3403,19 +3403,6 @@ SELECT
 FROM #numeric_extreme_test;
 GO
 
--- Aggregate negative scale values
-SELECT 
-    SUM(numeric_negative_scale) AS sum_numeric_negative_scale,
-    SUM(decimal_negative_scale) AS sum_decimal_negative_scale,
-    AVG(numeric_negative_scale) AS avg_numeric_negative_scale,
-    AVG(decimal_negative_scale) AS avg_decimal_negative_scale,
-    MIN(numeric_negative_scale) AS min_numeric_negative_scale,
-    MIN(decimal_negative_scale) AS min_decimal_negative_scale,
-    MAX(numeric_negative_scale) AS max_numeric_negative_scale,
-    MAX(decimal_negative_scale) AS max_decimal_negative_scale
-FROM #numeric_extreme_test;
-GO
-
 -- Statistical functions with extreme values
 SELECT 
     STDEV(numeric_max) AS stdev_numeric_max,
@@ -3438,15 +3425,6 @@ SELECT
 FROM #numeric_extreme_test;
 GO
 
--- Statistical functions with negative scale values
-SELECT 
-    STDEV(numeric_negative_scale) AS stdev_numeric_negative_scale,
-    STDEV(decimal_negative_scale) AS stdev_decimal_negative_scale,
-    VAR(numeric_negative_scale) AS var_numeric_negative_scale,
-    VAR(decimal_negative_scale) AS var_decimal_negative_scale
-FROM #numeric_extreme_test;
-GO
-
 -- Aggregate functions with expressions on extreme values
 SELECT 
     SUM(numeric_max + numeric_min) AS sum_numeric_max_plus_min,
@@ -3463,9 +3441,7 @@ SELECT
     COUNT(DISTINCT decimal_max) AS count_distinct_decimal_max,
     COUNT(DISTINCT decimal_min) AS count_distinct_decimal_min,
     COUNT(DISTINCT numeric_small_scale) AS count_distinct_numeric_small_scale,
-    COUNT(DISTINCT decimal_small_scale) AS count_distinct_decimal_small_scale,
-    COUNT(DISTINCT numeric_negative_scale) AS count_distinct_numeric_negative_scale,
-    COUNT(DISTINCT decimal_negative_scale) AS count_distinct_decimal_negative_scale
+    COUNT(DISTINCT decimal_small_scale) AS count_distinct_decimal_small_scale
 FROM #numeric_extreme_test;
 GO
 
@@ -3477,10 +3453,10 @@ FROM #numeric_extreme_test
 WHERE numeric_max > 5000000000000000000000000000;
 GO
 
-
 -- Clean up
 DROP TABLE #numeric_extreme_test;
 GO
+
 ------------------------------------------------------------------------
 ---- 9. Special Case Tests
 ------------------------------------------------------------------------
@@ -4103,23 +4079,22 @@ SELECT 'DECIMAL_LARGER', CAST(123.456 AS DECIMAL(15,3))
 ORDER BY source_type;
 GO
 
--- TODO: 
----- 13.12 UNION with Calculated Columns
+-- 13.12 UNION with Calculated Columns
 -- Test: UNION with arithmetic operations
--- SELECT 
---     'CALC1' as source_type,
---     val,
---     val * 2 as doubled,
---     val / 2 as halved,
---     val + 100 as added,
---     val - 100 as subtracted
--- FROM (
---     SELECT CAST(123.45 AS NUMERIC(10,2)) as val
---     UNION
---     SELECT CAST(456.78 AS NUMERIC(10,2))
--- ) t
--- ORDER BY val;
--- GO
+SELECT 
+    'CALC1' as source_type,
+    val,
+    val * 2 as doubled,
+    val / 2 as halved,
+    val + 100 as added,
+    val - 100 as subtracted
+FROM (
+    SELECT CAST(123.45 AS NUMERIC(10,2)) as val
+    UNION
+    SELECT CAST(456.78 AS NUMERIC(10,2))
+) t
+ORDER BY val;
+GO
 
 ---- 13.13 UNION with Negative Scale
 -- Test: UNION with negative scale values
@@ -4390,15 +4365,13 @@ INSERT INTO numeric_index_test (
 (999.99, 999.9999999999, 999.99, 999, 999999, 999, 999.99, 999.99, 'CAT-3');
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'on', false)
-go
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
-go
-SELECT set_config('enable_seqscan', 'off', false)
-go
-SELECT set_config('enable_bitmapscan', 'off', false)
-go
-SET babelfish_showplan_all ON
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+SET BABELFISH_STATISTICS PROFILE ON;
 go
 
 -- Test 1: Direct NUMERIC comparison (baseline)
@@ -4522,17 +4495,569 @@ WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%';
 GO
 
 -- Reset
-SET babelfish_showplan_all OFF
-go
-SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'off', false)
-go
+SET BABELFISH_STATISTICS PROFILE OFF;
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-SELECT set_config('enable_seqscan', 'on', false)
-go
-SELECT set_config('enable_bitmapscan', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
 go
 
 -- Cleanup
 DROP TABLE numeric_index_test;
+GO
+
+
+------------------------------------------------------------------------
+---- 15.Partition Table Tests for Numeric Types
+------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NUMERIC_dt_partition_func (NUMERIC(18,2))
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        1000.00,
+        10000.00,
+        100000.00
+    );
+GO
+
+CREATE PARTITION SCHEME NUMERIC_dt_partition_scheme
+    AS PARTITION NUMERIC_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE NUMERIC_dt_partition(
+    amount NUMERIC(18,2),
+    category VARCHAR(20)
+)
+ON NUMERIC_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO NUMERIC_dt_partition (amount, category) VALUES 
+(-1000.00, 'Negative'),
+(-500.00, 'Negative'),
+(0.00, 'Zero'),
+(500.00, 'Small'),
+(1500.00, 'Medium'),
+(5000.00, 'Medium'),
+(15000.00, 'Large'),
+(50000.00, 'Large'),
+(150000.00, 'Extra Large'),
+(200000.00, 'Extra Large');
+GO
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.NUMERIC_dt_partition_func(amount) AS PartitionNumber
+FROM NUMERIC_dt_partition 
+ORDER BY PartitionNumber;
+GO
+
+-- Query to show count by partition
+SELECT $PARTITION.NUMERIC_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM NUMERIC_dt_partition
+GROUP BY $PARTITION.NUMERIC_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+
+-- Partitioned table testing for DECIMAL
+CREATE PARTITION FUNCTION DECIMAL_dt_partition_func (DECIMAL(18,2))
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        1000.00,
+        10000.00,
+        100000.00
+    );
+GO
+
+CREATE PARTITION SCHEME DECIMAL_dt_partition_scheme
+    AS PARTITION DECIMAL_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE DECIMAL_dt_partition(
+    amount DECIMAL(18,2),
+    category VARCHAR(20)
+)
+ON DECIMAL_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO DECIMAL_dt_partition (amount, category) VALUES 
+(-1000.00, 'Negative'),
+(-500.00, 'Negative'),
+(0.00, 'Zero'),
+(500.00, 'Small'),
+(1500.00, 'Medium'),
+(5000.00, 'Medium'),
+(15000.00, 'Large'),
+(50000.00, 'Large'),
+(150000.00, 'Extra Large'),
+(200000.00, 'Extra Large');
+GO
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.DECIMAL_dt_partition_func(amount) AS PartitionNumber
+FROM DECIMAL_dt_partition 
+ORDER BY PartitionNumber;
+GO
+
+-- Query to show count by partition
+SELECT $PARTITION.DECIMAL_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM DECIMAL_dt_partition
+GROUP BY $PARTITION.DECIMAL_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+
+-- Additional test for precision and scale variations
+CREATE PARTITION FUNCTION NUMERIC_PRECISE_dt_partition_func (NUMERIC(38,10))
+    AS RANGE RIGHT FOR VALUES(
+        0.0000000000,
+        1000.0000000000,
+        10000.0000000000,
+        100000.0000000000
+    );
+GO
+
+CREATE PARTITION SCHEME NUMERIC_PRECISE_dt_partition_scheme
+    AS PARTITION NUMERIC_PRECISE_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE NUMERIC_PRECISE_dt_partition(
+    amount NUMERIC(38,10),
+    category VARCHAR(20)
+)
+ON NUMERIC_PRECISE_dt_partition_scheme(amount);
+GO
+
+-- Insert test data with high precision
+INSERT INTO NUMERIC_PRECISE_dt_partition (amount, category) VALUES 
+(-1000.1234567890, 'Negative'),
+(-500.0987654321, 'Negative'),
+(0.0000000001, 'Zero'),
+(500.1111111111, 'Small'),
+(1500.2222222222, 'Medium'),
+(5000.3333333333, 'Medium'),
+(15000.4444444444, 'Large'),
+(50000.5555555555, 'Large'),
+(150000.6666666666, 'Extra Large'),
+(200000.7777777777, 'Extra Large');
+GO
+
+-- Query to show high precision amounts in each partition
+SELECT amount, category, 
+       $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount) AS PartitionNumber
+FROM NUMERIC_PRECISE_dt_partition 
+ORDER BY PartitionNumber;
+GO
+
+-- Query to show count by partition for high precision
+SELECT $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM NUMERIC_PRECISE_dt_partition
+GROUP BY $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+
+-- Cleanup
+DROP TABLE NUMERIC_dt_partition;
+DROP TABLE DECIMAL_dt_partition;
+DROP TABLE NUMERIC_PRECISE_dt_partition;
+DROP PARTITION SCHEME NUMERIC_dt_partition_scheme;
+DROP PARTITION SCHEME DECIMAL_dt_partition_scheme;
+DROP PARTITION SCHEME NUMERIC_PRECISE_dt_partition_scheme;
+DROP PARTITION FUNCTION NUMERIC_dt_partition_func;
+DROP PARTITION FUNCTION DECIMAL_dt_partition_func;
+DROP PARTITION FUNCTION NUMERIC_PRECISE_dt_partition_func;
+GO
+
+
+------------------------------------------------------------------------
+---- 16. Numeric types as default and check constraints
+------------------------------------------------------------------------
+CREATE TABLE NUMERIC_dt(
+    a NUMERIC(18,2) DEFAULT 100.00, 
+    b NUMERIC(18,2), 
+    c INT, 
+    CHECK (b > 1000.00)
+);
+GO
+
+INSERT INTO NUMERIC_dt (b,c) VALUES (1500.00, 1);
+GO
+INSERT INTO NUMERIC_dt (b,c) VALUES (500.00, 2);  -- Should fail check constraint
+GO
+
+SELECT * FROM NUMERIC_dt;
+GO
+
+DROP TABLE NUMERIC_dt;
+GO
+
+CREATE TABLE DECIMAL_dt(
+    a DECIMAL(18,2) DEFAULT 100.00, 
+    b DECIMAL(18,2), 
+    c INT, 
+    CHECK (b > 100.00)
+);
+GO
+
+INSERT INTO DECIMAL_dt (b,c) VALUES (150.00, 1);
+GO
+INSERT INTO DECIMAL_dt (b,c) VALUES (50.00, 2);  -- Should fail check constraint
+GO
+
+SELECT * FROM DECIMAL_dt;
+GO
+
+DROP TABLE DECIMAL_dt;
+GO
+
+------------------------------------------------------------------------
+---- 17. Ability to use numeric types as part of table variable
+------------------------------------------------------------------------
+DECLARE @NUMERIC_dt TABLE (
+    a NUMERIC(18,2),
+    b DECIMAL(10,4),
+    c NUMERIC(38,10)
+);
+
+INSERT INTO @NUMERIC_dt VALUES 
+(0.00, 0.0000, 0.0000000000),
+(NULL, NULL, NULL),
+(100.00, 100.0000, 100.0000000000),
+(999999999999999.99, 999999.9999, 9999999999999999999999999999.9999999999);
+
+SELECT * FROM @NUMERIC_dt;
+GO
+
+-- Select into testing
+CREATE TABLE NUMERIC_dt (
+    a NUMERIC(18,2),
+    b DECIMAL(10,4),
+    c NUMERIC(20,4),
+    d DECIMAL(12,4),
+    e NUMERIC(38,10)
+);
+GO
+
+INSERT INTO NUMERIC_dt (a, b, c, d, e)
+VALUES
+(NULL, NULL, NULL, NULL, NULL),
+(0.00, 0.0000, 0.0000, 0.0000, 0.0000000000),
+(NULL, 0.0000, NULL, 0.0000, NULL),
+(0.00, NULL, 0.0000, NULL, 0.0000000000),
+(100.00, 100.0000, 1000.0000, 100.0000, 10000.0000000000),
+(250.50, 200.5000, 2500.5000, 200.5000, 25000.5000000000),
+(500.75, 300.7500, 5000.7500, 300.7500, 50000.7500000000),
+(750.25, 400.2500, 7500.2500, 400.2500, 75000.2500000000),
+(1000.00, 500.0000, 10000.0000, 500.0000, 100000.0000000000),
+(-100.00, -100.0000, -1000.0000, -100.0000, -10000.0000000000),
+(999999999999999.99, 9999.9999, 99999999.9999, 99999.9999, 9999999999999999999999999999.9999999999),
+(-999999999999999.99, -9999.9999, -99999999.9999, -99999.9999, -9999999999999999999999999999.9999999999),
+(1234.56, 123.4567, 12345.6789, 123.4567, 123456.7890000000),
+(9999.99, 999.9999, 99999.9999, 999.9999, 999999.9999000000);
+GO
+
+SELECT * INTO NUMERIC_dt_derived FROM NUMERIC_dt;
+GO
+
+-- Check column attributes for derived table
+SELECT 
+    c.name AS column_name,
+    t.name AS data_type,
+    c.precision,
+    c.scale
+FROM sys.columns c
+JOIN sys.types t ON c.system_type_id = t.system_type_id
+WHERE object_id = OBJECT_ID('NUMERIC_dt_derived')
+ORDER BY column_id;
+GO
+
+-- Check column attributes for original table
+SELECT 
+    c.name AS column_name,
+    t.name AS data_type,
+    c.precision,
+    c.scale
+FROM sys.columns c
+JOIN sys.types t ON c.system_type_id = t.system_type_id
+WHERE object_id = OBJECT_ID('NUMERIC_dt')
+ORDER BY column_id;
+GO
+
+-- Additional precision/scale tests
+CREATE TABLE NUMERIC_precision_test (
+    -- Test different precision/scale combinations
+    col1 NUMERIC(5,2),   -- Small precision, standard scale
+    col2 NUMERIC(38,10), -- Maximum precision, large scale
+    col3 DECIMAL(18,0),  -- No decimal places
+    col4 DECIMAL(38,38)  -- Maximum precision and scale
+);
+GO
+
+INSERT INTO NUMERIC_precision_test VALUES
+(123.45, 12345678901234567890.1234567890, 123456789, 0.12345678901234567890123456789012345678),
+(999.99, 9999999999999999999.9999999999, 999999999, 0.99999999999999999999999999999999999999);
+
+SELECT * FROM NUMERIC_precision_test;
+GO
+
+-- Test arithmetic operations maintaining precision
+SELECT 
+    col1 * 2 AS doubled_col1,
+    col2 / 3 AS divided_col2,
+    col3 + 1 AS incremented_col3
+FROM NUMERIC_precision_test;
+GO
+
+-- Cleanup
+DROP TABLE NUMERIC_dt_derived;
+DROP TABLE NUMERIC_dt;
+DROP TABLE NUMERIC_precision_test;
+GO
+
+
+------------------------------------------------------------------------
+---- 18. Test Scenarios for COALESCE, INTERSECT, EXCEPT, VALUES, ISNULL
+------------------------------------------------------------------------
+
+-- Create test tables with varied precision/scale combinations
+CREATE TABLE numeric_test1 (
+    id INT,
+    val1 NUMERIC(5,2),    -- Small precision/scale
+    val2 NUMERIC(10,4),   -- Medium precision/scale
+    val3 NUMERIC(18,6),   -- Large precision/scale
+    val4 DECIMAL(28,8),   -- Larger precision/scale
+    val5 NUMERIC(38,10)   -- Maximum precision with large scale
+);
+
+CREATE TABLE numeric_test2 (
+    id INT,
+    val1 NUMERIC(5,2),
+    val2 NUMERIC(10,4),
+    val3 NUMERIC(18,6),
+    val4 DECIMAL(28,8),
+    val5 NUMERIC(38,10)
+);
+GO
+
+-- Insert varied test data including edge cases
+INSERT INTO numeric_test1 
+VALUES 
+    (1, 123.45, 1234.5678, 123456.789012, 12345678.90123456, 1234567890.1234567890),
+    (2, NULL, 2345.6789, NULL, 23456789.01234567, NULL),
+    (3, 345.67, NULL, 345678.901234, NULL, 3456789012.3456789012),
+    (4, -999.99, -9999.9999, -999999.999999, -99999999.99999999, -9999999999.9999999999),
+    (5, 999.99, 9999.9999, 999999.999999, 99999999.99999999, 9999999999.9999999999),
+    (6, 0.01, 0.0001, 0.000001, 0.00000001, 0.0000000001),
+    (7, NULL, NULL, NULL, NULL, NULL),
+    (8, 555.55, 5555.5555, 555555.555555, 55555555.55555555, 5555555555.5555555555);
+GO
+
+INSERT INTO numeric_test2 
+VALUES 
+    (1, 123.45, 1234.5678, 123456.789012, 12345678.90123456, 1234567890.1234567890),
+    (3, 345.67, 3456.7890, 345678.901234, 34567890.12345678, 3456789012.3456789012),
+    (5, 999.99, 9999.9999, 999999.999999, 99999999.99999999, 9999999999.9999999999),
+    (9, 777.77, 7777.7777, 777777.777777, 77777777.77777777, 7777777777.7777777777),
+    (10, -888.88, -8888.8888, -888888.888888, -88888888.88888888, -8888888888.8888888888);
+GO
+
+-- 1. Extended COALESCE Tests
+-- Test COALESCE with multiple precision combinations
+SELECT 
+    id,
+    COALESCE(val1, val2, val3, val4, val5, 0) AS coalesce_all,
+    COALESCE(val1, CAST(0 AS NUMERIC(5,2))) AS coalesce_small,
+    COALESCE(val3, CAST(0 AS NUMERIC(18,6))) AS coalesce_medium,
+    COALESCE(val5, CAST(0 AS NUMERIC(38,10))) AS coalesce_large,
+    COALESCE(val1 * 2, val2 * 2, val3 * 2) AS coalesce_arithmetic
+FROM numeric_test1
+ORDER BY id;
+GO
+
+-- 2. Extended ISNULL Tests
+-- Test ISNULL with various combinations and calculations
+SELECT 
+    id,
+    ISNULL(val1, val2) AS isnull_basic,
+    ISNULL(val1, ISNULL(val2, ISNULL(val3, 0))) AS isnull_nested,
+    ISNULL(val1 * val2, val3 * val4) AS isnull_multiplication,
+    ISNULL(val1 / NULLIF(val2, 0), 0) AS isnull_division_safe
+FROM numeric_test1
+ORDER BY id;
+GO
+
+-- 3. Extended INTERSECT Tests
+-- Test INTERSECT with various combinations
+SELECT id, val1, val2 FROM numeric_test1
+INTERSECT
+SELECT id, val1, val2 FROM numeric_test2
+ORDER BY id;
+GO
+
+SELECT id, val3, val4, val5 FROM numeric_test1
+INTERSECT
+SELECT id, val3, val4, val5 FROM numeric_test2
+ORDER BY id;
+GO
+
+-- Test INTERSECT with calculations
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test1
+INTERSECT
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test2
+ORDER BY id;
+GO
+
+-- 4. Extended EXCEPT Tests
+-- Test EXCEPT with various combinations
+SELECT id, val1, val2 FROM numeric_test1
+EXCEPT
+SELECT id, val1, val2 FROM numeric_test2
+ORDER BY id;
+GO
+
+SELECT id, val3, val4, val5 FROM numeric_test1
+EXCEPT
+SELECT id, val3, val4, val5 FROM numeric_test2
+ORDER BY id;
+GO
+
+-- Test EXCEPT with calculations
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test1
+EXCEPT
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test2
+ORDER BY id;
+GO
+
+-- 5. Extended VALUES Tests
+-- Test VALUES with different precision/scale combinations
+SELECT 
+    id,
+    n1,
+    n2,
+    n3,
+    n1 + n2 + n3 AS sum_all,
+    n1 * n2 / NULLIF(n3, 0) AS complex_calc
+FROM (
+    VALUES 
+        (1, CAST(11.11 AS NUMERIC(5,2)), CAST(11.1111 AS NUMERIC(10,4)), CAST(11.111111 AS NUMERIC(18,6))),
+        (2, CAST(22.22 AS NUMERIC(5,2)), CAST(22.2222 AS NUMERIC(10,4)), CAST(22.222222 AS NUMERIC(18,6))),
+        (3, CAST(33.33 AS NUMERIC(5,2)), CAST(33.3333 AS NUMERIC(10,4)), CAST(33.333333 AS NUMERIC(18,6))),
+        (4, CAST(-44.44 AS NUMERIC(5,2)), CAST(-44.4444 AS NUMERIC(10,4)), CAST(-44.444444 AS NUMERIC(18,6))),
+        (5, CAST(0.01 AS NUMERIC(5,2)), CAST(0.0001 AS NUMERIC(10,4)), CAST(0.000001 AS NUMERIC(18,6)))
+) AS number_variations(id, n1, n2, n3)
+ORDER BY id;
+GO
+
+-- 6. Combined Operations Tests
+-- Test complex combinations of operations
+WITH combined_calcs AS (
+    SELECT 
+        t1.id,
+        COALESCE(t1.val1, t2.val1) AS c1,
+        ISNULL(t1.val2, t2.val2) AS c2,
+        CASE 
+            WHEN t1.val3 IS NULL THEN t2.val3
+            WHEN t2.val3 IS NULL THEN t1.val3
+            ELSE (t1.val3 + t2.val3) / 2
+        END AS c3
+    FROM numeric_test1 t1
+    FULL OUTER JOIN numeric_test2 t2 ON t1.id = t2.id
+)
+SELECT 
+    id,
+    c1,
+    c2,
+    c3,
+    COALESCE(c1, c2, c3) AS final_result,
+    CASE 
+        WHEN c1 IS NOT NULL AND c2 IS NOT NULL THEN c1 * c2
+        ELSE NULL
+    END AS multiplication_result
+FROM combined_calcs
+ORDER BY id;
+GO
+
+-- 7. Mathematical Function Tests with COALESCE/ISNULL
+SELECT 
+    id,
+    COALESCE(val1, 0) AS safe_sqrt,
+    ISNULL(val1, 0) AS safe_power,
+    COALESCE(LOG10(ABS(NULLIF(val1, 0))), 0) AS safe_log,
+    ISNULL(EXP(CASE WHEN val1 < 10 THEN val1 ELSE NULL END), 0) AS safe_exp
+FROM numeric_test1
+ORDER BY id;
+GO
+
+-- 8. Aggregate Functions with COALESCE/ISNULL
+SELECT 
+    COALESCE(SUM(val1), 0) AS sum_val1,
+    ISNULL(AVG(val1), 0) AS avg_val1,
+    COALESCE(MIN(val1), 0) AS min_val1,
+    ISNULL(MAX(val1), 0) AS max_val1,
+    COUNT(COALESCE(val1, val2)) AS count_either,
+    SUM(ISNULL(val1, 0) + ISNULL(val2, 0)) AS sum_both
+FROM numeric_test1;
+GO
+
+-- 9. Window Functions with COALESCE/ISNULL
+SELECT 
+    id,
+    val1,
+    val2,
+    COALESCE(val1, LAG(val1) OVER (ORDER BY id), 0) AS coalesce_lag,
+    ISNULL(val2, LEAD(val2) OVER (ORDER BY id)) AS isnull_lead,
+    SUM(COALESCE(val1, 0)) OVER (ORDER BY id ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS running_sum
+FROM numeric_test1
+ORDER BY id;
+GO
+
+-- 10. Complex Calculations with Multiple Operations
+WITH calc_cte AS (
+    SELECT 
+        t1.id,
+        COALESCE(t1.val1, t2.val1) AS c1,
+        ISNULL(t1.val2, t2.val2) AS c2,
+        COALESCE(t1.val3, t2.val3) AS c3
+    FROM numeric_test1 t1
+    FULL OUTER JOIN numeric_test2 t2 ON t1.id = t2.id
+)
+SELECT 
+    id,
+    c1,
+    c2,
+    c3,
+    POWER(COALESCE(c1, 0), 2) + POWER(ISNULL(c2, 0), 2) AS pythagoras,
+    CASE 
+        WHEN c1 IS NOT NULL AND c2 IS NOT NULL AND c3 IS NOT NULL 
+        THEN (c1 + c2 + c3) / 3
+        ELSE COALESCE(c1, c2, c3, 0)
+    END AS complex_avg
+FROM calc_cte
+ORDER BY id;
+GO
+
+-- 11. String Conversion Tests
+SELECT 
+    id,
+    CAST(COALESCE(val1, 0) AS VARCHAR(20)) AS string_val1,
+    CAST(ISNULL(val2, 0) AS VARCHAR(20)) AS string_val2,
+    CAST(COALESCE(val3, 0) AS VARCHAR(30)) AS string_val3,
+    TRY_CAST(COALESCE(val4, 0) AS VARCHAR(40)) AS safe_string_val4
+FROM numeric_test1
+ORDER BY id;
+GO
+
+-- Cleanup
+DROP TABLE numeric_test1;
+DROP TABLE numeric_test2;
 GO

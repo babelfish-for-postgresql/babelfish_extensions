@@ -235,6 +235,10 @@ int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#nume
 ~~END~~
 
 
+-- Cleanup
+DROP TABLE numeric_decimal_test_suite
+GO
+
 
 ------------------------------------------------------------------------
 ---- 3. Overflow and Precision Loss Tests
@@ -325,7 +329,7 @@ SELECT CAST(99999999999999999.99 AS NUMERIC(19,2)) * CAST(2 AS NUMERIC(19,2)) AS
 GO
 ~~START~~
 numeric
-199999999999999999.9800
+199999999999999999.980
 ~~END~~
 
 
@@ -352,7 +356,7 @@ SELECT CAST(1 AS NUMERIC(5,2)) / CAST(3 AS NUMERIC(5,2)) AS result;
 GO
 ~~START~~
 numeric
-0.33333333333333333333
+0.33333333
 ~~END~~
 
 
@@ -361,7 +365,7 @@ SELECT CAST(10 AS NUMERIC(2,0)) / CAST(3 AS NUMERIC(2,0)) AS result;
 GO
 ~~START~~
 numeric
-3.3333333333333333
+3.333333
 ~~END~~
 
 
@@ -457,13 +461,20 @@ numeric
 
 
 -- Testing precision loss in product calculation and aggregation
-SELECT value_a * value_b AS individual_product,
-       SUM(value_a * value_b) AS sum_of_products
+SELECT value_a,
+       value_b,
+       value_a * value_b AS individual_product,
+       SUM(value_a * value_b) OVER () AS sum_of_products
 FROM numeric_aggregate_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "numeric_aggregate_test.value_a" must appear in the GROUP BY clause or be used in an aggregate function)~~
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+9999999.99#!#0.01#!#99999.9999#!#499999.99950000
+9999999.99#!#0.01#!#99999.9999#!#499999.99950000
+9999999.99#!#0.01#!#99999.9999#!#499999.99950000
+9999999.99#!#0.01#!#99999.9999#!#499999.99950000
+9999999.99#!#0.01#!#99999.9999#!#499999.99950000
+~~END~~
 
 
 -- Testing overflow in complex expressions with multiple operations (multiplication, power, and division)
@@ -500,7 +511,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.0067 AS NUMERIC(4,4)) AS result;
 GO
 ~~START~~
 numeric
-18425.373134328358
+18425.3731343
 ~~END~~
 
 
@@ -518,9 +529,10 @@ numeric
 SELECT CAST(0.9999999999999999999999999999999999999 AS DECIMAL(38,37)) * 
        CAST(0.9999999999999999999999999999999999999 AS DECIMAL(38,37)) AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+1.00000000000000000000000000000000000
+~~END~~
 
 
 -- Testing scale change behavior in multiplication of DECIMAL values
@@ -537,7 +549,7 @@ SELECT CAST(123.45 AS DECIMAL(5,2)) / CAST(67.89 AS DECIMAL(4,2)) AS result;
 GO
 ~~START~~
 numeric
-1.8183826778612461
+1.8183826
 ~~END~~
 
 
@@ -871,7 +883,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(2.50 AS NUMERIC(5,2)) AS result;
 GO
 ~~START~~
 numeric
-49.3800000000000000
+49.38000000
 ~~END~~
 
 
@@ -880,7 +892,7 @@ SELECT CAST(123.45 AS DECIMAL(5,2)) / CAST(2.50 AS DECIMAL(5,2)) AS result;
 GO
 ~~START~~
 numeric
-49.3800000000000000
+49.38000000
 ~~END~~
 
 
@@ -889,7 +901,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.25 AS NUMERIC(3,2)) AS result;
 GO
 ~~START~~
 numeric
-493.8000000000000000
+493.800000
 ~~END~~
 
 
@@ -898,7 +910,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(0.01 AS NUMERIC(3,2)) AS result;
 GO
 ~~START~~
 numeric
-12345.000000000000
+12345.000000
 ~~END~~
 
 
@@ -915,7 +927,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(5 AS INT) AS result;
 GO
 ~~START~~
 numeric
-24.6900000000000000
+24.690000
 ~~END~~
 
 
@@ -1076,7 +1088,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS NUMERIC(5,2)) / CAST(2 AS I
 GO
 ~~START~~
 numeric
-412.9000000000000000
+412.900000
 ~~END~~
 
 
@@ -1139,7 +1151,7 @@ SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(2.50 AS DECIMAL(5,2)) AS result;
 GO
 ~~START~~
 numeric
-49.3800000000000000
+49.38000000
 ~~END~~
 
 
@@ -1175,9 +1187,10 @@ numeric
 SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) - 
        CAST(0.0000000000000000000000000000000000001 AS NUMERIC(38,37)) AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+9999999999999999999999999999999999999
+~~END~~
 
 
 -- Largest NUMERIC / Largest NUMERIC
@@ -1186,7 +1199,7 @@ SELECT CAST(9999999999999999999999999999999999999 AS NUMERIC(38,0)) /
 GO
 ~~START~~
 numeric
-1.00000000000000000000
+1.000000
 ~~END~~
 
 
@@ -2888,7 +2901,7 @@ SELECT CAST(CAST(-922337203685477.5808 AS MONEY) AS NUMERIC(19,4)), CAST(CAST(0 
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--922337203685477.5808#!#0.0000#!#922337203685477.5807
+-922337203685477.58080000#!#0.0000#!#922337203685477.58070000
 ~~END~~
 
 
@@ -2906,7 +2919,7 @@ SELECT CAST(CAST(-214748.3648 AS SMALLMONEY) AS NUMERIC(10,4)), CAST(CAST(0 AS S
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--214748.3648#!#0.0000#!#214748.3647
+-214748.36480000#!#0.0000#!#214748.36470000
 ~~END~~
 
 
@@ -4194,7 +4207,7 @@ SELECT CONVERT(NUMERIC(19,4), CAST(-922337203685477.5808 AS MONEY)), CONVERT(NUM
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--922337203685477.5808#!#0.0000#!#922337203685477.5807
+-922337203685477.58080000#!#0.0000#!#922337203685477.58070000
 ~~END~~
 
 
@@ -4212,7 +4225,7 @@ SELECT CONVERT(NUMERIC(10,4), CAST(-214748.3648 AS SMALLMONEY)), CONVERT(NUMERIC
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
--214748.3648#!#0.0000#!#214748.3647
+-214748.36480000#!#0.0000#!#214748.36470000
 ~~END~~
 
 
@@ -4640,7 +4653,7 @@ GO
 numeric#!#numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "03/07/2025")~~
+~~ERROR (Message: invalid input syntax for type numeric: "04/01/2025")~~
 
 
 -- CONVERT between NUMERIC types with extreme precision differences
@@ -7240,39 +7253,27 @@ CREATE TABLE #numeric_extreme_test (
     decimal_max DECIMAL(38,10),
     decimal_min DECIMAL(38,10),
     numeric_small_scale NUMERIC(38,38),
-    decimal_small_scale DECIMAL(38,38),
-    numeric_negative_scale NUMERIC(38,-10),
-    decimal_negative_scale DECIMAL(38,-10)
+    decimal_small_scale DECIMAL(38,38)
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '-' at line 10 and character position 38)~~
-
 
 -- Insert extreme values
 INSERT INTO #numeric_extreme_test (
     numeric_max, numeric_min, decimal_max, decimal_min,
-    numeric_small_scale, decimal_small_scale,
-    numeric_negative_scale, decimal_negative_scale
+    numeric_small_scale, decimal_small_scale
 )
 VALUES 
     (9999999999999999999999999999.9999999999, -9999999999999999999999999999.9999999999, 
      9999999999999999999999999999.9999999999, -9999999999999999999999999999.9999999999,
-     0.0000000000000000000000000000000000001, 0.0000000000000000000000000000000000001,
-     12345678900000000000, 12345678900000000000),
+     0.0000000000000000000000000000000000001, 0.0000000000000000000000000000000000001),
     (1234567890123456789012345678.1234567890, -1234567890123456789012345678.1234567890, 
      1234567890123456789012345678.1234567890, -1234567890123456789012345678.1234567890,
-     0.0000000000000000000000000000000000002, 0.0000000000000000000000000000000000002,
-     23456789000000000000, 23456789000000000000),
+     0.0000000000000000000000000000000000002, 0.0000000000000000000000000000000000002),
     (9876543210987654321098765432.0987654321, -9876543210987654321098765432.0987654321, 
      9876543210987654321098765432.0987654321, -9876543210987654321098765432.0987654321,
-     0.0000000000000000000000000000000000003, 0.0000000000000000000000000000000000003,
-     34567890000000000000, 34567890000000000000);
+     0.0000000000000000000000000000000000003, 0.0000000000000000000000000000000000003);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~ROW COUNT: 3~~
 
 
 -- Aggregate maximum precision/scale values
@@ -7295,9 +7296,11 @@ SELECT
     MAX(decimal_min) AS max_decimal_min
 FROM #numeric_extreme_test;
 GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 -- Aggregate very small scale values
@@ -7312,26 +7315,10 @@ SELECT
     MAX(decimal_small_scale) AS max_decimal_small_scale
 FROM #numeric_extreme_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
-
-
--- Aggregate negative scale values
-SELECT 
-    SUM(numeric_negative_scale) AS sum_numeric_negative_scale,
-    SUM(decimal_negative_scale) AS sum_decimal_negative_scale,
-    AVG(numeric_negative_scale) AS avg_numeric_negative_scale,
-    AVG(decimal_negative_scale) AS avg_decimal_negative_scale,
-    MIN(numeric_negative_scale) AS min_numeric_negative_scale,
-    MIN(decimal_negative_scale) AS min_decimal_negative_scale,
-    MAX(numeric_negative_scale) AS max_numeric_negative_scale,
-    MAX(decimal_negative_scale) AS max_decimal_negative_scale
-FROM #numeric_extreme_test;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+6.0E-37#!#6.0E-37#!#2.0E-37#!#2.0E-37#!#1.0E-37#!#1.0E-37#!#3.0E-37#!#3.0E-37
+~~END~~
 
 
 -- Statistical functions with extreme values
@@ -7346,9 +7333,10 @@ SELECT
     VAR(decimal_min) AS var_decimal_min
 FROM #numeric_extreme_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~START~~
+float#!#float#!#float#!#float#!#float#!#float#!#float#!#float
+5.025464805999439E27#!#5.025464805999439E27#!#5.025464805999439E27#!#5.025464805999439E27#!#2.525529651633897E55#!#2.525529651633897E55#!#2.525529651633897E55#!#2.525529651633897E55
+~~END~~
 
 
 -- Statistical functions with very small scale values
@@ -7359,22 +7347,10 @@ SELECT
     VAR(decimal_small_scale) AS var_decimal_small_scale
 FROM #numeric_extreme_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
-
-
--- Statistical functions with negative scale values
-SELECT 
-    STDEV(numeric_negative_scale) AS stdev_numeric_negative_scale,
-    STDEV(decimal_negative_scale) AS stdev_decimal_negative_scale,
-    VAR(numeric_negative_scale) AS var_numeric_negative_scale,
-    VAR(decimal_negative_scale) AS var_decimal_negative_scale
-FROM #numeric_extreme_test;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~START~~
+float#!#float#!#float#!#float
+9.999999999999999E-38#!#9.999999999999999E-38#!#9.999999999999998E-75#!#9.999999999999998E-75
+~~END~~
 
 
 -- Aggregate functions with expressions on extreme values
@@ -7385,9 +7361,10 @@ SELECT
     MAX(POWER(numeric_small_scale, 2)) AS max_numeric_small_scale_squared
 FROM #numeric_extreme_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+0E-10#!#14074074067407407406740740740.14814815#!#1.2345678901#!#0E-8
+~~END~~
 
 
 -- Aggregate functions with DISTINCT on extreme values
@@ -7397,14 +7374,13 @@ SELECT
     COUNT(DISTINCT decimal_max) AS count_distinct_decimal_max,
     COUNT(DISTINCT decimal_min) AS count_distinct_decimal_min,
     COUNT(DISTINCT numeric_small_scale) AS count_distinct_numeric_small_scale,
-    COUNT(DISTINCT decimal_small_scale) AS count_distinct_decimal_small_scale,
-    COUNT(DISTINCT numeric_negative_scale) AS count_distinct_numeric_negative_scale,
-    COUNT(DISTINCT decimal_negative_scale) AS count_distinct_decimal_negative_scale
+    COUNT(DISTINCT decimal_small_scale) AS count_distinct_decimal_small_scale
 FROM #numeric_extreme_test;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+3#!#3#!#3#!#3#!#3#!#3
+~~END~~
 
 
 -- Aggregate functions with filtering on extreme values
@@ -7414,18 +7390,16 @@ SELECT
 FROM #numeric_extreme_test
 WHERE numeric_max > 5000000000000000000000000000;
 GO
+~~START~~
+numeric#!#numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "#numeric_extreme_test" does not exist)~~
-
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 -- Clean up
 DROP TABLE #numeric_extreme_test;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "#numeric_extreme_test" does not exist)~~
 
 ------------------------------------------------------------------------
 ---- 9. Special Case Tests
@@ -7443,9 +7417,10 @@ varchar
 Very Small Values
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+1.0E-37#!#1.0E-37#!#0E-36#!#0E-36
+~~END~~
 
 
 -- Testing with very large values
@@ -7645,7 +7620,7 @@ Repeating Decimals
 
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric
-0.333333333333333333333333333333333333#!#0.333333333333333333333333333333333333#!#0.666666666666666666666666666666666667#!#0.666666666666666666666666666666666667
+0.333333#!#0.333333#!#0.666666#!#0.666666
 ~~END~~
 
 
@@ -8332,24 +8307,29 @@ NUMERIC_VAL#!#123.456
 ~~END~~
 
 
-
--- TODO: 
----- 13.12 UNION with Calculated Columns
+-- 13.12 UNION with Calculated Columns
 -- Test: UNION with arithmetic operations
--- SELECT 
---     'CALC1' as source_type,
---     val,
---     val * 2 as doubled,
---     val / 2 as halved,
---     val + 100 as added,
---     val - 100 as subtracted
--- FROM (
---     SELECT CAST(123.45 AS NUMERIC(10,2)) as val
---     UNION
---     SELECT CAST(456.78 AS NUMERIC(10,2))
--- ) t
--- ORDER BY val;
--- GO
+SELECT 
+    'CALC1' as source_type,
+    val,
+    val * 2 as doubled,
+    val / 2 as halved,
+    val + 100 as added,
+    val - 100 as subtracted
+FROM (
+    SELECT CAST(123.45 AS NUMERIC(10,2)) as val
+    UNION
+    SELECT CAST(456.78 AS NUMERIC(10,2))
+) t
+ORDER BY val;
+GO
+~~START~~
+varchar#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+CALC1#!#123.45#!#246.90#!#61.725000#!#223.45#!#23.45
+CALC1#!#456.78#!#913.56#!#228.390000#!#556.78#!#356.78
+~~END~~
+
+
 ---- 13.13 UNION with Negative Scale
 -- Test: UNION with negative scale values
 SELECT 'NEG_SCALE1' as source_type, 
@@ -8712,37 +8692,44 @@ GO
 ~~ROW COUNT: 3~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'on', false)
-go
-~~START~~
-text
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not access file "pg_hint_plan": No such file or directory)~~
-
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+SET BABELFISH_STATISTICS PROFILE ON;
 go
 ~~START~~
 text
 off
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'off', false)
-go
 ~~START~~
 text
 off
 ~~END~~
 
-SELECT set_config('enable_bitmapscan', 'off', false)
-go
 ~~START~~
 text
 off
 ~~END~~
 
-SET babelfish_showplan_all ON
-go
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
 
 
 -- Test 1: Direct NUMERIC comparison (baseline)
@@ -8751,16 +8738,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col = 123.45;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = 123.45
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col = 123.45)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = 123.45
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 123.45)
 ~~END~~
 
 
@@ -8769,16 +8756,17 @@ SELECT * FROM numeric_index_test
 WHERE num_col = 500;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = 500
-Seq Scan on numeric_index_test
-  Filter: (num_col = 500)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = 500
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: (num_col = 500)
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -8787,16 +8775,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col = CAST(999.99 AS DECIMAL(18,2));
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = CAST(999.99 AS DECIMAL(18,2))
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col = 999.99)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.145 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(999.99 AS DECIMAL(18,2))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 999.99)
 ~~END~~
 
 
@@ -8805,16 +8793,17 @@ SELECT * FROM numeric_index_test
 WHERE num_col = CAST(123.45 AS FLOAT);
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = CAST(123.45 AS FLOAT)
-Seq Scan on numeric_index_test
-  Filter: ((num_col)::double precision = '123.45'::double precision)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(123.45 AS FLOAT)
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: ((num_col)::double precision = '123.45'::double precision)
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -8823,16 +8812,17 @@ SELECT * FROM numeric_index_test
 WHERE num_col = CAST(500.00 AS MONEY);
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = CAST(500.00 AS MONEY)
-Seq Scan on numeric_index_test
-  Filter: (num_col = (('500.0000'::fixeddecimal)::money)::fixeddecimal)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.140 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(500.00 AS MONEY)
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: (num_col = (('500.0000'::fixeddecimal)::money)::fixeddecimal)
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -8841,16 +8831,17 @@ SELECT * FROM numeric_index_test
 WHERE num_col BETWEEN 100 AND CAST(200 AS INT);
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col BETWEEN 100 AND CAST(200 AS INT)
-Seq Scan on numeric_index_test
-  Filter: ((num_col >= 100) AND (num_col <= 200))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 4.359 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col BETWEEN 100 AND CAST(200 AS INT)
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: ((num_col >= 100) AND (num_col <= 200))
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -8858,16 +8849,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col BETWEEN 400.00 AND CAST(600.00 AS DECIMAL(18,2));
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col BETWEEN 400.00 AND CAST(600.00 AS DECIMAL(18,2))
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col BETWEEN 400.00 AND CAST(600.00 AS DECIMAL(18,2))
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: ((num_col >= 400.00) AND (num_col <= 600.00))
 ~~END~~
 
 
@@ -8877,20 +8868,22 @@ FROM numeric_index_test a
 JOIN numeric_index_test b ON a.num_col = b.decimal_col;
 GO
 ~~START~~
-text
-Query Text: SELECT a.*, b.* 
-FROM numeric_index_test a
-JOIN numeric_index_test b ON a.num_col = b.decimal_col
-Merge Join
-  Merge Cond: (a.num_col = (b.decimal_col)::numeric)
-  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test a
-  ->  Materialize
-        ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar#!#int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1#!#1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2#!#2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
+3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3#!#3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 31.242 ms
+Query Text: SELECT a.*, b.* 
+FROM numeric_index_test a
+JOIN numeric_index_test b ON a.num_col = b.decimal_col
+Merge Join (actual rows=3 loops=1)
+  Merge Cond: (a.num_col = (b.decimal_col)::numeric)
+  ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test a (actual rows=3 loops=1)
+  ->  Materialize (actual rows=3 loops=1)
+        ->  Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test b (actual rows=3 loops=1)
 ~~END~~
 
 
@@ -8901,18 +8894,20 @@ WHERE num_col = int_col
    OR num_col = CAST(money_col AS NUMERIC(18,2));
 GO
 ~~START~~
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
+3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3
+~~END~~
+
+~~START~~
 text
 Query Text: SELECT * FROM numeric_index_test 
 WHERE num_col = int_col 
    OR num_col = CAST(float_col AS NUMERIC(18,2))
    OR num_col = CAST(money_col AS NUMERIC(18,2))
-Seq Scan on numeric_index_test
+Seq Scan on numeric_index_test (actual rows=3 loops=1)
   Filter: ((num_col = int_col) OR (num_col = (float_col)::numeric(18,2)) OR (num_col = (money_col)::numeric(18,2)))
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.377 ms
 ~~END~~
 
 
@@ -8922,18 +8917,18 @@ WHERE num_col = CAST(500 AS INT)
   AND category = 'CAT-2';
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = CAST(500 AS INT)
-  AND category = 'CAT-2'
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (category = 'CAT-2'::"varchar")
-  Filter: (num_col = 500)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = CAST(500 AS INT)
+  AND category = 'CAT-2'
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (category = 'CAT-2'::"varchar")
+  Filter: (num_col = 500)
 ~~END~~
 
 
@@ -8942,16 +8937,17 @@ SELECT * FROM numeric_index_test
 WHERE num_col = int_col + 0.45;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = int_col + 0.45
-Seq Scan on numeric_index_test
-  Filter: (num_col = ((int_col)::numeric + 0.45))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.216 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = int_col + 0.45
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: (num_col = ((int_col)::numeric + 0.45))
+  Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -8960,16 +8956,18 @@ SELECT * FROM numeric_index_test
 WHERE CAST(num_col AS DECIMAL(18,2)) = decimal_col;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE CAST(num_col AS DECIMAL(18,2)) = decimal_col
-Seq Scan on numeric_index_test
-  Filter: ((num_col)::numeric = (decimal_col)::numeric)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
+3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.080 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE CAST(num_col AS DECIMAL(18,2)) = decimal_col
+Seq Scan on numeric_index_test (actual rows=3 loops=1)
+  Filter: ((num_col)::numeric = (decimal_col)::numeric)
 ~~END~~
 
 
@@ -8978,16 +8976,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col IN (123, 123.45, 123.45678);
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col IN (123, 123.45, 123.45678)
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col IN (123, 123.45, 123.45678)
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
 ~~END~~
 
 
@@ -8996,16 +8994,16 @@ SELECT * FROM numeric_index_test
 WHERE num_precise_col = CAST(123.4567890123 AS NUMERIC(38,10));
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_precise_col = CAST(123.4567890123 AS NUMERIC(38,10))
-Index Scan using idx_numeric_precisenumeric_indee9fe26d0621de94770ec0d8401129c48 on numeric_index_test
-  Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.156 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_precise_col = CAST(123.4567890123 AS NUMERIC(38,10))
+Index Scan using idx_numeric_precisenumeric_indee9fe26d0621de94770ec0d8401129c48 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
 ~~END~~
 
 
@@ -9015,18 +9013,18 @@ WHERE num_col = 123.45
   AND decimal_col = 123.45;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col = 123.45
-  AND decimal_col = 123.45
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col = 123.45)
-  Filter: ((decimal_col)::numeric = 123.45)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col = 123.45
+  AND decimal_col = 123.45
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 123.45)
+  Filter: ((decimal_col)::numeric = 123.45)
 ~~END~~
 
 
@@ -9036,17 +9034,19 @@ WHERE num_col > 100
 ORDER BY decimal_col;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col > 100
-ORDER BY decimal_col
-Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test
-  Filter: (num_col > 100)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
+2#!#500.00#!#500.0000000000#!#500.00#!#500#!#500000#!#500#!#500.0#!#500.0000#!#CAT-2
+3#!#999.99#!#999.9999999999#!#999.99#!#999#!#999999#!#999#!#999.99#!#999.9900#!#CAT-3
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col > 100
+ORDER BY decimal_col
+Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test (actual rows=3 loops=1)
+  Filter: (num_col > 100)
 ~~END~~
 
 
@@ -9057,19 +9057,23 @@ FROM numeric_index_test
 GROUP BY CAST(num_col AS DECIMAL(18,2));
 GO
 ~~START~~
+numeric#!#int
+500.00#!#1
+123.45#!#1
+999.99#!#1
+~~END~~
+
+~~START~~
 text
 Query Text: SELECT CAST(num_col AS DECIMAL(18,2)) as num_group, 
        COUNT(*) as cnt
 FROM numeric_index_test 
 GROUP BY CAST(num_col AS DECIMAL(18,2))
-HashAggregate
+HashAggregate (actual rows=3 loops=1)
   Group Key: (num_col)::"decimal"(18,2)
-  ->  Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 2.509 ms
+  Batches: 1  Memory Usage: 40kB
+  ->  Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=3 loops=1)
+        Heap Fetches: 3
 ~~END~~
 
 
@@ -9079,17 +9083,18 @@ FROM numeric_index_test
 WHERE num_col = 500.00;
 GO
 ~~START~~
-text
-Query Text: SELECT num_col, category 
-FROM numeric_index_test 
-WHERE num_col = 500.00
-Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col = 500.00)
+numeric#!#varchar
+500.00#!#CAT-2
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Query Text: SELECT num_col, category 
+FROM numeric_index_test 
+WHERE num_col = 500.00
+Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col = 500.00)
+  Heap Fetches: 1
 ~~END~~
 
 
@@ -9098,18 +9103,15 @@ INSERT INTO numeric_index_test (
     num_col, decimal_col, int_col, category
 ) VALUES (NULL, NULL, NULL, 'CAT-N');
 GO
+~~ROW COUNT: 1~~
+
 ~~START~~
 text
 Query Text: INSERT INTO numeric_index_test (
     num_col, decimal_col, int_col, category
 ) VALUES (NULL, NULL, NULL, 'CAT-N');
-Insert on numeric_index_test
-  ->  Result
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Insert on numeric_index_test (actual rows=0 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 
@@ -9117,16 +9119,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col IS NULL;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col IS NULL
-Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test
-  Index Cond: (num_col IS NULL)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#CAT-N
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col IS NULL
+Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
+  Index Cond: (num_col IS NULL)
 ~~END~~
 
 
@@ -9135,16 +9137,16 @@ SELECT * FROM numeric_index_test
 WHERE num_col * 2 = decimal_col;
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE num_col * 2 = decimal_col
-Seq Scan on numeric_index_test
-  Filter: ((num_col * '2'::numeric) = (decimal_col)::numeric)
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.617 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE num_col * 2 = decimal_col
+Seq Scan on numeric_index_test (actual rows=0 loops=1)
+  Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
+  Rows Removed by Filter: 4
 ~~END~~
 
 
@@ -9153,45 +9155,48 @@ SELECT * FROM numeric_index_test
 WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%';
 GO
 ~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%'
-Seq Scan on numeric_index_test
-  Filter: ((((num_col)::"varchar"(20))::text ~~* '123.%'::text COLLATE "default") AND (((num_col)::"varchar"(20))::text >= '123.'::text COLLATE "default") AND (((num_col)::"varchar"(20))::text < '123.?'::text))
+int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
+1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.491 ms
+Query Text: SELECT * FROM numeric_index_test 
+WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%'
+Seq Scan on numeric_index_test (actual rows=1 loops=1)
+  Filter: ((((num_col)::"varchar"(20))::text ~~* '123.%'::text COLLATE bbf_unicode_cp1_cs_as) AND (((num_col)::"varchar"(20))::text >= '123.'::text) AND (((num_col)::"varchar"(20))::text < '123.?'::text))
+  Rows Removed by Filter: 3
 ~~END~~
 
 
 -- Reset
-SET babelfish_showplan_all OFF
-go
-SELECT set_config('babelfishpg_tsql.enable_pg_hint', 'off', false)
-go
-~~START~~
-text
-off
-~~END~~
-
+SET BABELFISH_STATISTICS PROFILE OFF;
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
 go
 ~~START~~
 text
 on
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'on', false)
-go
 ~~START~~
 text
 on
 ~~END~~
 
-SELECT set_config('enable_bitmapscan', 'on', false)
-go
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
 ~~START~~
 text
 on
@@ -9200,4 +9205,857 @@ on
 
 -- Cleanup
 DROP TABLE numeric_index_test;
+GO
+
+
+------------------------------------------------------------------------
+---- 15.Partition Table Tests for Numeric Types
+------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NUMERIC_dt_partition_func (NUMERIC(18,2))
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        1000.00,
+        10000.00,
+        100000.00
+    );
+GO
+
+CREATE PARTITION SCHEME NUMERIC_dt_partition_scheme
+    AS PARTITION NUMERIC_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE NUMERIC_dt_partition(
+    amount NUMERIC(18,2),
+    category VARCHAR(20)
+)
+ON NUMERIC_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO NUMERIC_dt_partition (amount, category) VALUES 
+(-1000.00, 'Negative'),
+(-500.00, 'Negative'),
+(0.00, 'Zero'),
+(500.00, 'Small'),
+(1500.00, 'Medium'),
+(5000.00, 'Medium'),
+(15000.00, 'Large'),
+(50000.00, 'Large'),
+(150000.00, 'Extra Large'),
+(200000.00, 'Extra Large');
+GO
+~~ROW COUNT: 10~~
+
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.NUMERIC_dt_partition_func(amount) AS PartitionNumber
+FROM NUMERIC_dt_partition 
+ORDER BY PartitionNumber;
+GO
+~~START~~
+numeric#!#varchar#!#int
+-500.00#!#Negative#!#1
+-1000.00#!#Negative#!#1
+0.00#!#Zero#!#2
+500.00#!#Small#!#2
+5000.00#!#Medium#!#3
+1500.00#!#Medium#!#3
+15000.00#!#Large#!#4
+50000.00#!#Large#!#4
+150000.00#!#Extra Large#!#5
+200000.00#!#Extra Large#!#5
+~~END~~
+
+
+-- Query to show count by partition
+SELECT $PARTITION.NUMERIC_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM NUMERIC_dt_partition
+GROUP BY $PARTITION.NUMERIC_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#Negative#!#2
+2#!#Zero#!#1
+2#!#Small#!#1
+3#!#Medium#!#2
+4#!#Large#!#2
+5#!#Extra Large#!#2
+~~END~~
+
+
+-- Partitioned table testing for DECIMAL
+CREATE PARTITION FUNCTION DECIMAL_dt_partition_func (DECIMAL(18,2))
+    AS RANGE RIGHT FOR VALUES(
+        0.00,
+        1000.00,
+        10000.00,
+        100000.00
+    );
+GO
+
+CREATE PARTITION SCHEME DECIMAL_dt_partition_scheme
+    AS PARTITION DECIMAL_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE DECIMAL_dt_partition(
+    amount DECIMAL(18,2),
+    category VARCHAR(20)
+)
+ON DECIMAL_dt_partition_scheme(amount);
+GO
+
+-- Insert test data for different ranges
+INSERT INTO DECIMAL_dt_partition (amount, category) VALUES 
+(-1000.00, 'Negative'),
+(-500.00, 'Negative'),
+(0.00, 'Zero'),
+(500.00, 'Small'),
+(1500.00, 'Medium'),
+(5000.00, 'Medium'),
+(15000.00, 'Large'),
+(50000.00, 'Large'),
+(150000.00, 'Extra Large'),
+(200000.00, 'Extra Large');
+GO
+~~ROW COUNT: 10~~
+
+
+-- Query to show amounts in each partition
+SELECT amount, category, 
+       $PARTITION.DECIMAL_dt_partition_func(amount) AS PartitionNumber
+FROM DECIMAL_dt_partition 
+ORDER BY PartitionNumber;
+GO
+~~START~~
+numeric#!#varchar#!#int
+-500.00#!#Negative#!#1
+-1000.00#!#Negative#!#1
+0.00#!#Zero#!#2
+500.00#!#Small#!#2
+5000.00#!#Medium#!#3
+1500.00#!#Medium#!#3
+15000.00#!#Large#!#4
+50000.00#!#Large#!#4
+150000.00#!#Extra Large#!#5
+200000.00#!#Extra Large#!#5
+~~END~~
+
+
+-- Query to show count by partition
+SELECT $PARTITION.DECIMAL_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM DECIMAL_dt_partition
+GROUP BY $PARTITION.DECIMAL_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#Negative#!#2
+2#!#Zero#!#1
+2#!#Small#!#1
+3#!#Medium#!#2
+4#!#Large#!#2
+5#!#Extra Large#!#2
+~~END~~
+
+
+-- Additional test for precision and scale variations
+CREATE PARTITION FUNCTION NUMERIC_PRECISE_dt_partition_func (NUMERIC(38,10))
+    AS RANGE RIGHT FOR VALUES(
+        0.0000000000,
+        1000.0000000000,
+        10000.0000000000,
+        100000.0000000000
+    );
+GO
+
+CREATE PARTITION SCHEME NUMERIC_PRECISE_dt_partition_scheme
+    AS PARTITION NUMERIC_PRECISE_dt_partition_func ALL
+    TO ([PRIMARY]);
+GO
+
+CREATE TABLE NUMERIC_PRECISE_dt_partition(
+    amount NUMERIC(38,10),
+    category VARCHAR(20)
+)
+ON NUMERIC_PRECISE_dt_partition_scheme(amount);
+GO
+
+-- Insert test data with high precision
+INSERT INTO NUMERIC_PRECISE_dt_partition (amount, category) VALUES 
+(-1000.1234567890, 'Negative'),
+(-500.0987654321, 'Negative'),
+(0.0000000001, 'Zero'),
+(500.1111111111, 'Small'),
+(1500.2222222222, 'Medium'),
+(5000.3333333333, 'Medium'),
+(15000.4444444444, 'Large'),
+(50000.5555555555, 'Large'),
+(150000.6666666666, 'Extra Large'),
+(200000.7777777777, 'Extra Large');
+GO
+~~ROW COUNT: 10~~
+
+
+-- Query to show high precision amounts in each partition
+SELECT amount, category, 
+       $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount) AS PartitionNumber
+FROM NUMERIC_PRECISE_dt_partition 
+ORDER BY PartitionNumber;
+GO
+~~START~~
+numeric#!#varchar#!#int
+-500.0987654321#!#Negative#!#1
+-1000.1234567890#!#Negative#!#1
+1E-10#!#Zero#!#2
+500.1111111111#!#Small#!#2
+5000.3333333333#!#Medium#!#3
+1500.2222222222#!#Medium#!#3
+15000.4444444444#!#Large#!#4
+50000.5555555555#!#Large#!#4
+150000.6666666666#!#Extra Large#!#5
+200000.7777777777#!#Extra Large#!#5
+~~END~~
+
+
+-- Query to show count by partition for high precision
+SELECT $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount) AS PartitionNumber, 
+       category, 
+       COUNT(*) AS AmountCount
+FROM NUMERIC_PRECISE_dt_partition
+GROUP BY $PARTITION.NUMERIC_PRECISE_dt_partition_func(amount), category
+ORDER BY PartitionNumber;
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#Negative#!#2
+2#!#Zero#!#1
+2#!#Small#!#1
+3#!#Medium#!#2
+4#!#Large#!#2
+5#!#Extra Large#!#2
+~~END~~
+
+
+-- Cleanup
+DROP TABLE NUMERIC_dt_partition;
+DROP TABLE DECIMAL_dt_partition;
+DROP TABLE NUMERIC_PRECISE_dt_partition;
+DROP PARTITION SCHEME NUMERIC_dt_partition_scheme;
+DROP PARTITION SCHEME DECIMAL_dt_partition_scheme;
+DROP PARTITION SCHEME NUMERIC_PRECISE_dt_partition_scheme;
+DROP PARTITION FUNCTION NUMERIC_dt_partition_func;
+DROP PARTITION FUNCTION DECIMAL_dt_partition_func;
+DROP PARTITION FUNCTION NUMERIC_PRECISE_dt_partition_func;
+GO
+
+
+------------------------------------------------------------------------
+---- 16. Numeric types as default and check constraints
+------------------------------------------------------------------------
+CREATE TABLE NUMERIC_dt(
+    a NUMERIC(18,2) DEFAULT 100.00, 
+    b NUMERIC(18,2), 
+    c INT, 
+    CHECK (b > 1000.00)
+);
+GO
+
+INSERT INTO NUMERIC_dt (b,c) VALUES (1500.00, 1);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO NUMERIC_dt (b,c) VALUES (500.00, 2);  -- Should fail check constraint
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "numeric_dt" violates check constraint "numeric_dt_b_check")~~
+
+
+SELECT * FROM NUMERIC_dt;
+GO
+~~START~~
+numeric#!#numeric#!#int
+100.00#!#1500.00#!#1
+~~END~~
+
+
+DROP TABLE NUMERIC_dt;
+GO
+
+CREATE TABLE DECIMAL_dt(
+    a DECIMAL(18,2) DEFAULT 100.00, 
+    b DECIMAL(18,2), 
+    c INT, 
+    CHECK (b > 100.00)
+);
+GO
+
+INSERT INTO DECIMAL_dt (b,c) VALUES (150.00, 1);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO DECIMAL_dt (b,c) VALUES (50.00, 2);  -- Should fail check constraint
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "decimal_dt" violates check constraint "decimal_dt_b_check")~~
+
+
+SELECT * FROM DECIMAL_dt;
+GO
+~~START~~
+numeric#!#numeric#!#int
+100.00#!#150.00#!#1
+~~END~~
+
+
+DROP TABLE DECIMAL_dt;
+GO
+
+
+
+------------------------------------------------------------------------
+---- 17. Ability to use numeric types as part of table variable
+------------------------------------------------------------------------
+DECLARE @NUMERIC_dt TABLE (
+    a NUMERIC(18,2),
+    b DECIMAL(10,4),
+    c NUMERIC(38,10)
+);
+INSERT INTO @NUMERIC_dt VALUES 
+(0.00, 0.0000, 0.0000000000),
+(NULL, NULL, NULL),
+(100.00, 100.0000, 100.0000000000),
+(999999999999999.99, 999999.9999, 9999999999999999999999999999.9999999999);
+SELECT * FROM @NUMERIC_dt;
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+numeric#!#numeric#!#numeric
+0.00#!#0.0000#!#0E-10
+<NULL>#!#<NULL>#!#<NULL>
+100.00#!#100.0000#!#100.0000000000
+999999999999999.99#!#999999.9999#!#9999999999999999999999999999.9999999999
+~~END~~
+
+
+-- Select into testing
+CREATE TABLE NUMERIC_dt (
+    a NUMERIC(18,2),
+    b DECIMAL(10,4),
+    c NUMERIC(20,4),
+    d DECIMAL(12,4),
+    e NUMERIC(38,10)
+);
+GO
+
+INSERT INTO NUMERIC_dt (a, b, c, d, e)
+VALUES
+(NULL, NULL, NULL, NULL, NULL),
+(0.00, 0.0000, 0.0000, 0.0000, 0.0000000000),
+(NULL, 0.0000, NULL, 0.0000, NULL),
+(0.00, NULL, 0.0000, NULL, 0.0000000000),
+(100.00, 100.0000, 1000.0000, 100.0000, 10000.0000000000),
+(250.50, 200.5000, 2500.5000, 200.5000, 25000.5000000000),
+(500.75, 300.7500, 5000.7500, 300.7500, 50000.7500000000),
+(750.25, 400.2500, 7500.2500, 400.2500, 75000.2500000000),
+(1000.00, 500.0000, 10000.0000, 500.0000, 100000.0000000000),
+(-100.00, -100.0000, -1000.0000, -100.0000, -10000.0000000000),
+(999999999999999.99, 9999.9999, 99999999.9999, 99999.9999, 9999999999999999999999999999.9999999999),
+(-999999999999999.99, -9999.9999, -99999999.9999, -99999.9999, -9999999999999999999999999999.9999999999),
+(1234.56, 123.4567, 12345.6789, 123.4567, 123456.7890000000),
+(9999.99, 999.9999, 99999.9999, 999.9999, 999999.9999000000);
+GO
+~~ROW COUNT: 14~~
+
+
+SELECT * INTO NUMERIC_dt_derived FROM NUMERIC_dt;
+GO
+
+-- Check column attributes for derived table
+SELECT 
+    c.name AS column_name,
+    t.name AS data_type,
+    c.precision,
+    c.scale
+FROM sys.columns c
+JOIN sys.types t ON c.system_type_id = t.system_type_id
+WHERE object_id = OBJECT_ID('NUMERIC_dt_derived')
+ORDER BY column_id;
+GO
+~~START~~
+varchar#!#varchar#!#tinyint#!#tinyint
+a#!#numeric#!#18#!#2
+b#!#decimal#!#10#!#4
+c#!#numeric#!#20#!#4
+d#!#decimal#!#12#!#4
+e#!#numeric#!#38#!#10
+~~END~~
+
+
+-- Check column attributes for original table
+SELECT 
+    c.name AS column_name,
+    t.name AS data_type,
+    c.precision,
+    c.scale
+FROM sys.columns c
+JOIN sys.types t ON c.system_type_id = t.system_type_id
+WHERE object_id = OBJECT_ID('NUMERIC_dt')
+ORDER BY column_id;
+GO
+~~START~~
+varchar#!#varchar#!#tinyint#!#tinyint
+a#!#numeric#!#18#!#2
+b#!#decimal#!#10#!#4
+c#!#numeric#!#20#!#4
+d#!#decimal#!#12#!#4
+e#!#numeric#!#38#!#10
+~~END~~
+
+
+-- Additional precision/scale tests
+CREATE TABLE NUMERIC_precision_test (
+    -- Test different precision/scale combinations
+    col1 NUMERIC(5,2),   -- Small precision, standard scale
+    col2 NUMERIC(38,10), -- Maximum precision, large scale
+    col3 DECIMAL(18,0),  -- No decimal places
+    col4 DECIMAL(38,38)  -- Maximum precision and scale
+);
+GO
+
+
+INSERT INTO NUMERIC_precision_test VALUES
+(123.45, 12345678901234567890.1234567890, 123456789, 0.12345678901234567890123456789012345678),
+(999.99, 9999999999999999999.9999999999, 999999999, 0.99999999999999999999999999999999999999);
+SELECT * FROM NUMERIC_precision_test;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+123.45#!#12345678901234567890.1234567890#!#123456789#!#0.12345678901234567890123456789012345678
+999.99#!#9999999999999999999.9999999999#!#999999999#!#0.99999999999999999999999999999999999999
+~~END~~
+
+
+-- Test arithmetic operations maintaining precision
+SELECT 
+    col1 * 2 AS doubled_col1,
+    col2 / 3 AS divided_col2,
+    col3 + 1 AS incremented_col3
+FROM NUMERIC_precision_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+246.90#!#4115226300411522630.0411522630#!#123456790
+1999.98#!#3333333333333333333.3333333333#!#1000000000
+~~END~~
+
+
+-- Cleanup
+DROP TABLE NUMERIC_dt_derived;
+DROP TABLE NUMERIC_dt;
+DROP TABLE NUMERIC_precision_test;
+GO
+
+
+
+
+------------------------------------------------------------------------
+---- 18. Test Scenarios for COALESCE, INTERSECT, EXCEPT, VALUES, ISNULL
+------------------------------------------------------------------------
+-- Create test tables with varied precision/scale combinations
+CREATE TABLE numeric_test1 (
+    id INT,
+    val1 NUMERIC(5,2),    -- Small precision/scale
+    val2 NUMERIC(10,4),   -- Medium precision/scale
+    val3 NUMERIC(18,6),   -- Large precision/scale
+    val4 DECIMAL(28,8),   -- Larger precision/scale
+    val5 NUMERIC(38,10)   -- Maximum precision with large scale
+);
+CREATE TABLE numeric_test2 (
+    id INT,
+    val1 NUMERIC(5,2),
+    val2 NUMERIC(10,4),
+    val3 NUMERIC(18,6),
+    val4 DECIMAL(28,8),
+    val5 NUMERIC(38,10)
+);
+GO
+
+-- Insert varied test data including edge cases
+INSERT INTO numeric_test1 
+VALUES 
+    (1, 123.45, 1234.5678, 123456.789012, 12345678.90123456, 1234567890.1234567890),
+    (2, NULL, 2345.6789, NULL, 23456789.01234567, NULL),
+    (3, 345.67, NULL, 345678.901234, NULL, 3456789012.3456789012),
+    (4, -999.99, -9999.9999, -999999.999999, -99999999.99999999, -9999999999.9999999999),
+    (5, 999.99, 9999.9999, 999999.999999, 99999999.99999999, 9999999999.9999999999),
+    (6, 0.01, 0.0001, 0.000001, 0.00000001, 0.0000000001),
+    (7, NULL, NULL, NULL, NULL, NULL),
+    (8, 555.55, 5555.5555, 555555.555555, 55555555.55555555, 5555555555.5555555555);
+GO
+~~ROW COUNT: 8~~
+
+
+INSERT INTO numeric_test2 
+VALUES 
+    (1, 123.45, 1234.5678, 123456.789012, 12345678.90123456, 1234567890.1234567890),
+    (3, 345.67, 3456.7890, 345678.901234, 34567890.12345678, 3456789012.3456789012),
+    (5, 999.99, 9999.9999, 999999.999999, 99999999.99999999, 9999999999.9999999999),
+    (9, 777.77, 7777.7777, 777777.777777, 77777777.77777777, 7777777777.7777777777),
+    (10, -888.88, -8888.8888, -888888.888888, -88888888.88888888, -8888888888.8888888888);
+GO
+~~ROW COUNT: 5~~
+
+
+-- 1. Extended COALESCE Tests
+-- Test COALESCE with multiple precision combinations
+SELECT 
+    id,
+    COALESCE(val1, val2, val3, val4, val5, 0) AS coalesce_all,
+    COALESCE(val1, CAST(0 AS NUMERIC(5,2))) AS coalesce_small,
+    COALESCE(val3, CAST(0 AS NUMERIC(18,6))) AS coalesce_medium,
+    COALESCE(val5, CAST(0 AS NUMERIC(38,10))) AS coalesce_large,
+    COALESCE(val1 * 2, val2 * 2, val3 * 2) AS coalesce_arithmetic
+FROM numeric_test1
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#123.4500000000#!#123.45#!#123456.789012#!#1234567890.1234567890#!#246.900000
+2#!#2345.6789000000#!#0.00#!#0.000000#!#0E-10#!#4691.357800
+3#!#345.6700000000#!#345.67#!#345678.901234#!#3456789012.3456789012#!#691.340000
+4#!#-999.9900000000#!#-999.99#!#-999999.999999#!#-9999999999.9999999999#!#-1999.980000
+5#!#999.9900000000#!#999.99#!#999999.999999#!#9999999999.9999999999#!#1999.980000
+6#!#0.0100000000#!#0.01#!#0.000001#!#1E-10#!#0.020000
+7#!#0E-10#!#0.00#!#0.000000#!#0E-10#!#<NULL>
+8#!#555.5500000000#!#555.55#!#555555.555555#!#5555555555.5555555555#!#1111.100000
+~~END~~
+
+
+-- 2. Extended ISNULL Tests
+-- Test ISNULL with various combinations and calculations
+SELECT 
+    id,
+    ISNULL(val1, val2) AS isnull_basic,
+    ISNULL(val1, ISNULL(val2, ISNULL(val3, 0))) AS isnull_nested,
+    ISNULL(val1 * val2, val3 * val4) AS isnull_multiplication,
+    ISNULL(val1 / NULLIF(val2, 0), 0) AS isnull_division_safe
+FROM numeric_test1
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#123.4500#!#123.450000#!#152407.394910#!#0.0999945081995
+2#!#2345.6789#!#2345.678900#!#<NULL>#!#0E-13
+3#!#345.6700#!#345.670000#!#<NULL>#!#0E-13
+4#!#-999.9900#!#-999.990000#!#9999899.900001#!#0.0999990009999
+5#!#999.9900#!#999.990000#!#9999899.900001#!#0.0999990009999
+6#!#0.0100#!#0.010000#!#0.000001#!#100.0000000000000
+7#!#<NULL>#!#0.000000#!#<NULL>#!#0E-13
+8#!#555.5500#!#555.550000#!#3086388.858025#!#0.0999990009999
+~~END~~
+
+
+-- 3. Extended INTERSECT Tests
+-- Test INTERSECT with various combinations
+SELECT id, val1, val2 FROM numeric_test1
+INTERSECT
+SELECT id, val1, val2 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric
+1#!#123.45#!#1234.5678
+5#!#999.99#!#9999.9999
+~~END~~
+
+
+SELECT id, val3, val4, val5 FROM numeric_test1
+INTERSECT
+SELECT id, val3, val4, val5 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric
+1#!#123456.789012#!#12345678.90123456#!#1234567890.1234567890
+5#!#999999.999999#!#99999999.99999999#!#9999999999.9999999999
+~~END~~
+
+
+-- Test INTERSECT with calculations
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test1
+INTERSECT
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric
+1#!#246.90#!#617.283900
+5#!#1999.98#!#4999.999950
+~~END~~
+
+
+-- 4. Extended EXCEPT Tests
+-- Test EXCEPT with various combinations
+SELECT id, val1, val2 FROM numeric_test1
+EXCEPT
+SELECT id, val1, val2 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric
+2#!#<NULL>#!#2345.6789
+3#!#345.67#!#<NULL>
+4#!#-999.99#!#-9999.9999
+6#!#0.01#!#0.0001
+7#!#<NULL>#!#<NULL>
+8#!#555.55#!#5555.5555
+~~END~~
+
+
+SELECT id, val3, val4, val5 FROM numeric_test1
+EXCEPT
+SELECT id, val3, val4, val5 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric
+2#!#<NULL>#!#23456789.01234567#!#<NULL>
+3#!#345678.901234#!#<NULL>#!#3456789012.3456789012
+4#!#-999999.999999#!#-99999999.99999999#!#-9999999999.9999999999
+6#!#0.000001#!#1E-8#!#1E-10
+7#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#555555.555555#!#55555555.55555555#!#5555555555.5555555555
+~~END~~
+
+
+-- Test EXCEPT with calculations
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test1
+EXCEPT
+SELECT id, val1 * 2, val2 / 2 FROM numeric_test2
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric
+2#!#<NULL>#!#1172.839450
+3#!#691.34#!#<NULL>
+4#!#-1999.98#!#-4999.999950
+6#!#0.02#!#0.000050
+7#!#<NULL>#!#<NULL>
+8#!#1111.10#!#2777.777750
+~~END~~
+
+
+-- 5. Extended VALUES Tests
+-- Test VALUES with different precision/scale combinations
+SELECT 
+    id,
+    n1,
+    n2,
+    n3,
+    n1 + n2 + n3 AS sum_all,
+    n1 * n2 / NULLIF(n3, 0) AS complex_calc
+FROM (
+    VALUES 
+        (1, CAST(11.11 AS NUMERIC(5,2)), CAST(11.1111 AS NUMERIC(10,4)), CAST(11.111111 AS NUMERIC(18,6))),
+        (2, CAST(22.22 AS NUMERIC(5,2)), CAST(22.2222 AS NUMERIC(10,4)), CAST(22.222222 AS NUMERIC(18,6))),
+        (3, CAST(33.33 AS NUMERIC(5,2)), CAST(33.3333 AS NUMERIC(10,4)), CAST(33.333333 AS NUMERIC(18,6))),
+        (4, CAST(-44.44 AS NUMERIC(5,2)), CAST(-44.4444 AS NUMERIC(10,4)), CAST(-44.444444 AS NUMERIC(18,6))),
+        (5, CAST(0.01 AS NUMERIC(5,2)), CAST(0.0001 AS NUMERIC(10,4)), CAST(0.000001 AS NUMERIC(18,6)))
+) AS number_variations(id, n1, n2, n3)
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#11.11#!#11.1111#!#11.111111#!#33.332211#!#11.1099890010998900000000
+2#!#22.22#!#22.2222#!#22.222222#!#66.664422#!#22.2199780021997800000000
+3#!#33.33#!#33.3333#!#33.333333#!#99.996633#!#33.3299670032996700000000
+4#!#-44.44#!#-44.4444#!#-44.444444#!#-133.328844#!#-44.4399560043995600000000
+5#!#0.01#!#0.0001#!#0.000001#!#0.010101#!#1.0000000000000000000000
+~~END~~
+
+
+-- 6. Combined Operations Tests
+-- Test complex combinations of operations
+WITH combined_calcs AS (
+    SELECT 
+        t1.id,
+        COALESCE(t1.val1, t2.val1) AS c1,
+        ISNULL(t1.val2, t2.val2) AS c2,
+        CASE 
+            WHEN t1.val3 IS NULL THEN t2.val3
+            WHEN t2.val3 IS NULL THEN t1.val3
+            ELSE (t1.val3 + t2.val3) / 2
+        END AS c3
+    FROM numeric_test1 t1
+    FULL OUTER JOIN numeric_test2 t2 ON t1.id = t2.id
+)
+SELECT 
+    id,
+    c1,
+    c2,
+    c3,
+    COALESCE(c1, c2, c3) AS final_result,
+    CASE 
+        WHEN c1 IS NOT NULL AND c2 IS NOT NULL THEN c1 * c2
+        ELSE NULL
+    END AS multiplication_result
+FROM combined_calcs
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+<NULL>#!#-888.88#!#-8888.8888#!#-888888.88888800#!#-888.88000000#!#7901155.4765
+<NULL>#!#777.77#!#7777.7777#!#777777.77777700#!#777.77000000#!#6049322.1617
+1#!#123.45#!#1234.5678#!#123456.78901200#!#123.45000000#!#152407.3949
+2#!#<NULL>#!#2345.6789#!#<NULL>#!#2345.67890000#!#<NULL>
+3#!#345.67#!#3456.7890#!#345678.90123400#!#345.67000000#!#1194908.2536
+4#!#-999.99#!#-9999.9999#!#-999999.99999900#!#-999.99000000#!#9999899.9000
+5#!#999.99#!#9999.9999#!#999999.99999900#!#999.99000000#!#9999899.9000
+6#!#0.01#!#0.0001#!#0.00000100#!#0.01000000#!#0.0000
+7#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#555.55#!#5555.5555#!#555555.55555500#!#555.55000000#!#3086388.8580
+~~END~~
+
+
+-- 7. Mathematical Function Tests with COALESCE/ISNULL
+SELECT 
+    id,
+    COALESCE(val1, 0) AS safe_sqrt,
+    ISNULL(val1, 0) AS safe_power,
+    COALESCE(LOG10(ABS(NULLIF(val1, 0))), 0) AS safe_log,
+    ISNULL(EXP(CASE WHEN val1 < 10 THEN val1 ELSE NULL END), 0) AS safe_exp
+FROM numeric_test1
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#float#!#float
+1#!#123.45#!#123.45#!#2.091491094267951#!#0.0
+2#!#0.00#!#0.00#!#0.0#!#0.0
+3#!#345.67#!#345.67#!#2.538661689638404#!#0.0
+4#!#-999.99#!#-999.99#!#2.999995657033466#!#0.0
+5#!#999.99#!#999.99#!#2.999995657033466#!#0.0
+6#!#0.01#!#0.01#!#-2.0#!#1.010050167084168
+7#!#0.00#!#0.00#!#0.0#!#0.0
+8#!#555.55#!#555.55#!#2.74472315193016#!#0.0
+~~END~~
+
+
+-- 8. Aggregate Functions with COALESCE/ISNULL
+SELECT 
+    COALESCE(SUM(val1), 0) AS sum_val1,
+    ISNULL(AVG(val1), 0) AS avg_val1,
+    COALESCE(MIN(val1), 0) AS min_val1,
+    ISNULL(MAX(val1), 0) AS max_val1,
+    COUNT(COALESCE(val1, val2)) AS count_either,
+    SUM(ISNULL(val1, 0) + ISNULL(val2, 0)) AS sum_both
+FROM numeric_test1;
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#int#!#numeric
+1024.68#!#170.780000#!#-999.99#!#999.99#!#7#!#10160.4823
+~~END~~
+
+
+-- 9. Window Functions with COALESCE/ISNULL
+SELECT 
+    id,
+    val1,
+    val2,
+    COALESCE(val1, LAG(val1) OVER (ORDER BY id), 0) AS coalesce_lag,
+    ISNULL(val2, LEAD(val2) OVER (ORDER BY id)) AS isnull_lead,
+    SUM(COALESCE(val1, 0)) OVER (ORDER BY id ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS running_sum
+FROM numeric_test1
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+1#!#123.45#!#1234.5678#!#123.45000000#!#1234.56780000#!#123.45000000
+2#!#<NULL>#!#2345.6789#!#123.45000000#!#2345.67890000#!#469.12000000
+3#!#345.67#!#<NULL>#!#345.67000000#!#-9999.99990000#!#-654.32000000
+4#!#-999.99#!#-9999.9999#!#-999.99000000#!#-9999.99990000#!#345.67000000
+5#!#999.99#!#9999.9999#!#999.99000000#!#9999.99990000#!#0.01000000
+6#!#0.01#!#0.0001#!#0.01000000#!#0.00010000#!#1000.00000000
+7#!#<NULL>#!#<NULL>#!#0.01000000#!#5555.55550000#!#555.56000000
+8#!#555.55#!#5555.5555#!#555.55000000#!#5555.55550000#!#555.55000000
+~~END~~
+
+
+-- 10. Complex Calculations with Multiple Operations
+WITH calc_cte AS (
+    SELECT 
+        t1.id,
+        COALESCE(t1.val1, t2.val1) AS c1,
+        ISNULL(t1.val2, t2.val2) AS c2,
+        COALESCE(t1.val3, t2.val3) AS c3
+    FROM numeric_test1 t1
+    FULL OUTER JOIN numeric_test2 t2 ON t1.id = t2.id
+)
+SELECT 
+    id,
+    c1,
+    c2,
+    c3,
+    POWER(COALESCE(c1, 0), 2) + POWER(ISNULL(c2, 0), 2) AS pythagoras,
+    CASE 
+        WHEN c1 IS NOT NULL AND c2 IS NOT NULL AND c3 IS NOT NULL 
+        THEN (c1 + c2 + c3) / 3
+        ELSE COALESCE(c1, c2, c3, 0)
+    END AS complex_avg
+FROM calc_cte
+ORDER BY id;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+<NULL>#!#-888.88#!#-8888.8888#!#-888888.888888#!#79802451.75316544#!#-299555.55256266
+<NULL>#!#777.77#!#7777.7777#!#777777.777777#!#61098752.12351729#!#262111.10849233
+1#!#123.45#!#1234.5678#!#123456.789012#!#1539397.55529684#!#41604.93560400
+2#!#<NULL>#!#2345.6789#!#<NULL>#!#5502209.50190521#!#2345.67890000
+3#!#345.67#!#3456.7890#!#345678.901234#!#12068877.93942100#!#116493.78674466
+4#!#-999.99#!#-9999.9999#!#-999999.999999#!#100999978.00010001#!#-336999.99663300
+5#!#999.99#!#9999.9999#!#999999.999999#!#100999978.00010001#!#336999.99663300
+6#!#0.01#!#0.0001#!#0.000001#!#0.00010001#!#0.00336700
+7#!#<NULL>#!#<NULL>#!#<NULL>#!#0E-8#!#0E-8
+8#!#555.55#!#5555.5555#!#555555.555555#!#31172832.71608025#!#187222.22035166
+~~END~~
+
+
+-- 11. String Conversion Tests
+SELECT 
+    id,
+    CAST(COALESCE(val1, 0) AS VARCHAR(20)) AS string_val1,
+    CAST(ISNULL(val2, 0) AS VARCHAR(20)) AS string_val2,
+    CAST(COALESCE(val3, 0) AS VARCHAR(30)) AS string_val3,
+    TRY_CAST(COALESCE(val4, 0) AS VARCHAR(40)) AS safe_string_val4
+FROM numeric_test1
+ORDER BY id;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#123.45#!#1234.5678#!#123456.789012#!#12345678.90123456
+2#!#0#!#2345.6789#!#0#!#23456789.01234567
+3#!#345.67#!#0#!#345678.901234#!#0
+4#!#-999.99#!#-9999.9999#!#-999999.999999#!#-99999999.99999999
+5#!#999.99#!#9999.9999#!#999999.999999#!#99999999.99999999
+6#!#0.01#!#0.0001#!#0.000001#!#0.00000001
+7#!#0#!#0#!#0#!#0
+8#!#555.55#!#5555.5555#!#555555.555555#!#55555555.55555555
+~~END~~
+
+
+-- Cleanup
+DROP TABLE numeric_test1;
+DROP TABLE numeric_test2;
 GO
