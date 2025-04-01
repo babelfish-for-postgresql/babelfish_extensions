@@ -62,6 +62,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(escape_hatch_inline_function_option);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -325,6 +326,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 			if (!exec_as->CALLER())
 				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 		}
+		else if (option->inline_clause() && option->inline_clause()->INLINE())
+			handle(INSTR_UNSUPPORTED_TSQL_CREATE_FUNCTION_INLINE_OPTION, "INLINE", &st_escape_hatch_inline_function_option, getLineAndPos(option->inline_clause()));
 	}
 
 	if(ctx->func_body_returns_table())

@@ -1136,3 +1136,35 @@ varchar
 2023-06-15 14:30:45.123
 ~~END~~
 
+
+-- convert string to datetime test
+DECLARE @emptyString VARCHAR(10) = '';
+SELECT CONVERT(datetime, @emptyString) AS EmptyStringResult;
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_datetime_empty_string_vw
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+EXEC babel_datetime_empty_string_p
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+SELECT babel_datetime_empty_string_f()
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+

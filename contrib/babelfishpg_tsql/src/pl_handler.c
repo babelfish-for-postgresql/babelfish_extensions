@@ -2893,7 +2893,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 												stmt->view->relname)));
 							}
 							/* View doesn't exist - create it */
-							address = DefineView(stmt, queryString, pstmt->stmt_location, pstmt->stmt_len);
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+													queryEnv, dest, qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);							
 							CommandCounterIncrement();
 						}
 						/* View exists */
@@ -2912,8 +2917,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			
 							/* Create new view */
 							stmt->replace = true; 
-							address = DefineView(stmt, queryString, pstmt->stmt_location, pstmt->stmt_len);
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+													queryEnv, dest, qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+														queryEnv, dest, qc);
 							CommandCounterIncrement();
+
+							/* Get the new view's ObjectAddress */
+							address.objectId = RangeVarGetRelid(stmt->view, NoLock, false);
+							address.classId = RelationRelationId;
+							address.objectSubId = 0;
 							
 							/* Store the view definition in babelfish_view_def */
 							if(store_view_definition_hook)
