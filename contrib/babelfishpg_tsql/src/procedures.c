@@ -115,21 +115,21 @@ static bool is_supported_case_sp_describe_undeclared_parameters = true;
 /* xml handle hash table */
 static HTAB         *XMLHandleHashTable = NULL;
 static MemoryContext XMLHashtabContext = NULL;
-const uint32         XML_HANDLE_START = 0;
-const uint32         XML_HANDLE_INVALID = 0x80000000; 
-const uint32         MAX_XML_HANDLES_PER_SESSION = 4000;  /* Maximum xml handles per session (size of hash table)*/ 
+const  int           XML_HANDLE_START = 0;
+const  int           XML_HANDLE_INVALID = INT32_MAX/2; 
+const  int           MAX_XML_HANDLES_PER_SESSION = 4000;  /* Maximum xml handles per session (size of hash table)*/ 
 static int           current_xml_handle;
-uint32     	         get_next_xml_handle(void);
+int     	         get_next_xml_handle(void);
 void                 pltsql_create_xml_handle_htab(void);
-void                 pltsql_delete_xml_handle_entry(uint32 handle);
-uint32               pltsql_insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int32 xml_data_length, int32 ns_data_length);
+void                 pltsql_delete_xml_handle_entry(int  handle);
+int                  pltsql_insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
 
 typedef struct XMLHandleHashEnt           /* Entries of hash table */
 {
-	uint32      document_id;
-	uint32      namespace_id;
-	uint32      original_document_size_bytes;
-	uint32      original_namespace_document_size_bytes;
+	int         document_id;
+	int         namespace_id;
+	int         original_document_size_bytes;
+	int         original_namespace_document_size_bytes;
 	bool        is_namespace_null;
 	xmltype    *xml_data; 
 	xmltype    *ns_data; 
@@ -4319,21 +4319,21 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 }
 
 /* Function to generate the xml handles */
-uint32
+int 
 get_next_xml_handle()
 {
-    uint32 old_handle = current_xml_handle;
-	uint32 current_doc_id;
+    int  old_handle = current_xml_handle;
+	int  current_doc_id;
 
     while (true)
     {
         ++current_xml_handle;
-		current_doc_id = 2*current_xml_handle -1;
+	    current_doc_id = 2*current_xml_handle -1;
         
         if (current_xml_handle == XML_HANDLE_INVALID || current_xml_handle > MAX_XML_HANDLES_PER_SESSION )
 		{
             current_xml_handle = XML_HANDLE_START + 1;
-			current_doc_id = 2*current_xml_handle -1;
+		    current_doc_id = 2*current_xml_handle -1;
 		}
             
         if (unlikely(current_xml_handle == old_handle))
@@ -4347,7 +4347,8 @@ get_next_xml_handle()
     return current_xml_handle;
 }
 
-void pltsql_create_xml_handle_htab()    /* Creating the hash table */
+void 
+pltsql_create_xml_handle_htab()    /* Creating the hash table */
 {
     HASHCTL ctl;
 
@@ -4360,7 +4361,7 @@ void pltsql_create_xml_handle_htab()    /* Creating the hash table */
 
     /* XMLHandleHashTable */
     MemSet(&ctl, 0, sizeof(ctl));
-    ctl.keysize = sizeof(uint32);
+    ctl.keysize = sizeof(int);
     ctl.entrysize = sizeof(XMLHandleHashEnt);
     ctl.hcxt = XMLHashtabContext;
 
@@ -4372,13 +4373,47 @@ void pltsql_create_xml_handle_htab()    /* Creating the hash table */
     current_xml_handle = XML_HANDLE_INVALID;
 }
 
-uint32 pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, 
-                                     int32 xml_data_length, int32 ns_data_length)
+static xmltype*
+copyXMLType(xmltype *xml_data)
+{
+	xmltype*      new_xml_data;
+	MemoryContext oldcontext;
+
+	if(xml_data == NULL)
+	{
+		return NULL;
+	}
+
+	/*
+	 * VARSIZE_ANY_EXHDR is the size of the struct in bytes, minus the
+	 * VARHDRSZ or VARHDRSZ_SHORT of its header.  Construct the copy with a
+	 * full-length header.
+	 */
+	oldcontext = MemoryContextSwitchTo(XMLHashtabContext);
+	new_xml_data = (xmltype *) palloc(VARSIZE_ANY_EXHDR(xml_data) + VARHDRSZ);
+	MemoryContextSwitchTo(oldcontext);
+	// new_xml_data = (xmltype *) palloc(VARSIZE_ANY_EXHDR(xml_data) + VARHDRSZ);
+
+	SET_VARSIZE(new_xml_data, VARSIZE_ANY_EXHDR(xml_data) + VARHDRSZ);
+
+	/*
+	 * VARDATA is a pointer to the data region of the new struct.  The source
+	 * could be a short datum, so retrieve its data through VARDATA_ANY.
+	 */
+	memcpy(VARDATA(new_xml_data),		/* destination */
+		   VARDATA_ANY(xml_data),		/* source */
+		   VARSIZE_ANY_EXHDR(xml_data));	/* how many bytes */
+
+	return new_xml_data;	   
+}
+
+int 
+pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length, int ns_data_length)
 {
     XMLHandleHashEnt *hentry;
     bool found;
-    uint32 handle;
-    uint32 document_id;
+    int  handle;
+    int  document_id;
     
     handle = get_next_xml_handle();      /* get the next handle */
     document_id = 2*handle - 1;          /* document_id is always odd and unique */
@@ -4388,8 +4423,8 @@ uint32 pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data,
     if (found)
         ereport(ERROR, errmsg("Duplicate XML handles"));
 
-    hentry->xml_data = xml_data;
-    hentry->ns_data = ns_data;
+    hentry->xml_data = copyXMLType(xml_data);
+    hentry->ns_data = copyXMLType(ns_data);
     hentry->document_id = document_id;
    	hentry->original_document_size_bytes = xml_data_length;  /* store the size of the xml text and xpath namespaces */
     hentry->original_namespace_document_size_bytes = ns_data_length;
@@ -4408,7 +4443,8 @@ uint32 pltsql_insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data,
     return hentry->document_id;
 }
 
-void pltsql_delete_xml_handle_entry(uint32 document_id)
+void 
+pltsql_delete_xml_handle_entry(int document_id)
 {
     XMLHandleHashEnt *hentry;
 
@@ -4463,9 +4499,10 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     bool      is_xpath_namespaces_well_formed;
     xmltype  *xml_data;
     xmltype  *ns_data;
-    int32     document_id;
-    int32     xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
-    int32     ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
+    int       document_id;
+    int       xml_data_length = xml_text == NULL ? 0 : strlen(xml_text);
+    int       ns_data_length  = xpath_namespaces == NULL ? 0 : strlen(xpath_namespaces);
+
     
     HeapTuple        tuple;
     HeapTupleHeader  result;
@@ -4542,7 +4579,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
 Datum
 sp_xml_removedocument(PG_FUNCTION_ARGS)
 {
-    int32_t doc_handle;
+    int doc_handle;
     TSQLInstrumentation(INSTR_TSQL_SP_XML_REMOVEDOCUMENT);
     
     /* Check if document handle argument is NULL */
