@@ -235,7 +235,6 @@ static char
 
     /* removing leading and trailing spaces outside of double quotes */
     trim(trimmedInputStr, false);
-    inputLength = strlen(trimmedInputStr);
   
     /* 
      * removing leading spaces, for the phrase enclosed in double quotes

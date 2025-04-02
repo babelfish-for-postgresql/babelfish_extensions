@@ -21,6 +21,34 @@ DROP VIEW IF EXISTS prefix_rewrite_prepare_v6
 GO
 DROP VIEW IF EXISTS prefix_rewrite_prepare_v7
 GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v8
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v9
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v10
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v11
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v12
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v13
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v14
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v15
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v16
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v17
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v18
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v19
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v20
+GO
+DROP VIEW IF EXISTS prefix_rewrite_prepare_v21
+GO
 
 -- Drop procedures
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p1
@@ -44,6 +72,26 @@ GO
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p10
 GO
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p11
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p12
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p13
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p14
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p15
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p16
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p17
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p18
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p19
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p20
+GO
+DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p21
 GO
 
 -- Drop Fulltext index

@@ -6,21 +6,37 @@ ignore
 ~~END~~
 
 
--- leading and trailing spaces between quotes and double quotes
+-- 1. rewriting single prefix term
 SELECT * FROM prefix_rewrite_prepare_v1
 GO
 ~~START~~
 text
-one:*<->two:*<->three:*
+one:*
 ~~END~~
 
 SELECT * FROM prefix_rewrite_prepare_v2
 GO
 ~~START~~
 text
-one:*<->two:*<->three:*
+one:*
 ~~END~~
 
+EXEC prefix_rewrite_prepare_p1
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p2
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+
+-- 2. rewriting prefix term phrase
 SELECT * FROM prefix_rewrite_prepare_v3
 GO
 ~~START~~
@@ -42,103 +58,265 @@ text
 one:*<->two:*<->three:*
 ~~END~~
 
-SELECT * FROM prefix_rewrite_prepare_v6
+EXEC prefix_rewrite_prepare_p3
 GO
 ~~START~~
 text
 one:*<->two:*<->three:*
 ~~END~~
 
-SELECT * FROM prefix_rewrite_prepare_v7
-GO
-~~START~~
-text
-word1:*
-~~END~~
-
-
--- handling different cases of prefix terms
--- all are valid search strings
-EXEC prefix_rewrite_prepare_p1
-GO
-~~START~~
-text
-one:*
-~~END~~
-
-EXEC prefix_rewrite_prepare_p2
-GO
-~~START~~
-text
-one:*
-~~END~~
-
-EXEC prefix_rewrite_prepare_p3
-GO
-~~START~~
-text
-one:*<->two:*
-~~END~~
-
 EXEC prefix_rewrite_prepare_p4
 GO
 ~~START~~
 text
-one:*<->two:*
+one:*<->two:*<->three:*
 ~~END~~
 
 EXEC prefix_rewrite_prepare_p5
 GO
 ~~START~~
 text
-one:*
+one:*<->two:*<->three:*
 ~~END~~
 
 
--- negative test
--- does not give warning about noise in search string
+-- 3. Leading occurrences of asterisk
+SELECT * FROM prefix_rewrite_prepare_v6
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v7
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v8
+GO
+~~START~~
+text
+one:*
+~~END~~
+
 EXEC prefix_rewrite_prepare_p6
 GO
 ~~START~~
 text
-
+one:*<->two:*<->three:*
 ~~END~~
-
 
 EXEC prefix_rewrite_prepare_p7
 GO
 ~~START~~
 text
-word1:*<->word2:*
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p8
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
 ~~END~~
 
 
-
--- special characters
-EXEC prefix_rewrite_prepare_p8
+-- 4. Trailing occurrences of asterisk
+SELECT * FROM prefix_rewrite_prepare_v9
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+one:*
+~~END~~
 
-~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+SELECT * FROM prefix_rewrite_prepare_v10
+GO
+~~START~~
+text
+one:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v11
+GO
+~~START~~
+text
+one:*
+~~END~~
 
 EXEC prefix_rewrite_prepare_p9
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+~~START~~
+text
+one:*<->two:*
+~~END~~
 
 EXEC prefix_rewrite_prepare_p10
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+~~START~~
+text
+one:*<->two:*
+~~END~~
 
 EXEC prefix_rewrite_prepare_p11
 GO
 ~~START~~
 text
+one:*<->two:*
+~~END~~
+
+
+--5. Multiple occurrences of asterisk in prefix phrase
+SELECT * FROM prefix_rewrite_prepare_v12
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v13
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p12
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p13
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+
+-- 6. Multiple occurrences of spaces in prefix phrase
+SELECT * FROM prefix_rewrite_prepare_v14
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v15
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p14
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p15
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+
+-- 7. Combination of multiple occurrences
+SELECT * FROM prefix_rewrite_prepare_v16
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v17
+GO
+~~START~~
+text
+one:*<->two:*
+~~END~~
+
+SELECT * FROM prefix_rewrite_prepare_v18
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p16
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p17
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+EXEC prefix_rewrite_prepare_p18
+GO
+~~START~~
+text
+one:*<->two:*<->three:*
+~~END~~
+
+
+-- 8. special characters
+-- should throw not supported error
+SELECT * FROM prefix_rewrite_prepare_v19
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+SELECT * FROM prefix_rewrite_prepare_v20
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+EXEC prefix_rewrite_prepare_p19
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+EXEC prefix_rewrite_prepare_p20
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+
+-- Negative test
+-- should warn about noise words, but does not
+SELECT * FROM prefix_rewrite_prepare_v21
+GO
+~~START~~
+text
+
+~~END~~
+
+
+-- Not a valid prefix term syntax, recognized as simple term
+EXEC prefix_rewrite_prepare_p21
+GO
+~~START~~
+text
 o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
 ~~END~~
+
 
 
 -- Create a unique-text index

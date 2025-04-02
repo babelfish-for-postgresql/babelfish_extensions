@@ -1,45 +1,110 @@
 -- sys.babelfish_fts_rewrite()
-CREATE VIEW prefix_rewrite_prepare_v1 AS (SELECT sys.babelfish_fts_rewrite('"one two three*"'));
+-- 1. rewriting single prefix term
+CREATE VIEW prefix_rewrite_prepare_v1 AS (SELECT sys.babelfish_fts_rewrite('"one*"'));
 GO
-CREATE VIEW prefix_rewrite_prepare_v2 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*"'));
+CREATE VIEW prefix_rewrite_prepare_v2 AS (SELECT sys.babelfish_fts_rewrite(' "one*"'));
 GO
-CREATE VIEW prefix_rewrite_prepare_v3 AS (SELECT sys.babelfish_fts_rewrite('"one two three*" '));
+CREATE PROCEDURE prefix_rewrite_prepare_p1 AS (SELECT sys.babelfish_fts_rewrite('"one*" '));
 GO
-CREATE VIEW prefix_rewrite_prepare_v4 AS (SELECT sys.babelfish_fts_rewrite('"one* two three*"       '));
-GO
-CREATE VIEW prefix_rewrite_prepare_v5 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*" '));
-GO
-CREATE VIEW prefix_rewrite_prepare_v6 AS (SELECT sys.babelfish_fts_rewrite(' "one*two*three*" '));
-GO
-CREATE VIEW prefix_rewrite_prepare_v7 AS (SELECT sys.babelfish_fts_rewrite('"word1   * * ** *"'));
+CREATE PROCEDURE prefix_rewrite_prepare_p2 AS (SELECT sys.babelfish_fts_rewrite(' "one*" '));
 GO
 
-CREATE PROCEDURE prefix_rewrite_prepare_p1 AS (SELECT sys.babelfish_fts_rewrite('"one*"'));
+-- 2. rewriting prefix term phrase
+CREATE VIEW prefix_rewrite_prepare_v3 AS (SELECT sys.babelfish_fts_rewrite('"one two three*"'));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p2 AS (SELECT sys.babelfish_fts_rewrite('"* one*"'));
+CREATE VIEW prefix_rewrite_prepare_v4 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*"'));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p3 AS (SELECT sys.babelfish_fts_rewrite('"one * two*"'));
+CREATE VIEW prefix_rewrite_prepare_v5 AS (SELECT sys.babelfish_fts_rewrite('"one two three*" '));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p4 AS (SELECT sys.babelfish_fts_rewrite('" ** one * * * two*"'));
+CREATE PROCEDURE prefix_rewrite_prepare_p3 AS (SELECT sys.babelfish_fts_rewrite('"one* two three*"  '));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p5 AS (SELECT sys.babelfish_fts_rewrite('"*one*"'));
+CREATE PROCEDURE prefix_rewrite_prepare_p4 AS (SELECT sys.babelfish_fts_rewrite(' "one two three*" '));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p6 AS (SELECT sys.babelfish_fts_rewrite('"*"'));
-GO
-CREATE PROCEDURE prefix_rewrite_prepare_p7 AS (SELECT sys.babelfish_fts_rewrite('"word1   * * ** * word2*"'));
+CREATE PROCEDURE prefix_rewrite_prepare_p5 AS (SELECT sys.babelfish_fts_rewrite(' "one*two*three*" '));
 GO
 
---special characters
+-- 3. Leading occurrences of asterisk
+CREATE VIEW prefix_rewrite_prepare_v6 AS (SELECT sys.babelfish_fts_rewrite('"*one*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v7 AS (SELECT sys.babelfish_fts_rewrite(' "*one*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v8 AS (SELECT sys.babelfish_fts_rewrite('"***one*"  '));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p6 AS (SELECT sys.babelfish_fts_rewrite('"*one*two*three*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p7 AS (SELECT sys.babelfish_fts_rewrite('"*one* *two* **three*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p8 AS (SELECT sys.babelfish_fts_rewrite('  "***one* **two*three*"'));
+GO
+
+-- 4. Trailing occurrences of asterisk
+CREATE VIEW prefix_rewrite_prepare_v9 AS (SELECT sys.babelfish_fts_rewrite('"one**"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v10 AS (SELECT sys.babelfish_fts_rewrite('"one******"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v11 AS (SELECT sys.babelfish_fts_rewrite('"one ***"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p9 AS (SELECT sys.babelfish_fts_rewrite('"one two***"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p10 AS (SELECT sys.babelfish_fts_rewrite('  "one*** two*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p11 AS (SELECT sys.babelfish_fts_rewrite(' "one** two****"  '));
+GO
+
+--5. Multiple occurrences of asterisk in prefix phrase
+CREATE VIEW prefix_rewrite_prepare_v12 AS (SELECT sys.babelfish_fts_rewrite('" **one***two*three***"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v13 AS (SELECT sys.babelfish_fts_rewrite('" **one*** *two ***three**"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p12 AS (SELECT sys.babelfish_fts_rewrite('" *one* **two* **three*"  '));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p13 AS (SELECT sys.babelfish_fts_rewrite('" *one* ***two * **three *"  '));
+GO
+
+-- 6. Multiple occurrences of spaces in prefix phrase
+CREATE VIEW prefix_rewrite_prepare_v14 AS (SELECT sys.babelfish_fts_rewrite(' "*one *two*"  '));
+GO
+CREATE VIEW prefix_rewrite_prepare_v15 AS (SELECT sys.babelfish_fts_rewrite(' "*  one *two *"  '));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p14 AS (SELECT sys.babelfish_fts_rewrite(' "*    one *     two      *"  '));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p15 AS (SELECT sys.babelfish_fts_rewrite(' "      *one*     two   *"  '));
+GO
+
+-- 7. Combination of multiple occurrences
+CREATE VIEW prefix_rewrite_prepare_v16 AS (SELECT sys.babelfish_fts_rewrite('" ** one * * * two*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v17 AS (SELECT sys.babelfish_fts_rewrite('"one   * * ** * two*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v18 AS (SELECT sys.babelfish_fts_rewrite('"  one*  two * *** three* ** *"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p16 AS (SELECT sys.babelfish_fts_rewrite('" * ** one * two* three**"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p17 AS (SELECT sys.babelfish_fts_rewrite('"one* two  *  three ** **"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p18 AS (SELECT sys.babelfish_fts_rewrite('"one* two  *  three ** **"'));
+GO
+
+-- 8. special characters
 -- should throw not supported error
-CREATE PROCEDURE prefix_rewrite_prepare_p8 AS (SELECT sys.babelfish_fts_rewrite('"one$*"'));
+CREATE VIEW prefix_rewrite_prepare_v19 AS (SELECT sys.babelfish_fts_rewrite('"one$*"'));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p9 AS (SELECT sys.babelfish_fts_rewrite('"$$one*"'));
+CREATE VIEW prefix_rewrite_prepare_v20 AS (SELECT sys.babelfish_fts_rewrite('"$$one*"'));
 GO
-CREATE PROCEDURE prefix_rewrite_prepare_p10 AS (SELECT sys.babelfish_fts_rewrite('" $one *"'));
+CREATE PROCEDURE prefix_rewrite_prepare_p19 AS (SELECT sys.babelfish_fts_rewrite('" $one *"'));
 GO
+CREATE PROCEDURE prefix_rewrite_prepare_p20 AS (SELECT sys.babelfish_fts_rewrite('" one@*"'));
+GO
+
+
+-- Negative test
+-- should warn about noise words, but does not
+CREATE VIEW prefix_rewrite_prepare_v21 AS (SELECT sys.babelfish_fts_rewrite('"*"'));
+GO
+
 
 -- Not a valid prefix term syntax, recognized as simple term
-CREATE PROCEDURE prefix_rewrite_prepare_p11 AS (SELECT sys.babelfish_fts_rewrite('"o@ne* "'));
+CREATE PROCEDURE prefix_rewrite_prepare_p21 AS (SELECT sys.babelfish_fts_rewrite('"o@ne* "'));
 GO
 
 
