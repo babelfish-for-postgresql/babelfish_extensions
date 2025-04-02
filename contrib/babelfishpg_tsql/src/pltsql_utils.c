@@ -1956,16 +1956,18 @@ gen_schema_name_for_fulltext_index(const char *schema_name)
  * during execution of CONTAINS() statement
  */
 bool
-check_fulltext_exist(const char *schema_name, const char *table_name)
+check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name_list)
 {
 	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
 	char		*ft_index_name;
-	Oid			schemaOid;
-	Oid			relid;
+	Oid		schemaOid;
+	Oid		relid;
+	List 		*ft_column_name_list = NIL;
+	ListCell	*ft_column_name, *column_name;
 
 	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
 
-	// Check if schema exists
+	/* Check if schema exists */
 	if (!OidIsValid(schemaOid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1975,15 +1977,206 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
 	relid = get_relname_relid((const char *) table_name, schemaOid);
 
 
-	// Check if table exists
+	/* Check if table exists */
 	if (!OidIsValid(relid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_TABLE),
 				errmsg("relation \"%s\" does not exist",
 					table_name)));
 	
+	/* Check if column exists */
+	foreach(column_name, column_name_list)
+	{
+		if(!check_column_list(relid, (char *)(column_name)->ptr_value))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("column \"%s\" does not exist.",
+						(char *)(column_name)->ptr_value)));
+		}
+	}
+
 	ft_index_name = get_fulltext_index_name(relid, table_name);
-	return ft_index_name != NULL;
+	if(ft_index_name == NULL)
+		return false;
+
+	ft_column_name_list = get_fulltext_indexed_columns(relid, ft_index_name);
+	/* A safety check to handle the case when the index definition changes from the current definition */
+	if(ft_column_name_list == NIL)
+	{
+		pfree(ft_index_name);
+		return false;
+	}
+
+
+	/* Check if column is fulltext indexed */
+	foreach(column_name, column_name_list)
+	{
+		bool flag = false;
+		char *col_name = (char *)(column_name)->ptr_value;
+		foreach(ft_column_name, ft_column_name_list)
+		{
+			char *ft_col_name = (char *)(ft_column_name)->ptr_value;
+			if(pg_strcasecmp(col_name, ft_col_name) == 0)
+			{
+				flag = true;
+				break;
+			}
+		}
+		if(!flag)
+		{
+			list_free(ft_column_name_list);
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \'%s\' because it is not full-text indexed.",
+						col_name)));
+		}
+	}
+	pfree(ft_index_name);
+	list_free(ft_column_name_list);
+	return true;
+}
+
+ 
+/* 
+ * Check if the columns provided in the freetext predicate query exist or not
+ * The check for the columns existence is handled during query execution from PG side, 
+ * but we require to check it before checking if they are fulltext indexed or not
+ */
+bool check_column_list(Oid relid, char *column_name)
+{
+	Relation 	relation = RelationIdGetRelation(relid);
+	TupleDesc	tupledesc = RelationGetDescr(relation);
+	int		j;
+
+
+	for (j = 0; j < tupledesc->natts; j++) 
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupledesc, j);
+		if (!attr->attisdropped) 
+		{ 
+			char *str = NameStr(attr->attname);
+			if(pg_strcasecmp(column_name, str) == 0)
+			{
+				RelationClose(relation);
+				return true;
+			}
+		}
+	}
+	RelationClose(relation);
+	return false;
+}
+ 
+List
+*get_fulltext_indexed_columns(Oid relid, char *ft_index_name)
+{
+ 	Relation        relation  = RelationIdGetRelation(relid);
+ 	List            *indexoidlist = RelationGetIndexList(relation);
+ 	List 		*column_name = NIL;
+ 	ListCell	*cell;
+ 	char		*idx = NULL;
+	char		*name = NULL;
+	Oid		indexOid;
+ 	Datum 		result;
+ 
+ 	foreach(cell, indexoidlist)
+ 	{
+ 		indexOid = lfirst_oid(cell);
+ 		name = get_rel_name(indexOid);
+ 
+ 		if (strcmp(name, ft_index_name) == 0)
+ 		{
+ 			result = DirectFunctionCall1(pg_get_indexdef, ObjectIdGetDatum(indexOid));
+ 			if(DatumGetPointer(result) == NULL)
+			{
+				if(name != NULL)
+					pfree(name);
+
+				RelationClose(relation);
+				list_free(indexoidlist);
+				return NIL;
+			}
+ 			idx = text_to_cstring(DatumGetTextP(result));
+ 			column_name = get_columns(idx);
+ 			break;
+ 		}
+ 	}
+
+	if(idx != NULL)
+		pfree(idx);
+	if(name != NULL)
+		pfree(name);
+
+	RelationClose(relation);
+	list_free(indexoidlist);
+
+     	return column_name;
+}
+ 
+/* 
+ * The columns over which GIN index is created the index definition is like:
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, column_name)), for babelfish version before 16.2
+ * and
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts(column_name))), for babelfish version 16.2 onwards
+ * These columns can be of any text based datatype, like: TEXT, CHAR, VARCHAR, VARBINARY, etc.
+ */
+List
+*get_columns(char *index_stmt)
+{
+	
+	const char 	*indexdf = index_stmt;
+	List		*column_name_list = NULL;
+	size_t 		regconfig_len = strlen("regconfig, ");
+	size_t 		replace_special_chars_fts_len = strlen("replace_special_chars_fts(");
+	
+	if(index_stmt == NULL)
+	{
+		return NULL;
+	}
+
+ 	while ((indexdf = strstr(indexdf, "regconfig, ")) != NULL) 
+ 	{
+ 		StringInfoData 	bufStr;
+		char 		*closing;
+		char 		*column_name = NULL;
+		char		*start_ptr;
+ 		indexdf += regconfig_len;
+ 		initStringInfo(&bufStr);
+		
+		/* 
+		 * From  version 16.2 and onwards, the column names are processed for special characters before creating index,
+		 * so they are passed as replace_special_chars_fts(column_name) in the index definition
+		 * which is being checked before assigning the pointer to 'indexdf' 
+		 * as it will return NULL for version before 16.2
+		 */
+		if((start_ptr = strstr(indexdf, "replace_special_chars_fts(")) != NULL)
+		{
+			indexdf = start_ptr;
+			indexdf += replace_special_chars_fts_len;
+		}
+		/* 
+		 * The columns that are not of TEXT data type are casted into TEXT data type so the index definition for non TEXT columns is:
+		 * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, (column_name)::text)), for version before 16.2
+		 * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts((column_name)::text))), for version 16.2 and onwards  
+		 * so an extra '(' needs to be taken care of for these columns
+		 * These columns can be of any text based datatype, like: CHAR, VARCHAR, VARBINARY, etc.
+		 */
+		if(indexdf[0] == '(')
+		{
+			indexdf++;
+		}
+ 		/* Extract till the closing parenthesis */
+		closing = strchr(indexdf, ')');
+		*closing = '\0';
+
+		column_name = pstrdup(indexdf);
+
+		appendStringInfoString(&bufStr, (const char *)column_name);
+ 		column_name_list = lappend(column_name_list, bufStr.data);
+
+		indexdf = closing + 1;
+ 	}
+ 	return column_name_list;
 }
 
 /*
@@ -2183,6 +2376,13 @@ char
 	StringInfoData query;
 
 	initStringInfo(&query);
+
+	if(list_length(column_name) > 32)
+ 	{
+ 		ereport(ERROR,
+ 			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+ 				errmsg("Full-text index creation with more than 32 columns is not currently supported in Babelfish.")));
+ 	}
 
 	/*
 	 * We prepare the following query to create a fulltext index.

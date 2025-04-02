@@ -786,29 +786,56 @@ is_json_query(List *name)
 }
 
 /*
-* Parse T-SQL CONTAINS predicate. Currently only supports 
-* ... CONTAINS(column_name, '<contains_search_condition>') ...
+* Parse T-SQL CONTAINS predicate. Currently supports 
+* ... CONTAINS(column_name | (column_list), '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
 * to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* for column_list
+* to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* ...
+* to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
-TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
+TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
-    A_Expr *fts;
-    Node *to_tsvector_call, *to_tsquery_call;
-    Node *result_pgconfig;
-    List *args_pgconfig;
+	Node *fts = NULL;
+	A_Expr *column_clause;
+	Node *result_pgconfig;
+	List *args_pgconfig;
+	ListCell *column;
+ 
+	args_pgconfig = list_make1(search_expr);
+	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+	foreach(column, colId)
+	{
+		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+		Node * vec = makeToTSVectorFuncCall((column)->ptr_value, yyscanner, result_pgconfig);
+		column_clause = createTSMatchExpr(vec, query);
+		
+		fts = (fts != NULL)? createTSOrExpr((Node *) fts, (Node *) column_clause) : (Node *)column_clause;
+	}
+	return (Node *) fts;
+}
 
-    args_pgconfig = list_make1(search_expr);
-    result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
 
-    to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
-    to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-    
-    fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
+/* Creates and returns the tsvector and tsquery expression 
+ * for the column and search string passed in the argument 
+ */
+static A_Expr *
+createTSMatchExpr(Node *lexpr, Node *rexpr)
+{
+	return makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
+}
 
-    return (Node *)fts;
+/* Combines the nodes together using OR operator
+ * used to create a combined list of tsvector @@ tsquery expression for mulitple columns
+ */
+static Node *
+createTSOrExpr(Node *lexpr, Node *rexpr)
+{
+	return makeOrExpr(lexpr, rexpr, -1);
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
