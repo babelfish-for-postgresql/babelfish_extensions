@@ -411,31 +411,31 @@ WITH ColumnLengths AS (
 )
 SELECT COLUMN_NAME, ColumnLength
 FROM ColumnLengths
-WHERE ColumnLength % 2 = 0;
+WHERE ColumnLength % 2 = 0 order by COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#smallint
-ID#!#4
-col_char#!#10
-col_varchar#!#20
-col_nchar#!#16
-col_nvarchar#!#32
-col_text#!#16
-col_image#!#16
-col_ntext#!#16
-col_sysname#!#256
-col_sql_variant#!#8016
 col_bigint#!#8
-col_smallint#!#2
-col_smallmoney#!#4
-col_money#!#8
-col_smalldatetime#!#4
-col_real#!#4
-col_float#!#8
+col_char#!#10
 col_datetime#!#8
 col_datetime2#!#8
 col_datetimeoffset#!#10
+col_float#!#8
+col_image#!#16
+col_money#!#8
+col_nchar#!#16
+col_ntext#!#16
+col_nvarchar#!#32
+col_real#!#4
+col_smalldatetime#!#4
+col_smallint#!#2
+col_smallmoney#!#4
+col_sql_variant#!#8016
+col_sysname#!#256
+col_text#!#16
 col_uniqueidentifier#!#16
+col_varchar#!#20
+ID#!#4
 ~~END~~
 
 

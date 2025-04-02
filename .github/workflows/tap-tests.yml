@@ -11,7 +11,7 @@ jobs:
       INSTALL_DIR_16: psql16
       ENGINE_BRANCH_16: BABEL_4_X_DEV__PG_16_X
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -54,6 +54,7 @@ jobs:
         with:
           engine_branch: ${{env.ENGINE_BRANCH_OLD}}
           install_dir: ${{env.OLD_INSTALL_DIR}}
+          engine_version: 14.9
 
       - name: Compile ANTLR
         id: compile-antlr

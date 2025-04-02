@@ -513,9 +513,6 @@ go
 select t.name from test_special_char_t t where contains('t.name', '"one two"');
 go
 
-select t.name from test_special_char_t t where contains("t.name", '"one two"');
-go
-
 select name as txt from test_special_char_t where contains(txt, 'hello');
 go
 
@@ -545,6 +542,166 @@ go
 
 select * from fts_test_db.new_schema_fts.test where contains(fts_test_db.new_schema_fts.test.name, 'one');
 go
+
+-- Test case to check the limit of the fulltext index
+CREATE FULLTEXT INDEX ON ft_index_limit_t(col1, col2, col3, col4, col5,
+                                          col6, col7, col8, col9, col10,
+                                          col11, col12, col13, col14, col15,
+                                          col16, col17, col18, col19, col20,
+                                          col21, col22, col23, col24, col25,
+                                          col26, col27, col28, col29, col30,
+                                          col31, col32, col33, col34, col35,
+                                          col36 ) KEY INDEX uft
+GO
+
+-- Multiple column Test cases for the relation fts_contains_multicol_t
+
+-- gives error as fulltext index is still not created
+SELECT * FROM fts_contains_multicol_t WHERE contains(txt1, '"human or quantum')
+GO
+
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
+        txt1, 
+        txt2, 
+        txt3, 
+        txt4) KEY INDEX uid
+GO
+
+select * from fts_contains_multicol_t where contains((txt1, txt2, txt4), '"Artificial Intelligence"' )
+GO
+
+DROP FULLTEXT INDEX ON fts_contains_multicol_t
+GO
+
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
+        txt1, 
+        txt2) KEY INDEX uid
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '"The human genome"' )
+GO
+
+-- negative test
+-- should throw an error as there exists no column with the name txt5
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt5), '"The Industrial Revolution"')
+GO
+
+-- NULL test
+SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '')
+GO
+
+
+-- Test cases for the relation new_schema_fts.multicol_tb
+
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((txt, val), 'Product-A123')
+GO
+
+-- should throw an error as the previous full text index is not dropped
+CREATE FULLTEXT INDEX ON new_schema_fts.multicol_tb(
+        val, 
+        chr) KEY INDEX usr
+GO
+
+DROP FULLTEXT INDEX ON new_schema_fts.multicol_tb
+GO
+
+CREATE FULLTEXT INDEX ON new_schema_fts.multicol_tb(
+        txt, 
+        val, 
+        chr) KEY INDEX usr
+GO
+
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        multicol_tb.txt, 
+        val), '"brown fox"')
+GO
+
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        multicol_tb.val, 
+        multicol_tb.chr), 'TEST-999')
+GO
+
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        new_schema_fts.multicol_tb.txt, 
+        multicol_tb.chr), 'three')
+GO
+
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        new_schema_fts.multicol_tb.txt, 
+        new_schema_fts.multicol_tb.val, 
+        chr), 'Invoice/001')
+GO
+
+-- NULL test
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        txt, 
+        val, 
+        chr), '')
+GO
+
+-- A stop word used as a predicate, should give warning that only a stop word is used in predicate, but does not give the warning
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        txt, 
+        val, 
+        chr), 'The')
+GO
+
+-- Phrase made of only stop words is used as a predicate, should give warning and no result, but gives ambiguous result result
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        txt,
+        val, 
+        chr), '"To be"')
+GO
+
+-- Throws error as the column name is not valid
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains(( 
+        ,
+        val, 
+        chr), '"and no play"')
+GO
+
+-- Throws error as NULL is passed as a column
+SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
+        txt, 
+        NULL, 
+        chr), 'Order_789')
+GO
+
+
+-- Test cases for content_table
+CREATE UNIQUE INDEX ucid ON content_table(id)
+GO
+
+CREATE FULLTEXT INDEX ON content_table(
+        text_column,
+        char_column,
+        varchar_column,
+        ntext_column,
+        nchar_column) KEY INDEX ucid
+GO
+
+SELECT * FROM content_table WHERE contains((
+        text_column, 
+        char_column, 
+        varchar_column), '"Planning phase"')
+GO
+
+-- Case sensitivity of column names
+SELECT * FROM content_table WHERE contains((
+        TEXT_COLUMN, 
+        char_column, 
+        Varchar_Column), '"Planning phase"')
+GO
+
+-- should throw error as 'nvarchar_column' is not fulltext index
+SELECT * FROM content_table WHERE contains((
+        text_column,
+        char_column,
+        varchar_column,
+        nvarchar_column,
+        ntext_column,
+        nchar_column), 'documentation')
+GO
 
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
