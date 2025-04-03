@@ -4323,17 +4323,17 @@ int
 get_next_xml_handle()
 {
     int  old_handle = current_xml_handle;
-	int  current_doc_id;
+    int  current_doc_id;
 
     while (true)
     {
         ++current_xml_handle;
-	    current_doc_id = 2*current_xml_handle -1;
+        current_doc_id = 2*current_xml_handle -1;
         
         if (current_xml_handle == XML_HANDLE_INVALID || current_xml_handle > MAX_XML_HANDLES_PER_SESSION )
 		{
             current_xml_handle = XML_HANDLE_START + 1;
-		    current_doc_id = 2*current_xml_handle -1;
+            current_doc_id = 2*current_xml_handle -1;
 		}
             
         if (unlikely(current_xml_handle == old_handle))
