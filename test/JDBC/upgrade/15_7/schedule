@@ -564,3 +564,4 @@ smalldatetime_date_cmp
 test_conv_money_to_varchar
 fixeddecimal_modulo
 round_return_type_test-before-16_9-or-17_5
+BABEL-NUMERIC_EXPR

@@ -438,3 +438,4 @@ smalldatetime_date_cmp-before-15_5-16_1
 test_conv_money_to_varchar
 fixeddecimal_modulo
 round_return_type_test-before-16_9-or-17_5
+BABEL-NUMERIC_EXPR
