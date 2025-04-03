@@ -1,0 +1,148 @@
+
+#include "postgres.h"
+
+#include "access/parallel.h"
+#include "fmgr.h"
+#include "nodes/bitmapset.h"
+#include "nodes/execnodes.h"
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
+#include "parser/parser.h"
+#include "storage/shm_toc.h"
+#include "utils/elog.h"
+#include "utils/lsyscache.h"
+
+#include "bbf_parallel_query.h"
+
+/*
+ * temp_relids - maintains relid list of temp table shared by leader node. This should be
+ * strictly accessed within parallel worker context.
+ */
+static Bitmapset   *temp_relids = NULL;
+
+/*
+ * string representation of list of temp table oids computed by Leader node to be shared
+ * with parallel worker.
+ */
+static char		   *temp_relids_str = NULL;
+
+/*
+ * In Babelfish, Any user under given session should be able access the temp tables. 
+ * And Postgres doesn't allow parallel scan on temp tables. But it still does the permission
+ * check on temp tables under parallel workers. But since Babelfish temp tables implemented
+ * using ENR, it can't be accessed inside Parallel worker.
+ * 
+ * So we would like to avoid permission checking on temp tables under parallel workers while
+ * ensuring that Leader node does require permission checks on temp table.
+ * 
+ * In order to achieve this, we (probably re)do permission checks on temp tables and share
+ * the list of oids with parallel worker. And parallel worker will avoid permission check
+ * on these oids.
+ */
+
+
+/*
+ * bbf_ExecInitParallelPlan -- implements ExecInitParallelPlan_hook.
+ * It iterates through es_range_tables checking persistence of given relation. Probably,
+ * re-do permission checking (better to redo perm checking instead of never doing it) if
+ * relation is temp table and adds oid/relid to the set. This set will be shared with
+ * parallel worker so that parallel worker avoids permission check on temp tables.
+ */
+void 
+bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
+{
+	if (prev_ExecInitParallelPlan_hook)
+		(*prev_ExecInitParallelPlan_hook)(estate, pcxt, estimate);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (estimate)
+	{
+		ListCell   *lc;
+		Bitmapset  *temp_relids_local = NULL;
+
+		foreach(lc, estate->es_range_table)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (rte->rtekind == RTE_RELATION &&
+				OidIsValid(rte->relid) && 
+				get_rel_persistence(rte->relid) == 't')
+			{
+				temp_relids_local = bms_add_member(temp_relids_local, rte->relid);
+			}
+		}
+		temp_relids_str = bmsToString(temp_relids_local);
+
+		/*
+		 * Estimate extra context for Babelfish
+		 */
+		shm_toc_estimate_chunk(&pcxt->estimator, strlen(temp_relids_str) + 1);
+		shm_toc_estimate_keys(&pcxt->estimator, 1);
+	}
+	else
+	{
+		char *temp_relids_space;
+
+		/*temp_relids_str will never be NULL even if there is no temp tables in the query. */
+		if (temp_relids_str == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("Unexpected list of temp table relids")));
+		}
+
+		temp_relids_space = shm_toc_allocate(pcxt->toc, strlen(temp_relids_str) + 1);
+		memcpy(temp_relids_space, temp_relids_str, strlen(temp_relids_str) + 1);
+		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_TEMP_RELIDS, temp_relids_space);
+
+		/* And reset temp_relids_str */
+		pfree(temp_relids_str);
+		temp_relids_str = NULL;
+	}
+}
+/*
+ * bbf_ParallelQueryMain -- implements ParallelQueryMain_hook.
+ * It constructs temp_relids which represents oid list of temp tables communicated by Leader node.
+ * warning: should stricktly call under parallel worker.
+ */
+void
+bbf_ParallelQueryMain(shm_toc *toc)
+{
+	if (prev_ParallelQueryMain_hook)
+		(*prev_ParallelQueryMain_hook)(toc);
+
+	/* Another line of defense to make sure no regular backend calls this function. */
+	if (!IsBabelfishParallelWorker())
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("Invalid attempt to build set of relids")));
+	}
+
+	temp_relids = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
+															BABELFISH_PARALLEL_KEY_TEMP_RELIDS,
+															false));
+}
+
+/*
+ * IsBabelfishTempTable -- implements skip_ExecutorCheckPerms_hook.
+ * Returns true if provided relid is Babelfish temp table. Note that temp_relids must have
+ * communicated by Leader node.
+ * warning: should stricktly call under parallel worker.
+ */
+bool
+IsBabelfishTempTable(Oid relid)
+{
+	/* Another line of defense to make sure no regular backend calls this function. */
+	if (!IsBabelfishParallelWorker())
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("Invalid attempt to build set of relids")));
+	}
+
+	return bms_is_member(relid, temp_relids);
+}
+
