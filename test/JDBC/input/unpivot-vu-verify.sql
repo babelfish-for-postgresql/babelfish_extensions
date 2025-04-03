@@ -836,18 +836,27 @@ GO
 
     -- BABEL-5676 - Test UNPIVOT with Unicode characters
     -- Commented due to conflicting results in collation/non-collation pr tests
--- SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
--- FROM [Global_データ_Sales]
--- UNPIVOT (
---     [Amount_金額] FOR [Quarter_四半期] IN (
---         [Q1_売上],
---         [Q2_売上]
---     )
--- ) AS [Global_分析];
--- GO
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO
 
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
 SELECT customer_id, turnover, quarter FROM customer_turnover c 
 UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, c.q3, c.q4)) AS unpvt;
 GO
 
+SELECT [ID_番号], [Amount_金額], CAST([Quarter_四半期] as NVARCHAR(max))
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO
