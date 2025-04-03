@@ -64,7 +64,11 @@ INSERT INTO float_char_t1 (FloatValue, Description) VALUES
     (1E-10, 'Scientific notation - small'),
     (9999999999.99, 'Large decimal'),
     (0.000000001, 'Very small decimal'),
-	(NULL, 'NULL Value')
+	(NULL, 'NULL Value'),
+    (2.23E-308, 'Pos Min Value'),
+    (1.79E+308, 'Pos Min Value'),
+    (-2.23E-308, 'Pos Min Value'),
+    (-1.79E+308, 'Pos Min Value')
 GO
 
 
@@ -146,7 +150,11 @@ INSERT INTO float_varchar_t1 (FloatValue, Description) VALUES
     (1E-10, 'Scientific notation - small'),
     (9999999999.99, 'Large decimal'),
     (0.000000001, 'Very small decimal'),
-	(NULL, 'NULL Value')
+	(NULL, 'NULL Value'),
+    (2.23E-308, 'Pos Min Value'),
+    (1.79E+308, 'Pos Min Value'),
+    (-2.23E-308, 'Pos Min Value'),
+    (-1.79E+308, 'Pos Min Value')
 GO
 
 
