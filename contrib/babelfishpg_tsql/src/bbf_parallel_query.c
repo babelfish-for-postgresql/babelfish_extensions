@@ -8,12 +8,16 @@
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
+#include "miscadmin.h"
+#include "parser/parse_relation.h"
 #include "parser/parser.h"
 #include "storage/shm_toc.h"
+#include "utils/acl.h"
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 
 #include "bbf_parallel_query.h"
+#include "pltsql.h"
 
 /*
  * temp_relids - maintains relid list of temp table shared by leader node. This should be
@@ -55,7 +59,11 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 	if (prev_ExecInitParallelPlan_hook)
 		(*prev_ExecInitParallelPlan_hook)(estate, pcxt, estimate);
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
+	/*
+	 * Dialect check is not sufficient because parallel worker might be needed while
+	 * doing plpgsql function scan on leader node.
+	 */
+	if (!IS_TDS_CONN())
 		return;
 
 	if (estimate)

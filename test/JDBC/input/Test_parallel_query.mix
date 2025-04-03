@@ -118,3 +118,30 @@ DROP USER l1
 GO
 DROP LOGIN l1;
 GO
+
+-- tsql
+CREATE TABLE Employees (EmployeeID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), Department VARCHAR(50));
+GO
+
+-- Insert sample data
+INSERT INTO Employees VALUES (1, 'John', 'Doe', 'IT'), (2, 'Jane', 'Smith', 'HR'), (3, 'Mike', 'Johnson', 'IT');
+GO
+
+CREATE TYPE SalaryUpdateType AS TABLE(EmployeeID INT, NewSalary DECIMAL(10,2), EffectiveDate DATE);
+GO
+
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+select count(*) FROM Employees e
+    INNER JOIN @SalaryUpdateTable su ON e.EmployeeID = su.EmployeeID;
+GO
+
+DROP TYPE SalaryUpdateType
+GO
+
+DROP TABLE Employees;
+GO
