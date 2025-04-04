@@ -73,7 +73,7 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 Selectivity *rest_selec);
 
 static Node *transform_likenode_for_AI(OpExpr *op);
-static Node *convert_node_to_funcexpr_for_like(Node *node);
+static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
 
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
@@ -341,7 +341,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	char	   *op_str;
 	Node	   *ret;
 	Const	   *patt;
-	Const	   *prefix, *prefix_ai;
+	Const	   *prefix;
 	Operator	optup;
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
@@ -381,12 +381,24 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		op->opno = like_entry.ilike_oid;
 		op->opfuncid = like_entry.ilike_opfuncid;
 	}
-
+	
+	/* 
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
+	 */
+	if (IsA(rightop, RelabelType))
+	{
+		RelabelType		*relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+		{
+			lsecond(op->args) = relabel->arg;
+			rightop = (Node *) lsecond(op->args);
+		}
+	}
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	/* Remove accents if AI collations */
-	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		node = transform_likenode_for_AI(op);
 
 	/* no constant prefix found in pattern, or pattern is not constant */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
@@ -466,26 +478,14 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
-
-		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		{
-			prefix_ai = copyObject(prefix);
-			prefix_ai = (Const *) convert_node_to_funcexpr_for_like((Node *) prefix_ai);
-			ret = make_or_qual(ret, (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-									(Expr *) leftop,
-									(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
-									InvalidOid,
-									coll_info_of_inputcollid.oid,
-									oprfuncid(optup))));
-		}
 		ReleaseSysCache(optup);
 	}
 	else
 	{
-		Expr	   *greater_equal, *greater_equal_ai,
-					*less_equal, *less_equal_ai,
-					*concat_expr, *concat_expr_ai;
-		Node	   *constant_suffix, *constant_suffix_ai;
+		Expr	   *greater_equal,
+					*less_equal,
+					*concat_expr;
+		Node	   *constant_suffix;
 		Const	   *highest_sort_key;
 
 		/* Always create a CollateExpr on top to match with op->inputcollid */
@@ -506,17 +506,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 											coll_info_of_inputcollid.oid,
 											oprfuncid(optup));
 
-		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		{
-			prefix_ai = copyObject(prefix);
-			prefix_ai = (Const *) convert_node_to_funcexpr_for_like((Node *) prefix_ai);
-			greater_equal_ai = make_op_with_func(oprid(optup), BOOLOID, false,
-									(Expr *) leftop,
-									(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
-									InvalidOid,
-									coll_info_of_inputcollid.oid,
-									oprfuncid(optup));
-		}
 
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
@@ -532,13 +521,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 										(Expr *) prefix_collate,
 										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
 										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		{
-			concat_expr_ai = make_op_with_func(oprid(optup), rtypeId, false,
-												(Expr *) create_collate_expr((Node* ) prefix_ai, coll_info_of_inputcollid.oid),
-												(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
-												coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-		}
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
 		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
@@ -551,35 +533,16 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 										(Expr *) leftop, (Expr *) concat_expr,
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 
-		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		{
-			less_equal_ai = make_op_with_func(oprid(optup), BOOLOID, false,
-												(Expr *) leftop, (Expr *) concat_expr_ai,
-												InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-		}
 
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-		if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-		{
-			constant_suffix_ai = make_and_qual((Node *) greater_equal_ai, (Node *) less_equal_ai);
-		}
 
 		if (like_entry.is_not_match)
 		{
 			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
-			if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-			{
-				constant_suffix_ai = (Node *) make_notclause((Expr *) constant_suffix_ai);
-				constant_suffix = make_or_qual(constant_suffix, constant_suffix_ai);
-			}
 			ret = make_or_qual(node, constant_suffix);
 		}
 		else
 		{
-			if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000e) /* AI */
-			{
-				constant_suffix = make_or_qual(constant_suffix, constant_suffix_ai);
-			}
 			ret = make_and_qual(node, constant_suffix);
 		}
 		ReleaseSysCache(optup);
@@ -864,12 +827,18 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 }
 
 static Node *
-convert_node_to_funcexpr_for_like(Node *node)
+convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Node *new_node;
 	newFuncExpr->funcid = remove_accents_internal_oid;
-	newFuncExpr->funcresulttype = get_sys_varcharoid();
+	newFuncExpr->funcresulttype = get_sys_nvarcharoid();
+	newFuncExpr->funccollid = inputcollid;
+	newFuncExpr->inputcollid = inputcollid;
+	newFuncExpr->funcretset = false;
+	newFuncExpr->funcvariadic = false;
+	newFuncExpr->location = -1;
+
 
 	if (node == NULL)
 		return node;
@@ -894,15 +863,6 @@ convert_node_to_funcexpr_for_like(Node *node)
 				if (IsA(new_node, Const))
 				{
 					con = (Const *) new_node;
-					if (con->constisnull)
-						return new_node;
-					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
-					return (Node *) con;
-				}
-				else if (IsA(new_node, RelabelType))
-				{
-					RelabelType *relabel = (RelabelType*) new_node;
-					con = (Const *) (relabel->arg);
 					if (con->constisnull)
 						return new_node;
 					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
@@ -974,15 +934,15 @@ transform_likenode_for_AI(OpExpr *op)
 	Node		*rightop = (Node *) lsecond(op->args);
 
 	linitial(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(leftop),
-												get_sys_varcharoid(),
+												convert_node_to_funcexpr_for_like(leftop, op->inputcollid),
+												get_sys_nvarcharoid(),
 												exprType(leftop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
 												-1);
 	lsecond(op->args) = coerce_to_target_type(NULL,
-												convert_node_to_funcexpr_for_like(rightop),
-												get_sys_varcharoid(),
+												convert_node_to_funcexpr_for_like(rightop, op->inputcollid),
+												get_sys_nvarcharoid(),
 												exprType(rightop), -1,
 												COERCION_EXPLICIT,
 												COERCE_EXPLICIT_CAST,
@@ -1068,7 +1028,7 @@ transform_likenode(Node *node)
 			else if (coll_info_of_inputcollid.collateflags == 0x000e || coll_info_of_inputcollid.collateflags == 0x000f)	/* AI */
 			{
 				if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-					return optimise_likenode(node, op, like_entry, coll_info_of_inputcollid);
+					return optimise_likenode(node, (OpExpr*) transform_likenode_for_AI(op), like_entry, coll_info_of_inputcollid);
 				else
 					ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

@@ -1,0 +1,392 @@
+-- VARCHAR
+-- CS_AS
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_csas;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csas WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csas WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csas WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csas WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs999%'
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_cias;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_cias WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_cias WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_cias WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_cias WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci999%'
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_csai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csai WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csai WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csai WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_csai WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai999%'
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_ciai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_ciai WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_ciai WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_ciai WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_v_ciai WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai999%'
+GO
+
+-- CHAR
+-- CS_AS
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_csas;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csas WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csas WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csas WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csas WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs999%'
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_cias;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_cias WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_cias WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_cias WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_cias WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci999%'
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_csai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csai WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csai WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csai WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_csai WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai999%'
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_ciai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_ciai WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_ciai WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_ciai WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_c_ciai WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai999%'
+GO
+
+-- NVARCHAR
+-- CS_AS
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_csas;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csas WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csas WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csas WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csas WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs999%'
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_cias;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_cias WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_cias WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_cias WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_cias WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci999%'
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_csai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csai WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csai WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csai WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_csai WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai999%'
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_ciai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_ciai WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_ciai WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_ciai WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_nv_ciai WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai999%'
+GO
+
+
+-- TEXT
+-- CS_AS
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_csas;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csas WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csas WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csas WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csas WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs999%'
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_cias;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_cias WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_cias WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_cias WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_cias WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci999%'
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_csai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csai WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csai WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csai WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_csai WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai999%'
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_ciai;
+GO
+
+-- tsql
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_ciai WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_ciai WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai999%'
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_ciai WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1'
+GO
+
+SELECT * FROM test_like_index_vu_prepare_t_ciai WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai999%'
+GO
