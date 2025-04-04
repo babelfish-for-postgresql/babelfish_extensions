@@ -22,7 +22,7 @@
 
 /*
  * temp_relids - maintains relid list of temp table shared by leader node. This should be
- * strictly accessed within parallel worker context.
+* strictly accessed within parallel worker context.
  */
 static Bitmapset   *temp_relids = NULL;
 
@@ -81,7 +81,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 			{
 				/* probably (re)do perm check */
 				RTEPermissionInfo *perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);
-				if (!ExecCheckOneRelPerms(perminfo))
+				if (!ExecCheckOneRelPerms_wrapper(perminfo))
 				{
 					aclcheck_error(ACLCHECK_NO_PRIV,
 									get_relkind_objtype(get_rel_relkind(perminfo->relid)),
@@ -144,22 +144,31 @@ bbf_ParallelQueryMain(shm_toc *toc)
 }
 
 /*
- * IsBabelfishTempTable -- implements skip_ExecutorCheckPerms_hook.
- * Returns true if provided relid is Babelfish temp table. Note that temp_relids must have
- * communicated by Leader node.
- * warning: should stricktly call under parallel worker.
+ * bbf_ExecCheckOneRelPerms -- implements ExecCheckOneRelPerms_hook.
+ * Returns true if this is Babelfish parallel worker and provided relid is Babelfish temp table. 
+ * Note that temp_relids must have communicated by Leader node.
  */
 bool
-IsBabelfishTempTable(Oid relid)
+bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 {
-	/* Another line of defense to make sure no regular backend calls this function. */
-	if (!IsBabelfishParallelWorker())
+	if (prev_ExecCheckOneRelPerms_hook && (*prev_ExecCheckOneRelPerms_hook)(perminfo))
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("Invalid attempt to build set of relids")));
+		return true;
 	}
 
-	return bms_is_member(relid, temp_relids);
+	if (!OidIsValid(perminfo->relid))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("Unexpected perminfo is found")));
+	}
+
+	/* Let regular permission check happen if its not Babelfish parallel worker. */
+	if (!IsBabelfishParallelWorker())
+	{
+		return false;
+	}
+
+	return bms_is_member(perminfo->relid, temp_relids);
 }
 

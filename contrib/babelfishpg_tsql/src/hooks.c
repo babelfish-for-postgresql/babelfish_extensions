@@ -326,6 +326,7 @@ static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_m
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
+ExecCheckOneRelPerms_hook_type prev_ExecCheckOneRelPerms_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -575,7 +576,8 @@ InstallExtendedHooks(void)
 	prev_ExecInitParallelPlan_hook = ExecInitParallelPlan_hook;
 	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
 
-	skip_ExecutorCheckPerms_hook = IsBabelfishTempTable;
+	prev_ExecCheckOneRelPerms_hook = ExecCheckOneRelPerms_hook;
+	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
 }
 
 void
@@ -661,7 +663,7 @@ UninstallExtendedHooks(void)
 	is_bbf_tds_connection_hook = NULL;
 	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
-	skip_ExecutorCheckPerms_hook = NULL;
+	ExecCheckOneRelPerms_hook = prev_ExecCheckOneRelPerms_hook;
 }
 
 /*****************************************
