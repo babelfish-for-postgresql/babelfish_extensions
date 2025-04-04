@@ -595,3 +595,4 @@ BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 test_constraint_like-before-17-5-or-16-9
 round_return_type_test-before-16_9-or-17_5
 alter-view
+test_conv_int_to_varbinary_binary_before_17_5_or_16_9

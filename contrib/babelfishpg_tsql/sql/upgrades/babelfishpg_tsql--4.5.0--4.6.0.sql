@@ -1041,8 +1041,176 @@ CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$
 RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
+DO $$
+DECLARE
+    old_function_exists boolean;
+    exception_message text;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_try_conv_to_varbinary'
+        AND p.pronargs = 2  -- old version with 2 parameters
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        ALTER FUNCTION sys.babelfish_try_conv_to_varbinary(
+            IN arg anyelement,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_try_conv_to_varbinary_deprecated_in_4_6_0;
+        CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(
+            IN typmod INTEGER,
+            IN arg anyelement,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+            ELSE
+                IF typmod = -1 THEN
+                    RETURN CAST(arg as sys.varbinary);
+                ELSE
+                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                    RETURN result;
+                END IF;
+            END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    RETURN NULL;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_4_6_0');
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_conv_helper_to_varbinary'
+        AND p.pronargs = 3  -- old version with 3 parameters
+        AND p.proargtypes[0] = 'sys.varchar'::regtype::oid
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg sys.VARCHAR,
+            IN try BOOL,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_4_6_0;
+
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN typmod INTEGER,
+            IN arg sys.VARCHAR,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        BEGIN
+            IF try THEN
+                RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
+            ELSE
+                RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_4_6_0');
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_conv_helper_to_varbinary'
+        AND p.pronargs = 3  -- old version with 3 parameters
+        AND p.proargtypes[0] = 'anyelement'::regtype::oid
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        -- Recreate definition with updated dependant function syntax.
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF try THEN
+                --  Hardcoding this as the internal function could have been dropped)
+                RETURN sys.babelfish_try_conv_to_varbinary(-1 , arg, p_style);
+            ELSE
+                IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+                ELSE
+                    RETURN CAST(arg as sys.varbinary);
+                END IF;
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+
+        ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_conv_helper_to_varbinary_anyel_deprecated_in_4_6_0;
+
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN typmod INTEGER,
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF try THEN
+                RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
+            ELSE
+                IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+                ELSE
+                    IF typmod = -1 THEN
+                        RETURN CAST(arg as sys.varbinary);
+                    ELSE
+                        EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                        RETURN result;
+                    END IF;
+                END IF;
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_4_6_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement,
 															IN try BOOL,
@@ -1682,6 +1850,9 @@ RETURNS NULL ON NULL INPUT;
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
