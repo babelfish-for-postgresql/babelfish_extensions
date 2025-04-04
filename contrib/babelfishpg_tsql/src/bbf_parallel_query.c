@@ -152,9 +152,9 @@ bbf_ParallelQueryMain(shm_toc *toc)
 bool
 bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 {
-	if (prev_ExecCheckOneRelPerms_hook && (*prev_ExecCheckOneRelPerms_hook)(perminfo))
+	if (prev_ExecCheckOneRelPerms_hook && !(*prev_ExecCheckOneRelPerms_hook)(perminfo))
 	{
-		return true;
+		return false;
 	}
 
 	if (!OidIsValid(perminfo->relid))
