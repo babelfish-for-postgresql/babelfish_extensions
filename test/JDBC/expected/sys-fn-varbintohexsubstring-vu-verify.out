@@ -1,0 +1,23 @@
+SELECT * FROM fn_varbintohexsubstring_vu_prepare_view
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+EXEC fn_varbintohexsubstring_vu_prepare_proc
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT * FROM fn_varbintohexsubstring_vu_prepare_func()
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+

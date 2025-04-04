@@ -1,0 +1,11 @@
+USE master
+GO
+
+DROP VIEW sys_server_permissions_vu_prepare_view
+GO
+
+DROP PROC sys_server_permissions_vu_prepare_proc
+GO
+
+DROP FUNCTION sys_server_permissions_vu_prepare_func
+GO

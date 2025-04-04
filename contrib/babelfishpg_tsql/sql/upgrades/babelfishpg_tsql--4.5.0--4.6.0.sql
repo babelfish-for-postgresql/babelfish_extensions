@@ -1851,6 +1851,74 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix INT, expression sys.varbinary(128), start_offset INT, length_to_return INT) 
+RETURNS sys.nvarchar(128) 
+AS $$ 
+DECLARE 
+BEGIN 
+    RETURN NULL; 
+END; 
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE VIEW sys.server_permissions 
+AS
+SELECT
+  CAST(0 as sys.tinyint) AS class,
+  CAST(NULL as sys.nvarchar(60)) AS class_desc,
+  CAST(NULL as INT) AS major_id,
+  CAST(NULL as INT) AS minor_id,
+  CAST(NULL as INT) AS grantee_principal_id,
+  CAST(NULL as INT) AS grantor_principal_id,
+  CAST(NULL as sys.BPCHAR(4)) AS type,
+  CAST(NULL as sys.nvarchar(128)) AS permission_name,
+  CAST(NULL as sys.BPCHAR(1)) AS state,
+  CAST(NULL as sys.nvarchar(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.server_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.credentials 
+AS
+SELECT
+  CAST(NULL as INT) AS credential_id,
+  CAST(NULL as sys.sysname) AS name,
+  CAST(NULL as sys.nvarchar(4000)) AS credential_identity,
+  CAST(NULL as sys.datetime) AS create_date,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(NULL as sys.nvarchar(100)) AS target_type,
+  CAST(NULL as INT) AS target_id
+WHERE FALSE;
+GRANT SELECT ON sys.credentials TO PUBLIC;
+
+CREATE VIEW sys.sql_logins AS
+SELECT
+    CAST(NULL as sys.sysname) AS name,
+    CAST(NULL as INT) AS principal_id,
+    CAST(NULL as sys.VARBINARY(85)) AS sid,
+    CAST(NULL as sys.BPCHAR(1)) AS type,
+    CAST(NULL as sys.nvarchar(60)) AS type_desc,
+    CAST(NULL as INT) AS is_disabled,
+    CAST(NULL as sys.DATETIME) AS create_date,
+    CAST(NULL as sys.DATETIME) AS modify_date,
+    CAST(NULL as sys.sysname) AS default_database_name,
+    CAST(NULL as sys.sysname) AS default_language_name,
+    CAST(NULL as INT) AS credential_id,
+    CAST(NULL as INT) AS owning_principal_id,
+    CAST(0 as sys.BIT) AS is_fixed_role,
+    CAST(0 as sys.BIT) AS is_policy_checked,
+    CAST(0 as sys.BIT) AS is_expiration_checked,
+    CAST(NULL as sys.varbinary(256)) AS password_hash
+WHERE FALSE;
+GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

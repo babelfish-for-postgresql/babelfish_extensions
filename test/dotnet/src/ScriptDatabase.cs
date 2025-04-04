@@ -4,11 +4,38 @@ using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Common;
 using System.Collections.Specialized;
 using Microsoft.SqlServer.Management.Sdk.Sfc;
+using System.Text.RegularExpressions;
 
 namespace BabelfishDotnetFramework
 {
-public class DatabaseScripter
+public class LoginDatabaseScripter
 {
+    public static ServerConnection serverConnection;
+    public static Server server;
+    public static Scripter scripter;
+
+    public static void ConnectionInitialisation()
+    {
+        // Initialize ServerConnection
+        serverConnection = new ServerConnection(ConfigSetup.BblUrl);
+        serverConnection.LoginSecure = false;
+        serverConnection.Login = ConfigSetup.BblUser;
+        serverConnection.Password = ConfigSetup.BblPasswd;
+
+        // Initialize Server
+        server = new Server(serverConnection);
+
+        // Initialize Scripter with options
+        scripter = new Scripter(server)
+        {
+            Options = {
+                DriAll = true,
+                ScriptSchema = true,
+                ScriptData = false,
+                NoCollation = true
+            }
+        };
+    }
 	public static void ScriptDatabase(string strLine, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
 		string[] result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
@@ -18,13 +45,8 @@ public class DatabaseScripter
 
 		try
 		{
-			ServerConnection serverConnection = new ServerConnection(ConfigSetup.BblUrl);
-			serverConnection.LoginSecure = false;
-			serverConnection.Login = ConfigSetup.BblUser;
-			serverConnection.Password = ConfigSetup.BblPasswd;
+			ConnectionInitialisation();
 
-			// Create a Server object
-			Server server = new Server(serverConnection);
 			Database database = server.Databases[ConfigSetup.BblDb];
 			if (database == null)
 			{
@@ -34,24 +56,89 @@ public class DatabaseScripter
 
 			testUtils.PrintToLogsOrConsole($"\nScripting database: {ConfigSetup.BblDb}", logger, "information");
 
-			Scripter scripter = new Scripter(server)
-			{
-				Options = {
-					DriAll = true,
-					ScriptSchema = true,
-					ScriptData = false,
-					NoCollation = true
-				}
-			};
-
 			ScriptDatabaseObjects(database, scripter, flag, testName, testUtils, logger);
 		}
 		catch (Exception ex)
 		{
 			testUtils.PrintToLogsOrConsole("An error occurred: " + ex.Message, logger, "information");
 		}
+		finally
+		{
+			if (server?.ConnectionContext != null)
+			{
+				server.ConnectionContext.Disconnect();
+			}
+			if (serverConnection != null)
+			{
+				serverConnection.Disconnect(); 
+			}
+		}
 	}
 
+	public static void ScriptLogins(string testName, TestUtils testUtils, Serilog.Core.Logger logger)
+	{
+		try
+		{
+			ConnectionInitialisation();
+
+			string currentUser = server.ConnectionContext.TrueLogin;
+			var logins = server.Logins.Cast<Login>()
+				.Where(l => !l.IsSystemObject && l.Name != currentUser)
+				.ToList();
+
+			if (!logins.Any())
+			{
+				testUtils.PrintToLogsOrConsole("No user-defined logins found.", logger, "information");
+				return;
+			}
+
+			// Precompile regex patterns
+			Regex passwordRegex = new Regex(@"N?'(.*?)'", RegexOptions.Compiled);
+			Regex commentBlockRegex = new Regex(@"(?m)^\s*/\*.*?\*/\s*$", RegexOptions.Compiled);
+			Regex singleLineCommentRegex = new Regex(@"(?m)^\s*--.*$", RegexOptions.Compiled);
+			Regex sidRegex = new Regex(@",\s*SID=0x[0-9A-F]+", RegexOptions.Compiled);
+
+			foreach (Login login in logins)
+			{
+				try
+				{
+					testUtils.PrintToLogsOrConsole($"\nScripting Login: {login.Name}", logger, "information");
+					StringCollection loginScripts = scripter.Script(new Urn[] { login.Urn });
+
+					for (int i = 0; i < loginScripts.Count; i++)
+					{
+						// replace password with equal length * 
+						loginScripts[i] = passwordRegex.Replace(loginScripts[i], match => "'" + new string('*', match.Groups[1].Value.Length) + "'");
+						// remove comments
+						loginScripts[i] = commentBlockRegex.Replace(loginScripts[i], "");
+						loginScripts[i] = singleLineCommentRegex.Replace(loginScripts[i], "");
+						loginScripts[i] = sidRegex.Replace(loginScripts[i], "");
+					}
+					testUtils.ResultSetWriter(loginScripts, testName);
+				}
+				catch (Exception ex)
+				{
+					testUtils.PrintToLogsOrConsole($"Could not script login {login.Name}: {ex.Message}", logger, "warning");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			testUtils.PrintToLogsOrConsole($"Error in ScriptLogins: {ex.Message}", logger, "error");
+		}
+		finally
+		{
+			if (server?.ConnectionContext != null)
+			{
+				server.ConnectionContext.Disconnect();
+			}
+			if (serverConnection != null)
+			{
+				serverConnection.Disconnect(); 
+			}
+		}
+	}
+	
 	private static void ScriptDatabaseObjects(Database database, Scripter scripter, string flag, string testName, TestUtils testUtils, Serilog.Core.Logger logger)
 	{
 		const string sys_schema = "sys";
