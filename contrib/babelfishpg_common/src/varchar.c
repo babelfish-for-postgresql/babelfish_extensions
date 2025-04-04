@@ -1240,7 +1240,6 @@ float82bpchar(PG_FUNCTION_ARGS)
 	/* When No Typmod is defined Default Length is 30 */
 	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
 	Datum res;
-	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
 	char	   *result;
 	char	   *buf_padded;
 	int		   str_len;
