@@ -9,7 +9,6 @@
 
 extern ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook;
 extern ParallelQueryMain_hook_type prev_ParallelQueryMain_hook;
-extern ExecCheckOneRelPerms_hook_type prev_ExecCheckOneRelPerms_hook;
 
 extern void bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate);
 extern void bbf_ParallelQueryMain(shm_toc *toc);
