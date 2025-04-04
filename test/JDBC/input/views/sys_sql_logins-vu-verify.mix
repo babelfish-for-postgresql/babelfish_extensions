@@ -1,0 +1,99 @@
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login1 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login2 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login3 WITH PASSWORD = '123';
+GO
+
+-- tsql
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql user=sys_sql_logins_vu_login1 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql user=sys_sql_logins_vu_login2 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql user=sys_sql_logins_vu_login3 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE sysadmin add member sys_sql_logins_vu_login1
+GO
+
+-- tsql user=sys_sql_logins_vu_login1 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE dbcreator add member sys_sql_logins_vu_login2
+GO
+
+-- tsql user=sys_sql_logins_vu_login2 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE securityadmin add member sys_sql_logins_vu_login3
+GO
+
+-- tsql user=sys_sql_logins_vu_login3 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE securityadmin add member sys_sql_logins_vu_login1
+GO
+
+-- tsql user=sys_sql_logins_vu_login1 password=123
+-- login with sysadmin and securityadmin server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE sysadmin add member sys_sql_logins_vu_login2
+GO
+
+-- tsql user=sys_sql_logins_vu_login2 password=123
+-- login with sysadmin and dbcreator server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE dbcreator add member sys_sql_logins_vu_login3
+GO
+
+-- tsql user=sys_sql_logins_vu_login3 password=123
+-- login with dbcreator and securityadmin server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+
+-- negative tests to show server roles are not being displayed in sql_logins view
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'bbf_role_admin';
+GO
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'public';
+GO
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'sysadmin';
+GO
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'securityadmin';
+GO
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'dbcreator';
+GO

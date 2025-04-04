@@ -1,0 +1,78 @@
+-- tsql
+SELECT * FROM sys_server_permissions_vu_prepare_view
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login1 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login2 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login3 WITH PASSWORD = '123';
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE sysadmin add member sys_server_permissions_vu_login1
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE dbcreator add member sys_server_permissions_vu_login2
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE securityadmin add member sys_server_permissions_vu_login3
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE securityadmin add member sys_server_permissions_vu_login1
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+-- login with sysadmin and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE sysadmin add member sys_server_permissions_vu_login2
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+-- login with sysadmin and dbcreator server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+
+-- tsql
+ALTER ROLE dbcreator add member sys_server_permissions_vu_login3
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+-- login with dbcreator and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO

@@ -1,31 +1,191 @@
-USE master
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login1 WITH PASSWORD = '123';
 GO
 
-SELECT * FROM sys.sql_logins
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login2 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_sql_logins_vu_login3 WITH PASSWORD = '123';
+GO
+
+-- tsql
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#int#!#varbinary#!#char#!#nvarchar#!#int#!#datetime#!#datetime#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#varbinary
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
 ~~END~~
 
 
-SELECT * FROM sys_sql_logins_vu_prepare_view
+-- tsql user=sys_sql_logins_vu_login1 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#int#!#varbinary#!#char#!#nvarchar#!#int#!#datetime#!#datetime#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#varbinary
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
 ~~END~~
 
 
-EXEC sys_sql_logins_vu_prepare_proc
+-- tsql user=sys_sql_logins_vu_login2 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#int#!#varbinary#!#char#!#nvarchar#!#int#!#datetime#!#datetime#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#varbinary
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
 ~~END~~
 
 
-SELECT sys_sql_logins_vu_prepare_func()
+-- tsql user=sys_sql_logins_vu_login3 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-int
-0
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member sys_sql_logins_vu_login1
+GO
+
+-- tsql user=sys_sql_logins_vu_login1 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member sys_sql_logins_vu_login2
+GO
+
+-- tsql user=sys_sql_logins_vu_login2 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
+~~END~~
+
+
+-- tsql
+ALTER ROLE securityadmin add member sys_sql_logins_vu_login3
+GO
+
+-- tsql user=sys_sql_logins_vu_login3 password=123
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+~~END~~
+
+
+-- tsql
+ALTER ROLE securityadmin add member sys_sql_logins_vu_login1
+GO
+
+-- tsql user=sys_sql_logins_vu_login1 password=123
+-- login with sysadmin and securityadmin server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member sys_sql_logins_vu_login2
+GO
+
+-- tsql user=sys_sql_logins_vu_login2 password=123
+-- login with sysadmin and dbcreator server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member sys_sql_logins_vu_login3
+GO
+
+-- tsql user=sys_sql_logins_vu_login3 password=123
+-- login with dbcreator and securityadmin server role
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+~~END~~
+
+
+-- negative tests to show server roles are not being displayed in sql_logins view
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'bbf_role_admin';
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+~~END~~
+
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'public';
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+~~END~~
+
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'sysadmin';
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+~~END~~
+
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'securityadmin';
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
+~~END~~
+
+
+SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
+WHERE name =  'dbcreator';
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#varchar
 ~~END~~
 

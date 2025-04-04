@@ -1,31 +1,166 @@
-USE master
-GO
-
-SELECT * FROM sys.server_permissions
-GO
-~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
-~~END~~
-
-
+-- tsql
 SELECT * FROM sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
-EXEC sys_server_permissions_vu_prepare_proc
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login1 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login2 WITH PASSWORD = '123';
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_permissions_vu_login3 WITH PASSWORD = '123';
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-tinyint#!#nvarchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#char#!#nvarchar
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
 
-SELECT sys_server_permissions_vu_prepare_func()
+-- tsql user=sys_server_permissions_vu_login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
 GO
 ~~START~~
-int
-0
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member sys_server_permissions_vu_login1
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member sys_server_permissions_vu_login2
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE securityadmin add member sys_server_permissions_vu_login3
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE securityadmin add member sys_server_permissions_vu_login1
+GO
+
+-- tsql user=sys_server_permissions_vu_login1 password=123
+-- login with sysadmin and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE sysadmin add member sys_server_permissions_vu_login2
+GO
+
+-- tsql user=sys_server_permissions_vu_login2 password=123
+-- login with sysadmin and dbcreator server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+~~END~~
+
+
+-- tsql
+ALTER ROLE dbcreator add member sys_server_permissions_vu_login3
+GO
+
+-- tsql user=sys_server_permissions_vu_login3 password=123
+-- login with dbcreator and securityadmin server role
+SELECT * FROM dbo.sys_server_permissions_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+ad\server_perm_login#!#WINDOWS_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+jdbc_user#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+public#!#SERVER_ROLE#!#GRANT#!#CONNECT#!#ENDPOINT
+sys_server_permissions_vu_login1#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login2#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
+sys_server_permissions_vu_login3#!#SQL_LOGIN#!#GRANT#!#CONNECT SQL#!#SERVER
 ~~END~~
 
