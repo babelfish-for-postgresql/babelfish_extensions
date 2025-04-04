@@ -2,6 +2,7 @@
 #include "postgres.h"
 
 #include "access/parallel.h"
+#include "catalog/pg_class.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "nodes/bitmapset.h"
@@ -80,7 +81,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 			if (rte->rtekind == RTE_RELATION &&
 				OidIsValid(rte->relid) &&
-				get_rel_persistence(rte->relid) == 't')
+				get_rel_persistence(rte->relid) == RELPERSISTENCE_TEMP)
 			{
 				/* probably (re)do perm check */
 				RTEPermissionInfo *perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);

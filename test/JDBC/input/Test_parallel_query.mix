@@ -26,6 +26,10 @@ GO
 USE master
 GO
 
+-- psql
+ANALYSE;
+GO
+
 -- psql user=l1 password=12345678
 CREATE OR REPLACE FUNCTION master_schema_for_l1.f1()
 RETURNS TABLE (a INT) AS 
@@ -94,6 +98,39 @@ GO
 DROP TABLE #temp;
 GO
 
+-- tsql
+CREATE TABLE #temp (a int)
+GO
+
+INSERT INTO #temp VALUES (1)
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+SELECT * FROM pq_t where id IN (select a from #temp)
+GO
+
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+
 -- psql
 DROP FUNCTION master_schema_for_l1.f1()
 GO
@@ -144,4 +181,41 @@ DROP TYPE SalaryUpdateType
 GO
 
 DROP TABLE Employees;
+GO
+
+-- psql
+create temp table parallel_test (a int)
+GO
+
+create table reg_test (a int)
+GO
+
+insert into reg_test values (1)
+GO
+
+insert into parallel_test values (1)
+GO
+
+CREATE OR REPLACE FUNCTION f1()
+RETURNS TABLE (id INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT a FROM parallel_test);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+select * from f1()
+GO
+
+set debug_parallel_query=1
+GO
+
+select * from f1()
+GO
+
+set debug_parallel_query=0
+GO
+
+select * from reg_test r join parallel_test p on r.a = p.a
 GO
