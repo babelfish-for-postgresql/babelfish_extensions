@@ -1,3 +1,4 @@
+#include "executor/executor.h"
 #include "executor/execParallel.h"
 #include "fmgr.h"
 #include "nodes/execnodes.h"
