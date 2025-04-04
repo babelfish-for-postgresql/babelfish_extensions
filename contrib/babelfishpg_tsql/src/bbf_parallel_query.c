@@ -134,7 +134,7 @@ bbf_ParallelQueryMain(shm_toc *toc)
 		(*prev_ParallelQueryMain_hook)(toc);
 
 	/* Another line of defense to make sure no regular backend calls this function. */
-	if (IsBabelfishParallelWorker())
+	if (!IsBabelfishParallelWorker())
 	{
 		return;
 	}
