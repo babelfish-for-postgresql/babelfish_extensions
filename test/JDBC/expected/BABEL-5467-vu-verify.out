@@ -886,10 +886,9 @@ numeric
 
 select POWER(99999999999999999999.12, 1) * cast(1.23 as numeric(3,2)) 
 go
-~~START~~
-numeric
-122999999999999999998.9176
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 select RADIANS(99999999999999999999.12) * cast(1.23 as numeric(3,2)) 

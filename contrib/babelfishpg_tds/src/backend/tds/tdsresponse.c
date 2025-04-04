@@ -548,6 +548,24 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 	}
 	switch (nodeTag(expr))
 	{
+        case T_Param:
+            {
+                Param *param = (Param *) expr;
+                if (!is_numeric_datatype(param->paramtype))
+                {
+                    /* typmod is undefined */
+                    if (found != NULL) *found = false;
+                    return -1;
+                }
+                else
+                {
+                    if (param->paramtypmod == -1)
+                    {
+                        if (found != NULL) *found = false;
+                    }
+                    return param->paramtypmod;
+                }
+            }
 		case T_Const:
 			{
 				Const	   *con = (Const *) expr;
