@@ -53,6 +53,9 @@ static char		   *temp_relids_str = NULL;
  * re-do permission checking (better to redo perm checking instead of never doing it) if
  * relation is temp table and adds oid/relid to the set. This set will be shared with
  * parallel worker so that parallel worker avoids permission check on temp tables.
+ * When estimate = true passed then caller wants to estimate a dynamic shared memory (DSM)
+ * needed by this extension to communicate additional context.
+ * When estimate = false then caller wants to insert additional context to DSM.
  */
 void 
 bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
@@ -131,11 +134,9 @@ bbf_ParallelQueryMain(shm_toc *toc)
 		(*prev_ParallelQueryMain_hook)(toc);
 
 	/* Another line of defense to make sure no regular backend calls this function. */
-	if (!IsBabelfishParallelWorker())
+	if (IsBabelfishParallelWorker())
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("Invalid attempt to build set of relids")));
+		return;
 	}
 
 	temp_relids = (Bitmapset *) stringToNode(shm_toc_lookup(toc,
