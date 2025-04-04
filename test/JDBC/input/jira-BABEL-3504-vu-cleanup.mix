@@ -1,5 +1,5 @@
--- tsql user=jira_babel_3504_log1 password=123456789
-
+-- tsql
+-- SEQUENCE OWNER IS SCHEMA OWNER WHICH IS DBO. DBO CAN DROP THE SEQUENCE.
 use jira_babel_3504_dbone;
 go
 
@@ -96,17 +96,6 @@ go
 
 drop schema jira_babel_3504_sch2;
 go
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'jira_babel_3504_log1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
 
 -- tsql 
 use jira_babel_3504_dbone;

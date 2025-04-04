@@ -88,7 +88,7 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
-	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
+	extern bool check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name);
 
 	extern int escape_hatch_showplan_all;
 
@@ -155,10 +155,10 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate = false);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx);
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List **column_name);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -225,6 +225,7 @@ static bool isDelimitedAtAtUserVarName(const std::string name);
 static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);	
 static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
+static antlr4::tree::TerminalNode *getTokenFromFunctionOption(TSqlParser::Function_optionContext* o);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -1809,6 +1810,10 @@ public:
 			}
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+		else if(ctx->TRIGGER() && ctx->ALL())
+		{
+			rewritten_query_fragment.emplace(std::make_pair(ctx->ALL()->getSymbol()->getStartIndex(),std::make_pair(::getFullText(ctx->ALL()), "USER")));
 		}
 	}
 
@@ -3645,8 +3650,9 @@ static void process_query_specification(
 	}
 
 	bool is_freetext_predicate = false;
+	List *column_name = NIL;
 	if(qctx->where)
-		is_freetext_predicate = check_freetext_predicate(qctx->where);
+		is_freetext_predicate = check_freetext_predicate(qctx->where, &column_name);
 
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
@@ -3655,7 +3661,7 @@ static void process_query_specification(
 	if (qctx->table_sources())
 	{
 		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
+			post_process_table_source(tctx, expr, baseCtx, column_name, is_freetext_predicate);
 	}
 
 	/* handle special alias syntax and quote alias */
@@ -4129,11 +4135,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4146,11 +4148,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4182,11 +4180,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4199,11 +4193,7 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
-					if (o->execute_as_clause())
-						return o->execute_as_clause()->CALLER();
-					return o->SCHEMABINDING();
-				};
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = getTokenFromFunctionOption;
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -4371,6 +4361,7 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 {
 	int startIndex = -1;
 	int endIndex = -1;
+	int alterIndex = -1;
 	std::string originalQueryCopy = originalQuery;
 
 	if ((ctx->create_or_alter_procedure() && ctx->create_or_alter_procedure()->ALTER()))
@@ -4385,6 +4376,26 @@ storeOriginalQueryForBatchLevelStatement(TSqlParser::Batch_level_statementContex
 		startIndex = ctx->create_or_alter_function()->ALTER()->getSymbol()->getStartIndex();
 		endIndex = startIndex + 5;
 		originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		return pstrdup(originalQueryCopy.c_str());
+	}
+	/* Replace ALTER VIEW definitions with CREATE VIEW */
+	else if (ctx->create_or_alter_view() && ctx->create_or_alter_view()->ALTER())
+	{
+		startIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+		endIndex = startIndex + 5;
+		/* if the statement is "ALTER VIEW" */
+		if (!ctx->create_or_alter_view()->CREATE())
+		{
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
+		/* if the statement is "CREATE OR ALTER VIEW" */
+		else
+		{
+			startIndex = ctx->create_or_alter_view()->CREATE()->getSymbol()->getStartIndex();
+			alterIndex = ctx->create_or_alter_view()->ALTER()->getSymbol()->getStartIndex();
+			endIndex = alterIndex + 5;
+			originalQueryCopy.replace(startIndex, endIndex - startIndex, "CREATE");
+		}
 		return pstrdup(originalQueryCopy.c_str());
 	}
 	else
@@ -7427,27 +7438,50 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx, List **column_name)
 {
-    if (ctx && ctx->predicate_br().size() > 0)
+	if (ctx && ctx->predicate_br().size() > 0)
 	{
-        for (auto pred : ctx->predicate_br())
+		for (auto pred : ctx->predicate_br())
 		{
-            if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
-                return true;
-            if (pred && pred->search_condition()) {
-                if (check_freetext_predicate(pred->search_condition()))
-                    return true;
-            }
-        }
-    }
-    return false;
+			if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
+			{
+				if(pred->predicate()->freetext_predicate()->full_column_name().size() > 0)
+				{
+					for(auto col : pred->predicate()->freetext_predicate()->full_column_name())
+					{
+						if(col && col->column_name)
+						{
+							std::string str = ::getFullText(col->column_name);
+							if(str[0] == '"')
+							{
+								str = stripQuoteFromId(str);
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+										errmsg("Incorrect syntax near \'%s\'.",
+											str.c_str())));
+							}
+							char *c_string  = pstrdup(str.c_str());
+							*column_name = lappend(*column_name, c_string);
+						}
+					}
+				}
+				return true;
+			}
+			if (pred && pred->search_condition()) 
+			{
+				if (check_freetext_predicate(pred->search_condition(), column_name))
+				return true;
+			}
+		}
+    	}
+   	 return false;
 }
 
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate)
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name, bool is_freetext_predicate)
 {
 	for (auto cctx : ctx->table_source_item())
-		post_process_table_source(cctx, expr, baseCtx, is_freetext_predicate);
+		post_process_table_source(cctx, expr, baseCtx, column_name, is_freetext_predicate);
 
 	std::string table_name = extractTableName(nullptr, ctx);
 
@@ -7507,7 +7541,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		const char *s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
 		
 		/* Check if full-text index exists for the table, if not throw an error */
-		if (!check_fulltext_exist(const_cast<char *>(s_name), const_cast<char *>(t_name)))
+		if (!check_fulltext_exist(const_cast<char *>(s_name), const_cast<char *>(t_name), const_cast<List *>(column_name)))
 			throw PGErrorWrapperException(ERROR, ERRCODE_RAISE_EXCEPTION, format_errmsg("Cannot use a CONTAINS or FREETEXT predicate on table or indexed view '%s' because it is not full-text indexed.", table_name.c_str()), getLineAndPos(ctx));
 	}
 }
@@ -9896,4 +9930,23 @@ CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr)
 	{
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Incorrect syntax near '%s'.", name.c_str()), lineNr, 0);
 	}
+}
+
+/*
+ * Retrieves the token from a Function_optionContext.
+ * Note: All function options (EXECUTE AS, INLINE, SCHEMABINDING) are currently ignored during parsing time.
+ * This function is used to identify which option is present for potential future implementation.
+ *
+ * @param o The Function_optionContext to examine
+ * @return The corresponding terminal node, or nullptr if no valid option is found
+ */
+static antlr4::tree::TerminalNode *
+getTokenFromFunctionOption(TSqlParser::Function_optionContext* o) {
+	if (o->execute_as_clause())
+		return o->execute_as_clause()->CALLER();
+	if (o->inline_clause())
+		return o->inline_clause()->INLINE();
+	if (o->SCHEMABINDING())
+		return o->SCHEMABINDING();
+	return nullptr;
 }

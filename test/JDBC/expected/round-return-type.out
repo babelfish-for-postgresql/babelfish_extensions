@@ -1,0 +1,640 @@
+select round(cast(42 as int), 0)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as int), 1)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as int), 2)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as int), 999)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as int), -1)
+go
+~~START~~
+int
+40
+~~END~~
+
+
+select round(cast(42 as int), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as tinyint), 0)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as tinyint), 1)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as tinyint), 2)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as tinyint), 999)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as tinyint), -1)
+go
+~~START~~
+int
+40
+~~END~~
+
+
+select round(cast(42 as tinyint), -2)
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as smallint), 0)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as smallint), 1)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as smallint), 2)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as smallint), 999)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as smallint), -1)
+go
+~~START~~
+int
+40
+~~END~~
+
+
+select round(cast(42 as smallint), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as bigint), 0)
+go
+~~START~~
+bigint
+42
+~~END~~
+
+
+select round(cast(42 as bigint), 1)
+go
+~~START~~
+bigint
+42
+~~END~~
+
+
+select round(cast(42 as bigint), 2)
+go
+~~START~~
+bigint
+42
+~~END~~
+
+
+select round(cast(42 as bigint), 999)
+go
+~~START~~
+bigint
+42
+~~END~~
+
+
+select round(cast(42 as bigint), -1)
+go
+~~START~~
+bigint
+40
+~~END~~
+
+
+select round(cast(42 as bigint), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as decimal), 0)
+go
+~~START~~
+numeric
+42
+~~END~~
+
+
+select round(cast(42 as decimal), 1)
+go
+~~START~~
+numeric
+42.0
+~~END~~
+
+
+select round(cast(42 as decimal), 2)
+go
+~~START~~
+numeric
+42.00
+~~END~~
+
+
+select round(cast(42 as decimal), 999)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+select round(cast(42 as decimal), -1)
+go
+~~START~~
+numeric
+40
+~~END~~
+
+
+select round(cast(42 as decimal), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as numeric), 0)
+go
+~~START~~
+numeric
+42
+~~END~~
+
+
+select round(cast(42 as numeric), 1)
+go
+~~START~~
+numeric
+42.0
+~~END~~
+
+
+select round(cast(42 as numeric), 2)
+go
+~~START~~
+numeric
+42.00
+~~END~~
+
+
+select round(cast(42 as numeric), 999)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+select round(cast(42 as numeric), -1)
+go
+~~START~~
+numeric
+40
+~~END~~
+
+
+select round(cast(42 as numeric), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as money), 0)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as money), 1)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as money), 2)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as money), 999)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as money), -1)
+go
+~~START~~
+money
+40.0000
+~~END~~
+
+
+select round(cast(42 as money), -2)
+go
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as smallmoney), 0)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as smallmoney), 1)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as smallmoney), 2)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as smallmoney), 999)
+go
+~~START~~
+money
+42.0000
+~~END~~
+
+
+select round(cast(42 as smallmoney), -1)
+go
+~~START~~
+money
+40.0000
+~~END~~
+
+
+select round(cast(42 as smallmoney), -2)
+go
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+select round(cast(42 as real), 0)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(cast(42 as real), 1)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(cast(42 as real), 2)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(cast(42 as real), 999)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(cast(42 as real), -1)
+go
+~~START~~
+float
+40.0
+~~END~~
+
+
+select round(cast(42 as real), -2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+
+
+
+select round(cast(748.58 as float), -1)
+go
+~~START~~
+float
+750.0
+~~END~~
+
+
+select round(cast(748.58 as float), -2)
+go
+~~START~~
+float
+700.0
+~~END~~
+
+
+select round(cast(748.58 as float), 0)
+go
+~~START~~
+float
+749.0
+~~END~~
+
+
+select round(cast(748.58 as float), 1)
+go
+~~START~~
+float
+748.6
+~~END~~
+
+
+select round(cast(748.58 as float), 2)
+go
+~~START~~
+float
+748.58
+~~END~~
+
+
+select round(cast(748.58 as float), 3)
+go
+~~START~~
+float
+748.58
+~~END~~
+
+
+select round(cast(748.58 as int), 1)
+go
+~~START~~
+int
+748
+~~END~~
+
+
+select round(cast(748.58 as money), 1)
+go
+~~START~~
+money
+748.6000
+~~END~~
+
+
+select round(cast(748.58 as real), 1)
+go
+~~START~~
+float
+748.6
+~~END~~
+
+
+-- test syntax incorrect cases
+select round(42)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(42.123)
+go
+~~START~~
+numeric
+42
+~~END~~
+
+
+select round(42, 1, 2, 0)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The round function requires 1 to 3 arguments)~~
+
+
+-- test with function argument
+select round(cast(42 as int), 1, 0)
+go
+~~START~~
+int
+42
+~~END~~
+
+
+select round(cast(42 as float), 1, 0)
+go
+~~START~~
+float
+42.0
+~~END~~
+
+
+select round(cast(748.58 as float), 1, 0)
+go
+~~START~~
+float
+748.6
+~~END~~
+
+
+select round(cast(748.58 as int), 1, 0)
+go
+~~START~~
+int
+748
+~~END~~
+
+
+-- Add a round test from BABEL-1193.sql to here
+select round(cast ('123' as text), 1), round(cast ('123' as char(3)), 1), round(cast ('123' as varchar(3)), 1);
+GO
+~~START~~
+float#!#float#!#float
+123.0#!#123.0#!#123.0
+~~END~~
+
+
+-- Add a rount test from babel_function.sql to here
+select ROUND(NULL, -3);
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+IF OBJECT_ID('sample_table', 'U') IS NOT NULL
+    DROP TABLE sample_table;
+go
+
+CREATE TABLE sample_table (
+    id int,
+    a smallint
+);
+go
+
+-- Insert sample data
+INSERT INTO sample_table (id, a) VALUES
+(1, 123),
+(2, 456),
+(3, 789);
+go
+~~ROW COUNT: 3~~
+
+
+
+-- Query the data
+SELECT
+    id,
+    ROUND(CAST(a AS decimal), 2) as rounded_value
+FROM sample_table;
+SELECT
+    id,
+    ROUND(CAST(a AS int), 2) as rounded_value
+FROM sample_table;
+go
+~~START~~
+int#!#numeric
+1#!#123.00000000
+2#!#456.00000000
+3#!#789.00000000
+~~END~~
+
+~~START~~
+int#!#int
+1#!#123
+2#!#456
+3#!#789
+~~END~~
+
+
+IF OBJECT_ID('sample_table', 'U') IS NOT NULL
+        DROP TABLE sample_table;
+go
+
+DECLARE @strDev FLOAT = 2.73; SELECT CASE WHEN 2 = 3 THEN 0.00 ELSE ROUND(@strDev, 2) END;
+go
+~~START~~
+float
+2.73
+~~END~~
+

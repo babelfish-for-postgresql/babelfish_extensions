@@ -289,6 +289,11 @@ Oid			tsql_sqlvariant_oid = InvalidOid;
 Oid			tsql_geography_oid = InvalidOid;
 Oid			tsql_geometry_oid = InvalidOid;
 Oid			tsql_sysname_oid = InvalidOid;
+Oid			tsql_tinyint_oid = InvalidOid;
+Oid			tsql_money_oid = InvalidOid;
+Oid			tsql_smallmoney_oid = InvalidOid;
+Oid			tsql_fixeddecimal_oid = InvalidOid;
+Oid			tsql_bit_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -318,6 +323,22 @@ resolve_pg_type_to_tsql(Oid oid)
 			return type_infos[entry->persist_id].tsql_typname;
 	}
 	return NULL;
+}
+
+bool
+is_tsql_bit_datatype(Oid oid)
+{
+	if (tsql_bit_oid == InvalidOid)
+		tsql_bit_oid = lookup_tsql_datatype_oid("bit");
+	return tsql_bit_oid == oid;
+}
+
+bool
+is_tsql_fixeddecimal_datatype(Oid oid)
+{
+	if (tsql_fixeddecimal_oid == InvalidOid)
+		tsql_fixeddecimal_oid = lookup_tsql_datatype_oid("fixeddecimal");
+	return tsql_fixeddecimal_oid == oid;
 }
 
 bool
@@ -490,6 +511,30 @@ is_tsql_sqlvariant_datatype(Oid oid)
 	if (tsql_sqlvariant_oid == InvalidOid)
 		tsql_sqlvariant_oid = lookup_tsql_datatype_oid("sql_variant");
 	return tsql_sqlvariant_oid == oid;
+}
+
+bool
+is_tsql_tinyint_datatype(Oid oid)
+{
+	if (tsql_tinyint_oid == InvalidOid)
+		tsql_tinyint_oid = lookup_tsql_datatype_oid("tinyint");
+	return tsql_tinyint_oid == oid;
+}
+
+bool
+is_tsql_money_datatype(Oid oid)
+{
+	if (tsql_money_oid == InvalidOid)
+		tsql_money_oid = lookup_tsql_datatype_oid("money");
+	return tsql_money_oid == oid;
+}
+
+bool
+is_tsql_smallmoney_datatype(Oid oid)
+{
+	if (tsql_smallmoney_oid == InvalidOid)
+		tsql_smallmoney_oid = lookup_tsql_datatype_oid("smallmoney");
+	return tsql_smallmoney_oid == oid;
 }
 
 /*
