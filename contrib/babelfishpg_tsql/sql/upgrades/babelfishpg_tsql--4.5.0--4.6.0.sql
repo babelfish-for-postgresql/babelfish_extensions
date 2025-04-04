@@ -645,12 +645,16 @@ BEGIN
 			v_format := '9D99999EEEE';
 			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
 			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
+		ELSIF (v_floatval < 0.0001 AND v_floatval != 0) THEN	
+			v_format := '9D99999EEEE';
+			v_result := to_char(v_sign::NUMERIC * v_floatval, v_format);
+			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
 		ELSE
-            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
-                v_decimal_digits := 6 - v_integral_digits;
-            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
-                v_decimal_digits := 6;
-            END IF;
+			IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+				v_decimal_digits := 6 - v_integral_digits;
+			ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+				v_decimal_digits := 6;
+			END IF;
 			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
 			IF (v_decimal_digits > 0) THEN
 				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;

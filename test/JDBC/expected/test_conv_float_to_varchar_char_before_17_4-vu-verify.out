@@ -43,20 +43,24 @@ END
 CLOSE cur;
 DEALLOCATE cur;
 GO
-~~ROW COUNT: 8~~
+~~ROW COUNT: 12~~
 
-~~ROW COUNT: 8~~
+~~ROW COUNT: 12~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456                       #!#123.456                       #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#-123.456                      #!#-123.456                      #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0                             #!#0                             #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#10000000000                   #!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0                             #!#0.000000                      #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#9999999999.99                 #!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0                             #!#0.000000                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#1e+10                         #!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#1e-10                         #!#1e-10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#1e+10                         #!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#1e-09                         #!#1e-09                         #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#2.23e-308                     #!#2.23e-308                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#1.79e+308                     #!#1.79e+308                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#-2.23e-308                    #!#-2.23e-308                    #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#-1.79e+308                    #!#-1.79e+308                    #!#<NULL>
 ~~END~~
 
 ~~START~~
@@ -76,27 +80,47 @@ char#!#char
 
 ~~START~~
 char#!#char
-10000000000                   #!#1e+10                         
+1e+10                         #!#1e+10                         
 ~~END~~
 
 ~~START~~
 char#!#char
-0                             #!#0.000000                      
+1e-10                         #!#1e-10                         
 ~~END~~
 
 ~~START~~
 char#!#char
-9999999999.99                 #!#1e+10                         
+1e+10                         #!#1e+10                         
 ~~END~~
 
 ~~START~~
 char#!#char
-0                             #!#0.000000                      
+1e-09                         #!#1e-09                         
 ~~END~~
 
 ~~START~~
 char#!#char
 <NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+char#!#char
+2.23e-308                     #!#2.23e-308                     
+~~END~~
+
+~~START~~
+char#!#char
+1.79e+308                     #!#1.79e+308                     
+~~END~~
+
+~~START~~
+char#!#char
+-2.23e-308                    #!#-2.23e-308                    
+~~END~~
+
+~~START~~
+char#!#char
+-1.79e+308                    #!#-1.79e+308                    
 ~~END~~
 
 
@@ -121,7 +145,7 @@ SELECT float_char_f2('123.4567')
 GO
 ~~START~~
 varchar
-123.4567                      
+123.457                       
 ~~END~~
 
 ~~START~~
@@ -176,20 +200,24 @@ END
 CLOSE cur;
 DEALLOCATE cur;
 GO
-~~ROW COUNT: 8~~
+~~ROW COUNT: 12~~
 
-~~ROW COUNT: 8~~
+~~ROW COUNT: 12~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 Direct Conversion#!#CAST vs CONVERT#!#Standard positive decimal#!#123.456#!#123.456                       #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Negative decimal#!#-123.456#!#-123.456                      #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#Zero value#!#0#!#0                             #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#10000000000#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#0#!#0.000000                      #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#9999999999.99#!#1e+10                         #!#<NULL>
-Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#0#!#0.000000                      #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - large#!#1e+10#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Scientific notation - small#!#1e-10#!#1e-10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Large decimal#!#1e+10#!#1e+10                         #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Very small decimal#!#1e-09#!#1e-09                         #!#<NULL>
 Direct Conversion#!#CAST vs CONVERT#!#NULL Value#!#<NULL>#!#<NULL>#!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#2.23e-308#!#2.23e-308                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#1.79e+308#!#1.79e+308                     #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#-2.23e-308#!#-2.23e-308                    #!#<NULL>
+Direct Conversion#!#CAST vs CONVERT#!#Pos Min Value#!#-1.79e+308#!#-1.79e+308                    #!#<NULL>
 ~~END~~
 
 ~~START~~
@@ -209,27 +237,47 @@ varchar#!#varchar
 
 ~~START~~
 varchar#!#varchar
-10000000000#!#1e+10                         
+1e+10#!#1e+10                         
 ~~END~~
 
 ~~START~~
 varchar#!#varchar
-0#!#0.000000                      
+1e-10#!#1e-10                         
 ~~END~~
 
 ~~START~~
 varchar#!#varchar
-9999999999.99#!#1e+10                         
+1e+10#!#1e+10                         
 ~~END~~
 
 ~~START~~
 varchar#!#varchar
-0#!#0.000000                      
+1e-09#!#1e-09                         
 ~~END~~
 
 ~~START~~
 varchar#!#varchar
 <NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#varchar
+2.23e-308#!#2.23e-308                     
+~~END~~
+
+~~START~~
+varchar#!#varchar
+1.79e+308#!#1.79e+308                     
+~~END~~
+
+~~START~~
+varchar#!#varchar
+-2.23e-308#!#-2.23e-308                    
+~~END~~
+
+~~START~~
+varchar#!#varchar
+-1.79e+308#!#-1.79e+308                    
 ~~END~~
 
 
@@ -255,7 +303,7 @@ SELECT float_varchar_f2('123.4567')
 GO
 ~~START~~
 varchar
-123.4567
+123.457
 ~~END~~
 
 ~~START~~
@@ -269,14 +317,14 @@ SELECT COUNT(*) FROM float_varchar_t1 where length(CAST(FloatValue as VARCHAR)) 
 GO
 ~~START~~
 int
-4
+6
 ~~END~~
 
 SELECT COUNT(*) FROM float_varchar_t1 WHERE length(CONVERT(VARCHAR(30),FloatValue)) = 30;
 GO
 ~~START~~
 int
-7
+11
 ~~END~~
 
 
@@ -341,6 +389,6 @@ SELECT cast(@flt1*@flt2 as varchar(30)),cast(@flt1/@flt2 as varchar(30)),cast(@f
 GO
 ~~START~~
 varchar#!#varchar#!#char#!#char
--71820.376206#!#-2.4e-05#!#-54234.107967                 #!#-2.4e-05                      
+-71820.4#!#-2.44164e-05#!#-54234.1                      #!#-2.44164e-05                  
 ~~END~~
 

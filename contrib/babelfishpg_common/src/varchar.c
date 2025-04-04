@@ -1199,10 +1199,7 @@ float82varchar(PG_FUNCTION_ARGS)
 	/* When No Typmod is defined Default Length is 30 */
 	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
 	Datum res;
-	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
-	char	   *ascii = (char *) palloc0(32);
-	
-	/* round to 6 decimal digits */
+	char *result;
 	if (unlikely(isinf(num)|| isnan(num))) 
 	{
 		ereport(ERROR,
@@ -1211,15 +1208,13 @@ float82varchar(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		num = round(num * 1000000.0) / 1000000.0;
+		result = psprintf("%.6g",num);
 	}
-
-	double_to_shortest_decimal_buf(num, ascii);
 
 	/* Check if the number fits within the specified length */
 	if (maxlen > 0) 
 	{
-		size_t str_len = strlen(ascii);
+		size_t str_len = strlen(result);
 		if (str_len > maxlen) 
 		{
 			ereport(ERROR,
@@ -1229,7 +1224,7 @@ float82varchar(PG_FUNCTION_ARGS)
 	}
 	
 	res = DirectFunctionCall3(varcharin,
-							   CStringGetDatum(ascii),
+							   CStringGetDatum(result),
 							   ObjectIdGetDatum(0),
 							   Int32GetDatum(typmod));
 	
@@ -1245,8 +1240,7 @@ float82bpchar(PG_FUNCTION_ARGS)
 	/* When No Typmod is defined Default Length is 30 */
 	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
 	Datum res;
-	/* 32 length as double_to_shortest_decimal_buf always returns string with length less that 30*/
-	char	   *ascii = (char *) palloc0(32);
+	char	   *result;
 	char	   *buf_padded;
 	int		   str_len;
 	
@@ -1259,13 +1253,11 @@ float82bpchar(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		num = round(num * 1000000.0) / 1000000.0;
+		result = psprintf("%.6g",num);
 	}
 
-	double_to_shortest_decimal_buf(num, ascii);
-
 	/* Check if the number fits within the specified length */
-	str_len = strlen(ascii);
+	str_len = strlen(result);
 	if (str_len > maxlen) 
 	{
 		ereport(ERROR,
@@ -1275,7 +1267,7 @@ float82bpchar(PG_FUNCTION_ARGS)
 
 	/* Right pad float value with the spaces */
 	buf_padded = (char *) palloc0(maxlen + 1);
-	memcpy(buf_padded, ascii, str_len);
+	memcpy(buf_padded, result, str_len);
 	memset(buf_padded + str_len, ' ', maxlen - str_len);
 	
 	res = DirectFunctionCall3(bpcharin,
