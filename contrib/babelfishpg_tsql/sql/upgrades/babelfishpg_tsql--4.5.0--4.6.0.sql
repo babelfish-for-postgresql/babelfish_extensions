@@ -878,8 +878,6 @@ CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
-<<<<<<< HEAD:contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--4.5.0--4.6.0.sql
-=======
 CREATE OR REPLACE FUNCTION sys.loginproperty(login_name sys.sysname, property_name sys.nvarchar(128)) 
 RETURNS sys.nvarchar(128) 
 AS $$ 
@@ -981,7 +979,6 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = (SELECT super_user FROM super_user))
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
->>>>>>> 4c459f52a (Added support for sys.server_permissions and sys.sql_logins views. (#3538)):contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--5.1.0--5.2.0.sql
 /* Shows the list of objects where the object owner is not same as schema owner */
 /* Covers tables, views, functions, procedures, sequences, types */
 CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
