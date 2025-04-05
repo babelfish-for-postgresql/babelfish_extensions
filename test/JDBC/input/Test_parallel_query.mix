@@ -219,3 +219,9 @@ GO
 
 select * from reg_test r join parallel_test p on r.a = p.a
 GO
+
+drop table parallel_test
+GO
+
+drop table reg_test
+GO

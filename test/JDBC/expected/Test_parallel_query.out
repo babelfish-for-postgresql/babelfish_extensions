@@ -353,11 +353,6 @@ GO
 
 create table reg_test (a int)
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "reg_test" already exists
-    Server SQLState: 42P07)~~
-
 
 insert into reg_test values (1)
 GO
@@ -408,6 +403,11 @@ GO
 ~~START~~
 int4#!#int4
 1#!#1
-1#!#1
 ~~END~~
 
+
+drop table parallel_test
+GO
+
+drop table reg_test
+GO
