@@ -163,7 +163,10 @@ Hash Join (actual rows=1 loops=1)
         ->  Seq Scan on "#temp" (actual rows=1 loops=1)
   ->  Hash (actual rows=5 loops=1)
         Buckets: 1024  Batches: 1  Memory Usage: 9kB
-        ->  Seq Scan on pq_t (actual rows=5 loops=1)
+        ->  Gather (actual rows=5 loops=1)
+              Workers Planned: 1
+              Workers Launched: 1
+              ->  Parallel Seq Scan on pq_t (actual rows=2 loops=2)
 ~~END~~
 
 
@@ -186,7 +189,10 @@ Hash Right Join (actual rows=5 loops=1)
   ->  Seq Scan on "#temp" (actual rows=1 loops=1)
   ->  Hash (actual rows=5 loops=1)
         Buckets: 1024  Batches: 1  Memory Usage: 9kB
-        ->  Seq Scan on pq_t (actual rows=5 loops=1)
+        ->  Gather (actual rows=5 loops=1)
+              Workers Planned: 1
+              Workers Launched: 1
+              ->  Parallel Seq Scan on pq_t (actual rows=2 loops=2)
 ~~END~~
 
 
@@ -314,10 +320,13 @@ GO
 
 select * from f1()
 GO
-~~START~~
-int4
-1
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot access temporary tables during a parallel operation
+  Where: SQL statement "(SELECT a FROM parallel_test)"
+PL/pgSQL function f1() line 2 at RETURN QUERY
+parallel worker
+    Server SQLState: 25000)~~
 
 
 select * from reg_test r join parallel_test p on r.a = p.a

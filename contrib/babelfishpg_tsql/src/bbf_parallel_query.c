@@ -17,6 +17,7 @@
 #include "utils/acl.h"
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
+#include "utils/queryenvironment.h"
 
 #include "bbf_parallel_query.h"
 #include "pltsql.h"
@@ -81,7 +82,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 			if (rte->rtekind == RTE_RELATION &&
 				OidIsValid(rte->relid) &&
-				get_rel_persistence(rte->relid) == RELPERSISTENCE_TEMP)
+				get_ENR_withoid(currentQueryEnv, rte->relid, ENR_TSQL_TEMP) != NULL)
 			{
 				/* probably (re)do perm check */
 				RTEPermissionInfo *perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);
