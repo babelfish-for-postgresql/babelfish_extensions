@@ -509,15 +509,15 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(ltypeId, -1, InvalidOid, -1,
+		highest_sort_key = makeConst(ltypeId, -1, coll_info_of_inputcollid.oid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
-		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("||")), ltypeId, ltypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
-		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
+		concat_expr = make_op_with_func(oprid(optup), ltypeId, false,
 										(Expr *) prefix_collate,
 										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
 										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
