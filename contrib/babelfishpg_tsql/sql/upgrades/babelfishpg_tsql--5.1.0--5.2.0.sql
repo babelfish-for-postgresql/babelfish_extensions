@@ -1269,7 +1269,6 @@ select
     , CAST(p.is_published as sys.bit) as is_published
     , CAST(p.is_schema_published as sys.bit) as is_schema_published
 from sys.key_constraints p
-where p.type IN ('PK', 'UQ')
 union all
 select
       CAST(pr.name as sys.sysname) as name
