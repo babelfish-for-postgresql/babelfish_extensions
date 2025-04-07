@@ -42,6 +42,38 @@ LANGUAGE plpgsql
 PARALLEL SAFE;
 GO
 
+-- psql
+create temp table test_tbl(a int);
+GO
+
+insert into test_tbl values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+select * from test_tbl
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+-- In Postgres, not everyone can access temp table
+set role l1;
+GO
+
+select * from test_tbl
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table test_tbl
+    Server SQLState: 42501)~~
+
+
+reset role
+GO
+
 -- tsql user=l1 password=12345678
 SELECT * FROM pq_t
 GO
