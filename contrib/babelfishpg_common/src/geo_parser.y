@@ -27,7 +27,7 @@ static int      scanbuflen;
 %token RPAREN
 %token NULL_TOK
 %token EMPTY_TOK
-%token COMMA_TOK 
+%token COMMA_TOK Z_TOK M_TOK ZM_TOK
 
 %token LINESTRING_TOK
 %token POLYGON_TOK
@@ -44,7 +44,7 @@ static int      scanbuflen;
 %token TIN_TOK
 %token POLYHEDRALSURFACE_TOK
 
-%type <coordinatevalue> coordinate
+%type <coordinatevalue> coordinate coordz coordm coordzm
 %type <str> point_query 
 
 %start point_query
@@ -59,7 +59,26 @@ point_query:
         { *result = rewrite_point_query($3); }
     | POINT_TOK EMPTY_TOK
         { *result = strdup("POINT EMPTY"); }
+    | POINT_TOK  Z_TOK LPAREN coordz RPAREN
+        { *result = rewrite_point_query_z($4); }
+    | POINT_TOK  M_TOK LPAREN coordm RPAREN
+        { *result = rewrite_point_query_m($4); }
+    | POINT_TOK  ZM_TOK LPAREN coordzm RPAREN
+        { *result = rewrite_point_query_zm($4); }
     ;
+
+coordz:
+    DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
+        { $$ = create_coordinate($1, $2, $3, 0, 1, 0); }
+            
+coordm:
+    DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
+        { $$ = create_coordinate($1, $2, 0 , $3, 0, 1); }
+            
+coordzm:
+    DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
+        { $$ = create_coordinate($1, $2, $3, $4, 1, 1); }
+    
 
 coordinate:
     DOUBLE_TOK DOUBLE_TOK

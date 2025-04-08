@@ -144,7 +144,6 @@ CREATE VIEW notequal_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTG
 
 CREATE TABLE geometryAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -175,7 +174,6 @@ INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFrom
 
 CREATE TABLE geometryAsVarchar ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARCHAR(100) );
 
-# TODO: Tests with XYZ, XYM, XYZM coordinates will be updated later to match T-SQL output
 INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)));
 ~~ROW COUNT: 1~~
 
@@ -206,7 +204,6 @@ INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromTe
 
 CREATE TABLE geometryAsChar ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData CHAR(100) );
 
-# TODO: Tests with XYZ, XYM, XYZM coordinates will be updated later to match T-SQL output
 INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS CHAR(100)));
 ~~ROW COUNT: 1~~
 
@@ -237,7 +234,6 @@ INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText(
 
 CREATE TABLE CharAsVarbinaryGeom ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2)' AS CHAR(20)), 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -268,7 +264,6 @@ INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFrom
 
 CREATE TABLE VarcharAsVarbinaryGeom ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -299,7 +294,6 @@ INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomF
 
 CREATE TABLE VarbinaryAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
 
-# TODO: Test with POINT EMPTY will be supported later to match T-SQL output
 INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)) AS geometry));
 ~~ROW COUNT: 1~~
 
@@ -322,9 +316,7 @@ INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeo
 ~~ROW COUNT: 1~~
 
 INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)) AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText( NULL,4326) AS VARBINARY(100)) AS geometry));
 ~~ROW COUNT: 1~~
@@ -332,32 +324,23 @@ INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeo
 
 CREATE TABLE CharAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
 
-# TODO: Tests with any input AS 'NULL' will be supported later to match T-SQL output
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2)' AS geometry));
 ~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL)' AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL NULL)' AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3)' AS geometry));
 ~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3 NULL)' AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL 3)' AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3 4)' AS geometry));
 ~~ROW COUNT: 1~~
@@ -401,7 +384,6 @@ INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST( NULL AS VARCHAR(
 
 CREATE TABLE GeoVarcharAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
 
-# TODO: Tests with XYZ, XYM, XYZM coordinates will be supported later to match T-SQL output
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)) AS geometry));
 ~~ROW COUNT: 1~~
 
@@ -412,24 +394,16 @@ INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGe
 ~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)) AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)) AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)) AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)) AS geometry));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)) AS geometry));
 ~~ROW COUNT: 1~~
@@ -440,7 +414,6 @@ INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGe
 
 CREATE TABLE ByteaTogeometry (ID INT PRIMARY KEY, bytea_point bytea );
 
-# TODO: Test with bytea 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF01 will be supported later to match T-SQL output
 INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (1, 0xE6100000010C000000000000F03F0000000000000040);
 ~~ROW COUNT: 1~~
 
@@ -459,7 +432,6 @@ INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (5, 0xE6100000010400000000
 
 CREATE TABLE geometryToBytea (ID INT PRIMARY KEY, geo_point geometry );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO geometryToBytea (ID, geo_point) VALUES (1, geometry::STGeomFromText('POINT(1 2 )', 4326));
 ~~ROW COUNT: 1~~
 
@@ -650,7 +622,6 @@ CREATE VIEW notequal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTG
 
 CREATE TABLE GeographyAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -681,7 +652,6 @@ INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomF
 
 CREATE TABLE GeographyAsVarchar ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARCHAR(100) );
 
-# TODO: Tests with XYZ, XYM, XYZM coordinates will be updated later to match T-SQL output
 INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)));
 ~~ROW COUNT: 1~~
 
@@ -712,7 +682,6 @@ INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFro
 
 CREATE TABLE GeographyAsChar ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData CHAR(100) );
 
-# TODO: Tests with XYZ, XYM, XYZM coordinates will be updated later to match T-SQL output
 INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS CHAR(100)));
 ~~ROW COUNT: 1~~
 
@@ -743,7 +712,6 @@ INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromTe
 
 CREATE TABLE CharAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2)' AS CHAR(20)), 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -774,7 +742,6 @@ INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromTe
 
 CREATE TABLE VarcharAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
 ~~ROW COUNT: 1~~
 
@@ -805,7 +772,6 @@ INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFro
 
 CREATE TABLE VarbinaryAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
 
-# TODO: Test with POINT EMPTY will be supported later to match T-SQL output
 INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)) AS geography));
 ~~ROW COUNT: 1~~
 
@@ -828,9 +794,7 @@ INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::ST
 ~~ROW COUNT: 1~~
 
 INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)) AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText( NULL,4326) AS VARBINARY(100)) AS geography));
 ~~ROW COUNT: 1~~
@@ -838,32 +802,23 @@ INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::ST
 
 CREATE TABLE CharAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
 
-# TODO: Test with any input AS 'NULL' will be supported later to match T-SQL output
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2)' AS geography));
 ~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL)' AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL NULL)' AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3)' AS geography));
 ~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3 NULL)' AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL 3)' AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3 4)' AS geography));
 ~~ROW COUNT: 1~~
@@ -907,7 +862,6 @@ INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST( NULL AS VARCHA
 
 CREATE TABLE GeoVarcharAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
 
-# TODO: Test with XYZ, XYM, XYZM coordinates will be supported later to match T-SQL output
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)) AS geography));
 ~~ROW COUNT: 1~~
 
@@ -918,24 +872,16 @@ INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::S
 ~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)) AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)) AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)) AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)) AS geography));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)) AS geography));
 ~~ROW COUNT: 1~~
@@ -946,7 +892,6 @@ INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::S
 
 CREATE TABLE ByteaToGeography (ID INT PRIMARY KEY, bytea_point bytea );
 
-# TODO: Test with bytea 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF01 will be supported later to match T-SQL output
 INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (1, 0xE6100000010C000000000000F03F0000000000000040);
 ~~ROW COUNT: 1~~
 
@@ -965,7 +910,6 @@ INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (5, 0xE610000001040000000
 
 CREATE TABLE GeographyToBytea (ID INT PRIMARY KEY, geo_point geography );
 
-# TODO: Test with POINT EMPTY will be updated later to match T-SQL output
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (1, geography::STGeomFromText('POINT(1 2 )', 4326));
 ~~ROW COUNT: 1~~
 

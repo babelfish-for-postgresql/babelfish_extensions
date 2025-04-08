@@ -4218,7 +4218,7 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
 {
     int         rc = EOF,
                 npoints,
-                len,                    /* number of bytes used to store the string. */
+                len = 0,                    /* number of bytes used to store the string. */
                 pointSize,
                 hasZ,
                 hasM,
@@ -4226,7 +4226,7 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
                                          * store given string in given encoding. */
 
     char        *destBuf,
-                *buf,
+                *buf= NULL,
                 *itr;
     uint64_t    zeroPadding,
                 sentinel;

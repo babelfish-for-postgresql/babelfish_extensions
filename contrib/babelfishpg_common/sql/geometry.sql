@@ -88,7 +88,7 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 	RETURNS sys.bpchar
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common','geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 	RETURNS sys.varchar
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common','geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)

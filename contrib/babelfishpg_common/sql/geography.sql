@@ -127,7 +127,7 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.bpchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN sys.bpchar((SELECT sys.GeometryAsTextbp_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -152,7 +152,7 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.varchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN sys.varchar((SELECT sys.GeometryAsTextvar_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -471,4 +471,14 @@ CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
 CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'charTogeog'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeometryAsTextbp_helper(sys.GEOGRAPHY)
+	RETURNS sys.bpchar
+	AS 'babelfishpg_common', 'geometry_astext'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeometryAsTextvar_helper(sys.GEOGRAPHY)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common', 'geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;

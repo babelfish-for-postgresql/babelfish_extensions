@@ -24,19 +24,19 @@ static YY_BUFFER_STATE scanbufhandle;
 
 "POINT"                 { return POINT_TOK; }
 "LINESTRING"            { yyerror(NULL, " LINESTRING is currently not supported in Babelfish"); return LINESTRING_TOK; }
-"CIRCULARSTRING"        { yyerror(NULL, " CIRCULARSTRING is currently not supported in Babelfish"); return CIRCULARSTRING_TOK; }
-"POLYGON"               { yyerror(NULL, " POLYGON is currently not supported in Babelfish");  return POLYGON_TOK; }
-"MULTIPOINT"            { yyerror(NULL, " MULTIPOINT is currently not supported in Babelfish");  return MPOINT_TOK; }
-"MULTILINESTRING"       { yyerror(NULL, " MULTILINESTRING is currently not supported in Babelfish"); return MLINESTRING_TOK; }
-"MULTIPOLYGON"          { yyerror(NULL, " MULTIPOLYGON is currently not supported in Babelfish");  return MPOLYGON_TOK; }
-"CURVEPOLYGON"          { yyerror(NULL, " CURVEPOLYGON is currently not supported in Babelfish");  return CURVEPOLYGON_TOK; }
-"COMPOUNDCURVE"         { yyerror(NULL, " COMPOUNDCURVE is currently not supported in Babelfish");  return COMPOUNDCURVE_TOK; }
-"GEOMETRYCOLLECTION"    { yyerror(NULL, " GEOMETRYCOLLECTION is currently not supported in Babelfish");  return COLLECTION_TOK; }
-"MULTISURFACE"          { yyerror(NULL, " Invalid Geometry ");  return MSURFACE_TOK; }
-"MULTICURVE"            { yyerror(NULL, " Invalid Geometry ");  return MCURVE_TOK; }
-"POLYHEDRALSURFACE"     { yyerror(NULL, " Invalid Geometry ");  return POLYHEDRALSURFACE_TOK; }
-"TRIANGLE"              { yyerror(NULL, " Invalid Geometry ");  return TRIANGLE_TOK; }
-"TIN"                   { yyerror(NULL, " Invalid Geometry ");  return TIN_TOK; }
+"CIRCULARSTRING"        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
+"POLYGON"               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
+"MULTIPOINT"            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
+"MULTILINESTRING"       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
+"MULTIPOLYGON"          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }
+"CURVEPOLYGON"          { yyerror(NULL, "CURVEPOLYGON is not supported");  return CURVEPOLYGON_TOK; }
+"COMPOUNDCURVE"         { yyerror(NULL, "COMPOUNDCURVE is not supported");  return COMPOUNDCURVE_TOK; }
+"GEOMETRYCOLLECTION"    { yyerror(NULL, "GEOMETRYCOLLECTION is not supported");  return COLLECTION_TOK; }
+"MULTISURFACE"          { yyerror(NULL, "Invalid Geometry");  return MSURFACE_TOK; }
+"MULTICURVE"            { yyerror(NULL, "Invalid Geometry");  return MCURVE_TOK; }
+"POLYHEDRALSURFACE"     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSURFACE_TOK; }
+"TRIANGLE"              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
+"TIN"                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
 -?[0-9]+(\.[0-9]+)?     { yylval.val = atof(yytext);  return DOUBLE_TOK; }
 
@@ -46,6 +46,10 @@ static YY_BUFFER_STATE scanbufhandle;
 
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
+
+"Z"         { return Z_TOK; }
+"M"         { return M_TOK; }
+"ZM"        { return ZM_TOK; }
 
 [ \t\n]+    { /* Ignore whitespace */ }
 

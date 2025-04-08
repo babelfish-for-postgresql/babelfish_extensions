@@ -138,3 +138,97 @@ char* rewrite_point_query(POINT coord)
     /* Return the resulting string */
     return output.data; 
 }
+
+char*  rewrite_point_query_zm (POINT coord)
+{
+    StringInfoData output;
+    initStringInfo(&output);
+    
+    /* Start the WKT string with "POINT" */
+    appendStringInfoString(&output, "POINT ");
+
+    /* Open parenthesis for coordinate values */
+    appendStringInfoChar(&output, '(');
+
+    /* Add X and Y coordinates */
+    appendStringInfo(&output, "%s %s", 
+                    FLOAT8_TO_CSTRING(coord.x),
+                    FLOAT8_TO_CSTRING(coord.y));
+
+    /* Add Z coordinate if present */
+    if (FLAGS_GET_Z(coord.flags) && FLAGS_GET_M(coord.flags)) 
+    {
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
+    }
+    else if (FLAGS_GET_M(coord.flags)){
+        appendStringInfoString(&output, " NULL");
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
+    
+    }
+    else if (FLAGS_GET_Z(coord.flags)){
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
+    }
+    
+    /* Close parenthesis */
+    appendStringInfoChar(&output, ')');
+    
+    /* Return the resulting string */
+    return output.data; 
+}
+
+char*  rewrite_point_query_z (POINT coord)
+{
+    StringInfoData output;
+    initStringInfo(&output);
+    
+    /* Start the WKT string with "POINT" */
+    appendStringInfoString(&output, "POINT ");
+
+    /* Open parenthesis for coordinate values */
+    appendStringInfoChar(&output, '(');
+
+    /* Add X and Y coordinates */
+    appendStringInfo(&output, "%s %s", 
+                    FLOAT8_TO_CSTRING(coord.x),
+                    FLOAT8_TO_CSTRING(coord.y));
+                    
+    if (FLAGS_GET_Z(coord.flags)){
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
+    }
+    
+    /* Close parenthesis */
+    appendStringInfoChar(&output, ')');
+    
+    /* Return the resulting string */
+    return output.data; 
+}
+
+char*  rewrite_point_query_m (POINT coord)
+{
+    StringInfoData output;
+    initStringInfo(&output);
+    
+    /* Start the WKT string with "POINT" */
+    appendStringInfoString(&output, "POINT ");
+
+    /* Open parenthesis for coordinate values */
+    appendStringInfoChar(&output, '(');
+
+    /* Add X and Y coordinates */
+    appendStringInfo(&output, "%s %s", 
+                    FLOAT8_TO_CSTRING(coord.x),
+                    FLOAT8_TO_CSTRING(coord.y));
+
+    if (FLAGS_GET_M(coord.flags)){
+        appendStringInfoString(&output, " NULL");
+        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
+    
+    }
+
+    /* Close parenthesis */
+    appendStringInfoChar(&output, ')');
+    
+    /* Return the resulting string */
+    return output.data; 
+}

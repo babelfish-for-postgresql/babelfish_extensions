@@ -92,6 +92,7 @@ PG_FUNCTION_INFO_V1(geography_point);
 PG_FUNCTION_INFO_V1(st_as_binary_geometry);
 PG_FUNCTION_INFO_V1(st_as_binary_geography);
 PG_FUNCTION_INFO_V1(st_as_text);
+PG_FUNCTION_INFO_V1(geometry_astext);
 /*
  * Module to load external PostGIS functions
  */
@@ -147,80 +148,118 @@ load_functions()
 Datum
 geometry_in(PG_FUNCTION_ARGS)
 {
+    char *input_cstring;
+    text *input_text;
+    Datum rewritten_wkt;
+    char *rewritten_cstring;  // New variable for converted cstring
     Datum geom_datum;
     Datum geom_type;
     char *geometry_name;
-    LOCAL_FCINFO(fcinfo_local, 1); /* Use local fcinfo so as to avoid overriding of original structure */
+    LOCAL_FCINFO(fcinfo_local, 1);
 
     load_functions();
 
-    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+    /* Get the first argument as cstring */
+    input_cstring = PG_GETARG_CSTRING(0);
 
-    fcinfo_local->args[0].value = fcinfo->args[0].value;
+    /* Convert cstring to text */
+    input_text = cstring_to_text(input_cstring);
+
+    /* Rewrite the WKT string */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = PointerGetDatum(input_text);
     fcinfo_local->args[0].isnull = false;
+    rewritten_wkt = geo_wkt_rewrite_p(fcinfo_local);
+
+    /* Convert rewritten WKT from text to cstring */
+    rewritten_cstring = text_to_cstring(DatumGetTextP(rewritten_wkt));
+
+    /* Prepare for LWGEOM_in function call */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = CStringGetDatum(rewritten_cstring);  // Changed to use cstring
+    fcinfo_local->args[1].value = Int32GetDatum(0);
+    fcinfo_local->args[1].isnull = false;
 
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
 
+    /* Get geometry type */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
     fcinfo_local->args[0].value = geom_datum;
+    fcinfo_local->args[0].isnull = false;
     geom_type = geometry_type_p(fcinfo_local);
 
-    geometry_name = text_to_cstring(PG_DETOAST_DATUM(geom_type));
+    geometry_name = text_to_cstring(DatumGetTextP(geom_type));
     /* check if it is a 2-D point type */
     if (strcmp(geometry_name, "ST_Point") != 0)
         ereport(ERROR,
             (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
             errmsg("%s is not supported", geometry_name)));
 
-    PG_RETURN_DATUM(geom_datum);
+    /* Free allocated memory */
+    pfree(input_text);
+    pfree(rewritten_cstring);  // Free the new cstring
+    pfree(geometry_name);
 
+    PG_RETURN_DATUM(geom_datum);
 }
 
 Datum
 geography_in(PG_FUNCTION_ARGS)
 {
+    char *input_cstring;
+    text *input_text;
+    Datum rewritten_wkt;
+    char *rewritten_cstring;
     Datum geom_datum;
     Datum geom_type;
     char *geometry_name;
-    char *input_str = PG_GETARG_CSTRING(0);
     float8 lat;
     bool isBinary = false;
-    LOCAL_FCINFO(fcinfo_local, 3); /* Use local fcinfo so as to avoid overriding of original structure */
-    
-    if (input_str == NULL)
-        PG_RETURN_NULL(); 
-
-    if (input_str[0] == '0')
-        isBinary = true;
+    LOCAL_FCINFO(fcinfo_local, 3);
 
     load_functions();
 
-    InitFunctionCallInfoData(*fcinfo_local, NULL, 3, PG_GET_COLLATION(), NULL, NULL);
+    /* Get the first argument as cstring */
+    input_cstring = PG_GETARG_CSTRING(0);
 
-    fcinfo_local->args[0].value = fcinfo->args[0].value;
+    if (input_cstring == NULL)
+        PG_RETURN_NULL();
+
+    if (input_cstring[0] == '0')
+        isBinary = true;
+
+    /* Convert cstring to text */
+    input_text = cstring_to_text(input_cstring);
+
+    /* Rewrite the WKT string */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = PointerGetDatum(input_text);
     fcinfo_local->args[0].isnull = false;
-    fcinfo_local->args[1].value = fcinfo->args[1].value;
+    rewritten_wkt = geo_wkt_rewrite_p(fcinfo_local);
+
+    /* Convert rewritten WKT from text to cstring */
+    rewritten_cstring = text_to_cstring(DatumGetTextP(rewritten_wkt));
+
+    /* Prepare for LWGEOM_in function call */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 3, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = CStringGetDatum(rewritten_cstring);
+    fcinfo_local->args[1].value = Int32GetDatum(0);
     fcinfo_local->args[1].isnull = false;
-    fcinfo_local->args[2].value = fcinfo->args[2].value;
+    fcinfo_local->args[2].value = Int32GetDatum(-1);
     fcinfo_local->args[2].isnull = false;
 
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
 
+    /* Get geometry type */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
     fcinfo_local->args[0].value = geom_datum;
+    fcinfo_local->args[0].isnull = false;
     geom_type = geometry_type_p(fcinfo_local);
-    /*
-    * For binary string, such as '0101000000000000000000F03F000000000000004', predefined SRID is set by default
-    * For character string, such as 'POINT(0 0)', set default SRID to be 4326 for geography datatype
-    */
-    if (!isBinary)
-    {
-        fcinfo_local->args[0].value = geom_datum;
-        fcinfo_local->args[1].value = Int32GetDatum(4326);
 
-        geom_datum = gserialized_set_srid_p(fcinfo_local);
-    }
-    geometry_name = text_to_cstring(PG_DETOAST_DATUM(geom_type));
+    geometry_name = text_to_cstring(DatumGetTextP(geom_type));
+
     /* check if it is a 2-D point type */
     if (strcmp(geometry_name, "ST_Point") != 0)
         ereport(ERROR,
@@ -228,24 +267,51 @@ geography_in(PG_FUNCTION_ARGS)
             errmsg("%s is not supported", geometry_name)));
     else
     {
-        fcinfo_local->args[0].value = geom_datum;
-        /* Flipping the coordinates since Geography Datatype stores the point in Reverse Order i.e. (long, lat)  */
+        /* For character string, set default SRID to be 4326 for geography datatype */
         if (!isBinary)
-            geom_datum = st_flip_coord_p(fcinfo_local);
+        {
+            InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+            fcinfo_local->args[0].value = geom_datum;
+            fcinfo_local->args[1].value = Int32GetDatum(4326);
+            geom_datum = gserialized_set_srid_p(fcinfo_local);
+        }
 
+        /* Flipping the coordinates since Geography Datatype stores the point in Reverse Order i.e. (long, lat) */
+        if (!isBinary)
+        {
+            InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+            fcinfo_local->args[0].value = geom_datum;
+            geom_datum = st_flip_coord_p(fcinfo_local);
+        }
+
+        /* Get latitude */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
         fcinfo_local->args[0].value = geom_datum;
         lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
 
         /* Checking if latitude falls in allowed range -> [-90.0, 90.0] */
         if(lat <= 90.0 && lat >= -90.0)
+        {
+            /* Free allocated memory */
+            pfree(input_text);
+            pfree(rewritten_cstring);
+            pfree(geometry_name);
+
             PG_RETURN_DATUM(geom_datum);
+        }
         else
             ereport(ERROR,
                 (errcode(ERRCODE_DATA_EXCEPTION),
                 errmsg("Latitude values must be between -90 and 90 degrees")));
     }
-    /* Return the created geometry */
-    PG_RETURN_DATUM(geom_datum);
+
+    /* Free allocated memory */
+    pfree(input_text);
+    pfree(rewritten_cstring);
+    pfree(geometry_name);
+
+    /* This point should never be reached, but to satisfy the compiler: */
+    PG_RETURN_NULL();
 }
 
 /* This function stores valid SRIDs for Geography types*/
@@ -757,9 +823,9 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
             geom_type[2],      /* Geometry type bytes */
             dimension_flag = 0,/* Dimension type flag */
             /* IEEE 754 representation of NaN */
-            coord_NaN[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f};
+            empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f",
+            new_header[5] = "\x01\x01\x00\x00\x20";
     int     input_len,         /* Length of input data */
-            byte_position = 6, /* Current position in byte stream */
             isNaN = 0;         /* Flag for NaN detection */
     int32_t srid;              /* Spatial Reference ID */
     LOCAL_FCINFO(fcinfo_local, 1);
@@ -784,23 +850,6 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     srid = (input_data[3] << 24) | (input_data[2] << 16) | 
            (input_data[1] << 8) | input_data[0];
 
-    /* Scan for NaN coordinates in the geometry data */
-    while (byte_position < input_len) 
-    {
-        if (input_len - byte_position < 8) 
-        {
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("Invalid Geometry: Unexpected end of input")));
-        }
-        if (memcmp(input_data + byte_position, coord_NaN, 8) == 0) 
-        {
-            isNaN = 1;
-            break;
-        }
-        byte_position += 8;
-    }
-
     /* Extract and validate geometry type */
     memcpy(geom_type, input_data + 4, 2);
 
@@ -811,39 +860,53 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
      * 2 = XYM (0x010e)
      * 3 = XYZM (0x010f)
      */
-    if (memcmp(geom_type, "\x01\x0c", 2) == 0)
-        dimension_flag = 0;
-    else if (memcmp(geom_type, "\x01\x0d", 2) == 0) 
-        dimension_flag = 1;
-    else if (memcmp(geom_type, "\x01\x0e", 2) == 0) 
-        dimension_flag = 2;
-    else if (memcmp(geom_type, "\x01\x0f", 2) == 0) 
-        dimension_flag = 3;
-    else 
-    {
+    if (memcmp(geom_type, "\x01\x04", 2) == 0) {
+        dimension_flag = 0;      /* XY */
+    } else if (memcmp(geom_type, "\x01\x0c", 2) == 0) {
+        dimension_flag = 1;      /* XY (alternate) */
+    } else if (memcmp(geom_type, "\x01\x0d", 2) == 0) {
+        dimension_flag = 2;      /* XYZ */
+    } else if (memcmp(geom_type, "\x01\x0e", 2) == 0) {
+        dimension_flag = 3;      /* XYM */
+    } else if (memcmp(geom_type, "\x01\x0f", 2) == 0) {
+        dimension_flag = 4;      /* XYZM */
+    } else {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Unsupported geometry type")));
+                 errmsg("Unsupported geography type")));
     }
 
     /* Process geometry if SRID is valid and no NaN coordinates found */
     if (srid >= 0 && srid <= 999999 && isNaN == 0) 
     {
-        /* Create appropriate header based on dimension type */
-        uint8 new_header[5] = "\x01\x01\x00\x00\x20";  /* Base header */
-        if (dimension_flag == 1) new_header[4] = 0xA0; /* XYZ */
-        if (dimension_flag == 2) new_header[4] = 0x60; /* XYM */
-        if (dimension_flag == 3) new_header[4] = 0xE0; /* XYZM */
+        if (dimension_flag == 0) {
+            /* Handle empty geography */
+            result = (bytea *) palloc(VARHDRSZ + 25);
+            SET_VARSIZE(result, VARHDRSZ + 25);
+            result_data = (uint8 *)VARDATA(result);
 
-        /* Allocate memory for processed geometry */
-        result = (bytea *) palloc(VARHDRSZ + input_len - 2 + 5);
-        SET_VARSIZE(result, VARHDRSZ + input_len - 2 + 5);
-        result_data = (uint8 *)VARDATA(result);
+            /* Construct new geography with updated header */
+            memcpy(result_data, new_header, 5);
+            memcpy(result_data + 5, input_data, 4);
+            memcpy(result_data + 9, empty_geom, 8);
+            memcpy(result_data + 17, empty_geom, 8);
+        } else {
+            /* Handle non-empty geometry with dimensions */
+            
+            /* Adjust header based on dimension type */
+            if (dimension_flag == 2) new_header[4] = 0xA0;  /* XYZ */
+            if (dimension_flag == 3) new_header[4] = 0x60;  /* XYM */
+            if (dimension_flag == 4) new_header[4] = 0xE0;  /* XYZM */
 
-        /* Construct new geometry with updated header */
-        memcpy(result_data, new_header, 5);
-        memcpy(result_data + 5, input_data, 4);
-        memcpy(result_data + 9, input_data + 6, input_len - 6);
+            /* Allocate and construct result */
+            result = (bytea *) palloc(VARHDRSZ + input_len - 2 + 5);
+            SET_VARSIZE(result, VARHDRSZ + input_len - 2 + 5);
+            result_data = (uint8 *)VARDATA(result);
+
+            memcpy(result_data, new_header, 5);
+            memcpy(result_data + 5, input_data, 4);
+            memcpy(result_data + 9, input_data + 6, input_len - 6);
+        }
     }
     else 
     {
@@ -863,8 +926,7 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
 }
 
 /* This function converts a binary (bytea) representation to a PostGIS geography object. */
-Datum
-geography_from_bytea(PG_FUNCTION_ARGS)
+Datum geography_from_bytea(PG_FUNCTION_ARGS)
 {
     Datum       geography_result;   /* Final geography object */
     bytea       *input,             /* Input binary data */
@@ -874,173 +936,155 @@ geography_from_bytea(PG_FUNCTION_ARGS)
                 geom_type[2],       /* Geography type bytes */
                 dimension_flag = 0, /* Dimension type flag */
                 /* IEEE 754 representation of NaN */
-                coord_NaN[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f};
+                empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f",
+                new_header[5] = "\x01\x01\x00\x00\x20";
     int         input_len,          /* Length of input data */
-                byte_position = 6,  /* Current position in byte stream */
                 isNaN = 0,          /* Flag for NaN detection */
                 num_valid_srids;    /* Count of valid SRIDs */
     int32_t     srid;               /* Spatial Reference ID */
-    double      lat;                /* Latitude value */
-    uint64_t    lat_bits;           /* Binary representation of latitude */
     bool        srid_valid = false; /* Flag for SRID validation */
     int32       *valid_srids;       /* Array of valid SRID values */
     ArrayType   *valid_srids_array; /* PostgreSQL array of valid SRIDs */
+    double      lat;                /* Latitude value */
+    uint64_t    lat_bits;           /* Binary representation of latitude */ 
     LOCAL_FCINFO(fcinfo_local, 1);
 
     /* Load required PostGIS functions */
     load_functions();
 
-    /* Extract input binary data */
+    /* Extract and validate input binary data */
     input = PG_GETARG_BYTEA_PP(0);
     input_data = (uint8 *)VARDATA_ANY(input);
     input_len = VARSIZE_ANY_EXHDR(input);
 
-    /* Validate minimum input length (header + basic geography data) */
-    if (input_len < 22) 
-    {
+    if (input_len < 22) {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                  errmsg("Invalid Geography")));
     }
 
-    /* Extract SRID from first 4 bytes (little-endian) */
+    /* Extract SRID (little-endian) */
     srid = (input_data[3] << 24) | (input_data[2] << 16) | 
            (input_data[1] << 8) | input_data[0];
 
-    /* Extract and convert latitude value */
+    /* Extract and convert latitude */
     memcpy(&lat_bits, input_data + 6, sizeof(uint64_t));
-    /* Convert from little-endian to host byte order */
     lat_bits = le64toh(lat_bits);
     memcpy(&lat, &lat_bits, sizeof(double));
-
-    /* Scan for NaN coordinates in the geography data */
-    while (byte_position < input_len) 
-    {
-        if (input_len - byte_position < 8) 
-        {
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("Invalid Geography: Unexpected end of input")));
-        }
-        if (memcmp(input_data + byte_position, coord_NaN, 8) == 0) 
-        {
-            isNaN = 1;
-            break;
-        }
-        byte_position += 8;
-    }
 
     /* Extract and validate geography type */
     memcpy(geom_type, input_data + 4, 2);
 
-    /* 
-     * Set dimension flag based on geography type:
-     * 0 = XY (0x010c)
-     * 1 = XYZ (0x010d)
-     * 2 = XYM (0x010e)
-     * 3 = XYZM (0x010f)
-     */
-    if (memcmp(geom_type, "\x01\x0c", 2) == 0)
-        dimension_flag = 0;
-    else if (memcmp(geom_type, "\x01\x0d", 2) == 0) 
-        dimension_flag = 1;
-    else if (memcmp(geom_type, "\x01\x0e", 2) == 0) 
-        dimension_flag = 2;
-    else if (memcmp(geom_type, "\x01\x0f", 2) == 0) 
-        dimension_flag = 3;
-    else 
-    {
+    /* Determine dimension flag based on geography type */
+    if (memcmp(geom_type, "\x01\x04", 2) == 0) {
+        dimension_flag = 0;      /* XY */
+    } else if (memcmp(geom_type, "\x01\x0c", 2) == 0) {
+        dimension_flag = 1;      /* XY (alternate) */
+    } else if (memcmp(geom_type, "\x01\x0d", 2) == 0) {
+        dimension_flag = 2;      /* XYZ */
+    } else if (memcmp(geom_type, "\x01\x0e", 2) == 0) {
+        dimension_flag = 3;      /* XYM */
+    } else if (memcmp(geom_type, "\x01\x0f", 2) == 0) {
+        dimension_flag = 4;      /* XYZM */
+    } else {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                  errmsg("Unsupported geography type")));
     }
 
-    /* Retrieve and validate SRID against allowed values */
+    /* Validate SRID against allowed values */
     valid_srids_array = DatumGetArrayTypeP(DirectFunctionCall1(get_valid_srids, 
                                            Int32GetDatum(0)));
     valid_srids = (int32 *)ARR_DATA_PTR(valid_srids_array);
     num_valid_srids = ArrayGetNItems(ARR_NDIM(valid_srids_array), 
                                      ARR_DIMS(valid_srids_array));
 
-    /* Check if input SRID is in the list of valid SRIDs */
-    for (int i = 0; i < num_valid_srids; i++) 
-    {
-        if (valid_srids[i] == srid) 
-        {
+    for (int i = 0; i < num_valid_srids; i++) {
+        if (valid_srids[i] == srid) {
             srid_valid = true;
             break;
         }
     }
 
-    /* Process geography if SRID is valid and no NaN coordinates found */
-    if (srid_valid && isNaN == 0) 
-    {
-        if (lat >= -90.0 && lat <= 90.0) 
-        {
-            /* Create appropriate header based on dimension type */
-            uint8 new_header[5] = "\x01\x01\x00\x00\x20";  /* Base header */
-            if (dimension_flag == 1) new_header[4] = 0xA0; /* XYZ */
-            if (dimension_flag == 2) new_header[4] = 0x60; /* XYM */
-            if (dimension_flag == 3) new_header[4] = 0xE0; /* XYZM */
-
-            /* Allocate memory for processed geography */
-            result = (bytea *) palloc(VARHDRSZ + input_len - 2 + 5);
-            SET_VARSIZE(result, VARHDRSZ + input_len - 2 + 5);
+    /* Process geography if SRID is valid and coordinates are valid */
+    if (srid_valid && !isNaN && lat >= -90.0 && lat <= 90.0) {
+        if (dimension_flag == 0) {
+            /* Handle empty geography */
+            result = (bytea *) palloc(VARHDRSZ + 25);
+            SET_VARSIZE(result, VARHDRSZ + 25);
             result_data = (uint8 *)VARDATA(result);
 
             /* Construct new geography with updated header */
             memcpy(result_data, new_header, 5);
-            memcpy(result_data + 5, input_data, 4);                 /* Copy SRID */
-            memcpy(result_data + 9, input_data + 6, input_len - 6); /* Copy coordinates */
+            memcpy(result_data + 5, input_data, 4);
+            memcpy(result_data + 9, empty_geom, 8);
+            memcpy(result_data + 17, empty_geom, 8);
+        } else {
+            /* Handle non-empty geography with dimensions */
+            
+            /* Adjust header based on dimension type */
+            if (dimension_flag == 2) new_header[4] = 0xA0;  /* XYZ */
+            if (dimension_flag == 3) new_header[4] = 0x60;  /* XYM */
+            if (dimension_flag == 4) new_header[4] = 0xE0;  /* XYZM */
+
+            /* Allocate and construct result */
+            result = (bytea *) palloc(VARHDRSZ + input_len - 2 + 5);
+            SET_VARSIZE(result, VARHDRSZ + input_len - 2 + 5);
+            result_data = (uint8 *)VARDATA(result);
+
+            memcpy(result_data, new_header, 5);
+            memcpy(result_data + 5, input_data, 4);
+            memcpy(result_data + 9, input_data + 6, input_len - 6);
         }
-        else 
-        {
-            ereport(ERROR,
-                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                     errmsg("Error converting data type varbinary to geography.")));
-        }
-    }
-    else 
-    {
+    } else {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                  errmsg("Error converting data type varbinary to geography.")));
     }
 
-    /* Convert processed binary data to geography object */
+    /* Convert to geography object */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
     fcinfo_local->args[0].value = PointerGetDatum(result);
     fcinfo_local->args[0].isnull = false;
     geography_result = DirectFunctionCall1(lwgeom_from_bytea_p, 
-                                           PointerGetDatum(result));
+                                         PointerGetDatum(result));
 
     return geography_result;
 }
 
 /* This function converts a geometry object to its binary (bytea) representation. */
-Datum
-bytea_from_geometry(PG_FUNCTION_ARGS)
+Datum bytea_from_geometry(PG_FUNCTION_ARGS)
 {
-    Datum   geom_datum;      /* Input geometry object */
-    bytea   *byte,           /* Original binary data */
-            *result;         /* Processed binary data */
-    uint8   *byte_data,      /* Original data pointer */
-            srid_flag,       /* SRID and dimension flags */
-            *result_data,    /* Result data pointer */
-            point_type;      /* Point dimension type */
-    int     byte_len,        /* Length of input data */
-            srid_size,       /* Size of SRID data (4 bytes) */
-            coord_size;      /* Size of coordinate data */
-    bool    has_srid;        /* Flag indicating SRID presence */
+    Datum   geom_datum;       /* Input geometry object */
+    bytea   *byte,            /* Original binary data */
+            *result;          /* Processed binary data */
+    uint8   *byte_data,       /* Original data pointer */
+            srid_flag,        /* SRID and dimension flags */
+            *result_data,     /* Result data pointer */
+            point_type;       /* Point dimension type */
+    int     byte_len,         /* Length of input data */
+            srid_size,        /* Size of SRID data (4 bytes) */
+            coord_size;       /* Size of coordinate data */
+    bool    has_srid,         /* Flag indicating SRID presence */
+            is_empty = false; /* Flag indicating empty geometry */
+    /* Coordinate data for empty points */
+    uint8 coord[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0x01
+    };
     LOCAL_FCINFO(fcinfo_local, 1);
 
-    /* Load required functions */
+    /* Load required PostGIS functions */
     load_functions();
 
     /* Get the input geometry object */
     geom_datum = PG_GETARG_DATUM(0);
 
-    /* Convert geometry to binary format using PostGIS function */
+    /* Check if the geometry is empty */
+    is_empty = DatumGetBool(DirectFunctionCall1(st_isempty_p, geom_datum));
+
+    /* Convert geometry to binary format */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
     fcinfo_local->args[0].value = geom_datum;
     fcinfo_local->args[0].isnull = false;
@@ -1050,45 +1094,48 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
     byte_data = (uint8 *)VARDATA_ANY(byte);
     byte_len = VARSIZE_ANY_EXHDR(byte);
 
-    /* 
-     * Validate geometry type (Point type = 1)
-     * Check for minimum length and point type identifier
-     */
+    /* Validate if input is a point geometry */
     if (byte_len >= 5 && byte_data[1] == 0x01 && 
         byte_data[2] == 0x00 && byte_data[3] == 0x00) 
-        {
+    {
         
         /* Extract SRID flag and check for SRID presence */
         srid_flag = byte_data[4];
         has_srid = srid_flag & 0x20;
         srid_size = 4;
    
-        /* 
-         * Determine point type and coordinate size based on dimension flags:
-         * 0x00 = XY   (16 bytes)
-         * 0x80 = XYZ  (24 bytes)
-         * 0xC0 = XYZM (32 bytes)
-         * 0x40 = XYM  (24 bytes)
-         */
+        /* Determine point type and coordinate size based on dimension flags */
         if ((srid_flag & 0xC0) == 0x00) 
         {
-            point_type = 0x0c;
-            coord_size = 16;
+            if (is_empty) 
+            {
+                point_type = 0x04;
+                coord_size = 21;
+            }
+            else 
+            {
+                /* XY coordinates */
+                point_type = 0x0c;
+                coord_size = 16;  
+            }
         } 
         else if ((srid_flag & 0xC0) == 0x80) 
         {
+            /* XYZ coordinates */
             point_type = 0x0d;
-            coord_size = 24;
+            coord_size = 24;      
         } 
         else if ((srid_flag & 0xC0) == 0xC0) 
         {
+            /* XYZM coordinates */
             point_type = 0x0f;
-            coord_size = 32;
+            coord_size = 32;      
         } 
         else if ((srid_flag & 0xC0) == 0x40) 
         {
+            /* XYM coordinates */
             point_type = 0x0e;
-            coord_size = 24;
+            coord_size = 24;      
         } 
         else 
         {
@@ -1096,7 +1143,7 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
             PG_RETURN_BYTEA_P(byte);
         }
 
-        /* Allocate memory for result with header and data */
+        /* Allocate memory for result */
         result = (bytea *) palloc(6 + srid_size + coord_size);
         SET_VARSIZE(result, 6 + srid_size + coord_size);
         result_data = (uint8 *)VARDATA(result);
@@ -1104,12 +1151,10 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
         /* Handle SRID data */
         if (has_srid) 
         {
-            /* Copy existing SRID */
             memcpy(result_data, byte_data + 5, 4);
         } 
         else 
         {
-            /* Set default SRID (0) */
             memset(result_data, 0, 4);
         }
 
@@ -1117,14 +1162,14 @@ bytea_from_geometry(PG_FUNCTION_ARGS)
         result_data[4] = 0x01;
         result_data[5] = point_type;
 
-        /* Copy coordinate data based on SRID presence */
-        if (has_srid) 
+        /* Copy coordinate data */
+        if (is_empty) 
         {
-            memcpy(result_data + 6, byte_data + 9, coord_size);
+            memcpy(result_data + 6, coord, coord_size);
         } 
         else 
         {
-            memcpy(result_data + 6, byte_data + 5, coord_size);
+            memcpy(result_data + 6, byte_data + (has_srid ? 9 : 5), coord_size);
         }
         
         PG_RETURN_BYTEA_P(result);
@@ -1148,6 +1193,13 @@ bytea_from_geography(PG_FUNCTION_ARGS)
     int     byte_len,        /* Length of input data */
             srid_size,       /* Size of SRID data (4 bytes) */
             coord_size;      /* Size of coordinate data */
+    bool    is_empty = false;/* Flag indicating empty geometry */
+    /* Coordinate data for empty points */
+    uint8 coord[] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0x01
+    };
     LOCAL_FCINFO(fcinfo_local, 1);
 
     /* Load required functions */
@@ -1155,6 +1207,9 @@ bytea_from_geography(PG_FUNCTION_ARGS)
 
     /* Get the input geography object */
     geom_datum = PG_GETARG_DATUM(0);
+
+    /* Check if the geometry is empty */
+    is_empty = DatumGetBool(DirectFunctionCall1(st_isempty_p, geom_datum));
 
     /* Convert geography to binary format using PostGIS function */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
@@ -1187,8 +1242,17 @@ bytea_from_geography(PG_FUNCTION_ARGS)
          */
         if ((srid_flag & 0xC0) == 0x00) 
         {
-            point_type = 0x0c;
-            coord_size = 16;
+            if (is_empty) 
+            {
+                point_type = 0x04;
+                coord_size = 21;
+            }
+            else 
+            {
+                /* XY coordinates */
+                point_type = 0x0c;
+                coord_size = 16;  
+            }
         } 
         else if ((srid_flag & 0xC0) == 0x80) 
         {
@@ -1224,8 +1288,15 @@ bytea_from_geography(PG_FUNCTION_ARGS)
         result_data[4] = 0x01;
         result_data[5] = point_type;
 
-        /* Copy coordinate data */
-        memcpy(result_data + 6, byte_data + 9, coord_size);
+        if (is_empty) 
+        {
+            memcpy(result_data + 6, coord, coord_size);
+        } 
+        else 
+        {
+            /* Copy coordinate data */
+            memcpy(result_data + 6, byte_data + 9, coord_size);
+        }
 
         PG_RETURN_BYTEA_P(result);
     }
@@ -1437,6 +1508,39 @@ st_as_text(PG_FUNCTION_ARGS)
     result = lwgeom_astext_p(fcinfo_local);
 
     PG_RETURN_DATUM(result);
+}
+
+Datum
+geometry_astext(PG_FUNCTION_ARGS)
+{
+    Datum geom_datum = PG_GETARG_DATUM(0);
+    Datum text_datum;
+    Datum rewritten_text;
+    LOCAL_FCINFO(fcinfo_local, 1);
+
+    load_functions();
+
+    /* Prepare fcinfo for LWGEOM_asText function */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = geom_datum;
+    fcinfo_local->args[0].isnull = false;
+
+    /* Call the LWGEOM_asText function via the function pointer */
+    text_datum = lwgeom_astext_p(fcinfo_local);
+
+    /* Rewrite the text */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = text_datum;
+    fcinfo_local->args[0].isnull = false;
+
+    /* Call the geo_wkt_rewrite_p function */
+    rewritten_text = geo_wkt_rewrite_p(fcinfo_local);
+
+    /* Convert text to varchar if necessary */
+    /* In PostgreSQL, text and varchar are often interchangeable, so this step might not be needed */
+    /* If conversion is needed, you would do it here */
+
+    PG_RETURN_DATUM(rewritten_text);
 }
 
 #endif
