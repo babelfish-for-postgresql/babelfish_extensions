@@ -76,16 +76,28 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 	{
 		ListCell   *lc;
 		Bitmapset  *temp_relids_local = NULL;
+		temp_relids_str = NULL;
 
 		foreach(lc, estate->es_range_table)
 		{
+			RTEPermissionInfo *perminfo;
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
 			if (rte->rtekind == RTE_RELATION &&
 				OidIsValid(rte->relid) &&
 				get_rel_persistence(rte->relid) == RELPERSISTENCE_TEMP)
 			{
+				if (estate->es_plannedstmt == NULL ||
+					list_length(estate->es_plannedstmt->permInfos) == 0)
+				{
+					/* If there is RTE present then corresponding permInfo must be there */
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("Perminfo corresponding to temporary table couldn't be found")));
+				}
+
+				/* getRTEPermissionInfo would return valid perfInfo, error will be raised otherwise */
+				perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);
 				/* probably (re)do perm check */
-				RTEPermissionInfo *perminfo = getRTEPermissionInfo(estate->es_plannedstmt->permInfos, rte);
 				if (!ExecCheckOneRelPerms_wrapper(perminfo))
 				{
 					aclcheck_error(ACLCHECK_NO_PRIV,
@@ -111,7 +123,7 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 		if (temp_relids_str == NULL)
 		{
 			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Unexpected list of temp table relids")));
 		}
 
@@ -157,7 +169,7 @@ bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 	if (!OidIsValid(perminfo->relid))
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			(errcode(ERRCODE_INTERNAL_ERROR),
 			 errmsg("Unexpected perminfo is found")));
 	}
 

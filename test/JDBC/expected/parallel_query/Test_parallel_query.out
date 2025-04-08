@@ -43,6 +43,8 @@ PARALLEL SAFE;
 GO
 
 -- psql
+-- Permission check on temp table in Postgres
+-- Not everyone can access temp table
 create temp table test_tbl(a int);
 GO
 
@@ -59,10 +61,10 @@ int4
 ~~END~~
 
 
--- In Postgres, not everyone can access temp table
 set role l1;
 GO
 
+-- Permission denied error because l1 does not have access to temp table test_tbl
 select * from test_tbl
 GO
 ~~ERROR (Code: 0)~~
@@ -75,6 +77,7 @@ reset role
 GO
 
 -- tsql user=l1 password=12345678
+-- verify that only temp table permission check is skipped under parallel worker
 SELECT * FROM pq_t
 GO
 ~~ERROR (Code: 33557097)~~
@@ -177,6 +180,7 @@ off
 SET BABELFISH_STATISTICS PROFILE ON
 GO
 
+-- temp table on outer side
 SELECT * FROM pq_t where id IN (select a from #temp)
 GO
 ~~START~~
@@ -202,6 +206,7 @@ Hash Join (actual rows=1 loops=1)
 ~~END~~
 
 
+-- temp table on outer side
 SELECT * FROM pq_t LEFT JOIN #temp ON id = a;
 GO
 ~~START~~
@@ -289,6 +294,7 @@ DROP LOGIN l1;
 GO
 
 -- tsql
+-- table valued parameter should behave same as normal temp table
 CREATE TABLE Employees (EmployeeID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), Department VARCHAR(50));
 GO
 
@@ -301,6 +307,7 @@ GO
 CREATE TYPE SalaryUpdateType AS TABLE(EmployeeID INT, NewSalary DECIMAL(10,2), EffectiveDate DATE);
 GO
 
+-- table valued parameter on outerside
 DECLARE @SalaryUpdateTable SalaryUpdateType;
 -- Insert values into the table variable
 INSERT INTO @SalaryUpdateTable VALUES
@@ -317,6 +324,45 @@ int
 3
 ~~END~~
 
+
+CREATE PROCEDURE UpdateEmployeeSalaries
+    @SalaryUpdates SalaryUpdateType READONLY
+AS
+BEGIN
+    -- Join TVP with regular table to get employee details with new salaries
+    SELECT 
+        e.EmployeeID,
+        e.FirstName,
+        e.LastName,
+        e.Department,
+        su.NewSalary,
+        su.EffectiveDate
+    FROM Employees e
+    INNER JOIN @SalaryUpdates su ON e.EmployeeID = su.EmployeeID;
+END;
+GO
+
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+-- Execute the stored procedure
+EXEC UpdateEmployeeSalaries @SalaryUpdateTable;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#numeric#!#date
+1#!#John#!#Doe#!#IT#!#75000.00#!#2025-01-01
+2#!#Jane#!#Smith#!#HR#!#65000.00#!#2025-01-01
+3#!#Mike#!#Johnson#!#IT#!#70000.00#!#2025-01-01
+~~END~~
+
+
+DROP PROCEDURE UpdateEmployeeSalaries
+GO
 
 DROP TYPE SalaryUpdateType
 GO
