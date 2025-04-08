@@ -37,3 +37,19 @@ GO
 
 SELECT OBJECT_ID('object_id_idx_parent_id');
 GO
+
+-- Unique constraints metadata test
+
+-- CREATE TABLE constraint
+SELECT o.name AS constraint_name,
+       o.type,
+       o.type_desc
+FROM sys.objects o WHERE o.parent_object_id = OBJECT_ID('object_id_conflict_t2') AND o.type = 'UQ';
+GO
+
+-- ALTER TABLE constraint
+SELECT o.name AS constraint_name,
+       o.type,
+       o.type_desc
+FROM sys.objects o WHERE o.parent_object_id = OBJECT_ID('object_id_conflict_t') AND o.type = 'UQ';
+GO

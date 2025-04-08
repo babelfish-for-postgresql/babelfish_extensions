@@ -1815,15 +1815,19 @@ select
     , CAST(p.principal_id as int) as principal_id
     , CAST(p.schema_id as int) as schema_id
     , CAST(p.parent_object_id as int) as parent_object_id
-    , CAST('PK' as char(2)) as type
-    , CAST('PRIMARY_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(p.type as char(2)) as type
+    , CAST(
+        CASE p.type
+        WHEN 'PK' THEN 'PRIMARY_KEY_CONSTRAINT'
+        WHEN 'UQ' THEN 'UNIQUE_CONSTRAINT'
+        END
+      as sys.nvarchar(60)) as type_desc
     , CAST(p.create_date as sys.datetime) as create_date
     , CAST(p.modify_date as sys.datetime) as modify_date
     , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(p.is_published as sys.bit) as is_published
     , CAST(p.is_schema_published as sys.bit) as is_schema_published
 from sys.key_constraints p
-where p.type = 'PK'
 union all
 select
       CAST(pr.name as sys.sysname) as name

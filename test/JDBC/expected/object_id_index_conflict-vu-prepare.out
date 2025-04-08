@@ -33,3 +33,7 @@ GO
 
 CREATE INDEX object_id_idx_parent_id ON object_id_conflict_t (parent_id);
 GO
+
+-- Test for unique constraints metadata for CREATE/ALTER TABLE
+CREATE TABLE object_id_conflict_t2 (id INT, num INT CONSTRAINT unq_num UNIQUE);
+GO

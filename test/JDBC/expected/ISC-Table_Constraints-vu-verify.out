@@ -78,7 +78,6 @@ master#!#sch1#!#tbl_pk_pkey#!#master#!#sch1#!#tbl_pk#!#PRIMARY KEY#!#NO#!#NO
 
 
 -- verify from sys.objects
--- Note: sys.objects not showing unique constraints currently
 select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk') order by constraint_name, constraint_schema;
 select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') and object_name(parent_object_id) in ('tbl_pk','tbl_fk') order by name, schname;
 go
@@ -102,6 +101,8 @@ tbl_fk_a_fkey#!#dbo#!#tbl_fk#!#FOREIGN_KEY_CONSTRAINT
 tbl_fk_a_fkey#!#sch1#!#tbl_fk#!#FOREIGN_KEY_CONSTRAINT
 tbl_fk_pkey#!#dbo#!#tbl_fk#!#PRIMARY_KEY_CONSTRAINT
 tbl_fk_pkey#!#sch1#!#tbl_fk#!#PRIMARY_KEY_CONSTRAINT
+tbl_pk_c_key#!#dbo#!#tbl_pk#!#UNIQUE_CONSTRAINT
+tbl_pk_c_key#!#sch1#!#tbl_pk#!#UNIQUE_CONSTRAINT
 tbl_pk_d_check#!#dbo#!#tbl_pk#!#CHECK_CONSTRAINT
 tbl_pk_d_check#!#sch1#!#tbl_pk#!#CHECK_CONSTRAINT
 tbl_pk_pkey#!#dbo#!#tbl_pk#!#PRIMARY_KEY_CONSTRAINT
