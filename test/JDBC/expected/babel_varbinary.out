@@ -791,12 +791,35 @@ GO
 CREATE NONCLUSTERED INDEX ind ON varbinary_test_table(varbinary_test_col ASC)
 GO
 
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 SELECT set_config('enable_seqscan', 'off', false);
 GO
 ~~START~~
 text
 off
 ~~END~~
+
 
 
 SET BABELFISH_SHOWPLAN_ALL ON
@@ -809,15 +832,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 112.291 ms
+Babelfish T-SQL Batch Parsing Time: 113.092 ms
 ~~END~~
 
 
@@ -828,15 +851,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.115 ms
+Babelfish T-SQL Batch Parsing Time: 7.146 ms
 ~~END~~
 
 
@@ -847,15 +870,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.217 ms
+Babelfish T-SQL Batch Parsing Time: 0.216 ms
 ~~END~~
 
 
@@ -866,15 +889,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.211 ms
+Babelfish T-SQL Batch Parsing Time: 0.255 ms
 ~~END~~
 
 
@@ -899,15 +922,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.294 ms
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
 ~~END~~
 
 
@@ -918,15 +941,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.324 ms
+Babelfish T-SQL Batch Parsing Time: 0.210 ms
 ~~END~~
 
 
@@ -937,15 +960,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.222 ms
+Babelfish T-SQL Batch Parsing Time: 0.209 ms
 ~~END~~
 
 
@@ -956,15 +979,15 @@ text
 Query Text: 
  select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
 
-Result  (cost=0.00..0.02 rows=1 width=8)
+Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
-Result  (cost=0.00..0.00 rows=0 width=0)
+Result
   One-Time Filter: false
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.214 ms
+Babelfish T-SQL Batch Parsing Time: 0.208 ms
 ~~END~~
 
 
@@ -1019,3 +1042,11 @@ varbinary
 
 drop table varbinary_test_table
 go
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
