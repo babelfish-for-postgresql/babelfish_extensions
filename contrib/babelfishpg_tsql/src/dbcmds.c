@@ -920,7 +920,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,

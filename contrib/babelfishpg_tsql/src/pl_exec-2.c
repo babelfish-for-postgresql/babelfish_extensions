@@ -4207,7 +4207,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = res_stmt;
 	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 1;
+	wrapper->stmt_len = 0;
 
 	/* do this step */
 	ProcessUtility(wrapper,

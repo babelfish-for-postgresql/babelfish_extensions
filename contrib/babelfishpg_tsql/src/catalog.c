@@ -3226,7 +3226,7 @@ create_guest_role_for_db(const char *dbname)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = res_stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 18;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -4284,7 +4284,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 				wrapper->canSetTag = false;
 				wrapper->utilityStmt = (Node *) grant;
 				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 1;
+				wrapper->stmt_len = 0;
 
 				/* do this step */
 				ProcessUtility(wrapper,
@@ -4402,7 +4402,7 @@ exec_internal_grant_on_function(Oid objectId)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = (Node *) grant;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 1;
+			wrapper->stmt_len = 0;
 
 			GetUserIdAndSecContext(&save_userid, &save_sec_context);
 

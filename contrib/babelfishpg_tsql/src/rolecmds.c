@@ -663,7 +663,7 @@ grant_revoke_role_to_login(const char* login, const char *role_name, const char 
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = stmt;
 	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 23;
+	wrapper->stmt_len = 0;
 
 	/* do this step */
 	ProcessUtility(wrapper,
@@ -1152,7 +1152,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 				wrapper->canSetTag = false;
 				wrapper->utilityStmt = stmt;
 				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 16;
+				wrapper->stmt_len = 0;
 
 				/* do this step */
 				ProcessUtility(wrapper,
@@ -1512,7 +1512,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 34;
+			wrapper->stmt_len = 0;
 
 			/* Run the built query */
 			ProcessUtility(wrapper,

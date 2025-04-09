@@ -1895,7 +1895,7 @@ exec_add_original_index_name(char *idxname, char *schemaname, char *original_nam
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = stmt;
 	wrapper->stmt_location = 0;
-	wrapper->stmt_len = strlen(query_str);
+	wrapper->stmt_len = 0;
 
 	ProcessUtility(wrapper,
 				   "(ALTER INDEX )",

@@ -2165,7 +2165,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -2307,7 +2307,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -2479,7 +2479,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -2645,7 +2645,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -3861,7 +3861,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = 0;
 
 			/* do this step */
 			ProcessUtility(wrapper,
