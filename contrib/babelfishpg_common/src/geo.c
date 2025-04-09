@@ -9,7 +9,6 @@
 #include <stdio.h>
 
 #define FLOAT8_TO_CSTRING(x)         DatumGetCString(DirectFunctionCall1(float8out, Float8GetDatum(x)))
-#define YYpALLOC                     palloc
 #define YYFREE                       pfree
 
 #define POINTFLAG_Z                  (1 << 0)  
@@ -26,10 +25,10 @@ PG_FUNCTION_INFO_V1(geo_wkt_rewrite);
 Datum
 geo_wkt_rewrite(PG_FUNCTION_ARGS)
 {
-    text    *input_text,
+    text    *input_text = NULL,
             *result_text = NULL;    /* Ensure initialization */
-    char    *input_str,
-            *translated_query;      /* Ensure initialization */
+    char    *input_str = NULL,
+            *translated_query = NULL;      /* Ensure initialization */
 
     /* Check if the input argument is NULL */
     if (PG_ARGISNULL(0))
@@ -59,9 +58,10 @@ geo_wkt_rewrite(PG_FUNCTION_ARGS)
         /* Cleanup lexer (scanner) */
         geo_scanner_finish();
     }
-    PG_CATCH();
+    PG_FINALLY();
     {
-        PG_RE_THROW();   
+        /* Cleanup code that runs whether or not an error occurred */
+        geo_scanner_finish();
     }
     PG_END_TRY();
 
@@ -110,10 +110,7 @@ char* rewrite_point_query(POINT coord)
     appendStringInfoString(&output, "POINT ");
 
     /* Add 'Z' and/or 'M' if the point has those coordinates */
-    if (FLAGS_GET_Z(coord.flags))
-        appendStringInfoChar(&output, 'Z');
-        
-    if (FLAGS_GET_M(coord.flags))
+    if (FLAGS_GET_M(coord.flags) && !FLAGS_GET_Z(coord.flags) )
         appendStringInfoChar(&output, 'M');
 
     /* Open parenthesis for coordinate values */
@@ -139,11 +136,11 @@ char* rewrite_point_query(POINT coord)
     return output.data; 
 }
 
-char*  rewrite_point_query_zm (POINT coord)
+char* rewrite_point_dim_query(POINT coord)
 {
     StringInfoData output;
     initStringInfo(&output);
-    
+
     /* Start the WKT string with "POINT" */
     appendStringInfoString(&output, "POINT ");
 
@@ -164,71 +161,15 @@ char*  rewrite_point_query_zm (POINT coord)
     else if (FLAGS_GET_M(coord.flags)){
         appendStringInfoString(&output, " NULL");
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
-    
+
     }
     else if (FLAGS_GET_Z(coord.flags)){
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
     }
-    
-    /* Close parenthesis */
-    appendStringInfoChar(&output, ')');
-    
-    /* Return the resulting string */
-    return output.data; 
-}
-
-char*  rewrite_point_query_z (POINT coord)
-{
-    StringInfoData output;
-    initStringInfo(&output);
-    
-    /* Start the WKT string with "POINT" */
-    appendStringInfoString(&output, "POINT ");
-
-    /* Open parenthesis for coordinate values */
-    appendStringInfoChar(&output, '(');
-
-    /* Add X and Y coordinates */
-    appendStringInfo(&output, "%s %s", 
-                    FLOAT8_TO_CSTRING(coord.x),
-                    FLOAT8_TO_CSTRING(coord.y));
-                    
-    if (FLAGS_GET_Z(coord.flags)){
-        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
-    }
-    
-    /* Close parenthesis */
-    appendStringInfoChar(&output, ')');
-    
-    /* Return the resulting string */
-    return output.data; 
-}
-
-char*  rewrite_point_query_m (POINT coord)
-{
-    StringInfoData output;
-    initStringInfo(&output);
-    
-    /* Start the WKT string with "POINT" */
-    appendStringInfoString(&output, "POINT ");
-
-    /* Open parenthesis for coordinate values */
-    appendStringInfoChar(&output, '(');
-
-    /* Add X and Y coordinates */
-    appendStringInfo(&output, "%s %s", 
-                    FLOAT8_TO_CSTRING(coord.x),
-                    FLOAT8_TO_CSTRING(coord.y));
-
-    if (FLAGS_GET_M(coord.flags)){
-        appendStringInfoString(&output, " NULL");
-        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
-    
-    }
 
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
-    
+
     /* Return the resulting string */
     return output.data; 
 }
