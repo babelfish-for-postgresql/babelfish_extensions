@@ -92,7 +92,8 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 					/* If there is RTE present then corresponding permInfo must be there */
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("Perminfo corresponding to temporary table couldn't be found")));
+							errmsg("Failed to check permission of the temporary table because " \
+									"corresponding Perminfo is not found while launching parallel worker(s)")));
 				}
 
 				/* getRTEPermissionInfo would return valid perfInfo, error will be raised otherwise */
@@ -170,7 +171,7 @@ bbf_ExecCheckOneRelPerms(RTEPermissionInfo *perminfo)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("Unexpected perminfo is found")));
+			 errmsg("Invalid Oid is found while checking permission of the relation")));
 	}
 
 	/* Let regular permission check happen if its not Babelfish parallel worker. */
