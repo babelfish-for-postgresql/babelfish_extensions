@@ -1,0 +1,4 @@
+-- complain if script is sourced in psql, rather than via ALTER EXTENSION
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '5.3.0'" to load this file. \quit
+-- add 'sys' to search path for the convenience
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
