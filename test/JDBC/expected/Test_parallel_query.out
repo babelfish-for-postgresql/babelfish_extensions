@@ -1,4 +1,5 @@
 -- tsql
+-- setup
 CREATE LOGIN l1 WITH PASSWORD = '12345678'
 GO
 
@@ -28,11 +29,9 @@ GO
 USE master
 GO
 
--- psql
-ANALYSE;
-GO
-
 -- psql user=l1 password=12345678
+-- setup
+-- create parallel safe function under schema_for_l1 where user is authorised to create
 CREATE OR REPLACE FUNCTION master_schema_for_l1.f1()
 RETURNS TABLE (a INT) AS 
 $$ BEGIN
@@ -42,18 +41,39 @@ LANGUAGE plpgsql
 PARALLEL SAFE;
 GO
 
+
 -- psql
--- Permission check on temp table in Postgres
--- Not everyone can access temp table
-create temp table test_tbl(a int);
+-- Test permission check on temp table from Postgres
+create table reg_test (a int)
 GO
 
-insert into test_tbl values (1)
+insert into reg_test values (1)
 GO
 ~~ROW COUNT: 1~~
 
 
-select * from test_tbl
+create temp table parallel_test(a int);
+GO
+
+insert into parallel_test values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+ANALYSE;
+GO
+
+-- function which tries to access temp table using parallel execution
+CREATE OR REPLACE FUNCTION f1()
+RETURNS TABLE (id INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT a FROM parallel_test);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+select * from parallel_test
 GO
 ~~START~~
 int4
@@ -61,22 +81,73 @@ int4
 ~~END~~
 
 
+-- temp table as a outer scan and should not be scanned using parallel worker
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+~~START~~
+int4#!#int4
+1#!#1
+~~END~~
+
+
+-- following would throw an error under parallel execution
+select * from f1()
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+-- Not everyone can access temp table
+-- Permission denied error should be raised whe l1 tries to access to temp table parallel_test
 set role l1;
 GO
 
--- Permission denied error because l1 does not have access to temp table test_tbl
-select * from test_tbl
+-- should result in permission error
+select * from parallel_test
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied for table test_tbl
+~~ERROR (Message: ERROR: permission denied for table parallel_test
+    Server SQLState: 42501)~~
+
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from f1()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table parallel_test
+  Where: SQL statement "(SELECT a FROM parallel_test)"
+PL/pgSQL function f1() line 2 at RETURN QUERY
+    Server SQLState: 42501)~~
+
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table reg_test
     Server SQLState: 42501)~~
 
 
 reset role
 GO
 
+DROP FUNCTION f1()
+GO
+
+drop table parallel_test
+GO
+
+drop table reg_test
+GO
+
+
 -- tsql user=l1 password=12345678
+-- testing permission on temp table from Babelfish endpoint
 -- verify that only temp table permission check is skipped under parallel worker
 SELECT * FROM pq_t
 GO
@@ -85,6 +156,7 @@ GO
 ~~ERROR (Message: permission denied for table pq_t)~~
 
 
+-- function schema_for_l1.f1() access regular table so permission check shouldnt be skipped even under parallel worker
 SELECT * FROM schema_for_l1.f1()
 GO
 ~~START~~
@@ -102,6 +174,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- temp table as a outer scan and user has permission to access regular table
 SELECT * FROM pq_t where id IN (select a from #temp)
 GO
 ~~ERROR (Code: 33557097)~~
@@ -116,12 +189,18 @@ GO
 ~~ERROR (Message: permission denied for table pq_t)~~
 
 
--- any user can access local temp table created under given session
-GO
-
 USE pq_db
 GO
 
+select current_user
+GO
+~~START~~
+varchar
+pq_db_u1
+~~END~~
+
+
+-- any user can access local temp table created under given session
 select * from #temp;
 GO
 ~~START~~
@@ -133,9 +212,6 @@ int
 USE master
 GO
 
-DROP TABLE #temp;
-GO
-
 -- tsql
 CREATE TABLE #temp (a int)
 GO
@@ -143,7 +219,6 @@ GO
 INSERT INTO #temp VALUES (1)
 GO
 ~~ROW COUNT: 1~~
-
 
 SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
@@ -179,8 +254,8 @@ off
 
 SET BABELFISH_STATISTICS PROFILE ON
 GO
-
--- temp table on outer side
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
 SELECT * FROM pq_t where id IN (select a from #temp)
 GO
 ~~START~~
@@ -203,27 +278,30 @@ Hash Join (actual rows=1 loops=1)
 ~~END~~
 
 
--- temp table on outer side
-SELECT * FROM pq_t LEFT JOIN #temp ON id = a;
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id;
 GO
 ~~START~~
 int#!#int
 1#!#1
 2#!#<NULL>
-5#!#<NULL>
-4#!#<NULL>
 3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
 ~~END~~
 
 ~~START~~
 text
-Query Text: SELECT * FROM pq_t LEFT JOIN #temp ON id = a
-Hash Right Join (actual rows=5 loops=1)
-  Hash Cond: ("#temp".a = pq_t.id)
-  ->  Seq Scan on "#temp" (actual rows=1 loops=1)
-  ->  Hash (actual rows=5 loops=1)
-        Buckets: 1024  Batches: 1  Memory Usage: 9kB
-        ->  Seq Scan on pq_t (actual rows=5 loops=1)
+Query Text: SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id
+Sort (actual rows=5 loops=1)
+  Sort Key: pq_t.id NULLS FIRST
+  Sort Method: quicksort  Memory: 25kB
+  ->  Hash Right Join (actual rows=5 loops=1)
+        Hash Cond: ("#temp".a = pq_t.id)
+        ->  Seq Scan on "#temp" (actual rows=1 loops=1)
+        ->  Hash (actual rows=5 loops=1)
+              ->  Seq Scan on pq_t (actual rows=5 loops=1)
 ~~END~~
 
 
@@ -292,16 +370,16 @@ GO
 CREATE TABLE Employees (EmployeeID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), Department VARCHAR(50));
 GO
 
--- Insert sample data
 INSERT INTO Employees VALUES (1, 'John', 'Doe', 'IT'), (2, 'Jane', 'Smith', 'HR'), (3, 'Mike', 'Johnson', 'IT');
 GO
 ~~ROW COUNT: 3~~
 
 
+-- table type
 CREATE TYPE SalaryUpdateType AS TABLE(EmployeeID INT, NewSalary DECIMAL(10,2), EffectiveDate DATE);
 GO
 
--- table valued parameter on outerside
+-- check table valued parameter on outer side scanned on leader node only
 DECLARE @SalaryUpdateTable SalaryUpdateType;
 -- Insert values into the table variable
 INSERT INTO @SalaryUpdateTable VALUES
@@ -332,7 +410,8 @@ BEGIN
         su.NewSalary,
         su.EffectiveDate
     FROM Employees e
-    INNER JOIN @SalaryUpdates su ON e.EmployeeID = su.EmployeeID;
+    INNER JOIN @SalaryUpdates su ON e.EmployeeID = su.EmployeeID
+    ORDER BY EmployeeID;
 END;
 GO
 
@@ -362,52 +441,4 @@ DROP TYPE SalaryUpdateType
 GO
 
 DROP TABLE Employees;
-GO
-
--- psql
-create temp table parallel_test (a int)
-GO
-
-create table reg_test (a int)
-GO
-
-insert into reg_test values (1)
-GO
-~~ROW COUNT: 1~~
-
-
-insert into parallel_test values (1)
-GO
-~~ROW COUNT: 1~~
-
-
-CREATE OR REPLACE FUNCTION f1()
-RETURNS TABLE (id INT) AS 
-$$ BEGIN
-    RETURN QUERY (SELECT a FROM parallel_test);
-END; $$
-LANGUAGE plpgsql
-PARALLEL SAFE;
-GO
-
-select * from f1()
-GO
-~~START~~
-int4
-1
-~~END~~
-
-
-select * from reg_test r join parallel_test p on r.a = p.a
-GO
-~~START~~
-int4#!#int4
-1#!#1
-~~END~~
-
-
-drop table parallel_test
-GO
-
-drop table reg_test
 GO
