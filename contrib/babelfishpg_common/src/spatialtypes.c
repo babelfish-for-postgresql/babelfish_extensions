@@ -79,13 +79,13 @@ static lwgeom_astext_t lwgeom_astext_p;
 
 PG_FUNCTION_INFO_V1(geometry_in);
 PG_FUNCTION_INFO_V1(geography_in);
-PG_FUNCTION_INFO_V1(geometry_rewrite);
+PG_FUNCTION_INFO_V1(get_geometry_from_text);
 PG_FUNCTION_INFO_V1(charTogeom);
 PG_FUNCTION_INFO_V1(geometry_from_bytea);
 PG_FUNCTION_INFO_V1(bytea_from_geometry);
 PG_FUNCTION_INFO_V1(geography_from_bytea);
 PG_FUNCTION_INFO_V1(bytea_from_geography);
-PG_FUNCTION_INFO_V1(geography_rewrite);
+PG_FUNCTION_INFO_V1(get_geography_from_text);
 PG_FUNCTION_INFO_V1(get_valid_srids);
 PG_FUNCTION_INFO_V1(charTogeog);
 PG_FUNCTION_INFO_V1(geography_point);
@@ -384,7 +384,7 @@ get_valid_srids(PG_FUNCTION_ARGS)
  * rewrites the WKT, and converts it to a geometry object.
  */
 Datum
-geometry_rewrite(PG_FUNCTION_ARGS)
+get_geometry_from_text(PG_FUNCTION_ARGS)
 {
     Datum   geom_datum,             /* Final geometry object */
             geom_type_datum;        /* Geometry type as datum */
@@ -452,7 +452,7 @@ geometry_rewrite(PG_FUNCTION_ARGS)
  * rewrites the WKT, and converts it to a geography object.
  */
 Datum
-geography_rewrite(PG_FUNCTION_ARGS)
+get_geography_from_text(PG_FUNCTION_ARGS)
 {
     Datum       geom_datum,          /* Geometry object */
                 lat_datum,           /* Latitude value as datum */

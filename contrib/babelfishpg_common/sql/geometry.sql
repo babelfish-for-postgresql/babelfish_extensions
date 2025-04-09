@@ -70,7 +70,7 @@ CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
 
 CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'geometry_rewrite'
+	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
@@ -205,7 +205,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'geometry_rewrite'
+	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)

@@ -808,13 +808,13 @@ SELECT ID, geometryData FROM geometryAsVarchar ORDER BY ID;
 GO
 ~~START~~
 int#!#varchar
-1#!#POINT (1 2)
-2#!#POINT (1 2)
-3#!#POINT (1 2)
-4#!#POINT (1 2 3)
-5#!#POINT (1 2 3)
-6#!#POINT (1 2 NULL 3)
-7#!#POINT (1 2 3 4)
+1#!#POINT(1 2)
+2#!#POINT(1 2)
+3#!#POINT(1 2)
+4#!#POINT(1 2 3)
+5#!#POINT(1 2 3)
+6#!#POINT(1 2 NULL 3)
+7#!#POINT(1 2 3 4)
 8#!#POINT EMPTY
 9#!#<NULL>
 ~~END~~
@@ -824,13 +824,13 @@ SELECT ID, GeographyData FROM GeographyAsVarchar ORDER BY ID;
 GO
 ~~START~~
 int#!#varchar
-1#!#POINT (1 2)
-2#!#POINT (1 2)
-3#!#POINT (1 2)
-4#!#POINT (1 2 3)
-5#!#POINT (1 2 3)
-6#!#POINT (1 2 NULL 3)
-7#!#POINT (1 2 3 4)
+1#!#POINT(1 2)
+2#!#POINT(1 2)
+3#!#POINT(1 2)
+4#!#POINT(1 2 3)
+5#!#POINT(1 2 3)
+6#!#POINT(1 2 NULL 3)
+7#!#POINT(1 2 3 4)
 8#!#POINT EMPTY
 9#!#<NULL>
 ~~END~~
@@ -841,13 +841,13 @@ SELECT ID, geometryData FROM geometryAsChar ORDER BY ID;
 GO
 ~~START~~
 int#!#char
-1#!#POINT (1 2)                                                                                         
-2#!#POINT (1 2)                                                                                         
-3#!#POINT (1 2)                                                                                         
-4#!#POINT (1 2 3)                                                                                       
-5#!#POINT (1 2 3)                                                                                       
-6#!#POINT (1 2 NULL 3)                                                                                  
-7#!#POINT (1 2 3 4)                                                                                     
+1#!#POINT(1 2)                                                                                          
+2#!#POINT(1 2)                                                                                          
+3#!#POINT(1 2)                                                                                          
+4#!#POINT(1 2 3)                                                                                        
+5#!#POINT(1 2 3)                                                                                        
+6#!#POINT(1 2 NULL 3)                                                                                   
+7#!#POINT(1 2 3 4)                                                                                      
 8#!#POINT EMPTY                                                                                         
 9#!#<NULL>
 ~~END~~
@@ -857,13 +857,13 @@ SELECT ID, GeographyData FROM GeographyAsChar ORDER BY ID;
 GO
 ~~START~~
 int#!#char
-1#!#POINT (1 2)                                                                                         
-2#!#POINT (1 2)                                                                                         
-3#!#POINT (1 2)                                                                                         
-4#!#POINT (1 2 3)                                                                                       
-5#!#POINT (1 2 3)                                                                                       
-6#!#POINT (1 2 NULL 3)                                                                                  
-7#!#POINT (1 2 3 4)                                                                                     
+1#!#POINT(1 2)                                                                                          
+2#!#POINT(1 2)                                                                                          
+3#!#POINT(1 2)                                                                                          
+4#!#POINT(1 2 3)                                                                                        
+5#!#POINT(1 2 3)                                                                                        
+6#!#POINT(1 2 NULL 3)                                                                                   
+7#!#POINT(1 2 3 4)                                                                                      
 8#!#POINT EMPTY                                                                                         
 9#!#<NULL>
 ~~END~~

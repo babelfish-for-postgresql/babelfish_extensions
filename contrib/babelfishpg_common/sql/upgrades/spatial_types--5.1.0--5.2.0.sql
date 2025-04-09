@@ -364,12 +364,12 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
 -- Functions migrated from SQL  to C
 CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'geometry_rewrite'
+	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'geography_rewrite'
+	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
@@ -420,12 +420,12 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'geometry_rewrite'
+	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'geography_rewrite'
+	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)

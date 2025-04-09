@@ -107,11 +107,11 @@ char* rewrite_point_query(POINT coord)
     initStringInfo(&output);
     
     /* Start the WKT string with "POINT" */
-    appendStringInfoString(&output, "POINT ");
+    appendStringInfoString(&output, "POINT");
 
     /* Add 'Z' and/or 'M' if the point has those coordinates */
     if (FLAGS_GET_M(coord.flags) && !FLAGS_GET_Z(coord.flags) )
-        appendStringInfoChar(&output, 'M');
+        appendStringInfoString(&output, " M");
 
     /* Open parenthesis for coordinate values */
     appendStringInfoChar(&output, '(');
@@ -142,7 +142,7 @@ char* rewrite_point_dim_query(POINT coord)
     initStringInfo(&output);
 
     /* Start the WKT string with "POINT" */
-    appendStringInfoString(&output, "POINT ");
+    appendStringInfoString(&output, "POINT");
 
     /* Open parenthesis for coordinate values */
     appendStringInfoChar(&output, '(');

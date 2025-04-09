@@ -190,7 +190,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'geography_rewrite'
+	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
@@ -216,7 +216,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 
 CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'geography_rewrite'
+	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
