@@ -32,9 +32,7 @@ POINT create_coordinate(double x, double y, double z, double m, int has_z, int h
 
 /* Function to rewrite a POINT query to WKT format */
 char* rewrite_point_query(POINT p);
-char*  rewrite_point_query_z (POINT coord);
-char*  rewrite_point_query_m (POINT coord);
-char*  rewrite_point_query_zm (POINT coord);
+char* rewrite_point_dim_query (POINT coord);
 
 #endif /* GEO_DATA_H */
 

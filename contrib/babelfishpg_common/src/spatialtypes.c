@@ -155,7 +155,7 @@ geometry_in(PG_FUNCTION_ARGS)
     Datum geom_datum;
     Datum geom_type;
     char *geometry_name;
-    LOCAL_FCINFO(fcinfo_local, 1);
+    LOCAL_FCINFO(fcinfo_local, 2);
 
     load_functions();
 
@@ -387,7 +387,6 @@ Datum
 geometry_rewrite(PG_FUNCTION_ARGS)
 {
     Datum   geom_datum,             /* Final geometry object */
-            rewritten_wkt,          /* Processed WKT string */
             geom_type_datum;        /* Geometry type as datum */
     int32   srid;                   /* Spatial Reference ID */
     char    *geom_type;             /* String representation of geometry type */
@@ -417,14 +416,11 @@ geometry_rewrite(PG_FUNCTION_ARGS)
     }
 
     /* Set the second argument (SRID) in function call info */
-    fcinfo_local->args[1].value = Int32GetDatum(srid);
+    fcinfo_local->args[1].value = PG_GETARG_INT32(1);
     fcinfo_local->args[1].isnull = false;
 
-    /* Process and rewrite the WKT string */
-    rewritten_wkt = geo_wkt_rewrite_p(fcinfo_local);
-
     /* Update function call info with rewritten WKT */
-    fcinfo_local->args[0].value = rewritten_wkt;
+    fcinfo_local->args[0].value = geo_wkt_rewrite_p(fcinfo_local);
 
     /* Convert the rewritten WKT to a geometry object */
     geom_datum = lwgeom_from_text_p(fcinfo_local);
@@ -824,9 +820,11 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
             dimension_flag = 0,/* Dimension type flag */
             /* IEEE 754 representation of NaN */
             empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f",
+            input_coord[8],
             new_header[5] = "\x01\x01\x00\x00\x20";
     int     input_len,         /* Length of input data */
-            isNaN = 0;         /* Flag for NaN detection */
+            isNaN = 0,         /* Flag for NaN detection */
+            byte_position = 6;
     int32_t srid;              /* Spatial Reference ID */
     LOCAL_FCINFO(fcinfo_local, 1);
 
@@ -849,6 +847,17 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     /* Extract SRID from first 4 bytes (little-endian) */
     srid = (input_data[3] << 24) | (input_data[2] << 16) | 
            (input_data[1] << 8) | input_data[0];
+    
+    while (byte_position < input_len)
+    {
+        memcpy(input_coord, input_data + byte_position, 8);
+        if (memcmp(input_coord, empty_geom, 8) == 0)
+        {
+            isNaN = 1;
+            break;
+        }
+        byte_position += 8;
+    }
 
     /* Extract and validate geometry type */
     memcpy(geom_type, input_data + 4, 2);
@@ -873,7 +882,7 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     } else {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Unsupported geography type")));
+                 errmsg("Unsupported geometry type")));
     }
 
     /* Process geometry if SRID is valid and no NaN coordinates found */
@@ -937,9 +946,11 @@ Datum geography_from_bytea(PG_FUNCTION_ARGS)
                 dimension_flag = 0, /* Dimension type flag */
                 /* IEEE 754 representation of NaN */
                 empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f",
+                input_coord[8],
                 new_header[5] = "\x01\x01\x00\x00\x20";
     int         input_len,          /* Length of input data */
                 isNaN = 0,          /* Flag for NaN detection */
+                byte_position = 6,
                 num_valid_srids;    /* Count of valid SRIDs */
     int32_t     srid;               /* Spatial Reference ID */
     bool        srid_valid = false; /* Flag for SRID validation */
@@ -971,6 +982,17 @@ Datum geography_from_bytea(PG_FUNCTION_ARGS)
     memcpy(&lat_bits, input_data + 6, sizeof(uint64_t));
     lat_bits = le64toh(lat_bits);
     memcpy(&lat, &lat_bits, sizeof(double));
+
+    while (byte_position < input_len)
+    {
+        memcpy(input_coord, input_data + byte_position, 8);
+        if (memcmp(input_coord, empty_geom, 8) == 0)
+        {
+            isNaN = 1;
+            break;
+        }
+        byte_position += 8;
+    }
 
     /* Extract and validate geography type */
     memcpy(geom_type, input_data + 4, 2);

@@ -3,6 +3,7 @@
 #include "postgres.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #define YY_READ_BUF_SIZE 16777216
 
@@ -22,36 +23,44 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"POINT"                 { return POINT_TOK; }
-"LINESTRING"            { yyerror(NULL, " LINESTRING is currently not supported in Babelfish"); return LINESTRING_TOK; }
-"CIRCULARSTRING"        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
-"POLYGON"               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
-"MULTIPOINT"            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
-"MULTILINESTRING"       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
-"MULTIPOLYGON"          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }
-"CURVEPOLYGON"          { yyerror(NULL, "CURVEPOLYGON is not supported");  return CURVEPOLYGON_TOK; }
-"COMPOUNDCURVE"         { yyerror(NULL, "COMPOUNDCURVE is not supported");  return COMPOUNDCURVE_TOK; }
-"GEOMETRYCOLLECTION"    { yyerror(NULL, "GEOMETRYCOLLECTION is not supported");  return COLLECTION_TOK; }
-"MULTISURFACE"          { yyerror(NULL, "Invalid Geometry");  return MSURFACE_TOK; }
-"MULTICURVE"            { yyerror(NULL, "Invalid Geometry");  return MCURVE_TOK; }
-"POLYHEDRALSURFACE"     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSURFACE_TOK; }
-"TRIANGLE"              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
-"TIN"                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
+POINT                 { return POINT_TOK; }
+LINESTRING            { yyerror(NULL, "LINESTRING is not supported"); return LINESTRING_TOK; }
+CIRCULARSTRING        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
+POLYGON               { yyerror(NULL, "POLYGON is not supported");  return POLYGON_TOK; }
+MULTIPOINT            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
+MULTILINESTRING       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
+MULTIPOLYGON          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }
+CURVEPOLYGON          { yyerror(NULL, "CURVEPOLYGON is not supported");  return CURVEPOLYGON_TOK; }
+COMPOUNDCURVE         { yyerror(NULL, "COMPOUNDCURVE is not supported");  return COMPOUNDCURVE_TOK; }
+GEOMETRYCOLLECTION    { yyerror(NULL, "GEOMETRYCOLLECTION is not supported");  return COLLECTION_TOK; }
+MULTISURFACE          { yyerror(NULL, "Invalid Geometry");  return MSURFACE_TOK; }
+MULTICURVE            { yyerror(NULL, "Invalid Geometry");  return MCURVE_TOK; }
+POLYHEDRALSURFACE     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSURFACE_TOK; }
+TRIANGLE              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
+TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
--?[0-9]+(\.[0-9]+)?     { yylval.val = atof(yytext);  return DOUBLE_TOK; }
+-?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?  {
+    double val = atof(yytext);
+    if (isnan(val)) {
+        yyerror(NULL, "NaN values are not allowed");
+    }
+    yylval.val = val;
+    return DOUBLE_TOK;
+}
 
-"NULL"      { return NULL_TOK; }
-"EMPTY"     { return EMPTY_TOK; }
-","         { return COMMA_TOK;}
 
-"("         { return LPAREN; }
-")"         { return RPAREN; }
+NULL       { return NULL_TOK; }
+[ ]+EMPTY  { return EMPTY_TOK; }
+,          { return COMMA_TOK;}
 
-"Z"         { return Z_TOK; }
-"M"         { return M_TOK; }
-"ZM"        { return ZM_TOK; }
+\(         { return LPAREN; }
+\)         { return RPAREN; }
 
-[ \t\n]+    { /* Ignore whitespace */ }
+Z          { return Z_TOK; }
+M          { return M_TOK; }
+ZM         { return ZM_TOK; }
+
+[ \t\n\r]+    { /* Ignore whitespace */ }
 
 .           { return yytext[0]; }
 
@@ -71,8 +80,9 @@ void geo_scanner_init(const char *str)
         yy_delete_buffer(YY_CURRENT_BUFFER);
 
     /* Check for empty input */
-    if (!str || !*str || (strspn(str, " \t\n\r") == slen))
-        yyerror(NULL, "Null or empty ");
+    if (!str || !*str || (strspn(str, " \t\n\r") == slen)) {
+        yyerror(NULL, "Invalid input: string is either NULL, empty, or contains only whitespace characters");
+    }
 
     scanbuflen = slen;
     scanbuf = palloc(slen + 2);
@@ -84,6 +94,10 @@ void geo_scanner_init(const char *str)
 
 void geo_scanner_finish(void)
 {
-    yy_delete_buffer(scanbufhandle);
-    pfree(scanbuf);
+    if (scanbufhandle)
+        yy_delete_buffer(scanbufhandle);
+    if (scanbuf)
+        pfree(scanbuf);
+    scanbuf = NULL;
+    scanbufhandle = NULL;
 }

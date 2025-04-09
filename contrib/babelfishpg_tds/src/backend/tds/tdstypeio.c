@@ -4214,11 +4214,12 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
+int 
+TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int         rc = EOF,
                 npoints,
-                len = 0,                    /* number of bytes used to store the string. */
+                len = 0,                /* number of bytes used to store the string. */
                 pointSize,
                 hasZ,
                 hasM,
@@ -4226,7 +4227,7 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
                                          * store given string in given encoding. */
 
     char        *destBuf,
-                *buf= NULL,
+                *buf = NULL,
                 *itr;
     uint64_t    zeroPadding,
                 sentinel;
@@ -4264,7 +4265,7 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
         *((int32_t*)buf) = srid;
         itr = buf + 4;
 
-        /* Geometry type: Point */
+        /* Geometry type */
         *itr = 1;
         itr++;
 
@@ -4291,57 +4292,68 @@ int TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsI
         if (geom_type == POINTTYPE)
             *itr = 0x01;
     }
-    else if (geom_type == POINTTYPE)
+    else 
     {
-        /* Handle non-empty POINT */
+        switch(geom_type)
+        {
+            case POINTTYPE:
+                /* Handle non-empty POINT */
 
-        /*
-         * Row chunck length expected by the driver is:
-         * pointSize * (No. of Points) + 6
-         * pointSize -> 16(8 bytes for X + 8 bytes for Y) + 8(if Z exists) + 8(if M exists)
-         * 6 -> 4 Byte SRID + 2 Byte Geometry Type
-         */
-        pointSize = 16;
-        
-        /* Add 8 bytes for Z coordinate */
-        if (hasZ)
-            pointSize += 8;
+                /*
+                 * Row chunck length expected by the driver is:
+                 * pointSize * (No. of Points) + 6
+                 * pointSize -> 16(8 bytes for X + 8 bytes for Y) + 8(if Z exists) + 8(if M exists)
+                 * 6 -> 4 Byte SRID + 2 Byte Geometry Type
+                 */
+                pointSize = 16;
+                
+                /* Add 8 bytes for Z coordinate */
+                if (hasZ)
+                    pointSize += 8;
 
-        /* Add 8 bytes for M coordinate */
-        if (hasM)
-            pointSize += 8;
+                /* Add 8 bytes for M coordinate */
+                if (hasM)
+                    pointSize += 8;
 
-        len = npoints * pointSize + 6;
-        buf = (char *) palloc0(len);
+                len = npoints * pointSize + 6;
+                buf = (char *) palloc0(len);
 
-        /* Set SRID */
-        *((int32_t*)buf) = srid;
-        itr = buf + 4; 
+                /* Set SRID */
+                *((int32_t*)buf) = srid;
+                itr = buf + 4; 
 
-        /* Point type */
-        *itr = 1;
-        itr++;
+                /* Point type */
+                *itr = 1;
+                itr++;
 
-        /* 
-         * Set the geometry type bytes
-         * 01 0F for 3D Point with M (XYZM)
-         * 01 0E for 2D Point with M (XYM)
-         * 01 0D for 3D Point (XYZ)
-         * 01 0C for 2D Point (XY)
-         */
-        if (hasZ && hasM)
-            *itr = 15;
-        else if (hasM)
-            *itr = 14;
-        else if (hasZ)
-            *itr = 13;
-        else
-            *itr = 12;
-        itr++;
+                /* 
+                 * Set the geometry type bytes
+                 * 01 0F for 3D Point with M (XYZM)
+                 * 01 0E for 2D Point with M (XYM)
+                 * 01 0D for 3D Point (XYZ)
+                 * 01 0C for 2D Point (XY)
+                 */
+                if (hasZ && hasM)
+                    *itr = 15;
+                else if (hasM)
+                    *itr = 14;
+                else if (hasZ)
+                    *itr = 13;
+                else
+                    *itr = 12;
+                itr++;
 
-        /* Copy coordinate data */
-        memcpy(itr, (char *)gser->data + 8, len - 6);
+                /* Copy coordinate data */
+                memcpy(itr, (char *)gser->data + 8, len - 6);
+                break;
+
+            // Add cases for other geometry types here
+
+            default:
+					elog(ERROR, "Unsupported geometry type");
+        }
     }
+
     destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 
     TDSInstrumentation(TdsInstr);

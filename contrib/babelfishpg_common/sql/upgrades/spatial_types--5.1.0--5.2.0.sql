@@ -32,7 +32,7 @@ end
 $$
 LANGUAGE plpgsql;
 
--- Functions removed whoch are no longer in use
+-- Functions removed which are no longer in use
 DO $$
 DECLARE
     exception_message text;
@@ -475,6 +475,39 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
+	RETURNS sys.bpchar
+	AS $$
+	BEGIN
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
+		RETURN sys.bpchar((SELECT sys.GeometryAsTextbp_helper(sys.Geography__STFlipCoordinates($1))));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
+	RETURNS sys.bpchar
+	AS 'babelfishpg_common','geometry_astext'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
+	RETURNS sys.varchar
+	AS $$
+	BEGIN
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
+		RETURN sys.varchar((SELECT sys.GeometryAsTextvar_helper(sys.Geography__STFlipCoordinates($1))));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common','geometry_astext'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 -- New functions
 CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
@@ -484,6 +517,16 @@ CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.G
 CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
 	RETURNS TEXT
 	AS 'babelfishpg_common', 'st_as_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeometryAsTextbp_helper(sys.GEOGRAPHY)
+	RETURNS sys.bpchar
+	AS 'babelfishpg_common', 'geometry_astext'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeometryAsTextvar_helper(sys.GEOGRAPHY)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common', 'geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.

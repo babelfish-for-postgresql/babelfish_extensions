@@ -448,14 +448,14 @@ SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message:  LINESTRING is currently not supported in Babelfish)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 
 SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message:  LINESTRING is currently not supported in Babelfish)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 
 -- POLYGON

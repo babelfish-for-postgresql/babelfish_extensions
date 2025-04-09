@@ -204,7 +204,7 @@ Insert into geominTable values('POINT(1 2 3 4)');
 Insert into geominTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ST_LineString is not supported)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geominTable values('POINT(1000 2000)');
 ~~ROW COUNT: 1~~
@@ -477,7 +477,7 @@ Insert into geoginTable values('POINT(1 2 3 4)');
 Insert into geoginTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ST_LineString is not supported)~~
+~~ERROR (Message: LINESTRING is not supported)~~
 
 Insert into geoginTable values('POINT(1000 2000)');
 ~~ERROR (Code: 33557097)~~
