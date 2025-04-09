@@ -636,3 +636,386 @@ drop table t1;
 drop procedure test_hex_bitop;
 drop procedure test_hex_insert;
 go
+
+-- TODO : will fix in jira BABEL-5597
+declare @random varbinary(5) = 0x4142434445
+declare @result varbinary(max) = 0x
+select @result + @random
+GO
+~~START~~
+bigint
+280284578885
+~~END~~
+
+
+declare @random varbinary(5) = 0x4142434445
+declare @result varbinary(max) = 0x
+select @result - @random
+GO
+~~START~~
+bigint
+-280284578885
+~~END~~
+
+
+select 
+cast(cast(9223372036854775807 as bigint) as varbinary(max)) 
++ 
+cast(cast(9223372036854775807 as bigint) as varbinary(max));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+select 
+cast(cast(9223372036854775807 as bigint) as varbinary(200)) 
++ 
+cast(cast(9223372036854775807 as bigint) as varbinary(200));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+select 
+cast(cast(9223372036854775807 as bigint) as varbinary(max)) 
+-
+cast(cast(9223372036854775807 as bigint) as varbinary(max));
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select 
+cast(cast(9223372036854775807 as bigint) as varbinary(200)) 
+-
+cast(cast(9223372036854775807 as bigint) as varbinary(200));
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select cast(0x as varbinary(max)) + cast(0x as varbinary(max))
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select cast(0x0 as varbinary(max)) + cast(0x0 as varbinary(max))
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select cast(NULL as varbinary(max)) + cast(NULL as varbinary(max))
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+
+select cast(0x as varbinary(max)) - cast(0x as varbinary(max))
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select cast(0x0 as varbinary(max)) - cast(0x0 as varbinary(max))
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+select cast(NULL as varbinary(max)) - cast(NULL as varbinary(max))
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+
+SELECT 
+CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max)) 
++ 
+CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max));
+GO
+~~START~~
+bigint
+-2
+~~END~~
+
+
+SELECT 
+CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max)) 
+- 
+CAST(0x0000000000000000000000000000FFFF AS VARBINARY(max));
+GO
+~~START~~
+bigint
+-1
+~~END~~
+
+
+CREATE TABLE varbinary_test_table ( varbinary_test_col varbinary(max))
+GO
+
+INSERT INTO varbinary_test_table (varbinary_test_col) SELECT CAST(0x1 AS VARBINARY) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO varbinary_test_table (varbinary_test_col) SELECT CAST(0x4 AS VARBINARY) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO varbinary_test_table (varbinary_test_col) SELECT CAST(0x8 AS VARBINARY) FROM generate_series(1, 3);
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE NONCLUSTERED INDEX ind ON varbinary_test_table(varbinary_test_col ASC)
+GO
+
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 112.291 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.115 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.217 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.211 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.294 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.324 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.222 ms
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+text
+Query Text: 
+ select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+
+Result  (cost=0.00..0.02 rows=1 width=8)
+Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.214 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+varbinary
+01
+01
+01
+04
+04
+04
+08
+08
+08
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+varbinary
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+varbinary
+01
+01
+01
+04
+04
+04
+08
+08
+08
+~~END~~
+
+
+Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
+GO
+~~START~~
+varbinary
+~~END~~
+
+
+drop table varbinary_test_table
+go
