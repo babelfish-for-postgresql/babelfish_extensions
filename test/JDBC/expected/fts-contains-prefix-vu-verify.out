@@ -228,7 +228,7 @@ one:*<->two:*
 ~~END~~
 
 
--- 7. Combination of multiple occurrences
+-- 7. Combination of multiple occurrences of spaces and asterisk and tab spaces in prefix phrase
 SELECT * FROM prefix_rewrite_prepare_v16
 GO
 ~~START~~
@@ -319,13 +319,7 @@ o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat
 
 
 
--- Create a unique-text index
-CREATE UNIQUE INDEX uid ON fts_prefix_t(id)
-GO
--- Create a full-text index
-CREATE FULLTEXT INDEX ON fts_prefix_t(Content)
-KEY INDEX uid 
-GO
+
 
 -- Sample search query using CONTAINS
 -- Prefix term search for multiple forms of passing same search string
@@ -437,34 +431,42 @@ Digital twins optimize manufacturing processes#!#Digital twin applications
 ~~END~~
 
 
-
-
--- Drop existing full-text index
-DROP FULLTEXT INDEX ON fts_prefix_t;
--- Create a full-text index
-CREATE FULLTEXT INDEX ON fts_prefix_t(
-        Content,
-        Category,
-        ShortDescription,
-        Author,
-        Tags,
-        Notes) KEY INDEX uid 
+SELECT Content, ShortDescription, Notes FROM fts_prefix_t_v1 WHERE CONTAINS((Content, ShortDescription, Notes), '"comp*"')
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'fts_prefix_t_v1' because it is not full-text indexed.)~~
 
 
-
--- Create a unique-text index
-CREATE UNIQUE INDEX uid ON fts_multicol_prefix_t(id)
--- Create a full-text index
-CREATE FULLTEXT INDEX ON fts_multicol_prefix_t(
-        daily_updates,
-        industry_news,
-        local_events,
-        tech_innovations,
-        community_highlights) KEY INDEX uid
+SELECT * FROM fts_prefix_t_v2
 GO
+~~START~~
+int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
+2#!#Cloud computing reduces infrastructure costs significantly#!#Technology#!#Cost benefits of cloud adoption#!#EWATSN                                            #!##CLOUD#COSTS                  #!#ROI analysis included
+8#!#Data visualization improves decision making process#!#Analytics#!#Visual analytics benefits#!#JBAKER                                            #!##VIZ#ANALYTICS                #!#Tool comparison included
+16#!#Data governance ensures compliance standards#!#Compliance#!#Regulatory compliance guide#!#DSMITH                                            #!##DATA#GOVERN                  #!#Regulatory updates included
+18#!#Edge computing reduces latency issues#!#Technology#!#Edge computing benefits#!#MROGER                                            #!##EDGE#COMPUTE                 #!#Performance metrics
+19#!#Quantum computing advances computation speed#!#Technology#!#Quantum computing impact#!#JTHOMS                                            #!##QUANTUM#TECH                 #!#Research findings
+41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
+45#!#Cloud compliance meets regulations#!#Compliance#!#Regulatory requirements#!#HWILSN                                            #!##COMPLY#REG                   #!#Standard updates
+46#!#Data privacy protects user rights#!#Security#!#Privacy protection measures#!#IROGER                                            #!##PRIVACY#SEC                  #!#GDPR compliance
+~~END~~
+
+
 
 -- prefix term search over multiple columns
+EXEC fts_multicol_prefix_t_p1
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+46#!#Side walking pedestrians avoid collision#!#Sideways glance reveals hidden door#!#The sidecar needs new paint                                                                                                                                                                             #!#Side-effect concerns worry patients                                                                                                                                                                     #!#Sideline reporter interviews coach
+47#!#Back pack full of supplies#!#Backing tracks support live performance#!#The backroom deal falls through                                                                                                                                                                         #!#Back-ordered items arrive tomorrow                                                                                                                                                                      #!#Background check reveals interesting facts
+55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+69#!#Brain storming session generates ideas#!#Brainwave activity shows interesting patterns#!#The brainteaser challenges participants                                                                                                                                                                 #!#Brain-computer interface advances rapidly                                                                                                                                                               #!#Brainpower enhancement techniques discussed
+90#!#Bed room furniture arrives today#!#Bedside manner improves patient satisfaction#!#The bedrock shows interesting formations                                                                                                                                                                #!#Bed-and-breakfast receives great reviews                                                                                                                                                                #!#Bedding plants need regular water
+~~END~~
+
+
 SELECT *
 FROM fts_multicol_prefix_t
 WHERE CONTAINS((daily_updates,
@@ -582,4 +584,247 @@ int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
 55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
 ~~END~~
 
+
+-- tab character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+-- newline character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"light work' + CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*'+ CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+-- combination of tab and newline character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+
+-- Create a unique index
+CREATE UNIQUE INDEX uid ON fts_char_prefix_t(id)
+GO
+
+-- Create a full-text index
+CREATE FULLTEXT INDEX ON fts_char_prefix_t(
+        main_story,
+        industry_update,
+        local_news,
+        tech_highlight,
+        community_event) KEY INDEX uid
+GO
+
+-- tab character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"coral ree' + CHAR(9) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(9) + 'reef' + CHAR(9) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(9) + 'ree' + CHAR(9) + '*'+ CHAR(9) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+-- newline character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"cor ree' + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(10) + 'ree' + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(10) + 'reef' + CHAR(10) + '*'+ CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+-- combination of tab and newline character in prefix term search string
+DECLARE @search_term nvarchar(100) = '"bor for' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
+
+
+DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(9) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
 

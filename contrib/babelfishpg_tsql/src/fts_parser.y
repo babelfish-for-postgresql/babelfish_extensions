@@ -217,93 +217,78 @@ static char
  */
 static char
 *translate_prefix_term(const char* inputStr) {
-    int             inputLength;
-    char            *trimmedInputStr;
-    char            *outputStr;
-    StringInfoData  output;
-    const char      *specialChars = "~!&|@#$%^+=\\;:<>?.\\/";
+    char                *outputStr;
+    char                *trimmedOutputStr;
+    StringInfoData      output;
+    static const char   *specialChars = "~!&|@#$%^+=\\;:<>?.\\/`'_";
 
 
     /* Check for empty input - this should not be possible based on lexer rules, but check just in case */
-    if (!inputStr || !(inputLength = strlen(inputStr))) {
+    if (!inputStr || !*inputStr) {
       ereport(ERROR,
           (errcode(ERRCODE_INTERNAL_ERROR),
            errmsg("Null or empty full-text predicate.")));
     }
     
-    trimmedInputStr = pstrdup(inputStr);
+    outputStr = pstrdup(inputStr);
 
     /* removing leading and trailing spaces outside of double quotes */
-    trim(trimmedInputStr, false);
+    trim(outputStr, false);
   
     /* 
      * removing leading spaces, for the phrase enclosed in double quotes
      * search string with trailing spaces are identified as simple terms by the lexer
      */
-    trim(trimmedInputStr, true);
+    trim(outputStr, true);
     
-    /* Rewriting search string in format word1:*<->word2:*  */
-    outputStr = pstrdup(trimmedInputStr);
-    inputLength = strlen(outputStr);
     initStringInfo(&output);
+    trimmedOutputStr = outputStr;
 
-    for(int i=0; i<inputLength; i++) {
-        if (strchr(specialChars, outputStr[i]) != NULL || strchr("`'_", outputStr[i]) != NULL) {
+    /* 
+     * Rewriting search string in format word1:*<->word2:*  
+     */
+    while(*trimmedOutputStr) {
+        if (strchr(specialChars, *trimmedOutputStr) != NULL) {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
         }
-        if (outputStr[i] == ' ') {
+        if (*trimmedOutputStr == ' ' || *trimmedOutputStr == '*') {
             /* 
              * Removing multiple spaces and * from the search string 
              * If a space is encountered, we remove all the next occurances of * and spaces 
              * before end of the input or if next word is encountered
              * Case 1: '"word1   * * ** *"' = 'word1:*'
              * Case 2: '"word1   * * ** * word2*"' = 'word1:*<->word2:*'
+             * Case 3: '"word1* * ** *"' = 'word1:*'
+             * Case 4: '"word1* * *      *** * word2*"' = 'word1:*<->word2:*'
              */
-            while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
-                i++;
+            while(*(trimmedOutputStr + 1) && (*(trimmedOutputStr + 1) == '*' || *(trimmedOutputStr + 1) == ' ')) {
+                trimmedOutputStr++;
             }
             if(output.len > 0){
-              if(i == inputLength-1) {
-                  appendStringInfoString(&output, ":*");
+              if(*(trimmedOutputStr + 1) == '\0') {
+                    appendStringInfoString(&output, ":*");
               }
               else {
-                  appendStringInfoString(&output, ":*<->");
+                    appendStringInfoString(&output, ":*<->");
               }
-            } else {
-                  continue;
             }
-        } else if(outputStr[i] == '*') {
-            /* 
-             * Removing multiple * and spaces from the search string 
-             * If a * is encountered, we remove all the next occurances of * and spaces 
-             * before end of the input or if next word is encountered
-             * Case 1: '"word1* * ** *"' = 'word1:*'
-             * Case 2: '"word1* * *      *** * word2*"' = 'word1:*<->word2:*'
-             */
-                while(i < inputLength-1 && (outputStr[i+1] == '*' || outputStr[i+1] == ' ')) {
-                    i++;
-                }
-                /* adding the prefix operator ':*' and followed by operator '<->' if output is not NULL */
-                if(output.len > 0){
-                    if(i == inputLength-1) {
-                        appendStringInfoString(&output, ":*");
-                    }
-                    else {
-                        appendStringInfoString(&output, ":*<->");
-                    }
-                } else {
-                        continue;
-                }
+        } else if (*trimmedOutputStr == '\n' || *trimmedOutputStr == '\t') {
+                /*
+                 * To match the behavior of SQL server.
+                 * When FTS is performed over prefix_term,
+                 * it outputs no result
+                 */ 
+                pfree(outputStr);
+                output.data = "";
+                return output.data;
         } else {
-                appendStringInfoChar(&output, outputStr[i]);
+                appendStringInfoChar(&output, *trimmedOutputStr);
         }
+        trimmedOutputStr++;
     }
-    appendStringInfoChar(&output, '\0');
-    pfree(trimmedInputStr);
     pfree(outputStr);
-
     return output.data;
 }
 

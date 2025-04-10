@@ -44,6 +44,10 @@ DROP VIEW IF EXISTS prefix_rewrite_prepare_v20
 GO
 DROP VIEW IF EXISTS prefix_rewrite_prepare_v21
 GO
+DROP VIEW IF EXISTS fts_prefix_t_v1
+GO
+DROP VIEW IF EXISTS fts_prefix_t_v2
+GO
 
 -- Drop procedures
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p1
@@ -87,6 +91,8 @@ GO
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p20
 GO
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p21
+GO
+DROP PROCEDURE IF EXISTS fts_multicol_prefix_t_p1
 GO
 
 -- Drop Fulltext index
