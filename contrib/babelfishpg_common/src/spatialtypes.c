@@ -312,11 +312,6 @@ geography_in(PG_FUNCTION_ARGS)
         /* Checking if latitude falls in allowed range -> [-90.0, 90.0] */
         if(lat <= 90.0 && lat >= -90.0)
         {
-            /* Free allocated memory */
-            pfree(input_text);
-            pfree(rewritten_cstring);
-            pfree(geometry_name);
-
             PG_RETURN_DATUM(geom_datum);
         }
         else
@@ -324,11 +319,6 @@ geography_in(PG_FUNCTION_ARGS)
                 (errcode(ERRCODE_DATA_EXCEPTION),
                 errmsg("Latitude values must be between -90 and 90 degrees")));
     }
-
-    /* Free allocated memory */
-    pfree(input_text);
-    pfree(rewritten_cstring);
-    pfree(geometry_name);
 
     /* This point should never be reached, but to satisfy the compiler: */
     PG_RETURN_NULL();
@@ -445,7 +435,6 @@ get_geometry_from_text(PG_FUNCTION_ARGS)
     /* Convert the rewritten WKT to a geometry object */
     geom_datum = lwgeom_from_text_p(fcinfo_local);
     fcinfo_local->args[0].value = geom_datum;
-
     /* Determine the type of geometry created */
     InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
     fcinfo_local->args[0].value = geom_datum;

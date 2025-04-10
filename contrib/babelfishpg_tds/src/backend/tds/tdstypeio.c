@@ -4270,25 +4270,25 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
         *itr = 4;
         itr++;
 
-		/* Number of points */
-		*((int32_t*)itr) = 0;
-		itr += 4;
+        /* Number of points */
+        *((int32_t*)itr) = 0;
+        itr += 4;
 
-		/* Number of figures */
-		*((int32_t*)itr) = 0;
-		itr += 4;
+        /* Number of figures */
+        *((int32_t*)itr) = 0;
+        itr += 4;
 
-		/* Number of Shapes */
-		*((int32_t*)itr) = 0x00000001;
-		itr += 4;
+        /* Number of Shapes */
+        *((int32_t*)itr) = 0x00000001;
+        itr += 4;
 
-		/* Figure index */
-		*((int32_t*)itr) = 0xFFFFFFFF;
-		itr += 4;
+        /* Figure index */
+        *((int32_t*)itr) = 0xFFFFFFFF;
+        itr += 4;
 
-		/* Shape index */
-		*((int32_t*)itr) = 0xFFFFFFFF;
-		itr += 4;
+        /* Shape index */
+        *((int32_t*)itr) = 0xFFFFFFFF;
+        itr += 4;
 
         /* Final byte for POINT EMPTY*/
         if (geom_type == POINTTYPE)
@@ -4352,7 +4352,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
             // Add cases for other geometry types here
 
             default:
-					elog(ERROR, "Unsupported geometry type");
+                elog(ERROR, "Unsupported geometry type");
         }
     }
 
@@ -4365,6 +4365,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     pfree(destBuf);
     return rc;
 }
+
 
 int
 TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData)
