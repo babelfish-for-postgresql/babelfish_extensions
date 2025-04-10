@@ -2227,9 +2227,8 @@ make_nvarchar_const(const char *str, int location)
     int32 typmod;
 
     /* Create sys.nvarchar type */
-    nvarcharTypeName = makeTypeNameFromNameList(
-        list_make2(makeString("sys"), makeString("nvarchar"))
-    );
+    nvarcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"), 
+                                                           makeString("nvarchar")));
 
     /* Set appropriate typmod */
     typmod = strlen(str);
@@ -2338,7 +2337,7 @@ tsql_unpivot_transformation(List *components, int location)
         col_ref->fields = list_make2(makeString(source_alias), col_name);
         
         /* Create pair (ColumnRef, column name) and append to VALUES list */
-		value_pair = list_make2(col_ref, make_nvarchar_const(strVal(col_name), location));
+        value_pair = list_make2(col_ref, make_nvarchar_const(strVal(col_name), location));
         values_list = lappend(values_list, value_pair);
     }
     
