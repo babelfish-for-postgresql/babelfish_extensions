@@ -267,7 +267,7 @@ varchar
 
 ~~START~~
 varchar
-@var_a: 4444.4444
+@var_a: 4444.44
 ~~END~~
 
 
@@ -699,7 +699,7 @@ varchar
 
 ~~START~~
 varchar
-@var_d: 4444.5444
+@var_d: 4444.54
 ~~END~~
 
 ~~START~~
