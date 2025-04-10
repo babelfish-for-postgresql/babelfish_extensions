@@ -4229,10 +4229,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     char        *destBuf,
                 *buf = NULL,
                 *itr;
-    uint64_t    zeroPadding,
-                sentinel;
-    uint32_t    geom_type,
-                emptyFlag;
+    uint32_t    geom_type;
     int32_t     srid;
 
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
@@ -4273,20 +4270,25 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
         *itr = 4;
         itr++;
 
-        /* Zero padding (8 bytes) */
-        zeroPadding = 0x0000000000000000;
-        memcpy(itr, &zeroPadding, sizeof(uint64_t));
-        itr += 8;
+		/* Number of points */
+		*((int32_t*)itr) = 0;
+		itr += 4;
 
-        /* Empty flag (4 bytes) */
-        emptyFlag = 0x00000001;
-        memcpy(itr, &emptyFlag, sizeof(uint32_t));
-        itr += 4;
+		/* Number of figures */
+		*((int32_t*)itr) = 0;
+		itr += 4;
 
-        /* Sentinel value (8 bytes) */
-        sentinel = 0xFFFFFFFFFFFFFFFF;
-        memcpy(itr, &sentinel, sizeof(uint64_t));
-        itr += 8;
+		/* Number of Shapes */
+		*((int32_t*)itr) = 0x00000001;
+		itr += 4;
+
+		/* Figure index */
+		*((int32_t*)itr) = 0xFFFFFFFF;
+		itr += 4;
+
+		/* Shape index */
+		*((int32_t*)itr) = 0xFFFFFFFF;
+		itr += 4;
 
         /* Final byte for POINT EMPTY*/
         if (geom_type == POINTTYPE)

@@ -155,6 +155,7 @@ geometry_in(PG_FUNCTION_ARGS)
     Datum geom_datum;
     Datum geom_type;
     char *geometry_name;
+    bool isBinary = false;
     LOCAL_FCINFO(fcinfo_local, 2);
 
     load_functions();
@@ -162,24 +163,35 @@ geometry_in(PG_FUNCTION_ARGS)
     /* Get the first argument as cstring */
     input_cstring = PG_GETARG_CSTRING(0);
 
-    /* Convert cstring to text */
-    input_text = cstring_to_text(input_cstring);
+    if (input_cstring[0] == '0')
+    isBinary = true;
 
-    /* Rewrite the WKT string */
-    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
-    fcinfo_local->args[0].value = PointerGetDatum(input_text);
-    fcinfo_local->args[0].isnull = false;
-    rewritten_wkt = geo_wkt_rewrite_p(fcinfo_local);
+    if(!isBinary)
+    {
+        /* Convert cstring to text */
+        input_text = cstring_to_text(input_cstring);
 
-    /* Convert rewritten WKT from text to cstring */
-    rewritten_cstring = text_to_cstring(DatumGetTextP(rewritten_wkt));
+        /* Rewrite the WKT string */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+        fcinfo_local->args[0].value = PointerGetDatum(input_text);
+        fcinfo_local->args[0].isnull = false;
+        rewritten_wkt = geo_wkt_rewrite_p(fcinfo_local);
 
-    /* Prepare for LWGEOM_in function call */
-    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
-    fcinfo_local->args[0].value = CStringGetDatum(rewritten_cstring);  // Changed to use cstring
-    fcinfo_local->args[1].value = Int32GetDatum(0);
-    fcinfo_local->args[1].isnull = false;
+        /* Convert rewritten WKT from text to cstring */
+        rewritten_cstring = text_to_cstring(DatumGetTextP(rewritten_wkt));
 
+        /* Prepare for LWGEOM_in function call */
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+        fcinfo_local->args[0].value = CStringGetDatum(rewritten_cstring);  // Changed to use cstring
+        fcinfo_local->args[1].value = Int32GetDatum(0);
+        fcinfo_local->args[1].isnull = false;
+    }
+    else 
+    {
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
+        fcinfo_local->args[0].value = fcinfo->args[0].value;
+        fcinfo_local->args[0].isnull = false;
+    }
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
 
@@ -195,11 +207,6 @@ geometry_in(PG_FUNCTION_ARGS)
         ereport(ERROR,
             (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
             errmsg("%s is not supported", geometry_name)));
-
-    /* Free allocated memory */
-    pfree(input_text);
-    pfree(rewritten_cstring);  // Free the new cstring
-    pfree(geometry_name);
 
     PG_RETURN_DATUM(geom_datum);
 }
@@ -229,6 +236,8 @@ geography_in(PG_FUNCTION_ARGS)
     if (input_cstring[0] == '0')
         isBinary = true;
 
+    if(!isBinary)
+    {
     /* Convert cstring to text */
     input_text = cstring_to_text(input_cstring);
 
@@ -248,6 +257,17 @@ geography_in(PG_FUNCTION_ARGS)
     fcinfo_local->args[1].isnull = false;
     fcinfo_local->args[2].value = Int32GetDatum(-1);
     fcinfo_local->args[2].isnull = false;
+    }
+    else
+    {
+        InitFunctionCallInfoData(*fcinfo_local, NULL, 3, PG_GET_COLLATION(), NULL, NULL);
+        fcinfo_local->args[0].value = fcinfo->args[0].value;
+        fcinfo_local->args[0].isnull = false;
+        fcinfo_local->args[1].value = fcinfo->args[1].value;
+        fcinfo_local->args[1].isnull = false;
+        fcinfo_local->args[2].value = fcinfo->args[2].value;
+        fcinfo_local->args[2].isnull = false;
+    }
 
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
