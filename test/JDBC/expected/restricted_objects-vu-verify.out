@@ -1,0 +1,255 @@
+-- tsql
+USE msdb
+GO
+
+ALTER LOGIN babel_5146_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_owner_l WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_ddladmin_l WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_5146_case_l WITH PASSWORD = 'abc';
+GO
+
+GRANT CONNECT TO guest;
+GO
+
+-- tsql user=babel_5146_user_l1 password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
+
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+-- psql user=babel_5146_user_l1 password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of function fn_syspolicy_is_automation_enabled
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_system_health_state
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
+    Server SQLState: 42501)~~
+
+
+-- terminate-tsql-conn user=babel_5146_user_l1 password=abc
+
+-- tsql user=babel_5146_owner_l password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
+
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+-- psql user=babel_5146_owner_l password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of function fn_syspolicy_is_automation_enabled
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_system_health_state
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
+    Server SQLState: 42501)~~
+
+
+-- terminate-tsql-conn user=babel_5146_owner_l password=abc
+
+-- tsql user=babel_5146_ddladmin_l password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
+
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+-- psql user=babel_5146_ddladmin_l password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of function fn_syspolicy_is_automation_enabled
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_system_health_state
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
+    Server SQLState: 42501)~~
+
+
+-- terminate-tsql-conn user=babel_5146_ddladmin_l password=abc
+
+-- tsql user=babel_5146_case_l password=abc
+-- should throw error
+USE msdb
+GO
+
+EXEC dbo.babel_5146_prepare_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
+
+
+EXEC dbo.babel_5146_prepare_p2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+EXEC dbo.babel_5146_prepare_p3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+DROP FUNCTION IF EXISTS dbo.[FN_SYSPOLICY_IS_AUTOMATION_ENABLED];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function fn_syspolicy_is_automation_enabled)~~
+
+
+DROP VIEW IF EXISTS dbo.[syspolicy_system_HEALTH_STATE];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_system_health_state)~~
+
+
+DROP VIEW IF EXISTS dbo.[SYSpolicy_CONFIGuration];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of view syspolicy_configuration)~~
+
+
+-- psql user=babel_5146_case_l password=abc
+-- should throw error
+DROP FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of function fn_syspolicy_is_automation_enabled
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_system_health_state;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_system_health_state
+    Server SQLState: 42501)~~
+
+
+DROP VIEW msdb_dbo.syspolicy_configuration;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of view syspolicy_configuration
+    Server SQLState: 42501)~~
+
+
+-- terminate-tsql-conn user=babel_5146_case_l password=abc

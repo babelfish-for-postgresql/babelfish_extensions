@@ -100,6 +100,7 @@ List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_un
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
 
 char	   *sp_describe_first_result_set_view_name = NULL;
 
@@ -1855,9 +1856,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	PlannedStmt *wrapper;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_path = "public, \"$user\", sys, pg_catalog";
+	int        save_nestlevel;
 
+	save_nestlevel = NewGUCNestLevel();
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
@@ -2066,12 +2068,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		set_config_option("search_path", saved_path,
-						  PGC_USERSET, PGC_S_SESSION,
-						  GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 
 	}
+	AtEOXact_GUC(false, save_nestlevel);
 	PG_END_TRY();
 	PG_RETURN_VOID();
 }
@@ -3786,6 +3786,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			objtype_code = OBJECT_TABLE;
 			process_util_querystr = "(ALTER TABLE )";
 		}
+		else if (strcmp(objtype, "IX") == 0)
+		{
+			objtype_code = OBJECT_INDEX;
+			process_util_querystr = "(ALTER INDEX )";
+		}
 		else if (strcmp(objtype, "V") == 0)
 		{
 			objtype_code = OBJECT_VIEW;
@@ -4021,6 +4026,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
 			appendStringInfo(&query, "ALTER TABLE dummy SET (dummy = 'dummy'); ");
 			break;
+		case OBJECT_INDEX:
+			appendStringInfo(&query, "ALTER INDEX dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER INDEX dummy SET (dummy = 'dummy'); ");
+			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
 			break;
@@ -4059,6 +4068,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	sql_dialect = old_dialect;
 
 	if ((objtype != OBJECT_TABLE) &&
+		(objtype != OBJECT_INDEX) &&
 		(objtype != OBJECT_COLUMN) &&
 		(objtype != OBJECT_TRIGGER) &&
 		(list_length(res) != 1))
@@ -4072,15 +4082,31 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	if (!IsA(renamestmt, RenameStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
 
-	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
+	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_INDEX) ||
+		(objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
 	{
-		renamestmt->renameType = objtype;
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+		char *newobjname = downcase_truncate_identifier(newname, strlen(newname), false);
 
-		if (objtype == OBJECT_TABLE)
+		renamestmt->renameType = objtype;
+		renamestmt->relation->schemaname = lowerstr(schemaname);
+
+		if (objtype == OBJECT_INDEX)
+		{
+			char *lower_relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
+
+			newobjname = construct_unique_index_name(newobjname, lower_relname);
+			renamestmt->subname = NULL;
+			renamestmt->newname = newobjname;
+			renamestmt->relation->relname = construct_unique_index_name(downcase_truncate_identifier(objname, strlen(objname), false), lower_relname);
+		}
+		else
+		{
+			renamestmt->subname = lowerstr(objname);
+			renamestmt->newname = lowerstr(newobjname);
+			renamestmt->relation->relname = lowerstr(objname);
+		}
+
+		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
 		{
 			AlterTableStmt *altertablestmt;
 			AlterTableCmd *cmd;
@@ -4093,13 +4119,11 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			if (!IsA(altertablestmt, AlterTableStmt))
 				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
-			altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-			altertablestmt->relation->relname = pstrdup(lowerstr(newname));
-			altertablestmt->objtype = OBJECT_TABLE;
+			altertablestmt->relation->schemaname = lowerstr(schemaname);
+			altertablestmt->relation->relname = lowerstr(newobjname);
 			/* get data of the first node */
 			lc = list_head(altertablestmt->cmds);
 			cmd = (AlterTableCmd *) lfirst(lc);
-			cmd->subtype = AT_SetRelOptions;
 			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(newname)), -1));
 		}
 	}

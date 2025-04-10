@@ -393,6 +393,66 @@ GO
 SELECT * FROM PartitionSchemeContainsDuplicateIDs()
 GO
 
+sp_rename 'dbo.partition_vu_prepare_normal_table.partition_vu_prepare_normal_index', 'partition_vu_prepare_normal_index_new', 'INDEX';
+GO
+
+sp_rename 'dbo.partition_vu_prepare_int_table.partition_vu_prepare_int_index', 'partition_vu_prepare_int_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_bigint_table.partition_vu_prepare_bigint_index', 'partition_vu_prepare_bigint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallint_table.partition_vu_prepare_smallint_index', 'partition_vu_prepare_smallint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_tinyint_table.partition_vu_prepare_tinyint_index', 'partition_vu_prepare_tinyint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_decimal_table.partition_vu_prepare_decimal_index', 'partition_vu_prepare_decimal_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_numeric_table.partition_vu_prepare_numeric_index', 'partition_vu_prepare_numeric_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_money_table.partition_vu_prepare_money_index', 'partition_vu_prepare_money_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallmoney_table.partition_vu_prepare_smallmoney_index', 'partition_vu_prepare_smallmoney_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_date_table.partition_vu_prepare_date_index', 'partition_vu_prepare_date_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime_table.partition_vu_prepare_datetime_index', 'partition_vu_prepare_datetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime2_table.partition_vu_prepare_datetime2_index', 'partition_vu_prepare_datetime2_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smalldatetime_table.partition_vu_prepare_smalldatetime_index', 'partition_vu_prepare_smalldatetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_char_table.partition_vu_prepare_char_index', 'partition_vu_prepare_char_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varchar_table.partition_vu_prepare_varchar_index', 'partition_vu_prepare_varchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nvarchar_table.partition_vu_prepare_nvarchar_index', 'partition_vu_prepare_nvarchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nchar_table.partition_vu_prepare_nchar_index', 'partition_vu_prepare_nchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_binary_table.partition_vu_prepare_binary_index', 'partition_vu_prepare_binary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varbinary_table.partition_vu_prepare_varbinary_index', 'partition_vu_prepare_varbinary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_uniqueidentifier_table.partition_vu_prepare_uniqueidentifier_index', 'partition_vu_prepare_uniqueidentifier_index_new', 'INDEX';
+GO
+
 SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
 GO
 
@@ -522,6 +582,8 @@ SELECT
         name, type, type_desc, fanout, boundary_value_on_right, is_system
     FROM 
         sys.partition_functions
+    ORDER BY
+        name
 go
 
 SELECT 
@@ -530,6 +592,8 @@ SELECT
         sys.partition_schemes ps
     INNER JOIN 
         sys.partition_functions pf on (ps.function_id = pf.function_id)
+    ORDER BY
+        ps.name
 go
 
 ------------------------------------------------------------
@@ -560,13 +624,12 @@ GO
 SELECT CURRENT_USER
 GO
 
+/** CREATE PERMISSION GRANTED VIA PG PORT MAY NOT TAKE EFFECT ON TSQL OBJECTS **/
+/** NOT A RECOMMENDED WAY **/
 CREATE TABLE PartitionDb_TestPartitionTable (
     Id INT,
     Value sys.varchar(20)
 ) ON PartitionDb_PartitionScheme(Id);
-GO
-
-DROP TABLE PartitionDb_TestPartitionTable
 GO
 
 -- revoke create permission from user on schema
@@ -1680,3 +1743,67 @@ GO
 
 DROP USER partition_u2
 GO
+
+---------------------------------------------------------------
+--- Test Collation of Partition Functions after upgrade
+---------------------------------------------------------------
+USE PartitionDb
+Go
+
+-- Test 1: Create tables with the compatible collation i.e. database default (should work)
+CREATE TABLE PT_SameCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go
+
+-- Test 2: Create tables with incompatible collation i.e. other than database default (should fail)
+CREATE TABLE PT_DifferentCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+Go
+
+CREATE TABLE PT_DifferentCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+
+CREATE TABLE PT_DifferentCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+
+CREATE TABLE PT_DifferentCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go

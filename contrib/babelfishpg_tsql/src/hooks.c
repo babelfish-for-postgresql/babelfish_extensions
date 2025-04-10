@@ -35,6 +35,8 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "executor/execExpr.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -85,6 +87,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -98,6 +101,12 @@ typedef enum PltsqlInitPrivsOptions
 	DISCARD_INIT_PRIVS,
 	ERROR_INIT_PRIVS
 } PltsqlInitPrivsOptions;
+
+/*****************************************
+ * 			General Hooks
+ *****************************************/
+
+static bool is_bbf_tds_connection(void);
 
 /*****************************************
  * 			Catalog Hooks
@@ -147,6 +156,9 @@ static ResTarget* make_restarget_from_cstr_list(List * l);
 static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 													SortByDir ordering);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
+static void transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt);
+static bool transform_unpivot_clause_recursive(Node **node, List **measure_cols, List **unpivot_src_cols);
+static List* filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols);
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -184,11 +196,12 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
+static Datum adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod);
+static void pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 extern bool called_from_tsql_insert_exec();
 extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
@@ -196,6 +209,7 @@ static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  char prokind, bool finalize);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
+static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
 
 /*****************************************
  * 			Replication Hooks
@@ -224,6 +238,7 @@ static Oid set_param_collation(Param *param);
 static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
+static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -270,10 +285,13 @@ static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
+static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
+static ExecUpdateResultTypeTL_hook_type prev_ExecUpdateResultTypeTL_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
+static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -290,10 +308,10 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static transform_unpivot_clause_hook_type pre_transform_unpivot_clause_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -305,6 +323,9 @@ static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_p
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
+static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
+ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
+ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -413,6 +434,12 @@ InstallExtendedHooks(void)
 	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
 	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger;
 
+	prev_adjust_numeric_result_hook = adjust_numeric_result_hook;
+	adjust_numeric_result_hook = adjust_numeric_result;
+
+	prev_ExecUpdateResultTypeTL_hook = ExecUpdateResultTypeTL_hook;
+	ExecUpdateResultTypeTL_hook = pltsql_ExecUpdateResultTypeTL;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -424,6 +451,9 @@ InstallExtendedHooks(void)
 
 	prev_replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults;
+
+	prev_exprTypmod_hook = exprTypmod_hook;
+	exprTypmod_hook = pltsql_exprTypmod;
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
@@ -474,9 +504,6 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
-	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
-
 	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
 	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 
@@ -484,6 +511,9 @@ InstallExtendedHooks(void)
 
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
+
+	pre_transform_unpivot_clause_hook = transform_unpivot_clause_hook;
+	transform_unpivot_clause_hook = transform_unpivot_clause;
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
@@ -534,6 +564,18 @@ InstallExtendedHooks(void)
 	is_bbf_db_ddladmin_operation_hook = is_bbf_db_ddladmin_operation;
 
 	pltsql_allow_storing_init_privs_hook = allow_storing_init_privs;
+
+	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
+	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
+	is_bbf_tds_connection_hook = is_bbf_tds_connection;
+
+	prev_ParallelQueryMain_hook = ParallelQueryMain_hook;
+	ParallelQueryMain_hook = bbf_ParallelQueryMain;
+
+	prev_ExecInitParallelPlan_hook = ExecInitParallelPlan_hook;
+	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
+
+	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
 }
 
 void
@@ -569,10 +611,13 @@ UninstallExtendedHooks(void)
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
+	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
+	ExecUpdateResultTypeTL_hook = prev_ExecUpdateResultTypeTL_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
+	exprTypmod_hook = prev_exprTypmod_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -590,10 +635,10 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	get_bbf_admin_oid_hook = prev_get_bbf_admin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
+	transform_unpivot_clause_hook = pre_transform_unpivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
@@ -605,7 +650,7 @@ UninstallExtendedHooks(void)
 	ExecFuncProc_AclCheck_hook = prev_ExecFuncProc_AclCheck_hook;
 	bbf_execute_grantstmt_as_dbsecadmin_hook = prev_bbf_execute_grantstmt_as_dbsecadmin_hook;
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
-
+	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
@@ -613,6 +658,10 @@ UninstallExtendedHooks(void)
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
 	pltsql_allow_storing_init_privs_hook = NULL;
+	is_bbf_tds_connection_hook = NULL;
+	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
+	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
+	ExecCheckOneRelPerms_hook = NULL;
 }
 
 /*****************************************
@@ -894,8 +943,13 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid)
 {
 	Oid userid = GetUserId();
 
-	/* In TDS client, the permissions might need to be checked against session user. */
-	if (IS_TDS_CLIENT())
+	/*
+	 * In TDS client, the permissions might need to be checked against session user.
+	 * Do not do this when in SECURITY_RESTRICTED_OPERATION because in this context
+	 * we temprorarily switch to a different user to execute some internal subcommands.
+	 * For example see reseed_identity_post_select_into
+	 */
+	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 	{
 		Oid schema_id = get_func_namespace(funcid);
 
@@ -949,8 +1003,9 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	/*
 	 * In TDS client, the RTE permissions might need to be checked against login mapped to given checkAsUser,
 	 * if it is valid, otherwise permissions are checked against session user (current login).
+	 * For SECURITY_RESTRICTED_OPERATION handling see comments in pltsql_ExecFuncProc_AclCheck
 	 */
-	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL)
+	if (IS_TDS_CLIENT() && queryDesc->plannedstmt != NULL && !InSecurityRestrictedOperation())
 	{
 		ListCell	*lc;
 
@@ -1188,6 +1243,58 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			break;
 	}
 	return false;
+}
+
+/*
+ * contains_truncation_functions_checker
+ *  For Numeric Division and Numeric Average, truncation of
+ *  results needs to be done. Following function identifies 
+ *  all such functions which requires result truncation.
+ */
+static bool
+contains_truncation_functions_checker(Oid func_id, void *context)
+{
+	return (func_id == F_NUMERIC_DIV || func_id == F_AVG_NUMERIC);
+	
+}
+
+/*
+ * adjust_numeric_result
+ *  truncates/rounds the result value to the correct scale based on result_typmod.
+ *  for result_typmod = -1, computes the result_typmod using pltsql_exprTypmod function.
+ */
+static Datum
+adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
+{
+	int32       scale;
+
+	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
+		return result;
+
+	if (!OidIsValid(result_type))
+		result_type = exprType(expr);
+
+	if (result && OidIsValid(result_type) && getBaseType(result_type) == NUMERICOID)
+	{
+		if (expr != NULL && result_typmod == -1)
+			result_typmod = pltsql_exprTypmod(plan, expr);
+
+		if (result_typmod != -1)
+		{
+			scale = (result_typmod - VARHDRSZ) & 0xffff; 
+
+			/*
+			 * For Numeric Division and Numeric Average, 
+			 * we need to do a truncation and for rest we need to do rounding
+			 */
+			if (check_functions_in_node(expr, contains_truncation_functions_checker, NULL))
+				return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+			else
+				return DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
+		}
+	}
+
+	return result;
 }
 
 /*
@@ -3715,7 +3822,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
  * Update 'function_args' in 'sys.babelfish_schema_permissions' 
  */
 void
-alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt, Oid oid)
+alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, List *parameters, int objtypeInt)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
@@ -5099,37 +5206,6 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-
-static char *
-get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
-{
-	HeapTuple 	 	tuple;
-	char 			*func_schema_name = NULL,
-					*new_search_path = NULL;
-	char  			*func_dbo_schema;
-	const char		*cur_dbname = get_cur_db_name();
-	
-	tuple = SearchSysCache1(NAMESPACEOID,
-						ObjectIdGetDatum(proc_nsp_oid));
-	if(HeapTupleIsValid(tuple))
-	{
-		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
-		func_dbo_schema = get_dbo_schema_name(cur_dbname);
-
-		if(strcmp(func_schema_name, func_dbo_schema) != 0
-			&& strcmp(func_schema_name, "sys") != 0)
-			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
-										quote_identifier(func_schema_name),
-										quote_identifier(func_dbo_schema));
-		
-		ReleaseSysCache(tuple);
-		
-		pfree(func_dbo_schema);
-	}
-
-	return new_search_path;
-}
-
 static ResTarget *
 make_restarget_from_cstr_list(List * l)
 {
@@ -5346,6 +5422,244 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
 }
 
+/*
+ * Transform tsql UNPIVOT clauses in SELECT statement's FROM clause
+ *
+ * pstate - current parser state
+ * stmt - SelectStmt being transformed
+ *
+ * Note: 
+ *   Called for every SELECT Stmt (because UNPIVOT can appear anywhere in the
+ *   FROM clause) to find UNPIVOT nodes and perform required post processing.
+ *   During parsing stage, each UNPIVOT clause was transformed to equivalent
+ *   CROSS JOIN LATERAL node and wrapped as a List node with other metadata.
+ *
+ * Processing:
+ *   1. DFS traversal of Join nodes in fromClause tree to find UNPIVOT List nodes
+ *   2. Extract metadata and replace with transformed JoinExpr node
+ *   3. Filter targetList for 'SELECT *' case to exclude UNPIVOT source columns
+ *   4. Add IS NOT NULL checks for measure columns to WHERE clause
+ * 
+ * Supported Syntax for UNPIVOT:
+ *     SELECT <TargetList> 
+ *     FROM <table_ref> 
+ *     UNPIVOT (
+ *         <measure_col>            -- column to hold values
+ *         FOR <dimension_col>      -- column to hold names
+ *         IN (<col1>, ...)         -- souce columns to unpivot
+ *     ) AS <unpivot_alias>
+ *     [WHERE ...]
+ *     [ORDER BY ...];
+ */
+static void 
+transform_unpivot_clause(ParseState *pstate, SelectStmt *stmt)
+{
+    List *measure_cols;
+    List *src_cols;
+    bool has_unpivot;
+    Node *where_clause;
+    ListCell *lc;
+
+    measure_cols = NIL;
+    src_cols = NIL;
+    has_unpivot = false;
+    where_clause = stmt->whereClause;
+
+    if (sql_dialect != SQL_DIALECT_TSQL)
+        return;
+
+    foreach(lc, stmt->fromClause)
+        has_unpivot |= transform_unpivot_clause_recursive((Node **)&lc->ptr_value, 
+                                                          &measure_cols, 
+                                                          &src_cols);
+
+    if (!has_unpivot)
+        goto cleanup;
+
+    /* Filter SELECT * to exclude UNPIVOT source columns */
+    stmt->targetList = filter_star_targetlist_for_unpivot(pstate, stmt, &src_cols);
+
+    if (measure_cols == NIL)
+        return;
+
+    /* Create IS NOT NULL where conditions for all collected columns */
+    foreach(lc, measure_cols)
+    {
+        char *measure_col = strVal(lfirst(lc));
+        ColumnRef *measure_ref;
+        NullTest *null_test;
+
+        /* Create IS NOT NULL condition */
+        measure_ref = makeNode(ColumnRef);
+        measure_ref->fields = list_make1(makeString(pstrdup(measure_col)));
+        measure_ref->location = -1;
+
+        null_test = makeNode(NullTest);
+        null_test->arg = (Expr *)measure_ref;
+        null_test->nulltesttype = IS_NOT_NULL;
+        null_test->argisrow = false;
+        null_test->location = -1;
+
+        /* Add to WHERE clause */
+        if (where_clause)
+        {
+            BoolExpr *bool_expr = makeNode(BoolExpr);
+            bool_expr->boolop = AND_EXPR;
+            bool_expr->args = list_make2(where_clause, null_test);
+            bool_expr->location = -1;
+            where_clause = (Node *)bool_expr;
+        }
+        else
+        {
+            where_clause = (Node *)null_test;
+        }
+    }
+    stmt->whereClause = where_clause;
+
+    cleanup:
+    if (measure_cols)
+        list_free_deep(measure_cols);
+}
+
+/*
+ * Recursively find and process UNPIVOT list nodes in FROM clause tree.
+ *
+ * node_ptr - Current node being processed
+ * measure_cols - List of measure columns for NULL handling
+ * unpivot_src_cols - Source columns for SELECT * filtering
+ *
+ * Returns: true if UNPIVOT found and processed; else false
+ * 
+ * Note:
+ *   1. Traverses down Join nodes in a DFS fashion to find and process
+ *      UNPIVOT transformations.
+ *   2. Extracts metadata from List and reassigns JoinExpr node to pointer.
+ */
+static bool 
+transform_unpivot_clause_recursive(Node **node_ptr, List **measure_cols, List **unpivot_src_cols)
+{
+    JoinExpr *join;
+    List *unpivot_info;
+    char *measure_col;
+    Node *transformed_node;
+    List *cols;
+    bool found_unpivot;
+
+    found_unpivot = false;
+
+    if (node_ptr == NULL || *node_ptr == NULL)
+        return false;
+
+    if (IsA(*node_ptr, JoinExpr))
+    {
+        join = (JoinExpr *)*node_ptr;
+        found_unpivot |= transform_unpivot_clause_recursive(&join->larg, measure_cols, unpivot_src_cols);
+        found_unpivot |= transform_unpivot_clause_recursive(&join->rarg, measure_cols, unpivot_src_cols);
+    }
+    else if (IsA(*node_ptr, List))
+    {
+        unpivot_info = (List *)*node_ptr;
+        if (unpivot_info != NULL &&
+            list_length(unpivot_info) == 7 &&
+            IsA(linitial(unpivot_info), String) &&
+            strcmp(strVal(linitial(unpivot_info)), "UNPIVOT") == 0)
+        {
+            measure_col = strVal(list_nth(unpivot_info,3));
+            transformed_node = list_nth(unpivot_info, 6);
+
+            /* Add this measure column to the list */
+            *measure_cols = lappend(*measure_cols, makeString(measure_col));
+
+            /* Get source columns */
+            cols = (List *)list_nth(unpivot_info, 5);
+            if (*unpivot_src_cols == NIL)
+                *unpivot_src_cols = copyObject(cols);
+            else
+                *unpivot_src_cols = list_concat(*unpivot_src_cols, copyObject(cols));
+
+            /* Replace UNPIVOT info with transformed node */
+            *node_ptr = transformed_node;
+            found_unpivot = true;
+            /* Recurse down unpivot join node to look for additional unpivots */
+            transform_unpivot_clause_recursive(node_ptr, measure_cols, unpivot_src_cols);
+        }
+    }
+
+    return found_unpivot;
+}
+
+/*
+ * Process SELECT * for UNPIVOT queries by removing source columns.
+ *
+ * pstate - Parser state
+ * stmt - Statement containing target list
+ * source_cols - List of columns to exclude
+ *
+ * Returns: Filtered target list excluding unpivot source columns
+ * Note: Only processes if target list contains * 
+ */
+static List *
+filter_star_targetlist_for_unpivot(ParseState *pstate, SelectStmt *stmt, List **source_cols)
+{
+    Query *temp_query;
+    List *result_targetlist;
+    ListCell *lc;
+    
+    /* 
+     * Return if not 'SELECT *'
+     *
+     * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
+     * Does not check: `SELECT unpivot_alias.* ...`
+     * Validate against more variations of targetlist
+     */
+    if (stmt->targetList == NIL || 
+        !IsA(((ResTarget *)linitial(stmt->targetList))->val, ColumnRef) ||
+        !IsA(linitial(((ColumnRef *)((ResTarget *)linitial(stmt->targetList))->val)->fields), A_Star))
+    {
+        return stmt->targetList;
+    }
+
+    result_targetlist = NIL;
+
+    /* Analyze to expand * */
+    temp_query = parse_sub_analyze((Node *)copyObject(stmt), 
+                                   pstate, 
+                                   NULL, 
+                                   false, 
+                                   false);
+
+    /* Filter out source columns from TargetList */
+    foreach(lc, temp_query->targetList)
+    {
+        TargetEntry *te;
+        bool skip_column;
+        ListCell *source_lc;
+        String *source_col;
+
+        te = (TargetEntry *)lfirst(lc);
+        skip_column = false;
+
+        /* Check if this column is in source_cols */
+        foreach(source_lc, *source_cols) {
+            source_col = (String *)lfirst(source_lc);
+            if (strcmp(te->resname, strVal(source_col)) == 0) {
+                skip_column = true;
+                /* Remove the matched source column to avoid duplicate removal */
+                *source_cols = foreach_delete_current(*source_cols, source_lc);
+                break;
+            }
+        }
+        
+        if (!skip_column)
+        {
+            /* Create new ResTarget for this column */
+            ResTarget *rt = make_restarget_from_cstr_list(list_make1(makeString(te->resname)));
+            result_targetlist = lappend(result_targetlist, rt);
+        }
+    }
+    
+    return result_targetlist;
+}
 
 static inline bool
 is_integer_type(Oid type)
@@ -5718,7 +6032,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 	 * 3. Grantor is same as owner OR Grantor already has all the required privileges.
 	 *    This means already the best grantor has been selected using select_best_grantor().
 	 */
-	if (!MyProcPort->is_tds_conn ||
+	if (!IS_TDS_CONN() ||
 		sql_dialect != SQL_DIALECT_TSQL ||
 		*grantorId == ownerId ||
 		*grantOptions == ACL_GRANT_OPTION_FOR(privileges))
@@ -5756,7 +6070,7 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
 		schema_oid = get_object_namespace(&address);
 	}
 
-	if (OidIsValid(schema_oid))
+	if (OidIsValid(schema_oid) && !isTempOrTempToastNamespace(schema_oid))
 	{
 		/*
 		 * Don't allow if object's schema is not from current database OR
@@ -5790,7 +6104,6 @@ handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid ownerId,
  * Objects are always owned by current user in postgres but in babelfish
  * schema contained objects should be owned by the schema owner by default
  * Use this hook to pick schema owner as object owner during object creation
- * We currently only do this if current user is member of db_ddladmin or db_owner
  */
 static Oid
 pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
@@ -5801,13 +6114,19 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return ownerId;
 
 	if (!OidIsValid(ownerId))
 		ownerId = GetUserId();
 
 	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(namespaceId));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema with OID %u does not exist", namespaceId)));
+
 	nsptup = (Form_pg_namespace) GETSTRUCT(tuple);
 
 	logical_schema_name = get_logical_schema_name(NameStr(nsptup->nspname), true);
@@ -5818,6 +6137,8 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		char	*db_name = get_cur_db_name();
 		char	*dbo_name = get_dbo_role_name(db_name);
 		Oid		dbo_oid = get_role_oid(dbo_name, false);
+		Oid		schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
+
 		/*
 		 * babelfish issue special handing for dbo schema since it is
 		 * owned by db_owner but the correct owner should have been dbo
@@ -5827,17 +6148,12 @@ pltsql_get_object_owner(Oid namespaceId, Oid ownerId)
 		else
 			nsp_owner = nsptup->nspowner;
 
-		if (ownerId != nsp_owner)
+		/*
+		 * Object owner should not be same as schema owner
+		 */
+		if ((ownerId != nsp_owner) && (schema_db_id == get_cur_db_id()))
 		{
-			Oid 	db_ddladmin = get_db_ddladmin_oid(db_name, false);
-			Oid 	db_owner = get_db_owner_oid(db_name, false);
-			Oid 	schema_db_id = get_dbid_from_physical_schema_name(NameStr(nsptup->nspname), false);
-
-			/* If current user is member of db_owner or db_ddladmin and object owner is not dbo */
-			if (schema_db_id == get_cur_db_id() && ownerId != dbo_oid &&
-				(has_privs_of_role(GetUserId(), db_owner) ||
-				has_privs_of_role(GetUserId(), db_ddladmin)))
-				ownerId = nsp_owner;
+			ownerId = nsp_owner;
 		}
 
 		pfree(db_name);
@@ -5862,10 +6178,14 @@ is_bbf_db_ddladmin_operation(Oid namespaceId)
 
 	Assert(OidIsValid(namespaceId));
 
-	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN() || isTempOrTempToastNamespace(namespaceId))
 		return false;
 
 	nspname = get_namespace_name(namespaceId);
+
+	if (nspname == NULL)
+		return false;
+
 	schema_db_id = get_dbid_from_physical_schema_name(nspname, true);
 	db_ddladmin = get_db_ddladmin_oid(get_current_pltsql_db_name(), false);
 
@@ -6038,4 +6358,102 @@ remove_db_name_in_schema(const char *object_name, const char *object_type)
 	pfree(splited_object_name);
 
 	return (const char *)pstrdup(object_name + prefix_len);
+}
+
+/*
+ * pltsql_exprTypmod -
+ *  returns the type-specific modifier of the expression's result type,
+ *  if it can be determined, else we return -1.
+ */
+static int32
+pltsql_exprTypmod(Plan *plan, Node *expr)
+{
+	int32       result_typmod = -1;
+	Oid         expr_type;
+	
+	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
+		return -1;
+
+	expr_type = exprType(expr);
+
+	if (!OidIsValid(expr_type))
+		return -1;
+
+	if (getBaseType(expr_type) == NUMERICOID)
+	{
+		bool        found_typmod;
+
+		/*
+		 * use get_numeric_typmod_from_exp function to get the typmod
+ 		 * from the expression node, when the expression type is numeric.
+		 */ 
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
+		{
+			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, &found_typmod);
+			if (!found_typmod)
+				return -1;
+		}
+	}
+	return result_typmod;
+}
+
+/*
+ * pltsql_ExecUpdateResultTypeTL
+ *
+ * Update typmod of all the entries of a previously initialized tuple descriptor, 
+ * using pltsql_exprTypmod when attribute type is NUMERIC, DECIMAL and any UDT on NUMERIC, DECIMAL.
+ */
+void
+pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc)
+{
+	ListCell   *l;
+	int         cur_resno = 1;
+	List       *targetList;
+
+	/*
+	 * sanity checks
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!PointerIsValid(desc) ||
+		!PointerIsValid(planstate) ||
+		!PointerIsValid(planstate->plan) ||
+		!PointerIsValid(planstate->plan->targetlist))
+		return;
+
+	targetList = planstate->plan->targetlist;
+
+	foreach(l, targetList)
+	{
+		TargetEntry *tle = lfirst(l);
+		Form_pg_attribute attr = TupleDescAttr(desc, cur_resno - 1);
+
+		if (attr->atttypid == NUMERICOID || getBaseType(attr->atttypid) == NUMERICOID)
+		{
+			attr->atttypmod = pltsql_exprTypmod(planstate->plan, (Node *) tle->expr);
+		}
+
+		cur_resno++;
+	}
+}
+
+/* Check if current connection is a tds connection */
+static bool
+is_bbf_tds_connection(void)
+{
+	return IS_TDS_CONN();
+}
+static bool
+pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
+{
+	ListCell   *lc;
+
+	foreach(lc, plan->plancache_list)
+	{
+		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
+		if (!SearchPathMatchesCurrentEnvironment(plansource->search_path))
+			return false;
+	}
+	return true;
+	
 }

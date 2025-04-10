@@ -47,7 +47,6 @@ select * from information_schema.table_constraints where table_name in ('tbl_pk'
 go
 
 -- verify from sys.objects
--- Note: sys.objects not showing unique constraints currently
 select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints order by constraint_name, constraint_schema;
 
 select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') order by name, schname;
@@ -210,7 +209,6 @@ select * from information_schema.table_constraints where table_name in ('tbl_pk'
 go
 
 -- verify from sys.objects
--- Note: sys.objects not showing unique constraints currently
 select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints order by constraint_name, constraint_schema;
 
 select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') order by name, schname;

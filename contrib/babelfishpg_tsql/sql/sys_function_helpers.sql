@@ -10226,20 +10226,27 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg anyelement,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
+                                                                  IN arg anyelement,
                                                                   IN try BOOL,
                                                                   IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
+DECLARE result sys.varbinary;
 BEGIN
     IF try THEN
-        RETURN sys.babelfish_try_conv_to_varbinary(arg, p_style);
+        RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
     ELSE
         IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
             RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
         ELSE
-            RETURN CAST(arg AS sys.varbinary);
+            IF typmod = -1 THEN
+                RETURN CAST(arg as sys.varbinary);
+            ELSE
+                EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                RETURN result;
+            END IF;
         END IF;
     END IF;
 END;
@@ -10247,7 +10254,8 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;  
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN arg sys.VARCHAR,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(IN typmod INTEGER,
+                                                                  IN arg sys.VARCHAR,
                                                                   IN try BOOL,
                                                                   IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
@@ -10279,16 +10287,23 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN arg anyelement,
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(IN typmod INTEGER,
+                                                               IN arg anyelement,
                                                                IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.varbinary
 AS
 $BODY$
+DECLARE result sys.varbinary;
 BEGIN
     IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
         RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
     ELSE
-        RETURN CAST(arg AS sys.varbinary);
+        IF typmod = -1 THEN
+            RETURN CAST(arg as sys.varbinary);
+        ELSE
+            EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+            RETURN result;
+        END IF;
     END IF;
     EXCEPTION
         WHEN OTHERS THEN
@@ -10977,12 +10992,16 @@ BEGIN
 			v_format := '9D99999EEEE';
 			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
 			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
+		ELSIF (v_floatval < 0.0001 AND v_floatval != 0) THEN	
+			v_format := '9D99999EEEE';
+			v_result := to_char(v_sign::NUMERIC * v_floatval, v_format);
+			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
 		ELSE
-            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
-                v_decimal_digits := 6 - v_integral_digits;
-            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
-                v_decimal_digits := 6;
-            END IF;
+			IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+				v_decimal_digits := 6 - v_integral_digits;
+			ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+				v_decimal_digits := 6;
+			END IF;
 			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
 			IF (v_decimal_digits > 0) THEN
 				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
@@ -11004,9 +11023,9 @@ BEGIN
 
 	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
 	IF v_res_length IS NULL THEN
-		RETURN v_result;
+		RETURN ltrim(v_result);
 	ELSE
-		RETURN rpad(v_result,  v_res_length, ' ');
+		RETURN rpad(ltrim(v_result),  v_res_length, ' ');
 	END IF;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
@@ -11430,4 +11449,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_split_identifier(IN identifier VARCHAR, OUT value VARCHAR)
 RETURNS SETOF VARCHAR AS 'babelfishpg_tsql', 'split_identifier_internal'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
+RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

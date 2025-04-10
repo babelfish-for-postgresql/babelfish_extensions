@@ -39,8 +39,29 @@ go
 drop table new_schema_fts.test;
 go
 
-drop schema new_schema_fts;
-go
+DROP TABLE IF EXISTS ft_index_limit_t
+GO
+
+DROP FULLTEXT INDEX ON fts_contains_multicol_t
+GO
+
+DROP TABLE IF EXISTS fts_contains_multicol_t
+GO
+
+DROP FULLTEXT INDEX ON content_table
+GO
+
+DROP TABLE IF EXISTS content_table
+GO
+
+DROP FULLTEXT INDEX ON new_schema_fts.multicol_tb
+GO
+
+DROP TABLE IF EXISTS new_schema_fts.multicol_tb
+GO
+
+DROP SCHEMA IF EXISTS fts_schema
+GO
 
 use master;
 go

@@ -1163,7 +1163,7 @@ alter_partition_function
     ;
 
 create_partition_function
-    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
+    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type collation? RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-partition-scheme-transact-sql
@@ -2054,6 +2054,7 @@ function_option
     | RETURNS NULL_P ON NULL_P INPUT
     | CALLED ON NULL_P INPUT
     | execute_as_clause
+    | inline_clause
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188038.aspx
@@ -3191,6 +3192,10 @@ execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
     ;
 
+inline_clause
+    : INLINE EQUAL on_off
+    ;
+
 execute_as_statement
     : (EXECUTE|EXEC) AS ( CALLER | ( LOGIN | USER ) EQUAL char_string (WITH (NO REVERT | COOKIE INTO LOCAL_ID ))? )
     ;
@@ -3925,12 +3930,18 @@ geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
     | STAREA
+    | STDIMENSION
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     ;
 
 geospatial_func_arg
     : STDISTANCE
     | STEQUALS
     | STCONTAINS
+    | STDISJOINT 
+    | STINTERSECTS
     ;
 
 hierarchyid_methods
@@ -5024,8 +5035,14 @@ keyword
     | STCONTAINS
     | STDEV
     | STDEVP
+    | STDIMENSION
+    | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STINTERSECTS
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     | STOP
     | STOPAT
     | STOPATMARK

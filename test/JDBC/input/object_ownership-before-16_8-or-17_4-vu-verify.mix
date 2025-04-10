@@ -1,0 +1,211 @@
+-- RESET LOGIN PASSWORD
+ALTER LOGIN object_ownership_l1 WITH PASSWORD = '123'
+GO
+
+create login object_ownership_l2 with password = '123'
+go
+use object_ownership_db;
+go
+create user object_ownership_u2 for login object_ownership_l2;
+go
+alter role object_ownership_r1 add member object_ownership_u2;
+go
+alter role object_ownership_r1 drop member object_ownership_u1;
+go
+-- Add the computed column
+alter table object_ownership_s3.old_t add c as (a + b);
+go
+-- Add the identity column
+alter table object_ownership_s3.old_t add id int identity(1,1);
+go
+use master;
+go
+
+-- tsql user=object_ownership_l2 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+
+/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNER AND OBJECT OWNERS ARE DIFFERENT ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY USER ***/
+select * from object_ownership_s3.old_t;
+go
+select * from object_ownership_s3.old_v;
+go
+exec object_ownership_s3.old_p;
+go
+select object_ownership_s3.old_f();
+go
+insert into object_ownership_s3.old_t values (2, 3);
+go
+select next value for object_ownership_s3.old_sq;
+go
+select * from object_ownership_s3.old_tvf();
+go
+select * from object_ownership_s3.old_mtvf();
+go
+use master
+go
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+
+/*** USER MAY NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNER AND OBJECT OWNERS ARE DIFFERENT ***/
+/*** SCHEMA OWNED BY USER, OBJECTS OWNED BY DBO ***/
+select * from object_ownership_s2.old_t;
+go
+select * from object_ownership_s2.old_v;
+go
+exec object_ownership_s2.old_p;
+go
+select object_ownership_s2.old_f();
+go
+insert into object_ownership_s2.old_t values (2, 3);
+go
+select next value for object_ownership_s2.old_sq;
+go
+select * from object_ownership_s2.pt2;
+go
+
+/*** USER WILL HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA OWNED BY ROLE, OBJECTS OWNED BY CURRENT_USER ***/
+select * from object_ownership_s3.old_t1;
+go
+select * from object_ownership_s3.old_v1;
+go
+exec object_ownership_s3.old_p1;
+go
+select object_ownership_s3.old_f1();
+go
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+select next value for object_ownership_s3.old_sq1;
+go
+use master
+go
+
+-- tsql
+use object_ownership_db;
+go
+select current_user;
+go
+/**** SHOWS MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+select * from get_schema_object_ownership();
+go
+
+/*** SHOWS THE LIST OF ALTER STATEMENTS TO BE EXECUTED ***/
+select * from generate_alter_ownership_statements();
+go
+
+/*** EXECUTES THE ALTER STATEMENTS ***/
+-- psql
+ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_0" OWNER TO object_ownership_db_object_ownership_u1;
+ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_1" OWNER TO object_ownership_db_object_ownership_u1;
+ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_2" OWNER TO object_ownership_db_object_ownership_u1;
+ALTER TABLE object_ownership_db_object_ownership_s2."2bc43500e5a904447227cb4121181c74_partition_3" OWNER TO object_ownership_db_object_ownership_u1;
+ALTER FUNCTION object_ownership_db_object_ownership_s2.old_f OWNER TO object_ownership_db_object_ownership_u1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s2.old_p OWNER TO object_ownership_db_object_ownership_u1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_sq OWNER TO object_ownership_db_object_ownership_u1;
+ALTER TABLE object_ownership_db_object_ownership_s2.old_t OWNER TO object_ownership_db_object_ownership_u1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.old_t_id_seq OWNER TO object_ownership_db_object_ownership_u1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s2.old_v OWNER TO object_ownership_db_object_ownership_u1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+ALTER TABLE object_ownership_db_object_ownership_s2.pt2 OWNER TO object_ownership_db_object_ownership_u1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s2.pt2_saleid_seq OWNER TO object_ownership_db_object_ownership_u1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_f1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_mtvf1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p OWNER TO object_ownership_db_object_ownership_r1;
+ALTER PROCEDURE object_ownership_db_object_ownership_s3.old_p1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq OWNER TO object_ownership_db_object_ownership_r1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_sq1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_t1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER SEQUENCE object_ownership_db_object_ownership_s3.old_t_id_seq OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tr OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tr1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TABLE object_ownership_db_object_ownership_s3.old_ttype1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf OWNER TO object_ownership_db_object_ownership_r1;
+ALTER FUNCTION object_ownership_db_object_ownership_s3.old_tvf1 OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type OWNER TO object_ownership_db_object_ownership_r1;
+ALTER TYPE object_ownership_db_object_ownership_s3.old_type1 OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+ALTER VIEW object_ownership_db_object_ownership_s3.old_v1 OWNER TO object_ownership_db_object_ownership_r1;
+SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+GO
+
+-- tsql
+/**** THERE SHOULD BE NO MISMATCHED OBJECT AND SCHEMA OWNERS ******/
+select * from get_schema_object_ownership();
+go
+
+/********** CREATE NEW OBJECTS IN ALL THE SCHEMAS **********/
+-- tsql user=object_ownership_l2 password=123
+use object_ownership_db;
+go
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+select * from object_ownership_s3.old_t;
+go
+select * from object_ownership_s3.old_v;
+go
+exec object_ownership_s3.old_p;
+go
+select object_ownership_s3.old_f();
+go
+insert into object_ownership_s3.old_t values (2, 3);
+go
+select next value for object_ownership_s3.old_sq;
+go
+
+-- tsql user=object_ownership_l1 password=123
+use object_ownership_db;
+go
+select current_user;
+go
+
+/*** USER SHOULD HAVE ACCESS TO THESE OBJECTS ***/
+select * from object_ownership_s2.old_t;
+go
+select * from object_ownership_s2.old_v;
+go
+exec object_ownership_s2.old_p;
+go
+select object_ownership_s2.old_f();
+go
+insert into object_ownership_s2.old_t values (2, 3);
+go
+select next value for object_ownership_s2.old_sq;
+go
+select * from object_ownership_s2.pt2;
+go
+
+/*** REDUCTION OF PRIVILEGE ***/
+/*** USER WILL NOT HAVE ACCESS TO THESE OBJECTS ***/
+/*** SCHEMA AND OBJECT OWNED BY ROLE, CURRENT USER IS NOT A PART OF THE ROLE ***/
+select * from object_ownership_s3.old_t1;
+go
+select * from object_ownership_s3.old_v1;
+go
+exec object_ownership_s3.old_p1;
+go
+select object_ownership_s3.old_f1();
+go
+insert into object_ownership_s3.old_t1 values (2, 3);
+go
+select next value for object_ownership_s3.old_sq1;
+go
+use master
+go

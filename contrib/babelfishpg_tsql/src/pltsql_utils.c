@@ -12,6 +12,7 @@
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "pltsql.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
@@ -1291,29 +1292,6 @@ varchar_to_cstring(const VarChar *varchar)
 	return result;
 }
 
-/*
- * Convert list of schema OIDs to schema names.
- */
-
-char *
-flatten_search_path(List *oid_list)
-{
-	StringInfoData pathbuf;
-	ListCell   *lc;
-
-	initStringInfo(&pathbuf);
-
-	foreach(lc, oid_list)
-	{
-		Oid			schema_oid = lfirst_oid(lc);
-		char	   *schema_name = get_namespace_name(schema_oid);
-
-		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
-	}
-	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
-	return pathbuf.data;
-}
-
 char *
 get_pltsql_function_signature_internal(const char *funcname,
 									   int nargs, const Oid *argtypes)
@@ -1882,6 +1860,56 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+void
+exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+	AlterTableStmt *atstmt;
+	AlterTableCmd *cmd_orig_name;
+	char *query_str = "ALTER INDEX dummy SET (dummy=dummy)";
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	atstmt = castNode(AlterTableStmt, stmt);
+	atstmt->relation->relname = idxname;
+	if (schemaname != NULL)
+		atstmt->relation->schemaname = schemaname;
+	cmd_orig_name = castNode(AlterTableCmd, linitial(atstmt->cmds));
+	cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	ProcessUtility(wrapper,
+				   "(ALTER INDEX )",
+				   false,
+				   PROCESS_UTILITY_QUERY,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+}
+
 Oid get_sys_varcharoid(void)
 {
 	Oid sys_oid;
@@ -1928,16 +1956,18 @@ gen_schema_name_for_fulltext_index(const char *schema_name)
  * during execution of CONTAINS() statement
  */
 bool
-check_fulltext_exist(const char *schema_name, const char *table_name)
+check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name_list)
 {
 	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
 	char		*ft_index_name;
-	Oid			schemaOid;
-	Oid			relid;
+	Oid		schemaOid;
+	Oid		relid;
+	List 		*ft_column_name_list = NIL;
+	ListCell	*ft_column_name, *column_name;
 
 	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
 
-	// Check if schema exists
+	/* Check if schema exists */
 	if (!OidIsValid(schemaOid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1947,15 +1977,206 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
 	relid = get_relname_relid((const char *) table_name, schemaOid);
 
 
-	// Check if table exists
+	/* Check if table exists */
 	if (!OidIsValid(relid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_TABLE),
 				errmsg("relation \"%s\" does not exist",
 					table_name)));
 	
+	/* Check if column exists */
+	foreach(column_name, column_name_list)
+	{
+		if(!check_column_list(relid, (char *)(column_name)->ptr_value))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg("column \"%s\" does not exist.",
+						(char *)(column_name)->ptr_value)));
+		}
+	}
+
 	ft_index_name = get_fulltext_index_name(relid, table_name);
-	return ft_index_name != NULL;
+	if(ft_index_name == NULL)
+		return false;
+
+	ft_column_name_list = get_fulltext_indexed_columns(relid, ft_index_name);
+	/* A safety check to handle the case when the index definition changes from the current definition */
+	if(ft_column_name_list == NIL)
+	{
+		pfree(ft_index_name);
+		return false;
+	}
+
+
+	/* Check if column is fulltext indexed */
+	foreach(column_name, column_name_list)
+	{
+		bool flag = false;
+		char *col_name = (char *)(column_name)->ptr_value;
+		foreach(ft_column_name, ft_column_name_list)
+		{
+			char *ft_col_name = (char *)(ft_column_name)->ptr_value;
+			if(pg_strcasecmp(col_name, ft_col_name) == 0)
+			{
+				flag = true;
+				break;
+			}
+		}
+		if(!flag)
+		{
+			list_free(ft_column_name_list);
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("Cannot use a CONTAINS or FREETEXT predicate on column \'%s\' because it is not full-text indexed.",
+						col_name)));
+		}
+	}
+	pfree(ft_index_name);
+	list_free(ft_column_name_list);
+	return true;
+}
+
+ 
+/* 
+ * Check if the columns provided in the freetext predicate query exist or not
+ * The check for the columns existence is handled during query execution from PG side, 
+ * but we require to check it before checking if they are fulltext indexed or not
+ */
+bool check_column_list(Oid relid, char *column_name)
+{
+	Relation 	relation = RelationIdGetRelation(relid);
+	TupleDesc	tupledesc = RelationGetDescr(relation);
+	int		j;
+
+
+	for (j = 0; j < tupledesc->natts; j++) 
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupledesc, j);
+		if (!attr->attisdropped) 
+		{ 
+			char *str = NameStr(attr->attname);
+			if(pg_strcasecmp(column_name, str) == 0)
+			{
+				RelationClose(relation);
+				return true;
+			}
+		}
+	}
+	RelationClose(relation);
+	return false;
+}
+ 
+List
+*get_fulltext_indexed_columns(Oid relid, char *ft_index_name)
+{
+ 	Relation        relation  = RelationIdGetRelation(relid);
+ 	List            *indexoidlist = RelationGetIndexList(relation);
+ 	List 		*column_name = NIL;
+ 	ListCell	*cell;
+ 	char		*idx = NULL;
+	char		*name = NULL;
+	Oid		indexOid;
+ 	Datum 		result;
+ 
+ 	foreach(cell, indexoidlist)
+ 	{
+ 		indexOid = lfirst_oid(cell);
+ 		name = get_rel_name(indexOid);
+ 
+ 		if (strcmp(name, ft_index_name) == 0)
+ 		{
+ 			result = DirectFunctionCall1(pg_get_indexdef, ObjectIdGetDatum(indexOid));
+ 			if(DatumGetPointer(result) == NULL)
+			{
+				if(name != NULL)
+					pfree(name);
+
+				RelationClose(relation);
+				list_free(indexoidlist);
+				return NIL;
+			}
+ 			idx = text_to_cstring(DatumGetTextP(result));
+ 			column_name = get_columns(idx);
+ 			break;
+ 		}
+ 	}
+
+	if(idx != NULL)
+		pfree(idx);
+	if(name != NULL)
+		pfree(name);
+
+	RelationClose(relation);
+	list_free(indexoidlist);
+
+     	return column_name;
+}
+ 
+/* 
+ * The columns over which GIN index is created the index definition is like:
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, column_name)), for babelfish version before 16.2
+ * and
+ * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts(column_name))), for babelfish version 16.2 onwards
+ * These columns can be of any text based datatype, like: TEXT, CHAR, VARCHAR, VARBINARY, etc.
+ */
+List
+*get_columns(char *index_stmt)
+{
+	
+	const char 	*indexdf = index_stmt;
+	List		*column_name_list = NULL;
+	size_t 		regconfig_len = strlen("regconfig, ");
+	size_t 		replace_special_chars_fts_len = strlen("replace_special_chars_fts(");
+	
+	if(index_stmt == NULL)
+	{
+		return NULL;
+	}
+
+ 	while ((indexdf = strstr(indexdf, "regconfig, ")) != NULL) 
+ 	{
+ 		StringInfoData 	bufStr;
+		char 		*closing;
+		char 		*column_name = NULL;
+		char		*start_ptr;
+ 		indexdf += regconfig_len;
+ 		initStringInfo(&bufStr);
+		
+		/* 
+		 * From  version 16.2 and onwards, the column names are processed for special characters before creating index,
+		 * so they are passed as replace_special_chars_fts(column_name) in the index definition
+		 * which is being checked before assigning the pointer to 'indexdf' 
+		 * as it will return NULL for version before 16.2
+		 */
+		if((start_ptr = strstr(indexdf, "replace_special_chars_fts(")) != NULL)
+		{
+			indexdf = start_ptr;
+			indexdf += replace_special_chars_fts_len;
+		}
+		/* 
+		 * The columns that are not of TEXT data type are casted into TEXT data type so the index definition for non TEXT columns is:
+		 * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, (column_name)::text)), for version before 16.2
+		 * CREATE INDEX ft_table_name ON table_name USING gin (to_tsvector('fts_contains_simple'::reconfig, replace_special_chars_fts((column_name)::text))), for version 16.2 and onwards  
+		 * so an extra '(' needs to be taken care of for these columns
+		 * These columns can be of any text based datatype, like: CHAR, VARCHAR, VARBINARY, etc.
+		 */
+		if(indexdf[0] == '(')
+		{
+			indexdf++;
+		}
+ 		/* Extract till the closing parenthesis */
+		closing = strchr(indexdf, ')');
+		*closing = '\0';
+
+		column_name = pstrdup(indexdf);
+
+		appendStringInfoString(&bufStr, (const char *)column_name);
+ 		column_name_list = lappend(column_name_list, bufStr.data);
+
+		indexdf = closing + 1;
+ 	}
+ 	return column_name_list;
 }
 
 /*
@@ -2156,6 +2377,13 @@ char
 
 	initStringInfo(&query);
 
+	if(list_length(column_name) > 32)
+ 	{
+ 		ereport(ERROR,
+ 			(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+ 				errmsg("Full-text index creation with more than 32 columns is not currently supported in Babelfish.")));
+ 	}
+
 	/*
 	 * We prepare the following query to create a fulltext index.
 	 *
@@ -2257,7 +2485,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
 static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	StringInfoData query;
 	List	   *stmt_list;
@@ -2272,11 +2500,10 @@ static List
 
 	/*
 	 * Don't need multiple ALTER DEFAULT PRIVILEGE statements, if:
-	 * 1. It's a part of CREATE SCHEMA statement
-	 * 2. If the schema owner is dbo
-	 * 3. If the schema owner is db_owner (dbo_schema owner is a db_owner)
+	 * 1. If the schema owner is dbo
+	 * 2. If the schema owner is db_owner (dbo_schema owner is a db_owner)
 	 */
-	if (!is_create_schema && (strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
+	if ((strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
 	{
 		owner_other_than_dbo = true;
 	}
@@ -2367,7 +2594,7 @@ static List
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege, bool is_create_schema)
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
@@ -2384,7 +2611,7 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege, is_create_schema);
+		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
 		{

@@ -834,7 +834,16 @@ with index_id_map as MATERIALIZED(
 )
 select
   cast(X.indrelid as int) as object_id
-  , cast(I.relname as sys.sysname) as name
+  , cast(
+		coalesce(
+			(select pg_catalog.string_agg(
+				case
+					when option like 'bbf_original_rel_name=%' then substring(option, 23 /* prefix length */)
+					else null
+				end, ',')
+			from unnest(I.reloptions) as option),
+			I.relname)
+		AS sys.sysname) AS name
   , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
   , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
   , cast(X.indisunique as sys.bit) as is_unique
@@ -1806,15 +1815,19 @@ select
     , CAST(p.principal_id as int) as principal_id
     , CAST(p.schema_id as int) as schema_id
     , CAST(p.parent_object_id as int) as parent_object_id
-    , CAST('PK' as char(2)) as type
-    , CAST('PRIMARY_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(p.type as char(2)) as type
+    , CAST(
+        CASE p.type
+        WHEN 'PK' THEN 'PRIMARY_KEY_CONSTRAINT'
+        WHEN 'UQ' THEN 'UNIQUE_CONSTRAINT'
+        END
+      as sys.nvarchar(60)) as type_desc
     , CAST(p.create_date as sys.datetime) as create_date
     , CAST(p.modify_date as sys.datetime) as modify_date
     , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(p.is_published as sys.bit) as is_published
     , CAST(p.is_schema_published as sys.bit) as is_schema_published
 from sys.key_constraints p
-where p.type = 'PK'
 union all
 select
       CAST(pr.name as sys.sysname) as name
@@ -3289,6 +3302,90 @@ JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_defa
 JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_permissions AS 
+WITH super_user AS (SELECT datdba AS super_user FROM pg_database WHERE datname = CURRENT_DATABASE()) 
+SELECT 
+CAST(100 AS sys.tinyint) AS class,
+CAST('SERVER' AS sys.nvarchar(60)) AS class_desc,
+CAST(0 AS int) AS major_id,
+CAST(0 AS int) AS minor_id,
+CAST(Base.oid AS INT) AS grantee_principal_id,
+CAST((SELECT super_user FROM super_user) AS INT) AS grantor_principal_id,
+CAST('COSQ' AS sys.BPCHAR(4)) AS type,
+CAST('CONNECT SQL' AS sys.nvarchar(128)) AS permission_name,
+CAST('G' AS sys.BPCHAR(1)) AS state,
+CAST('GRANT' AS sys.nvarchar(60)) AS state_desc 
+FROM pg_catalog.pg_roles AS Base 
+INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
+WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Base.rolname = sys.suser_name() COLLATE sys.database_default 
+  OR Base.rolname = (SELECT pg_get_userbyid(super_user) FROM super_user))
+  AND Ext.type IN ('S', 'U') 
+UNION ALL 
+SELECT 
+CAST(105 AS sys.tinyint) AS class,
+CAST('ENDPOINT' AS sys.nvarchar(60)) AS class_desc,
+CAST(4 AS int) AS major_id,
+CAST(0 AS int) AS minor_id,
+CAST(2 AS INT) AS grantee_principal_id,
+CAST((SELECT super_user FROM super_user) AS INT) AS grantor_principal_id,
+CAST('CO' AS sys.BPCHAR(4)) AS type,
+CAST('CONNECT' AS sys.nvarchar(128)) AS permission_name,
+CAST('G' AS sys.BPCHAR(1)) AS state,
+CAST('GRANT' AS sys.nvarchar(60)) AS state_desc;
+GRANT SELECT ON sys.server_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.credentials 
+AS
+SELECT
+  CAST(NULL as INT) AS credential_id,
+  CAST(NULL as sys.sysname) AS name,
+  CAST(NULL as sys.nvarchar(4000)) AS credential_identity,
+  CAST(NULL as sys.datetime) AS create_date,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(NULL as sys.nvarchar(100)) AS target_type,
+  CAST(NULL as INT) AS target_id
+WHERE FALSE;
+GRANT SELECT ON sys.credentials TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_logins AS 
+WITH super_user AS (SELECT pg_get_userbyid(datdba) COLLATE sys.database_default AS super_user FROM pg_database WHERE datname = CURRENT_DATABASE())
+SELECT
+  CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+  CAST(Base.oid AS INT) AS principal_id,
+  CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+  CAST('S' AS sys.BPCHAR(1)) AS type,
+  CAST('SQL_LOGIN' AS sys.NVARCHAR(60)) AS type_desc,
+  CAST(Ext.is_disabled AS INT) AS is_disabled,
+  CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+  CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+  CAST(Ext.default_database_name AS SYS.SYSNAME) AS default_database_name,
+  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+  CAST(Ext.credential_id AS INT) AS credential_id,
+  CAST(
+    CASE
+      WHEN Ext.orig_loginname = (SELECT super_user FROM super_user) THEN 0
+      ELSE 1
+    END
+  AS sys.BIT) AS is_policy_checked,
+  CAST(0 AS sys.BIT) AS is_expiration_checked,
+  CAST(
+    CASE
+      WHEN (sys.suser_name() = (SELECT super_user FROM super_user) OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')) THEN Auth.rolpassword
+      ELSE NULL
+    END
+  AS sys.varbinary(256)) AS password_hash 
+FROM pg_catalog.pg_roles AS Base 
+INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
+LEFT JOIN pg_authid Auth ON Auth.rolname = Base.rolname 
+WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = sys.suser_name()
+  OR Ext.orig_loginname = (SELECT super_user FROM super_user))
+  AND Ext.type = 'S';
+GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.trigger_events
 AS

@@ -162,14 +162,14 @@ SELECT * FROM babel_1000_test8(1)
 GO
 ~~START~~
 numeric
-2.06000000
+2.06
 ~~END~~
 
 SELECT * FROM babel_1000_test8(12.345678)
 GO
 ~~START~~
 numeric
-13.06000000
+13.06
 ~~END~~
 
 -- overflow, expect error
