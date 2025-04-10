@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "collation.h"
 #include "executor/spi.h"
+#include "libpq/libpq-be.h"
 #include "optimizer/planner.h"
 #include "utils/expandedrecord.h"
 #include "utils/plancache.h"
@@ -1864,6 +1865,8 @@ extern common_utility_plugin *common_utility_plugin_ptr;
 
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
+
+#define IS_TDS_CONN() (MyProcPort && MyProcPort->is_tds_conn)
 
 extern Oid	procid_var;
 extern uint64 rowcount_var;
