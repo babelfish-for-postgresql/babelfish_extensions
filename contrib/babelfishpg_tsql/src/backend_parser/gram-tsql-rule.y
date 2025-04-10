@@ -1782,7 +1782,7 @@ table_ref:	relation_expr tsql_table_hint_expr
 			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
 				{
 					List *unpivot_info = list_make3($1, (List *)$3, $4);
-                    $$ = tsql_unpivot_transformation(unpivot_info);
+                    $$ = tsql_unpivot_transformation(unpivot_info, @1);
 				}
 		;
 

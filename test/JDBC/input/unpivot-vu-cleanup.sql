@@ -43,8 +43,8 @@ DROP TABLE very_long_table_name_123456789012345678901234567890123456789012345678
 GO
 DROP TABLE [Sales$Data@2024];
 GO
--- DROP TABLE [Global_データ_Sales];
--- GO
+DROP TABLE [Global_データ_Sales];
+GO
 
 -- Drop temporary tables (if they still exist)
 IF OBJECT_ID('tempdb..#temp_sales') IS NOT NULL
