@@ -3383,26 +3383,15 @@ John Doe#!#IT#!#Project A#!#5000#!#500000
 ~~END~~
 
 
+DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
+GO
+
 DROP TABLE testexactnumeric_emp_babel_5621;
 GO
-~~ERROR (Code: 3726)~~
-
-~~ERROR (Message: cannot drop table testexactnumeric_emp_babel_5621 because other objects depend on it)~~
-
 
 DROP TABLE testexactnumeric_dept_babel_5621;
 GO
-~~ERROR (Code: 3726)~~
-
-~~ERROR (Message: cannot drop table testexactnumeric_dept_babel_5621 because other objects depend on it)~~
-
 
 DROP TABLE testexactnumeric_proj_babel_5621;
 GO
-~~ERROR (Code: 3726)~~
 
-~~ERROR (Message: cannot drop table testexactnumeric_proj_babel_5621 because other objects depend on it)~~
-
-
-DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
-GO

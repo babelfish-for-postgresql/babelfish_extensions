@@ -1672,6 +1672,9 @@ AND p.cost < hbd.budget
 ORDER BY hbd.budget DESC, e.salary DESC;
 GO
 
+DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
+GO
+
 DROP TABLE testexactnumeric_emp_babel_5621;
 GO
 
@@ -1681,5 +1684,3 @@ GO
 DROP TABLE testexactnumeric_proj_babel_5621;
 GO
 
-DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
-GO
