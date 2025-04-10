@@ -1181,29 +1181,29 @@ SELECT
 FROM exactnumeric_table;
 GO
 ~~START~~
-numeric#!#numeric#!#numeric#!#numeric
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
-127.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#32767.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#2147483647.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807.00000000
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808
+127#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32767#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483647#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-128.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-5.00000000#!#100.00000000#!#10000.00000000#!#1000000000.00000000
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+128#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#100#!#10000#!#1000000000
 ~~END~~
 
 
@@ -1215,29 +1215,29 @@ SELECT
 FROM exactnumeric_table;
 GO
 ~~START~~
-numeric#!#numeric#!#numeric#!#numeric
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32800.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#-2147483600.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775800.00000000
-100.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#32800.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#2147483600.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775800.00000000
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32800#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483600#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775800
+100#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32800#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483600#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775800
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-100.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-0E-8#!#100.00000000#!#10000.00000000#!#1000000000.00000000
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+100#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#100#!#10000#!#1000000000
 ~~END~~
 
 
@@ -1249,29 +1249,29 @@ SELECT
 FROM exactnumeric_table;
 GO
 ~~START~~
-numeric#!#numeric#!#numeric#!#numeric
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#-32768.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#-2147483648.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808.00000000
-127.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#32767.00000000#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#2147483647.00000000#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807.00000000
+int#!#int#!#int#!#bigint
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#-32768#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#-2147483648#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#-9223372036854775808
+127#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#32767#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#2147483647#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#9223372036854775807
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-0E-8#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0E-8#!#<NULL>#!#<NULL>
-<NULL>#!#<NULL>#!#0E-8#!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#0E-8
-128.00000000#!#<NULL>#!#<NULL>#!#<NULL>
-5.00000000#!#100.00000000#!#10000.00000000#!#1000000000.00000000
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+0#!#<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#0#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#0
+128#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#100#!#10000#!#1000000000
 ~~END~~
 
 
@@ -3223,79 +3223,61 @@ bigint
 
 
 -- Complex queries
-CREATE TABLE testexactnumeric_emp (
+CREATE TABLE testexactnumeric_emp_babel_5621 (
 	id INT PRIMARY KEY,
 	name VARCHAR(50),
 	department_id TINYINT,
 	salary SMALLINT
 );
 GO
-~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "testexactnumeric_emp" already exists)~~
-
-
-CREATE TABLE testexactnumeric_dept (
+CREATE TABLE testexactnumeric_dept_babel_5621 (
 	id TINYINT PRIMARY KEY,
 	name VARCHAR(50),
 	budget INT
 );
 GO
-~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "testexactnumeric_dept" already exists)~~
-
-
-CREATE TABLE testexactnumeric_proj (
+CREATE TABLE testexactnumeric_proj_babel_5621 (
 	id SMALLINT PRIMARY KEY,
 	name VARCHAR(50),
 	department_id TINYINT,
 	cost BIGINT
 );
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "testexactnumeric_proj" already exists)~~
-
 
 -- Insert sample data
-INSERT INTO testexactnumeric_emp VALUES 
+INSERT INTO testexactnumeric_emp_babel_5621 VALUES 
 (1, 'John Doe', 1, 5000),
 (2, 'Jane Smith', 2, 6000),
 (3, 'Bob Johnson', 1, 4500),
 (4, 'Alice Brown', 3, 5500);
 GO
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "testexactnumeric_emp_pkey")~~
+~~ROW COUNT: 4~~
 
 
-INSERT INTO testexactnumeric_dept VALUES
+INSERT INTO testexactnumeric_dept_babel_5621 VALUES
 (1, 'IT', 1000000),
 (2, 'HR', 500000),
 (3, 'Finance', 750000);
 GO
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "testexactnumeric_dept_pkey")~~
+~~ROW COUNT: 3~~
 
 
-INSERT INTO testexactnumeric_proj VALUES
+INSERT INTO testexactnumeric_proj_babel_5621 VALUES
 (1, 'Project A', 1, 500000),
 (2, 'Project B', 2, 250000),
 (3, 'Project C', 1, 750000),
 (4, 'Project D', 3, 1000000);
 GO
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "testexactnumeric_proj_pkey")~~
+~~ROW COUNT: 4~~
 
 
 -- Multiple join conditions
 SELECT e.name AS employee_name, d.name AS department_name, p.name AS project_name
-FROM testexactnumeric_emp e
-JOIN testexactnumeric_dept d ON e.department_id = d.id
-JOIN testexactnumeric_proj p ON d.id = p.department_id AND e.salary < p.cost
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id AND e.salary < p.cost
 WHERE e.id > 0 AND d.budget > 100000 AND p.cost < 1000000;
 GO
 ~~START~~
@@ -3310,11 +3292,11 @@ Bob Johnson#!#IT#!#Project A
 
 -- Subquery
 SELECT e.name, e.salary
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 WHERE e.department_id IN (
     SELECT d.id
-    FROM testexactnumeric_dept d
-    WHERE d.budget > (SELECT AVG(cost) FROM testexactnumeric_proj)
+    FROM testexactnumeric_dept_babel_5621 d
+    WHERE d.budget > (SELECT AVG(cost) FROM testexactnumeric_proj_babel_5621)
 );
 GO
 ~~START~~
@@ -3328,14 +3310,14 @@ Alice Brown#!#5500
 -- CTE
 WITH dept_project_count AS (
     SELECT d.id, d.name, COUNT(p.id) AS project_count
-    FROM testexactnumeric_dept d
-    LEFT JOIN testexactnumeric_proj p ON d.id = p.department_id
+    FROM testexactnumeric_dept_babel_5621 d
+    LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
     GROUP BY d.id, d.name
 )
 SELECT e.name AS employee_name, dpc.name AS department_name, dpc.project_count
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 JOIN dept_project_count dpc ON e.department_id = dpc.id
-WHERE e.salary > (SELECT AVG(salary) FROM testexactnumeric_emp);
+WHERE e.salary > (SELECT AVG(salary) FROM testexactnumeric_emp_babel_5621);
 GO
 ~~START~~
 varchar#!#varchar#!#int
@@ -3345,22 +3327,22 @@ Alice Brown#!#Finance#!#1
 
 
 --views
-CREATE VIEW testexactnumeric_emp_proj_summary AS
+CREATE VIEW testexactnumeric_emp_babel_5621_proj_summary AS
 SELECT 
     e.id AS employee_id,
     e.name AS employee_name,
     d.name AS department_name,
     COUNT(p.id) AS project_count,
     SUM(p.cost) AS total_project_cost
-FROM testexactnumeric_emp e
-JOIN testexactnumeric_dept d ON e.department_id = d.id
-LEFT JOIN testexactnumeric_proj p ON d.id = p.department_id
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
 GROUP BY e.id, e.name, d.name;
 GO
 
 -- Query using the view
 SELECT *
-FROM testexactnumeric_emp_proj_summary
+FROM testexactnumeric_emp_babel_5621_proj_summary
 WHERE total_project_cost > 500000 AND project_count > 0;
 GO
 ~~START~~
@@ -3374,8 +3356,8 @@ int#!#varchar#!#varchar#!#int#!#bigint
 -- Complex query combining multiple techniques
 WITH high_budget_depts AS (
     SELECT id, name, budget
-    FROM testexactnumeric_dept
-    WHERE budget > (SELECT AVG(budget) FROM testexactnumeric_dept)
+    FROM testexactnumeric_dept_babel_5621
+    WHERE budget > (SELECT AVG(budget) FROM testexactnumeric_dept_babel_5621)
 )
 SELECT 
     e.name AS employee_name,
@@ -3383,12 +3365,12 @@ SELECT
     p.name AS project_name,
     e.salary,
     p.cost AS project_cost
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 JOIN high_budget_depts hbd ON e.department_id = hbd.id
-LEFT JOIN testexactnumeric_proj p ON hbd.id = p.department_id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON hbd.id = p.department_id
 WHERE e.salary > (
     SELECT AVG(salary) 
-    FROM testexactnumeric_emp 
+    FROM testexactnumeric_emp_babel_5621 
     WHERE department_id = e.department_id
 )
 AND p.cost < hbd.budget
@@ -3401,26 +3383,26 @@ John Doe#!#IT#!#Project A#!#5000#!#500000
 ~~END~~
 
 
-DROP TABLE testexactnumeric_emp;
+DROP TABLE testexactnumeric_emp_babel_5621;
 GO
 ~~ERROR (Code: 3726)~~
 
-~~ERROR (Message: cannot drop table testexactnumeric_emp because other objects depend on it)~~
+~~ERROR (Message: cannot drop table testexactnumeric_emp_babel_5621 because other objects depend on it)~~
 
 
-DROP TABLE testexactnumeric_dept;
+DROP TABLE testexactnumeric_dept_babel_5621;
 GO
 ~~ERROR (Code: 3726)~~
 
-~~ERROR (Message: cannot drop table testexactnumeric_dept because other objects depend on it)~~
+~~ERROR (Message: cannot drop table testexactnumeric_dept_babel_5621 because other objects depend on it)~~
 
 
-DROP TABLE testexactnumeric_proj;
+DROP TABLE testexactnumeric_proj_babel_5621;
 GO
 ~~ERROR (Code: 3726)~~
 
-~~ERROR (Message: cannot drop table testexactnumeric_proj because other objects depend on it)~~
+~~ERROR (Message: cannot drop table testexactnumeric_proj_babel_5621 because other objects depend on it)~~
 
 
-DROP VIEW testexactnumeric_emp_proj_summary;
+DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
 GO

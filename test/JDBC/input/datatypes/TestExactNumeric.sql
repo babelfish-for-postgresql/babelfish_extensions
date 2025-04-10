@@ -1553,7 +1553,7 @@ SELECT CAST(9223372036854775807 AS BIGINT) % (CAST(32767 AS SMALLINT) * CAST(255
 GO
 
 -- Complex queries
-CREATE TABLE testexactnumeric_emp (
+CREATE TABLE testexactnumeric_emp_babel_5621 (
 	id INT PRIMARY KEY,
 	name VARCHAR(50),
 	department_id TINYINT,
@@ -1561,14 +1561,14 @@ CREATE TABLE testexactnumeric_emp (
 );
 GO
 
-CREATE TABLE testexactnumeric_dept (
+CREATE TABLE testexactnumeric_dept_babel_5621 (
 	id TINYINT PRIMARY KEY,
 	name VARCHAR(50),
 	budget INT
 );
 GO
 
-CREATE TABLE testexactnumeric_proj (
+CREATE TABLE testexactnumeric_proj_babel_5621 (
 	id SMALLINT PRIMARY KEY,
 	name VARCHAR(50),
 	department_id TINYINT,
@@ -1577,20 +1577,20 @@ CREATE TABLE testexactnumeric_proj (
 GO
 
 -- Insert sample data
-INSERT INTO testexactnumeric_emp VALUES 
+INSERT INTO testexactnumeric_emp_babel_5621 VALUES 
 (1, 'John Doe', 1, 5000),
 (2, 'Jane Smith', 2, 6000),
 (3, 'Bob Johnson', 1, 4500),
 (4, 'Alice Brown', 3, 5500);
 GO
 
-INSERT INTO testexactnumeric_dept VALUES
+INSERT INTO testexactnumeric_dept_babel_5621 VALUES
 (1, 'IT', 1000000),
 (2, 'HR', 500000),
 (3, 'Finance', 750000);
 GO
 
-INSERT INTO testexactnumeric_proj VALUES
+INSERT INTO testexactnumeric_proj_babel_5621 VALUES
 (1, 'Project A', 1, 500000),
 (2, 'Project B', 2, 250000),
 (3, 'Project C', 1, 750000),
@@ -1599,60 +1599,60 @@ GO
 
 -- Multiple join conditions
 SELECT e.name AS employee_name, d.name AS department_name, p.name AS project_name
-FROM testexactnumeric_emp e
-JOIN testexactnumeric_dept d ON e.department_id = d.id
-JOIN testexactnumeric_proj p ON d.id = p.department_id AND e.salary < p.cost
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id AND e.salary < p.cost
 WHERE e.id > 0 AND d.budget > 100000 AND p.cost < 1000000;
 GO
 
 -- Subquery
 SELECT e.name, e.salary
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 WHERE e.department_id IN (
     SELECT d.id
-    FROM testexactnumeric_dept d
-    WHERE d.budget > (SELECT AVG(cost) FROM testexactnumeric_proj)
+    FROM testexactnumeric_dept_babel_5621 d
+    WHERE d.budget > (SELECT AVG(cost) FROM testexactnumeric_proj_babel_5621)
 );
 GO
 
 -- CTE
 WITH dept_project_count AS (
     SELECT d.id, d.name, COUNT(p.id) AS project_count
-    FROM testexactnumeric_dept d
-    LEFT JOIN testexactnumeric_proj p ON d.id = p.department_id
+    FROM testexactnumeric_dept_babel_5621 d
+    LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
     GROUP BY d.id, d.name
 )
 SELECT e.name AS employee_name, dpc.name AS department_name, dpc.project_count
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 JOIN dept_project_count dpc ON e.department_id = dpc.id
-WHERE e.salary > (SELECT AVG(salary) FROM testexactnumeric_emp);
+WHERE e.salary > (SELECT AVG(salary) FROM testexactnumeric_emp_babel_5621);
 GO
 
 --views
-CREATE VIEW testexactnumeric_emp_proj_summary AS
+CREATE VIEW testexactnumeric_emp_babel_5621_proj_summary AS
 SELECT 
     e.id AS employee_id,
     e.name AS employee_name,
     d.name AS department_name,
     COUNT(p.id) AS project_count,
     SUM(p.cost) AS total_project_cost
-FROM testexactnumeric_emp e
-JOIN testexactnumeric_dept d ON e.department_id = d.id
-LEFT JOIN testexactnumeric_proj p ON d.id = p.department_id
+FROM testexactnumeric_emp_babel_5621 e
+JOIN testexactnumeric_dept_babel_5621 d ON e.department_id = d.id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON d.id = p.department_id
 GROUP BY e.id, e.name, d.name;
 GO
 
 -- Query using the view
 SELECT *
-FROM testexactnumeric_emp_proj_summary
+FROM testexactnumeric_emp_babel_5621_proj_summary
 WHERE total_project_cost > 500000 AND project_count > 0;
 GO
 
 -- Complex query combining multiple techniques
 WITH high_budget_depts AS (
     SELECT id, name, budget
-    FROM testexactnumeric_dept
-    WHERE budget > (SELECT AVG(budget) FROM testexactnumeric_dept)
+    FROM testexactnumeric_dept_babel_5621
+    WHERE budget > (SELECT AVG(budget) FROM testexactnumeric_dept_babel_5621)
 )
 SELECT 
     e.name AS employee_name,
@@ -1660,26 +1660,26 @@ SELECT
     p.name AS project_name,
     e.salary,
     p.cost AS project_cost
-FROM testexactnumeric_emp e
+FROM testexactnumeric_emp_babel_5621 e
 JOIN high_budget_depts hbd ON e.department_id = hbd.id
-LEFT JOIN testexactnumeric_proj p ON hbd.id = p.department_id
+LEFT JOIN testexactnumeric_proj_babel_5621 p ON hbd.id = p.department_id
 WHERE e.salary > (
     SELECT AVG(salary) 
-    FROM testexactnumeric_emp 
+    FROM testexactnumeric_emp_babel_5621 
     WHERE department_id = e.department_id
 )
 AND p.cost < hbd.budget
 ORDER BY hbd.budget DESC, e.salary DESC;
 GO
 
-DROP TABLE testexactnumeric_emp;
+DROP TABLE testexactnumeric_emp_babel_5621;
 GO
 
-DROP TABLE testexactnumeric_dept;
+DROP TABLE testexactnumeric_dept_babel_5621;
 GO
 
-DROP TABLE testexactnumeric_proj;
+DROP TABLE testexactnumeric_proj_babel_5621;
 GO
 
-DROP VIEW testexactnumeric_emp_proj_summary;
+DROP VIEW testexactnumeric_emp_babel_5621_proj_summary;
 GO
