@@ -53,8 +53,8 @@
   engine_branch: BABEL_2_12_STABLE__PG_14_17
   extension_branch: BABEL_2_12_STABLE
 '14.18':
-  engine_branch: BABEL_2_X_DEV__PG_14_X
-  extension_branch: BABEL_2_X_DEV
+  engine_branch: BABEL_2_12_STABLE__PG_14_18
+  extension_branch: BABEL_2_12_STABLE
 '15.2':
   engine_branch: BABEL_3_1_STABLE__PG_15_2
   extension_branch: BABEL_3_1_STABLE
@@ -83,8 +83,8 @@
   engine_branch: BABEL_3_9_STABLE__PG_15_12
   extension_branch: BABEL_3_9_STABLE
 '15.13':
-  engine_branch: BABEL_3_X_DEV__PG_15_X
-  extension_branch: BABEL_3_X_DEV
+  engine_branch: BABEL_3_10_STABLE__PG_15_3
+  extension_branch: BABEL_3_10_STABLE
 '16.1':
   engine_branch: BABEL_4_0_STABLE__PG_16_1
   extension_branch: BABEL_4_0_STABLE
