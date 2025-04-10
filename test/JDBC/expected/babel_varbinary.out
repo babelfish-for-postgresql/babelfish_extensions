@@ -830,7 +830,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
@@ -840,7 +840,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 113.092 ms
+Babelfish T-SQL Batch Parsing Time: 112.215 ms
 ~~END~~
 
 
@@ -849,7 +849,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
@@ -859,7 +859,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.146 ms
+Babelfish T-SQL Batch Parsing Time: 7.073 ms
 ~~END~~
 
 
@@ -868,7 +868,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
@@ -878,7 +878,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.216 ms
+Babelfish T-SQL Batch Parsing Time: 0.212 ms
 ~~END~~
 
 
@@ -887,7 +887,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
@@ -897,7 +897,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.255 ms
+Babelfish T-SQL Batch Parsing Time: 0.206 ms
 ~~END~~
 
 
@@ -920,7 +920,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
@@ -930,7 +930,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.205 ms
+Babelfish T-SQL Batch Parsing Time: 0.319 ms
 ~~END~~
 
 
@@ -939,7 +939,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
@@ -958,7 +958,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col < cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
@@ -968,7 +968,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.209 ms
+Babelfish T-SQL Batch Parsing Time: 0.313 ms
 ~~END~~
 
 
@@ -977,7 +977,7 @@ GO
 ~~START~~
 text
 Query Text: 
- select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+ select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 
 Result
 Query Text: Select varbinary_test_col from varbinary_test_table where varbinary_test_col > cast(0x123 as varbinary(10)) + cast(0x123 as varbinary(10))
@@ -987,7 +987,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.208 ms
+Babelfish T-SQL Batch Parsing Time: 0.318 ms
 ~~END~~
 
 

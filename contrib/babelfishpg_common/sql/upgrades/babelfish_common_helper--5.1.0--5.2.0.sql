@@ -45,15 +45,15 @@ END
 $body$;
 
 -- TODO : We need to fix this in BABEL-5597
-CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.bbf_varbinary,rightarg sys.bbf_varbinary)
-RETURNS int8
+CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
+RETURNS INT8
 AS $$
-	select sys.varbinaryadd_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+	select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.varbinaryadd_helper(int8, int8)
-RETURNS int8
+CREATE OR REPLACE FUNCTION sys.varbinaryadd_helper(INT8, INT8)
+RETURNS INT8
 AS 'int8pl'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -68,15 +68,15 @@ CREATE OPERATOR sys.+ (
 END IF;
 END $$;
 
-CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.bbf_varbinary,rightarg sys.bbf_varbinary)
-RETURNS int8
+CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
+RETURNS INT8
 AS $$
-	select sys.varbinarysub_helper(varbinaryint8(leftarg), varbinaryint8(rightarg))
+	select sys.varbinarysub_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.varbinarysub_helper(int8, int8)
-RETURNS int8
+CREATE OR REPLACE FUNCTION sys.varbinarysub_helper(INT8, INT8)
+RETURNS INT8
 AS 'int8mi'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
