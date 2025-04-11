@@ -1,0 +1,103 @@
+name: 'Run JDBC Tests'
+description: 'Run Babel JDBC test framework'
+
+inputs:
+  input_dir:
+    description: 'Test input directory'
+    required: false
+    default: input
+  migration_mode:
+    description: 'Database migration mode'
+    required: false
+    default: "multi-db"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run JDBC Tests
+      run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          export inputFilesPath=${{inputs.input_dir}}
+          cd test/JDBC/
+
+          # Create a temporary file to store selected tests
+          > temp_selected_tests
+
+          # Function to check if test is ignored
+          is_test_ignored() {
+            local test_name=$1
+            grep -q "^ignore#!#$test_name$" jdbc_schedule 2>/dev/null
+            return $?
+          }
+
+          # Find all SQL test files from input directory and its subdirectories
+          SQL_TESTS=$(find input -name "*.sql")
+
+          # Function to get base name of VU test
+          get_vu_base_name() {
+            local file_name=$1
+            if [[ $file_name == *"-vu-prepare"* ]]; then
+              echo "${file_name%-vu-prepare*}"
+            elif [[ $file_name == *"-vu-verify"* ]]; then
+              echo "${file_name%-vu-verify*}"
+            elif [[ $file_name == *"-vu-cleanup"* ]]; then
+              echo "${file_name%-vu-cleanup*}"
+            else
+              echo "$file_name"
+            fi
+          }
+
+          # Randomly select 3 test files
+          echo "$SQL_TESTS" | shuf -n 300 | while read -r test; do
+              # Get the base name without extension
+              test_without_ext=$(basename "$test" .sql)
+
+              # Skip if test is marked as ignored
+              if is_test_ignored "$test_without_ext"; then
+                  echo "Skipping ignored test: $test_without_ext"
+                  continue
+              fi
+
+              # Check if it's a VU test by looking for -vu- in the name
+              if [[ $test_without_ext == *"-vu-"* ]]; then
+                  # Extract the base name (everything before -vu-)
+                  base_name=${test_without_ext%%-vu-*}
+                  
+                  # Add all three related files in order
+                  echo "${base_name}-vu-prepare" >> temp_selected_tests
+                  echo "${base_name}-vu-verify" >> temp_selected_tests
+                  echo "${base_name}-vu-cleanup" >> temp_selected_tests
+                  echo "Added VU test suite: $base_name"
+              else
+                  # This is a normal test
+                  echo "$test_without_ext" >> temp_selected_tests
+                  echo "Added normal test: $test_without_ext"
+              fi
+          done
+          
+          # Clear the schedule file and write the new tests
+          > jdbc_schedule
+
+          # Remove duplicates while maintaining order
+          awk '!seen[$0]++' temp_selected_tests > jdbc_schedule
+          rm temp_selected_tests
+
+          echo "Schedule file contents:"
+          cat jdbc_schedule
+
+          # Update migration mode
+          if [[ '${{ inputs.migration_mode }}' == 'single-db' ]];then
+            export isSingleDbMode=true
+          fi
+
+          # Run the tests
+          mvn -B -ntp test
+
+          if [[ '${{ inputs.migration_mode }}' == 'single-db' ]];then
+            unset isSingleDbMode
+          fi
+
+          echo "Completed running the tests from schedule:"
+          
+      shell: bash
