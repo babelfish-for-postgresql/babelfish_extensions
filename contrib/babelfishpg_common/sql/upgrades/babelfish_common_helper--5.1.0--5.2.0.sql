@@ -44,17 +44,9 @@ BEGIN
 END
 $body$;
 
--- TODO : We need to fix this in BABEL-5597
-CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
+CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY, rightarg sys.BBF_VARBINARY)
 RETURNS sys.BBF_VARBINARY
-AS $$
-	select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
-$$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinaryadd_helper(INT8, INT8)
-RETURNS INT8
-AS 'int8pl'
+AS 'byteacat'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 DO $$
@@ -64,29 +56,6 @@ CREATE OPERATOR sys.+ (
 	LEFTARG    = sys.BBF_VARBINARY,
 	RIGHTARG   = sys.BBF_VARBINARY,
 	PROCEDURE  = sys.varbinaryadd
-);
-END IF;
-END $$;
-
-CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS sys.BBF_VARBINARY
-AS $$
-	select sys.varbinarysub_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
-$$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinarysub_helper(INT8, INT8)
-RETURNS INT8
-AS 'int8mi'
-LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
-
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_operator WHERE oprleft = 'sys.BBF_VARBINARY'::pg_catalog.regtype and oprright = 'sys.BBF_VARBINARY'::pg_catalog.regtype and oprnamespace = 'sys'::regnamespace and oprname = '-' and oprresult != 0) THEN
-CREATE OPERATOR sys.- (
-	LEFTARG    = sys.BBF_VARBINARY,
-	RIGHTARG   = sys.BBF_VARBINARY,
-	PROCEDURE  = sys.varbinarysub
 );
 END IF;
 END $$;

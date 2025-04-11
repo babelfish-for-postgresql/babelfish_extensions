@@ -341,41 +341,13 @@ DEFAULT FOR TYPE sys.bbf_varbinary USING btree AS
     OPERATOR    5   >  (sys.bbf_varbinary, sys.bbf_varbinary),
     FUNCTION    1   sys.bbf_varbinary_cmp(sys.bbf_varbinary, sys.bbf_varbinary);
 
--- FIX ME :: This implementation of the varbinary addition and subtraction operator is functionally incorrect. It was 
--- also incorrect in previous versions, so not picking an index scan (which it was doing earlier) is acceptable. This 
--- implementation is maintained to avoid regression in response value. The functional correctness will be addressed in JIRA-BABEL5597
-CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
+CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY, rightarg sys.BBF_VARBINARY)
 RETURNS sys.BBF_VARBINARY
-AS $$
-	select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
-$$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinaryadd_helper(INT8, INT8)
-RETURNS INT8
-AS 'int8pl'
+AS 'byteacat'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (
 	LEFTARG    = sys.BBF_VARBINARY,
 	RIGHTARG   = sys.BBF_VARBINARY,
 	PROCEDURE  = sys.varbinaryadd
-);
-
-CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS sys.BBF_VARBINARY
-AS $$
-	select sys.varbinarysub_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
-$$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varbinarysub_helper(INT8, INT8)
-RETURNS INT8
-AS 'int8mi'
-LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OPERATOR sys.- (
-	LEFTARG    = sys.BBF_VARBINARY,
-	RIGHTARG   = sys.BBF_VARBINARY,
-	PROCEDURE  = sys.varbinarysub
 );
