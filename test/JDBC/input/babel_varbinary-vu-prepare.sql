@@ -1,10 +1,10 @@
-CREATE TABLE babel_varbinary_test_table (
+CREATE TABLE babel_varbinary_test_table1 (
     fixedlen_col VARBINARY(100), 
     maxlen_col VARBINARY(MAX)
 )
 GO
 
-INSERT INTO babel_varbinary_test_table (fixedlen_col, maxlen_col) VALUES 
+INSERT INTO babel_varbinary_test_table1 (fixedlen_col, maxlen_col) VALUES 
     (0x, 0x), 
     (NULL, NULL), 
     (0x0, 0x0), 
@@ -17,7 +17,7 @@ SELECT
     t1.maxlen_col + t1.fixedlen_col as max_fixed_addition,
     t1.fixedlen_col + t1.fixedlen_col as fixed_fixed_addition,
     t1.maxlen_col + t1.maxlen_col as max_max_addition
-FROM babel_varbinary_test_table t1
+FROM babel_varbinary_test_table1 t1
 ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition;
 GO
 
@@ -26,8 +26,8 @@ SELECT
     t1.maxlen_col + t2.fixedlen_col as max_fixed_addition,
     t1.fixedlen_col + t2.fixedlen_col as fixed_fixed_addition,
     t1.maxlen_col + t2.maxlen_col as max_max_addition
-FROM babel_varbinary_test_table t1 
-CROSS JOIN babel_varbinary_test_table t2
+FROM babel_varbinary_test_table1 t1 
+CROSS JOIN babel_varbinary_test_table1 t2
 ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition;
 GO
 
@@ -68,7 +68,7 @@ RETURN (
         t1.maxlen_col + t1.fixedlen_col as max_fixed_addition,
         t1.fixedlen_col + t1.fixedlen_col as fixed_fixed_addition,
         t1.maxlen_col + t1.maxlen_col as max_max_addition
-    FROM babel_varbinary_test_table t1
+    FROM babel_varbinary_test_table1 t1
     ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition
 );
 GO
@@ -81,8 +81,8 @@ RETURN (
         t1.maxlen_col + t2.fixedlen_col as max_fixed_addition,
         t1.fixedlen_col + t2.fixedlen_col as fixed_fixed_addition,
         t1.maxlen_col + t2.maxlen_col as max_max_addition
-    FROM babel_varbinary_test_table t1 
-    CROSS JOIN babel_varbinary_test_table t2
+    FROM babel_varbinary_test_table1 t1 
+    CROSS JOIN babel_varbinary_test_table1 t2
     ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition
 );
 GO
@@ -155,7 +155,7 @@ BEGIN
         t1.maxlen_col + t1.fixedlen_col as max_fixed_addition,
         t1.fixedlen_col + t1.fixedlen_col as fixed_fixed_addition,
         t1.maxlen_col + t1.maxlen_col as max_max_addition
-    FROM babel_varbinary_test_table t1
+    FROM babel_varbinary_test_table1 t1
     ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition;
 END;
 GO
@@ -167,8 +167,8 @@ BEGIN
         t1.maxlen_col + t2.fixedlen_col as max_fixed_addition,
         t1.fixedlen_col + t2.fixedlen_col as fixed_fixed_addition,
         t1.maxlen_col + t2.maxlen_col as max_max_addition
-    FROM babel_varbinary_test_table t1 
-    CROSS JOIN babel_varbinary_test_table t2
+    FROM babel_varbinary_test_table1 t1 
+    CROSS JOIN babel_varbinary_test_table1 t2
     ORDER BY max_fixed_addition, fixed_fixed_addition, max_max_addition;
 END;
 GO
@@ -226,4 +226,19 @@ BEGIN
         @fixed_input + @fixed_input as fixed_fixed_result,
         @max_input1 + @max_input2 as max_max_result;
 END;
+GO
+
+CREATE TABLE babel_varbinary_test_table2 (varbinary_col varbinary(100))
+GO
+
+INSERT INTO babel_varbinary_test_table2 (varbinary_col) SELECT CAST(0x1 AS VARBINARY) FROM generate_series(1, 3);
+GO
+
+INSERT INTO babel_varbinary_test_table2 (varbinary_col) SELECT CAST(0x4 AS VARBINARY) FROM generate_series(1, 3000000);
+GO
+
+INSERT INTO babel_varbinary_test_table2 (varbinary_col) SELECT CAST(0x8 AS VARBINARY) FROM generate_series(1, 3);
+GO
+
+CREATE INDEX babel_varbinary_test_ind ON babel_varbinary_test_table2 (varbinary_col ASC);
 GO

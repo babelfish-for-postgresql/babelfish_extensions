@@ -44,9 +44,14 @@ GO
 DROP VIEW babel_varbinary_test_view6;
 GO
 
--- Drop Table
-DROP TABLE babel_varbinary_test_table;
+-- Drop Indexes
+DROP INDEX babel_varbinary_test_ind ON babel_varbinary_test_table2;
 GO
 
+-- Drop Table
+DROP TABLE babel_varbinary_test_table1;
+GO
+DROP TABLE babel_varbinary_test_table2;
+GO
 DROP TABLE addition_testing;
 GO
