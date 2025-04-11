@@ -46,7 +46,7 @@ $body$;
 
 -- TODO : We need to fix this in BABEL-5597
 CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS INT8
+RETURNS sys.BBF_VARBINARY
 AS $$
 	select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$
@@ -69,7 +69,7 @@ END IF;
 END $$;
 
 CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS INT8
+RETURNS sys.BBF_VARBINARY
 AS $$
 	select sys.varbinarysub_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$

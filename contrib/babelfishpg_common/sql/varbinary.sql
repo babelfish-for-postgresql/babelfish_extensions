@@ -345,7 +345,7 @@ DEFAULT FOR TYPE sys.bbf_varbinary USING btree AS
 -- also incorrect in previous versions, so not picking an index scan (which it was doing earlier) is acceptable. This 
 -- implementation is maintained to avoid regression in response value. The functional correctness will be addressed in JIRA-BABEL5597
 CREATE OR REPLACE FUNCTION sys.varbinaryadd(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS INT8
+RETURNS sys.BBF_VARBINARY
 AS $$
 	select sys.varbinaryadd_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$
@@ -363,7 +363,7 @@ CREATE OPERATOR sys.+ (
 );
 
 CREATE OR REPLACE FUNCTION sys.varbinarysub(leftarg sys.BBF_VARBINARY,rightarg sys.BBF_VARBINARY)
-RETURNS INT8
+RETURNS sys.BBF_VARBINARY
 AS $$
 	select sys.varbinarysub_helper(sys.varbinaryint8(leftarg), sys.varbinaryint8(rightarg))
 $$

@@ -643,8 +643,8 @@ declare @result varbinary(max) = 0x
 select @result + @random
 GO
 ~~START~~
-bigint
-280284578885
+varbinary
+0000004142434445
 ~~END~~
 
 
@@ -653,8 +653,8 @@ declare @result varbinary(max) = 0x
 select @result - @random
 GO
 ~~START~~
-bigint
--280284578885
+varbinary
+FFFFFFBEBDBCBBBB
 ~~END~~
 
 
@@ -684,8 +684,8 @@ cast(cast(9223372036854775807 as bigint) as varbinary(max))
 cast(cast(9223372036854775807 as bigint) as varbinary(max));
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
@@ -695,31 +695,31 @@ cast(cast(9223372036854775807 as bigint) as varbinary(200))
 cast(cast(9223372036854775807 as bigint) as varbinary(200));
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
 select cast(0x as varbinary(max)) + cast(0x as varbinary(max))
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
 select cast(0x0 as varbinary(max)) + cast(0x0 as varbinary(max))
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
 select cast(NULL as varbinary(max)) + cast(NULL as varbinary(max))
 GO
 ~~START~~
-bigint
+varbinary
 <NULL>
 ~~END~~
 
@@ -727,23 +727,23 @@ bigint
 select cast(0x as varbinary(max)) - cast(0x as varbinary(max))
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
 select cast(0x0 as varbinary(max)) - cast(0x0 as varbinary(max))
 GO
 ~~START~~
-bigint
-0
+varbinary
+0000000000000000
 ~~END~~
 
 
 select cast(NULL as varbinary(max)) - cast(NULL as varbinary(max))
 GO
 ~~START~~
-bigint
+varbinary
 <NULL>
 ~~END~~
 
@@ -754,8 +754,8 @@ CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max))
 CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max));
 GO
 ~~START~~
-bigint
--2
+varbinary
+FFFFFFFFFFFFFFFE
 ~~END~~
 
 
@@ -765,8 +765,8 @@ CAST(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF AS VARBINARY(max))
 CAST(0x0000000000000000000000000000FFFF AS VARBINARY(max));
 GO
 ~~START~~
-bigint
--1
+varbinary
+FFFFFFFFFFFFFFFF
 ~~END~~
 
 
@@ -840,7 +840,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 112.215 ms
+Babelfish T-SQL Batch Parsing Time: 113.517 ms
 ~~END~~
 
 
@@ -859,7 +859,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.073 ms
+Babelfish T-SQL Batch Parsing Time: 7.221 ms
 ~~END~~
 
 
@@ -878,7 +878,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.212 ms
+Babelfish T-SQL Batch Parsing Time: 0.228 ms
 ~~END~~
 
 
@@ -897,7 +897,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.206 ms
+Babelfish T-SQL Batch Parsing Time: 0.222 ms
 ~~END~~
 
 
@@ -930,7 +930,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.319 ms
+Babelfish T-SQL Batch Parsing Time: 0.257 ms
 ~~END~~
 
 
@@ -949,7 +949,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 0.224 ms
 ~~END~~
 
 
@@ -968,7 +968,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.313 ms
+Babelfish T-SQL Batch Parsing Time: 0.328 ms
 ~~END~~
 
 
@@ -987,7 +987,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.318 ms
+Babelfish T-SQL Batch Parsing Time: 0.354 ms
 ~~END~~
 
 
@@ -998,15 +998,6 @@ Select varbinary_test_col from varbinary_test_table where varbinary_test_col < c
 GO
 ~~START~~
 varbinary
-01
-01
-01
-04
-04
-04
-08
-08
-08
 ~~END~~
 
 
@@ -1014,6 +1005,15 @@ Select varbinary_test_col from varbinary_test_table where varbinary_test_col > c
 GO
 ~~START~~
 varbinary
+01
+01
+01
+04
+04
+04
+08
+08
+08
 ~~END~~
 
 
@@ -1021,15 +1021,6 @@ Select varbinary_test_col from varbinary_test_table where varbinary_test_col < c
 GO
 ~~START~~
 varbinary
-01
-01
-01
-04
-04
-04
-08
-08
-08
 ~~END~~
 
 
@@ -1037,6 +1028,15 @@ Select varbinary_test_col from varbinary_test_table where varbinary_test_col > c
 GO
 ~~START~~
 varbinary
+01
+01
+01
+04
+04
+04
+08
+08
+08
 ~~END~~
 
 
