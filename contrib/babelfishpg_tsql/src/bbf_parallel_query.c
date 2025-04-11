@@ -131,8 +131,6 @@ bbf_ExecInitParallelPlan(EState *estate, ParallelContext *pcxt, bool estimate)
 void
 bbf_ParallelQueryMain(shm_toc *toc)
 {
-	char *temp_relids_local;
-
 	if (prev_ParallelQueryMain_hook)
 		(*prev_ParallelQueryMain_hook)(toc);
 
@@ -142,11 +140,9 @@ bbf_ParallelQueryMain(shm_toc *toc)
 		return;
 	}
 
-	temp_relids_local = pstrdup(shm_toc_lookup(toc,
-											   BABELFISH_PARALLEL_KEY_TEMP_RELIDS,
-											   false));
-	temp_relids = stringToBms(temp_relids_local);
-	pfree(temp_relids_local);
+	temp_relids = stringToBms(shm_toc_lookup(toc,
+											 BABELFISH_PARALLEL_KEY_TEMP_RELIDS,
+											 false));
 }
 
 /*
