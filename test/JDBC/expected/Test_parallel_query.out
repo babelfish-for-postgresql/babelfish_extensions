@@ -1,0 +1,444 @@
+-- tsql
+-- setup
+CREATE LOGIN l1 WITH PASSWORD = '12345678'
+GO
+
+CREATE USER l1
+GO
+
+CREATE TABLE pq_t (id INT)
+GO
+
+INSERT INTO pq_t VALUES (1), (2), (3), (4) , (5);
+GO
+~~ROW COUNT: 5~~
+
+
+CREATE SCHEMA schema_for_l1 AUTHORIZATION l1
+GO
+
+CREATE DATABASE pq_db
+GO
+
+USE pq_db
+GO
+
+CREATE USER pq_db_u1 FOR LOGIN l1
+GO
+
+USE master
+GO
+
+-- psql user=l1 password=12345678
+-- setup
+-- create parallel safe function under schema_for_l1 where user is authorised to create
+CREATE OR REPLACE FUNCTION master_schema_for_l1.f1()
+RETURNS TABLE (a INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT id FROM pq_t);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+
+-- psql
+-- Test permission check on temp table from Postgres
+create table reg_test (a int)
+GO
+
+insert into reg_test values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+create temp table parallel_test(a int);
+GO
+
+insert into parallel_test values (1)
+GO
+~~ROW COUNT: 1~~
+
+
+ANALYSE;
+GO
+
+-- function which tries to access temp table using parallel execution
+CREATE OR REPLACE FUNCTION f1()
+RETURNS TABLE (id INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT a FROM parallel_test);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+select * from parallel_test
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+-- temp table as a outer scan and should not be scanned using parallel worker
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+~~START~~
+int4#!#int4
+1#!#1
+~~END~~
+
+
+-- following would throw an error under parallel execution
+select * from f1()
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+-- Not everyone can access temp table
+-- Permission denied error should be raised whe l1 tries to access to temp table parallel_test
+set role l1;
+GO
+
+-- should result in permission error
+select * from parallel_test
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table parallel_test
+    Server SQLState: 42501)~~
+
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from f1()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table parallel_test
+  Where: SQL statement "(SELECT a FROM parallel_test)"
+PL/pgSQL function f1() line 2 at RETURN QUERY
+    Server SQLState: 42501)~~
+
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table reg_test
+    Server SQLState: 42501)~~
+
+
+reset role
+GO
+
+DROP FUNCTION f1()
+GO
+
+drop table parallel_test
+GO
+
+drop table reg_test
+GO
+
+
+-- tsql user=l1 password=12345678
+-- testing permission on temp table from Babelfish endpoint
+-- verify that only temp table permission check is skipped under parallel worker
+SELECT * FROM pq_t
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pq_t)~~
+
+
+-- function schema_for_l1.f1() access regular table so permission check shouldnt be skipped even under parallel worker
+SELECT * FROM schema_for_l1.f1()
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pq_t)~~
+
+
+CREATE TABLE #temp (a int)
+GO
+
+INSERT INTO #temp VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+-- temp table as a outer scan and user has permission to access regular table
+SELECT * FROM pq_t where id IN (select a from #temp)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pq_t)~~
+
+
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pq_t)~~
+
+
+USE pq_db
+GO
+
+select current_user
+GO
+~~START~~
+varchar
+pq_db_u1
+~~END~~
+
+
+-- any user can access local temp table created under given session
+select * from #temp;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+-- tsql
+CREATE TABLE #temp (a int)
+GO
+
+INSERT INTO #temp VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
+SELECT * FROM pq_t where id IN (select a from #temp)
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM pq_t where id IN (select a from #temp)
+Hash Join (actual rows=1 loops=1)
+  Hash Cond: ("#temp".a = pq_t.id)
+  ->  HashAggregate (actual rows=1 loops=1)
+        Group Key: "#temp".a
+        Batches: 1  Memory Usage: 40kB
+        ->  Seq Scan on "#temp" (actual rows=1 loops=1)
+  ->  Hash (actual rows=5 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        ->  Seq Scan on pq_t (actual rows=5 loops=1)
+~~END~~
+
+
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id;
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#<NULL>
+3#!#<NULL>
+4#!#<NULL>
+5#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id
+Sort (actual rows=5 loops=1)
+  Sort Key: pq_t.id NULLS FIRST
+  Sort Method: quicksort  Memory: 25kB
+  ->  Hash Right Join (actual rows=5 loops=1)
+        Hash Cond: ("#temp".a = pq_t.id)
+        ->  Seq Scan on "#temp" (actual rows=1 loops=1)
+        ->  Hash (actual rows=5 loops=1)
+              ->  Seq Scan on pq_t (actual rows=5 loops=1)
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+-- psql
+DROP FUNCTION master_schema_for_l1.f1()
+GO
+
+-- tsql
+DROP SCHEMA schema_for_l1;
+GO
+
+DROP DATABASE pq_db
+GO
+
+-- terminate-tsql-conn user=l1 password=12345678
+GO
+
+-- terminate-psql-conn user=l1 password=12345678
+GO
+
+-- tsql
+DROP TABLE pq_t
+GO
+DROP USER l1
+GO
+DROP LOGIN l1;
+GO
+
+-- tsql
+-- table valued parameter should behave same as normal temp table
+CREATE TABLE Employees (EmployeeID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), Department VARCHAR(50));
+GO
+
+INSERT INTO Employees VALUES (1, 'John', 'Doe', 'IT'), (2, 'Jane', 'Smith', 'HR'), (3, 'Mike', 'Johnson', 'IT');
+GO
+~~ROW COUNT: 3~~
+
+
+-- table type
+CREATE TYPE SalaryUpdateType AS TABLE(EmployeeID INT, NewSalary DECIMAL(10,2), EffectiveDate DATE);
+GO
+
+-- check table valued parameter on outer side scanned on leader node only
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+select count(*) FROM Employees e
+    INNER JOIN @SalaryUpdateTable su ON e.EmployeeID = su.EmployeeID;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+CREATE PROCEDURE UpdateEmployeeSalaries
+    @SalaryUpdates SalaryUpdateType READONLY
+AS
+BEGIN
+    -- Join TVP with regular table to get employee details with new salaries
+    SELECT 
+        e.EmployeeID,
+        e.FirstName,
+        e.LastName,
+        e.Department,
+        su.NewSalary,
+        su.EffectiveDate
+    FROM Employees e
+    INNER JOIN @SalaryUpdates su ON e.EmployeeID = su.EmployeeID
+    ORDER BY EmployeeID;
+END;
+GO
+
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+-- Execute the stored procedure
+EXEC UpdateEmployeeSalaries @SalaryUpdateTable;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#numeric#!#date
+1#!#John#!#Doe#!#IT#!#75000.00#!#2025-01-01
+2#!#Jane#!#Smith#!#HR#!#65000.00#!#2025-01-01
+3#!#Mike#!#Johnson#!#IT#!#70000.00#!#2025-01-01
+~~END~~
+
+
+DROP PROCEDURE UpdateEmployeeSalaries
+GO
+
+DROP TYPE SalaryUpdateType
+GO
+
+DROP TABLE Employees;
+GO
