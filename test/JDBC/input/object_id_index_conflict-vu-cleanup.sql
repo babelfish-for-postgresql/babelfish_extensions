@@ -18,7 +18,13 @@ GO
 ALTER TABLE object_id_conflict_t DROP CONSTRAINT IF EXISTS unq_name;
 GO
 
+ALTER TABLE object_id_conflict_t2 DROP CONSTRAINT IF EXISTS unq_num;
+GO
+
 -- Table cleanup
+DROP TABLE IF EXISTS object_id_conflict_t2;
+GO
+
 DROP TABLE IF EXISTS object_id_conflict_parent_t;
 GO
 
