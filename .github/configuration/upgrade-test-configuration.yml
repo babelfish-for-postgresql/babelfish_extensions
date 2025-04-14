@@ -61,7 +61,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '14.17',
+      version: '14.18',
       upgrade-type: null
     },
     {
