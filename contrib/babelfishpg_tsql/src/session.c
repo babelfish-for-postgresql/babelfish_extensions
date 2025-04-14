@@ -18,6 +18,7 @@
 #include "pltsql.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
+#include "bbf_parallel_query.h"
 
 /* Core Session Properties */
 
