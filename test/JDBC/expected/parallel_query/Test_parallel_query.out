@@ -207,10 +207,9 @@ pq_db_u1
 -- any user can access local temp table created under given session
 select * from #temp;
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table #temp)~~
 
 
 USE master
@@ -362,11 +361,25 @@ GO
 DROP DATABASE pq_db
 GO
 
--- terminate-tsql-conn user=l1 password=12345678
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
+~~START~~
+bool
+t
+t
+~~END~~
 
--- terminate-psql-conn user=l1 password=12345678
+
+select pg_sleep(2)
 GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 DROP TABLE pq_t
