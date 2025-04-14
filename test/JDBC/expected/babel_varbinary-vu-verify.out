@@ -233,7 +233,130 @@ varbinary
 ~~END~~
 
 
--- Test Case 16: depedent objects
+-- Test Case: UDT testing
+CREATE TYPE FIXEDLEN_VARBINARY FROM VARBINARY(5)
+GO
+
+CREATE TYPE MAXLEN_VARBINARY FROM VARBINARY(max)
+GO
+
+-- Test Case 16: Empty Binary Values with UDTs
+SELECT CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x AS FIXEDLEN_VARBINARY) AS EmptyFixed_UDT,
+       CAST(0x AS MAXLEN_VARBINARY) + CAST(0x AS MAXLEN_VARBINARY) AS EmptyMax_UDT,
+       CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x AS MAXLEN_VARBINARY) AS EmptyMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+#!##!#
+~~END~~
+
+
+-- Test Case 17: Basic Binary Addition with UDTs
+SELECT CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(0x456 AS FIXEDLEN_VARBINARY) AS FixedAdd_UDT,
+       CAST(0x123 AS MAXLEN_VARBINARY) + CAST(0x456 AS MAXLEN_VARBINARY) AS MaxAdd_UDT,
+       CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(0x456 AS MAXLEN_VARBINARY) AS MixedAdd_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+01230456#!#01230456#!#01230456
+~~END~~
+
+
+-- Test Case 18: NULL Values with UDTs
+SELECT CAST(NULL AS FIXEDLEN_VARBINARY) + CAST(NULL AS FIXEDLEN_VARBINARY) AS NullFixed_UDT,
+       CAST(NULL AS MAXLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS NullMax_UDT,
+       CAST(NULL AS FIXEDLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS NullMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test Case 19: NULL with Non-NULL UDT Values
+SELECT CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(NULL AS FIXEDLEN_VARBINARY) AS FixedWithNull_UDT,
+       CAST(0x456 AS MAXLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS MaxWithNull_UDT,
+       CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS MixedWithNull_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test Case 20: Leading Zeros with UDTs
+SELECT CAST(0x001 AS FIXEDLEN_VARBINARY) + CAST(0x002 AS FIXEDLEN_VARBINARY) AS FixedLeadingZeros_UDT,
+       CAST(0x001 AS MAXLEN_VARBINARY) + CAST(0x002 AS MAXLEN_VARBINARY) AS MaxLeadingZeros_UDT,
+       CAST(0x001 AS FIXEDLEN_VARBINARY) + CAST(0x002 AS MAXLEN_VARBINARY) AS MixedLeadingZeros_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+00010002#!#00010002#!#00010002
+~~END~~
+
+
+-- Test Case 21: Maximum Length Tests with UDTs
+SELECT CAST(0x12345 AS FIXEDLEN_VARBINARY) + CAST(0x12345 AS FIXEDLEN_VARBINARY) AS FixedMaxLength_UDT,
+       CAST(0x12345 AS MAXLEN_VARBINARY) + CAST(0x12345 AS MAXLEN_VARBINARY) AS MaxLength_UDT,
+       CAST(0x12345 AS FIXEDLEN_VARBINARY) + CAST(0x12345 AS MAXLEN_VARBINARY) AS MixedMaxLength_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+012345012345#!#012345012345#!#012345012345
+~~END~~
+
+
+-- Test Case 22: Different Length Values with UDTs
+SELECT CAST(0x12 AS FIXEDLEN_VARBINARY) + CAST(0x345 AS FIXEDLEN_VARBINARY) AS DiffLengthFixed_UDT,
+       CAST(0x12 AS MAXLEN_VARBINARY) + CAST(0x345 AS MAXLEN_VARBINARY) AS DiffLengthMax_UDT,
+       CAST(0x12 AS FIXEDLEN_VARBINARY) + CAST(0x345 AS MAXLEN_VARBINARY) AS DiffLengthMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+120345#!#120345#!#120345
+~~END~~
+
+
+-- Test Case 23: Large Values with UDTs
+SELECT CAST(0xFFFF AS FIXEDLEN_VARBINARY) + CAST(0xFFFF AS FIXEDLEN_VARBINARY) AS LargeFixed_UDT,
+       CAST(0xFFFF AS MAXLEN_VARBINARY) + CAST(0xFFFF AS MAXLEN_VARBINARY) AS LargeMax_UDT,
+       CAST(0xFFFF AS FIXEDLEN_VARBINARY) + CAST(0xFFFF AS MAXLEN_VARBINARY) AS LargeMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+FFFFFFFF#!#FFFFFFFF#!#FFFFFFFF
+~~END~~
+
+
+-- Test Case 24: Empty + Non-Empty with UDTs
+SELECT CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x123 AS FIXEDLEN_VARBINARY) AS EmptyPlusValueFixed_UDT,
+       CAST(0x AS MAXLEN_VARBINARY) + CAST(0x123 AS MAXLEN_VARBINARY) AS EmptyPlusValueMax_UDT,
+       CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x123 AS MAXLEN_VARBINARY) AS EmptyPlusValueMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+0123#!#0123#!#0123
+~~END~~
+
+
+-- Test Case 25: Single Byte with UDTs
+SELECT CAST(0xFF AS FIXEDLEN_VARBINARY) + CAST(0xFF AS FIXEDLEN_VARBINARY) AS SingleByteFixed_UDT,
+       CAST(0xFF AS MAXLEN_VARBINARY) + CAST(0xFF AS MAXLEN_VARBINARY) AS SingleByteMax_UDT,
+       CAST(0xFF AS FIXEDLEN_VARBINARY) + CAST(0xFF AS MAXLEN_VARBINARY) AS SingleByteMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+FFFF#!#FFFF#!#FFFF
+~~END~~
+
+
+DROP TYPE FIXEDLEN_VARBINARY
+GO
+
+DROP TYPE MAXLEN_VARBINARY
+GO
+
+-- Test Case 26: depedent objects
 -- Select from table
 SELECT * FROM babel_varbinary_test_table1;
 GO
@@ -591,7 +714,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 117.249 ms
+Babelfish T-SQL Batch Parsing Time: 112.790 ms
 ~~END~~
 
 
@@ -606,7 +729,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.244 ms
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
@@ -621,7 +744,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.240 ms
+Babelfish T-SQL Batch Parsing Time: 7.111 ms
 ~~END~~
 
 
@@ -637,7 +760,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 32.793 ms
+Babelfish T-SQL Batch Parsing Time: 32.451 ms
 ~~END~~
 
 
@@ -653,7 +776,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.222 ms
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
