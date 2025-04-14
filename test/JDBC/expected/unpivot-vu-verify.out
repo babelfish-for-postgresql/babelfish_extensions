@@ -5,7 +5,7 @@ SELECT customer_id, turnover, quarter FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#0#!#q2
 3#!#400#!#q3
 3#!#150#!#q4
@@ -24,7 +24,7 @@ SELECT customer_id, turnover, quarter FROM customer_turnover ct
 UNPIVOT (turnover FOR quarter IN (q4, q3, q2, q1)) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#150#!#q4
 3#!#400#!#q3
 3#!#0#!#q2
@@ -44,7 +44,7 @@ FROM [customer_turnover]
 UNPIVOT (turnover FOR [time period] IN ([q1],[q2],[q3],[q4])) AS [unpvt alias];
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#0#!#q2
 3#!#400#!#q3
 3#!#150#!#q4
@@ -64,7 +64,7 @@ FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#0#!#q2
 3#!#400#!#q3
 3#!#150#!#q4
@@ -84,7 +84,7 @@ SELECT * FROM customer_turnover
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 ~~START~~
-int#!#varchar#!#char#!#int#!#varchar
+int#!#varchar#!#char#!#int#!#nvarchar
 3#!#Cust C#!#R#!#0#!#q2
 3#!#Cust C#!#R#!#400#!#q3
 3#!#Cust C#!#R#!#150#!#q4
@@ -106,7 +106,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS u
 ON c.customer_id = u.customer_id;
 GO
 ~~START~~
-varchar#!#int#!#varchar
+varchar#!#int#!#nvarchar
 Bob Johnson#!#0#!#q2
 Bob Johnson#!#400#!#q3
 Bob Johnson#!#150#!#q4
@@ -158,7 +158,7 @@ FROM customer_turnover
 UNPIVOT ([turnover] FOR [quarter] IN ([q1], [q2], [q3], [q4])) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar#!#varchar
+int#!#int#!#nvarchar#!#varchar
 3#!#0#!#q2#!#Second
 3#!#400#!#q3#!#Third
 3#!#150#!#q4#!#Fourth
@@ -183,7 +183,7 @@ UNPIVOT (revenue for col_name1 in (revenue_q1, revenue_q2)) AS r
 WHERE RIGHT(r.col_name, 2) = RIGHT(r.col_name1, 2) AND r.product_desc IS NOT NULL;
 GO
 ~~START~~
-int#!#varchar#!#int#!#numeric
+int#!#nvarchar#!#int#!#numeric
 2#!#q1#!#80#!#1600.00
 2#!#q2#!#90#!#1800.00
 3#!#q1#!#0#!#0.00
@@ -201,7 +201,7 @@ FROM numeric_types
 UNPIVOT ( bit_value FOR bit_name IN (bit_val1, bit_val2, bit_val3)) AS bit_unpvt;
 GO
 ~~START~~
-int#!#bit#!#varchar
+int#!#bit#!#nvarchar
 1#!#1#!#bit_val1
 1#!#0#!#bit_val2
 1#!#1#!#bit_val3
@@ -215,7 +215,7 @@ UNPIVOT ( decimal_value FOR decimal_name IN (decimal_val1, decimal_val2)) AS dec
 UNPIVOT ( numeric_value FOR numeric_name IN (numeric_val1, numeric_val2)) AS numeric_unpvt;
 GO
 ~~START~~
-int#!#numeric#!#varchar#!#numeric#!#varchar
+int#!#numeric#!#nvarchar#!#numeric#!#nvarchar
 1#!#123456.78#!#decimal_val1#!#987654.32#!#numeric_val1
 1#!#123456.78#!#decimal_val1#!#456789.01#!#numeric_val2
 1#!#98765.43#!#decimal_val2#!#987654.32#!#numeric_val1
@@ -236,7 +236,7 @@ CROSS JOIN (
 ) t2;
 GO
 ~~START~~
-int#!#float#!#varchar#!#int#!#real#!#varchar
+int#!#float#!#nvarchar#!#int#!#real#!#nvarchar
 1#!#123456.789#!#float_val1#!#1#!#987654.3#!#real_val1
 1#!#123456.789#!#float_val1#!#1#!#456789.0#!#real_val2
 1#!#98765.432#!#float_val2#!#1#!#987654.3#!#real_val1
@@ -256,7 +256,7 @@ WHERE RIGHT(bigint_name, 1) = RIGHT(int_name, 1)
     AND RIGHT(smallint_name, 1) = RIGHT(tinyint_name, 1);
 GO
 ~~START~~
-int#!#bigint#!#varchar#!#int#!#varchar#!#smallint#!#varchar#!#tinyint#!#varchar
+int#!#bigint#!#nvarchar#!#int#!#nvarchar#!#smallint#!#nvarchar#!#tinyint#!#nvarchar
 1#!#9223372036854775807#!#bigint_val1#!#2147483647#!#int_val1#!#32767#!#smallint_val1#!#255#!#tinyint_val1
 1#!#4611686018427387904#!#bigint_val2#!#1073741824#!#int_val2#!#16384#!#smallint_val2#!#128#!#tinyint_val2
 ~~END~~
@@ -280,7 +280,7 @@ ON m.id = s.id
     ORDER BY m.id, s.name;
 GO
 ~~START~~
-int#!#varchar#!#money#!#varchar#!#smallmoney
+int#!#nvarchar#!#money#!#nvarchar#!#smallmoney
 1#!#money_val1#!#214748.3647#!#smallmoney_val1#!#214748.3647
 1#!#money_val2#!#107374.1824#!#smallmoney_val2#!#107374.1824
 ~~END~~
@@ -294,7 +294,7 @@ UNPIVOT ( char_value FOR char_name IN (char_val1, char_val2, char_val3)) AS char
 UNPIVOT ( varchar_value FOR varchar_name IN (varchar_val1, varchar_val2, varchar_val3)) AS varchar_unpvt;
 GO
 ~~START~~
-int#!#char#!#varchar#!#varchar#!#varchar
+int#!#char#!#nvarchar#!#varchar#!#nvarchar
 1#!#ABC       #!#char_val1#!#Café#!#varchar_val1
 1#!#ABC       #!#char_val1#!#Test_123#!#varchar_val2
 1#!#ABC       #!#char_val1#!#   spaces   #!#varchar_val3
@@ -326,7 +326,7 @@ UNPIVOT ( nvarchar_value FOR nvarchar_name IN (nvarchar_val1, nvarchar_val2, nva
 WHERE RIGHT(nchar_name, 1) = RIGHT(nvarchar_name, 1);
 GO
 ~~START~~
-int#!#nchar#!#varchar#!#varchar#!#nvarchar#!#varchar
+int#!#nchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 1#!#한글        #!#nchar_val1#!#Primary Value#!#Hello世界#!#nvarchar_val1
 1#!#日本        #!#nchar_val2#!#Secondary Value#!#🌟Star⭐#!#nvarchar_val2
 1#!#Привет    #!#nchar_val3#!#Tertiary Value#!#König#!#nvarchar_val3
@@ -350,7 +350,7 @@ ON t.id = nt.id AND RIGHT(t.name, 1) = RIGHT(nt.name, 1)
 ORDER BY t.id, nt.name;
 GO
 ~~START~~
-int#!#varchar#!#text#!#varchar#!#ntext
+int#!#nvarchar#!#text#!#nvarchar#!#ntext
 1#!#text_val1#!#Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum Duis aute irure dolor in reprehenderit in voluptate velit esse cillum Lorem ipsum dolore Lorem ipsum eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, Lorem ipsumomnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem Lorem ipsum quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, Lorem ipsum ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat. Sed ut perspiciatis unde Lorem ipsum omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consecttur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et doloe magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem Lorem ipsum ullam corporis suscipit laboriosam, nisi ut aliquid Lorem ipsum ex ea commoi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero Lorem eos et accusamus et Lorem ipsum odio dignissimos ducimus quiblanditiis praesentium voluptatum deleniti atque corupi quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero Lorem ipsum tempore, cum soluta nobis est eligendi optio cumque nihil impeit quo minus id quod maxime placeat facere possimus, omnis voluptas assumen dolor repellendus. Temporibus Lorem ipsum autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusadae. Itaque earum rerum hic tenetur a Lorem ipsum sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.#!#ntext_val1#!#علم
 1#!#text_val2#!#Special chars: /\@#$%^&*()#!#ntext_val2#!#שלום
 ~~END~~
@@ -394,7 +394,7 @@ UNPIVOT ( time_value FOR time_name IN (time_val1, time_val2)) AS time_unpvt
 ORDER BY id, data_type, column_name;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#varchar
+int#!#varchar#!#nvarchar#!#varchar
 1#!#DATE#!#date_val1#!#2023-01-01
 1#!#DATE#!#date_val2#!#2023-02-01
 1#!#DATETIME#!#datetime_val1#!#2023-01-01 12:30:45
@@ -419,7 +419,7 @@ UNPIVOT (turnover FOR quarter IN (q4, q3, q1, q2)) AS u
 ON c.customer_id = u.customer_id;
 GO
 ~~START~~
-varchar#!#int#!#varchar
+varchar#!#int#!#nvarchar
 Bob Johnson#!#150#!#q4
 Bob Johnson#!#400#!#q3
 Bob Johnson#!#0#!#q2
@@ -444,7 +444,7 @@ UNPIVOT ( turnover FOR quarter IN (q3, q1, q2, q4)) AS u
 LEFT JOIN customer_info c2 ON u.customer_id = c2.customer_id;
 GO
 ~~START~~
-int#!#varchar#!#int#!#varchar#!#varchar
+int#!#varchar#!#int#!#nvarchar#!#varchar
 3#!#Bob Johnson#!#400#!#q3#!#Premium
 3#!#Bob Johnson#!#0#!#q2#!#Premium
 3#!#Bob Johnson#!#150#!#q4#!#Premium
@@ -469,7 +469,7 @@ CROSS JOIN (
 WHERE u.customer_id = c.customer_id and u.customer_id = 2;
 GO
 ~~START~~
-varchar#!#varchar#!#int#!#varchar
+varchar#!#varchar#!#int#!#nvarchar
 Jane Smith#!#Cust B#!#250#!#q2
 Jane Smith#!#Cust B#!#200#!#q3
 Jane Smith#!#Cust B#!#150#!#q1
@@ -488,7 +488,7 @@ CROSS APPLY (
 WHERE c.customer_id = 1;
 GO
 ~~START~~
-varchar#!#varchar#!#int#!#varchar
+varchar#!#varchar#!#int#!#nvarchar
 John Doe#!#Cust A#!#100#!#q3
 John Doe#!#Cust A#!#400#!#q4
 John Doe#!#Cust A#!#200#!#q2
@@ -508,7 +508,7 @@ UNPIVOT (revenue FOR quarter IN (q1, q2, q3, q4)) AS u2
     AND turnover > 100;
 GO
 ~~START~~
-varchar#!#int#!#varchar
+varchar#!#int#!#nvarchar
 Bob Johnson#!#400#!#q3
 Bob Johnson#!#150#!#q4
 John Doe#!#200#!#q2
@@ -526,7 +526,7 @@ UNPIVOT (turnover FOR quarter IN
 ) AS u;
 GO
 ~~START~~
-varchar#!#int#!#varchar#!#char#!#int#!#int#!#varchar
+varchar#!#int#!#varchar#!#char#!#int#!#int#!#nvarchar
 Widget#!#1#!#Cust A#!#R#!#400#!#1#!#product_id
 Widget#!#1#!#Cust A#!#R#!#400#!#100#!#q3
 Widget#!#1#!#Cust A#!#R#!#400#!#100#!#q1
@@ -549,7 +549,7 @@ JOIN (
 ) u ON p.product_id = u.product_id;
 GO
 ~~START~~
-int#!#varchar#!#int#!#int#!#varchar
+int#!#varchar#!#int#!#int#!#nvarchar
 1#!#Widget#!#1#!#100#!#q1_sales
 1#!#Widget#!#1#!#150#!#q2_sales
 2#!#Gadget#!#2#!#200#!#q1_sales
@@ -568,7 +568,7 @@ SELECT * FROM QuarterlyData
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#0#!#q2
 3#!#400#!#q3
 3#!#150#!#q4
@@ -588,7 +588,7 @@ WITH QuarterlyData AS (
 SELECT * FROM QuarterlyData;
 GO
 ~~START~~
-int#!#varchar#!#char#!#int#!#varchar
+int#!#varchar#!#char#!#int#!#nvarchar
 2#!#Cust B#!#P#!#150#!#q1
 2#!#Cust B#!#P#!#250#!#q2
 2#!#Cust B#!#P#!#200#!#q3
@@ -623,7 +623,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY path, quarter;
 GO
 ~~START~~
-varchar#!#int#!#varchar#!#int
+varchar#!#int#!#nvarchar#!#int
 1#!#0#!#q1#!#100
 1#!#0#!#q2#!#200
 1#!#0#!#q3#!#300
@@ -674,7 +674,7 @@ UNPIVOT (metric_value FOR metric_type IN (quantity, revenue, price_per_unit)) AS
 ORDER BY product_id, quarter_num, metric_type;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#numeric#!#varchar
+int#!#varchar#!#nvarchar#!#numeric#!#nvarchar
 1#!#ProductA#!#1#!#10.00#!#price_per_unit
 1#!#ProductA#!#1#!#100.00#!#quantity
 1#!#ProductA#!#1#!#1000.00#!#revenue
@@ -724,7 +724,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 WHERE turnover > 200;
 GO
 ~~START~~
-varchar#!#int#!#varchar
+varchar#!#int#!#nvarchar
 Cust C#!#400#!#q3
 Cust A#!#400#!#q4
 Cust B#!#250#!#q2
@@ -740,7 +740,7 @@ WHERE CAST(turnover AS DECIMAL(10,2)) > 150.00
     AND unpvt.customer_id < 1000;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 1#!#200#!#q2
 2#!#250#!#q2
 ~~END~~
@@ -758,7 +758,7 @@ WHERE turnover > (
 );
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#400#!#q3
 1#!#200#!#q2
 1#!#400#!#q4
@@ -779,7 +779,7 @@ GROUP BY customer_type, quarter
 ORDER BY customer_type, quarter DESC;
 GO
 ~~START~~
-char#!#varchar#!#int#!#int
+char#!#nvarchar#!#int#!#int
 P#!#q3#!#1#!#200
 P#!#q2#!#1#!#250
 P#!#q1#!#1#!#150
@@ -802,7 +802,7 @@ GROUP BY customer_type, quarter
 HAVING COUNT(*) > 1 AND SUM(turnover) > 500;
 GO
 ~~START~~
-char#!#varchar#!#int#!#int
+char#!#nvarchar#!#int#!#int
 R#!#q4#!#2#!#550
 ~~END~~
 
@@ -815,7 +815,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id ASC, turnover, quarter DESC;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 1#!#100#!#q3
 1#!#100#!#q1
 1#!#200#!#q2
@@ -836,7 +836,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY RIGHT(quarter, 1), turnover * 1.1;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 1#!#100#!#q1
 2#!#150#!#q1
 3#!#0#!#q2
@@ -858,7 +858,7 @@ UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY turnover DESC;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#400#!#q3
 1#!#400#!#q4
 2#!#250#!#q2
@@ -875,7 +875,7 @@ ORDER BY turnover DESC
 OFFSET 5 ROWS FETCH NEXT 5 ROWS ONLY;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 3#!#150#!#q4
 2#!#150#!#q1
 1#!#100#!#q3
@@ -906,7 +906,7 @@ GO
 ~~ROW COUNT: 3~~
 
 ~~START~~
-int#!#varchar#!#numeric#!#varchar
+int#!#varchar#!#numeric#!#nvarchar
 1#!#Product A#!#100.50#!#q1_sales
 1#!#Product A#!#0.00#!#q2_sales
 2#!#Product B#!#300.00#!#q2_sales
@@ -931,7 +931,7 @@ GO
 ~~ROW COUNT: 2~~
 
 ~~START~~
-int#!#varchar#!#money#!#varchar
+int#!#varchar#!#money#!#nvarchar
 1#!#North#!#1000.0000#!#jan_rev
 1#!#North#!#0.0000#!#feb_rev
 2#!#South#!#800.0000#!#jan_rev
@@ -947,7 +947,7 @@ UNPIVOT ( sales_amount FOR quarter IN (q1_sales, q2_sales, q4_sales, q3_sales)) 
 WHERE quarter = 'q3_sales' OR quarter = 'q4_sales'; 
 GO
 ~~START~~
-int#!#varchar#!#numeric#!#varchar
+int#!#varchar#!#numeric#!#nvarchar
 1#!#Product A#!#175.50#!#q4_sales
 1#!#Product A#!#200.25#!#q3_sales
 2#!#Product B#!#0.00#!#q3_sales
@@ -975,7 +975,7 @@ GO
 SELECT * FROM sales.sales_analysis_view;
 GO
 ~~START~~
-int#!#varchar#!#numeric#!#varchar#!#varchar
+int#!#varchar#!#numeric#!#nvarchar#!#varchar
 1#!#Product A#!#0.55#!#q1_sales#!#First
 1#!#Product A#!#165.83#!#q2_sales#!#Second
 1#!#Product A#!#220.28#!#q3_sales#!#Third
@@ -1053,7 +1053,7 @@ SELECT * FROM (
 UNPIVOT ( adjusted_turnover FOR quarter IN (q1_adj, [q3 adj])) AS u;
 GO
 ~~START~~
-int#!#char#!#numeric#!#numeric#!#varchar
+int#!#char#!#numeric#!#numeric#!#nvarchar
 3#!#R#!#0.00#!#440.00000000#!#q3 adj
 1#!#R#!#220.00#!#110.00000000#!#q1_adj
 1#!#R#!#220.00#!#110.00000000#!#q3 adj
@@ -1072,7 +1072,7 @@ SELECT product_id, quarter, sales FROM dbo.GetSalesData()
 UNPIVOT ( sales FOR quarter IN (q1_sales, q2_sales)) AS unpvt;
 GO
 ~~START~~
-int#!#varchar#!#int
+int#!#nvarchar#!#int
 1#!#q1_sales#!#100
 1#!#q2_sales#!#150
 2#!#q1_sales#!#200
@@ -1103,7 +1103,7 @@ UNPIVOT (
 ) AS unpvt;
 GO
 ~~START~~
-int#!#varchar#!#int
+int#!#nvarchar#!#int
 1#!#q1_sales#!#100
 1#!#q2_sales#!#200
 1#!#q3_sales#!#300
@@ -1156,7 +1156,7 @@ UNPIVOT (
 EXEC sp_executesql @unpivotSql;
 GO
 ~~START~~
-int#!#varchar#!#char#!#varchar#!#int
+int#!#varchar#!#char#!#nvarchar#!#int
 3#!#Cust C#!#R#!#q2#!#0
 3#!#Cust C#!#R#!#q3#!#400
 3#!#Cust C#!#R#!#q4#!#150
@@ -1203,7 +1203,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2)) AS unpvt;
 SELECT * from #new_quarterly_sales;
 GO
 ~~START~~
-int#!#varchar#!#char#!#varchar#!#int
+int#!#varchar#!#char#!#nvarchar#!#int
 3#!#Cust C#!#R#!#q2#!#0
 1#!#Cust A#!#R#!#q1#!#100
 1#!#Cust A#!#R#!#q2#!#200
@@ -1336,7 +1336,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id, quarter;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#int
+int#!#varchar#!#nvarchar#!#int
 1#!#Cust A#!#q1#!#100
 1#!#Cust A#!#q2#!#200
 1#!#Cust A#!#q3#!#100
@@ -1363,7 +1363,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id, quarter;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#int
+int#!#varchar#!#nvarchar#!#int
 1#!#Cust A#!#q1#!#100
 1#!#Cust A#!#q1#!#100
 1#!#Cust A#!#q2#!#200
@@ -1398,7 +1398,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id, quarter;
 GO
 ~~START~~
-int#!#varchar#!#int
+int#!#nvarchar#!#int
 1#!#q1#!#100
 1#!#q2#!#200
 1#!#q3#!#100
@@ -1419,7 +1419,7 @@ UNPIVOT (sales FOR quarter IN (q1, q2, q3, q4)) AS unpvt
 ORDER BY customer_id, quarter;
 GO
 ~~START~~
-int#!#varchar#!#int
+int#!#nvarchar#!#int
 2#!#q1#!#150
 2#!#q2#!#250
 2#!#q3#!#200
@@ -1441,7 +1441,7 @@ GO
 SELECT * FROM dbo.fn_UnpivotSales();
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 1#!#100#!#q1_sales
 1#!#150#!#q2_sales
 ~~END~~
@@ -1483,7 +1483,7 @@ SELECT customer_id, turnover, quarter FROM empty_table
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 ~~END~~
 
 
@@ -1496,7 +1496,7 @@ UNPIVOT (value FOR column_name IN (
 ) AS unpvt;
 GO
 ~~START~~
-int#!#int#!#varchar
+int#!#int#!#nvarchar
 1#!#10#!#very_long_column_name_q1_12345678901234567890123456789012345678
 1#!#20#!#very_long_column_name_q2_12345678901234567890123456789012345678
 ~~END~~
@@ -1514,28 +1514,34 @@ UNPIVOT (
 ) AS [Sales@Analysis];
 GO
 ~~START~~
-int#!#numeric#!#varchar
+int#!#numeric#!#nvarchar
 1#!#10.00#!#q1$sales
 1#!#20.00#!#q2$sales
 1#!#30.00#!#q3$sales
 ~~END~~
 
 
+    -- Test UNPIVOT with non-Latin characters in column name
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [q1_売上],
+        [q2_売上]
+    )
+) AS [Global_分析];
+GO
+~~START~~
+int#!#numeric#!#nvarchar
+1#!#4.00#!#q1_売上
+1#!#5.00#!#q2_売上
+~~END~~
+
 
 
 -- KNOWN ISSUES
-    -- BABEL-5676 - Test UNPIVOT with Unicode characters
-    -- Commented due to conflicting results in collation/non-collation pr tests
--- SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
--- FROM [Global_データ_Sales]
--- UNPIVOT (
---     [Amount_金額] FOR [Quarter_四半期] IN (
---         [Q1_売上],
---         [Q2_売上]
---     )
--- ) AS [Global_分析];
--- GO
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
+        -- Aliased column names in unpivot source list
 SELECT customer_id, turnover, quarter FROM customer_turnover c 
 UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, c.q3, c.q4)) AS unpvt;
 GO
@@ -1543,4 +1549,37 @@ GO
 
 ~~ERROR (Message: syntax error at or near ".")~~
 
+        -- Extra columns in result set when `SELECT alias.*`
+SELECT unpvt.* FROM customer_turnover c 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+~~START~~
+int#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#nvarchar
+3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#0#!#q2
+3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#400#!#q3
+3#!#Cust C#!#R#!#<NULL>#!#0#!#400#!#150#!#150#!#q4
+1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#100#!#q1
+1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#200#!#q2
+1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#100#!#q3
+1#!#Cust A#!#R#!#100#!#200#!#100#!#400#!#400#!#q4
+2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#150#!#q1
+2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#250#!#q2
+2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#200#!#q3
+~~END~~
+
+        -- Uppercase column names in unpivot source list
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO
+~~START~~
+int#!#numeric#!#nvarchar
+1#!#4.00#!#q1_売上
+1#!#5.00#!#q2_売上
+~~END~~
 
