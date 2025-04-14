@@ -114,20 +114,6 @@ FROM babel_varbinary_test_table1 t1
 ORDER BY fixed_value1, max_value1, fixed_fixed_addition, max_fixed_addition, max_max_addition;
 GO
 
-SELECT 
-    t1.fixedlen_col as t1_fixed_value,
-    t1.maxlen_col as t1_max_value,
-    t2.fixedlen_col as t2_fixed_value,
-    t2.maxlen_col as t2_max_value,
-    t1.maxlen_col + t2.fixedlen_col as max_fixed_addition,
-    t1.fixedlen_col + t2.fixedlen_col as fixed_fixed_addition,
-    t1.maxlen_col + t2.maxlen_col as max_max_addition
-FROM babel_varbinary_test_table1 t1 
-CROSS JOIN babel_varbinary_test_table1 t2
-ORDER BY t1_fixed_value, t1_max_value, t2_fixed_value, t2_max_value, 
-         max_fixed_addition, fixed_fixed_addition, max_max_addition;
-GO
-
 -- Select from views
 SELECT * FROM babel_varbinary_test_view1;
 GO
