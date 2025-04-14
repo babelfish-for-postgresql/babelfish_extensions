@@ -104,15 +104,24 @@ GO
 CREATE PROCEDURE prefix_rewrite_prepare_p20 AS (SELECT sys.babelfish_fts_rewrite('" one@*"'));
 GO
 
+-- 9. support for emojis
+-- should throw languages other than english are not supported
+CREATE VIEW prefix_rewrite_prepare_v21 AS (SELECT sys.babelfish_fts_rewrite(N'"one👋*"'));
+GO
+CREATE VIEW prefix_rewrite_prepare_v22 AS (SELECT sys.babelfish_fts_rewrite(N'"🙂one*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p21 AS (SELECT sys.babelfish_fts_rewrite(N'"✅🆗*"'));
+GO
+CREATE PROCEDURE prefix_rewrite_prepare_p22 AS (SELECT sys.babelfish_fts_rewrite(N'"one 👍*"'));
+GO
 
 -- Negative test
 -- should warn about noise words, but does not
-CREATE VIEW prefix_rewrite_prepare_v21 AS (SELECT sys.babelfish_fts_rewrite('"*"'));
+CREATE VIEW prefix_rewrite_prepare_v23 AS (SELECT sys.babelfish_fts_rewrite('"*"'));
 GO
 
-
 -- Not a valid prefix term syntax, recognized as simple term
-CREATE PROCEDURE prefix_rewrite_prepare_p21 AS (SELECT sys.babelfish_fts_rewrite('"o@ne* "'));
+CREATE PROCEDURE prefix_rewrite_prepare_p23 AS (SELECT sys.babelfish_fts_rewrite('"o@ne* "'));
 GO
 
 

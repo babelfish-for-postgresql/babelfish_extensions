@@ -98,19 +98,29 @@ GO
 EXEC prefix_rewrite_prepare_p20
 GO
 
+-- 9. support for emojis
+-- should throw languages other than english are not supported
+SELECT * FROM prefix_rewrite_prepare_v21
+GO
+SELECT * FROM prefix_rewrite_prepare_v22
+GO
+EXEC prefix_rewrite_prepare_p21
+GO
+EXEC prefix_rewrite_prepare_p22
+GO
+
 -- Negative test
 -- should warn about noise words, but does not
-SELECT * FROM prefix_rewrite_prepare_v21
+SELECT * FROM prefix_rewrite_prepare_v23
 GO
 
 -- Not a valid prefix term syntax, recognized as simple term
-EXEC prefix_rewrite_prepare_p21
+EXEC prefix_rewrite_prepare_p23
 GO
 
 
 
-
--- Sample search query using CONTAINS
+-- 10. Sample search query using CONTAINS
 -- Prefix term search for multiple forms of passing same search string
 SELECT * 
 FROM fts_prefix_t 
@@ -225,6 +235,32 @@ WHERE CONTAINS((daily_updates,
                 community_highlights), '"light *  * *  work   * **"')
 GO
 
+-- Common Table Expressions
+WITH fts_multicol_prefix_t_cte1 AS (
+    SELECT *
+    FROM fts_multicol_prefix_t
+    WHERE CONTAINS((daily_updates,
+                    industry_news,
+                    local_events,
+                    tech_innovations,
+                    community_highlights), '"light work*"')
+)
+SELECT * FROM fts_multicol_prefix_t_cte1
+GO
+
+WITH fts_multicol_prefix_t_cte2 AS (
+    SELECT *
+    FROM fts_multicol_prefix_t
+)
+SELECT *
+FROM fts_multicol_prefix_t_cte2
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), '"light work*"')
+GO
+
 -- tab character in prefix term search string
 DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + '*"';
 SELECT *
@@ -323,7 +359,7 @@ CREATE FULLTEXT INDEX ON fts_char_prefix_t(
 GO
 
 -- tab character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"coral ree' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coral re' + CHAR(9) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,
@@ -333,7 +369,7 @@ WHERE CONTAINS((main_story,
                 community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(9) + 'reef' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(9) + 're' + CHAR(9) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,
@@ -343,7 +379,7 @@ WHERE CONTAINS((main_story,
                 community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(9) + 'ree' + CHAR(9) + '*'+ CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(9) + 're' + CHAR(9) + '*'+ CHAR(9) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,
@@ -354,7 +390,7 @@ WHERE CONTAINS((main_story,
 GO
 
 -- newline character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"cor ree' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"cor re' + CHAR(10) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,
@@ -364,7 +400,7 @@ WHERE CONTAINS((main_story,
                 community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(10) + 'ree' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coral'+ CHAR(10) + 're' + CHAR(10) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,
@@ -374,7 +410,7 @@ WHERE CONTAINS((main_story,
                 community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(10) + 'reef' + CHAR(10) + '*'+ CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(10) + 're' + CHAR(10) + '*'+ CHAR(10) + '*"';
 SELECT *
 FROM fts_char_prefix_t
 WHERE CONTAINS((main_story,

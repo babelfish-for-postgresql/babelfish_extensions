@@ -225,7 +225,7 @@ static char
 
     /* Check for empty input - this should not be possible based on lexer rules, but check just in case */
     if (!inputStr || !*inputStr) {
-      ereport(ERROR,
+        ereport(ERROR,
           (errcode(ERRCODE_INTERNAL_ERROR),
            errmsg("Null or empty full-text predicate.")));
     }
@@ -253,7 +253,7 @@ static char
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
         }
-        if (*trimmedOutputStr == ' ' || *trimmedOutputStr == '*') {
+        if (*trimmedOutputStr == ' ' || *trimmedOutputStr == '*' || *trimmedOutputStr == '\t' || *trimmedOutputStr == '\n') {
             /* 
              * Removing multiple spaces and * from the search string 
              * If a space is encountered, we remove all the next occurances of * and spaces 
@@ -263,7 +263,7 @@ static char
              * Case 3: '"word1* * ** *"' = 'word1:*'
              * Case 4: '"word1* * *      *** * word2*"' = 'word1:*<->word2:*'
              */
-            while(*(trimmedOutputStr + 1) && (*(trimmedOutputStr + 1) == '*' || *(trimmedOutputStr + 1) == ' ')) {
+            while(*(trimmedOutputStr + 1) && (*(trimmedOutputStr + 1) == '*' || *(trimmedOutputStr + 1) == ' ' || *(trimmedOutputStr + 1) == '\t' || *(trimmedOutputStr + 1) == '\n')) {
                 trimmedOutputStr++;
             }
             if(output.len > 0){
@@ -274,16 +274,8 @@ static char
                     appendStringInfoString(&output, ":*<->");
               }
             }
-        } else if (*trimmedOutputStr == '\n' || *trimmedOutputStr == '\t') {
-                /*
-                 * To match the behavior of SQL server.
-                 * When FTS is performed over prefix_term,
-                 * it outputs no result
-                 */ 
-                pfree(outputStr);
-                output.data = "";
-                return output.data;
-        } else {
+        } 
+        else {
                 appendStringInfoChar(&output, *trimmedOutputStr);
         }
         trimmedOutputStr++;
