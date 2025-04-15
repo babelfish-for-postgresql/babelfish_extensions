@@ -4263,6 +4263,13 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     /* Get number of points */
     npoints = *((int *)((char*)gser->data + 4));
 
+    if (geom_type != POINTTYPE)
+    {
+        ereport(ERROR,
+            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Unsupported geometry type")));
+    }
+
     /* EMPTY GEOMETRY case */
     if (npoints == 0) 
     {
@@ -4356,9 +4363,6 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
                 /* Copy coordinate data */
                 memcpy(itr, (char *)gser->data + 8, len - 6);
                 break;
-
-			default:
-                elog(ERROR, "Unsupported geometry type");
         }
     }
 

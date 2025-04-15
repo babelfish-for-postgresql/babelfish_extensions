@@ -298,27 +298,6 @@ GO
 
 -- Test with invalid types (these should raise errors)
 
--- Point Z (3D point)
-SELECT geometry::STGeomFromText('POINT Z(0 0 10)', 4326);
-GO
-
-SELECT geography::STGeomFromText('POINT Z(0 0 10)', 4326);
-GO
-
--- Point M (2D point with measure)
-SELECT geometry::STGeomFromText('POINT M(0 0 1)', 4326);
-GO
-
-SELECT geography::STGeomFromText('POINT M(0 0 1)', 4326);
-GO
-
--- Point ZM (3D point with measure)
-SELECT geometry::STGeomFromText('POINT ZM(0 0 10 1)', 4326);
-GO
-
-SELECT geography::STGeomFromText('POINT ZM(0 0 10 1)', 4326);
-GO
-
 -- MULTISURFACE
 SELECT geometry::STGeomFromText('MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(0 0, 1 1, 2 0, 1 -1, 0 0)))', 4326);
 GO
@@ -360,6 +339,74 @@ SELECT geometry::STGeomFromText('BABEL(0 0)', 4326);
 GO
 
 SELECT geography::STGeomFromText('BABEL(0 0)', 4326);
+GO
+
+-- Test with POINT M in diffrent scenarios (these should raise errors)
+
+SELECT geometry::STGeomFromText('POINT M(1 2 3)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT M(1 2 3)', 4326);
+GO
+
+SELECT geometry::STGeomFromText(CAST('POINT M(1 2 3)' AS CHAR(20)), 4326)
+GO
+
+SELECT geography::STGeomFromText(CAST('POINT M(1 2 3)' AS CHAR(20)), 4326)
+GO
+
+SELECT geometry::STGeomFromText(CAST('POINT M(1 2 3)' AS VARCHAR(20)), 4326)
+GO
+
+SELECT geography::STGeomFromText(CAST('POINT M(1 2 3)' AS VARCHAR(20)), 4326)
+GO
+
+SELECT CAST('POINT M ( 1 2 3)' AS geometry)
+GO
+
+SELECT CAST('POINT M ( 1 2 3)' AS geography)
+GO
+
+SELECT CAST(geometry::STGeomFromText('POINT M(1 2 3 )', 4326) AS bytea)
+GO
+
+SELECT CAST(geography::STGeomFromText('POINT M(1 2 3 )', 4326) AS bytea)
+GO
+
+SELECT CAST(geometry::STGeomFromText('POINT M(1 2 3)', 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(geography::STGeomFromText('POINT M(1 2 3)', 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(geometry::STGeomFromText(CAST('POINT M(1 2 3)' AS CHAR(20)), 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(geography::STGeomFromText(CAST('POINT M(1 2 3)' AS CHAR(20)), 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(geometry::STGeomFromText(CAST('POINT M(1 2 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(geography::STGeomFromText(CAST('POINT M(1 2 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100))
+GO
+
+SELECT CAST(CAST('POINT M(1 2 3)' AS VARCHAR(100)) AS geometry)
+GO
+
+SELECT CAST(CAST('POINT M(1 2 3)' AS VARCHAR(100)) AS geography)
+GO
+
+SELECT CAST(CAST(geometry::STGeomFromText('POINT M(1 2 3)', 4326) AS VARBINARY(100)) AS geometry)
+GO
+
+SELECT CAST(CAST(geography::STGeomFromText('POINT M(1 2 3)', 4326) AS VARBINARY(100)) AS geography)
+GO
+
+SELECT CAST(CAST(geometry::STGeomFromText('POINT M(1 2 3)', 4326) AS VARCHAR(100)) AS geometry)
+GO
+
+SELECT CAST(CAST(geography::STGeomFromText('POINT M(1 2 3)', 4326) AS VARCHAR(100)) AS geography)
 GO
 
 -- Geography__STFlipCoordinates tests (Not supported by TSQL, it's for internal use)
