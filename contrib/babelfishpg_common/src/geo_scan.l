@@ -49,8 +49,8 @@ TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 }
 
 
-NULL          { return NULL_TOK; }
-[ \t]+EMPTY  { return EMPTY_TOK; }
+NULL             { return NULL_TOK; }
+[ \t\n\r]+EMPTY  { return EMPTY_TOK; }
 
 ,          { return COMMA_TOK;}
 \(         { return LPAREN; }

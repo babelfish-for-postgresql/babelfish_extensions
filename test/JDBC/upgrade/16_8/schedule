@@ -435,8 +435,8 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint_before_17_5-or-16_9
-Test-spatial-functions_before_17_5-or-16_9
+TestSpatialPoint_before_17_6-or-16_11
+Test-spatial-functions_before_17_6-or-16_11
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
