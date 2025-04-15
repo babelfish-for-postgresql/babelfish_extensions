@@ -62,6 +62,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -192,7 +193,8 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-
+ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
+ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -327,6 +329,14 @@ InstallExtendedHooks(void)
 
 	bbf_InitializeParallelDSM_hook = babelfixedparallelstate_insert;
 	bbf_ParallelWorkerMain_hook = babelfixedparallelstate_restore;
+
+	prev_ParallelQueryMain_hook = ParallelQueryMain_hook;
+	ParallelQueryMain_hook = bbf_ParallelQueryMain;
+
+	prev_ExecInitParallelPlan_hook = ExecInitParallelPlan_hook;
+	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
+
+	ExecCheckRTEPerms_hook = bbf_ExecCheckRTEPerms;
 }
 
 void
@@ -381,6 +391,9 @@ UninstallExtendedHooks(void)
 	
 	bbf_InitializeParallelDSM_hook = NULL;
 	bbf_ParallelWorkerMain_hook = NULL;
+	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
+	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
+	ExecCheckRTEPerms_hook = NULL;
 }
 
 /*****************************************
