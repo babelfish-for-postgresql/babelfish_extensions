@@ -237,6 +237,19 @@ extern char *replace_special_chars_fts_impl(char *input_str);
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
+const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
+	{"xp_qv","master_dbo"},
+	{"xp_instance_regread","master_dbo"},
+	{"sp_addlinkedserver", "master_dbo"},
+	{"sp_addlinkedsrvlogin", "master_dbo"},
+	{"sp_dropserver", "master_dbo"},
+	{"sp_droplinkedsrvlogin", "master_dbo"},
+	{"sp_testlinkedserver", "master_dbo"},
+	{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
+	{"syspolicy_configuration", "msdb_dbo"},
+	{"syspolicy_system_health_state", "msdb_dbo"},
+	{"sp_enum_oledb_providers", "master_dbo"}
+};
 #define MD5_HASH_LEN 32
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -1987,6 +2000,8 @@ search_partition(PG_FUNCTION_ARGS)
 	Datum			arg;
 	Oid			argtypeid;
 	char			*func_param_typname = NULL;
+	char			*func_param_collation = NULL;
+	Oid			collation_oid = InvalidOid;
 	Oid			func_param_typoid;
 	Oid			sqlvariant_typoid;
 	Datum			*range_values;
@@ -1999,6 +2014,13 @@ search_partition(PG_FUNCTION_ARGS)
 	if (!PG_ARGISNULL(2)) /* Database is specified. */
 	{
 		char *db_name = text_to_cstring(PG_GETARG_TEXT_P(2));
+		/* Lowercase the db_name, if needed. */
+		if (pltsql_case_insensitive_identifiers)
+		{
+			char *tmp = db_name;
+			db_name = downcase_identifier(tmp, strlen(tmp), false, false);
+			pfree(tmp);
+		}
 		dbid = get_db_id(db_name);
 		if (!DbidIsValid(dbid))
 			ereport(ERROR,
@@ -2037,6 +2059,7 @@ search_partition(PG_FUNCTION_ARGS)
 	if (HeapTupleIsValid(tuple))
 	{
 		func_param_typname = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+		func_param_collation = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_collation, RelationGetDescr(rel), &isnull)));
 		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
 		deconstruct_array(values, sqlvariant_typoid,
 					-1, false, 'i', &range_values, &nulls, &nelems);
@@ -2069,6 +2092,17 @@ search_partition(PG_FUNCTION_ARGS)
 
 	/* Get OID of partition function parameter type. */
 	func_param_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (func_param_typname);
+	
+	/* Get collation oid from partition function collation. */
+	if (func_param_collation)
+	{
+		collation_oid = get_collation_oid(list_make1(makeString(func_param_collation)), false);
+		/* Sanity check. */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", func_param_collation)));
+	}
 
 	/* 
 	 * Implicitly convert input value to parameter type of
@@ -2096,7 +2130,7 @@ search_partition(PG_FUNCTION_ARGS)
 								ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	cxt.function_oid = cmpfunction_oid;
-	cxt.colloid = tsql_get_database_or_server_collation_oid_internal(false);
+	cxt.colloid = collation_oid;
 	
 	/* Perform binary search on sorted range values. */
 	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
@@ -2284,7 +2318,11 @@ object_id(PG_FUNCTION_ARGS)
 				}
 				else if (enr == NULL)
 				{
-					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					Oid relid = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
 				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
@@ -2303,7 +2341,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_class by name and schema oid */
 				Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 				{
 					result = relid;
 				}
@@ -2368,7 +2406,15 @@ object_id(PG_FUNCTION_ARGS)
 			} 
 			else if (enr == NULL)
 			{
-				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				Oid temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+				if (OidIsValid(temp_nsp_oid))
+				{
+					Oid relid = get_relname_relid((const char *) object_name, temp_nsp_oid);
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
+				}
 			}
 		}
 		else
@@ -2376,7 +2422,7 @@ object_id(PG_FUNCTION_ARGS)
 			/* search in pg_class by name and schema oid */
 			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
 				result = relid;
 			}
@@ -3840,30 +3886,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	int	i = 0;
 	bool	is_ms_shipped = false;
 	char	*namespace_name = NULL;
+
 	/*
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-#define NUM_DB_OBJECTS 11
-	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
+	static int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
 		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
-	};
-	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
-		{"xp_qv","master_dbo"},
-		{"xp_instance_regread","master_dbo"},
-		{"sp_addlinkedserver", "master_dbo"},
-		{"sp_addlinkedsrvlogin", "master_dbo"},
-		{"sp_dropserver", "master_dbo"},
-		{"sp_droplinkedsrvlogin", "master_dbo"},
-		{"sp_testlinkedserver", "master_dbo"},
-		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
-		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"},
-		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
@@ -4904,15 +4937,14 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 			 * the hash table
 			 */
 			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
-			catname_lower = downcase_identifier(catname, strlen(catname), false, false);
-			if (catname_lower != NULL)
-			{
-				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
+            if (catname != NULL) {
+                catname_lower = downcase_identifier(catname, strlen(catname), false, false);
+                bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
 
-				if (catdesc)
-					values[catdesc->attidx + non_pivot_columns] =
-						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
-			}
+                if (catdesc)
+                    values[catdesc->attidx + non_pivot_columns] =
+                        SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+            }
 
 			if (ncols > 2)
 			{

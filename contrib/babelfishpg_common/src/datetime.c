@@ -29,6 +29,7 @@ PG_FUNCTION_INFO_V1(datetime_recv);
 PG_FUNCTION_INFO_V1(date_datetime);
 PG_FUNCTION_INFO_V1(time_datetime);
 PG_FUNCTION_INFO_V1(timestamp_datetime);
+PG_FUNCTION_INFO_V1(varbinary_datetime);
 PG_FUNCTION_INFO_V1(timestamptz_datetime);
 PG_FUNCTION_INFO_V1(datetime_varchar);
 PG_FUNCTION_INFO_V1(varchar_datetime);
@@ -760,6 +761,54 @@ timestamp_datetime(PG_FUNCTION_ARGS)
 {
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
+	CheckDatetimeRange(result, fcinfo->context);
+	PG_RETURN_TIMESTAMP(result);
+}
+
+/* 
+ * varbinary_datetime()
+ * Convert varbinary to datetime
+ */
+Datum
+varbinary_datetime(PG_FUNCTION_ARGS)
+{
+	bytea			*arg = PG_GETARG_BYTEA_PP(0);
+	int32			size = VARSIZE_ANY_EXHDR(arg);
+	int64			days = 0;
+	uint32_t		time_part = 0;
+	int64			ms_value = 0;
+	int64			usecs;
+	Timestamp		result;
+	unsigned char		*buffer = (unsigned char *)VARDATA_ANY(arg);
+	uint32_t		i = 0;
+
+	for (; i < size && i < sizeof(int32); i++)
+		time_part |= (buffer[size - 1 - i] << (8 * i));
+	for (; i < size && i < sizeof(int64); i++)
+		days |= (buffer[size - 1 - i] << (8 * i));
+
+	/* Convert time_part to microseconds */
+	ms_value = ((int64)time_part * 10LL) / 3LL;
+	usecs = ms_value * 1000;
+
+	if (usecs >= USECS_PER_DAY)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime")));
+
+	if (days < 0)
+	{
+		/* Handle pre-1900 dates */
+		int64 day_value = days & ((int64) 0xFFFFFFFF);
+		int64 total_usecs = (day_value - MIN_DATE_MASK) * USECS_PER_DAY + usecs;
+		result = MIN_DATETIME + total_usecs;
+	}
+	else
+	{
+		/* Handle post-1900 dates */
+		int64 total_usecs = days * USECS_PER_DAY + usecs;
+		result = TSQL_DEFAULT_DATETIME + total_usecs;
+	}
 	CheckDatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
