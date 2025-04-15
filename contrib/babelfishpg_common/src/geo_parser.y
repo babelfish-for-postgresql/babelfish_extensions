@@ -51,32 +51,32 @@ point_query:
 
 coordz:
     DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, $3, 0, 1, 0); }
+        { $$ = create_point($1, $2, $3, 0, 1, 0); }
             
 coordm:
     DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, 0 , $3, 0, 1); }
+        { $$ = create_point($1, $2, 0 , $3, 0, 1); }
             
 coordzm:
     DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, $3, $4, 1, 1); }
+        { $$ = create_point($1, $2, $3, $4, 1, 1); }
     
 
 coordinate:
     DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, 0, 0, 0, 0); }
+        { $$ = create_point($1, $2, 0, 0, 0, 0); }
     | DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, $3, 0, 1, 0); }
+        { $$ = create_point($1, $2, $3, 0, 1, 0); }
     | DOUBLE_TOK DOUBLE_TOK NULL_TOK
-        { $$ = create_coordinate($1, $2, 0, 0, 0, 0); }
+        { $$ = create_point($1, $2, 0, 0, 0, 0); }
     | DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK
-        { $$ = create_coordinate($1, $2, $3, $4, 1, 1); }
+        { $$ = create_point($1, $2, $3, $4, 1, 1); }
     | DOUBLE_TOK DOUBLE_TOK NULL_TOK NULL_TOK
-        { $$ = create_coordinate($1, $2, 0, 0, 0, 0); }
+        { $$ = create_point($1, $2, 0, 0, 0, 0); }
     | DOUBLE_TOK DOUBLE_TOK DOUBLE_TOK NULL_TOK
-        { $$ = create_coordinate($1, $2, $3, 0, 1, 0); }
+        { $$ = create_point($1, $2, $3, 0, 1, 0); }
     | DOUBLE_TOK DOUBLE_TOK NULL_TOK DOUBLE_TOK 
-        { $$ = create_coordinate($1, $2, 0, $4, 0, 1); }
+        { $$ = create_point($1, $2, 0, $4, 0, 1); }
     ;
 
 %%

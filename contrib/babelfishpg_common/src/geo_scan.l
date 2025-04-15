@@ -39,7 +39,7 @@ POLYHEDRALSURFACE     { yyerror(NULL, "Invalid Geometry");  return POLYHEDRALSUR
 TRIANGLE              { yyerror(NULL, "Invalid Geometry");  return TRIANGLE_TOK; }
 TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
--?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?  {
+[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)? {
     double val = atof(yytext);
     if (isnan(val)) {
         yyerror(NULL, "NaN values are not allowed");
@@ -49,10 +49,10 @@ TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 }
 
 
-NULL       { return NULL_TOK; }
-[ ]+EMPTY  { return EMPTY_TOK; }
-,          { return COMMA_TOK;}
+NULL          { return NULL_TOK; }
+[ \t]+ EMPTY  { return EMPTY_TOK; }
 
+,          { return COMMA_TOK;}
 \(         { return LPAREN; }
 \)         { return RPAREN; }
 

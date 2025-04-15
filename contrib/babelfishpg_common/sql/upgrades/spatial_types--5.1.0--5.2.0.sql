@@ -127,7 +127,7 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    ALTER FUNCTION sys.get_valid_srids() RENAME TO get_valid_srids_5_2_0;
+    ALTER FUNCTION sys.get_valid_srids() RENAME TO get_valid_srids_deprecated_5_2_0;
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -136,7 +136,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_valid_srids_5_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_valid_srids_deprecated_5_2_0');
 
 DO $$
 DECLARE
@@ -519,12 +519,12 @@ CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
 	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GeometryAsTextbp_helper(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY)
 	RETURNS sys.bpchar
 	AS 'babelfishpg_common', 'geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GeometryAsTextvar_helper(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
 	RETURNS sys.varchar
 	AS 'babelfishpg_common', 'geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;

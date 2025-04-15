@@ -20,34 +20,26 @@
 #define FLAGS_GET_Z(flags)           ((flags) & POINTFLAG_Z)
 #define FLAGS_GET_M(flags)           ((flags) & POINTFLAG_M)
 
-PG_FUNCTION_INFO_V1(geo_wkt_rewrite);
-
-Datum
-geo_wkt_rewrite(PG_FUNCTION_ARGS)
+text*
+geo_wkt_rewrite(text* input_text)
 {
-    text    *input_text = NULL,
-            *result_text = NULL;    /* Ensure initialization */
-    char    *input_str = NULL,
-            *translated_query = NULL;      /* Ensure initialization */
+    text* result_text = NULL;
+    char* input_str = NULL;
+    char* translated_query = NULL;
 
     /* Check if the input argument is NULL */
-    if (PG_ARGISNULL(0))
+    if (input_text == NULL)
     {
-        ereport(ERROR,
-                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-                 errmsg("Incorrect syntax near the keyword 'null'")));
+        /* Return NULL if input is NULL */
+        return NULL;
     }
+    
 
     /* Convert PostgreSQL TEXT to C string */
-    input_text = PG_GETARG_TEXT_PP(0);
     input_str = text_to_cstring(input_text);
    
     PG_TRY();
     {
-        /* Switch to a suitable memory context if necessary */
-        if (!CurrentMemoryContext)
-            MemoryContextSwitchTo(TopMemoryContext);
-
         /* Initialize lexer (scanner) */
         geo_scanner_init(input_str);
 
@@ -55,33 +47,29 @@ geo_wkt_rewrite(PG_FUNCTION_ARGS)
         if (geo_yyparse(&translated_query) != 0)
             geo_yyerror(&translated_query, "geospatial parser failed");
 
-        /* Cleanup lexer (scanner) */
-        geo_scanner_finish();
     }
     PG_FINALLY();
     {
-        /* Cleanup code that runs whether or not an error occurred */
         geo_scanner_finish();
     }
     PG_END_TRY();
 
     /* Convert the rewritten query to PostgreSQL TEXT */
     if (translated_query)
+    {
         result_text = cstring_to_text(translated_query);
+    }
 
     /* Free allocated memory for input string */
     pfree(input_str);
 
     /* Return the rewritten query or NULL */
-    if (result_text)
-        PG_RETURN_TEXT_P(result_text);
-    else
-        PG_RETURN_NULL();
+    return result_text;
 }
 
-
 /* Creates a POINT coordinate structure with the given values. */
-POINT create_coordinate(double x, double y, double z, double m, int has_z, int has_m)
+POINT
+create_point(double x, double y, double z, double m, int has_z, int has_m)
 {
     POINT coord;
     
@@ -101,7 +89,8 @@ POINT create_coordinate(double x, double y, double z, double m, int has_z, int h
 
 
 /* Rewrites a POINT coordinate into a WKT (Well-Known Text) string representation. */
-char* rewrite_point_query(POINT coord)
+char*
+rewrite_point_query(POINT coord)
 {
     StringInfoData output;
     initStringInfo(&output);
@@ -109,7 +98,7 @@ char* rewrite_point_query(POINT coord)
     /* Start the WKT string with "POINT" */
     appendStringInfoString(&output, "POINT");
 
-    /* Add 'Z' and/or 'M' if the point has those coordinates */
+    /* Add 'M' if the point has M coordinate and doesn't have Z coordinate */
     if (FLAGS_GET_M(coord.flags) && !FLAGS_GET_Z(coord.flags) )
         appendStringInfoString(&output, " M");
 
@@ -136,7 +125,8 @@ char* rewrite_point_query(POINT coord)
     return output.data; 
 }
 
-char* rewrite_point_dim_query(POINT coord)
+char*
+rewrite_point_dim_query(POINT coord)
 {
     StringInfoData output;
     initStringInfo(&output);

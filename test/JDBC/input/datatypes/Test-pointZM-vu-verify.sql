@@ -117,6 +117,63 @@ GO
 SELECT geography::STGeomFromText('POINT(-1 -1 -1 -1)', 4326);
 GO
 
+-- Scientific notation
+SELECT geometry::STGeomFromText('POINT(1.5e2 2.5e-2)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.5e2 2.5e-2 3.5e1)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(1.5e2 2.5e-2 3.5e1 4.5e0)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(1.5e2 2.5e-2)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(1.5e2 2.5e-2 3.5e1)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(1.5e2 2.5e-2 3.5e1 4.5e0)', 4326);
+GO
+
+-- Edge cases
+SELECT geometry::STGeomFromText('POINT(0.0 0.0)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(-3.0 +2.0 0.0)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(0.0 0.0 0.0 0.0)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(0.0 0.0)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(-0.0 +0.0 0.0)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(0.0 0.0 0.0 0.0)', 4326);
+GO
+
+-- Decimal Values
+SELECT geometry::STGeomFromText('POINT(.23 .45)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(.23 .45)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(.23 0.45 .67)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('POINT(.23 .45 0.67 .89)', 4326)
+GO
+
+SELECT geography::STGeomFromText('POINT(.23 0.45)', 4326);
+GO
+
+SELECT geography::STGeomFromText('POINT(0.23 .45 .67)', 4326);
+GO
+
 -- Test with extra whitespace
 SELECT geometry::STGeomFromText('  POINT  (  1  1  )  ', 4326);
 GO

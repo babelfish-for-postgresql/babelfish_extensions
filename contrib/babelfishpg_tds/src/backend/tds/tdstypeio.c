@@ -58,6 +58,11 @@
 /* TODO: need to add for other geometry types when introduced */
 #define POINTTYPE 1
 
+#define SHAPE_COUNT_EMPTY     0x00000001
+#define EMPTY_FIGURE_INDEX    0xFFFFFFFF
+#define EMPTY_SHAPE_INDEX     0xFFFFFFFF
+#define SRID_OFFSET           4
+
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
 	pgTypeOid = (finfo->ttmbasetypeid != InvalidOid) ? \
@@ -179,6 +184,14 @@ get_srid(uint8_t *id)
 		return 0;
 	else
 		return srid;
+}
+
+/* Helper function to write a 32-bit integer to a buffer and advance the pointer */
+static inline void 
+write_int32(unsigned char **ptr, int32_t value)
+{
+    *((int32_t*)*ptr) = value;
+    *ptr += sizeof(int32_t);
 }
 
 /*
@@ -4214,7 +4227,7 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-int 
+int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int         rc = EOF,
@@ -4227,13 +4240,13 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
                                          * store given string in given encoding. */
 
     char        *destBuf,
-                *buf = NULL,
-                *itr;
+                *buf = NULL;
     uint32_t    geom_type;
     int32_t     srid;
+    unsigned char *itr;
 
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-    GSERIALIZED *gser;
+    GSERIALIZED *gser;    /* Used to Store the bytes in the Format which is stored in PostGIS */
 
     gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);
 
@@ -4256,11 +4269,11 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
         /* Fixed length for expected output */
         len = 27;
         buf = (char *) palloc0(len);
-        itr = buf;
+        itr = (unsigned char *)buf;
 
         /* Set SRID */
         *((int32_t*)buf) = srid;
-        itr = buf + 4;
+        itr = (unsigned char *)buf + SRID_OFFSET;
 
         /* Geometry type */
         *itr = 1;
@@ -4271,30 +4284,25 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
         itr++;
 
         /* Number of points */
-        *((int32_t*)itr) = 0;
-        itr += 4;
+        write_int32(&itr, 0);
 
         /* Number of figures */
-        *((int32_t*)itr) = 0;
-        itr += 4;
+        write_int32(&itr, 0);
 
         /* Number of Shapes */
-        *((int32_t*)itr) = 0x00000001;
-        itr += 4;
+        write_int32(&itr, SHAPE_COUNT_EMPTY);
 
         /* Figure index */
-        *((int32_t*)itr) = 0xFFFFFFFF;
-        itr += 4;
+        write_int32(&itr, EMPTY_FIGURE_INDEX);
 
         /* Shape index */
-        *((int32_t*)itr) = 0xFFFFFFFF;
-        itr += 4;
+        write_int32(&itr, EMPTY_SHAPE_INDEX);
 
         /* Final byte for POINT EMPTY*/
         if (geom_type == POINTTYPE)
             *itr = 0x01;
     }
-    else 
+    else if (npoints != 0)
     {
         switch(geom_type)
         {
@@ -4322,7 +4330,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 
                 /* Set SRID */
                 *((int32_t*)buf) = srid;
-                itr = buf + 4; 
+                itr = (unsigned char *)buf + 4; 
 
                 /* Point type */
                 *itr = 1;
@@ -4349,9 +4357,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
                 memcpy(itr, (char *)gser->data + 8, len - 6);
                 break;
 
-            // Add cases for other geometry types here
-
-            default:
+			default:
                 elog(ERROR, "Unsupported geometry type");
         }
     }

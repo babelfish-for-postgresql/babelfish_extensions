@@ -27,8 +27,9 @@ extern void geo_scanner_finish(void);
 /* External variable for lexer text */
 extern char *geo_yytext;
 
+text* geo_wkt_rewrite(text* input_text);
 /* Function to create a POINT structure */
-POINT create_coordinate(double x, double y, double z, double m, int has_z, int has_m);
+POINT create_point(double x, double y, double z, double m, int has_z, int has_m);
 
 /* Function to rewrite a POINT query to WKT format */
 char* rewrite_point_query(POINT p);
