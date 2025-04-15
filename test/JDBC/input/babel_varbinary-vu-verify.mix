@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 -- Test Plan for Varbinary Addition Operations
 -- Test Case 1: Empty Binary Values Addition with max length
