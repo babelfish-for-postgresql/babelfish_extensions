@@ -488,7 +488,7 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.bpchar((SELECT sys.GeometryAsTextbp_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN sys.bpchar((SELECT sys.GeographyAsTextbp_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -505,7 +505,7 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.varchar((SELECT sys.GeometryAsTextvar_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN sys.varchar((SELECT sys.GeographyAsTextvar_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
