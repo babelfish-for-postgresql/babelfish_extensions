@@ -3,6 +3,36 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when undefined_function then --if 'Deprecated function does not exist'
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -32,6 +62,10 @@ $$
         execute query;
     end;
 $$;
+
+ALTER FUNCTION sys.fn_varbintohexsubstring RENAME TO fn_varbintohexsubstring_deprecated_in_5_3_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_varbintohexsubstring_deprecated_in_5_3_0');
 
 CREATE OR REPLACE FUNCTION sys.fn_varbintohexsubstring(set_prefix sys.BIT, expression sys.varbinary, start_offset INT, substr_length INT)
 RETURNS sys.nvarchar AS 
@@ -101,6 +135,10 @@ CAST('CONNECT' AS sys.nvarchar(128)) AS permission_name,
 CAST('G' AS sys.BPCHAR(1)) AS state,
 CAST('GRANT' AS sys.nvarchar(60)) AS state_desc;
 GRANT SELECT ON sys.server_permissions TO PUBLIC;
+
+ALTER VIEW sys.sql_logins RENAME TO sql_logins_deprecated_in_5_3_0;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_logins_deprecated_in_5_3_0');
 
 CREATE OR REPLACE VIEW sys.sql_logins AS 
 WITH super_user AS (SELECT pg_get_userbyid(datdba) COLLATE sys.database_default AS super_user FROM pg_database WHERE datname = CURRENT_DATABASE())
