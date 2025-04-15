@@ -230,7 +230,6 @@ Function sys.bbf_varbinary(sys.geometry)
 Function sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary,sys.bbf_binary)
 Function sys.bbf_varbinary_cmp(sys.bbf_varbinary,sys.bbf_varbinary)
 Function sys.bbfbinary_sqlvariant(sys.bbf_binary)
-Function sys.bbfvarbinary(sys.bbf_varbinary,integer,boolean)
 Function sys.bbfvarbinary_sqlvariant(sys.bbf_varbinary)
 Function sys.bigint_avg(internal)
 Function sys.bigint_sqlvariant(bigint)
@@ -961,7 +960,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."real"
-Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
