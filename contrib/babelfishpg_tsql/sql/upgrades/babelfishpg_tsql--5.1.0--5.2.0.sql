@@ -970,8 +970,6 @@ SELECT
     CAST(NULL as sys.sysname) AS default_database_name,
     CAST(NULL as sys.sysname) AS default_language_name,
     CAST(NULL as INT) AS credential_id,
-    CAST(NULL as INT) AS owning_principal_id,
-    CAST(0 as sys.BIT) AS is_fixed_role,
     CAST(0 as sys.BIT) AS is_policy_checked,
     CAST(0 as sys.BIT) AS is_expiration_checked,
     CAST(NULL as sys.varbinary(256)) AS password_hash
