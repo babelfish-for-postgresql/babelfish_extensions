@@ -140,6 +140,7 @@ BABEL-CHECK-CONSTRAINT
 babel_context_info
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
+babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
@@ -574,5 +575,6 @@ smalldatetime_date_cmp
 test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-5467
-round_return_type_test-before-16_9-or-17_5
+round_return_type_test
 BABEL-NUMERIC_EXPR
+babel_varbinary
