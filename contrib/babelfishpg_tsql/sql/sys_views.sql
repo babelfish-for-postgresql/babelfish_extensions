@@ -3332,7 +3332,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
-CREATE VIEW sys.sql_logins AS
+CREATE OR REPLACE VIEW sys.sql_logins AS
 SELECT
     CAST(NULL as sys.sysname) AS name,
     CAST(NULL as INT) AS principal_id,
