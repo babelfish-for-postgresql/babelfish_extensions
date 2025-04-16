@@ -399,7 +399,12 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	}
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-	/* no constant prefix found in pattern, or pattern is not constant */
+	/* 
+	 * no constant prefix found in pattern, or pattern is not constant 
+	 * OR if it is for CHECK CONSTRAINT, we do NOT need any optimisation
+	 * for it. Rather it will add extra overhead, moreover vanilla PG
+	 * also handles check constraints this way
+	 */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull || is_constraint)
 	{
