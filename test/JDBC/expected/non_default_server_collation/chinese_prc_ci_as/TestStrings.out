@@ -620,7 +620,7 @@ varchar#!#varchar
 ABCDEFGHIJNCHAR20NCR20NCHAR20 #!#XZ
                               #!#  
 <NULL>#!#<NULL>
-!@#$%^&*()????????????        #!#!?
+!@#$%^&*()你好こんにちは????? #!#!
   Spaces    Spaces            #!#  
 <NULL>#!#<NULL>
 ~~END~~
@@ -741,7 +741,7 @@ varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
 ABCDEFGHIJ#!#VARCHAR50#!#NCHAR20NCR20NCHAR20 #!#NVARCHAR100#!#ABCDEFGHIJ VARCHAR50#!#NCHAR20NCR20NCHAR20  NVARCHAR100#!#ABCDEFGHIJ NCHAR20NCR20NCHAR20 
           #!##!#                    #!##!#           #!#                     #!#                               
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-!@#$%^&*()#!#!@#$%^&*()#!#你好こんにちは안녕하세요        #!#你好こんにちは안녕하세요#!#!@#$%^&*() !@#$%^&*()#!#你好こんにちは안녕하세요         你好こんにちは안녕하세요#!#!@#$%^&*() ????????????        
+!@#$%^&*()#!#!@#$%^&*()#!#你好こんにちは안녕하세요        #!#你好こんにちは안녕하세요#!#!@#$%^&*() !@#$%^&*()#!#你好こんにちは안녕하세요         你好こんにちは안녕하세요#!#!@#$%^&*() 你好こんにちは????? 
   Spaces  #!#  Spaces  #!#  Spaces            #!#  Spaces  #!#  Spaces     Spaces  #!#  Spaces               Spaces  #!#  Spaces     Spaces            
 <NULL>#!#Hello World#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
@@ -829,7 +829,7 @@ GO
 varchar
 ABCDEFGHIJ<newline>VARCHAR50<newline>NCHAR20NCR20NCHAR20 
           <newline>                    
-!@#$%^&*()<newline>!@#$%^&*()<newline>????????????        
+!@#$%^&*()<newline>!@#$%^&*()<newline>你好こんにちは????? 
   Spaces  <newline>  Spaces  <newline>  Spaces            
 ~~END~~
 

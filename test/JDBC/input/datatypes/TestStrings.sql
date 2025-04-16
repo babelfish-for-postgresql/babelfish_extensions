@@ -529,7 +529,8 @@ UNION
 SELECT
     char_col1 + varchar_col8000 AS ConcatenatedResult
 FROM
-    String_Datatype_Limits;
+    String_Datatype_Limits
+ORDER BY ConcatenatedResult
 GO
 
 -- Test concatenation with CTE queries
