@@ -67,3 +67,29 @@ int
 <NULL>
 ~~END~~
 
+
+
+-- Unique constraints metadata test
+-- CREATE TABLE constraint
+SELECT o.name AS constraint_name,
+       o.type,
+       o.type_desc
+FROM sys.objects o WHERE o.parent_object_id = OBJECT_ID('object_id_conflict_t2') AND o.type = 'UQ';
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+unq_num#!#UQ#!#UNIQUE_CONSTRAINT
+~~END~~
+
+
+-- ALTER TABLE constraint
+SELECT o.name AS constraint_name,
+       o.type,
+       o.type_desc
+FROM sys.objects o WHERE o.parent_object_id = OBJECT_ID('object_id_conflict_t') AND o.type = 'UQ';
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+unq_name#!#UQ#!#UNIQUE_CONSTRAINT
+~~END~~
+
