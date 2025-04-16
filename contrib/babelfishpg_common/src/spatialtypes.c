@@ -66,8 +66,37 @@ static const int32 geography_valid_srids[] = {
     4941, 4943, 4945, 4947, 4949, 4951, 4953, 4955, 4957, 4959, 4961, 4963, 4965, 4967, 4971, 4973, 4975, 4977, 4979, 
     4981, 4983, 4985, 4987, 4989, 4991, 4993, 4995, 4997, 4999, 7843, 7844, 104001
 };
-/* Number of valid SRIDs */
-static const int num_valid_srids_geography = sizeof(geography_valid_srids) / sizeof(geography_valid_srids[0]);
+
+/*
+ * Check if the given SRID is valid for geography type using the predefined array
+ * Returns true if SRID is valid, false otherwise
+ */
+static bool
+is_valid_geography_srid(int32 srid)
+{
+    /* Calculate number of valid SRIDs */
+    const int num_valid_srids = sizeof(geography_valid_srids) / sizeof(geography_valid_srids[0]);
+    
+    /* Since array is sorted, we can use binary search for better performance */
+    int low = 0;
+    int high = num_valid_srids - 1;
+
+    while (low <= high)
+    {
+        int mid = low + (high - low) / 2;
+        
+        if (geography_valid_srids[mid] == srid)
+            return true;
+        
+        if (geography_valid_srids[mid] < srid)
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+
+    return false;
+}
+
 
 /*
  * Updates FunctionCallInfoBaseData with new arguments efficiently.
@@ -350,9 +379,9 @@ geography_in(PG_FUNCTION_ARGS)
     }
     else 
     {
-    ereport(ERROR,
-        (errcode(ERRCODE_DATA_EXCEPTION),
-         errmsg("Latitude values must be between -90 and 90 degrees")));
+        ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("Latitude values must be between -90 and 90 degrees")));
     }
 
     /* This point should never be reached, but to satisfy the compiler: */
@@ -405,7 +434,7 @@ get_geometry_from_text(PG_FUNCTION_ARGS)
 
     /* 
      * Return the geometry object if it's a Point type
-     * Otherwise return NULL (only ST_Point is currently supported)
+     * Otherwise return NULL (only Point is currently supported)
      */
     if (strcmp(geom_type, "ST_Point") == 0)
         PG_RETURN_DATUM(geom_datum);
@@ -426,7 +455,6 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     text       *rewritten_wkt_text; /* Processed WKT text */          
     char       *geom_type;          /* String representation of geometry type */
     float8      lat;                /* Latitude value */
-    bool        srid_valid = false; /* Flag for SRID validation */
     int32       srid;               /* Input SRID value */
     LOCAL_FCINFO(fcinfo_local, 2);  /* Local function call info with 2 arguments */
 
@@ -439,18 +467,8 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     /* Load required functions for geometry processing */
     load_functions();
 
-    /* Validate input SRID against list of valid SRIDs */
-    for (int i = 0; i < num_valid_srids_geography; i++) 
-    {    
-        if (geography_valid_srids[i] == srid)
-        {
-            srid_valid = true;
-            break;
-        }
-    }
-
     /* Raise error if SRID is not in valid list */
-    if (!srid_valid) 
+    if (!is_valid_geography_srid(srid))
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -485,13 +503,15 @@ get_geography_from_text(PG_FUNCTION_ARGS)
         {
             PG_RETURN_DATUM(flipped_geom_datum);
         } 
-        
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
+        else
+        {
+            ereport(ERROR,
+                    (errcode(ERRCODE_DATA_EXCEPTION),
+                     errmsg("Latitude values must be between -90 and 90 degrees")));
+        }
     }
 
-    /* Code path for non-Point geometries (should never be reached) */
+    /*  return NULL (only Point is currently supported)*/
     PG_RETURN_NULL();
 }
 
@@ -503,8 +523,6 @@ geography_point(PG_FUNCTION_ARGS)
     float8   lat,                /* Latitude value */
              lon;                /* Longitude value */
     int32    srid;              /* Spatial Reference ID */
-    bool     srid_valid = false; /* Flag for SRID validation */
-    int      i;                 /* Loop counter */
     LOCAL_FCINFO(fcinfo_local, 3); /* Local function call info with 3 arguments */
 
     /* Initialize function call info once */
@@ -519,17 +537,7 @@ geography_point(PG_FUNCTION_ARGS)
     load_functions();
 
     /* Validate input SRID against list of valid SRIDs */
-    for (i = 0; i < num_valid_srids_geography; i++) 
-    {
-        if (geography_valid_srids[i] == srid) 
-        {
-            srid_valid = true;
-            break;
-        }
-    }
-
-    /* Validate SRID */
-    if (!srid_valid)
+    if (!is_valid_geography_srid(srid))
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -591,13 +599,13 @@ charTogeom(PG_FUNCTION_ARGS)
     }
     else 
     {
-    /* 
-     * Raise error for unsupported geometry types
-     * Currently only Point geometries are supported
-     */
-    ereport(ERROR,
-            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-             errmsg("%s is not supported", geom_type)));
+        /* 
+        * Raise error for unsupported geometry types
+        * Currently only Point geometries are supported
+        */
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("%s is not supported", geom_type)));
     }
 
     /* Control should never reach this point */
@@ -665,17 +673,17 @@ charTogeog(PG_FUNCTION_ARGS)
         }
         else
         {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("Latitude values must be between -90 and 90 degrees")));
+            ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                    errmsg("Latitude values must be between -90 and 90 degrees")));
         }
     }
     else 
     {
-    /* Raise error for unsupported geometry types */
-    ereport(ERROR,
-            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-             errmsg("%s is not supported", geom_type)));
+        /* Raise error for unsupported geometry types */
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                errmsg("%s is not supported", geom_type)));
     }
 
     /* Control should never reach this point */
@@ -765,7 +773,8 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
     /* Process geometry if SRID is valid and no NaN coordinates found */
     if (srid >= 0 && srid <= 999999 && isNaN == 0) 
     {
-        if (dimension_flag == 0) {
+        if (dimension_flag == 0) 
+        {
             /* Handle empty geometry */
             result = (bytea *) palloc(VARHDRSZ + 25);
             SET_VARSIZE(result, VARHDRSZ + 25);
@@ -776,7 +785,9 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
             memcpy(result_data + 5, input_data, 4);
             memcpy(result_data + 9, empty_geom, 8);
             memcpy(result_data + 17, empty_geom, 8);
-        } else {
+        } 
+        else 
+        {
             /* Handle non-empty geometry with dimensions */
             if (dimension_flag <= MAX_DIMENSION_FLAG) 
                 new_header[4] = DIMENSION_HEADERS[dimension_flag];
@@ -891,16 +902,16 @@ geography_from_bytea(PG_FUNCTION_ARGS)
     }
 
     /* Validate SRID against allowed values */
-    for (int i = 0; i < num_valid_srids_geography; i++) {
-        if (geography_valid_srids[i] == srid) {
-            srid_valid = true;
-            break;
-        }
+    if (is_valid_geography_srid(srid))
+    {
+        srid_valid = true;
     }
 
     /* Process geography if SRID is valid and coordinates are valid */
-    if (srid_valid && !isNaN && lat >= -90.0 && lat <= 90.0) {
-        if (dimension_flag == 0) {
+    if (srid_valid && !isNaN && lat >= -90.0 && lat <= 90.0) 
+    {
+        if (dimension_flag == 0) 
+        {
             /* Handle empty geography */
             result = (bytea *) palloc(VARHDRSZ + 25);
             SET_VARSIZE(result, VARHDRSZ + 25);
@@ -911,7 +922,9 @@ geography_from_bytea(PG_FUNCTION_ARGS)
             memcpy(result_data + 5, input_data, 4);
             memcpy(result_data + 9, empty_geom, 8);
             memcpy(result_data + 17, empty_geom, 8);
-        } else {
+        } 
+        else 
+        {
             /* Handle non-empty geography with dimensions */
             if (dimension_flag <= MAX_DIMENSION_FLAG) 
                 new_header[4] = DIMENSION_HEADERS[dimension_flag];

@@ -1,11 +1,6 @@
 %{   
-#include <string.h>
-#include "postgres.h"
-#include "lib/stringinfo.h"
-#include "utils/elog.h"
-#include "utils/builtins.h"
-#include "fmgr.h"  
 #include "geo_data.h"
+#include "utils/elog.h"
 
 static char     *scanbuf;
 static int      scanbuflen;

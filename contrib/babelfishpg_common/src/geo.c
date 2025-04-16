@@ -1,12 +1,4 @@
-#include "postgres.h"
-#include "fmgr.h"
-#include <string.h>
-#include "utils/geo_decls.h"
-#include "utils/builtins.h"
 #include "geo_data.h"
-#include "lib/stringinfo.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 #define FLOAT8_TO_CSTRING(x)         DatumGetCString(DirectFunctionCall1(float8out, Float8GetDatum(x)))
 #define YYFREE                       pfree

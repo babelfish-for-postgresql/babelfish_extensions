@@ -2,8 +2,11 @@
 #define GEO_DATA_H
 
 #include "postgres.h"
+#include "fmgr.h"
 #include "utils/memutils.h"
-#include <stdint.h>
+#include "utils/geo_decls.h"
+#include "utils/builtins.h"
+#include "lib/stringinfo.h"
 
 /* Structure definition for a geometric point */
 typedef struct

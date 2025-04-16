@@ -1,8 +1,5 @@
 %{
 #include "geo_data.h"
-#include "postgres.h"
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
 
 #define YY_READ_BUF_SIZE 16777216
