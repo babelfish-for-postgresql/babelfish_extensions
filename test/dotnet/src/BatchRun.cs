@@ -288,8 +288,7 @@ namespace BabelfishDotnetFramework
 							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
 							testUtils.PrintToLogsOrConsole("############################# DDLEXPORT ##############################", logger, "information");
 							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
-							LoginDatabaseScripter.ScriptDatabase(strLine, testName, testUtils, logger);
-							LoginDatabaseScripter.ScriptLogins(testName, testUtils, logger);
+							DatabaseScripter.ScriptDatabase(strLine, testName, testUtils, logger);
 						}
 						else
 						{
