@@ -138,7 +138,7 @@ BABEL-CHECK-CONSTRAINT
 babel_context_info
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-babel_datetime-before-15_12-or-16_8-or-17_4
+babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
@@ -246,6 +246,7 @@ ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
 key_column_usage
+ignore_inline_option
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
@@ -255,6 +256,7 @@ newid
 objectpropertyex
 openjson
 orderby
+object_id_index_conflict
 routines_definition
 rowcount
 schema_resolution_func
@@ -435,6 +437,7 @@ TestSmallInt
 TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
+Test-spatial-functions-2
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -518,6 +521,7 @@ BABEL-4606
 BABEL-4672
 permission_restrictions_from_pg
 restricting_function_overloading
+restricted_objects
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -601,8 +605,17 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
-test_constraint_like-before-17-5-or-16-9
-round_return_type_test-before-16_9-or-17_5
+BABEL-5467
+sys_credentials
+sys_server_permissions
+sys_sql_logins
+sys-login-property
+sys-fn-varbintohexsubstring
+BABEL_OBJECT_RESOLUTION_IN_ROUTINES
+alter-mvu-test
+test_constraint_like
+unpivot
+forjson-escape
+round_return_type_test
 alter-view
-object_ownership-before-16_8-or-17_4
-test_conv_int_to_varbinary_binary_before_17_5_or_16_9
+test_conv_int_to_varbinary_binary
