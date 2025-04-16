@@ -335,7 +335,7 @@ static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = copyObject(lsecond(op->args));
+	Node	   *rightop = (Node *) lsecond(op->args);
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
@@ -465,13 +465,15 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	
 	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
 
+	Assert(ltypeId == rtypeId);
+
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		op_str = like_entry.is_not_match ? "<>" : "=";
-		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
@@ -482,6 +484,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
+		
 		ReleaseSysCache(optup);
 	}
 	else
@@ -497,7 +500,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 
 		/* construct leftop >= pattern */
-		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
@@ -509,25 +512,23 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 											InvalidOid,
 											coll_info_of_inputcollid.oid,
 											oprfuncid(optup));
-
-
 		ReleaseSysCache(optup);
 		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(ltypeId, -1, InvalidOid, -1,
+		highest_sort_key = makeConst(rtypeId, -1, InvalidOid, -1,
 										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
 
-		optup = compatible_oper(NULL, list_make1(makeString("||")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
 
-		concat_expr = make_op_with_func(oprid(optup), ltypeId, false,
+		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
 										(Expr *) prefix_collate,
 										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
 										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
 		ReleaseSysCache(optup);
 		/* construct leftop < pattern */
-		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
 								true, -1);
 		if (optup == (Operator) NULL)
 			return node;
@@ -536,10 +537,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
 										(Expr *) leftop, (Expr *) concat_expr,
 										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-
-
 		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-
 		if (like_entry.is_not_match)
 		{
 			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
