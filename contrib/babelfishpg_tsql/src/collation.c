@@ -332,7 +332,7 @@ create_collate_expr(Node *arg, Oid collid)
  */
 
 static Node *
-optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
 	Node	   *rightop = copyObject(lsecond(op->args));
@@ -399,10 +399,9 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	}
 	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
-
 	/* no constant prefix found in pattern, or pattern is not constant */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-		((Const *) rightop)->constisnull)
+		((Const *) rightop)->constisnull || is_constraint)
 	{
 		/* update the collation of left and right node*/
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
@@ -964,7 +963,7 @@ supported_collation_for_db_and_like(int32_t code_page)
 }
 
 static Node *
-transform_likenode(Node *node)
+transform_likenode(Node *node, bool is_constraint)
 {
 	if (node && IsA(node, OpExpr))
 	{
@@ -1023,12 +1022,12 @@ transform_likenode(Node *node)
 		if (OidIsValid(like_entry.like_oid) && OidIsValid(coll_info_of_inputcollid.oid))
 		{
 			if (coll_info_of_inputcollid.collateflags == 0x000d || coll_info_of_inputcollid.collateflags == 0x000c)	/* AS */
-				return optimise_likenode(node, op, like_entry, coll_info_of_inputcollid);
+				return optimise_likenode(node, op, like_entry, coll_info_of_inputcollid, is_constraint);
 
 			else if (coll_info_of_inputcollid.collateflags == 0x000e || coll_info_of_inputcollid.collateflags == 0x000f)	/* AI */
 			{
 				if (supported_collation_for_db_and_like(coll_info_of_inputcollid.code_page))
-					return optimise_likenode(node, (OpExpr*) transform_likenode_for_AI(op), like_entry, coll_info_of_inputcollid);
+					return optimise_likenode(node, (OpExpr*) transform_likenode_for_AI(op), like_entry, coll_info_of_inputcollid, is_constraint);
 				else
 					ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1040,14 +1039,14 @@ transform_likenode(Node *node)
 }
 
 Node *
-pltsql_predicate_transformer(Node *expr)
+pltsql_predicate_transformer(Node *expr, bool is_constraint)
 {
 	if (expr == NULL)
 		return expr;
 
 	if (IsA(expr, OpExpr))
 	{
-		Node *ret = transform_likenode(expr);
+		Node *ret = transform_likenode(expr, is_constraint);
 		if (expr == ret)
 			/* If it's not a like Opexpr, then walk through args */
 			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
@@ -1102,11 +1101,11 @@ pltsql_predicate_transformer(Node *expr)
 			if (IsA(qual, BoolExpr))
 			{
 				new_predicates = lappend(new_predicates,
-										 pltsql_predicate_transformer(qual));
+										 pltsql_predicate_transformer(qual, is_constraint));
 			}
 			else if (IsA(qual, OpExpr))
 			{
-				qual = transform_likenode(qual);
+				qual = transform_likenode(qual, is_constraint);
 				new_predicates = lappend(new_predicates,
 										 expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
 			}
@@ -1138,7 +1137,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 		if (caseexpr->arg != NULL)
 			/* CASE expression WHEN... */
 		{
-			pltsql_predicate_transformer((Node *) caseexpr->arg);
+			pltsql_predicate_transformer((Node *) caseexpr->arg, false);
 		}
 	}
 	else if (IsA(node, CaseWhen))
@@ -1146,7 +1145,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 	{
 		CaseWhen   *casewhen = (CaseWhen *) node;
 
-		pltsql_predicate_transformer((Node *) casewhen->expr);
+		pltsql_predicate_transformer((Node *) casewhen->expr, false);
 	}
 
 	/* Recurse through the operands of node */
@@ -1167,7 +1166,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 		 * Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; This
 		 * is done even in the postgres dialect.
 		 */
-		node = transform_likenode(node);
+		node = transform_likenode(node, false);
 	}
 
 	return node;
@@ -1206,7 +1205,7 @@ pltsql_planner_node_transformer(PlannerInfo *root,
 									   pgtsql_expression_tree_mutator,
 									   NULL);
 	}
-	return pltsql_predicate_transformer(expr);
+	return pltsql_predicate_transformer(expr, false);
 }
 
 static void
