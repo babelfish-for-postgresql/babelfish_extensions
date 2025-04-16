@@ -570,3 +570,7 @@ ignore#!#test_conv_int_to_varbinary_binary_before_16_6_or_15_10-vu-cleanup
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-prepare
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-verify
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-cleanup
+
+ignore#!#test_constraint_like-16-6-vu-prepare
+ignore#!#test_constraint_like-16-6-vu-verify
+ignore#!#test_constraint_like-16-6-vu-cleanup
