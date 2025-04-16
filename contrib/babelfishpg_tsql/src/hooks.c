@@ -85,6 +85,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -312,6 +313,8 @@ static pltsql_is_partitioned_table_reloptions_allowed_hook_type prev_pltsql_is_p
 static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
+ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
+ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -549,6 +552,14 @@ InstallExtendedHooks(void)
 	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
 	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
+
+	prev_ParallelQueryMain_hook = ParallelQueryMain_hook;
+	ParallelQueryMain_hook = bbf_ParallelQueryMain;
+
+	prev_ExecInitParallelPlan_hook = ExecInitParallelPlan_hook;
+	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
+
+	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
 }
 
 void
@@ -630,6 +641,9 @@ UninstallExtendedHooks(void)
 	handle_default_collation_hook = NULL;
 	pltsql_get_object_identity_event_trigger_hook = NULL;
 	is_bbf_tds_connection_hook = NULL;
+	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
+	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
+	ExecCheckOneRelPerms_hook = NULL;
 }
 
 /*****************************************
