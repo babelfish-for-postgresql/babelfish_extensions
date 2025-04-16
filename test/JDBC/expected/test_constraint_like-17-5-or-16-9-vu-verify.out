@@ -801,3 +801,4 @@ GO
 text
 CHECK ((('abc'::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('A%'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
+
