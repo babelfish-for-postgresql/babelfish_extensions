@@ -1,0 +1,266 @@
+-- parallel_query_expected
+-- tsql
+-- setup
+CREATE LOGIN l1 WITH PASSWORD = '12345678'
+GO
+
+CREATE USER l1
+GO
+
+CREATE TABLE pq_t (id INT)
+GO
+
+INSERT INTO pq_t VALUES (1), (2), (3), (4) , (5);
+GO
+
+CREATE SCHEMA schema_for_l1 AUTHORIZATION l1
+GO
+
+CREATE DATABASE pq_db
+GO
+
+USE pq_db
+GO
+
+CREATE USER pq_db_u1 FOR LOGIN l1
+GO
+
+USE master
+GO
+
+-- psql user=l1 password=12345678
+-- setup
+-- create parallel safe function under schema_for_l1 where user is authorised to create
+CREATE OR REPLACE FUNCTION master_schema_for_l1.f1()
+RETURNS TABLE (a INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT id FROM pq_t);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+-- Test permission check on temp table from Postgres
+
+-- psql
+create table reg_test (a int)
+GO
+
+insert into reg_test values (1)
+GO
+
+create temp table parallel_test(a int);
+GO
+
+insert into parallel_test values (1)
+GO
+
+ANALYSE;
+GO
+
+-- function which tries to access temp table using parallel execution
+CREATE OR REPLACE FUNCTION f1()
+RETURNS TABLE (id INT) AS 
+$$ BEGIN
+    RETURN QUERY (SELECT a FROM parallel_test);
+END; $$
+LANGUAGE plpgsql
+PARALLEL SAFE;
+GO
+
+select * from parallel_test
+GO
+
+-- temp table as a outer scan and should not be scanned using parallel worker
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+
+-- following would throw an error under parallel execution
+select * from f1()
+GO
+
+-- Not everyone can access temp table
+-- Permission denied error should be raised whe l1 tries to access to temp table parallel_test
+set role l1;
+GO
+
+-- should result in permission error
+select * from parallel_test
+GO
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from f1()
+GO
+
+-- should result in permission error irrespective of whether parallel execution or not
+select * from reg_test r join parallel_test p on r.a = p.a
+GO
+
+reset role
+GO
+
+DROP FUNCTION f1()
+GO
+
+drop table parallel_test
+GO
+
+drop table reg_test
+GO
+
+-- testing permission on temp table from Babelfish endpoint
+
+-- tsql user=l1 password=12345678
+-- verify that only temp table permission check is skipped under parallel worker
+SELECT * FROM pq_t
+GO
+
+-- function schema_for_l1.f1() access regular table so permission check shouldnt be skipped even under parallel worker
+SELECT * FROM schema_for_l1.f1()
+GO
+
+CREATE TABLE #temp (a int)
+GO
+
+INSERT INTO #temp VALUES (1)
+GO
+
+-- temp table as a outer scan and user has permission to access regular table
+SELECT * FROM pq_t where id IN (select a from #temp)
+GO
+
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a;
+GO
+
+USE pq_db
+GO
+
+select current_user
+GO
+
+-- any user can access local temp table created under given session
+select * from #temp;
+GO
+
+USE master
+GO
+
+-- tsql
+CREATE TABLE #temp (a int)
+GO
+
+INSERT INTO #temp VALUES (1)
+GO
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
+SELECT * FROM pq_t where id IN (select a from #temp)
+GO
+
+-- temp table on outer side which should be scanned using paralell worker
+-- regular table on inner side may get scanned using parallel worker
+SELECT * FROM pq_t LEFT JOIN #temp ON id = a order by id;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+
+-- psql
+DROP FUNCTION master_schema_for_l1.f1()
+GO
+
+-- tsql
+DROP SCHEMA schema_for_l1;
+GO
+
+DROP DATABASE pq_db
+GO
+
+-- terminate-tsql-conn user=l1 password=12345678
+GO
+
+-- terminate-psql-conn user=l1 password=12345678
+GO
+
+-- tsql
+DROP TABLE pq_t
+GO
+DROP USER l1
+GO
+DROP LOGIN l1;
+GO
+
+-- tsql
+-- table valued parameter should behave same as normal temp table
+CREATE TABLE Employees (EmployeeID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), Department VARCHAR(50));
+GO
+
+INSERT INTO Employees VALUES (1, 'John', 'Doe', 'IT'), (2, 'Jane', 'Smith', 'HR'), (3, 'Mike', 'Johnson', 'IT');
+GO
+
+-- table type
+CREATE TYPE SalaryUpdateType AS TABLE(EmployeeID INT, NewSalary DECIMAL(10,2), EffectiveDate DATE);
+GO
+
+-- check table valued parameter on outer side scanned on leader node only
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+select count(*) FROM Employees e
+    INNER JOIN @SalaryUpdateTable su ON e.EmployeeID = su.EmployeeID;
+GO
+
+CREATE PROCEDURE UpdateEmployeeSalaries
+    @SalaryUpdates SalaryUpdateType READONLY
+AS
+BEGIN
+    -- Join TVP with regular table to get employee details with new salaries
+    SELECT 
+        e.EmployeeID,
+        e.FirstName,
+        e.LastName,
+        e.Department,
+        su.NewSalary,
+        su.EffectiveDate
+    FROM Employees e
+    INNER JOIN @SalaryUpdates su ON e.EmployeeID = su.EmployeeID
+    ORDER BY EmployeeID;
+END;
+GO
+
+DECLARE @SalaryUpdateTable SalaryUpdateType;
+-- Insert values into the table variable
+INSERT INTO @SalaryUpdateTable VALUES
+(1, 75000.00, '2025-01-01'),
+(2, 65000.00, '2025-01-01'),
+(3, 70000.00, '2025-01-01');
+-- Execute the stored procedure
+EXEC UpdateEmployeeSalaries @SalaryUpdateTable;
+GO
+
+DROP PROCEDURE UpdateEmployeeSalaries
+GO
+
+DROP TYPE SalaryUpdateType
+GO
+
+DROP TABLE Employees;
+GO

@@ -1,4 +1,4 @@
--- tsql user=jira_babel_3504_log1 password=123456789
+-- tsql
 
 use jira_babel_3504_dbone;
 go
@@ -95,7 +95,6 @@ WHERE sys.suser_name(usesysid) = 'jira_babel_3504_log1' AND backend_type = 'clie
 GO
 ~~START~~
 bool
-t
 ~~END~~
 
 

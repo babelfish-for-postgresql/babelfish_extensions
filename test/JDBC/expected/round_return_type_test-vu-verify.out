@@ -1,0 +1,452 @@
+-- TEST CASE 1: Basic rounding with different data types
+INSERT INTO TestRound (numeric_data, int_data, bigint_data, decimal_data, float_data, money_data) 
+VALUES (3.14159, 3, 3, 3.14159, 3.14159, 3.14);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM TestRound;
+GO
+~~START~~
+int#!#numeric#!#int#!#bigint#!#numeric#!#float#!#money#!#float#!#float#!#numeric#!#numeric#!#float#!#float
+1#!#3.1416#!#3#!#3#!#3.1416#!#3.14159#!#3.1400#!#3.0#!#3.14#!#3.00000000#!#3.14000000#!#3.0#!#3.0
+2#!#2.7183#!#3#!#3#!#2.7183#!#2.71828#!#2.7200#!#3.0#!#2.72#!#3.00000000#!#2.72000000#!#3.0#!#3.0
+3#!#1.4142#!#1#!#1#!#1.4142#!#1.41421#!#1.4100#!#1.0#!#1.41#!#1.00000000#!#1.41000000#!#1.0#!#1.0
+4#!#10.0000#!#10#!#10#!#10.0000#!#9.99999#!#10.0000#!#10.0#!#10.0#!#10.00000000#!#10.00000000#!#10.0#!#10.0
+5#!#3.1416#!#3#!#3#!#3.1416#!#3.14159#!#3.1400#!#3.0#!#3.14#!#3.00000000#!#3.14000000#!#3.0#!#3.0
+~~END~~
+
+
+-- TEST CASE 2: Testing ROUND with different data types and decimal places
+SELECT 
+    ROUND(3.14159, 0) as float_round_0,
+    ROUND(3.14159, 2) as float_round_2,
+    ROUND(CAST(3.14159 AS DECIMAL(10,5)), 2) as decimal_round_2,
+    ROUND(CAST(3 AS INT), 2) as int_round_2,
+    ROUND(CAST(3.14159 AS MONEY), 2) as money_round_2,
+    ROUND(CAST(3.14159 AS NUMERIC(10,5)), 2) as numeric_round_2;
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#int#!#money#!#numeric
+3#!#3.14#!#3.14#!#3#!#3.1400#!#3.14
+~~END~~
+
+
+-- TEST CASE 3: Testing negative decimal places
+SELECT 
+    ROUND(1234.5678, -1) as round_tens,
+    ROUND(1234.5678, -2) as round_hundreds,
+    ROUND(1234.5678, -3) as round_thousands;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+1230#!#1200#!#1000
+~~END~~
+
+
+-- TEST CASE 4: Testing rounding with .5 cases for different types
+SELECT 
+    ROUND(3.5, 0) as round_up_35_float,
+    ROUND(CAST(3.5 AS DECIMAL(10,4)), 0) as round_up_35_decimal,
+    ROUND(CAST(3.5 AS MONEY), 0) as round_up_35_money,
+    ROUND(CAST(3.5 AS NUMERIC(10,4)), 0) as round_up_35_numeric;
+GO
+~~START~~
+numeric#!#numeric#!#money#!#numeric
+4#!#4#!#4.0000#!#4
+~~END~~
+
+
+-- TEST CASE 5: Testing NULL values for different types
+SELECT 
+    ROUND(CAST(NULL AS FLOAT), 2) as null_round_float,
+    ROUND(CAST(NULL AS DECIMAL(10,4)), 2) as null_round_decimal,
+    ROUND(CAST(NULL AS MONEY), 2) as null_round_money,
+    ROUND(CAST(NULL AS NUMERIC(10,4)), 2) as null_round_numeric;
+GO
+~~START~~
+float#!#numeric#!#money#!#numeric
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- TEST CASE 6: Testing extreme values
+SELECT 
+    ROUND(9999999.99999, 2) as large_number,
+    ROUND(0.000000001, 8) as small_number,
+    ROUND(-9999999.99999, 2) as large_negative;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+10000000.00#!#0#!#-10000000.00
+~~END~~
+
+
+-- TEST CASE 7: Testing the RoundFloat function
+SELECT 
+    dbo.RoundFloat(3.14159, 2) as pi_rounded,
+    dbo.RoundFloat(2.71828, 3) as e_rounded;
+GO
+~~START~~
+float#!#float
+3.14#!#2.718
+~~END~~
+
+
+-- TEST CASE 8: Testing the RoundDecimal function
+SELECT 
+    dbo.RoundDecimal(3.14159, 2) as pi_rounded,
+    dbo.RoundDecimal(2.71828, 3) as e_rounded;
+GO
+~~START~~
+numeric#!#numeric
+3.140000#!#2.718000
+~~END~~
+
+
+-- TEST CASE 9: Testing views
+SELECT * FROM dbo.RoundDemoView;
+GO
+~~START~~
+float#!#numeric#!#float
+3.14#!#3.140000#!#3.14
+~~END~~
+
+
+SELECT * FROM dbo.TestRoundView;
+GO
+~~START~~
+int#!#numeric#!#int#!#bigint#!#numeric#!#float#!#money#!#numeric#!#int#!#bigint#!#numeric#!#float#!#money
+1#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000
+2#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000
+3#!#1.00000000#!#1#!#1#!#1.00000000#!#1.0#!#1.0000#!#1.00000000#!#1#!#1#!#1.00000000#!#1.0#!#1.0000
+4#!#10.00000000#!#10#!#10#!#10.00000000#!#10.0#!#10.0000#!#10.00000000#!#10#!#10#!#10.00000000#!#10.0#!#10.0000
+5#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000#!#3.00000000#!#3#!#3#!#3.00000000#!#3.0#!#3.0000
+~~END~~
+
+
+-- TEST CASE 10: Testing RoundMultipleTypes function
+SELECT * FROM dbo.RoundMultipleTypes(3.14159, 3.14159, 3, 2);
+GO
+~~START~~
+float#!#numeric#!#float
+3.14#!#3.14000000#!#3.0
+~~END~~
+
+
+-- TEST CASE 11: Testing with expressions
+SELECT 
+    ROUND(1.0/3.0, 2) as division_rounded,
+    ROUND(SQRT(2), 4) as sqrt_rounded,
+    ROUND(PI(), 4) as pi_rounded;
+GO
+~~START~~
+numeric#!#float#!#float
+0.33#!#1.4142#!#3.1416
+~~END~~
+
+
+-- TEST CASE 12: Testing with different numeric types
+DECLARE @float_val FLOAT = 3.14159;
+DECLARE @decimal_val DECIMAL(10,5) = 3.14159;
+DECLARE @money_val MONEY = 3.14159;
+DECLARE @numeric_val NUMERIC(10,5) = 3.14159;
+DECLARE @bigint_val BIGINT = 3;
+SELECT 
+    ROUND(@float_val, 2) as float_round,
+    ROUND(@decimal_val, 2) as decimal_round,
+    ROUND(@money_val, 2) as money_round,
+    ROUND(@numeric_val, 2) as numeric_round,
+    ROUND(CAST(@bigint_val AS FLOAT), 2) as bigint_round;
+GO
+~~START~~
+float#!#numeric#!#money#!#numeric#!#float
+3.14#!#3.14000000#!#3.1400#!#3.14000000#!#3.0
+~~END~~
+
+
+-- TEST CASE 13: Testing edge cases for all types
+SELECT 
+    ROUND(CAST(0.0 AS NUMERIC(10,4)), 2) as zero_round_numeric,
+    ROUND(0.0, 2) as zero_round_float,
+    ROUND(CAST(0.0 AS MONEY), 2) as zero_round_money,
+    ROUND(CAST(0.0 AS DECIMAL(10,4)), 2) as zero_round_decimal;
+GO
+~~START~~
+numeric#!#numeric#!#money#!#numeric
+0#!#0#!#0.0000#!#0
+~~END~~
+
+
+-- TEST CASE 14: Testing with computed columns
+SELECT 
+    id,
+    numeric_data,
+    decimal_data,
+    float_data,
+    money_data,
+    round_float_2,
+    round_decimal_2,
+    round_int_2
+FROM TestRound;
+GO
+~~START~~
+int#!#numeric#!#numeric#!#float#!#money#!#float#!#numeric#!#float
+1#!#3.1416#!#3.1416#!#3.14159#!#3.1400#!#3.14#!#3.14000000#!#3.0
+2#!#2.7183#!#2.7183#!#2.71828#!#2.7200#!#2.72#!#2.72000000#!#3.0
+3#!#1.4142#!#1.4142#!#1.41421#!#1.4100#!#1.41#!#1.41000000#!#1.0
+4#!#10.0000#!#10.0000#!#9.99999#!#10.0000#!#10.0#!#10.00000000#!#10.0
+5#!#3.1416#!#3.1416#!#3.14159#!#3.1400#!#3.14#!#3.14000000#!#3.0
+~~END~~
+
+
+-- TEST CASE 15: Testing type conversion with ROUND
+SELECT 
+    ROUND(CAST('3.14159' AS FLOAT), 2) as string_to_float_round,
+    ROUND(CAST('3.14159' AS DECIMAL(10,5)), 2) as string_to_decimal_round,
+    ROUND(CAST('3.14159' AS MONEY), 2) as string_to_money_round,
+    ROUND(CAST('3.14159' AS NUMERIC(10,5)), 2) as string_to_numeric_round;
+GO
+~~START~~
+float#!#numeric#!#money#!#numeric
+3.14#!#3.14#!#3.1400#!#3.14
+~~END~~
+
+
+-- TEST: Testing unsupported data types from sql server documentation
+select round(cast ('abc' as binary), 1)
+go
+~~START~~
+bigint
+0
+~~END~~
+
+
+select round(cast ('abc' as varbinary), 1)
+go
+~~START~~
+bigint
+6382179
+~~END~~
+
+
+select round(cast ('abc' as char(3)), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('abc' as nchar(3)), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('abc' as varchar(3)), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('abc' as nvarchar(3)), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('11-11-2025' as datetime), 1)
+go
+~~START~~
+float
+45970.0
+~~END~~
+
+
+select round(cast ('11-11-2025' as smalldatetime), 1)
+go
+~~START~~
+float
+45970.0
+~~END~~
+
+
+select round(cast ('11-11-2025' as date), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast ('11:30:30' as time), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast ('11-11-2025' as datetimeoffset), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast ('11-11-2025' as datetime2), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast (2.51 as decimal), 1)
+go
+~~START~~
+numeric
+3.0
+~~END~~
+
+
+select round(cast (1.67 as numeric), 1)
+go
+~~START~~
+numeric
+2.0
+~~END~~
+
+
+select round(cast (1.77 as float), 1)
+go
+~~START~~
+float
+1.8
+~~END~~
+
+
+select round(cast (1.77 as real), 1)
+go
+~~START~~
+float
+1.8
+~~END~~
+
+
+select round(cast (1.77 as bigint), 1)
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+select round(cast (2 as int), 1)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select round(cast (2 as smallint), 1)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select round(cast (2 as tinyint), 1)
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select round(cast (5 as money), 1)
+go
+~~START~~
+money
+5.0000
+~~END~~
+
+
+select round(cast (5 as smallmoney), 1)
+go
+~~START~~
+money
+5.0000
+~~END~~
+
+
+select round(cast (0 as bit), 1)
+go
+~~START~~
+bigint
+0
+~~END~~
+
+
+select round(NEWID(), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast ('abc' as image), 1)
+go
+~~START~~
+bigint
+6382179
+~~END~~
+
+
+select round(cast ('abc' as ntext), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('abc' as text), 1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "abc")~~
+
+
+select round(cast ('abc' as sql_variant), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+select round(cast ('<body><fruit/></body>' as xml), 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+select round(@inputString, 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select round(@inputString, 1)
+go
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function round is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+

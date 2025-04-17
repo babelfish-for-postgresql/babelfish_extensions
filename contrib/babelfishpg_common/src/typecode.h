@@ -85,6 +85,8 @@ extern Oid	tsql_datetimeoffset_oid;
 extern Oid	tsql_decimal_oid;
 
 extern Oid	lookup_tsql_datatype_oid(const char *typename);
+extern bool is_tsql_fixeddecimal_datatype(Oid oid);
+extern bool is_tsql_bit_datatype(Oid oid);
 extern bool is_tsql_sysname_datatype(Oid oid);
 extern bool is_tsql_bpchar_datatype(Oid oid);
 extern bool is_tsql_nchar_datatype(Oid oid);
@@ -107,6 +109,9 @@ extern bool is_tsql_smalldatetime_datatype(Oid oid);
 extern bool is_tsql_datetimeoffset_datatype(Oid oid);
 extern bool is_tsql_decimal_datatype(Oid oid);
 extern bool is_tsql_sqlvariant_datatype(Oid oid);
+extern bool is_tsql_tinyint_datatype(Oid oid);
+extern bool is_tsql_money_datatype(Oid oid);
+extern bool is_tsql_smallmoney_datatype(Oid oid);
 
 extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collationid);
 extern bool check_target_type_is_sys_varchar(Oid funcid);
