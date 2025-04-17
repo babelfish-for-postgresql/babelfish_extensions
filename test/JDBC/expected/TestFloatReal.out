@@ -23,17 +23,17 @@ GO
 INSERT INTO float_real_range_test VALUES 
     (6, CAST('3.5E+38' AS REAL), NULL);  -- Should fail for REAL
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 232)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type real.)~~
+~~ERROR (Message: "3.5E+38" is out of range for type real)~~
 
 
 INSERT INTO float_real_range_test VALUES 
     (7, NULL, CAST('1.8E+308' AS FLOAT));  -- Should fail for FLOAT
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type float.)~~
+~~ERROR (Message: "1.8E+308" is out of range for type double precision)~~
 
 
 -- Default Value Tests
@@ -80,7 +80,7 @@ INSERT INTO float_real_null_test (id, real_not_null, float_not_null) VALUES
 GO
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: Cannot insert the value NULL into column 'real_not_null', table 'TestDb.dbo.float_real_null_test'; column does not allow nulls. INSERT fails.)~~
+~~ERROR (Message: null value in column "real_not_null" of relation "float_real_null_test" violates not-null constraint)~~
 
 
 -- Precision Tests
@@ -116,9 +116,9 @@ FROM float_real_precision_test ORDER BY id;
 GO
 ~~START~~
 int#!#real#!#float#!#varchar#!#varchar
-1#!#1.2345679#!#1.23456789#!#REAL Precision Loss#!#FLOAT Precision Loss
-2#!#123456.79#!#123456.789#!#REAL Precision Loss#!#FLOAT Precision Loss
-3#!#1.2345679E-6#!#1.23456789E-6#!#REAL Precision Loss#!#FLOAT Precision Loss
+1#!#1.2345679#!#1.23456789#!#REAL Precision OK#!#FLOAT Precision Loss
+2#!#123456.79#!#123456.789#!#REAL Precision OK#!#FLOAT Precision Loss
+3#!#1.2345679E-6#!#1.23456789E-6#!#REAL Precision OK#!#FLOAT Precision Loss
 ~~END~~
 
 
@@ -194,10 +194,6 @@ INSERT INTO float_real_comparison_test VALUES
     (13, 0.9999999, 1.0000001, 0.9999999, 1.0000001),
     (14, 1.0000001, 0.9999999, 1.0000001, 0.9999999);
 GO
-~~WARNING (Code: 337)~~
-
-~~WARNING (Message: Warning: the floating point value '1.0E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~~~WARNING (Message: Warning: the floating point value '1.1E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~~~WARNING (Message: Warning: the floating point value '1.0E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~~~WARNING (Message: Warning: the floating point value '1.0E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~~~WARNING (Message: Warning: the floating point value '1.1E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~~~WARNING (Message: Warning: the floating point value '1.0E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~
-
 ~~ROW COUNT: 14~~
 
 
@@ -212,8 +208,8 @@ int#!#real#!#real#!#float#!#float
 5#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456788
 6#!#0.0#!#0.0#!#0.0#!#0.0
 7#!#0.0#!#0.0#!#0.0#!#0.0
-8#!#1.0E-38#!#1.1E-38#!#0.0#!#0.0
-9#!#1.0E-38#!#0.0#!#0.0#!#0.0
+8#!#1.0E-38#!#1.1E-38#!#1.0E-308#!#1.1E-308
+9#!#1.0E-38#!#0.0#!#1.0E-308#!#0.0
 10#!#1.0E38#!#3.0E38#!#1.0E308#!#1.1E308
 11#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456789
 12#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456788
@@ -261,8 +257,8 @@ int#!#real#!#real#!#float#!#float#!#varchar#!#varchar#!#varchar#!#varchar#!#varc
 5#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456788#!#Equal#!#Not Equal#!#Equal#!#Not Equal#!#Not Less#!#Not Less#!#Not Greater#!#Greater#!#Less/Equal#!#Greater#!#Greater/Equal#!#Greater/Equal
 6#!#0.0#!#0.0#!#0.0#!#0.0#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
 7#!#0.0#!#0.0#!#0.0#!#0.0#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
-8#!#1.0E-38#!#1.1E-38#!#0.0#!#0.0#!#Not Equal#!#Equal#!#Not Equal#!#Equal#!#Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Greater/Equal
-9#!#1.0E-38#!#0.0#!#0.0#!#0.0#!#Not Equal#!#Equal#!#Not Equal#!#Equal#!#Not Less#!#Not Less#!#Greater#!#Not Greater#!#Greater#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+8#!#1.0E-38#!#1.1E-38#!#1.0E-308#!#1.1E-308#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+9#!#1.0E-38#!#0.0#!#1.0E-308#!#0.0#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Less#!#Not Less#!#Greater#!#Greater#!#Greater#!#Greater#!#Greater/Equal#!#Greater/Equal
 10#!#1.0E38#!#3.0E38#!#1.0E308#!#1.1E308#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
 11#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456789#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
 12#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456788#!#Equal#!#Not Equal#!#Equal#!#Not Equal#!#Not Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Less
@@ -281,7 +277,7 @@ GO
 ~~START~~
 varchar#!#int#!#int
 DISTINCT test for REAL#!#14#!#9
-DISTINCT test for FLOAT#!#14#!#8
+DISTINCT test for FLOAT#!#14#!#9
 ~~END~~
 
 
@@ -290,7 +286,7 @@ SELECT 'GROUP BY test for REAL' as test_type, real_col1 as num_val, COUNT(*) as 
 FROM float_real_comparison_test
 GROUP BY real_col1
 UNION ALL
-SELECT 'GROUP BY test for FLOAT', float_col1 as num_val, COUNT(*) as count
+SELECT 'GROUP BY test for FLOAT' as test_type, float_col1 as num_val, COUNT(*) as count
 FROM float_real_comparison_test
 GROUP BY float_col1
 ORDER BY test_type, num_val, count DESC
@@ -298,22 +294,18 @@ GO
 ~~START~~
 varchar#!#float#!#int
 GROUP BY test for FLOAT#!#-1.23456789#!#2
-GROUP BY test for FLOAT#!#0.0#!#4
+GROUP BY test for FLOAT#!#0.0#!#2
+GROUP BY test for FLOAT#!#1.0E-308#!#2
 GROUP BY test for FLOAT#!#0.9999999#!#1
 GROUP BY test for FLOAT#!#1.0#!#2
 GROUP BY test for FLOAT#!#1.0000001#!#1
 GROUP BY test for FLOAT#!#1.23456789#!#2
 GROUP BY test for FLOAT#!#1.5#!#1
 GROUP BY test for FLOAT#!#1.0E308#!#1
-GROUP BY test for REAL#!#-1.2345678806304932#!#2
-GROUP BY test for REAL#!#0.0#!#2
-GROUP BY test for REAL#!#9.999999350456404E-39#!#2
 GROUP BY test for REAL#!#0.9999998807907104#!#1
-GROUP BY test for REAL#!#1.0#!#2
-GROUP BY test for REAL#!#1.0000001192092896#!#1
-GROUP BY test for REAL#!#1.2345678806304932#!#2
-GROUP BY test for REAL#!#1.5#!#1
-GROUP BY test for REAL#!#9.999999680285692E37#!#1
+GROUP BY test for REAL#!#1.0#!#7
+GROUP BY test for REAL#!#1.2345678806304932#!#4
+GROUP BY test for REAL#!#9.999999680285692E37#!#2
 ~~END~~
 
 
@@ -335,8 +327,8 @@ ORDER BY test for FLOAT#!#6#!#0.0
 ORDER BY test for REAL#!#6#!#0.0
 ORDER BY test for FLOAT#!#7#!#0.0
 ORDER BY test for REAL#!#7#!#0.0
-ORDER BY test for FLOAT#!#8#!#0.0
-ORDER BY test for FLOAT#!#9#!#0.0
+ORDER BY test for FLOAT#!#8#!#1.0E-308
+ORDER BY test for FLOAT#!#9#!#1.0E-308
 ORDER BY test for REAL#!#8#!#9.999999350456404E-39
 ORDER BY test for REAL#!#9#!#9.999999350456404E-39
 ORDER BY test for REAL#!#13#!#0.9999998807907104
@@ -379,19 +371,19 @@ INSERT INTO float_real_special_test VALUES (4, CAST(1.0/0.0 AS REAL), CAST(1.0/0
 GO
 ~~ERROR (Code: 8134)~~
 
-~~ERROR (Message: Divide by zero error encountered.)~~
+~~ERROR (Message: division by zero)~~
 
 INSERT INTO float_real_special_test VALUES (5, CAST(-1.0/0.0 AS REAL), CAST(-1.0/0.0 AS FLOAT)); -- Negative Infinity
 GO
 ~~ERROR (Code: 8134)~~
 
-~~ERROR (Message: Divide by zero error encountered.)~~
+~~ERROR (Message: division by zero)~~
 
 INSERT INTO float_real_special_test VALUES (6, CAST(0.0/0.0 AS REAL), CAST(0.0/0.0 AS FLOAT)); -- NaN
 GO
 ~~ERROR (Code: 8134)~~
 
-~~ERROR (Message: Divide by zero error encountered.)~~
+~~ERROR (Message: division by zero)~~
 
 
 
@@ -571,16 +563,16 @@ ORDER BY id;
 GO
 ~~START~~
 int#!#varchar#!#real#!#varchar#!#int#!#int#!#int#!#float#!#varchar#!#int#!#int#!#int
-1#!#Seven significant digits#!#1.234567#!#1.23457#!#6#!#5#!#1#!#1.234567#!#1.23457#!#6#!#5#!#1
-2#!#Mixed precision before/after decimal#!#123.4567#!#123.457#!#6#!#3#!#3#!#123.4567#!#123.457#!#6#!#3#!#3
-3#!#Large number significant digits#!#1234567.8#!#1.23457e+006#!#11#!#10#!#1#!#1234567.8#!#1.23457e+006#!#11#!#10#!#1
-4#!#Small number significant digits#!#1.234567E-4#!#0.000123457#!#9#!#9#!#0#!#1.234567E-4#!#0.000123457#!#9#!#9#!#0
+1#!#Seven significant digits#!#1.234567#!#1.234567#!#7#!#6#!#1#!#1.234567#!#1.23457#!#6#!#5#!#1
+2#!#Mixed precision before/after decimal#!#123.4567#!#123.4567#!#7#!#4#!#3#!#123.4567#!#123.457#!#6#!#3#!#3
+3#!#Large number significant digits#!#1234567.8#!#1.2345678e+06#!#12#!#11#!#1#!#1234567.8#!#1.23457e+06#!#10#!#9#!#1
+4#!#Small number significant digits#!#1.234567E-4#!#0.0001234567#!#10#!#10#!#0#!#1.234567E-4#!#0.000123457#!#9#!#9#!#0
 5#!#No decimal digits#!#12345.0#!#12345#!#5#!#0#!#5#!#12345.0#!#12345#!#5#!#0#!#5
-6#!#Many decimal digits#!#1.2345679#!#1.23457#!#6#!#5#!#1#!#1.23456789012345#!#1.23457#!#6#!#5#!#1
+6#!#Many decimal digits#!#1.2345679#!#1.2345679#!#8#!#7#!#1#!#1.23456789012345#!#1.23457#!#6#!#5#!#1
 7#!#Positive exponent#!#123000.0#!#123000#!#3#!#0#!#3#!#123000.0#!#123000#!#3#!#0#!#3
-8#!#Negative exponent#!#1.23E-5#!#1.23e-005#!#8#!#7#!#1#!#1.23E-5#!#1.23e-005#!#8#!#7#!#1
-9#!#REAL max precision#!#3.402823E38#!#3.40282e+038#!#11#!#10#!#1#!#1.79E308#!#1.79e+308#!#8#!#7#!#1
-10#!#REAL min precision#!#-3.402823E38#!#-3.40282e+038#!#11#!#10#!#1#!#-1.79E308#!#-1.79e+308#!#8#!#7#!#1
+8#!#Negative exponent#!#1.23E-5#!#1.23e-05#!#7#!#6#!#1#!#1.23E-5#!#1.23e-05#!#7#!#6#!#1
+9#!#REAL max precision#!#3.402823E38#!#3.402823e+38#!#11#!#10#!#1#!#1.79E308#!#1.79e+308#!#8#!#7#!#1
+10#!#REAL min precision#!#-3.402823E38#!#-3.402823e+38#!#11#!#10#!#1#!#-1.79E308#!#-1.79e+308#!#8#!#7#!#1
 ~~END~~
 
 
@@ -845,11 +837,15 @@ GO
 -- bit
 EXEC TestConversionFrom 'bit', 'CAST(''1'' AS BIT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to double precision)~~
 
 EXEC TestConversionFrom 'bit', 'CAST(''0'' AS BIT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to double precision)~~
 
 
 -- decimal
@@ -912,11 +908,15 @@ GO
 -- float
 EXEC TestConversionFrom 'float', 'CAST(''1.79E+308'' AS FLOAT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
 
 EXEC TestConversionFrom 'float', 'CAST(''-1.79E+308'' AS FLOAT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
 
 EXEC TestConversionFrom 'float', 'CAST(''0'' AS FLOAT)';
 GO
@@ -969,57 +969,81 @@ GO
 -- date
 EXEC TestConversionFrom 'date', 'CAST(''2023-06-16'' AS DATE)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
 
 EXEC TestConversionFrom 'date', 'CAST(''0001-01-01'' AS DATE)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
 
 EXEC TestConversionFrom 'date', 'CAST(''9999-12-31'' AS DATE)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
 
 
 -- time
 EXEC TestConversionFrom 'time', 'CAST(''12:34:56.7891234'' AS TIME)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
 
 EXEC TestConversionFrom 'time', 'CAST(''00:00:00'' AS TIME)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
 
 EXEC TestConversionFrom 'time', 'CAST(''23:59:59.9999999'' AS TIME)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
 
 
 -- datetime2
 EXEC TestConversionFrom 'datetime2', 'CAST(''2023-06-16 12:34:56.7891234'' AS DATETIME2)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
 
 EXEC TestConversionFrom 'datetime2', 'CAST(''0001-01-01 00:00:00'' AS DATETIME2)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
 
 EXEC TestConversionFrom 'datetime2', 'CAST(''9999-12-31 23:59:59.9999999'' AS DATETIME2)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
 
 
 -- datetimeoffset
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''2023-06-16 12:34:56.7891234 +00:00'' AS DATETIMEOFFSET)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
 
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''0001-01-01 00:00:00 +00:00'' AS DATETIMEOFFSET)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
 
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''9999-12-31 23:59:59.9999999 +14:00'' AS DATETIMEOFFSET)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
 
 
 -- Character Strings
@@ -1054,15 +1078,21 @@ GO
 -- text
 EXEC TestConversionFrom 'text', 'CAST(''123.456'' AS TEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
 
 EXEC TestConversionFrom 'text', 'CAST(''-123.456'' AS TEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
 
 EXEC TestConversionFrom 'text', 'CAST(''1.23E+10'' AS TEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
 
 
 -- Unicode Character Strings
@@ -1097,41 +1127,55 @@ GO
 -- ntext
 EXEC TestConversionFrom 'ntext', 'CAST(N''123.456'' AS NTEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
 
 EXEC TestConversionFrom 'ntext', 'CAST(N''-123.456'' AS NTEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
 
 EXEC TestConversionFrom 'ntext', 'CAST(N''1.23E+10'' AS NTEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
 
 
 -- Binary Strings
 -- binary
 EXEC TestConversionFrom 'binary', 'CAST(0x0123456789 AS BINARY(5))';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to double precision)~~
 
 
 -- varbinary
 EXEC TestConversionFrom 'varbinary', 'CAST(0x0123456789 AS VARBINARY(5))';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to double precision)~~
 
 
 -- image
 EXEC TestConversionFrom 'image', 'CAST(0x0123456789 AS IMAGE)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type image to double precision)~~
 
 
 -- Other Data Types
 -- uniqueidentifier
 EXEC TestConversionFrom 'uniqueidentifier', 'CAST(''A98E21B9-43F7-40CD-94E4-BF4A5C8C68B2'' AS UNIQUEIDENTIFIER)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type uniqueidentifier to double precision)~~
 
 
 -- sql_variant
@@ -1143,7 +1187,9 @@ GO
 -- xml
 EXEC TestConversionFrom 'xml', 'CAST(''<root>123.456</root>'' AS XML)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to double precision)~~
 
 
 
@@ -1368,9 +1414,9 @@ EXEC TestConversionTo 'text',
     'CAST(@float AS TEXT)',
     'CAST(@real AS TEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type text)~~
 
 
 
@@ -1421,9 +1467,9 @@ EXEC TestConversionTo 'ntext',
     'CAST(@float AS NTEXT)',
     'CAST(@real AS NTEXT)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type ntext)~~
 
 
 
@@ -1488,9 +1534,9 @@ EXEC TestConversionTo 'date',
     'CAST(@float AS DATE)',
     'CAST(@real AS DATE)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: cannot cast type double precision to date)~~
 
 
 
@@ -1501,9 +1547,9 @@ EXEC TestConversionTo 'time',
     'CAST(@float AS TIME)',
     'CAST(@real AS TIME)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: cannot cast type double precision to time without time zone)~~
 
 
 
@@ -1514,9 +1560,9 @@ EXEC TestConversionTo 'datetime2',
     'CAST(@float AS DATETIME2)',
     'CAST(@real AS DATETIME2)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: cannot cast type double precision to datetime2)~~
 
 
 
@@ -1527,9 +1573,9 @@ EXEC TestConversionTo 'datetimeoffset',
     'CAST(@float AS DATETIMEOFFSET)',
     'CAST(@real AS DATETIMEOFFSET)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: cannot cast type double precision to datetimeoffset)~~
 
 
 
@@ -1541,9 +1587,9 @@ EXEC TestConversionTo 'uniqueidentifier',
     'CAST(@float AS UNIQUEIDENTIFIER)',
     'CAST(@real AS UNIQUEIDENTIFIER)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: cannot cast type double precision to uniqueidentifier)~~
 
 
 
@@ -1567,9 +1613,9 @@ EXEC TestConversionTo 'xml',
     'CAST(CAST(@float AS NVARCHAR(MAX)) AS XML)',
     'CAST(CAST(@real AS NVARCHAR(MAX)) AS XML)';
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type xml)~~
 
 
 
@@ -1610,15 +1656,7 @@ EXEC TestConversionTo 'varchar(50)',
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
-~~WARNING (Code: 337)~~
-
-~~WARNING (Message: Warning: the floating point value '1.79E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~
-
 ~~ROW COUNT: 1~~
-
-~~WARNING (Code: 337)~~
-
-~~WARNING (Message: Warning: the floating point value '1.79E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~
 
 ~~ROW COUNT: 1~~
 
@@ -1631,15 +1669,7 @@ EXEC TestConversionTo 'varchar(50)',
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
-~~WARNING (Code: 337)~~
-
-~~WARNING (Message: Warning: the floating point value '1.79E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~
-
 ~~ROW COUNT: 1~~
-
-~~WARNING (Code: 337)~~
-
-~~WARNING (Message: Warning: the floating point value '1.79E-308' is too small. It will be interpreted as 0.  Server SQLState: S0001)~~
 
 ~~ROW COUNT: 1~~
 
@@ -1667,68 +1697,41 @@ int#!#varchar#!#sql_variant#!#float#!#real#!#bit#!#varchar
 9#!#smallint#!#0#!#0.0#!#0.0#!#1#!#<NULL>
 10#!#tinyint#!#255#!#255.0#!#255.0#!#1#!#<NULL>
 11#!#tinyint#!#0#!#0.0#!#0.0#!#1#!#<NULL>
-12#!#bit#!#true#!#1.0#!#1.0#!#1#!#<NULL>
-13#!#bit#!#false#!#0.0#!#0.0#!#1#!#<NULL>
-14#!#decimal#!#123456789.123456789#!#1.2345678912345679E8#!#1.2345679E8#!#1#!#<NULL>
-15#!#decimal#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.2345679E8#!#1#!#<NULL>
-16#!#decimal#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
-17#!#numeric#!#123456789.123456789#!#1.2345678912345679E8#!#1.2345679E8#!#1#!#<NULL>
-18#!#numeric#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.2345679E8#!#1#!#<NULL>
-19#!#numeric#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
-20#!#money#!#922337203685477.5807#!#9.223372036854776E14#!#9.223372E14#!#1#!#<NULL>
-21#!#money#!#-922337203685477.5808#!#-9.223372036854776E14#!#-9.223372E14#!#1#!#<NULL>
-22#!#money#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
-23#!#smallmoney#!#214748.3647#!#214748.3647#!#214748.36#!#1#!#<NULL>
-24#!#smallmoney#!#-214748.3648#!#-214748.3648#!#-214748.36#!#1#!#<NULL>
-25#!#smallmoney#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
-27#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Arithmetic overflow error for type real, value = 179000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000.
-29#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Arithmetic overflow error for type real, value = -179000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000.
-30#!#float#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
-31#!#real#!#3.4E38#!#3.3999999521443642E38#!#3.4E38#!#1#!#<NULL>
-32#!#real#!#-3.4E38#!#-3.3999999521443642E38#!#-3.4E38#!#1#!#<NULL>
-33#!#real#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
-34#!#datetime#!#2023-06-16 12:34:56.79#!#45091.524268402776#!#45091.523#!#1#!#<NULL>
-35#!#datetime#!#1753-01-01 00:00:00.0#!#-53690.0#!#-53690.0#!#1#!#<NULL>
-36#!#datetime#!#9999-12-31 00:00:00.0#!#2958463.0#!#2958463.0#!#1#!#<NULL>
-37#!#smalldatetime#!#2023-06-16 12:34:00.0#!#45091.52361111111#!#45091.523#!#1#!#<NULL>
-38#!#smalldatetime#!#1900-01-01 00:00:00.0#!#0.0#!#0.0#!#1#!#<NULL>
-39#!#smalldatetime#!#2079-06-06 00:00:00.0#!#65535.0#!#65535.0#!#1#!#<NULL>
-40#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type date to float is not allowed.
-41#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type date to float is not allowed.
-42#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type date to float is not allowed.
-43#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type time to float is not allowed.
-44#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type time to float is not allowed.
-45#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type time to float is not allowed.
-46#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetime2 to float is not allowed.
-47#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetime2 to float is not allowed.
-48#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetime2 to float is not allowed.
-49#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetimeoffset to float is not allowed.
-50#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetimeoffset to float is not allowed.
-51#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type datetimeoffset to float is not allowed.
-52#!#char#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
-53#!#char#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
-54#!#char#!#1.23E+10  #!#1.23E10#!#1.23E10#!#1#!#<NULL>
-55#!#varchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
-56#!#varchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
-57#!#varchar#!#1.23E+10#!#1.23E10#!#1.23E10#!#1#!#<NULL>
-58#!#text#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type text to float is not allowed.
-59#!#text#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type text to float is not allowed.
-60#!#text#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type text to float is not allowed.
-61#!#nchar#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
-62#!#nchar#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
-63#!#nchar#!#1.23E+10  #!#1.23E10#!#1.23E10#!#1#!#<NULL>
-64#!#nvarchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
-65#!#nvarchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
-66#!#nvarchar#!#1.23E+10#!#1.23E10#!#1.23E10#!#1#!#<NULL>
-67#!#ntext#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type ntext to float is not allowed.
-68#!#ntext#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type ntext to float is not allowed.
-69#!#ntext#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type ntext to float is not allowed.
-70#!#binary#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type binary to float is not allowed.
-71#!#varbinary#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type varbinary to float is not allowed.
-72#!#image#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type image to float is not allowed.
-73#!#uniqueidentifier#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type uniqueidentifier to float is not allowed.
-74#!#sql_variant#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
-75#!#xml#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#Explicit conversion from data type xml to float is not allowed.
+12#!#decimal#!#123456789.123456789#!#1.2345678912345679E8#!#1.2345679E8#!#1#!#<NULL>
+13#!#decimal#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.2345679E8#!#1#!#<NULL>
+14#!#decimal#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
+15#!#numeric#!#123456789.123456789#!#1.2345678912345679E8#!#1.2345679E8#!#1#!#<NULL>
+16#!#numeric#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.2345679E8#!#1#!#<NULL>
+17#!#numeric#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
+18#!#money#!#922337203685477.5807#!#9.223372036854776E14#!#9.223372E14#!#1#!#<NULL>
+19#!#money#!#-922337203685477.5808#!#-9.223372036854776E14#!#-9.223372E14#!#1#!#<NULL>
+20#!#money#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
+21#!#smallmoney#!#214748.3647#!#214748.3647#!#214748.36#!#1#!#<NULL>
+22#!#smallmoney#!#-214748.3648#!#-214748.3648#!#-214748.36#!#1#!#<NULL>
+23#!#smallmoney#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
+24#!#float#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
+25#!#real#!#3.4E38#!#3.3999999521443642E38#!#3.4E38#!#1#!#<NULL>
+26#!#real#!#-3.4E38#!#-3.3999999521443642E38#!#-3.4E38#!#1#!#<NULL>
+27#!#real#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
+28#!#datetime#!#2023-06-16 12:34:56.79#!#45091.524268402776#!#45091.523#!#1#!#<NULL>
+29#!#datetime#!#1753-01-01 00:00:00.0#!#-53690.0#!#-53690.0#!#1#!#<NULL>
+30#!#datetime#!#9999-12-31 00:00:00.0#!#2958463.0#!#2958463.0#!#1#!#<NULL>
+31#!#smalldatetime#!#2023-06-16 12:34:00.0#!#45091.52361111111#!#45091.523#!#1#!#<NULL>
+32#!#smalldatetime#!#1900-01-01 00:00:00.0#!#0.0#!#0.0#!#1#!#<NULL>
+33#!#smalldatetime#!#2079-06-06 00:00:00.0#!#65535.0#!#65535.0#!#1#!#<NULL>
+34#!#char#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
+35#!#char#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
+36#!#char#!#1.23E+10  #!#1.23E10#!#1.23E10#!#1#!#<NULL>
+37#!#varchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
+38#!#varchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
+39#!#varchar#!#1.23E+10#!#1.23E10#!#1.23E10#!#1#!#<NULL>
+40#!#nchar#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
+41#!#nchar#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
+42#!#nchar#!#1.23E+10  #!#1.23E10#!#1.23E10#!#1#!#<NULL>
+43#!#nvarchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
+44#!#nvarchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
+45#!#nvarchar#!#1.23E+10#!#1.23E10#!#1.23E10#!#1#!#<NULL>
+46#!#sql_variant#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
 ~~END~~
 
 
@@ -1770,51 +1773,35 @@ int#!#varchar#!#float#!#real#!#sql_variant#!#bit#!#varchar
 25#!#smalldatetime#!#123.456789#!#123.45679#!#1900-05-04 10:58:00.0#!#1#!#<NULL>
 26#!#smalldatetime(from REAL)#!#123.456789#!#123.45679#!#1900-05-04 10:58:00.0#!#1#!#<NULL>
 27#!#char(50)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
-28#!#char(50)(from REAL)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
+28#!#char(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679                                         #!#1#!#<NULL>
 29#!#varchar(50)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
-30#!#varchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
-31#!#varchar(max)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: varchar(max) is incompatible with sql_variant
-32#!#varchar(max)(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: varchar(max) is incompatible with sql_variant
-33#!#text#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to text is not allowed.
-34#!#text(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to text is not allowed.
-35#!#nchar(50)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
-36#!#nchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
-37#!#nvarchar(50)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
-38#!#nvarchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
-39#!#nvarchar(max)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: nvarchar(max) is incompatible with sql_variant
-40#!#nvarchar(max)(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: nvarchar(max) is incompatible with sql_variant
-41#!#ntext#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to ntext is not allowed.
-42#!#ntext(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to ntext is not allowed.
-43#!#binary(8)#!#123.456789#!#123.45679#!#[B@57f791c6#!#1#!#<NULL>
-44#!#binary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@51650883#!#1#!#<NULL>
-45#!#varbinary(8)#!#123.456789#!#123.45679#!#[B@6c4f9535#!#1#!#<NULL>
-46#!#varbinary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@5bd1ceca#!#1#!#<NULL>
-47#!#varbinary(max)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: varbinary(max) is incompatible with sql_variant
-48#!#varbinary(max)(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: varbinary(max) is incompatible with sql_variant
-49#!#image#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to image is not allowed.
-50#!#image(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to image is not allowed.
-51#!#date#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to date is not allowed.
-52#!#date(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to date is not allowed.
-53#!#time#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to time is not allowed.
-54#!#time(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to time is not allowed.
-55#!#datetime2#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to datetime2 is not allowed.
-56#!#datetime2(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to datetime2 is not allowed.
-57#!#datetimeoffset#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to datetimeoffset is not allowed.
-58#!#datetimeoffset(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to datetimeoffset is not allowed.
-59#!#uniqueidentifier#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type float to uniqueidentifier is not allowed.
-60#!#uniqueidentifier(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Explicit conversion from data type real to uniqueidentifier is not allowed.
-61#!#sql_variant#!#123.456789#!#123.45679#!#123.456789#!#1#!#<NULL>
-62#!#sql_variant(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
-63#!#xml#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: xml is incompatible with sql_variant
-64#!#xml(from REAL)#!#123.456789#!#123.45679#!#<NULL>#!#0#!#Operand type clash: xml is incompatible with sql_variant
-65#!#varchar(50)#!#1.79E308#!#3.4E38#!#1.79e+308#!#1#!#<NULL>
-66#!#varchar(50)(from REAL)#!#1.79E308#!#3.4E38#!#3.4e+038#!#1#!#<NULL>
-67#!#varchar(50)#!#-1.79E308#!#-3.4E38#!#-1.79e+308#!#1#!#<NULL>
-68#!#varchar(50)(from REAL)#!#-1.79E308#!#-3.4E38#!#-3.4e+038#!#1#!#<NULL>
-69#!#varchar(50)#!#0.0#!#3.4E-38#!#0#!#1#!#<NULL>
-70#!#varchar(50)(from REAL)#!#0.0#!#3.4E-38#!#3.4e-038#!#1#!#<NULL>
-71#!#varchar(50)#!#-0.0#!#-3.4E-38#!#-0#!#1#!#<NULL>
-72#!#varchar(50)(from REAL)#!#-0.0#!#-3.4E-38#!#-3.4e-038#!#1#!#<NULL>
+30#!#varchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+31#!#varchar(max)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+32#!#varchar(max)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+33#!#nchar(50)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
+34#!#nchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679                                         #!#1#!#<NULL>
+35#!#nvarchar(50)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+36#!#nvarchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+37#!#nvarchar(max)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+38#!#nvarchar(max)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+39#!#binary(8)#!#123.456789#!#123.45679#!#[B@2b491fee#!#1#!#<NULL>
+40#!#binary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@3f1c5af9#!#1#!#<NULL>
+41#!#varbinary(8)#!#123.456789#!#123.45679#!#[B@1c55f277#!#1#!#<NULL>
+42#!#varbinary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@5ddabb18#!#1#!#<NULL>
+43#!#varbinary(max)#!#123.456789#!#123.45679#!#[B@3e8f7922#!#1#!#<NULL>
+44#!#varbinary(max)(from REAL)#!#123.456789#!#123.45679#!#[B@63192798#!#1#!#<NULL>
+45#!#image#!#123.456789#!#123.45679#!#[B@50eca7c6#!#1#!#<NULL>
+46#!#image(from REAL)#!#123.456789#!#123.45679#!#[B@58e6d4b8#!#1#!#<NULL>
+47#!#sql_variant#!#123.456789#!#123.45679#!#123.456789#!#1#!#<NULL>
+48#!#sql_variant(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+49#!#varchar(50)#!#1.79E308#!#3.4E38#!#1.79e+308#!#1#!#<NULL>
+50#!#varchar(50)(from REAL)#!#1.79E308#!#3.4E38#!#3.4e+38#!#1#!#<NULL>
+51#!#varchar(50)#!#-1.79E308#!#-3.4E38#!#-1.79e+308#!#1#!#<NULL>
+52#!#varchar(50)(from REAL)#!#-1.79E308#!#-3.4E38#!#-3.4e+38#!#1#!#<NULL>
+53#!#varchar(50)#!#1.79E-308#!#3.4E-38#!#1.79e-308#!#1#!#<NULL>
+54#!#varchar(50)(from REAL)#!#1.79E-308#!#3.4E-38#!#3.4e-38#!#1#!#<NULL>
+55#!#varchar(50)#!#-1.79E-308#!#-3.4E-38#!#-1.79e-308#!#1#!#<NULL>
+56#!#varchar(50)(from REAL)#!#-1.79E-308#!#-3.4E-38#!#-3.4e-38#!#1#!#<NULL>
 ~~END~~
 
 
@@ -1832,20 +1819,13 @@ GO
 ~~START~~
 varchar#!#int#!#int#!#int
 bigint#!#3#!#3#!#0
-binary#!#1#!#0#!#1
-bit#!#2#!#2#!#0
 char#!#3#!#3#!#0
-date#!#3#!#0#!#3
 datetime#!#3#!#3#!#0
-datetime2#!#3#!#0#!#3
-datetimeoffset#!#3#!#0#!#3
 decimal#!#3#!#3#!#0
-float#!#3#!#1#!#2
-image#!#1#!#0#!#1
+float#!#1#!#1#!#0
 int#!#3#!#3#!#0
 money#!#3#!#3#!#0
 nchar#!#3#!#3#!#0
-ntext#!#3#!#0#!#3
 numeric#!#3#!#3#!#0
 nvarchar#!#3#!#3#!#0
 real#!#3#!#3#!#0
@@ -1853,13 +1833,8 @@ smalldatetime#!#3#!#3#!#0
 smallint#!#3#!#3#!#0
 smallmoney#!#3#!#3#!#0
 sql_variant#!#1#!#1#!#0
-text#!#3#!#0#!#3
-time#!#3#!#0#!#3
 tinyint#!#2#!#2#!#0
-uniqueidentifier#!#1#!#0#!#1
-varbinary#!#1#!#0#!#1
 varchar#!#3#!#3#!#0
-xml#!#1#!#0#!#1
 ~~END~~
 
 
@@ -1882,34 +1857,26 @@ bit#!#1#!#1#!#0
 bit(from REAL)#!#1#!#1#!#0
 char(50)#!#1#!#1#!#0
 char(50)(from REAL)#!#1#!#1#!#0
-date#!#1#!#0#!#1
-date(from REAL)#!#1#!#0#!#1
 datetime#!#1#!#1#!#0
 datetime(from REAL)#!#1#!#1#!#0
-datetime2#!#1#!#0#!#1
-datetime2(from REAL)#!#1#!#0#!#1
-datetimeoffset#!#1#!#0#!#1
-datetimeoffset(from REAL)#!#1#!#0#!#1
 decimal#!#1#!#1#!#0
 decimal(from REAL)#!#1#!#1#!#0
 float#!#1#!#1#!#0
 float(from REAL)#!#1#!#1#!#0
-image#!#1#!#0#!#1
-image(from REAL)#!#1#!#0#!#1
+image#!#1#!#1#!#0
+image(from REAL)#!#1#!#1#!#0
 int#!#1#!#1#!#0
 int(from REAL)#!#1#!#1#!#0
 money#!#1#!#1#!#0
 money(from REAL)#!#1#!#1#!#0
 nchar(50)#!#1#!#1#!#0
 nchar(50)(from REAL)#!#1#!#1#!#0
-ntext#!#1#!#0#!#1
-ntext(from REAL)#!#1#!#0#!#1
 numeric#!#1#!#1#!#0
 numeric(from REAL)#!#1#!#1#!#0
 nvarchar(50)#!#1#!#1#!#0
 nvarchar(50)(from REAL)#!#1#!#1#!#0
-nvarchar(max)#!#1#!#0#!#1
-nvarchar(max)(from REAL)#!#1#!#0#!#1
+nvarchar(max)#!#1#!#1#!#0
+nvarchar(max)(from REAL)#!#1#!#1#!#0
 real#!#1#!#1#!#0
 real(from REAL)#!#1#!#1#!#0
 smalldatetime#!#1#!#1#!#0
@@ -1920,24 +1887,16 @@ smallmoney#!#1#!#1#!#0
 smallmoney(from REAL)#!#1#!#1#!#0
 sql_variant#!#1#!#1#!#0
 sql_variant(from REAL)#!#1#!#1#!#0
-text#!#1#!#0#!#1
-text(from REAL)#!#1#!#0#!#1
-time#!#1#!#0#!#1
-time(from REAL)#!#1#!#0#!#1
 tinyint#!#1#!#1#!#0
 tinyint(from REAL)#!#1#!#1#!#0
-uniqueidentifier#!#1#!#0#!#1
-uniqueidentifier(from REAL)#!#1#!#0#!#1
 varbinary(8)#!#1#!#1#!#0
 varbinary(8)(from REAL)#!#1#!#1#!#0
-varbinary(max)#!#1#!#0#!#1
-varbinary(max)(from REAL)#!#1#!#0#!#1
+varbinary(max)#!#1#!#1#!#0
+varbinary(max)(from REAL)#!#1#!#1#!#0
 varchar(50)#!#5#!#5#!#0
 varchar(50)(from REAL)#!#5#!#5#!#0
-varchar(max)#!#1#!#0#!#1
-varchar(max)(from REAL)#!#1#!#0#!#1
-xml#!#1#!#0#!#1
-xml(from REAL)#!#1#!#0#!#1
+varchar(max)#!#1#!#1#!#0
+varchar(max)(from REAL)#!#1#!#1#!#0
 ~~END~~
 
 
@@ -2028,8 +1987,8 @@ SELECT
 FROM FLOAT_REAL_AGGREGATE_dt;
 GO
 ~~START~~
-int#!#int#!#float#!#float#!#float#!#float#!#float#!#real#!#float#!#real
-3#!#3#!#13.68#!#13.679999828338623#!#4.56#!#4.559999942779541#!#1.23#!#1.23#!#7.89#!#7.89
+int#!#int#!#float#!#real#!#float#!#float#!#float#!#real#!#float#!#real
+3#!#3#!#13.68#!#13.68#!#4.56#!#4.559999942779541#!#1.23#!#1.23#!#7.89#!#7.89
 ~~END~~
 
 
@@ -2276,14 +2235,14 @@ ORDER BY id;
 GO
 ~~START~~
 int#!#float#!#float#!#float#!#float#!#real#!#float#!#float#!#float
-1#!#1.23#!#0.9424888019316975#!#0.20701416938432612#!#1.23#!#1.23#!#0.9424888083067761#!#0.20701418489122547#!#1.23
-2#!#4.56#!#-0.9884112519391305#!#1.5173226235262947#!#4.56#!#4.56#!#-0.9884112432530713#!#1.5173226109779483#!#4.56
-3#!#-7.89#!#-0.999351408778317#!#2.065596134857783#!#-7.89#!#-7.89#!#-0.999351413586239#!#2.065596117935805#!#-7.89
+1#!#1.23#!#0.9424888019316975#!#0.2070141693843261#!#1.23#!#1.23#!#0.9424888083067761#!#0.2070141848912284#!#1.23
+2#!#4.56#!#-0.9884112519391305#!#1.5173226235262947#!#4.56#!#4.56#!#-0.9884112432530713#!#1.517322610977948#!#4.56
+3#!#-7.89#!#-0.999351408778317#!#2.065596134857783#!#-7.89#!#-7.89#!#-0.999351413586239#!#2.0655961179358053#!#-7.89
 4#!#0.0#!#0.0#!#<NULL>#!#0.0#!#0.0#!#0.0#!#<NULL>#!#0.0
-5#!#100.123#!#-0.39674208489268614#!#4.606399430157809#!#100.12#!#100.123#!#-0.3967410764242939#!#4.60639944113064#!#100.12
-6#!#-50.456#!#-0.18936709864988174#!#3.92110166936135#!#-50.46#!#-50.456#!#-0.1893683571966948#!#3.921101694764439#!#-50.46
+5#!#100.123#!#-0.39674208489268614#!#4.606399430157809#!#100.12#!#100.123#!#-0.3967410764242939#!#4.606399441130642#!#100.12
+6#!#-50.456#!#-0.18936709864988174#!#3.92110166936135#!#-50.46#!#-50.456#!#-0.1893683571966948#!#3.9211016947644395#!#-50.46
 7#!#1.23E10#!#0.18931047042655302#!#23.232865099324783#!#1.23E10#!#1.23E10#!#-0.9886724430069095#!#23.23286512013779#!#1.2300000256E10
-8#!#1.23E-10#!#1.23E-10#!#-22.81883676055613#!#0.0#!#1.23E-10#!#1.2299999907483539E-10#!#-22.818836768077794#!#0.0
+8#!#1.23E-10#!#1.23E-10#!#-22.81883676055613#!#0.0#!#1.23E-10#!#1.2299999907483539E-10#!#-22.818836768077798#!#0.0
 ~~END~~
 
 
@@ -2299,28 +2258,31 @@ GO
 -- Test querying with indexes
 SELECT set_config('enable_seqscan', 'off', false)
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'set_config' is not a recognized built-in function name.)~~
+~~START~~
+text
+off
+~~END~~
 
 
 set babelfish_showplan_all on
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'babelfish_showplan_all' is not a recognized SET option.)~~
-
 
 SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
 WHERE float_computed BETWEEN 0 AND 100
 ORDER BY float_computed;
 GO
 ~~START~~
-int#!#float#!#real#!#float#!#real#!#float#!#float
-4#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0
-8#!#1.23E-10#!#1.23E-10#!#3.0749999999999997E-10#!#3.075E-10#!#1.1090536506409432E-5#!#1.109053646469979E-5
-1#!#1.23#!#1.23#!#3.075#!#3.075#!#2.6219536506409415#!#2.62195370616071
-2#!#4.56#!#4.56#!#11.399999999999999#!#11.4#!#22.92901565040626#!#22.92901511515771
+text
+Query Text: SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE float_computed BETWEEN 0 AND 100
+ORDER BY float_computed
+Index Scan using ix_float_real_persisted_compute8e6cbdf23db5caf9b93940ea925f91e1 on float_real_persisted_computed_test  (cost=0.13..8.15 rows=1 width=44)
+  Index Cond: ((float_computed >= '0'::double precision) AND (float_computed <= '100'::double precision))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.708 ms
 ~~END~~
 
 
@@ -2329,26 +2291,29 @@ WHERE real_computed BETWEEN 0 AND 100
 ORDER BY real_computed;
 GO
 ~~START~~
-int#!#float#!#real#!#float#!#real#!#float#!#float
-4#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0
-8#!#1.23E-10#!#1.23E-10#!#3.0749999999999997E-10#!#3.075E-10#!#1.1090536506409432E-5#!#1.109053646469979E-5
-1#!#1.23#!#1.23#!#3.075#!#3.075#!#2.6219536506409415#!#2.62195370616071
-2#!#4.56#!#4.56#!#11.399999999999999#!#11.4#!#22.92901565040626#!#22.92901511515771
+text
+Query Text: SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE real_computed BETWEEN 0 AND 100
+ORDER BY real_computed
+Index Scan using ix_float_real_persisted_computec641e3f7c05d1a11aa08963a094a5671 on float_real_persisted_computed_test  (cost=0.13..8.15 rows=1 width=44)
+  Index Cond: ((real_computed >= '0'::real) AND (real_computed <= '100'::real))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.269 ms
 ~~END~~
 
 
 set babelfish_showplan_all OFF
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'babelfish_showplan_all' is not a recognized SET option.)~~
-
 
 SELECT set_config('enable_seqscan', 'on', false)
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'set_config' is not a recognized built-in function name.)~~
+~~START~~
+text
+on
+~~END~~
 
 
 -- Test computed columns in predicates
@@ -2523,7 +2488,7 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-Negative price not allowed: The INSERT statement conflicted with the CHECK constraint "chk_price". The conflict occurred in database "TestDb", table "dbo.float_real_udt_constraints", column 'product_price'.
+Negative price not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_price"
 ~~END~~
 
 
@@ -2538,7 +2503,7 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-Zero length not allowed: The INSERT statement conflicted with the CHECK constraint "chk_length". The conflict occurred in database "TestDb", table "dbo.float_real_udt_constraints", column 'length_mm'.
+Zero length not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_length"
 ~~END~~
 
 
@@ -2553,7 +2518,7 @@ END CATCH;
 GO
 ~~START~~
 nvarchar
-Humidity > 100 not allowed: The INSERT statement conflicted with the CHECK constraint "chk_humidity". The conflict occurred in database "TestDb", table "dbo.float_real_udt_constraints", column 'humidity_pct'.
+Humidity > 100 not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_humidity"
 ~~END~~
 
 
@@ -2594,17 +2559,14 @@ GO
 -- Test index usage
 SELECT set_config('enable_seqscan', 'off', false)
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'set_config' is not a recognized built-in function name.)~~
+~~START~~
+text
+off
+~~END~~
 
 
 set babelfish_showplan_all on
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'babelfish_showplan_all' is not a recognized SET option.)~~
-
 
 SELECT *
 FROM float_real_udt_test
@@ -2612,10 +2574,18 @@ WHERE product_price > 100
 ORDER BY product_price;
 GO
 ~~START~~
-int#!#float#!#float#!#real#!#real
-1#!#999.99#!#500.0#!#22.5#!#45.6
-3#!#9999.99#!#0.001#!#-5.2#!#90.5
-4#!#123000.0#!#1230.0#!#35.8#!#10.2
+text
+Query Text: SELECT *
+FROM float_real_udt_test
+WHERE product_price > 100
+ORDER BY product_price
+Index Scan using ix_float_real_udt_test_pricefloa59d5b0879b52fe8b6e091c0861e349a on float_real_udt_test  (cost=0.13..8.17 rows=2 width=28)
+  Index Cond: ((product_price)::double precision > '100'::double precision)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.242 ms
 ~~END~~
 
 
@@ -2625,23 +2595,30 @@ WHERE room_temp BETWEEN 20 AND 30
 ORDER BY room_temp;
 GO
 ~~START~~
-int#!#float#!#float#!#real#!#real
-1#!#999.99#!#500.0#!#22.5#!#45.6
+text
+Query Text: SELECT *
+FROM float_real_udt_test
+WHERE room_temp BETWEEN 20 AND 30
+ORDER BY room_temp
+Index Scan using ix_float_real_udt_test_tempfloa54f9975c8d72ec6b136d117aa4e38fcf on float_real_udt_test  (cost=0.13..8.15 rows=1 width=28)
+  Index Cond: (((room_temp)::real >= '20'::real) AND ((room_temp)::real <= '30'::real))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.279 ms
 ~~END~~
 
 
 set babelfish_showplan_all OFF
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'babelfish_showplan_all' is not a recognized SET option.)~~
-
 
 SELECT set_config('enable_seqscan', 'on', false)
 GO
-~~ERROR (Code: 195)~~
-
-~~ERROR (Message: 'set_config' is not a recognized built-in function name.)~~
+~~START~~
+text
+on
+~~END~~
 
 
 -- Cleanup
@@ -2731,9 +2708,9 @@ FROM float_real_base_test ORDER BY id;
 GO
 ~~START~~
 float#!#real
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type real.)~~
+~~ERROR (Message: value out of range: overflow)~~
 
 
 SELECT * FROM dbo.float_real_get_range(0, 10);
@@ -2976,9 +2953,9 @@ SELECT * FROM float_real_audit ORDER BY audit_id;
 GO
 ~~START~~
 int#!#varchar#!#datetime#!#float#!#float#!#real#!#real#!#varchar
-1#!#INSERT#!#<NULL>#!#<NULL>#!#777.888#!#<NULL>#!#777.888#!#admin
-2#!#UPDATE#!#<NULL>#!#777.888#!#855.6768000000001#!#777.888#!#855.6768#!#admin
-3#!#INSERT#!#<NULL>#!#<NULL>#!#1999.998#!#<NULL>#!#1999.998#!#admin
+1#!#INSERT#!#<NULL>#!#<NULL>#!#777.888#!#<NULL>#!#777.888#!#jdbc_user
+2#!#UPDATE#!#<NULL>#!#777.888#!#855.6768000000001#!#777.888#!#855.6768#!#jdbc_user
+3#!#INSERT#!#<NULL>#!#<NULL>#!#1999.998#!#<NULL>#!#1999.998#!#jdbc_user
 ~~END~~
 
 
@@ -3102,7 +3079,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-NOT NULL constraint test#!#SUCCESS: NOT NULL constraint worked for float_not_null - Cannot insert the value NULL into column 'float_not_null', table 'TestDb.dbo.float_real_constraint_test'; column does not allow nulls. INSERT fails.
+NOT NULL constraint test#!#SUCCESS: NOT NULL constraint worked for float_not_null - null value in column "float_not_null" of relation "float_real_constraint_test" violates not-null constraint
 ~~END~~
 
 
@@ -3131,7 +3108,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Positive value constraint test#!#SUCCESS: Positive value constraint worked - The INSERT statement conflicted with the CHECK constraint "CK__float_rea__float__3489AE06". The conflict occurred in database "TestDb", table "dbo.float_real_constraint_test", column 'float_positive'.
+Positive value constraint test#!#SUCCESS: Positive value constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_positive_check"
 ~~END~~
 
 
@@ -3160,7 +3137,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Range constraint test#!#SUCCESS: Range constraint worked - The INSERT statement conflicted with the CHECK constraint "CK__float_rea__float__357DD23F". The conflict occurred in database "TestDb", table "dbo.float_real_constraint_test", column 'float_range'.
+Range constraint test#!#SUCCESS: Range constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_range_check"
 ~~END~~
 
 
@@ -3189,7 +3166,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Precision constraint test#!#SUCCESS: Precision constraint worked - The INSERT statement conflicted with the CHECK constraint "CK__float_rea__float__385A3EEA". The conflict occurred in database "TestDb", table "dbo.float_real_constraint_test", column 'float_precision'.
+Precision constraint test#!#SUCCESS: Precision constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_precision_check"
 ~~END~~
 
 
@@ -3218,7 +3195,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Min-max constraint test#!#SUCCESS: Min-max constraint worked - The INSERT statement conflicted with the CHECK constraint "chk_float_range_valid". The conflict occurred in database "TestDb", table "dbo.float_real_constraint_test".
+Min-max constraint test#!#SUCCESS: Min-max constraint worked - new row for relation "float_real_constraint_test" violates check constraint "chk_float_range_valid"
 ~~END~~
 
 
@@ -3707,12 +3684,12 @@ ORDER BY p.partition_number;
 GO
 ~~START~~
 int#!#bigint#!#varchar#!#float#!#float#!#int
-1#!#4#!#x <= -1000.0#!#-12300.0#!#-1500.0#!#4
-2#!#3#!#-1000.0 < x <= -1.0#!#-750.0#!#-2.5#!#3
-3#!#4#!#-1.0 < x <= 0.0#!#-0.75#!#-1.23E-4#!#4
-4#!#4#!#0.0 < x <= 1.0#!#1.23E-4#!#0.75#!#4
-5#!#3#!#1.0 < x <= 1000.0#!#2.5#!#750.0#!#3
-6#!#4#!#x > 1000.0#!#1500.0#!#12300.0#!#4
+1#!#0#!#x <= -1000.0#!#-12300.0#!#-1500.0#!#4
+2#!#0#!#-1000.0 < x <= -1.0#!#-750.0#!#-2.5#!#3
+3#!#0#!#-1.0 < x <= 0.0#!#-0.75#!#-1.23E-4#!#4
+4#!#0#!#0.0 < x <= 1.0#!#1.23E-4#!#0.75#!#4
+5#!#0#!#1.0 < x <= 1000.0#!#2.5#!#750.0#!#3
+6#!#0#!#x > 1000.0#!#1500.0#!#12300.0#!#4
 ~~END~~
 
 
@@ -3858,7 +3835,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Test 1 - Non-existent product_id#!#The INSERT statement conflicted with the FOREIGN KEY constraint "fk_product". The conflict occurred in database "TestDb", table "dbo.float_real_master_products", column 'product_id'.
+Test 1 - Non-existent product_id#!#insert or update on table "float_real_order_details" violates foreign key constraint "fk_product"
 ~~END~~
 
 
@@ -3874,7 +3851,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Test 2 - Non-existent rate_id#!#The INSERT statement conflicted with the FOREIGN KEY constraint "fk_rate". The conflict occurred in database "TestDb", table "dbo.float_real_master_rates", column 'rate_id'.
+Test 2 - Non-existent rate_id#!#insert or update on table "float_real_price_history" violates foreign key constraint "fk_rate"
 ~~END~~
 
 
@@ -3889,7 +3866,7 @@ END CATCH;
 GO
 ~~START~~
 varchar#!#nvarchar
-Test 3 - Delete referenced product#!#The DELETE statement conflicted with the REFERENCE constraint "fk_product". The conflict occurred in database "TestDb", table "dbo.float_real_order_details", column 'product_id'.
+Test 3 - Delete referenced product#!#update or delete on table "float_real_master_products" violates foreign key constraint "fk_product" on table "float_real_order_details"
 ~~END~~
 
 
@@ -3923,7 +3900,7 @@ WHERE product_id = 3;
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: The UPDATE statement conflicted with the REFERENCE constraint "fk_product". The conflict occurred in database "TestDb", table "dbo.float_real_order_details", column 'product_id'.)~~
+~~ERROR (Message: update or delete on table "float_real_master_products" violates foreign key constraint "fk_product" on table "float_real_order_details")~~
 
 
 
@@ -3983,16 +3960,16 @@ GO
 ~~START~~
 int#!#varchar#!#float#!#float#!#float
 1#!#Sine Wave#!#1.0#!#<NULL>#!#0.8414709848078965
-2#!#Cosine Wave#!#1.0#!#<NULL>#!#0.5403023058681397
+2#!#Cosine Wave#!#1.0#!#<NULL>#!#0.5403023058681398
 3#!#Tangent#!#1.0#!#<NULL>#!#1.5574077246549023
 4#!#Logarithm Base 10#!#100.0#!#<NULL>#!#2.0
-5#!#Natural Logarithm#!#2.718281828459045#!#<NULL>#!#1.0
+5#!#Natural Logarithm#!#2.718281828459045#!#<NULL>#!#1.0000000000000018
 6#!#Power#!#2.0#!#3.0#!#8.0
 7#!#Square Root#!#16.0#!#<NULL>#!#4.0
 8#!#Absolute Value#!#-123.456#!#<NULL>#!#123.456
 9#!#PI Calculation#!#3.141592653589793#!#<NULL>#!#3.141592653589793
 10#!#Exponential#!#1.0#!#<NULL>#!#2.718281828459045
-11#!#Degrees to Radians#!#180.0#!#<NULL>#!#3.141592653589793
+11#!#Degrees to Radians#!#180.0#!#<NULL>#!#3.141592653589794
 12#!#Radians to Degrees#!#3.141592653589793#!#<NULL>#!#180.0
 ~~END~~
 
@@ -4061,11 +4038,9 @@ EXEC TestFloatErrors;
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
+~~ERROR (Message: "200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0" is out of range for type double precision)~~
 
 
 
@@ -4075,10 +4050,7 @@ DROP TABLE FLOAT_dt_errors;
 GO
 ~~START~~
 int#!#varchar#!#varchar
-1#!#Division by zero#!#Divide by zero error encountered.
-2#!#Overflow#!#Arithmetic overflow error converting float to data type numeric.
-3#!#Invalid conversion#!#Error converting data type varchar to float.
-4#!#Square root of negative#!#An invalid floating point operation occurred.
+1#!#Division by zero#!#division by zero
 ~~END~~
 
 
@@ -4418,7 +4390,7 @@ CROSS APPLY (
 ORDER BY t.id;
 GO
 ~~START~~
-int#!#float#!#real#!#varchar#!#float#!#float#!#float#!#varchar#!#float#!#float#!#real#!#float#!#varchar#!#decimal#!#decimal#!#float#!#varchar#!#float
+int#!#float#!#real#!#varchar#!#float#!#float#!#float#!#varchar#!#float#!#float#!#real#!#float#!#varchar#!#numeric#!#numeric#!#float#!#varchar#!#float
 1#!#100.123456#!#100.12346#!#Not Equal#!#100.123456#!#1.9999999428244946#!#300.246912#!#Medium#!#200.2469148623047#!#10024.706441383936#!#1.0#!#10034.712612422965#!#Positive#!#333366.748970#!#333366.749486#!#1000100.2484588623#!#In decimal range#!#10025.706441383936
 2#!#-100.123456#!#-100.12346#!#Not Equal#!#-100.0#!#1.9999999428244946#!#-300.2469177246094#!#Negative or Zero#!#-200.2469148623047#!#10024.706441383936#!#1.0#!#10034.712612422965#!#Negative#!#-100.123456#!#-100.123459#!#-100.123456#!#In decimal range#!#10025.706441383936
 3#!#0.0#!#0.0#!#Equal to FLOAT#!#0.0#!#0.0#!#0.0#!#Negative or Zero#!#0.0#!#0.0#!#<NULL>#!#0.0#!#Positive#!#333366.748970#!#333366.749486#!#1000100.2484588623#!#In decimal range#!#<NULL>
@@ -4449,11 +4421,11 @@ WITH NullTestCTE AS (
 SELECT * FROM NullTestCTE ORDER BY id;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#float#!#float
-1#!#Unknown#!#Unknown#!#100.123456#!#100.123456
-2#!#Unknown#!#Unknown#!#-100.123456#!#-100.123456
-3#!#Unknown#!#Unknown#!#0.0#!#<NULL>
-4#!#Unknown#!#Unknown#!#1000000.123456#!#1000000.123456
+int#!#varchar#!#varchar#!#numeric#!#float
+1#!#Unknown#!#Unknown#!#100.12345600#!#100.123456
+2#!#Unknown#!#Unknown#!#-100.12345600#!#-100.123456
+3#!#Unknown#!#Unknown#!#0E-8#!#<NULL>
+4#!#Unknown#!#Unknown#!#1000000.12345600#!#1000000.123456
 ~~END~~
 
 
@@ -4579,7 +4551,7 @@ SELECT id,
 FROM float_real_case_test;
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#float#!#float#!#float#!#float#!#float
+int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#float#!#float#!#float#!#numeric#!#float
 1#!#float match#!#no float match#!#no real match#!#real >= smallmoney#!#sum > 200#!#100.123456#!#100.123456#!#100.123456#!#1.0#!#100.123456
 2#!#float match#!#no float match#!#no real match#!#int <= bigint#!#no arithmetic match#!#-100.12345886230469#!#-100.123456#!#-100.123456#!#2.0#!#-100.123456
 3#!#float match#!#no float match#!#no real match#!#real >= smallmoney#!#sum > 200#!#10000.1234#!#1000000.123456#!#1000000.123456#!#1.0#!#1000000.123456

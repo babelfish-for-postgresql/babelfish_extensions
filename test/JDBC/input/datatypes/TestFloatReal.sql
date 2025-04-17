@@ -203,7 +203,7 @@ SELECT 'GROUP BY test for REAL' as test_type, real_col1 as num_val, COUNT(*) as 
 FROM float_real_comparison_test
 GROUP BY real_col1
 UNION ALL
-SELECT 'GROUP BY test for FLOAT', float_col1 as num_val, COUNT(*) as count
+SELECT 'GROUP BY test for FLOAT' as test_type, float_col1 as num_val, COUNT(*) as count
 FROM float_real_comparison_test
 GROUP BY float_col1
 ORDER BY test_type, num_val, count DESC
