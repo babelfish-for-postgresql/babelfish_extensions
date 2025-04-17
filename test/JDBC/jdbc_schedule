@@ -524,3 +524,8 @@ ignore#!#test_conv_int_to_varbinary_binary_before_16_3_or_15_7-vu-cleanup
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-prepare
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-verify
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_6 or 16_10 release
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-prepare
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-verify
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-cleanup
