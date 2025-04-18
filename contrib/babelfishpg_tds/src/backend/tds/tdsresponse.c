@@ -853,27 +853,19 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 */
 				if (precision > TDS_MAX_NUM_PRECISION)
 				{
-					if (precision - scale > 32 && scale > 6)
+					if (precision - scale <= 32)
 					{
-						/*
-						 * Result might be rounded to 6 decimal places or the
-						 * overflow error will be thrown if the integral part
-						 * can't fit into 32 digits.
-						 */
+						scale = Min(scale, 38 - (precision-scale));
+						precision = TDS_MAX_NUM_PRECISION;
+					}
+					else if (precision - scale > 32 && scale <= 6)
+					{
+						precision = TDS_MAX_NUM_PRECISION;
+					}
+					else if (precision - scale > 32 && scale > 6)
+					{
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
-					}
-					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
-					{
-						/*
-						 * scale adjustment by delta is only applicable for
-						 * division and (multiplcation having no aggregate
-						 * operand)
-						 */
-						int			delta = precision - TDS_MAX_NUM_PRECISION;
-
-						precision = TDS_MAX_NUM_PRECISION;
-						scale = Max(scale - delta, 0);
 					}
 					/*
 					 * Control reaching here for only arithmetic overflow
@@ -884,6 +876,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						if (found != NULL) *found = false;
 					}
 				}
+				elog(LOG, "Yashneet : precision: %d, scale: %d", precision, scale);
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
 		case T_FuncExpr:
