@@ -62,6 +62,9 @@
 
 %type <list> tsql_stmtmulti
 %type <list> columnListWithOptAscDesc
+%type <list> columnDefList
+%type <node> columnDefElem
+
 
 %type <boolean> tsql_cluster tsql_opt_cluster
 

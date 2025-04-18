@@ -1904,8 +1904,19 @@ joined_table:
 				}
 		;
 
+columnDefList:
+			columnDefElem								{ $$ = list_make1($1); }
+			| columnDefList ',' columnDefElem				{ $$ = lappend($1, $3); }
+		;
+
+columnDefElem: ColIdDef
+				{
+					$$ = (Node *) makeString($1);
+				}
+		;
+
 tsql_unpivot_clause:
-            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+            '(' columnref FOR columnref IN_P '(' columnDefList ')' ')'
                 {
 					$$ = (Node *)list_make3($2, $4, $7);
                 }

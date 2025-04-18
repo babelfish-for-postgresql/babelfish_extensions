@@ -843,6 +843,24 @@ UNPIVOT (
 ) AS [Global_分析];
 GO
 
+-- BABEL-5761 Case insensitivity of column names in UNPIVOT result
+        -- Uppercase column names in unpivot source list
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO
+
+SELECT COLUMN_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'Test_Case_Sensitivity' 
+    AND TABLE_SCHEMA = 'dbo' 
+ORDER BY ORDINAL_POSITION;
+GO
 
 -- KNOWN ISSUES
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
@@ -853,14 +871,4 @@ GO
         -- Extra columns in result set when `SELECT alias.*`
 SELECT unpvt.* FROM customer_turnover c 
 UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
-GO
-        -- Uppercase column names in unpivot source list
-SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
-FROM [Global_データ_Sales]
-UNPIVOT (
-    [Amount_金額] FOR [Quarter_四半期] IN (
-        [Q1_売上],
-        [Q2_売上]
-    )
-) AS [Global_分析];
 GO

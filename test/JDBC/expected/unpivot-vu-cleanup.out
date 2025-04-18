@@ -45,6 +45,8 @@ DROP TABLE [Sales$Data@2024];
 GO
 DROP TABLE [Global_データ_Sales];
 GO
+DROP TABLE Test_Case_Sensitivity;
+GO
 
 -- Drop temporary tables (if they still exist)
 IF OBJECT_ID('tempdb..#temp_sales') IS NOT NULL

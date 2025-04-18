@@ -434,3 +434,12 @@ INSERT INTO [Global_データ_Sales] VALUES (1,2,3,4,5);
 GO
 ~~ROW COUNT: 1~~
 
+
+CREATE TABLE Test_Case_Sensitivity (
+    IDENT INT PRIMARY KEY,
+    [Order Number] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+    OrderStatus NVARCHAR(20) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+    [shipping-address] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+    TOTAL_AMOUNT DECIMAL(15,2)
+);
+GO

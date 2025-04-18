@@ -1538,6 +1538,39 @@ int#!#numeric#!#nvarchar
 ~~END~~
 
 
+-- BABEL-5761 Case insensitivity of column names in UNPIVOT result
+        -- Uppercase column names in unpivot source list
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO
+~~START~~
+int#!#numeric#!#nvarchar
+1#!#4.00#!#Q1_売上
+1#!#5.00#!#Q2_売上
+~~END~~
+
+
+SELECT COLUMN_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'Test_Case_Sensitivity' 
+    AND TABLE_SCHEMA = 'dbo' 
+ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar
+IDENT
+Order Number
+OrderStatus
+shipping-address
+TOTAL_AMOUNT
+~~END~~
+
 
 -- KNOWN ISSUES
     -- BABEL-5677 - Support more variations of UNPIVOT Syntax
@@ -1565,21 +1598,5 @@ int#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#nvarchar
 2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#150#!#q1
 2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#250#!#q2
 2#!#Cust B#!#P#!#150#!#250#!#200#!#<NULL>#!#200#!#q3
-~~END~~
-
-        -- Uppercase column names in unpivot source list
-SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
-FROM [Global_データ_Sales]
-UNPIVOT (
-    [Amount_金額] FOR [Quarter_四半期] IN (
-        [Q1_売上],
-        [Q2_売上]
-    )
-) AS [Global_分析];
-GO
-~~START~~
-int#!#numeric#!#nvarchar
-1#!#4.00#!#q1_売上
-1#!#5.00#!#q2_売上
 ~~END~~
 
