@@ -9702,13 +9702,14 @@ SELECT
     CONSTRAINT_NAME,
     CONSTRAINT_TYPE
 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-WHERE TABLE_NAME = 'SmallDateTimeTest1';
+WHERE TABLE_NAME = 'SmallDateTimeTest1'
+ORDER BY CONSTRAINT_NAME;
 GO
 ~~START~~
 varchar#!#varchar
-smalldatetimetest1_smalldatetimecolumn_check#!#CHECK
-smalldatetimetest1_pkey#!#PRIMARY KEY
 ck_smalldatetimetest_smalldatetimecolumn#!#CHECK
+smalldatetimetest1_pkey#!#PRIMARY KEY
+smalldatetimetest1_smalldatetimecolumn_check#!#CHECK
 ~~END~~
 
 
