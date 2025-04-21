@@ -4459,7 +4459,7 @@ UNION
 SELECT 'NUMERIC_15_3', CAST(123.456 AS NUMERIC(15,3))
 UNION
 SELECT 'NUMERIC_12_4', CAST(123.456 AS NUMERIC(12,4))
-ORDER BY val;
+ORDER BY source_type;
 GO
 
 ---- 13.3 Complex UNION Tests with Expressions
@@ -4835,7 +4835,7 @@ SELECT 'PRECISE2',
 UNION
 SELECT 'PRECISE3',
        CAST(100 AS MONEY) * @scientific_num
-ORDER BY val;
+ORDER BY source_type;
 GO
 
 -- Cleanup
