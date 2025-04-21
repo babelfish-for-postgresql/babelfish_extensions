@@ -841,7 +841,7 @@ SELECT @num1 * @num2 AS result;
 GO
 ~~START~~
 numeric
-1.00000000000000000000000000000000000
+0.99999999999999999999999999999999999
 ~~END~~
 
 
@@ -2170,7 +2170,7 @@ SELECT @num1 - @num2 AS result;
 GO
 ~~START~~
 numeric
-9999999999999999999999999999999999999
+9999999999999999999999999999999999998
 ~~END~~
 
 
@@ -9949,8 +9949,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (category = 'CAT-2'::"varchar")
-  Filter: (num_col = 500)
+        Index Cond: (category = 'CAT-2'::"varchar")
+        Filter: (num_col = 500)
 ~~END~~
 
 
@@ -9972,8 +9972,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: (num_col = ((int_col)::numeric + 0.45))
-  Rows Removed by Filter: 2
+        Filter: (num_col = ((int_col)::numeric + 0.45))
+        Rows Removed by Filter: 2
 ~~END~~
 
 
@@ -9997,7 +9997,7 @@ Gather (actual rows=3 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Seq Scan on numeric_index_test (actual rows=3 loops=1)
-  Filter: ((num_col)::numeric = (decimal_col)::numeric)
+        Filter: ((num_col)::numeric = (decimal_col)::numeric)
 ~~END~~
 
 
@@ -10019,7 +10019,7 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
+        Index Cond: (num_col = ANY ('{123,123.45,123.45678}'::numeric[]))
 ~~END~~
 
 
@@ -10041,7 +10041,7 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_numeric_precisenumeric_indee9fe26d0621de94770ec0d8401129c48 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
+        Index Cond: (num_precise_col = 123.4567890123::numeric(38,10))
 ~~END~~
 
 
@@ -10065,8 +10065,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (num_col = 123.45)
-  Filter: ((decimal_col)::numeric = 123.45)
+        Index Cond: (num_col = 123.45)
+        Filter: ((decimal_col)::numeric = 123.45)
 ~~END~~
 
 
@@ -10091,7 +10091,7 @@ Gather Merge (actual rows=3 loops=1)
   Workers Planned: 1
   Workers Launched: 1
   ->  Parallel Index Scan using idx_decimalnumeric_index_test5d8e61a04a9662670ec1a2266602e173 on numeric_index_test (actual rows=2 loops=2)
-  Filter: (num_col > 100)
+        Filter: (num_col > 100)
 ~~END~~
 
 
@@ -10121,7 +10121,7 @@ HashAggregate (actual rows=3 loops=1)
         Workers Planned: 1
         Workers Launched: 1
         ->  Parallel Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=2 loops=2)
-        Heap Fetches: 3
+              Heap Fetches: 3
 ~~END~~
 
 
@@ -10145,8 +10145,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (num_col = 500.00)
-  Heap Fetches: 1
+        Index Cond: (num_col = 500.00)
+        Heap Fetches: 1
 ~~END~~
 
 
@@ -10184,7 +10184,7 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using idx_composite_num_catnumeric_in0a16adf6c28603b70af9d88eead29f13 on numeric_index_test (actual rows=1 loops=1)
-  Index Cond: (num_col IS NULL)
+        Index Cond: (num_col IS NULL)
 ~~END~~
 
 
@@ -10205,8 +10205,8 @@ Gather (actual rows=0 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Seq Scan on numeric_index_test (actual rows=0 loops=1)
-  Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
-  Rows Removed by Filter: 4
+        Filter: ((num_col * '2'::numeric(1,0)) = (decimal_col)::numeric)
+        Rows Removed by Filter: 4
 ~~END~~
 
 
