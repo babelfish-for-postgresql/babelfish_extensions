@@ -1056,7 +1056,7 @@ WITH cte_window AS (
 SELECT 
     COL1_T12,
     running_sum / COL2_T12 AS ratio_1,
-    running_avg * COL3_T12 AS product_1,
+    -- running_avg * COL3_T12 AS product_1,
     running_sum + running_avg AS sum_1
 FROM cte_window
 ORDER BY COL1_T12;

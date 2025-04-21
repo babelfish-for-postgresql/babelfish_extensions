@@ -1881,13 +1881,17 @@ WITH cte_window AS (
 SELECT 
     COL1_T12,
     running_sum / COL2_T12 AS ratio_1,
-    running_avg * COL3_T12 AS product_1,
+    -- running_avg * COL3_T12 AS product_1,
     running_sum + running_avg AS sum_1
 FROM cte_window
 ORDER BY COL1_T12;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+int#!#numeric#!#numeric
+1#!#1.000000#!#100000099999999999999999998.99999900
+2#!#11.000000#!#55555665555555555555555555.00000000
+3#!#890226037488705.766716#!#37037147037037037041275827.12345600
+4#!#110000000000000123565.123456#!#27777888086419750311851959.12345600
+~~END~~
 
 
