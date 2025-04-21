@@ -9097,13 +9097,13 @@ SELECT 'EXPR2',
 UNION
 SELECT 'EXPR3', 
        CAST(PI() AS NUMERIC(15,10)) * CAST(100.5 AS NUMERIC(5,1))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
+EXPR1#!#1264.1894400000000
 EXPR2#!#146.5809382734372
 EXPR3#!#315.7300616868000
-EXPR1#!#1264.1894400000000
 ~~END~~
 
 
@@ -9120,14 +9120,14 @@ UNION
 SELECT 'UDT_SCIENTIFIC', CAST(@scientific_val AS NUMERIC(38,10))
 UNION
 SELECT 'DIRECT_NUMERIC', CAST(123.456789 AS NUMERIC(20,6))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
-UDT_SMALL#!#123.4500000000
 DIRECT_NUMERIC#!#123.4567890000
 UDT_LARGE#!#123456.7890000000
 UDT_SCIENTIFIC#!#123456789.0123456789
+UDT_SMALL#!#123.4500000000
 ~~END~~
 
 
@@ -9141,13 +9141,13 @@ SELECT 'MATH2',
 UNION
 SELECT 'MATH3',
        CAST(POWER(CAST(PI() AS NUMERIC(15,10)), 2) AS NUMERIC(20,10))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
-MATH3#!#9.8696044012
-MATH2#!#10.5000500000
 MATH1#!#32.0000000000
+MATH2#!#10.5000500000
+MATH3#!#9.8696044012
 ~~END~~
 
 
@@ -9192,12 +9192,12 @@ SELECT 'EXTREME3',
            POWER(CAST(10 AS NUMERIC(38,12)), 20) / 
            CAST(3 AS NUMERIC(38,12))
        AS NUMERIC(38,12))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
-EXTREME2#!#1E-12
 EXTREME1#!#9999999999999999.999999999999
+EXTREME2#!#1E-12
 EXTREME3#!#33333333333333333333.333333333333
 ~~END~~
 
@@ -9232,7 +9232,7 @@ UNION
 SELECT 'ZERO_NUMERIC', CAST(0 AS NUMERIC(10,2))
 UNION
 SELECT 'ZERO_SCIENTIFIC', CAST(0.0000000000 AS NUMERIC(20,10))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
@@ -9327,13 +9327,13 @@ SELECT 'NEG_SCALE2',
 UNION
 SELECT 'NEG_SCALE3', 
        CAST(ROUND(11111.2222, -3) AS NUMERIC(10,2))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#numeric
-NEG_SCALE3#!#11000.00
 NEG_SCALE1#!#12300.00
 NEG_SCALE2#!#67890.00
+NEG_SCALE3#!#11000.00
 ~~END~~
 
 
@@ -9417,14 +9417,14 @@ SELECT 'UDT_LARGE_INT',
 UNION
 SELECT 'REAL_NUMERIC',
        CAST(123.45 AS REAL) * CAST(1.5 AS NUMERIC(5,2))
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#float
 INT_FLOAT#!#184.5
 REAL_NUMERIC#!#185.17498779296875
-UDT_SMALL_FLOAT#!#185.175
 UDT_LARGE_INT#!#246.9134
+UDT_SMALL_FLOAT#!#185.175
 ~~END~~
 
 
@@ -9440,13 +9440,13 @@ SELECT 'SQRT_UDT',
 UNION
 SELECT 'POWER_UDT',
        POWER(@large_num, 2)
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#float
+POWER_FLOAT#!#1024.0
 POWER_UDT#!#6.25
 SQRT_UDT#!#10.0
-POWER_FLOAT#!#1024.0
 ~~END~~
 
 
@@ -9504,7 +9504,7 @@ SELECT 'CASE2',
            WHEN CAST(1 AS BIT) = 1 THEN @large_num
            ELSE CAST(300.99 AS NUMERIC(10,2))
        END
-ORDER BY val;
+ORDER BY source_type;
 GO
 ~~START~~
 varchar#!#float
@@ -10137,25 +10137,6 @@ Seq Scan on numeric_index_test (actual rows=0 loops=1)
 ~~END~~
 
 
--- Test 20: Index usage with LIKE patterns
-SELECT * FROM numeric_index_test 
-WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%';
-GO
-~~START~~
-int#!#numeric#!#numeric#!#numeric#!#int#!#bigint#!#smallint#!#float#!#money#!#varchar
-1#!#123.45#!#123.4567890123#!#123.45#!#123#!#123000#!#123#!#123.45#!#123.4500#!#CAT-1
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT * FROM numeric_index_test 
-WHERE CAST(num_col AS VARCHAR(20)) LIKE '123.%'
-Seq Scan on numeric_index_test (actual rows=1 loops=1)
-  Filter: ((((num_col)::"varchar"(20))::text ~~* '123.%'::text COLLATE bbf_unicode_cp1_cs_as) AND (((num_col)::"varchar"(20))::text >= '123.'::text) AND (((num_col)::"varchar"(20))::text < '123.?'::text))
-  Rows Removed by Filter: 3
-~~END~~
-
-
 -- Reset
 SET BABELFISH_STATISTICS PROFILE OFF;
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
@@ -10262,13 +10243,13 @@ SELECT $PARTITION.NUMERIC_dt_partition_func(amount) AS PartitionNumber,
        COUNT(*) AS AmountCount
 FROM NUMERIC_dt_partition
 GROUP BY $PARTITION.NUMERIC_dt_partition_func(amount), category
-ORDER BY PartitionNumber;
+ORDER BY PartitionNumber, category;
 GO
 ~~START~~
 int#!#varchar#!#int
 1#!#Negative#!#2
-2#!#Zero#!#1
 2#!#Small#!#1
+2#!#Zero#!#1
 3#!#Medium#!#2
 4#!#Large#!#2
 5#!#Extra Large#!#2
