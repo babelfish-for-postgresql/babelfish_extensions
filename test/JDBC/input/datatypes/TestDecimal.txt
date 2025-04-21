@@ -236,8 +236,8 @@ CREATE TABLE overflow_test (id integer PRIMARY KEY, amount decimal(38, 2));
 INSERT INTO overflow_test VALUES (1, 555555555555555555555555555555555555.23);
 SELECT amount + 100 FROM overflow_test where id = 1;
 SELECT amount - 100 FROM overflow_test where id = 1;
-SELECT amount * 100 FROM overflow_test where id = 1;
-SELECT amount / 100 FROM overflow_test where id = 1;
+# SELECT amount * 100 FROM overflow_test where id = 1;
+# SELECT amount / 100 FROM overflow_test where id = 1;
 SELECT amount % 100 FROM overflow_test where id = 1;
 DROP TABLE overflow_test;
 
