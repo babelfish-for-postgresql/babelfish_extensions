@@ -6,7 +6,7 @@ jobs:
     env:
       INSTALL_DIR: psql
       DATABASE_COLLATION_NAME: bbf_unicode_cp1_ci_ai
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
