@@ -512,9 +512,9 @@ ignore#!#object_ownership-before-16_8-or-17_4-vu-verify
 ignore#!#object_ownership-before-16_8-or-17_4-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to 17_5 or 16_9 release
-ignore#!#test_constraint_like-before-17-5-or-16-9-vu-prepare
-ignore#!#test_constraint_like-before-17-5-or-16-9-vu-verify
-ignore#!#test_constraint_like-before-17-5-or-16-9-vu-cleanup
+ignore#!#test_constraint_like-17-4-or-16-8-vu-prepare
+ignore#!#test_constraint_like-17-4-or-16-8-vu-verify
+ignore#!#test_constraint_like-17-4-or-16-8-vu-cleanup
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
@@ -529,3 +529,6 @@ ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-cleanup
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-prepare
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-verify
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-cleanup
+ignore#!#test_constraint_like-16-6-vu-prepare
+ignore#!#test_constraint_like-16-6-vu-verify
+ignore#!#test_constraint_like-16-6-vu-cleanup
