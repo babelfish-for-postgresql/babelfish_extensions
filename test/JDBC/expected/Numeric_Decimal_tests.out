@@ -5627,13 +5627,13 @@ numeric#!#numeric
 
 
 -- CONVERT with style parameter for date formats
-SELECT CONVERT(NUMERIC(8,0), CONVERT(VARCHAR, GETDATE(), 101)), CONVERT(DECIMAL(8,0), CONVERT(VARCHAR, GETDATE(), 101));
+SELECT CONVERT(NUMERIC(8,0), CONVERT(VARCHAR, '2025-04-17', 101)), CONVERT(DECIMAL(8,0), CONVERT(VARCHAR, '2025-04-17', 101));
 GO
 ~~START~~
 numeric#!#numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "04/01/2025")~~
+~~ERROR (Message: invalid input syntax for type numeric: "2025-04-17")~~
 
 
 -- CONVERT between NUMERIC types with extreme precision differences
@@ -7508,12 +7508,13 @@ SELECT
     SUM(numeric_small) AS sum_numeric_small,
     SUM(decimal_small) AS sum_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#numeric#!#numeric
-B#!#80.23#!#80.23
 A#!#35.79#!#35.79
+B#!#80.23#!#80.23
 C#!#56.78#!#56.78
 ~~END~~
 
@@ -7565,12 +7566,13 @@ SELECT
     AVG(numeric_small) AS avg_numeric_small,
     AVG(decimal_small) AS avg_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#numeric#!#numeric
-B#!#40.115000#!#40.115000
 A#!#17.895000#!#17.895000
+B#!#40.115000#!#40.115000
 C#!#56.780000#!#56.780000
 ~~END~~
 
@@ -7622,12 +7624,13 @@ SELECT
     MIN(numeric_small) AS min_numeric_small,
     MIN(decimal_small) AS min_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#numeric#!#numeric
-B#!#34.56#!#34.56
 A#!#12.34#!#12.34
+B#!#34.56#!#34.56
 C#!#56.78#!#56.78
 ~~END~~
 
@@ -7679,12 +7682,13 @@ SELECT
     MAX(numeric_small) AS max_numeric_small,
     MAX(decimal_small) AS max_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#numeric#!#numeric
-B#!#45.67#!#45.67
 A#!#23.45#!#23.45
+B#!#45.67#!#45.67
 C#!#56.78#!#56.78
 ~~END~~
 
@@ -7739,12 +7743,13 @@ SELECT
     COUNT(decimal_small) AS count_decimal_small,
     COUNT(*) AS count_all
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#int#!#int#!#int
-B#!#2#!#2#!#2
 A#!#2#!#2#!#2
+B#!#2#!#2#!#2
 C#!#1#!#1#!#2
 ~~END~~
 
@@ -7951,12 +7956,13 @@ SELECT
     STRING_AGG(CAST(decimal_small AS VARCHAR(20)), ', ') AS string_agg_decimal_small
 FROM #numeric_aggregate_test
 WHERE numeric_small IS NOT NULL
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#varchar#!#varchar
-B#!#34.56, 45.67#!#34.56, 45.67
 A#!#12.34, 23.45#!#12.34, 23.45
+B#!#34.56, 45.67#!#34.56, 45.67
 C#!#56.78#!#56.78
 ~~END~~
 
@@ -8123,7 +8129,8 @@ SELECT
     AVG(numeric_small) AS avg_numeric_small
 FROM #numeric_aggregate_test
 GROUP BY category
-HAVING SUM(numeric_small) > 50;
+HAVING SUM(numeric_small) > 50
+ORDER BY category;
 GO
 ~~START~~
 varchar#!#numeric#!#numeric
@@ -9619,8 +9626,8 @@ GO
 ~~START~~
 varchar#!#float
 PRECISE2#!#123.45678899999999
-PRECISE3#!#123.456789
 PRECISE1#!#123.456789
+PRECISE3#!#123.456789
 ~~END~~
 
 

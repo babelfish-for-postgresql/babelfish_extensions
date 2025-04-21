@@ -2570,7 +2570,7 @@ SELECT CONVERT(NUMERIC(15,5), '1.23456E+3', 2), CONVERT(DECIMAL(15,5), '1.23456E
 GO
 
 -- CONVERT with style parameter for date formats
-SELECT CONVERT(NUMERIC(8,0), CONVERT(VARCHAR, GETDATE(), 101)), CONVERT(DECIMAL(8,0), CONVERT(VARCHAR, GETDATE(), 101));
+SELECT CONVERT(NUMERIC(8,0), CONVERT(VARCHAR, '2025-04-17', 101)), CONVERT(DECIMAL(8,0), CONVERT(VARCHAR, '2025-04-17', 101));
 GO
 
 -- CONVERT between NUMERIC types with extreme precision differences
@@ -3403,7 +3403,8 @@ SELECT
     SUM(numeric_small) AS sum_numeric_small,
     SUM(decimal_small) AS sum_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- AVG function tests
@@ -3438,7 +3439,8 @@ SELECT
     AVG(numeric_small) AS avg_numeric_small,
     AVG(decimal_small) AS avg_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- MIN function tests
@@ -3473,7 +3475,8 @@ SELECT
     MIN(numeric_small) AS min_numeric_small,
     MIN(decimal_small) AS min_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- MAX function tests
@@ -3508,7 +3511,8 @@ SELECT
     MAX(numeric_small) AS max_numeric_small,
     MAX(decimal_small) AS max_decimal_small
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- COUNT function tests
@@ -3546,7 +3550,8 @@ SELECT
     COUNT(decimal_small) AS count_decimal_small,
     COUNT(*) AS count_all
 FROM #numeric_aggregate_test
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- COUNT DISTINCT tests
@@ -3681,7 +3686,8 @@ SELECT
     STRING_AGG(CAST(decimal_small AS VARCHAR(20)), ', ') AS string_agg_decimal_small
 FROM #numeric_aggregate_test
 WHERE numeric_small IS NOT NULL
-GROUP BY category;
+GROUP BY category
+ORDER BY category;
 GO
 
 -- STRING_AGG with ORDER BY
@@ -3786,7 +3792,8 @@ SELECT
     AVG(numeric_small) AS avg_numeric_small
 FROM #numeric_aggregate_test
 GROUP BY category
-HAVING SUM(numeric_small) > 50;
+HAVING SUM(numeric_small) > 50
+ORDER BY category;
 GO
 
 ------------------------------------------------------------------------
