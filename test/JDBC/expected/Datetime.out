@@ -1514,7 +1514,7 @@ SELECT * FROM sys.types WHERE name = 'datetime';
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
-datetime#!#17481#!#17481#!#16398#!#<NULL>#!#8#!#23#!#3#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
+datetime#!#17483#!#17483#!#16398#!#<NULL>#!#8#!#23#!#3#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 

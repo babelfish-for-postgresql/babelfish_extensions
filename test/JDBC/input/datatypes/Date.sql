@@ -3329,7 +3329,8 @@ SELECT
     CONSTRAINT_NAME,
     CONSTRAINT_TYPE
 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-WHERE TABLE_NAME = 'DateTest1';
+WHERE TABLE_NAME = 'DateTest1'
+ORDER BY CONSTRAINT_NAME;
 GO
 
 -- 7. Primary Key columns (already added in step 1, but let's verify)

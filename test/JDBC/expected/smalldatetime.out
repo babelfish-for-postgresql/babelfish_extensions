@@ -1564,7 +1564,7 @@ SELECT * FROM sys.types WHERE name = 'smalldatetime';
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
-smalldatetime#!#17669#!#17669#!#16398#!#<NULL>#!#4#!#16#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
+smalldatetime#!#17671#!#17671#!#16398#!#<NULL>#!#4#!#16#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
