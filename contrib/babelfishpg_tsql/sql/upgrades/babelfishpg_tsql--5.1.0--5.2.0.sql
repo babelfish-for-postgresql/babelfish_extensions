@@ -957,6 +957,8 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
+ALTER VIEW IF EXISTS sys.sql_logins RENAME TO sql_logins_deprecated_in_5_2_0;
+
 CREATE OR REPLACE VIEW sys.sql_logins AS
 SELECT
     CAST(NULL as sys.sysname) AS name,
