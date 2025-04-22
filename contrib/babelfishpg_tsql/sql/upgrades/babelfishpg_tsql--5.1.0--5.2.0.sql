@@ -957,20 +957,6 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    ALTER VIEW sys.sql_logins RENAME TO sql_logins_deprecated_in_5_2_0;
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
-
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_logins_deprecated_in_5_2_0');
-
 CREATE OR REPLACE VIEW sys.sql_logins AS
 SELECT
     CAST(NULL as sys.sysname) AS name,
