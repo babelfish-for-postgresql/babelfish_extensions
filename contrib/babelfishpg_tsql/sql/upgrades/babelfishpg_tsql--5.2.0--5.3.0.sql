@@ -63,7 +63,17 @@ $$
     end;
 $$;
 
-ALTER FUNCTION sys.fn_varbintohexsubstring RENAME TO fn_varbintohexsubstring_deprecated_in_5_3_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.fn_varbintohexsubstring RENAME TO fn_varbintohexsubstring_deprecated_in_5_3_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_varbintohexsubstring_deprecated_in_5_3_0');
 
@@ -136,7 +146,17 @@ CAST('G' AS sys.BPCHAR(1)) AS state,
 CAST('GRANT' AS sys.nvarchar(60)) AS state_desc;
 GRANT SELECT ON sys.server_permissions TO PUBLIC;
 
-ALTER VIEW sys.sql_logins RENAME TO sql_logins_deprecated_in_5_3_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER VIEW sys.sql_logins RENAME TO sql_logins_deprecated_in_5_3_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_logins_deprecated_in_5_3_0');
 
@@ -183,6 +203,10 @@ GRANT SELECT ON sys.sql_logins TO PUBLIC;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();

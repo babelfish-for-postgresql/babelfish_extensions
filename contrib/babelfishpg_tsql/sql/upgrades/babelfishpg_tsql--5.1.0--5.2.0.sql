@@ -977,6 +977,7 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
 /* Shows the list of objects where the object owner is not same as schema owner */
 /* Covers tables, views, functions, procedures, sequences, types */
 CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
