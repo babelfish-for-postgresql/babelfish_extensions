@@ -1,0 +1,1273 @@
+-- tsql
+-- Test Plan for Varbinary Addition Operations
+-- Test Case 1: Empty Binary Values Addition with max length
+select cast(0x as varbinary(max)) + cast(0x as varbinary(max)) as EmptyBinaryAddition_maxlen
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+
+-- Test Case 2: Empty Binary Values Addition with fixed length
+select cast(0x as varbinary(5)) + cast(0x as varbinary(3)) as EmptyBinaryAddition_fixedlen
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+
+-- Test Case 3: Empty Binary Values Addition with mixed length
+select cast(0x as varbinary(5)) + cast(0x as varbinary(max)) as EmptyBinaryAddition_mixedlen
+GO
+~~START~~
+varbinary
+
+~~END~~
+
+
+-- Test Case 4: Fixed Length + Max Length
+select cast(0x123 as varbinary(5)) + cast(0x123 as varbinary(max)) as MixedLengthAddition
+GO
+~~START~~
+varbinary
+01230123
+~~END~~
+
+
+-- Test Case 5: Max Length + Max Length
+select cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max)) as MaxLengthAddition
+GO
+~~START~~
+varbinary
+01230123
+~~END~~
+
+
+-- Test Case 6: Fixed Length + Fixed Length
+select cast(0x123 as varbinary(5)) + cast(0x123 as varbinary(8)) as FixedLengthAddition
+GO
+~~START~~
+varbinary
+01230123
+~~END~~
+
+
+-- Test Case 7: Large Length addition
+select cast(0xFFFFFFFF as varbinary(10)) + cast(0xFFFFFFFF as varbinary(10)) as LargeValueAddition_v1
+GO
+~~START~~
+varbinary
+FFFFFFFFFFFFFFFF
+~~END~~
+
+
+-- Test Case 8: Large Length addition with lower typmod
+select cast(0xFFFFFFFF as varbinary(2)) + cast(0xFFFFFFFF as varbinary(2)) as LargeValueAddition_v2
+GO
+~~START~~
+varbinary
+FFFFFFFF
+~~END~~
+
+
+-- Test Case 9: Different Length Values
+select cast(0x123 as varbinary(3)) + cast(0x45678 as varbinary(5)) as DifferentLengthAddition 
+GO
+~~START~~
+varbinary
+0123045678
+~~END~~
+
+
+-- Test Case 10: NULL + NULL
+select cast(NULL as varbinary(max)) + cast(NULL as varbinary(max))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(5)) + cast(NULL as varbinary(3))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(max)) + cast(NULL as varbinary(5))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Test Case 11: NULL + empty Binary
+select cast(NULL as varbinary(max)) + cast(0x as varbinary(max))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(5)) + cast(0x as varbinary(max))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(max)) + cast(0x as varbinary(5))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(10)) + cast(0x as varbinary(5))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Test Case 12: NULL + Fixed length
+select cast(NULL as varbinary(max)) + cast(0x12345 as varbinary(5))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(10)) + cast(0x5342 as varbinary(5))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Test Case 13: NULL + max length
+select cast(NULL as varbinary(max)) + cast(0x12345 as varbinary(max))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+select cast(NULL as varbinary(5)) + cast(0x5342 as varbinary(max))
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+-- Test Case 14: starting with 0
+select cast(0x001 as varbinary(max)) + cast(0x09 as varbinary(max))
+GO
+~~START~~
+varbinary
+000109
+~~END~~
+
+
+select cast(0x001 as varbinary(5)) + cast(0x09 as varbinary(max))
+GO
+~~START~~
+varbinary
+000109
+~~END~~
+
+
+select cast(0x001 as varbinary(max)) + cast(0x09 as varbinary(5))
+GO
+~~START~~
+varbinary
+000109
+~~END~~
+
+
+select cast(0x001 as varbinary(10)) + cast(0x09 as varbinary(5))
+GO
+~~START~~
+varbinary
+000109
+~~END~~
+
+
+-- Test Case 15: issue found
+declare @random varbinary(5) = 0x4142434445 
+declare @result varbinary(max) = 0x 
+select @result + @random
+GO
+~~START~~
+varbinary
+4142434445
+~~END~~
+
+
+declare @random varbinary(5) = 0x4142434445 
+declare @result varbinary(max) = 0x 
+select @random, datalength(@random), @result, datalength(@result) 
+select cast(@result + @random as varbinary(10)) 
+GO
+~~START~~
+varbinary#!#int#!#varbinary#!#int
+4142434445#!#5#!##!#0
+~~END~~
+
+~~START~~
+varbinary
+4142434445
+~~END~~
+
+
+-- Test Case: UDT testing
+CREATE TYPE FIXEDLEN_VARBINARY FROM VARBINARY(5)
+GO
+
+CREATE TYPE MAXLEN_VARBINARY FROM VARBINARY(max)
+GO
+
+-- Test Case 16: Empty Binary Values with UDTs
+SELECT CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x AS FIXEDLEN_VARBINARY) AS EmptyFixed_UDT,
+       CAST(0x AS MAXLEN_VARBINARY) + CAST(0x AS MAXLEN_VARBINARY) AS EmptyMax_UDT,
+       CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x AS MAXLEN_VARBINARY) AS EmptyMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+#!##!#
+~~END~~
+
+
+-- Test Case 17: Basic Binary Addition with UDTs
+SELECT CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(0x456 AS FIXEDLEN_VARBINARY) AS FixedAdd_UDT,
+       CAST(0x123 AS MAXLEN_VARBINARY) + CAST(0x456 AS MAXLEN_VARBINARY) AS MaxAdd_UDT,
+       CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(0x456 AS MAXLEN_VARBINARY) AS MixedAdd_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+01230456#!#01230456#!#01230456
+~~END~~
+
+
+-- Test Case 18: NULL Values with UDTs
+SELECT CAST(NULL AS FIXEDLEN_VARBINARY) + CAST(NULL AS FIXEDLEN_VARBINARY) AS NullFixed_UDT,
+       CAST(NULL AS MAXLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS NullMax_UDT,
+       CAST(NULL AS FIXEDLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS NullMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test Case 19: NULL with Non-NULL UDT Values
+SELECT CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(NULL AS FIXEDLEN_VARBINARY) AS FixedWithNull_UDT,
+       CAST(0x456 AS MAXLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS MaxWithNull_UDT,
+       CAST(0x123 AS FIXEDLEN_VARBINARY) + CAST(NULL AS MAXLEN_VARBINARY) AS MixedWithNull_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test Case 20: Leading Zeros with UDTs
+SELECT CAST(0x001 AS FIXEDLEN_VARBINARY) + CAST(0x002 AS FIXEDLEN_VARBINARY) AS FixedLeadingZeros_UDT,
+       CAST(0x001 AS MAXLEN_VARBINARY) + CAST(0x002 AS MAXLEN_VARBINARY) AS MaxLeadingZeros_UDT,
+       CAST(0x001 AS FIXEDLEN_VARBINARY) + CAST(0x002 AS MAXLEN_VARBINARY) AS MixedLeadingZeros_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+00010002#!#00010002#!#00010002
+~~END~~
+
+
+-- Test Case 21: Maximum Length Tests with UDTs
+SELECT CAST(0x12345 AS FIXEDLEN_VARBINARY) + CAST(0x12345 AS FIXEDLEN_VARBINARY) AS FixedMaxLength_UDT,
+       CAST(0x12345 AS MAXLEN_VARBINARY) + CAST(0x12345 AS MAXLEN_VARBINARY) AS MaxLength_UDT,
+       CAST(0x12345 AS FIXEDLEN_VARBINARY) + CAST(0x12345 AS MAXLEN_VARBINARY) AS MixedMaxLength_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+012345012345#!#012345012345#!#012345012345
+~~END~~
+
+
+-- Test Case 22: Different Length Values with UDTs
+SELECT CAST(0x12 AS FIXEDLEN_VARBINARY) + CAST(0x345 AS FIXEDLEN_VARBINARY) AS DiffLengthFixed_UDT,
+       CAST(0x12 AS MAXLEN_VARBINARY) + CAST(0x345 AS MAXLEN_VARBINARY) AS DiffLengthMax_UDT,
+       CAST(0x12 AS FIXEDLEN_VARBINARY) + CAST(0x345 AS MAXLEN_VARBINARY) AS DiffLengthMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+120345#!#120345#!#120345
+~~END~~
+
+
+-- Test Case 23: Large Values with UDTs
+SELECT CAST(0xFFFF AS FIXEDLEN_VARBINARY) + CAST(0xFFFF AS FIXEDLEN_VARBINARY) AS LargeFixed_UDT,
+       CAST(0xFFFF AS MAXLEN_VARBINARY) + CAST(0xFFFF AS MAXLEN_VARBINARY) AS LargeMax_UDT,
+       CAST(0xFFFF AS FIXEDLEN_VARBINARY) + CAST(0xFFFF AS MAXLEN_VARBINARY) AS LargeMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+FFFFFFFF#!#FFFFFFFF#!#FFFFFFFF
+~~END~~
+
+
+-- Test Case 24: Empty + Non-Empty with UDTs
+SELECT CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x123 AS FIXEDLEN_VARBINARY) AS EmptyPlusValueFixed_UDT,
+       CAST(0x AS MAXLEN_VARBINARY) + CAST(0x123 AS MAXLEN_VARBINARY) AS EmptyPlusValueMax_UDT,
+       CAST(0x AS FIXEDLEN_VARBINARY) + CAST(0x123 AS MAXLEN_VARBINARY) AS EmptyPlusValueMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+0123#!#0123#!#0123
+~~END~~
+
+
+-- Test Case 25: Single Byte with UDTs
+SELECT CAST(0xFF AS FIXEDLEN_VARBINARY) + CAST(0xFF AS FIXEDLEN_VARBINARY) AS SingleByteFixed_UDT,
+       CAST(0xFF AS MAXLEN_VARBINARY) + CAST(0xFF AS MAXLEN_VARBINARY) AS SingleByteMax_UDT,
+       CAST(0xFF AS FIXEDLEN_VARBINARY) + CAST(0xFF AS MAXLEN_VARBINARY) AS SingleByteMixed_UDT;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+FFFF#!#FFFF#!#FFFF
+~~END~~
+
+
+DROP TYPE FIXEDLEN_VARBINARY
+GO
+
+DROP TYPE MAXLEN_VARBINARY
+GO
+
+-- Test Case 26: depedent objects
+-- Select from table
+SELECT * FROM babel_varbinary_test_table1;
+GO
+~~START~~
+varbinary#!#varbinary
+#!#
+<NULL>#!#<NULL>
+00#!#00
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+0123#!#0123
+~~END~~
+
+
+-- Select from table with addition operation
+SELECT 
+    t1.fixedlen_col as fixed_value1,
+    t1.maxlen_col as max_value1,
+    t1.fixedlen_col + t1.fixedlen_col as fixed_fixed_addition,
+    t1.maxlen_col + t1.fixedlen_col as max_fixed_addition,
+    t1.maxlen_col + t1.maxlen_col as max_max_addition
+FROM babel_varbinary_test_table1 t1
+ORDER BY fixed_value1, max_value1, fixed_fixed_addition, max_fixed_addition, max_max_addition;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+#!##!##!##!#
+00#!#00#!#0000#!#0000#!#0000
+0123#!#0123#!#01230123#!#01230123#!#01230123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+
+SELECT C.name AS table_name, T.name as type, C.precision AS precision, C.scale AS scale 
+FROM sys.columns C, sys.types T 
+WHERE C.user_type_id = T.user_type_id 
+AND C.object_id = OBJECT_ID('babel_varbinary_test_table1') 
+ORDER BY C.name 
+GO
+~~START~~
+varchar#!#varchar#!#tinyint#!#tinyint
+fixedlen_col#!#varbinary#!#0#!#0
+maxlen_col#!#varbinary#!#0#!#0
+~~END~~
+
+
+-- Select from views
+SELECT * FROM babel_varbinary_test_view1;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+0000#!#0000#!#0000
+01230123#!#01230123#!#01230123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+SELECT * FROM babel_varbinary_test_view2;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+00#!#00#!#00
+00#!#00#!#00
+0000#!#0000#!#0000
+000123#!#000123#!#000123
+00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+0123#!#0123#!#0123
+0123#!#0123#!#0123
+012300#!#012300#!#012300
+01230123#!#01230123#!#01230123
+0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+SELECT * FROM babel_varbinary_test_view3;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_varbinary_test_view4;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_varbinary_test_view5;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765012345#!#098765012345#!#098765012345
+~~END~~
+
+SELECT * FROM babel_varbinary_test_view6;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765#!#098765#!#098765
+~~END~~
+
+
+-- Execute table-valued functions
+SELECT * FROM babel_varbinary_test_func1();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+0000#!#0000#!#0000
+01230123#!#01230123#!#01230123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func2();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+00#!#00#!#00
+00#!#00#!#00
+0000#!#0000#!#0000
+000123#!#000123#!#000123
+00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+0123#!#0123#!#0123
+0123#!#0123#!#0123
+012300#!#012300#!#012300
+01230123#!#01230123#!#01230123
+0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func3();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func4();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func5();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765012345#!#098765012345#!#098765012345
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func6();
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765#!#098765#!#098765
+~~END~~
+
+
+-- Execute function with parameters
+SELECT * FROM babel_varbinary_test_func7(
+    CAST(0x123456 AS VARBINARY(MAX)),
+    CAST(0x789ABC AS VARBINARY(100)),
+    CAST(0xDEF012 AS VARBINARY(MAX))
+);
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+123456789ABC#!#789ABC789ABC#!#123456DEF012
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func7(
+    NULL,
+    CAST(0x123456 AS VARBINARY(100)),
+    CAST(0x789ABC AS VARBINARY(MAX))
+);
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#123456123456#!#<NULL>
+~~END~~
+
+SELECT * FROM babel_varbinary_test_func7(
+    CAST(0x123456 AS VARBINARY(MAX)),
+    NULL,
+    CAST(0x789ABC AS VARBINARY(MAX))
+);
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#123456789ABC
+~~END~~
+
+
+-- Execute stored procedures
+EXEC babel_varbinary_test_proc1;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+0000#!#0000#!#0000
+01230123#!#01230123#!#01230123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+EXEC babel_varbinary_test_proc2;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>
+#!##!#
+00#!#00#!#00
+00#!#00#!#00
+0000#!#0000#!#0000
+000123#!#000123#!#000123
+00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+0123#!#0123#!#0123
+0123#!#0123#!#0123
+012300#!#012300#!#012300
+01230123#!#01230123#!#01230123
+0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#0123FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0123
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF#!#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+~~END~~
+
+EXEC babel_varbinary_test_proc3;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+EXEC babel_varbinary_test_proc4;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+EXEC babel_varbinary_test_proc5;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765012345#!#098765012345#!#098765012345
+~~END~~
+
+EXEC babel_varbinary_test_proc6;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+098765#!#098765#!#098765
+~~END~~
+
+
+-- Execute procedure with parameters
+EXEC babel_varbinary_test_proc7 
+    @max_input1 = 0x123456,
+    @fixed_input = 0x789ABC,
+    @max_input2 = 0xDEF012;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+123456789ABC#!#789ABC789ABC#!#123456DEF012
+~~END~~
+
+EXEC babel_varbinary_test_proc7 
+    @max_input1 = NULL,
+    @fixed_input = 0x123456,
+    @max_input2 = 0x789ABC;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#123456123456#!#<NULL>
+~~END~~
+
+EXEC babel_varbinary_test_proc7 
+    @max_input1 = 0x123456,
+    @fixed_input = NULL,
+    @max_input2 = 0x789ABC;
+GO
+~~START~~
+varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#123456789ABC
+~~END~~
+
+
+-- psql
+ANALYZE master_dbo.babel_varbinary_test_table2;
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(100)) + cast(0x123 as varbinary(100))
+GO
+~~START~~
+text
+Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(100)) + cast(0x123 as varbinary(100))
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.781 ms
+~~END~~
+
+
+Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col < '0x01230123'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.217 ms
+~~END~~
+
+
+Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: Select varbinary_col from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b60808b914 on babel_varbinary_test_table2
+  Index Cond: (varbinary_col > '0x01230123'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.684 ms
+~~END~~
+
+
+select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Finalize Aggregate
+  ->  Gather
+        Workers Planned: 2
+        ->  Partial Aggregate
+              ->  Parallel Seq Scan on babel_varbinary_test_table2
+                    Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 33.697 ms
+~~END~~
+
+
+select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+text
+Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+Finalize Aggregate
+  ->  Gather
+        Workers Planned: 2
+        ->  Partial Aggregate
+              ->  Parallel Seq Scan on babel_varbinary_test_table2
+                    Filter: ((varbinary_col)::bbf_varbinary < '0x01230123'::bbf_varbinary)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.216 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+int
+3000003
+~~END~~
+
+
+select count(*) from babel_varbinary_test_table2 where varbinary_col < cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Testing other datatype addition
+CREATE TABLE addition_testing (
+    decimal_col DECIMAL(18,2),
+    float_col FLOAT,
+    real_col REAL,
+    bigint_col BIGINT,
+    int_col INT,
+    smallint_col SMALLINT,
+    tinyint_col TINYINT,
+    money_col MONEY,
+    bit_col BIT,
+    guid_col UNIQUEIDENTIFIER,
+    image_col IMAGE,
+    binary_col BINARY(10)
+)
+GO
+
+INSERT INTO addition_testing (
+    decimal_col,
+    float_col,
+    real_col,
+    bigint_col,
+    int_col,
+    smallint_col,
+    tinyint_col,
+    money_col,
+    bit_col,
+    guid_col,
+    image_col,
+    binary_col
+) VALUES (
+    100.50,
+    100.50,
+    100.50,
+    1000,
+    100,
+    10,
+    1,
+    100.50,
+    0,
+    'A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6',
+    NULL,
+    0x00
+);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Decimal on left side
+SELECT 
+    decimal_col + float_col as decimal_float_add,
+    decimal_col + real_col as decimal_real_add,
+    decimal_col + bigint_col as decimal_bigint_add,
+    decimal_col + int_col as decimal_int_add,
+    decimal_col + smallint_col as decimal_smallint_add,
+    decimal_col + tinyint_col as decimal_tinyint_add,
+    decimal_col + money_col as decimal_money_add,
+    decimal_col + bit_col as decimal_bit_add,
+    decimal_col + decimal_col as decimal_decimal_add,
+    decimal_col + guid_col as decimal_guid_add,
+    decimal_col + image_col as decimal_image_add,
+    decimal_col + binary_col as decimal_binary_add
+FROM addition_testing
+ORDER BY 
+    decimal_float_add,
+    decimal_real_add,
+    decimal_bigint_add,
+    decimal_int_add,
+    decimal_smallint_add,
+    decimal_tinyint_add,
+    decimal_money_add,
+    decimal_bit_add,
+    decimal_decimal_add,
+    decimal_guid_add,
+    decimal_image_add,
+    decimal_binary_add;
+GO
+~~START~~
+float#!#real#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.50#!#200.50#!#110.50#!#101.50#!#201.00#!#100.50#!#201.00#!#100.50A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+~~END~~
+
+
+-- Float on left side
+SELECT 
+    float_col + decimal_col as float_decimal_add,
+    float_col + real_col as float_real_add,
+    float_col + bigint_col as float_bigint_add,
+    float_col + int_col as float_int_add,
+    float_col + smallint_col as float_smallint_add,
+    float_col + tinyint_col as float_tinyint_add,
+    float_col + money_col as float_money_add,
+    float_col + bit_col as float_bit_add,
+    float_col + float_col as float_float_add,
+    float_col + guid_col as float_guid_add,
+    float_col + image_col as float_image_add,
+    float_col + binary_col as float_binary_add
+FROM addition_testing
+ORDER BY 
+    float_decimal_add,
+    float_real_add,
+    float_bigint_add,
+    float_int_add,
+    float_smallint_add,
+    float_tinyint_add,
+    float_money_add,
+    float_bit_add,
+    float_float_add,
+    float_guid_add,
+    float_image_add,
+    float_binary_add;
+GO
+~~START~~
+float#!#float#!#float#!#float#!#float#!#float#!#float#!#datetime#!#float#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#1900-04-11 12:00:00.0#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+~~END~~
+
+
+-- Real on left side
+SELECT 
+    real_col + decimal_col as real_decimal_add,
+    real_col + float_col as real_float_add,
+    real_col + bigint_col as real_bigint_add,
+    real_col + int_col as real_int_add,
+    real_col + smallint_col as real_smallint_add,
+    real_col + tinyint_col as real_tinyint_add,
+    real_col + money_col as real_money_add,
+    real_col + bit_col as real_bit_add,
+    real_col + real_col as real_real_add,
+    real_col + guid_col as real_guid_add,
+    real_col + image_col as real_image_add,
+    real_col + binary_col as real_binary_add
+FROM addition_testing
+ORDER BY 
+    real_decimal_add,
+    real_float_add,
+    real_bigint_add,
+    real_int_add,
+    real_smallint_add,
+    real_tinyint_add,
+    real_money_add,
+    real_bit_add,
+    real_real_add,
+    real_guid_add,
+    real_image_add,
+    real_binary_add;
+GO
+~~START~~
+real#!#float#!#real#!#real#!#real#!#real#!#real#!#datetime#!#real#!#varchar#!#datetime#!#bigint
+201.0#!#201.0#!#1100.5#!#200.5#!#110.5#!#101.5#!#201.0#!#1900-04-11 12:00:00.0#!#201.0#!#100.5A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+~~END~~
+
+
+-- Bigint on left side
+SELECT 
+    bigint_col + decimal_col as bigint_decimal_add,
+    bigint_col + float_col as bigint_float_add,
+    bigint_col + real_col as bigint_real_add,
+    bigint_col + int_col as bigint_int_add,
+    bigint_col + smallint_col as bigint_smallint_add,
+    bigint_col + tinyint_col as bigint_tinyint_add,
+    bigint_col + money_col as bigint_money_add,
+    bigint_col + bit_col as bigint_bit_add,
+    bigint_col + bigint_col as bigint_bigint_add,
+    bigint_col + guid_col as bigint_guid_add,
+    bigint_col + image_col as bigint_image_add,
+    bigint_col + binary_col as bigint_binary_add
+FROM addition_testing
+ORDER BY 
+    bigint_decimal_add,
+    bigint_float_add,
+    bigint_real_add,
+    bigint_int_add,
+    bigint_smallint_add,
+    bigint_tinyint_add,
+    bigint_money_add,
+    bigint_bit_add,
+    bigint_bigint_add,
+    bigint_guid_add,
+    bigint_image_add,
+    bigint_binary_add;
+GO
+~~START~~
+numeric#!#float#!#real#!#bigint#!#bigint#!#bigint#!#money#!#bigint#!#bigint#!#varchar#!#bigint#!#bigint
+1100.50#!#1100.5#!#1100.5#!#1100#!#1010#!#1001#!#1100.5000#!#1000#!#2000#!#1000A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#1000
+~~END~~
+
+
+-- Int on left side
+SELECT 
+    int_col + decimal_col as int_decimal_add,
+    int_col + float_col as int_float_add,
+    int_col + real_col as int_real_add,
+    int_col + bigint_col as int_bigint_add,
+    int_col + smallint_col as int_smallint_add,
+    int_col + tinyint_col as int_tinyint_add,
+    int_col + money_col as int_money_add,
+    int_col + bit_col as int_bit_add,
+    int_col + int_col as int_int_add,
+    int_col + guid_col as int_guid_add,
+    int_col + image_col as int_image_add,
+    int_col + binary_col as int_binary_add
+FROM addition_testing
+ORDER BY 
+    int_decimal_add,
+    int_float_add,
+    int_real_add,
+    int_bigint_add,
+    int_smallint_add,
+    int_tinyint_add,
+    int_money_add,
+    int_bit_add,
+    int_int_add,
+    int_guid_add,
+    int_image_add,
+    int_binary_add;
+GO
+~~START~~
+numeric#!#float#!#real#!#bigint#!#int#!#int#!#money#!#int#!#int#!#varchar#!#int#!#int
+200.50#!#200.5#!#200.5#!#1100#!#110#!#101#!#200.5000#!#100#!#200#!#100A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100
+~~END~~
+
+
+-- Smallint on left side
+SELECT 
+    smallint_col + decimal_col as smallint_decimal_add,
+    smallint_col + float_col as smallint_float_add,
+    smallint_col + real_col as smallint_real_add,
+    smallint_col + bigint_col as smallint_bigint_add,
+    smallint_col + int_col as smallint_int_add,
+    smallint_col + tinyint_col as smallint_tinyint_add,
+    smallint_col + money_col as smallint_money_add,
+    smallint_col + bit_col as smallint_bit_add,
+    smallint_col + smallint_col as smallint_smallint_add,
+    smallint_col + guid_col as smallint_guid_add,
+    smallint_col + image_col as smallint_image_add,
+    smallint_col + binary_col as smallint_binary_add
+FROM addition_testing
+ORDER BY 
+    smallint_decimal_add,
+    smallint_float_add,
+    smallint_real_add,
+    smallint_bigint_add,
+    smallint_int_add,
+    smallint_tinyint_add,
+    smallint_money_add,
+    smallint_bit_add,
+    smallint_smallint_add,
+    smallint_guid_add,
+    smallint_image_add,
+    smallint_binary_add;
+GO
+~~START~~
+numeric#!#float#!#real#!#bigint#!#int#!#smallint#!#money#!#smallint#!#smallint#!#varchar#!#smallint#!#smallint
+110.50#!#110.5#!#110.5#!#1010#!#110#!#11#!#110.5000#!#10#!#20#!#10A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#10
+~~END~~
+
+
+-- Tinyint on left side
+SELECT 
+    tinyint_col + decimal_col as tinyint_decimal_add,
+    tinyint_col + float_col as tinyint_float_add,
+    tinyint_col + real_col as tinyint_real_add,
+    tinyint_col + bigint_col as tinyint_bigint_add,
+    tinyint_col + int_col as tinyint_int_add,
+    tinyint_col + smallint_col as tinyint_smallint_add,
+    tinyint_col + money_col as tinyint_money_add,
+    tinyint_col + bit_col as tinyint_bit_add,
+    tinyint_col + tinyint_col as tinyint_tinyint_add,
+    tinyint_col + guid_col as tinyint_guid_add,
+    tinyint_col + image_col as tinyint_image_add,
+    tinyint_col + binary_col as tinyint_binary_add
+FROM addition_testing
+ORDER BY 
+    tinyint_decimal_add,
+    tinyint_float_add,
+    tinyint_real_add,
+    tinyint_bigint_add,
+    tinyint_int_add,
+    tinyint_smallint_add,
+    tinyint_money_add,
+    tinyint_bit_add,
+    tinyint_tinyint_add,
+    tinyint_guid_add,
+    tinyint_image_add,
+    tinyint_binary_add;
+GO
+~~START~~
+numeric#!#float#!#real#!#bigint#!#int#!#smallint#!#money#!#smallint#!#tinyint#!#varchar#!#smallint#!#smallint
+101.50#!#101.5#!#101.5#!#1001#!#101#!#11#!#101.5000#!#1#!#2#!#1A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#1
+~~END~~
+
+
+-- Money on left side
+SELECT 
+    money_col + decimal_col as money_decimal_add,
+    money_col + float_col as money_float_add,
+    money_col + real_col as money_real_add,
+    money_col + bigint_col as money_bigint_add,
+    money_col + int_col as money_int_add,
+    money_col + smallint_col as money_smallint_add,
+    money_col + tinyint_col as money_tinyint_add,
+    money_col + bit_col as money_bit_add,
+    money_col + money_col as money_money_add,
+    money_col + guid_col as money_guid_add,
+    money_col + image_col as money_image_add,
+    money_col + binary_col as money_binary_add
+FROM addition_testing
+ORDER BY 
+    money_decimal_add,
+    money_float_add,
+    money_real_add,
+    money_bigint_add,
+    money_int_add,
+    money_smallint_add,
+    money_tinyint_add,
+    money_bit_add,
+    money_money_add,
+    money_guid_add,
+    money_image_add,
+    money_binary_add;
+GO
+~~START~~
+numeric#!#float#!#real#!#money#!#money#!#money#!#money#!#money#!#money#!#varchar#!#money#!#money
+201.00#!#201.0#!#201.0#!#1100.5000#!#200.5000#!#110.5000#!#101.5000#!#100.5000#!#201.0000#!#100.5000A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#100.5000
+~~END~~
+
+
+-- Bit on left side
+SELECT 
+    bit_col + decimal_col as bit_decimal_add,
+    bit_col + float_col as bit_float_add,
+    bit_col + real_col as bit_real_add,
+    bit_col + bigint_col as bit_bigint_add,
+    bit_col + int_col as bit_int_add,
+    bit_col + smallint_col as bit_smallint_add,
+    bit_col + tinyint_col as bit_tinyint_add,
+    bit_col + money_col as bit_money_add,
+    bit_col + bit_col as bit_bit_add,
+    bit_col + guid_col as bit_guid_add,
+    bit_col + image_col as bit_image_add,
+    bit_col + binary_col as bit_binary_add
+FROM addition_testing
+ORDER BY 
+    bit_decimal_add,
+    bit_float_add,
+    bit_real_add,
+    bit_bigint_add,
+    bit_int_add,
+    bit_smallint_add,
+    bit_tinyint_add,
+    bit_money_add,
+    bit_bit_add,
+    bit_guid_add,
+    bit_image_add,
+    bit_binary_add;
+GO
+~~START~~
+numeric#!#datetime#!#datetime#!#bigint#!#int#!#smallint#!#smallint#!#money#!#datetime#!#varchar#!#datetime#!#bigint
+100.50#!#1900-04-11 12:00:00.0#!#1900-04-11 12:00:00.0#!#1000#!#100#!#10#!#1#!#100.5000#!#1900-01-01 00:00:00.0#!#0A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
+~~END~~
+
+
+-- GUID on left side
+SELECT 
+    guid_col + decimal_col as guid_decimal_add,
+    guid_col + float_col as guid_float_add,
+    guid_col + real_col as guid_real_add,
+    guid_col + bigint_col as guid_bigint_add,
+    guid_col + int_col as guid_int_add,
+    guid_col + smallint_col as guid_smallint_add,
+    guid_col + tinyint_col as guid_tinyint_add,
+    guid_col + money_col as guid_money_add,
+    guid_col + bit_col as guid_bit_add,
+    guid_col + guid_col as guid_guid_add,
+    guid_col + image_col as guid_image_add,
+    guid_col + binary_col as guid_binary_add
+FROM addition_testing
+ORDER BY 
+    guid_decimal_add,
+    guid_float_add,
+    guid_real_add,
+    guid_bigint_add,
+    guid_int_add,
+    guid_smallint_add,
+    guid_tinyint_add,
+    guid_money_add,
+    guid_bit_add,
+    guid_guid_add,
+    guid_image_add,
+    guid_binary_add;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varbinary#!#varchar
+A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.50#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E610#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E61#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6100.5000#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E60#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E60x00000000000000000000
+~~END~~
+
+
+-- Binary on left side
+SELECT 
+    binary_col + decimal_col as binary_decimal_add,
+    binary_col + float_col as binary_float_add,
+    binary_col + real_col as binary_real_add,
+    binary_col + bigint_col as binary_bigint_add,
+    binary_col + int_col as binary_int_add,
+    binary_col + smallint_col as binary_smallint_add,
+    binary_col + tinyint_col as binary_tinyint_add,
+    binary_col + money_col as binary_money_add,
+    binary_col + bit_col as binary_bit_add,
+    binary_col + guid_col as binary_guid_add,
+    binary_col + image_col as binary_image_add,
+    binary_col + binary_col as binary_binary_add
+FROM addition_testing
+ORDER BY 
+    binary_decimal_add,
+    binary_float_add,
+    binary_real_add,
+    binary_bigint_add,
+    binary_int_add,
+    binary_smallint_add,
+    binary_tinyint_add,
+    binary_money_add,
+    binary_bit_add,
+    binary_guid_add,
+    binary_image_add,
+    binary_binary_add;
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#int#!#smallint#!#smallint#!#money#!#bigint#!#varchar#!#varbinary#!#bigint
+100#!#100#!#100#!#1000#!#100#!#10#!#1#!#100.5000#!#0#!#0x00000000000000000000A1A2A3A4-B1B2-C1C2-D1D2-E1E2E3E4E5E6#!#<NULL>#!#0
+~~END~~
+
+
+-- Image on left side
+SELECT 
+    image_col + decimal_col as image_decimal_add,
+    image_col + float_col as image_float_add,
+    image_col + real_col as image_real_add,
+    image_col + bigint_col as image_bigint_add,
+    image_col + int_col as image_int_add,
+    image_col + smallint_col as image_smallint_add,
+    image_col + tinyint_col as image_tinyint_add,
+    image_col + money_col as image_money_add,
+    image_col + bit_col as image_bit_add,
+    image_col + guid_col as image_guid_add,
+    image_col + image_col as image_image_add,
+    image_col + binary_col as image_binary_add
+FROM addition_testing
+ORDER BY 
+    image_decimal_add,
+    image_float_add,
+    image_real_add,
+    image_bigint_add,
+    image_int_add,
+    image_smallint_add,
+    image_tinyint_add,
+    image_money_add,
+    image_bit_add,
+    image_guid_add,
+    image_image_add,
+    image_binary_add;
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#bigint#!#int#!#smallint#!#smallint#!#money#!#datetime#!#varbinary#!#varbinary#!#varbinary
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
