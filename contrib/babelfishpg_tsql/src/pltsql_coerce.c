@@ -2159,7 +2159,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 				typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
 			}
 
-			// if (typmod == -1 && (*pltsql_protocol_plugin_ptr) && type =  numericoid)
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
 				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);
 			
@@ -2261,10 +2260,10 @@ static void
 tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
 {
         /* calculating common_typemod for case expr */
-        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype); //786440
+        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype);
         ListCell       *l;
         
-        newc->defresult = (Expr *)  // here we will go to resolve_numeric for else condition
+        newc->defresult = (Expr *) 
                 coerce_to_target_type(pstate,
                                 (Node *) newc->defresult, 
                                 newc->casetype, 
