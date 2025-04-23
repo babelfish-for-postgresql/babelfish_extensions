@@ -575,4 +575,5 @@ BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
+babel_varbinary
 
