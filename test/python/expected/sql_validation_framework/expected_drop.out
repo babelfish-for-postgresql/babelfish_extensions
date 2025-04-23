@@ -91,6 +91,7 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--4.4.0--5.0.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.0.0--5.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.1.0--5.2.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--5.2.0--5.3.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_table in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--1.0.0--1.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--2.1.0--2.2.0.sql
@@ -111,3 +112,4 @@ Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babel
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.2.0--4.3.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.4.0--5.0.0.sql
+Unexpected drop found for view sql_logins_deprecated_in_5_2_0 in file babelfishpg_tsql--5.1.0--5.2.0.sql
