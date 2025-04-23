@@ -1018,7 +1018,7 @@ tsql_numeric_get_typmod(Numeric num)
 			10,
 			1,
 		};
-		int			leading_digits = NUMERIC_DIGITS(num)[0];
+		int			leading_digits = NUMERIC_NDIGITS(num) != 0 ? NUMERIC_DIGITS(num)[0] : 0;
 
 		precision = weight * DEC_DIGITS + scale;
 
