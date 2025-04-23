@@ -426,10 +426,46 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY;
+	BEGIN
+		geom = (SELECT sys.geomfromtext_helper($1, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Point' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
+	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		geom = (SELECT sys.geogfromtext_helper($1, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Point' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geogfromtext_helper(text, integer)
 	RETURNS sys.GEOGRAPHY
 	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -488,7 +524,7 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.bpchar((SELECT sys.GeographyAsTextbp_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN (SELECT sys.GeographyAsTextbp_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -505,7 +541,7 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates 
 		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
-		RETURN sys.varchar((SELECT sys.GeographyAsTextvar_helper(sys.Geography__STFlipCoordinates($1))));
+		RETURN (SELECT sys.GeographyAsTextvar_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 

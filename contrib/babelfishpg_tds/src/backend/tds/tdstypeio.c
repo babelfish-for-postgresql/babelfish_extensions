@@ -4246,7 +4246,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     unsigned char *itr;
 
     TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
-	GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */
+    GSERIALIZED *gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);    /* Used to Store the bytes in the Format which is stored in PostGIS */
 
     /* Get SRID */
     srid = get_srid(gser->srid);
@@ -4373,7 +4373,6 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     pfree(destBuf);
     return rc;
 }
-
 
 int
 TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData)

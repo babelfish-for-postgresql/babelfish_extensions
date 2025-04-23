@@ -216,8 +216,21 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 
 CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 	RETURNS sys.GEOGRAPHY
-	AS 'babelfishpg_common', 'get_geography_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOGRAPHY;
+	BEGIN
+		geom = (SELECT sys.geogfromtext_helper($1, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Point' THEN
+			RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
 	RETURNS text
@@ -481,4 +494,9 @@ CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
 	RETURNS sys.varchar
 	AS 'babelfishpg_common', 'geometry_astext'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geogfromtext_helper(text, integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'get_geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;

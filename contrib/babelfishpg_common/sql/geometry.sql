@@ -205,8 +205,21 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
-	AS 'babelfishpg_common', 'get_geometry_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY;
+	BEGIN
+		geom = (SELECT sys.geomfromtext_helper($1, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Point' THEN
+				RETURN geom;
+		ELSE
+			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
 	RETURNS text
@@ -438,5 +451,10 @@ CREATE OR REPLACE FUNCTION sys.GeomPoint_helper(float8, float8, srid integer)
 CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'charTogeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'get_geometry_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 	

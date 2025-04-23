@@ -1,113 +1,113 @@
-DROP TABLE IF EXISTS geometryAsVarbinary
+DROP TABLE  geometryAsVarbinary
 
-DROP TABLE IF EXISTS GeographyAsVarbinary
+DROP TABLE  GeographyAsVarbinary
 
-DROP TABLE IF EXISTS geometryAsVarchar
+DROP TABLE  geometryAsVarchar
 
-DROP TABLE IF EXISTS GeographyAsVarchar
+DROP TABLE  GeographyAsVarchar
 
-DROP TABLE IF EXISTS geometryAsChar
+DROP TABLE  geometryAsChar
 
-DROP TABLE IF EXISTS GeographyAsChar
+DROP TABLE  GeographyAsChar
 
-DROP TABLE IF EXISTS CharAsVarbinaryGeom
+DROP TABLE  CharAsVarbinaryGeom
 
-DROP TABLE IF EXISTS CharAsVarbinary
+DROP TABLE  CharAsVarbinary
 
-DROP TABLE IF EXISTS VarcharAsVarbinaryGeom
+DROP TABLE  VarcharAsVarbinaryGeom
 
-DROP TABLE IF EXISTS VarcharAsVarbinary
+DROP TABLE  VarcharAsVarbinary
 
-DROP TABLE IF EXISTS VarbinaryAsgeometry
+DROP TABLE  VarbinaryAsgeometry
 
-DROP TABLE IF EXISTS VarbinaryAsGeography
+DROP TABLE  VarbinaryAsGeography
 
-DROP TABLE IF EXISTS CharAsgeometry
+DROP TABLE  CharAsgeometry
 
-DROP TABLE IF EXISTS CharAsGeography
+DROP TABLE  CharAsGeography
 
-DROP TABLE IF EXISTS VarcharAsgeometry
+DROP TABLE  VarcharAsgeometry
 
-DROP TABLE IF EXISTS VarcharAsGeography
+DROP TABLE  VarcharAsGeography
 
-DROP TABLE IF EXISTS ByteaTogeometry
+DROP TABLE  ByteaTogeometry
 
-DROP TABLE IF EXISTS ByteaToGeography
+DROP TABLE  ByteaToGeography
 
-DROP TABLE IF EXISTS geometryToBytea
+DROP TABLE  geometryToBytea
 
-DROP TABLE IF EXISTS GeographyToBytea
+DROP TABLE  GeographyToBytea
 
-DROP TABLE IF EXISTS GeoVarcharAsgeometry
+DROP TABLE  GeoVarcharAsgeometry
 
-DROP TABLE IF EXISTS GeoVarcharAsGeography
-
-
-DROP VIEW IF EXISTS DimOfGeometry
-
-DROP VIEW IF EXISTS DimOfGeography
-
-DROP VIEW IF EXISTS AreaOfGeometry
-
-DROP VIEW IF EXISTS AreaOfGeography
-
-DROP VIEW IF EXISTS TextFromGeometry
-
-DROP VIEW IF EXISTS TextFromGeography
-
-DROP VIEW IF EXISTS BinaryFromGeometry
-
-DROP VIEW IF EXISTS BinaryFromGeography
-
-DROP VIEW IF EXISTS CoordsFromGeometry
-
-DROP VIEW IF EXISTS CoordsFromGeography
-
-DROP VIEW IF EXISTS SridFromGeometry
-
-DROP VIEW IF EXISTS SridFromGeography
-
-DROP VIEW IF EXISTS EmptyGeometry
-
-DROP VIEW IF EXISTS EmptyGeography
-
-DROP VIEW IF EXISTS ValidGeometry
-
-DROP VIEW IF EXISTS ValidGeography
-
-DROP VIEW IF EXISTS ClosedGeometry
-
-DROP VIEW IF EXISTS ClosedGeography
-
-DROP VIEW IF EXISTS DisjointTempGeom
-
-DROP VIEW IF EXISTS DisjointTempGeog
-
-DROP VIEW IF EXISTS DistanceTempGeom
-
-DROP VIEW IF EXISTS DistanceTempGeog
-
-DROP VIEW IF EXISTS IntersectsTempGeom
-
-DROP VIEW IF EXISTS IntersectsTempGeog
-
-DROP VIEW IF EXISTS EqualsTempGeom
-
-DROP VIEW IF EXISTS EqualsTempGeog
-
-DROP VIEW IF EXISTS ContainTempGeom
-
-DROP VIEW IF EXISTS ContainsTempGeog
-
-DROP VIEW IF EXISTS equals_opgeom
-
-DROP VIEW IF EXISTS equal_opgeog
-
-DROP VIEW IF EXISTS notequal_opgeom
-
-DROP VIEW IF EXISTS notequal_opgeog
+DROP TABLE  GeoVarcharAsGeography
 
 
-DROP TABLE IF EXISTS GEOSPATIALPOINTGEOGR_dt
+DROP VIEW  DimOfGeometry
 
-DROP TABLE IF EXISTS GEOSPATIALPOINTGEOM_dt
+DROP VIEW  DimOfGeography
+
+DROP VIEW  AreaOfGeometry
+
+DROP VIEW  AreaOfGeography
+
+DROP VIEW  TextFromGeometry
+
+DROP VIEW  TextFromGeography
+
+DROP VIEW  BinaryFromGeometry
+
+DROP VIEW  BinaryFromGeography
+
+DROP VIEW  CoordsFromGeometry
+
+DROP VIEW  CoordsFromGeography
+
+DROP VIEW  SridFromGeometry
+
+DROP VIEW  SridFromGeography
+
+DROP VIEW  EmptyGeometry
+
+DROP VIEW  EmptyGeography
+
+DROP VIEW  ValidGeometry
+
+DROP VIEW  ValidGeography
+
+DROP VIEW  ClosedGeometry
+
+DROP VIEW  ClosedGeography
+
+DROP VIEW  DisjointTempGeom
+
+DROP VIEW  DisjointTempGeog
+
+DROP VIEW  DistanceTempGeom
+
+DROP VIEW  DistanceTempGeog
+
+DROP VIEW  IntersectsTempGeom
+
+DROP VIEW  IntersectsTempGeog
+
+DROP VIEW  EqualsTempGeom
+
+DROP VIEW  EqualsTempGeog
+
+DROP VIEW  ContainTempGeom
+
+DROP VIEW  ContainsTempGeog
+
+DROP VIEW  equals_opgeom
+
+DROP VIEW  equal_opgeog
+
+DROP VIEW  notequal_opgeom
+
+DROP VIEW  notequal_opgeog
+
+
+DROP TABLE  GEOSPATIALPOINTGEOGR_dt
+
+DROP TABLE  GEOSPATIALPOINTGEOM_dt

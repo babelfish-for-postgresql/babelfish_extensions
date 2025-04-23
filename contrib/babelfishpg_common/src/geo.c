@@ -140,12 +140,14 @@ rewrite_point_dim_query(POINT coord)
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
     }
-    else if (FLAGS_GET_M(coord.flags)){
+    else if (FLAGS_GET_M(coord.flags))
+    {
         appendStringInfoString(&output, " NULL");
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
 
     }
-    else if (FLAGS_GET_Z(coord.flags)){
+    else if (FLAGS_GET_Z(coord.flags))
+    {
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
     }
 

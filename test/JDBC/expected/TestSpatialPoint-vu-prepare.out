@@ -448,7 +448,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geography type)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 
 CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;

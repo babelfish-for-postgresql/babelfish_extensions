@@ -1,29 +1,29 @@
--- STGeomFromText tests
+-- STGeomFromText tests with different SRIDs
 SELECT geography::STGeomFromText('POINT(45 90)', 4326);
 GO
 
-SELECT geography::STGeomFromText('POINT(45 90 30)', 4326);
+SELECT geography::STGeomFromText('POINT(45 90 30)', 104001);
 GO
 
-SELECT geography::STGeomFromText('POINT(45 90 NULL)', 4326);
+SELECT geography::STGeomFromText('POINT(45 90 NULL)', 4300);
 GO
 
 SELECT geography::STGeomFromText('POINT(45 90 30 1)', 4326);
 GO
 
-SELECT geography::STGeomFromText('POINT(45 90 NULL 1)', 4326);
+SELECT geography::STGeomFromText('POINT(45 90 NULL 1)', 4279);
 GO
 
-SELECT geography::STGeomFromText('POINT(45 90 30 NULL)', 4326);
+SELECT geography::STGeomFromText('POINT(45 90 30 NULL)', 4733);
 GO
 
-SELECT geography::STGeomFromText('POINT(45 90 NULL NULL)', 4326);
+SELECT geography::STGeomFromText('POINT(45 90 NULL NULL)', 7844);
 GO
 
-SELECT geography::STGeomFromText('POINT EMPTY', 4326);
+SELECT geography::STGeomFromText('POINT EMPTY', 4220);
 GO
 
-SELECT geography::STGeomFromText(NULL, 4326);
+SELECT geography::STGeomFromText(NULL, 4120);
 GO
 
 SELECT geography::STGeomFromText('POINT(45 90)', NULL);
@@ -55,6 +55,20 @@ SELECT geography::STPointFromText('POINT EMPTY', 4326);
 GO
 
 SELECT geography::STPointFromText(NULL, 4326);
+GO
+
+-- Test with Point empty
+SELECT geography::STPointFromText('POINT	EMPTY', 4326);
+GO
+
+SELECT geography::STPointFromText('POINT 
+EMPTY', 4326);
+GO
+
+SELECT geography::STPointFromText('Point Empty', 4326);
+GO
+
+SELECT geography::STPointFromText('point empty', 4326);
 GO
 
 -- Geography::Point constructor tests
