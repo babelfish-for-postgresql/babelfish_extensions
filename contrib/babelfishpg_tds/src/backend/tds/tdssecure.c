@@ -185,64 +185,77 @@ SslWrite(BIO * h, const char *buf, int size)
 	return res;
 }
 
-/*
- * TdsSshHandShakeWrite - Tds secure write function, similar to my_sock_write.
- * During the initial handshake add the 8 bytes header to the final data which
- * is sent to client
- */
 static int
 SslHandShakeWrite(BIO * h, const char *buf, int size)
 {
-	StringInfoData str;
-	char		tmp[2];
-	uint16_t	tsize;
-	int			res = 0;
+	#define SSL_MAX_PACKET_SIZE 4096
+	StringInfoData	str;
+	char			tmp[2];
+	uint16_t		tsize;
+	int				res = 0;
+	int				total_written = 0;
 
 	/* Nothing to write */
 	if (size < 0)
 		return size;
 
-	initStringInfo(&str);
-	appendStringInfoChar(&str, TDS_PRELOGIN);
-	appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
-	tsize = pg_hton16(size + TDS_PACKET_HEADER_SIZE);
-	memcpy(&tmp, (char *) &tsize, 2);
-
-	appendStringInfoChar(&str, tmp[0]);
-	appendStringInfoChar(&str, tmp[1]);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-
-	appendBinaryStringInfo(&str, buf, size);
-	buf = str.data;
-	size += TDS_PACKET_HEADER_SIZE;
-
-	/* Write the complete data */
-	while (res < size)
+	/* Process data in chunks of SSL_MAX_PACKET_SIZE */
+	while (size > 0)
 	{
-		int			tmp_res = 0;
+		int chunk_size = (size > (SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE)) ?
+							(SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE) :
+							size;
 
-		if ((tmp_res = SslWrite(h, &buf[res], size - res)) <= 0)
-			return tmp_res;
-		res += tmp_res;
+		initStringInfo(&str);
+		appendStringInfoChar(&str, TDS_PRELOGIN);
+
+		/* Set EOM flag only for the last packet */
+		if (size <= (SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE))
+			appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
+		else
+			appendStringInfoChar(&str, 0x00);  // Not end of message
+
+		tsize = pg_hton16(chunk_size + TDS_PACKET_HEADER_SIZE);
+		memcpy(&tmp, (char *) &tsize, 2);
+
+		appendStringInfoChar(&str, tmp[0]);
+		appendStringInfoChar(&str, tmp[1]);
+		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, 0x00);
+
+		appendBinaryStringInfo(&str, buf + total_written, chunk_size);
+
+		/* Write the current chunk */
+		res = 0;
+		while (res < tsize)
+		{
+			int tmp_res = SslWrite(h, str.data + res, (tsize - res));
+			if (tmp_res <= 0)
+				return tmp_res;
+			res += tmp_res;
+		}
+
+		/*
+		 * Below assertion should not be failed in ideal case. If it gets failed
+		 * then it means that we wrote TDS HEADER and buf on the wire without any
+		 * error above but number of bytes written is still less than
+		 * TDS_PACKET_HEADER_SIZE which is unexpected in any case.
+		 */
+		Assert(res >= TDS_PACKET_HEADER_SIZE);
+
+		total_written += chunk_size;
+		size -= chunk_size;
+		pfree(str.data);
 	}
 
 	/*
-	 * Below assertion should not be failed in ideal case. If it gets failed
-	 * then it means that we wrote TDS HEADER and buf on the wire without any
-	 * error above but number of bytes written is still less than
-	 * TDS_PACKET_HEADER_SIZE which is unexpected in any case.
+	 * We are returning size here because we are asked to write "size" number of bytes 
+	 * and callee does not know anything about TDS packet header.
 	 */
-	Assert(res >= TDS_PACKET_HEADER_SIZE);
-
-	/*
-	 * We are returning (res - TDS_PACKET_HEADER_SIZE) here because we are
-	 * asked to write "size" number of bytes and callee does not know anything
-	 * about TDS packet header.
-	 */
-	return (res - TDS_PACKET_HEADER_SIZE);
+	return size;
+	#undef SSL_MAX_PACKET_SIZE
 }
 
 /*
