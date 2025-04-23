@@ -1650,9 +1650,6 @@ numeric
 ~~END~~
 
 
--- TODO FIX: While calculating for money and smallmoney
--- babelfish is calculating it same as numeric logic
--- which is different from TSQL.
 -- Money datatypes testing
 SELECT CASE 
     WHEN 1 = 1 THEN 
@@ -1666,7 +1663,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.0800000000000
 ~~END~~
 
 
@@ -1682,7 +1679,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.0800000000000
 ~~END~~
 
 
@@ -1698,7 +1695,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.08000000000000
 ~~END~~
 
 
@@ -1714,7 +1711,7 @@ END AS result;
 GO
 ~~START~~
 numeric
-6790.080000
+6790.0800000000000000000000
 ~~END~~
 
 
