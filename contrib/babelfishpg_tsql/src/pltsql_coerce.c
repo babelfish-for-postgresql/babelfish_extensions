@@ -52,6 +52,11 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
+
+#define TDS_MONEY_PRECISION 19
+#define TDS_SMALLMONEY_PRECISION 10
+#define TDS_FIXEDDECIMAL_SCALE 4
+
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -2145,6 +2150,16 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			if (OidIsValid(immediate_base_type))
 				type = getBaseTypeAndTypmod(type, &typmod);
 			
+			if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
+			{
+				typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+			}
+			else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
+			{
+				typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+			}
+
+			// if (typmod == -1 && (*pltsql_protocol_plugin_ptr) && type =  numericoid)
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
 				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);
 			
@@ -2246,10 +2261,10 @@ static void
 tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
 {
         /* calculating common_typemod for case expr */
-        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype);
+        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype); //786440
         ListCell       *l;
         
-        newc->defresult = (Expr *) 
+        newc->defresult = (Expr *)  // here we will go to resolve_numeric for else condition
                 coerce_to_target_type(pstate,
                                 (Node *) newc->defresult, 
                                 newc->casetype, 

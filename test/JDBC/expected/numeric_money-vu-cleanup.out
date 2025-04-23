@@ -1,0 +1,21 @@
+-- Drop Tables
+DROP TABLE IF EXISTS babel_5512_t1;
+DROP TABLE IF EXISTS babel_5512_t2;
+DROP TABLE IF EXISTS babel_5512_t3;
+DROP TABLE IF EXISTS babel_5512_t4;
+GO
+
+-- Drop Functions
+DROP FUNCTION IF EXISTS babel_5512_f1;
+DROP FUNCTION IF EXISTS babel_5512_f2;
+GO
+
+-- Drop Procedures
+DROP PROCEDURE IF EXISTS babel_5512_p1;
+DROP PROCEDURE IF EXISTS babel_5512_p2;
+GO
+
+-- Drop User-Defined Types
+DROP TYPE IF EXISTS SmallMoneyType;
+DROP TYPE IF EXISTS MoneyType;
+GO
