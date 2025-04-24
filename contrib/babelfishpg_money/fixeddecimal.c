@@ -1734,7 +1734,7 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	result++;
 
 
-	if (result != ((int64) result))
+	if (result != (int128) ((int64) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -2060,7 +2060,7 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 	 * Overflow check. The best bang for the buck seems to be to check
 	 * whether result in the int32 range; if so, no overflow is possible.
 	 */
-	if (result != (int128) (int64) ((int32) result))
+	if (result != (int128) (int64) ((int32) result)) // try removing 64 and tell
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));

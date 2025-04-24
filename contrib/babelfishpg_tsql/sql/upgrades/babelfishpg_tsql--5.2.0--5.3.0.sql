@@ -197,6 +197,363 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_type_precision_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+AS $$
+DECLARE
+	precision INT;
+  v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	IF v_type IS NULL THEN 
+		RETURN -1;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE v_type
+		WHEN 'bigint' THEN precision = 19;
+		WHEN 'bit' THEN precision = 1;
+		WHEN 'date' THEN precision = 10;
+		WHEN 'datetime' THEN precision = 23;
+		WHEN 'datetime2' THEN precision = 26;
+		WHEN 'datetimeoffset' THEN precision = 33;
+		WHEN 'decimal' THEN precision = 38;
+		WHEN 'numeric' THEN precision = 38;
+		WHEN 'float' THEN precision = 53;
+		WHEN 'int' THEN precision = 10;
+		WHEN 'money' THEN precision = 19;
+		WHEN 'real' THEN precision = 24;
+		WHEN 'smalldatetime' THEN precision = 16;
+		WHEN 'smallint' THEN precision = 5;
+		WHEN 'smallmoney' THEN precision = 10;
+		WHEN 'time' THEN precision = 15;
+		WHEN 'tinyint' THEN precision = 3;
+		ELSE precision = 0;
+		END CASE;
+		RETURN precision;
+	END IF;
+
+	CASE v_type
+	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
+  WHEN 'money' THEN precision = ((typemod - 4) >> 16) & 65535;
+  WHEN 'smallmoney' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'smalldatetime' THEN precision = 16;
+	WHEN 'datetime2' THEN 
+		CASE typemod 
+		WHEN 0 THEN precision = 19;
+		WHEN 1 THEN precision = 21;
+		WHEN 2 THEN precision = 22;
+		WHEN 3 THEN precision = 23;
+		WHEN 4 THEN precision = 24;
+		WHEN 5 THEN precision = 25;
+		WHEN 6 THEN precision = 26;
+		-- typemod = 7 is not possible for datetime2 in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 27;
+		END CASE;
+	WHEN 'datetimeoffset' THEN
+		CASE typemod
+		WHEN 0 THEN precision = 26;
+		WHEN 1 THEN precision = 28;
+		WHEN 2 THEN precision = 29;
+		WHEN 3 THEN precision = 30;
+		WHEN 4 THEN precision = 31;
+		WHEN 5 THEN precision = 32;
+		WHEN 6 THEN precision = 33;
+		-- typemod = 7 is not possible for datetimeoffset in Babelfish
+		-- but adding the case just in case we support it in future
+		WHEN 7 THEN precision = 34;
+		END CASE;
+	WHEN 'time' THEN
+		CASE typemod
+		WHEN 0 THEN precision = 8;
+		WHEN 1 THEN precision = 10;
+		WHEN 2 THEN precision = 11;
+		WHEN 3 THEN precision = 12;
+		WHEN 4 THEN precision = 13;
+		WHEN 5 THEN precision = 14;
+		WHEN 6 THEN precision = 15;
+		-- typemod = 7 is not possible for time in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 16;
+		END CASE;
+	ELSE precision = 0;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
+
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'halfvec' THEN max_length = -1; -- dummy as varchar max
+		WHEN 'sparsevec' THEN max_length = -1; -- dummy as varchar max
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('geometry', 'geography') THEN max_length = -1;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
+AS $$
+DECLARE
+	scale INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	IF v_type IS NULL THEN 
+		RETURN -1;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE v_type
+		WHEN 'date' THEN scale = 0;
+		WHEN 'datetime' THEN scale = 3;
+		WHEN 'smalldatetime' THEN scale = 0;
+		WHEN 'datetime2' THEN scale = 6;
+		WHEN 'datetimeoffset' THEN scale = 6;
+		WHEN 'decimal' THEN scale = 38;
+		WHEN 'numeric' THEN scale = 38;
+		WHEN 'money' THEN scale = 4;
+		WHEN 'smallmoney' THEN scale = 4;
+		WHEN 'time' THEN scale = 6;
+		WHEN 'tinyint' THEN scale = 0;
+		ELSE
+			IF return_null_for_rest
+				THEN scale = NULL;
+			ELSE scale = 0;
+			END IF;
+		END CASE;
+		RETURN scale;
+	END IF;
+
+	CASE v_type 
+	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
+	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
+	WHEN 'money' THEN scale = (typemod - 4) & 65535;
+	WHEN 'smallmoney' THEN scale = (typemod - 4) & 65535;
+	WHEN 'smalldatetime' THEN scale = 0;
+	WHEN 'datetime2' THEN
+		CASE typemod 
+		WHEN 0 THEN scale = 0;
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for datetime2 in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
+		END CASE;
+	WHEN 'datetimeoffset' THEN
+		CASE typemod
+		WHEN 0 THEN scale = 0;
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for datetimeoffset in Babelfish
+		-- but adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
+		END CASE;
+	WHEN 'time' THEN
+		CASE typemod
+		WHEN 0 THEN scale = 0;
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for time in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
+		END CASE;
+	ELSE
+		IF return_null_for_rest
+			THEN scale = NULL;
+		ELSE scale = 0;
+		END IF;
+	END CASE;
+	RETURN scale;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_precision_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+AS $$
+DECLARE
+	precision INT;
+  v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	IF v_type IS NULL THEN 
+		RETURN -1;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE v_type
+		WHEN 'bigint' THEN precision = 19;
+		WHEN 'bit' THEN precision = 1;
+		WHEN 'date' THEN precision = 10;
+		WHEN 'datetime' THEN precision = 23;
+		WHEN 'datetime2' THEN precision = 26;
+		WHEN 'datetimeoffset' THEN precision = 33;
+		WHEN 'decimal' THEN precision = 38;
+		WHEN 'numeric' THEN precision = 38;
+		WHEN 'float' THEN precision = 53;
+		WHEN 'int' THEN precision = 10;
+		WHEN 'money' THEN precision = 19;
+		WHEN 'real' THEN precision = 24;
+		WHEN 'smalldatetime' THEN precision = 16;
+		WHEN 'smallint' THEN precision = 5;
+		WHEN 'smallmoney' THEN precision = 10;
+		WHEN 'time' THEN precision = 15;
+		WHEN 'tinyint' THEN precision = 3;
+		ELSE precision = 0;
+		END CASE;
+		RETURN precision;
+	END IF;
+
+	CASE v_type
+	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
+  WHEN 'money' THEN precision = ((typemod - 4) >> 16) & 65535;
+  WHEN 'smallmoney' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'smalldatetime' THEN precision = 16;
+	WHEN 'datetime2' THEN 
+		CASE typemod 
+		WHEN 0 THEN precision = 19;
+		WHEN 1 THEN precision = 21;
+		WHEN 2 THEN precision = 22;
+		WHEN 3 THEN precision = 23;
+		WHEN 4 THEN precision = 24;
+		WHEN 5 THEN precision = 25;
+		WHEN 6 THEN precision = 26;
+		-- typemod = 7 is not possible for datetime2 in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 27;
+		END CASE;
+	WHEN 'datetimeoffset' THEN
+		CASE typemod
+		WHEN 0 THEN precision = 26;
+		WHEN 1 THEN precision = 28;
+		WHEN 2 THEN precision = 29;
+		WHEN 3 THEN precision = 30;
+		WHEN 4 THEN precision = 31;
+		WHEN 5 THEN precision = 32;
+		WHEN 6 THEN precision = 33;
+		-- typemod = 7 is not possible for datetimeoffset in Babelfish
+		-- but adding the case just in case we support it in future
+		WHEN 7 THEN precision = 34;
+		END CASE;
+	WHEN 'time' THEN
+		CASE typemod
+		WHEN 0 THEN precision = 8;
+		WHEN 1 THEN precision = 10;
+		WHEN 2 THEN precision = 11;
+		WHEN 3 THEN precision = 12;
+		WHEN 4 THEN precision = 13;
+		WHEN 5 THEN precision = 14;
+		WHEN 6 THEN precision = 15;
+		-- typemod = 7 is not possible for time in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 16;
+		END CASE;
+	ELSE precision = 0;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
