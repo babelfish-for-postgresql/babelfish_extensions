@@ -1010,7 +1010,7 @@ tsql_numeric_get_typmod(Numeric num)
 	int32_t		weight = NUMERIC_WEIGHT(num);
 	int32_t		precision;
 
-	if (weight >= 0)
+	if (weight > 0)
 	{
 		static const int32 timescales[DEC_DIGITS] = {
 			1000,
@@ -1033,7 +1033,7 @@ tsql_numeric_get_typmod(Numeric num)
 	}
 	else
 		/* weight < 0 means the integral part of the number is 0 */
-		precision = 1 + scale;
+		precision = scale;
 
 	return (((precision & 0xFFFF) << 16) | (scale & 0xFFFF)) + VARHDRSZ;
 }
