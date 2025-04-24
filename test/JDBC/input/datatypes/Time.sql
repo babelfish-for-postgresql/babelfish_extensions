@@ -32,7 +32,7 @@ CREATE TABLE TimeDefaultTest (
     TimeCol1 Time(4),
     TimeCol2 Time(6)
 );
-INSERT INTO TimeDefaultTest VALUES (1, CAST('19:00:00' As time), CAST('19:00:00' As time), CAST('19:00:00' As time));
+INSERT INTO TimeDefaultTest VALUES (1, CAST('0001-01-01' As time), CAST('0001-01-01' As time), CAST('0001-01-01' As time));
 SELECT * FROM TimeDefaultTest;
 GO
 

@@ -48,15 +48,12 @@ CREATE TABLE TimeDefaultTest (
     TimeCol1 Time(4),
     TimeCol2 Time(6)
 );
-INSERT INTO TimeDefaultTest VALUES (1, CAST('19:00:00' As time), CAST('19:00:00' As time), CAST('19:00:00' As time));
+INSERT INTO TimeDefaultTest VALUES (1, CAST('0001-01-01' As time), CAST('0001-01-01' As time), CAST('0001-01-01' As time));
 SELECT * FROM TimeDefaultTest;
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-int#!#time#!#time#!#time
-1#!#19:00:00.0000000#!#19:00:00.0000#!#19:00:00.000000
-~~END~~
+~~ERROR (Message: invalid input syntax for type time: "0001-01-01")~~
 
 
 -- Character length
