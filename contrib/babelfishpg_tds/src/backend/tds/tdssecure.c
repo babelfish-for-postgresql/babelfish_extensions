@@ -256,10 +256,6 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 		pfree(str.data);
 	}
 
-	/*
-	 * We are returning size here because we are asked to write "size" number of bytes 
-	 * and callee does not know anything about TDS packet header.
-	 */
 	return total_written;
 	#undef SSL_MAX_PACKET_SIZE
 }
