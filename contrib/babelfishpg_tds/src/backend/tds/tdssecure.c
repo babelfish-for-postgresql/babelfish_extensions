@@ -235,7 +235,7 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 
 		/* Write the current chunk */
 		res = 0;
-		while (res < chunk_size)
+		while (res < (chunk_size + TDS_PACKET_HEADER_SIZE))
 		{
 			int tmp_res = SslWrite(h, str.data + res, (chunk_size + TDS_PACKET_HEADER_SIZE - res));
 			if (tmp_res <= 0)
