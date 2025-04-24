@@ -200,12 +200,16 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 	int		total_written = 0;
 	int		packet_id = 0;
 
-	/* Nothing to write */
-	if (size < 0)
+	/*
+	 * No data to write — uncommon during TLS handshake as records carry data.
+	 * In BIO-based writes (e.g. BIO_write_all), size <= 0 will raise an error.
+	 * Return early to avoid sending an empty or invalid TDS packet.
+	 */
+	if (size <= 0)
 		return size;
 
 	/* Process data in chunks of TDS_DEFAULT_INIT_PACKET_SIZE */
-	while (size > 0 || (size == packet_id)) /* Special handling when the size of first packet is 0 */
+	while (size > 0)
 	{
 		int chunk_size = (size > (TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE)) ?
 							(TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE) :
