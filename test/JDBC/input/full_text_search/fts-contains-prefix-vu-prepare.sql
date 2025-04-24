@@ -843,6 +843,16 @@ SET @cv = 'Delta'+CHAR(9)+'flow'+CHAR(10)+'patterns shift'
 INSERT INTO fts_char_prefix_t values(100, 'River dynamics change', @cv, 'Sediment distribution varies', 'Research project expands', 'Management adapts accordingly')
 GO
 
+DECLARE @cw VARCHAR(100)
+SET @cw = 'Boreal'+CHAR(10)+CHAR(10)+'forest'
+INSERT INTO fts_char_prefix_t values(101, 'River dynamics change', @cw, 'Sediment distribution varies', 'Research project expands', 'Management adapts accordingly')
+GO
+
+DECLARE @cx VARCHAR(100)
+SET @cx = 'Boreal'+CHAR(10)+CHAR(10)+CHAR(10)+'forest'
+INSERT INTO fts_char_prefix_t values(102, 'River dynamics change', @cx, 'Sediment distribution varies', 'Research project expands', 'Management adapts accordingly')
+GO
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

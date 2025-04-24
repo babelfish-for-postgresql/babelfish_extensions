@@ -292,6 +292,16 @@ WHERE CONTAINS((daily_updates,
                 community_highlights), @search_term)
 GO
 
+DECLARE @search_term nvarchar(100) = '" *** ** *' + CHAR(9) + '  ** * * * ' + CHAR(9) + 'light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+
 -- newline character in prefix term search string
 DECLARE @search_term nvarchar(100) = '"light work' + CHAR(10) + '*"';
 SELECT *
@@ -335,6 +345,16 @@ WHERE CONTAINS((daily_updates,
 GO
 
 DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_multicol_prefix_t
+WHERE CONTAINS((daily_updates,
+                industry_news,
+                local_events,
+                tech_innovations,
+                community_highlights), @search_term)
+GO
+
+DECLARE @search_term nvarchar(100) = CHAR(10) + CHAR(9) + '" * * * **** *light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
 FROM fts_multicol_prefix_t
 WHERE CONTAINS((daily_updates,
@@ -410,6 +430,16 @@ WHERE CONTAINS((main_story,
                 community_event), @search_term)
 GO
 
+DECLARE @search_term nvarchar(100) = CHAR(10) + '"coral'+ CHAR(10) + 're' + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+
 DECLARE @search_term nvarchar(100) = '"cor'+ CHAR(10) + 're' + CHAR(10) + '*'+ CHAR(10) + '*"';
 SELECT *
 FROM fts_char_prefix_t
@@ -434,6 +464,54 @@ GO
 DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(9) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
 FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+
+DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(10) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+
+DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(10) + CHAR(10) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
+GO
+
+-- Common Table Expressions
+DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(10) + CHAR(10) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
+WITH fts_char_prefix_t_cte1 AS (
+    SELECT *
+    FROM fts_char_prefix_t
+    WHERE CONTAINS((main_story,
+                    industry_update,
+                    local_news,
+                    tech_highlight,
+                    community_event), @search_term)
+)
+SELECT * FROM fts_char_prefix_t_cte1
+GO
+
+DECLARE @search_term nvarchar(100) = '"bor'+ CHAR(10) + CHAR(10) + CHAR(10) + 'for' + CHAR(9) + CHAR(10) + '*"';
+WITH fts_char_prefix_t_cte2 AS (
+    SELECT *
+    FROM fts_char_prefix_t
+)
+SELECT *
+FROM fts_char_prefix_t_cte2
 WHERE CONTAINS((main_story,
                 industry_update,
                 local_news,
