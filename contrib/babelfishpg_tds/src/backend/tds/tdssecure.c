@@ -193,7 +193,6 @@ SslWrite(BIO * h, const char *buf, int size)
 static int
 SslHandShakeWrite(BIO * h, const char *buf, int size)
 {
-	#define SSL_MAX_PACKET_SIZE 4096
 	StringInfoData	str;
 	char		tmp[2];
 	uint16_t	tsize;
@@ -205,18 +204,18 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 	if (size < 0)
 		return size;
 
-	/* Process data in chunks of SSL_MAX_PACKET_SIZE */
-	while (size > 0)
+	/* Process data in chunks of TDS_DEFAULT_INIT_PACKET_SIZE */
+	while (size > 0 || (size == packet_id)) /* Special handling when the size of first packet is 0 */
 	{
-		int chunk_size = (size > (SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE)) ?
-							(SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE) :
+		int chunk_size = (size > (TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE)) ?
+							(TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE) :
 							size;
 
 		initStringInfo(&str);
 		appendStringInfoChar(&str, TDS_PRELOGIN);
 
 		/* Set EOM flag only for the last packet */
-		if (size <= (SSL_MAX_PACKET_SIZE - TDS_PACKET_HEADER_SIZE))
+		if (size <= (TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE))
 			appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
 		else
 			appendStringInfoChar(&str, 0x00);  // Not end of message
@@ -257,7 +256,6 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 	}
 
 	return total_written;
-	#undef SSL_MAX_PACKET_SIZE
 }
 
 /*
