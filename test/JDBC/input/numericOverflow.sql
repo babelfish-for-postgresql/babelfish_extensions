@@ -9,8 +9,8 @@ go
 SELECT amount + 1 from overflow_test;
 go
 
--- SELECT amount * 10 from overflow_test;
--- go
+SELECT amount * 10 from overflow_test;
+go
 
 INSERT INTO overflow_test VALUES(1);
 go

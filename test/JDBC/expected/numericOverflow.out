@@ -17,9 +17,15 @@ numeric
 ~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
+SELECT amount * 10 from overflow_test;
+go
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
 
--- SELECT amount * 10 from overflow_test;
--- go
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
 INSERT INTO overflow_test VALUES(1);
 go
 ~~ROW COUNT: 1~~
