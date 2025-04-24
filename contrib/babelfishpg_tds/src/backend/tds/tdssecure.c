@@ -185,15 +185,21 @@ SslWrite(BIO * h, const char *buf, int size)
 	return res;
 }
 
+/*
+ * TdsSshHandShakeWrite - Tds secure write function, similar to my_sock_write.
+ * During the initial handshake add the 8 bytes header to the final data which
+ * is sent to client
+ */
 static int
 SslHandShakeWrite(BIO * h, const char *buf, int size)
 {
 	#define SSL_MAX_PACKET_SIZE 4096
 	StringInfoData	str;
-	char			tmp[2];
-	uint16_t		tsize;
-	int				res = 0;
-	int				total_written = 0;
+	char		tmp[2];
+	uint16_t	tsize;
+	int		res = 0;
+	int		total_written = 0;
+	int		packet_id = 0;
 
 	/* Nothing to write */
 	if (size < 0)
@@ -222,16 +228,16 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 		appendStringInfoChar(&str, tmp[1]);
 		appendStringInfoChar(&str, 0x00);
 		appendStringInfoChar(&str, 0x00);
-		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, packet_id++);
 		appendStringInfoChar(&str, 0x00);
 
 		appendBinaryStringInfo(&str, buf + total_written, chunk_size);
 
 		/* Write the current chunk */
 		res = 0;
-		while (res < tsize)
+		while (res < chunk_size)
 		{
-			int tmp_res = SslWrite(h, str.data + res, (tsize - res));
+			int tmp_res = SslWrite(h, str.data + res, (chunk_size + TDS_PACKET_HEADER_SIZE - res));
 			if (tmp_res <= 0)
 				return tmp_res;
 			res += tmp_res;
@@ -254,7 +260,7 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 	 * We are returning size here because we are asked to write "size" number of bytes 
 	 * and callee does not know anything about TDS packet header.
 	 */
-	return size;
+	return total_written;
 	#undef SSL_MAX_PACKET_SIZE
 }
 
