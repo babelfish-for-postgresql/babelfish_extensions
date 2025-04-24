@@ -387,15 +387,14 @@ INSERT INTO [Sales$Data@2024] VALUES (1,10,20,30);
 GO
 
 
--- BABEL-5676 - Test UNPIVOT with Unicode characters
--- Commented due to conflicting results in collation/non-collation pr tests
+CREATE TABLE [Global_データ_Sales] (
+    [ID_番号] INT,
+    [Q1_販売] DECIMAL(10,2),
+    [Q2_販売] DECIMAL(10,2),
+    [q1_売上] DECIMAL(10,2),
+    [q2_売上] DECIMAL(10,2)
+);
+GO
 
--- CREATE TABLE [Global_データ_Sales] (
---     [ID_番号] INT,
---     [Q1_売上] DECIMAL(10,2),
---     [Q2_売上] DECIMAL(10,2)
--- );
--- GO
-
--- INSERT INTO [Global_データ_Sales] VALUES (1,2,3);
--- GO
+INSERT INTO [Global_データ_Sales] VALUES (1,2,3,4,5);
+GO
