@@ -8199,9 +8199,6 @@ SELECT CAST(4.56 AS NUMERIC(5,2))
 ORDER BY value;
 GO
 
--- TODO FIX: While calculating for money and smallmoney
--- babelfish is calculating it same as numeric logic
--- which is different from TSQL.
 -- Test Case 81: UNION with MONEY type
 SELECT CAST(1.23 AS DECIMAL(10,2)) AS value
 UNION ALL
