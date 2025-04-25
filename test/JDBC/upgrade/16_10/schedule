@@ -228,7 +228,7 @@ forxml-subquery
 fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
-fts-contains-utils-before-17_6
+fts-contains-utils
 BABEL-4785
 get_tds_id
 HAS_DBACCESS
