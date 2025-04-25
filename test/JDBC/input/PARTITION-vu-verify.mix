@@ -600,52 +600,24 @@ go
 --- all user can use the metadata of the partition scheme 
 --- to create table if they permission to create table
 ------------------------------------------------------------
-
--- grant create permission to user on schema so that it can create table
--- psql
-DO $$
-DECLARE
-    schema_name TEXT;
-BEGIN
-    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
-        schema_name := 'partitiondb_dbo';
-    ELSE
-        schema_name := 'dbo';
-    END IF;
-
-    EXECUTE 'GRANT CREATE ON SCHEMA ' || quote_ident(schema_name) || ' TO partitiondb_partition_u1';
-END$$;
+-- tsql database=partitiondb
+-- add user as a member of db_ddladmin, so that it gets create permission
+ALTER ROLE db_ddladmin ADD MEMBER partition_u1
 GO
 
--- tsql     user=partition_l1 password=12345678
-USE PartitionDb;
-GO
-
+-- tsql     user=partition_l1 password=12345678 database=partitiondb
 SELECT CURRENT_USER
 GO
 
-/** CREATE PERMISSION GRANTED VIA PG PORT MAY NOT TAKE EFFECT ON TSQL OBJECTS **/
-/** NOT A RECOMMENDED WAY **/
 CREATE TABLE PartitionDb_TestPartitionTable (
     Id INT,
     Value sys.varchar(20)
 ) ON PartitionDb_PartitionScheme(Id);
 GO
 
--- revoke create permission from user on schema
--- psql
-DO $$
-DECLARE
-    schema_name TEXT;
-BEGIN
-    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
-        schema_name := 'partitiondb_dbo';
-    ELSE
-        schema_name := 'dbo';
-    END IF;
-
-    EXECUTE 'REVOKE CREATE ON SCHEMA ' || quote_ident(schema_name) || ' FROM partitiondb_partition_u1';
-END$$;
+-- tsql database=partitiondb
+-- remove user from member of db_ddladmin
+ALTER ROLE db_ddladmin DROP MEMBER partition_u1
 GO
 
 -----------------------------------------------------------------------------------
