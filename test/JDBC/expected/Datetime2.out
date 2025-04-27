@@ -8650,13 +8650,14 @@ SELECT
     CONSTRAINT_NAME,
     CONSTRAINT_TYPE
 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-WHERE TABLE_NAME = 'DateTime2Test1';
+WHERE TABLE_NAME = 'DateTime2Test1'
+ORDER BY CONSTRAINT_NAME;
 GO
 ~~START~~
 varchar#!#varchar
+ck_datetime2test_datetime2column#!#CHECK
 datetime2test1_datetime2column_check#!#CHECK
 datetime2test1_pkey#!#PRIMARY KEY
-ck_datetime2test_datetime2column#!#CHECK
 ~~END~~
 
 
