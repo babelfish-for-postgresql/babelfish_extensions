@@ -609,19 +609,19 @@ numeric
 select a * b from babel_2048_t1;
 ~~START~~
 numeric
-2.3000000
+2.3000
 ~~END~~
 
 select a / b from babel_2048_t1;
 ~~START~~
 numeric
-0.4347826086956521739
+0.43478260869565217391
 ~~END~~
 
 select b / a from babel_2048_t1;
 ~~START~~
 numeric
-2.3000000000000000000
+2.300000000000000
 ~~END~~
 
 select b * NULL from babel_2048_t1;
@@ -677,7 +677,7 @@ numeric
 select a+c, a-c, a*c, a/c, a%c, a%NULL from babel_2048_t1;
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#int
-4.123456789#!#-2.123456789#!#3.123456789000000#!#0.320158102881954100#!#1.000000000#!#<NULL>
+4.123456789#!#-2.123456789#!#3.123456789#!#0.3201581028819541002#!#1.000000000#!#<NULL>
 ~~END~~
 
 # test operation between numeric and numeric

@@ -76,6 +76,10 @@
 #define ROWVERSION_SIZE 8
 #define VARBINARY_MAX_SCALE 8000
 
+#define SMALLINT_PRECISION_RADIX 5
+#define INT_PRECISION_RADIX 10
+#define BIGINT_PRECISION_RADIX 19
+
 /*
  * Local structures and functions copied from printtup.c
  */
@@ -696,6 +700,25 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (var->vartypmod == -1)
 				{
+					/* UDT handling in T_var*/
+					Oid type = getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
+					if (type != var->vartype && var->vartypmod != -1)
+					{
+							return var->vartypmod;
+					}
+
+					if (plan && var->vartype == INT4OID)
+					{
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+					else if (plan && var->vartype == INT8OID)
+					{
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+					else if (plan && var->vartype == INT2OID)
+					{
+						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
 					if (found != NULL) *found = false;
 				}
 				return var->vartypmod;

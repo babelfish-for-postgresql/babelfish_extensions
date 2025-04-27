@@ -44,7 +44,7 @@ AS
     numa_node_count,
     container_type,
     container_type_desc
-  FROM sys.dm_os_sys_info 
+  FROM sys.dm_os_sys_info() 
 GO
 
 CREATE PROC sys_dm_os_sys_info_test_proc
@@ -93,13 +93,13 @@ AS
     numa_node_count,
     container_type,
     container_type_desc
-  FROM sys.dm_os_sys_info 
+  FROM sys.dm_os_sys_info()
 GO
 
 CREATE FUNCTION sys_dm_os_sys_info_test_func()
 RETURNS INT
 AS
 BEGIN
-    RETURN (SELECT COUNT(*) FROM sys.dm_os_sys_info)
+    RETURN (SELECT COUNT(*) FROM sys.dm_os_sys_info())
 END
 GO
