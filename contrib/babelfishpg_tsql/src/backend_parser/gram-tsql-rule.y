@@ -1782,7 +1782,7 @@ table_ref:	relation_expr tsql_table_hint_expr
 			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
 				{
 					List *unpivot_info = list_make3($1, (List *)$3, $4);
-                    $$ = tsql_unpivot_transformation(unpivot_info);
+                    $$ = tsql_unpivot_transformation(unpivot_info, @1);
 				}
 		;
 
@@ -2094,7 +2094,7 @@ func_expr_common_subexpr:
 							parser_errposition(@1)));
 					}
 				}
-			| TSQL_CONTAINS '(' var_name ',' tsql_contains_search_condition ')'
+			| TSQL_CONTAINS '(' opt_var_name_list ',' tsql_contains_search_condition ')'
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}
@@ -2120,6 +2120,28 @@ func_expr_common_subexpr:
 											   @1);
 				}
 		;
+
+opt_var_name_list:
+ 			var_name						
+ 				{ 
+ 					$$ = list_make1($1); 
+ 				}	
+ 			| '(' var_name_list ')'						
+ 				{ 
+ 					$$ = $2; 
+ 				}
+ 		;
+ 
+ var_name_list: 	
+ 			var_name						
+ 				{ 
+ 					$$ = list_make1($1); 
+ 				}
+ 			| var_name_list ',' var_name
+ 				{
+ 					$$ = lappend($1, $3); 
+ 				}
+ 		;
 
 tsql_contains_search_condition:
 			a_expr

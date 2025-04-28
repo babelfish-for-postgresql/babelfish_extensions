@@ -280,8 +280,11 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
 	{
 			Node	   *helperFuncCall;
-			helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), args, COERCE_EXPLICIT_CALL, location);
 
+			if(typmod > VARHDRSZ)
+				helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod - VARHDRSZ, location), args), COERCE_EXPLICIT_CALL, location);
+			else
+				helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
 			// add a type cast on top of the CONVERT helper function so typmod can be applied
 			result = makeTypeCast(helperFuncCall, typename, location);
 	}
@@ -786,29 +789,56 @@ is_json_query(List *name)
 }
 
 /*
-* Parse T-SQL CONTAINS predicate. Currently only supports 
-* ... CONTAINS(column_name, '<contains_search_condition>') ...
+* Parse T-SQL CONTAINS predicate. Currently supports 
+* ... CONTAINS(column_name | (column_list), '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
 * to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* for column_list
+* to_tsvector(pgconfig, col_1) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* to_tsvector(pgconfig, col_2) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>') OR
+* ...
+* to_tsvector(pgconfig, col_n) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
-TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
+TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner)
 {
-    A_Expr *fts;
-    Node *to_tsvector_call, *to_tsquery_call;
-    Node *result_pgconfig;
-    List *args_pgconfig;
+	Node *fts = NULL;
+	A_Expr *column_clause;
+	Node *result_pgconfig;
+	List *args_pgconfig;
+	ListCell *column;
+ 
+	args_pgconfig = list_make1(search_expr);
+	result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+	foreach(column, colId)
+	{
+		Node * query = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+		Node * vec = makeToTSVectorFuncCall((column)->ptr_value, yyscanner, result_pgconfig);
+		column_clause = createTSMatchExpr(vec, query);
+		
+		fts = (fts != NULL)? createTSOrExpr((Node *) fts, (Node *) column_clause) : (Node *)column_clause;
+	}
+	return (Node *) fts;
+}
 
-    args_pgconfig = list_make1(search_expr);
-    result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
 
-    to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
-    to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
-    
-    fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
+/* Creates and returns the tsvector and tsquery expression 
+ * for the column and search string passed in the argument 
+ */
+static A_Expr *
+createTSMatchExpr(Node *lexpr, Node *rexpr)
+{
+	return makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), lexpr, rexpr, -1);
+}
 
-    return (Node *)fts;
+/* Combines the nodes together using OR operator
+ * used to create a combined list of tsvector @@ tsquery expression for mulitple columns
+ */
+static Node *
+createTSOrExpr(Node *lexpr, Node *rexpr)
+{
+	return makeOrExpr(lexpr, rexpr, -1);
 }
 
 /* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
@@ -2180,6 +2210,40 @@ get_unpivot_source_alias(Node *table_ref) {
 }
 
 /*
+ * Create an NVARCHAR constant with proper typmod
+ *
+ * str: input string to be cast as NVARCHAR
+ * location: parse location (-1 if unknown)
+ *
+ * Returns: Node representing a TypeCast to sys.nvarchar
+ *
+ * Note: Create a TypeCast node for a string constant to sys.nvarchar type
+ * Follows same logic as N'string literal' syntax in TSQL (rule: TSQL_NVARCHAR Sconst)
+ */
+Node *
+make_nvarchar_const(const char *str, int location)
+{
+    TypeName *nvarcharTypeName;
+    int32 typmod;
+
+    /* Create sys.nvarchar type */
+    nvarcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"), 
+                                                           makeString("nvarchar")));
+
+    /* Set appropriate typmod */
+    typmod = strlen(str);
+    if (typmod == 0)
+        typmod = 2;
+    else if (typmod > 4000)
+        typmod = TSQLMaxTypmod;
+
+    nvarcharTypeName->typmods = list_make1(makeIntConst(typmod, -1));
+    nvarcharTypeName->location = -1;
+
+    return makeStringConstCast(pstrdup(str), location, nvarcharTypeName);
+}
+
+/*
  * Transform TSQL UNPIVOT operation into equivalent CROSS JOIN LATERAL structure
  * Builds a JoinExpr node representing the transformation and returns additional
  * context for analyzer stage processing.
@@ -2204,7 +2268,7 @@ get_unpivot_source_alias(Node *table_ref) {
  * - Builds complete JOIN structure with proper aliases
  */
 static Node *
-tsql_unpivot_transformation(List *components)
+tsql_unpivot_transformation(List *components, int location)
 {
     Node *table_ref;
     Node *measure_col;
@@ -2273,7 +2337,7 @@ tsql_unpivot_transformation(List *components)
         col_ref->fields = list_make2(makeString(source_alias), col_name);
         
         /* Create pair (ColumnRef, column name) and append to VALUES list */
-        value_pair = list_make2(col_ref, makeStringConst(strVal(col_name), -1));
+        value_pair = list_make2(col_ref, make_nvarchar_const(strVal(col_name), location));
         values_list = lappend(values_list, value_pair);
     }
     

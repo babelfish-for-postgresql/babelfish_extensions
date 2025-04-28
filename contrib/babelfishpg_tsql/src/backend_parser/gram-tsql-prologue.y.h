@@ -56,7 +56,8 @@ static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func
 										List *tsql_createfunc_args, char *param_name, int table_loc, List *table_elts, 
 										char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner);
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
-static Node *tsql_unpivot_transformation(List *components);
+static Node *tsql_unpivot_transformation(List *components, int location);
+static Node *make_nvarchar_const(const char *str, int location);
 static char *generate_unpivot_source_table_alias(const char *base);
 static char *get_unpivot_source_alias(Node *table_ref);
 
@@ -71,7 +72,9 @@ static bool isNVarCharType(char *typenameStr);
 static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
 
-static Node *TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner);
+static Node *TsqlExpressionContains(List *colId, Node *search_expr, core_yyscan_t yyscanner);
+static A_Expr *createTSMatchExpr(Node *lexpr, Node *rexpr);
+static Node *createTSOrExpr(Node *lexpr, Node *rexpr);
 static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
 static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
 

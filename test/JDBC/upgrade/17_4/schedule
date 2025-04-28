@@ -138,7 +138,7 @@ BABEL-CHECK-CONSTRAINT
 babel_context_info
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-babel_datetime
+babel_datetime-before-15_12-or-16_8-or-17_4
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
@@ -601,7 +601,8 @@ test_conv_money_to_varchar
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
 test_conv_float_to_varchar_char
-test_constraint_like-before-17-5-or-16-9
+test_constraint_like-17-4-or-16-8
 round_return_type_test-before-16_9-or-17_5
 alter-view
 object_ownership-before-16_8-or-17_4
+test_conv_int_to_varbinary_binary_before_17_5_or_16_9
