@@ -4401,30 +4401,18 @@ Prefix_䉁C
 SELECT 'Prefix_' + VarBinaryCol AS VarBinaryConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + VarBinaryCol AS VarBinaryConcatN FROM ImplicitToStringTest;
 GO
-~~START~~
-varchar
-Prefix_ABC
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-Prefix_䉁C
-~~END~~
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
 
 
 -- IMAGE
 SELECT 'Prefix_' + ImageCol AS ImageConcat FROM ImplicitToStringTest;
 SELECT N'Prefix_' + ImageCol AS ImageConcatN FROM ImplicitToStringTest;
 GO
-~~START~~
-varchar
-Prefix_ABC
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-Prefix_ABC
-~~END~~
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
 
 
 -- Special Types
