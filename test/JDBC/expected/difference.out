@@ -1,0 +1,7 @@
+-- Unsupported
+SELECT DIFFERENCE('Green', 'Greene');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function difference(unknown, unknown) does not exist)~~
+
