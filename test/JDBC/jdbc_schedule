@@ -518,9 +518,9 @@ ignore#!#test_constraint_like-17-4-or-16-8-vu-cleanup
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
-ignore#!#test_conv_int_to_varbinary_binary_before_16_3_or_15_7-vu-prepare
-ignore#!#test_conv_int_to_varbinary_binary_before_16_3_or_15_7-vu-verify
-ignore#!#test_conv_int_to_varbinary_binary_before_16_3_or_15_7-vu-cleanup
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-prepare
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-verify
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-cleanup
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-prepare
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-verify
 ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-cleanup

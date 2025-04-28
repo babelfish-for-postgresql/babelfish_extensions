@@ -476,4 +476,4 @@ BABEL-5467
 test_conv_float_to_varchar_char_before_17_4
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 round_return_type_test-before-16_9-or-17_5
-test_conv_int_to_varbinary_binary_before_16_3_or_15_7
+test_conv_int_to_varbinary_binary_before_16_4_or_15_8
