@@ -216,14 +216,14 @@ select coalesce(a10, a11) from babel_726_t1
 GO
 ~~START~~
 numeric
-123.00000000
+123.0000
 ~~END~~
 
 select coalesce(a11, a10) from babel_726_t1
 GO
 ~~START~~
 numeric
-10.00000000
+10.0000
 ~~END~~
 
 

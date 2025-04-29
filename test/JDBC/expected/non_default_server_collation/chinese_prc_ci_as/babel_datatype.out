@@ -485,7 +485,7 @@ select CAST(2 AS money) + CAST(1 AS decimal);
 GO
 ~~START~~
 numeric
-3.000
+3.0000
 ~~END~~
 
 
@@ -579,7 +579,7 @@ select CAST(2 AS money) / 0.5;
 GO
 ~~START~~
 numeric
-4.000000
+4.0000000
 ~~END~~
 
 select CAST(2 AS money) / CAST(2 AS int);
