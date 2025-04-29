@@ -2194,6 +2194,9 @@ char
 	
 	for (int i = 0; i < 5; i++) {
 		unique_hashes[i] = construct_unique_index_name("ftSpecial", psprintf("cat%d", i + 1));
+		/*
+		 * we need a hash value of lenght 22 characters
+		 */
 		unique_hashes[i][21] = '\0';
 	}
 	
