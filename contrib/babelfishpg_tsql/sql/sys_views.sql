@@ -258,8 +258,8 @@ BEGIN
 	CASE v_type
 	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
-  WHEN 'money' THEN precision = ((typemod - 4) >> 16) & 65535;
-  WHEN 'smallmoney' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'money' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'smallmoney' THEN precision = ((typemod - 4) >> 16) & 65535;
 	WHEN 'smalldatetime' THEN precision = 16;
 	WHEN 'datetime2' THEN 
 		CASE typemod 
