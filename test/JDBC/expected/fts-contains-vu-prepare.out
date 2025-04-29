@@ -5059,6 +5059,12 @@ GO
 ~~ROW COUNT: 45~~
 
 
+create unique index test_special_char_t_idx on test_special_char_t(id);
+go
+
+create fulltext index on test_special_char_t(name) key index test_special_char_t_idx;
+go
+
 create schema new_schema_fts_t
 go
 

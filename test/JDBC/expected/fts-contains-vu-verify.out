@@ -616,12 +616,6 @@ GO
 
 
 -- Special Character cases
-create unique index test_special_char_t_idx on test_special_char_t(id);
-go
-
-create fulltext index on test_special_char_t(name) key index test_special_char_t_idx;
-go
-
 select * from test_special_char_t where contains(name, '"one           two"');
 go
 ~~START~~
