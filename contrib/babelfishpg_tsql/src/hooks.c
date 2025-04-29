@@ -1268,8 +1268,8 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 {
 	int32		scale,
 			precision,
-			val_scale,
-			val_precision,
+			val_scale = 0,
+			val_precision = 0,
 			val_typmod = -1,
 			target_precision = 0;
 	Numeric		result_numeric_val;
