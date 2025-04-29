@@ -425,7 +425,13 @@ CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(
+  CASE 
+    WHEN Ext.orig_username = 'dbo' THEN CAST(Base3.oid AS INT)
+    WHEN Ext.orig_username = 'guest' THEN 0
+    ELSE CAST(Base2.oid AS INT)
+  END 
+AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
 CAST(Ext.authentication_type AS INT) AS authentication_type,
 CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
@@ -436,6 +442,10 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
+LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+ON Ext.database_name COLLATE sys.database_default = Db.name
+LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+ON Db.owner = Base3.rolname
 WHERE Ext.database_name = DB_NAME()
   AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
   OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
