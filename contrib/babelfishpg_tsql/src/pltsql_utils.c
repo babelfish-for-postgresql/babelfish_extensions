@@ -466,6 +466,7 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 				{
 					typname = "smallmoney";
 				}
+				ReleaseSysCache(ctype);
 			}
 		}
 
