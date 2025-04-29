@@ -370,7 +370,102 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+-- To handle the typmod values for procedure and function for smallmoney/money
+UPDATE pg_proc p1
+SET probin = (
+	SELECT jsonb_set(
+		p1.probin::jsonb,
+		'{typmod_array}',
+		to_jsonb(
+			(
+				SELECT jsonb_agg(
+					CASE
+						WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proargtypes[typ_index-1] IS NOT NULL) THEN
+							CASE
+								WHEN typmod = '-1' AND (p2.proargtypes[typ_index-1]::regtype::text = 'sys.money' OR
+									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.proargtypes[typ_index-1] AND
+										typbasetype::regtype::text = 'sys.money')) THEN '1245192'
+								WHEN typmod = '-1' and (p2.proargtypes[typ_index-1]::regtype::text = 'sys.smallmoney' OR
+									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.proargtypes[typ_index-1] AND
+										typbasetype::regtype::text = 'sys.smallmoney')) THEN '655368'
+								ELSE typmod
+							END
+						WHEN p2.prokind = 'f' AND p2.prorettype IS NOT NULL THEN
+							CASE
+								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.money' OR
+									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.prorettype AND
+										typbasetype::regtype::text = 'sys.money')) THEN '1245192'
+								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.smallmoney' OR
+									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.prorettype AND
+										typbasetype::regtype::text = 'sys.smallmoney')) THEN '655368'
+								ELSE typmod
+							END
+						ELSE typmod
+					END
+				)
+				FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(typmod,typ_index)
+			)
+		)
+	)
+)
+FROM pg_proc p2
+INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p2.pronamespace::regnamespace::name
+INNER JOIN pg_language l ON p2.prolang = l.oid AND l.lanname = 'pltsql'
+WHERE p1.oid = p2.oid
+	AND ((p2.prokind = 'p' AND p2.proargtypes <> '') OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL))
+	AND (
+		-- Check for money/smallmoney in argument types
+		EXISTS (
+			SELECT 1
+			FROM unnest(p2.proargtypes) AS arg_type
+			WHERE arg_type::regtype::text IN ('sys.money', 'sys.smallmoney')
+			OR EXISTS (
+				SELECT 1
+				FROM pg_type
+				WHERE oid = arg_type
+				AND typbasetype::regtype::text IN ('sys.money', 'sys.smallmoney')
+			)
+		)
+        -- Check for money/smallmoney in return type
+		OR p2.prorettype::regtype::text IN ('sys.money', 'sys.smallmoney')
+		OR EXISTS (
+			SELECT 1
+			FROM pg_type
+			WHERE oid = p2.prorettype
+			AND typbasetype::regtype::text IN ('sys.money', 'sys.smallmoney')
+		)
+	);
 
+
+-- To handle the typmod values for tables and views for smallmoney/money
+UPDATE pg_attribute a
+SET atttypmod =
+	CASE
+		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.money' OR
+			EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = a.atttypid AND
+				t.typbasetype::regtype::text = 'sys.money'))
+		THEN 1245192
+		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.smallmoney' OR
+			EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = a.atttypid AND
+				t.typbasetype::regtype::text = 'sys.smallmoney'))
+		THEN 655368
+		ELSE atttypmod
+	END
+FROM pg_class c
+INNER JOIN sys.babelfish_namespace_ext sch
+	ON sch.nspname = c.relnamespace::regnamespace::name
+WHERE a.attrelid = c.oid
+	AND a.atttypmod = -1
+	AND NOT a.attisdropped
+	AND (
+		a.atttypid::regtype::text IN ('sys.money', 'sys.smallmoney')
+		OR EXISTS (
+			SELECT 1
+			FROM pg_type t
+			WHERE t.oid = a.atttypid
+			AND t.typbasetype::regtype::text IN ('sys.money', 'sys.smallmoney')
+		)
+	);
 
 
 -- Please add your SQLs here
