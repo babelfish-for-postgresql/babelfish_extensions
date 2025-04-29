@@ -12,7 +12,7 @@ GO
 
 -- Drop Procedures
 DROP PROCEDURE IF EXISTS babel_5512_p1;
-DROP PROCEDURE IF EXISTS babel_5512_p2;
+-- DROP PROCEDURE IF EXISTS babel_5512_p2;
 GO
 
 -- Drop User-Defined Types
