@@ -255,21 +255,17 @@ static char
     rightPtr = output + (strlen(output) - 1);
         
     /*
-        * trim the extra 
-        * space, 
-        * asterisk, 
-        * a tab character or 
-        * a newline character 
-        * at the end of the search string
-        */
-    while(leftPtr <= rightPtr && (*rightPtr == ' ' || *rightPtr == '*' || *rightPtr == '\t' || *rightPtr == '\n')) {
+     * trim the extra spaces, asterisks, tab characters or a newline character 
+     * at the end of the search string
+     */
+    while (leftPtr <= rightPtr && (*rightPtr == ' ' || *rightPtr == '*' || *rightPtr == '\t' || *rightPtr == '\n')) {
         rightPtr--;
     }
     
     /*
      * rewriting search string in format word1:*<->word2:* 
      */
-    while(leftPtr <= rightPtr) {
+    while (leftPtr <= rightPtr) {
         if (strchr(specialChars, *leftPtr) != NULL) {
             pfree(output);
             resetStringInfo(&outputStr);
@@ -278,15 +274,15 @@ static char
                  errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
         }
         /* 
-        * removing multiple spaces, tabs and * from the search string 
-        * If a space is encountered, we remove all the next occurances of * and spaces and tabs
-        * before end of the input or if next word is encountered
-        * Case 1: '"word1   * * ** *"' = 'word1:*'
-        * Case 2: '"word1   * * ** * word2*"' = 'word1:*<->word2:*'
-        * Case 3: '"word1* *' + CHAR(9) + '** *"' = 'word1:*'
-        * Case 4: '"word1* * *  ' + CHAR(9) + '* ' + CHAR(9) + ' *** * word2*"' = 'word1:*<->word2:*'
-        */
-        if(*leftPtr == ' ' || *leftPtr == '*' || *leftPtr == '\t') {
+         * removing multiple spaces, tabs and * from the search string 
+         * If a space is encountered, we remove all the next occurances of * and spaces and tabs
+         * before end of the input or if next word is encountered
+         * Case 1: '"word1   * * ** *"' = 'word1:*'
+         * Case 2: '"word1   * * ** * word2*"' = 'word1:*<->word2:*'
+         * Case 3: '"word1* *' + CHAR(9) + '** *"' = 'word1:*'
+         * Case 4: '"word1* * *  ' + CHAR(9) + '* ' + CHAR(9) + ' *** * word2*"' = 'word1:*<->word2:*'
+         */
+        if (*leftPtr == ' ' || *leftPtr == '*' || *leftPtr == '\t') {
             while(leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t')) {
                 leftPtr++;
             }
@@ -296,32 +292,32 @@ static char
              * while removing extra space, asterisk and tab character
              * '"word1' + CHAR(9) + ' ' + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
              */
-            if(*(leftPtr + 1) == '\n') {
+            if (*(leftPtr + 1) == '\n') {
                 leftPtr++;
                 continue;
             }
             /*
              * space, tab and asterisk only between the keywords is translated
              */
-            if(outputStr.len>0) {
+            if (outputStr.len>0) {
                 appendStringInfoString(&outputStr, ":*<->");
             }
-        } else if(*leftPtr == '\n') {
-            if(outputStr.len > 0) {
+        } else if (*leftPtr == '\n') {
+            if (outputStr.len > 0) {
                 /*
                  * if a newline is encountered, remove all the next occurances of spaces, asterisks, tabs and newline
                  * till the next keyword
                  * as multiple newline characters are reduced to a single newline character
                  * '"word1' + CHAR(10) + ' * ** * ' + CHAR(9) + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
                  */
-                while(leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t' || *(leftPtr + 1) == '\n')) {
+                while (leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t' || *(leftPtr + 1) == '\n')) {
                     leftPtr++;
                 }
                 /*
                  * the trailing newline characters are removed in the beginning
                  * but added this safety check
                  */
-                if(leftPtr != rightPtr) {
+                if (leftPtr != rightPtr) {
                     char *newlineHash = replace_special_chars_fts_impl("\n");
                     trim(newlineHash, false);
                     appendStringInfoString(&outputStr, ":*<->");

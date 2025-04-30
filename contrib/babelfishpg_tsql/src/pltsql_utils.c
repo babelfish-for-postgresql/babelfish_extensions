@@ -50,7 +50,6 @@ extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
-extern char *generate_fts_char_hash(char *prefix, char *bucket);
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_dbo_schema_name(const char *dbname);
 PG_FUNCTION_INFO_V1(split_identifier_internal);
@@ -2202,8 +2201,7 @@ char
 		replacement = NULL;
 
 		for (int j = 0; j < 5; j++) {
-			char *chr;
-			if ((chr = strchr(special_chars[j], input_str[i])) != NULL) {
+			if (strchr(special_chars[j], input_str[i]) != NULL) {
 				replacement = unique_hashes[j];
 				break;
 			}

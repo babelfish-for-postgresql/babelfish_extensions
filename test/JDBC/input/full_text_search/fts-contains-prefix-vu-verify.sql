@@ -121,262 +121,207 @@ GO
 
 
 -- 10. Sample search query using CONTAINS
--- Prefix term search for multiple forms of passing same search string
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"digi*"')
+SELECT main_story, industry_update, local_news FROM fts_char_prefix_t_v1 WHERE CONTAINS((main_story, industry_update, local_news), '"mount*"')
 GO
 
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '   "digi    *"')
+SELECT * FROM fts_char_prefix_t_v2
 GO
 
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"digi   ***  * *" ')
-GO
-
-
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"int*"')
-GO
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"int      * *"')
-GO
-
-
-
-SELECT Content, ShortDescription 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"manufac process*"')
-GO
-
-SELECT Content, ShortDescription 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"manufac* process*"')
-GO
-
-SELECT Content, ShortDescription, Notes FROM fts_prefix_t_v1 WHERE CONTAINS((Content, ShortDescription, Notes), '"comp*"')
-GO
-
-SELECT * FROM fts_prefix_t_v2
-GO
-
-
--- prefix term search over multiple columns
-EXEC fts_multicol_prefix_t_p1
+EXEC fts_char_prefix_t_p1
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"inter*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"deforest*"')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), ' "inter  *" ')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), ' "deforest  *" ')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"inter *  *"  ')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"deforest *  *"  ')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"  power*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"  deforest*"')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light work*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast protect*"')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light* work*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast* protect*"')
 GO
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light *  * *  work   * **"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast *  * *  protect   * **"')
 GO
 
 -- Common Table Expressions
-WITH fts_multicol_prefix_t_cte1 AS (
+WITH fts_char_prefix_t_cte1 AS (
     SELECT *
-    FROM fts_multicol_prefix_t
-    WHERE CONTAINS((daily_updates,
-                    industry_news,
-                    local_events,
-                    tech_innovations,
-                    community_highlights), '"light work*"')
+    FROM fts_char_prefix_t
+    WHERE CONTAINS((main_story,
+                    industry_update,
+                    local_news,
+                    tech_highlight,
+                    community_event), '"coast protect*"')
 )
-SELECT * FROM fts_multicol_prefix_t_cte1
+SELECT * FROM fts_char_prefix_t_cte1
 GO
 
-WITH fts_multicol_prefix_t_cte2 AS (
+WITH fts_char_prefix_t_cte2 AS (
     SELECT *
-    FROM fts_multicol_prefix_t
+    FROM fts_char_prefix_t
 )
 SELECT *
-FROM fts_multicol_prefix_t_cte2
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light work*"')
+FROM fts_char_prefix_t_cte2
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast protect*"')
 GO
 
 -- tab character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + 'protect' + CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + 'protect' + CHAR(9) + '*'+ CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '" *** ** *' + CHAR(9) + '  ** * * * ' + CHAR(9) + 'light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '" *** ** *' + CHAR(9) + '  ** * * * ' + CHAR(9) + 'coast'+ CHAR(9) + 'protect' + CHAR(9) + '*'+ CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
 -- newline character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(10) + 'protect' + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*'+ CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(10) + 'protect' + CHAR(10) + '*'+ CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
 -- combination of tab and newline character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + CHAR(10) + 'protect' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-DECLARE @search_term nvarchar(100) = CHAR(10) + CHAR(9) + '" * * * **** *light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = CHAR(10) + CHAR(9) + '" * * * **** *coast'+ CHAR(9) + CHAR(10) + 'protect' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 
-
--- Create a unique index
-CREATE UNIQUE INDEX uid ON fts_char_prefix_t(id)
-GO
-
--- Create a full-text index
-CREATE FULLTEXT INDEX ON fts_char_prefix_t(
-        main_story,
-        industry_update,
-        local_news,
-        tech_highlight,
-        community_event) KEY INDEX uid
-GO
 
 -- tab character in prefix term search string
 DECLARE @search_term nvarchar(100) = '"coral re' + CHAR(9) + '*"';

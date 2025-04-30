@@ -53,9 +53,9 @@ DROP VIEW IF EXISTS prefix_rewrite_prepare_v22
 GO
 DROP VIEW IF EXISTS prefix_rewrite_prepare_v23
 GO
-DROP VIEW IF EXISTS fts_prefix_t_v1
+DROP VIEW IF EXISTS fts_char_prefix_t_v1
 GO
-DROP VIEW IF EXISTS fts_prefix_t_v2
+DROP VIEW IF EXISTS fts_char_prefix_t_v2
 GO
 
 -- Drop procedures
@@ -105,19 +105,15 @@ DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p22
 GO
 DROP PROCEDURE IF EXISTS prefix_rewrite_prepare_p23
 GO
-DROP PROCEDURE IF EXISTS fts_multicol_prefix_t_p1
+DROP PROCEDURE IF EXISTS fts_char_prefix_t_p1
 GO
 
 -- Drop Fulltext index
-DROP FULLTEXT INDEX ON fts_prefix_t
-GO
-DROP FULLTEXT INDEX ON fts_multicol_prefix_t
+DROP FULLTEXT INDEX ON fts_char_prefix_t
 GO
 
 -- Drop tables
-DROP TABLE IF EXISTS fts_prefix_t
-GO
-DROP TABLE IF EXISTS fts_multicol_prefix_t
+DROP TABLE IF EXISTS fts_char_prefix_t
 GO
 
 -- disable FULLTEXT

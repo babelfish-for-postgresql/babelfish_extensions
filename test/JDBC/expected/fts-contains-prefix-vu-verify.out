@@ -348,415 +348,310 @@ o<->ne | ('o specialCharscat1e09616b53f5138735a7d0a79e78e804e ne specialCharscat
 
 
 -- 10. Sample search query using CONTAINS
--- Prefix term search for multiple forms of passing same search string
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"digi*"')
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-1#!#Digital transformation helps businesses grow exponentially#!#Technology#!#Overview of digital transformation impact#!#JSMITH                                            #!##DIGITAL#TRANSFORM            #!#Key focus on enterprise solutions
-9#!#Digital marketing strategies boost online presence#!#Marketing#!#Digital marketing effectiveness#!#MTHOMS                                            #!##DIGITAL#MKTG                 #!#Campaign performance data
-14#!#Digital payments revolutionize transactions#!#Finance#!#Evolution of payment systems#!#ABROOK                                            #!##PAYMENT#FIN                  #!#Market adoption rates
-20#!#Digital twins optimize manufacturing processes#!#Manufacturing#!#Digital twin applications#!#CGREEN                                            #!##TWIN#MANUF                   #!#Case implementation
-28#!#Digital identity verifies online transactions#!#Security#!#Identity verification systems#!#KROGER                                            #!##IDENTITY#SEC                 #!#Security protocols
-32#!#Digital workspace enables remote work#!#Business#!#Remote work solutions#!#OBLACK                                            #!##REMOTE#WORK                  #!#Productivity metrics
-38#!#Digital advertising targets audiences#!#Marketing#!#Ad targeting strategies#!#ATHOMS                                            #!##AD#TARGET                    #!#Campaign results
-41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
-44#!#Digital currency transforms banking#!#Finance#!#Cryptocurrency impact#!#GSMITH                                            #!##CRYPTO#FIN                   #!#Market adoption
-47#!#Digital supply chains optimize logistics#!#Supply Chain#!#Supply chain innovation#!#JGREEN                                            #!##SUPPLY#CHAIN                 #!#Efficiency gains
-50#!#Digital ethics guides AI development#!#Technology#!#AI ethics framework#!#MJAMES                                            #!##AI#ETHICS                    #!#Policy guidelines
-~~END~~
-
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '   "digi    *"')
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-1#!#Digital transformation helps businesses grow exponentially#!#Technology#!#Overview of digital transformation impact#!#JSMITH                                            #!##DIGITAL#TRANSFORM            #!#Key focus on enterprise solutions
-9#!#Digital marketing strategies boost online presence#!#Marketing#!#Digital marketing effectiveness#!#MTHOMS                                            #!##DIGITAL#MKTG                 #!#Campaign performance data
-14#!#Digital payments revolutionize transactions#!#Finance#!#Evolution of payment systems#!#ABROOK                                            #!##PAYMENT#FIN                  #!#Market adoption rates
-20#!#Digital twins optimize manufacturing processes#!#Manufacturing#!#Digital twin applications#!#CGREEN                                            #!##TWIN#MANUF                   #!#Case implementation
-28#!#Digital identity verifies online transactions#!#Security#!#Identity verification systems#!#KROGER                                            #!##IDENTITY#SEC                 #!#Security protocols
-32#!#Digital workspace enables remote work#!#Business#!#Remote work solutions#!#OBLACK                                            #!##REMOTE#WORK                  #!#Productivity metrics
-38#!#Digital advertising targets audiences#!#Marketing#!#Ad targeting strategies#!#ATHOMS                                            #!##AD#TARGET                    #!#Campaign results
-41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
-44#!#Digital currency transforms banking#!#Finance#!#Cryptocurrency impact#!#GSMITH                                            #!##CRYPTO#FIN                   #!#Market adoption
-47#!#Digital supply chains optimize logistics#!#Supply Chain#!#Supply chain innovation#!#JGREEN                                            #!##SUPPLY#CHAIN                 #!#Efficiency gains
-50#!#Digital ethics guides AI development#!#Technology#!#AI ethics framework#!#MJAMES                                            #!##AI#ETHICS                    #!#Policy guidelines
-~~END~~
-
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"digi   ***  * *" ')
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-1#!#Digital transformation helps businesses grow exponentially#!#Technology#!#Overview of digital transformation impact#!#JSMITH                                            #!##DIGITAL#TRANSFORM            #!#Key focus on enterprise solutions
-9#!#Digital marketing strategies boost online presence#!#Marketing#!#Digital marketing effectiveness#!#MTHOMS                                            #!##DIGITAL#MKTG                 #!#Campaign performance data
-14#!#Digital payments revolutionize transactions#!#Finance#!#Evolution of payment systems#!#ABROOK                                            #!##PAYMENT#FIN                  #!#Market adoption rates
-20#!#Digital twins optimize manufacturing processes#!#Manufacturing#!#Digital twin applications#!#CGREEN                                            #!##TWIN#MANUF                   #!#Case implementation
-28#!#Digital identity verifies online transactions#!#Security#!#Identity verification systems#!#KROGER                                            #!##IDENTITY#SEC                 #!#Security protocols
-32#!#Digital workspace enables remote work#!#Business#!#Remote work solutions#!#OBLACK                                            #!##REMOTE#WORK                  #!#Productivity metrics
-38#!#Digital advertising targets audiences#!#Marketing#!#Ad targeting strategies#!#ATHOMS                                            #!##AD#TARGET                    #!#Campaign results
-41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
-44#!#Digital currency transforms banking#!#Finance#!#Cryptocurrency impact#!#GSMITH                                            #!##CRYPTO#FIN                   #!#Market adoption
-47#!#Digital supply chains optimize logistics#!#Supply Chain#!#Supply chain innovation#!#JGREEN                                            #!##SUPPLY#CHAIN                 #!#Efficiency gains
-50#!#Digital ethics guides AI development#!#Technology#!#AI ethics framework#!#MJAMES                                            #!##AI#ETHICS                    #!#Policy guidelines
-~~END~~
-
-
-
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"int*"')
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-6#!#Artificial intelligence transforms customer service#!#Technology#!#AI impact on customer experience#!#ASMITH                                            #!##AI#SERVICE                   #!#Implementation success metrics
-11#!#Internet of Things enables smart manufacturing#!#Manufacturing#!#IoT in industrial settings#!#KWHITE                                            #!##IOT#INDUSTRY                 #!#Implementation roadmap
-40#!#Data integration streamlines operations#!#Technology#!#Integration best practices#!#CWHITE                                            #!##DATA#INTEG                   #!#Efficiency gains
-~~END~~
-
-
-SELECT * 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"int      * *"')
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-6#!#Artificial intelligence transforms customer service#!#Technology#!#AI impact on customer experience#!#ASMITH                                            #!##AI#SERVICE                   #!#Implementation success metrics
-11#!#Internet of Things enables smart manufacturing#!#Manufacturing#!#IoT in industrial settings#!#KWHITE                                            #!##IOT#INDUSTRY                 #!#Implementation roadmap
-40#!#Data integration streamlines operations#!#Technology#!#Integration best practices#!#CWHITE                                            #!##DATA#INTEG                   #!#Efficiency gains
-~~END~~
-
-
-
-
-SELECT Content, ShortDescription 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"manufac process*"')
-GO
-~~START~~
-text#!#nvarchar
-Digital twins optimize manufacturing processes#!#Digital twin applications
-~~END~~
-
-
-SELECT Content, ShortDescription 
-FROM fts_prefix_t 
-WHERE CONTAINS(Content, '"manufac* process*"')
-GO
-~~START~~
-text#!#nvarchar
-Digital twins optimize manufacturing processes#!#Digital twin applications
-~~END~~
-
-
-SELECT Content, ShortDescription, Notes FROM fts_prefix_t_v1 WHERE CONTAINS((Content, ShortDescription, Notes), '"comp*"')
+SELECT main_story, industry_update, local_news FROM fts_char_prefix_t_v1 WHERE CONTAINS((main_story, industry_update, local_news), '"mount*"')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'fts_prefix_t_v1' because it is not full-text indexed.)~~
+~~ERROR (Message: Cannot use a CONTAINS or FREETEXT predicate on table or indexed view 'fts_char_prefix_t_v1' because it is not full-text indexed.)~~
 
 
-SELECT * FROM fts_prefix_t_v2
-GO
-~~START~~
-int#!#text#!#varchar#!#nvarchar#!#char#!#nchar#!#text
-2#!#Cloud computing reduces infrastructure costs significantly#!#Technology#!#Cost benefits of cloud adoption#!#EWATSN                                            #!##CLOUD#COSTS                  #!#ROI analysis included
-8#!#Data visualization improves decision making process#!#Analytics#!#Visual analytics benefits#!#JBAKER                                            #!##VIZ#ANALYTICS                #!#Tool comparison included
-16#!#Data governance ensures compliance standards#!#Compliance#!#Regulatory compliance guide#!#DSMITH                                            #!##DATA#GOVERN                  #!#Regulatory updates included
-18#!#Edge computing reduces latency issues#!#Technology#!#Edge computing benefits#!#MROGER                                            #!##EDGE#COMPUTE                 #!#Performance metrics
-19#!#Quantum computing advances computation speed#!#Technology#!#Quantum computing impact#!#JTHOMS                                            #!##QUANTUM#TECH                 #!#Research findings
-41#!#Digital signatures automate approvals#!#Business#!#E-signature solutions#!#DBLACK                                            #!##SIGN#AUTO                    #!#Compliance details
-45#!#Cloud compliance meets regulations#!#Compliance#!#Regulatory requirements#!#HWILSN                                            #!##COMPLY#REG                   #!#Standard updates
-46#!#Data privacy protects user rights#!#Security#!#Privacy protection measures#!#IROGER                                            #!##PRIVACY#SEC                  #!#GDPR compliance
-~~END~~
-
-
-
--- prefix term search over multiple columns
-EXEC fts_multicol_prefix_t_p1
+SELECT * FROM fts_char_prefix_t_v2
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-46#!#Side walking pedestrians avoid collision#!#Sideways glance reveals hidden door#!#The sidecar needs new paint                                                                                                                                                                             #!#Side-effect concerns worry patients                                                                                                                                                                     #!#Sideline reporter interviews coach
-47#!#Back pack full of supplies#!#Backing tracks support live performance#!#The backroom deal falls through                                                                                                                                                                         #!#Back-ordered items arrive tomorrow                                                                                                                                                                      #!#Background check reveals interesting facts
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
-69#!#Brain storming session generates ideas#!#Brainwave activity shows interesting patterns#!#The brainteaser challenges participants                                                                                                                                                                 #!#Brain-computer interface advances rapidly                                                                                                                                                               #!#Brainpower enhancement techniques discussed
-90#!#Bed room furniture arrives today#!#Bedside manner improves patient satisfaction#!#The bedrock shows interesting formations                                                                                                                                                                #!#Bed-and-breakfast receives great reviews                                                                                                                                                                #!#Bedding plants need regular water
+8#!#Deforestation rates decrease slightly#!#Rainforest	canopy study<newline>begins#!#Indigenous tribes protect sacred lands                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Medicinal plant discovery excites scientists                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Ecotourism provides alternative income
+34#!#Biodiversity hotspots identified#!#Deforestation rates decrease slightly#!#Tropical	forest<newline>canopy study begins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Carbon sequestration potential assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable forestry practices implemented
+~~END~~
+
+
+EXEC fts_char_prefix_t_p1
+GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+15#!#Coastal erosion rates decrease#!#Fish nursery habitats improve#!#Mangrove<newline>forest protection	expands                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  #!#Carbon sequestration potential studied                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local communities benefit from conservation
+21#!#Tropical<newline>cyclone	patterns shift#!#Coastal communities prepare for changes#!#Early warning systems improve                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       #!#Insurance industry reassesses risks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Climate change link studied extensively
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+51#!#Beach restoration shows progress#!#Coastal<newline>erosion	control succeeds#!#Dune vegetation establishes well                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #!#Storm protection improves significantly                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Community support increases steadily
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
+93#!#Shore<newline>habitat	protection expands#!#Coastal species return#!#Conservation efforts succeed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research continues actively                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Community support grows
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"inter*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"deforest*"')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-46#!#Side walking pedestrians avoid collision#!#Sideways glance reveals hidden door#!#The sidecar needs new paint                                                                                                                                                                             #!#Side-effect concerns worry patients                                                                                                                                                                     #!#Sideline reporter interviews coach
-47#!#Back pack full of supplies#!#Backing tracks support live performance#!#The backroom deal falls through                                                                                                                                                                         #!#Back-ordered items arrive tomorrow                                                                                                                                                                      #!#Background check reveals interesting facts
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
-69#!#Brain storming session generates ideas#!#Brainwave activity shows interesting patterns#!#The brainteaser challenges participants                                                                                                                                                                 #!#Brain-computer interface advances rapidly                                                                                                                                                               #!#Brainpower enhancement techniques discussed
-90#!#Bed room furniture arrives today#!#Bedside manner improves patient satisfaction#!#The bedrock shows interesting formations                                                                                                                                                                #!#Bed-and-breakfast receives great reviews                                                                                                                                                                #!#Bedding plants need regular water
+8#!#Deforestation rates decrease slightly#!#Rainforest	canopy study<newline>begins#!#Indigenous tribes protect sacred lands                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Medicinal plant discovery excites scientists                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Ecotourism provides alternative income
+34#!#Biodiversity hotspots identified#!#Deforestation rates decrease slightly#!#Tropical	forest<newline>canopy study begins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Carbon sequestration potential assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable forestry practices implemented
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), ' "inter  *" ')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), ' "deforest  *" ')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-46#!#Side walking pedestrians avoid collision#!#Sideways glance reveals hidden door#!#The sidecar needs new paint                                                                                                                                                                             #!#Side-effect concerns worry patients                                                                                                                                                                     #!#Sideline reporter interviews coach
-47#!#Back pack full of supplies#!#Backing tracks support live performance#!#The backroom deal falls through                                                                                                                                                                         #!#Back-ordered items arrive tomorrow                                                                                                                                                                      #!#Background check reveals interesting facts
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
-69#!#Brain storming session generates ideas#!#Brainwave activity shows interesting patterns#!#The brainteaser challenges participants                                                                                                                                                                 #!#Brain-computer interface advances rapidly                                                                                                                                                               #!#Brainpower enhancement techniques discussed
-90#!#Bed room furniture arrives today#!#Bedside manner improves patient satisfaction#!#The bedrock shows interesting formations                                                                                                                                                                #!#Bed-and-breakfast receives great reviews                                                                                                                                                                #!#Bedding plants need regular water
+8#!#Deforestation rates decrease slightly#!#Rainforest	canopy study<newline>begins#!#Indigenous tribes protect sacred lands                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Medicinal plant discovery excites scientists                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Ecotourism provides alternative income
+34#!#Biodiversity hotspots identified#!#Deforestation rates decrease slightly#!#Tropical	forest<newline>canopy study begins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Carbon sequestration potential assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable forestry practices implemented
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"inter *  *"  ')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"deforest *  *"  ')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-46#!#Side walking pedestrians avoid collision#!#Sideways glance reveals hidden door#!#The sidecar needs new paint                                                                                                                                                                             #!#Side-effect concerns worry patients                                                                                                                                                                     #!#Sideline reporter interviews coach
-47#!#Back pack full of supplies#!#Backing tracks support live performance#!#The backroom deal falls through                                                                                                                                                                         #!#Back-ordered items arrive tomorrow                                                                                                                                                                      #!#Background check reveals interesting facts
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
-69#!#Brain storming session generates ideas#!#Brainwave activity shows interesting patterns#!#The brainteaser challenges participants                                                                                                                                                                 #!#Brain-computer interface advances rapidly                                                                                                                                                               #!#Brainpower enhancement techniques discussed
-90#!#Bed room furniture arrives today#!#Bedside manner improves patient satisfaction#!#The bedrock shows interesting formations                                                                                                                                                                #!#Bed-and-breakfast receives great reviews                                                                                                                                                                #!#Bedding plants need regular water
+8#!#Deforestation rates decrease slightly#!#Rainforest	canopy study<newline>begins#!#Indigenous tribes protect sacred lands                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Medicinal plant discovery excites scientists                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Ecotourism provides alternative income
+34#!#Biodiversity hotspots identified#!#Deforestation rates decrease slightly#!#Tropical	forest<newline>canopy study begins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Carbon sequestration potential assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable forestry practices implemented
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"  power*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"  deforest*"')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-6#!#Power tools require proper maintenance#!#Powerful storm approaching the coast#!#The powerhouse team wins again                                                                                                                                                                          #!#Powerfully written thesis got approved                                                                                                                                                                  #!#Power-saving mode activated automatically
-24#!#Sun bathing area closes early#!#Sunlight powers new installation today#!#The sunroom needs fresh paint                                                                                                                                                                           #!#Sun-dried tomatoes taste amazing                                                                                                                                                                        #!#Sunshine brightens the entire valley
-38#!#Wind powered generators save energy#!#Winding road challenges new drivers#!#The windmill turns very slowly                                                                                                                                                                          #!#Wind-resistant umbrellas sell well                                                                                                                                                                      #!#Windshield wipers need replacement soon
+8#!#Deforestation rates decrease slightly#!#Rainforest	canopy study<newline>begins#!#Indigenous tribes protect sacred lands                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Medicinal plant discovery excites scientists                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Ecotourism provides alternative income
+34#!#Biodiversity hotspots identified#!#Deforestation rates decrease slightly#!#Tropical	forest<newline>canopy study begins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 #!#Carbon sequestration potential assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable forestry practices implemented
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light work*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast protect*"')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light* work*"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast* protect*"')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light *  * *  work   * **"')
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast *  * *  protect   * **"')
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
 -- Common Table Expressions
-WITH fts_multicol_prefix_t_cte1 AS (
+WITH fts_char_prefix_t_cte1 AS (
     SELECT *
-    FROM fts_multicol_prefix_t
-    WHERE CONTAINS((daily_updates,
-                    industry_news,
-                    local_events,
-                    tech_innovations,
-                    community_highlights), '"light work*"')
+    FROM fts_char_prefix_t
+    WHERE CONTAINS((main_story,
+                    industry_update,
+                    local_news,
+                    tech_highlight,
+                    community_event), '"coast protect*"')
 )
-SELECT * FROM fts_multicol_prefix_t_cte1
+SELECT * FROM fts_char_prefix_t_cte1
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-WITH fts_multicol_prefix_t_cte2 AS (
+WITH fts_char_prefix_t_cte2 AS (
     SELECT *
-    FROM fts_multicol_prefix_t
+    FROM fts_char_prefix_t
 )
 SELECT *
-FROM fts_multicol_prefix_t_cte2
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), '"light work*"')
+FROM fts_char_prefix_t_cte2
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), '"coast protect*"')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "fts_multicol_prefix_t_cte2" does not exist)~~
+~~ERROR (Message: relation "fts_char_prefix_t_cte2" does not exist)~~
 
 
 -- tab character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + 'protect' + CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + 'protect' + CHAR(9) + '*'+ CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '" *** ** *' + CHAR(9) + '  ** * * * ' + CHAR(9) + 'light'+ CHAR(9) + 'work' + CHAR(9) + '*'+ CHAR(9) + '*"';
+DECLARE @search_term nvarchar(100) = '" *** ** *' + CHAR(9) + '  ** * * * ' + CHAR(9) + 'coast'+ CHAR(9) + 'protect' + CHAR(9) + '*'+ CHAR(9) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
 -- newline character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(10) + 'protect' + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(10) + 'work' + CHAR(10) + '*'+ CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(10) + 'protect' + CHAR(10) + '*'+ CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
@@ -764,64 +659,53 @@ int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
 
 
 -- combination of tab and newline character in prefix term search string
-DECLARE @search_term nvarchar(100) = '"light work' + CHAR(9) + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast protect' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-1#!#The lighthouse keeper guided our ship#!#Light workload was distributed this week#!#Working with lighter materials today                                                                                                                                                                    #!#The lighting workshop starts tomorrow                                                                                                                                                                   #!#Lightweight construction materials arrived recently
-4#!#Working through complex programming challenges#!#The workshop delivered great results#!#Light work schedule this month                                                                                                                                                                          #!#Workstation setup needs improvement now                                                                                                                                                                 #!#Workflow optimization meeting this afternoon
-55#!#Sound proof rooms block noise#!#Sounding board provides valuable feedback#!#The soundscape creates peaceful atmosphere                                                                                                                                                              #!#Sound-activated lights work perfectly                                                                                                                                                                   #!#Soundwave analysis reveals interesting patterns
+28#!#Coastal protection improves noticeably#!#Mangrove	reforestation<newline>project succeeds#!#Fish nursery habitats expand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Carbon sequestration increases                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      #!#Local communities benefit economically
+39#!#Blue carbon potential quantified#!#Coastal protection role valued#!#Mangrove<newline>forest	carbon storage assessed                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Sustainable harvesting practices promoted                                                                                                                                                                                                                                                                                                                                                                                                                                                                           #!#Ecosystem restoration efforts expand
+65#!#Coastal protection improves#!#Wildlife corridors established#!#Peninsula<newline>conservation	effort succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                              #!#Local support grows stronger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        #!#Research findings encourage continuation
+70#!#Coastal protection improves#!#Dune	vegetation<newline>establishes successfully#!#Sand stabilization succeeds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         #!#Native species thrive naturally                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     #!#Research documents progress
+87#!#Dune<newline>system	stabilizes naturally#!#Sand movement decreases#!#Native plants establish                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #!#Research documents changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          #!#Coastal protection improves
 ~~END~~
 
 
-DECLARE @search_term nvarchar(100) = '"light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
+DECLARE @search_term nvarchar(100) = '"coast'+ CHAR(9) + CHAR(10) + 'protect' + CHAR(9) + CHAR(10) + '*"';
 SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
-GO
-~~START~~
-int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
-~~END~~
-
-
-DECLARE @search_term nvarchar(100) = CHAR(10) + CHAR(9) + '" * * * **** *light'+ CHAR(9) + CHAR(10) + 'work' + CHAR(9) + CHAR(10) + '*"';
-SELECT *
-FROM fts_multicol_prefix_t
-WHERE CONTAINS((daily_updates,
-                industry_news,
-                local_events,
-                tech_innovations,
-                community_highlights), @search_term)
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
 ~~START~~
 int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
 ~~END~~
 
 
-
--- Create a unique index
-CREATE UNIQUE INDEX uid ON fts_char_prefix_t(id)
+DECLARE @search_term nvarchar(100) = CHAR(10) + CHAR(9) + '" * * * **** *coast'+ CHAR(9) + CHAR(10) + 'protect' + CHAR(9) + CHAR(10) + '*"';
+SELECT *
+FROM fts_char_prefix_t
+WHERE CONTAINS((main_story,
+                industry_update,
+                local_news,
+                tech_highlight,
+                community_event), @search_term)
 GO
+~~START~~
+int#!#text#!#varchar#!#char#!#nchar#!#nvarchar
+~~END~~
 
--- Create a full-text index
-CREATE FULLTEXT INDEX ON fts_char_prefix_t(
-        main_story,
-        industry_update,
-        local_news,
-        tech_highlight,
-        community_event) KEY INDEX uid
-GO
+
 
 -- tab character in prefix term search string
 DECLARE @search_term nvarchar(100) = '"coral re' + CHAR(9) + '*"';
