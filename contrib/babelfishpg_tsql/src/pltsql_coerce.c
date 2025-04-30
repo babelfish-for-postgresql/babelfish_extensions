@@ -38,6 +38,7 @@
 #include "utils/syscache.h"
 #include "pltsql_instr.h"
 #include "parser/parse_target.h"
+#include "parser/parsetree.h"
 
 
 #include <math.h>
@@ -72,7 +73,6 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -1018,7 +1018,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-static Oid
+Oid
 get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;

@@ -701,9 +701,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (var->vartypmod == -1)
 				{
 					/* UDT handling in T_var*/
-					Oid type = getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
-					if (type != var->vartype && var->vartypmod != -1)
+					Oid immediate_base_type = pltsql_plugin_handler_ptr->pltsql_get_immediate_base_type_of_UDT_internal(var->vartype);
+					if (OidIsValid(immediate_base_type))
 					{
+						Oid type = var->vartype;
+						var->vartype = getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
+						var->vartype = type;
+						if (var->vartypmod != -1)
 							return var->vartypmod;
 					}
 
