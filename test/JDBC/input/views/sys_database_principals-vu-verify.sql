@@ -1,6 +1,15 @@
 use sys_database_principals_vu_db
 GO
 
+-- create a login which is a member of sysadmin server role
+create login sys_database_principals_vu_login_with_sysadmin with password = '12345678'
+alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
+GO
+
+-- change db owner to the new sysadmin login
+alter authorization on database::sys_database_principals_db_different_owner to sys_database_principals_vu_login_with_sysadmin
+GO
+
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
 
@@ -18,8 +27,4 @@ use sys_database_principals_db_different_owner
 GO
 
 select suser_sname(sid) from database_principals where name = 'dbo';
-GO
-
-drop login sys_database_principals_vu_login 
-drop login sys_database_principals_vu_login_with_sysadmin 
 GO

@@ -2,9 +2,6 @@
 create database sys_database_principals_vu_db
 GO
 
-use sys_database_principals_vu_db
-GO
-
 create login sys_database_principals_vu_login with password = '12345678'
 GO
 
@@ -20,10 +17,5 @@ GO
 drop login sys_database_principals_vu_login_tbd
 GO
 
-create login sys_database_principals_vu_login_with_sysadmin with password = '12345678'
-alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
-GO
-
 create database sys_database_principals_db_different_owner
-alter authorization on database::sys_database_principals_db_different_owner to sys_database_principals_vu_login_with_sysadmin
 GO

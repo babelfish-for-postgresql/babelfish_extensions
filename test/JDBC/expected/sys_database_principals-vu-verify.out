@@ -1,6 +1,15 @@
 use sys_database_principals_vu_db
 GO
 
+-- create a login which is a member of sysadmin server role
+create login sys_database_principals_vu_login_with_sysadmin with password = '12345678'
+alter server role sysadmin add member sys_database_principals_vu_login_with_sysadmin
+GO
+
+-- change db owner to the new sysadmin login
+alter authorization on database::sys_database_principals_db_different_owner to sys_database_principals_vu_login_with_sysadmin
+GO
+
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
 ~~START~~
@@ -13,7 +22,6 @@ select suser_sname(sid) from database_principals where name = 'sys_database_prin
 GO
 ~~START~~
 nvarchar
-sys_database_principals_vu_login
 ~~END~~
 
 
@@ -22,7 +30,6 @@ OR name in ('db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', '
 GO
 ~~START~~
 nvarchar
-<NULL>
 <NULL>
 <NULL>
 <NULL>
@@ -47,8 +54,6 @@ guest#!#<NULL>
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
 sys#!#<NULL>
-sys_database_principals_vu_orphaned_user#!#<NULL>
-sys_database_principals_vu_user#!#sys_database_principals_vu_login
 ~~END~~
 
 
@@ -62,7 +67,3 @@ nvarchar
 sys_database_principals_vu_login_with_sysadmin
 ~~END~~
 
-
-drop login sys_database_principals_vu_login 
-drop login sys_database_principals_vu_login_with_sysadmin 
-GO
