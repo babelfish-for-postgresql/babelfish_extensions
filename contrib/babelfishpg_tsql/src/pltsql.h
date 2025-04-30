@@ -1754,7 +1754,6 @@ typedef struct PLtsql_protocol_plugin
 	int			(*pltsql_read_numeric_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
 	Oid			(*pltsql_get_immediate_base_type_of_UDT_internal) (Oid type_oid);
-	int32		(*pltsql_resolve_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 
 	bool		(*pltsql_get_errdata) (int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 
@@ -1804,7 +1803,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_reset_tds_connection_flag) ();
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
-	// int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2322,7 +2321,6 @@ extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_
 
 
 Oid			get_immediate_base_type_of_UDT_internal(Oid typeoid);
-int32		resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,
