@@ -6408,12 +6408,9 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 		 * use get_numeric_typmod_from_exp function to get the typmod
  		 * from the expression node, when the expression type is numeric.
 		 */ 
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
-		{
-			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, &found_typmod);
-			if (!plan && !found_typmod)
-				return -1;
-		}
+		result_typmod = resolve_numeric_typmod_from_exp(plan, expr, &found_typmod);
+		if (!plan && !found_typmod)
+			return -1;
 	}
 	return result_typmod;
 }
