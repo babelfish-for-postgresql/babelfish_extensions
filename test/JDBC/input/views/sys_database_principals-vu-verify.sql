@@ -8,7 +8,7 @@ select suser_sname(sid) from database_principals where name = 'sys_database_prin
 OR name in ('db_owner', 'db_securityadmin', 'db_datawriter', 'db_accessadmin', 'db_datareader', 'db_ddladmin')
 GO
 
-select name, suser_sname(sid) from database_principals;
+select name, suser_sname(sid) from database_principals order by name;
 GO
 
 use sys_database_principals_db_different_owner

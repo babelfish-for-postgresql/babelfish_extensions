@@ -29,23 +29,23 @@ nvarchar
 ~~END~~
 
 
-select name, suser_sname(sid) from database_principals;
+select name, suser_sname(sid) from database_principals order by name;
 GO
 ~~START~~
 varchar#!#nvarchar
-db_owner#!#<NULL>
-dbo#!#jdbc_user
+db_accessadmin#!#<NULL>
 db_datareader#!#<NULL>
 db_datawriter#!#<NULL>
-db_accessadmin#!#<NULL>
-db_securityadmin#!#<NULL>
 db_ddladmin#!#<NULL>
+db_owner#!#<NULL>
+db_securityadmin#!#<NULL>
+dbo#!#jdbc_user
 guest#!#<NULL>
-sys_database_principals_vu_user#!#sys_database_principals_vu_login
-sys_database_principals_vu_orphaned_user#!#<NULL>
+INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
 sys#!#<NULL>
-INFORMATION_SCHEMA#!#<NULL>
+sys_database_principals_vu_orphaned_user#!#<NULL>
+sys_database_principals_vu_user#!#sys_database_principals_vu_login
 ~~END~~
 
 
