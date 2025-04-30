@@ -320,7 +320,11 @@ create_collate_expr(Node *arg, Oid collid)
 
 /*
  * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
- * transform the LIKE OpExpr to ILIKE OpExpr:
+ * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
+ * function to remove the accents and optimize.
+ * If the node is OpExpr and the collation is cs_ai , then use remove_accents_internal*
+ * function to remove the accents and optimize.
+ * If the node is OpExpr and the collation is cs_as, then simply use optimization:
  *
  * Case 1: if the pattern is a constant stirng
  *		 col LIKE PATTERN -> col = PATTERN
@@ -402,7 +406,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	/* 
 	 * no constant prefix found in pattern, or pattern is not constant 
 	 * OR if it is for CHECK CONSTRAINT, we do NOT need any optimisation
-	 * for it. Rather it will add extra overhead, moreover vanilla PG
+	 * for it. Rather it will add extra overhead, moreover vanilla Postgres
 	 * also handles check constraints this way
 	 */
 	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
