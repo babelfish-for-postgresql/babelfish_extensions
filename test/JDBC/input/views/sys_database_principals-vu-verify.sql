@@ -12,5 +12,7 @@ select name, suser_sname(sid) from database_principals order by name;
 GO
 
 use sys_database_principals_db_different_owner
+GO
+
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO

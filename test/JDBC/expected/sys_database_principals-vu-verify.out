@@ -50,12 +50,10 @@ sys_database_principals_vu_user#!#sys_database_principals_vu_login
 
 
 use sys_database_principals_db_different_owner
+GO
+
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: Changed database context to 'sys_database_principals_db_different_owner'.  Server SQLState: S0001)~~
-
 ~~START~~
 nvarchar
 sys_database_principals_vu_login_with_sysadmin
