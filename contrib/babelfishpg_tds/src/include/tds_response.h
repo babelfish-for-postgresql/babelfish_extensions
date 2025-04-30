@@ -98,6 +98,5 @@ extern void TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt 
 										  bool terminate_batch);
 extern void SendColumnMetadata(TupleDesc typeinfo, List *targetlist, int16 *formats);
 extern bool GetTdsEstateErrorData(int *number, int *severity, int *state);
-extern int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
 
 #endif							/* TDS_H */
