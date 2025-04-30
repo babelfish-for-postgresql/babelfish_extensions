@@ -8,3 +8,6 @@ GO
 drop database if exists sys_database_principals_db_different_owner 
 drop login sys_database_principals_vu_login_with_sysadmin 
 GO
+
+drop database if exists sys_database_principals_vu_db
+GO

@@ -1,3 +1,6 @@
+use sys_database_principals_vu_db
+GO
+
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
 

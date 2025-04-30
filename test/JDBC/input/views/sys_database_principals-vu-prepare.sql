@@ -1,3 +1,10 @@
+-- create a separate DB for users
+create database sys_database_principals_vu_db
+GO
+
+use sys_database_principals_vu_db
+GO
+
 create login sys_database_principals_vu_login with password = '12345678'
 GO
 
