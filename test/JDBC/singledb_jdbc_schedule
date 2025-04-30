@@ -15,3 +15,4 @@ ignore#!#test_search_path
 ignore#!#alter-mvu-test-vu-prepare
 ignore#!#alter-mvu-test-vu-verify
 ignore#!#alter-mvu-test-vu-cleanup
+ignore#!#sys_database_principals

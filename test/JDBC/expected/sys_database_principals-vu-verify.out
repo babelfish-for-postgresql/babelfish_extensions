@@ -62,3 +62,7 @@ nvarchar
 sys_database_principals_vu_login_with_sysadmin
 ~~END~~
 
+
+drop login sys_database_principals_vu_login 
+drop login sys_database_principals_vu_login_with_sysadmin 
+GO

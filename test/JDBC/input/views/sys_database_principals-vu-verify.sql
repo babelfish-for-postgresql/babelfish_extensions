@@ -19,3 +19,7 @@ GO
 
 select suser_sname(sid) from database_principals where name = 'dbo';
 GO
+
+drop login sys_database_principals_vu_login 
+drop login sys_database_principals_vu_login_with_sysadmin 
+GO
