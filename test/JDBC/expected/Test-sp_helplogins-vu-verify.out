@@ -1,0 +1,325 @@
+
+-- tsql
+-- prepare script for sp_helplogins
+-- create login with user in master with db_securityadmin role
+create login testlogin with password = '12345678'
+create user userof_testlogin for login testlogin
+GO
+
+-- tsql
+alter role db_securityadmin add member userof_testlogin
+GO
+
+-- tsql
+-- create a dummy db
+create database db1
+GO
+
+-- tsql
+-- create a login with user in master with securityadmin server role
+create login testloginwithsecurityadmin with password = '12345678'
+create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
+GO
+
+-- tsql
+alter server role securityadmin add member testloginwithsecurityadmin
+GO
+
+-- tsql
+-- create another user for login testloginwithsecurityadmin in db1
+use db1
+GO
+create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
+GO
+
+-- tsql
+use master
+GO
+
+-- tsql
+-- create a login which is a member of securityadmin server role
+-- and has a user with db_securityadmin role in db1
+create login testloginwithsecurityadmin2 with password = '12345678'
+GO
+
+-- tsql
+alter server role securityadmin add member testloginwithsecurityadmin2
+GO
+
+-- tsql
+-- create a login and a user in db1
+create login testloginindb1 with password = '12345678'
+GO
+
+-- tsql
+use db1
+GO
+
+-- tsql
+create user userof_testloginindb1 for login testloginindb1
+GO
+
+-- tsql
+create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
+GO
+
+-- tsql
+alter role db_securityadmin add member userof_testloginwithsecurityadmin2
+GO
+
+
+-- tsql
+-- create a login which is a member of securityadmin server role
+-- with a default database and ownership on db2
+create database db2
+GO
+
+-- tsql
+create login testloginwithsecurityadmin3 with password = '12345678', default_database = db2
+GO
+
+-- tsql
+alter server role securityadmin add member testloginwithsecurityadmin3
+GO
+
+-- tsql
+alter AUTHORIZATION on database::db2 to testloginwithsecurityadmin3
+GO
+
+
+
+-- tsql
+-- verify script for sp_helplogins
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
+testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
+testloginindb1#!#0001611F#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#db1#!#db_owner#!#Member of
+jdbc_user#!#db1#!#dbo#!#User
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testlogin#!#master#!#db_securityadmin#!#Member of
+testlogin#!#master#!#userof_testlogin#!#User
+testloginindb1#!#db1#!#userof_testloginindb1#!#User
+testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+testloginwithsecurityadmin3#!#db2#!#db_owner#!#Member of
+testloginwithsecurityadmin3#!#db2#!#dbo#!#User
+~~END~~
+
+
+-- tsql user=testlogin password=12345678
+EXEC sp_helplogins
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+-- tsql user=testloginwithsecurityadmin password=12345678
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
+testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
+testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#db1#!#db_owner#!#Member of
+jdbc_user#!#db1#!#dbo#!#User
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+~~END~~
+
+
+-- tsql user=testloginwithsecurityadmin2 password=12345678
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
+testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#00016105#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
+testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#db1#!#db_owner#!#Member of
+jdbc_user#!#db1#!#dbo#!#User
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testloginindb1#!#db1#!#userof_testloginindb1#!#User
+testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- tsql user=testloginwithsecurityadmin3 password=12345678
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
+testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#00016105#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
+testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testloginwithsecurityadmin3#!#db2#!#db_owner#!#Member of
+testloginwithsecurityadmin3#!#db2#!#dbo#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins 'jdbc_user'
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#db1#!#db_owner#!#Member of
+jdbc_user#!#db1#!#dbo#!#User
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins 'testlogin'
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testlogin#!#master#!#db_securityadmin#!#Member of
+testlogin#!#master#!#userof_testlogin#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins 'testloginwithsecurityadmin'
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins 'testloginwithsecurityadmin2'
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins 'testloginwithsecurityadmin2  '
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins ' testloginwithsecurityadmin2 '
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins ' '
+GO
+~~START~~
+varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+

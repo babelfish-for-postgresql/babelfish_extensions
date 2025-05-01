@@ -15,3 +15,13 @@ ignore#!#test_search_path
 ignore#!#alter-mvu-test-vu-prepare
 ignore#!#alter-mvu-test-vu-verify
 ignore#!#alter-mvu-test-vu-cleanup
+<<<<<<< Updated upstream
+=======
+ignore#!#sys_database_principals-vu-prepare
+ignore#!#sys_database_principals-vu-verify
+ignore#!#sys_database_principals-vu-cleanup
+
+# because these inherently execute with more than one db
+ignore#!#Test-sp_helplogins-vu-verify
+ignore#!#Test-sp_helplogins-vu-cleanup
+>>>>>>> Stashed changes

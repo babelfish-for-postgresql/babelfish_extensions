@@ -112,6 +112,195 @@ END;
 $$ 
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins()
+LANGUAGE pltsql
+AS $$
+BEGIN
+
+  IF is_srvrolemember('securityadmin') = 0 
+  BEGIN
+    RAISERROR('User does not have permission to perform this action.', 16, 1);
+	RETURN 1;
+  END
+
+  SELECT
+    CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
+    CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+    CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
+    CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
+    CASE 
+      WHEN Dp.name IS NOT NULL THEN 'YES'
+      ELSE 'NO'
+    END as AUser,
+    'NO' AS ARemote -- Currently we do not support linking local logins to remote logins
+  FROM pg_catalog.pg_roles AS Base 
+  INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
+  LEFT JOIN sys.database_principals Dp ON Dp.sid = CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) -- In order to find out if a login has any users associated with it
+  WHERE LExt.type NOT IN ('R', 'Z');
+
+  CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
+  INSERT INTO #DB_ROLE_MAPPING(database_name, role_name, member_login)
+  SELECT
+    UExt2.database_name as database_name,
+	UExt1.orig_username as role_name,
+	UExt2.login_name as member_login
+  FROM pg_catalog.pg_auth_members AS Authmbr
+  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+  WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin')
+  AND UExt2.login_name = sys.suser_name()
+
+  SELECT
+    CASE ISNULL(UExt.login_name, '')
+		WHEN '' THEN CAST(Db.owner AS sys.SYSNAME)
+		ELSE CAST(UExt.login_name AS sys.SYSNAME)
+	END AS LoginName,
+	CAST(UExt.database_name AS sys.SYSNAME) AS DefDBName,
+	CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
+	'User' AS UserOrAlias 
+  FROM sys.babelfish_authid_user_ext UExt
+  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name
+  WHERE UExt.type != 'R' AND  
+		UExt.orig_username != 'guest' AND 
+		has_dbaccess(UExt.database_name) = 1 AND
+		(
+          is_srvrolemember('sysadmin') = 1 OR 
+		  EXISTS (SELECT 1 from #DB_ROLE_MAPPING WHERE database_name = UExt.database_name) OR
+		  UExt.login_name = LOWER(sys.suser_name()) OR
+		  ISNULL(UExt.login_name, '') = ''
+        )
+
+  UNION
+
+  SELECT
+    CASE ISNULL(UExt2.login_name, '')
+      WHEN '' THEN CAST(Db.owner AS sys.SYSNAME)
+      ELSE CAST(UExt2.login_name AS sys.SYSNAME)
+    END AS LoginName,
+    CAST(UExt2.database_name AS sys.SYSNAME) AS DefDBName,
+    CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
+    'Member of' AS UserOrAlias 
+  FROM pg_catalog.pg_auth_members AS Authmbr
+  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name
+  WHERE UExt1.type = 'R' AND 
+        UExt2.orig_username != 'db_owner' AND
+        has_dbaccess(UExt2.database_name) = 1 AND
+		(
+          is_srvrolemember('sysadmin') = 1 OR 
+		  UExt2.login_name = LOWER(sys.suser_name()) OR
+		  ISNULL(UExt2.login_name, '') = ''
+        )
+
+  RETURN 0;
+END;
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplogins() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins("@loginname" sys.SYSNAME)
+LANGUAGE pltsql
+AS $$
+DECLARE @input_loginname sys.SYSNAME;
+BEGIN
+
+  SET @input_loginname = sys.RTRIM(@loginname);
+
+  IF is_srvrolemember('securityadmin') = 0 
+  BEGIN
+    RAISERROR('User does not have permission to perform this action.', 16, 1);
+	RETURN 1;
+  END
+
+  SELECT * FROM 
+  (
+	SELECT
+	  CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
+	  CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+	  CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
+	  CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
+	  CASE 
+	    WHEN Dp.name IS NOT NULL THEN 'YES'
+		ELSE 'NO'
+	  END as AUser,
+	  'NO' AS ARemote -- Currently we do not support linking local logins to remote logins
+	FROM pg_catalog.pg_roles AS Base 
+	INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
+	LEFT JOIN sys.database_principals Dp ON Dp.sid = CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) -- In order to find out if a login has any users associated with it
+	WHERE LExt.type NOT IN ('R', 'Z')
+  ) 
+  WHERE LoginName = @input_loginname;
+
+  CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
+  INSERT INTO #DB_ROLE_MAPPING(database_name, role_name, member_login)
+  SELECT
+    UExt2.database_name as database_name,
+	UExt1.orig_username as role_name,
+	UExt2.login_name as member_login
+  FROM pg_catalog.pg_auth_members AS Authmbr
+  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+  WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin')
+  AND UExt2.login_name = sys.suser_name()
+
+  SELECT * FROM 
+  (
+	SELECT
+      CASE ISNULL(UExt.login_name, '')
+	    WHEN '' THEN CAST(Db.owner AS sys.SYSNAME)
+		ELSE CAST(UExt.login_name AS sys.SYSNAME)
+	  END AS LoginName,
+	  CAST(UExt.database_name AS sys.SYSNAME) AS DefDBName,
+	  CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
+	  'User' AS UserOrAlias 
+    FROM sys.babelfish_authid_user_ext UExt
+    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name
+    WHERE UExt.type != 'R' AND  
+		UExt.orig_username != 'guest' AND 
+		has_dbaccess(UExt.database_name) = 1 AND
+		(
+          is_srvrolemember('sysadmin') = 1 OR 
+		  EXISTS (SELECT 1 from #DB_ROLE_MAPPING WHERE database_name = UExt.database_name) OR
+		  UExt.login_name = LOWER(sys.suser_name()) OR
+		  ISNULL(UExt.login_name, '') = ''
+        )
+    UNION
+  	SELECT
+      CASE ISNULL(UExt2.login_name, '')
+        WHEN '' THEN CAST(Db.owner AS sys.SYSNAME)
+        ELSE CAST(UExt2.login_name AS sys.SYSNAME)
+      END AS LoginName,
+      CAST(UExt2.database_name AS sys.SYSNAME) AS DefDBName,
+      CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
+      'Member of' AS UserOrAlias 
+    FROM pg_catalog.pg_auth_members AS Authmbr
+    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+    INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+    INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name
+    WHERE UExt1.type = 'R' AND 
+        UExt2.orig_username != 'db_owner' AND
+        has_dbaccess(UExt2.database_name) = 1 AND
+		(
+          is_srvrolemember('sysadmin') = 1 OR 
+		  UExt2.login_name = LOWER(sys.suser_name()) OR
+		  ISNULL(UExt2.login_name, '') = ''
+        )
+  ) 
+  WHERE LoginName = @input_loginname;
+
+  RETURN 0;
+END;
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplogins("@loginname" sys.SYSNAME) TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.server_permissions AS 
 WITH super_user AS (SELECT datdba AS super_user FROM pg_database WHERE datname = CURRENT_DATABASE()) 
 SELECT 
