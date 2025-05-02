@@ -283,7 +283,7 @@ static char
          * Case 4: '"word1* * *  ' + CHAR(9) + '* ' + CHAR(9) + ' *** * word2*"' = 'word1:*<->word2:*'
          */
         if (*leftPtr == ' ' || *leftPtr == '*' || *leftPtr == '\t') {
-            while(leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t')) {
+            while (leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t')) {
                 leftPtr++;
             }
 
@@ -299,7 +299,7 @@ static char
             /*
              * space, tab and asterisk only between the keywords is translated
              */
-            if (outputStr.len>0) {
+            if (outputStr.len > 0) {
                 appendStringInfoString(&outputStr, ":*<->");
             }
         } else if (*leftPtr == '\n') {
