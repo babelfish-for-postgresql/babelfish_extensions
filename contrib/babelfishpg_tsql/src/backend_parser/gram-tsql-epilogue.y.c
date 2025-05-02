@@ -2233,7 +2233,7 @@ needs_unpivot_source_alias(List *source_cols)
         ColumnRef *cref;
 
         res = (ResTarget *) lfirst(lc);
-		Assert(IsA(res->val, ColumnRef));
+        Assert(IsA(res->val, ColumnRef));
         cref = (ColumnRef *) res->val;
 
         /* If any column is qualified, don't generate alias */

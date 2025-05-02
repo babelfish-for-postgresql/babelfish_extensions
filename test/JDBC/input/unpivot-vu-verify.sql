@@ -843,7 +843,7 @@ UNPIVOT (
 ) AS [Global_分析];
 GO
 
--- BABEL-5762 - Aliased column names in unpivot source list
+-- Aliased column names in unpivot source list
     -- valid syntax
 SELECT customer_id, turnover, quarter FROM customer_turnover c 
 UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, c.q3, c.q4)) AS unpvt;
