@@ -2,7 +2,6 @@ CREATE LOGIN login_1
     WITH PASSWORD = '891$RtQ73nJ#k8';  
    ALTER SERVER ROLE [sysadmin] ADD MEMBER [login_1]
 GO
-
 CREATE LOGIN login_2   
     WITH PASSWORD = '673$WpM45hB#j4',
     default_database = tempdb; 
