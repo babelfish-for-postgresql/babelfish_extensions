@@ -70,12 +70,12 @@ DIMENSION_HEADERS[] = {
     0xE0    /* XYZM */
 };
 
-/* Constant array representing empty point coordinate data */
+/* Constant array representing empty coordinate data */
 static const uint8 
 EMPTY_COORD[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0x01
+    0xff, 0xff, 0xff, 0xff
 };
 
 /* Array of valid Spatial Reference System Identifiers (SRIDs) for Geography datatype */
@@ -134,6 +134,17 @@ is_valid_geography_srid(int32 srid)
     return false;
 }
 
+/* Throw error for unsupported geometry types*/
+static void 
+check_geom_type(const char *geom_type)
+{
+    if (strcmp(geom_type, "ST_Point") != 0 )
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("%s is not supported", geom_type)));
+    }
+}
 
 /*
  * Updates FunctionCallInfoBaseData with new arguments efficiently.
@@ -327,11 +338,8 @@ geometry_in(PG_FUNCTION_ARGS)
     /* Get geometry type */
     geometry_name = GetGeometryTypeName(fcinfo_local, geom_datum);
     
-    /* check if it is a 2-D point type */
-    if (strcmp(geometry_name, "ST_Point") != 0)
-        ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-             errmsg("%s is not supported", geometry_name)));
+    /* check if it is a point type */
+    check_geom_type(geometry_name);
 
     PG_RETURN_DATUM(geom_datum);
 }
@@ -382,8 +390,8 @@ geography_in(PG_FUNCTION_ARGS)
         /* Convert WKT to geometry */
         UpdateFunctionCallInfo(fcinfo_local, 3,
                              CStringGetDatum(rewritten_cstring),
-                             Int32GetDatum(0),
-                             Int32GetDatum(-1));
+                             fcinfo->args[1].value,
+                             fcinfo->args[2].value);
         geom_datum = lwgeom_in_p(fcinfo_local);
 
         /* Set SRID to 4326 for geography datatype */
@@ -399,13 +407,7 @@ geography_in(PG_FUNCTION_ARGS)
 
     /* Get and validate geometry type */
     geometry_name = GetGeometryTypeName(fcinfo_local, geom_datum);
-
-    if (strcmp(geometry_name, "ST_Point") != 0)
-    {
-        ereport(ERROR,
-            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-             errmsg("%s is not supported", geometry_name)));
-    }
+    check_geom_type(geometry_name);
 
     /* Get and validate latitude */
     UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
@@ -472,12 +474,10 @@ get_geometry_from_text(PG_FUNCTION_ARGS)
 
     /* 
      * Return the geometry object if it's a Point type
-     * Otherwise return NULL (only Point is currently supported)
      */
-    if (strcmp(geom_type, "ST_Point") == 0)
-        PG_RETURN_DATUM(geom_datum);
+    check_geom_type(geom_type);
 
-    PG_RETURN_NULL();
+    PG_RETURN_DATUM(geom_datum);
 }
 
 /*
@@ -524,8 +524,8 @@ get_geography_from_text(PG_FUNCTION_ARGS)
 
     /* Determine geometry type */
     geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
-
-    if (strcmp(geom_type, "ST_Point") == 0) 
+    check_geom_type(geom_type);
+    if (strcmp(geom_type, "ST_Point") == 0)
     {
         /* Flip coordinates to check latitude */
         UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
@@ -601,17 +601,8 @@ geography_point(PG_FUNCTION_ARGS)
 }
 
 /* Helper function implementations for char to geometry/geography conversions */
-static void 
-check_geom_type(const char *geom_type)
-{
-    if (strcmp(geom_type, "ST_Point") != 0) 
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("%s is not supported", geom_type)));
-    }
-}
 
+/* Validate whether latitude is between -90 to 90  for non-empty geography */
 static void 
 validate_latitude(Datum geom_datum) 
 {
@@ -733,8 +724,7 @@ initialize_geometry_data(bytea *input)
     return geom_data;
 }
 
-static void 
-check_nan_coordinates(GeometryData *geom_data) 
+static void check_nan_coordinates(GeometryData *geom_data) 
 {
     uint8 empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f";
     uint8 input_coord[8];
@@ -787,22 +777,54 @@ process_geometry_data(GeometryData *geom_data)
     uint8 new_header[5] = "\x01\x01\x00\x00\x20";
     uint8 empty_geom[8] = "\x00\x00\x00\x00\x00\x00\xf8\x7f";
     bytea *result;
-    uint8 *result_data;
+    uint8 *result_data,
+          last_emptybyte;
 
-    /* Handle empty geometry case */
-    if (geom_data->dimension_flag == 0) 
+    /* 
+     * Handle empty geometry case
+     * TODO : To be updated for LINESTRING which has same flags
+     */
+    if (geom_data->dimension_flag == 0 )
     {
-        /* Allocate memory for empty geometry */
-        result = (bytea *) palloc(VARHDRSZ + 25);
-        SET_VARSIZE(result, VARHDRSZ + 25);
-        result_data = (uint8 *)VARDATA(result);
+        /* 
+         * Validate empty geometry format:
+         * Input length should be sizeof(EMPTY_COORD) + 7 bytes 
+         * (6 bytes header + 20 bytes coordinates + 1 byte type)
+         * Compare input data (skipping 6 byte header) with EMPTY_COORD pattern
+         * Throw error if either condition fails
+         */
+        if (geom_data->input_len != sizeof(EMPTY_COORD) + 7 ||
+            memcmp(geom_data->input_data + 6, EMPTY_COORD, sizeof(EMPTY_COORD)) != 0)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Unsupported geometry type")));
+        }
+        last_emptybyte = geom_data->input_data[sizeof(EMPTY_COORD)+6];
 
-        /* Construct empty geometry */
-        memcpy(result_data, new_header, 5);
-        memcpy(result_data + 5, geom_data->input_data, 4);
-        memcpy(result_data + 9, empty_geom, 8);
-        memcpy(result_data + 17, empty_geom, 8);
-    } 
+        switch(last_emptybyte)
+        {
+            /* Handle POINT type where last byte is 01 */
+            case 0x01:
+                /* Allocate memory for empty geometry */
+                result = (bytea *) palloc(VARHDRSZ + 25);
+                SET_VARSIZE(result, VARHDRSZ + 25);
+                result_data = (uint8 *)VARDATA(result);
+
+                /* Construct empty geometry */
+                memcpy(result_data, new_header, 5);
+                memcpy(result_data + 5, geom_data->input_data, 4);
+                memcpy(result_data + 9, empty_geom, 8);
+                memcpy(result_data + 17, empty_geom, 8);
+                break;
+                
+            default:
+                ereport(ERROR,
+                    (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                     errmsg("Unsupported geometry type")));
+                break;
+        }
+    }
     else 
     {
         /* Update dimension information in header */
@@ -1001,7 +1023,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
         memset(result_data, 0, 4);
     }
     
-    /* Set point type in header */
+    /* Set geometry type in header */
     result_data[4] = 0x01;
     result_data[5] = geom_data->geom_type;
     
@@ -1009,6 +1031,9 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     if (geom_data->is_empty) 
     {
         memcpy(result_data + 6, EMPTY_COORD, geom_data->coord_size);
+        /* Check if the last byte is 01 which represents POINT type*/
+        if (geom_data->byte_data[1] == 0x01)
+            result_data[6 + sizeof(EMPTY_COORD)] = 0x01;
     } 
     else 
     {

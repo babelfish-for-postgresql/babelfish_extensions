@@ -1,6 +1,5 @@
 %{
 #include "geo_data.h"
-#include <math.h>
 
 #define YY_READ_BUF_SIZE 16777216
 
@@ -38,10 +37,11 @@ TIN                   { yyerror(NULL, "Invalid Geometry");  return TIN_TOK; }
 
 [+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)? {
     double val = atof(yytext);
-    if (isnan(val)) {
-        yyerror(NULL, "NaN values are not allowed");
-    }
     yylval.val = val;
+    return DOUBLE_TOK;
+}
+[nN][aA][nN]    {
+    yylval.val = NAN;
     return DOUBLE_TOK;
 }
 

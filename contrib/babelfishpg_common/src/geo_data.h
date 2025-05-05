@@ -3,6 +3,7 @@
 
 #include "postgres.h"
 #include "fmgr.h"
+#include <math.h>
 #include "utils/memutils.h"
 #include "utils/geo_decls.h"
 #include "utils/builtins.h"

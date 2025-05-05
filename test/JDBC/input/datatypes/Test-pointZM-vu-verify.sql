@@ -243,6 +243,86 @@ GO
 SELECT geography::STPointFromText('POINT(45 90)', NULL);
 GO
 
+-- Tests for common error handling
+SELECT geometry::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geography::STPointFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+SELECT geography::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326);
+GO
+
+-- Input length is less than 22 bytes
+SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geometry)
+GO
+
+SELECT CAST(0xE6100000010C000000000000F03F0000000000040 as geography)
+GO
+
+-- Test with Invalid flags
+SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geometry)
+GO
+
+SELECT CAST(0xE61000000105000000000000F03F0000000000000040 as geography)
+GO
+
+SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geometry)
+GO
+
+SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geography)
+GO
+
+-- When SRID is above 999999 for geometry 
+SELECT CAST(0x40420F00010D000000000000F03F00000000000000400000000000000840 as geometry)
+GO
+
+-- When SRID is invalid for geography
+SELECT CAST(0x10270000010D000000000000F03F00000000000000400000000000000840 as geography)
+GO
+
+-- Latitude is less than -90 and greater than 90 for geography
+SELECT CAST(0xE6100000010D000000000000594000000000000000400000000000000840 as geography)
+GO
+
+SELECT CAST(0xE6100000010D00000000000059C000000000000000400000000000000840 as geography)
+GO
+
+--  Negative Tests for Nan X and Y coordinates in CASTS
+SELECT CAST(CAST(0xE6100000010C0000000000000040000000000000F87F as geometry) As Varchar(MAX))
+GO
+
+SELECT CAST(CAST(0xE6100000010D0000000000000040000000000000F87F0000000000000840 as geometry) As Varchar(MAX))
+GO
+
+SELECT CAST(CAST(0xE6100000010F0000000000000040000000000000F87F0000000000000840000000000000F03F as geometry) As Varchar(MAX))
+GO
+
+--  Negative Tests Empty Geometries in CASTS
+SELECT CAST(CAST(0x000000000104000000000000084000000000000069400000000000001040 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000fffffffffffffff02 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000ffffffffffffffc01 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000003000000fffffffffffffff01 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000fffffffffffffff02 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000001100000000001000000fffffffffffffff01 as geometry) As varchar(MAX))
+GO
+
+SELECT CAST(CAST(0x000000000104000000000000000001000000ffffffffffffff01 as geometry) As varchar(MAX))
+GO
+
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
 
@@ -589,6 +669,12 @@ GO
 SELECT * FROM DisjointTempGeog;
 GO
 
+SELECT * FROM DisjointTempGeomsr;
+GO
+
+SELECT * FROM DisjointTempGeogsr;
+GO
+
 -- STDistance
 SELECT * FROM DistanceTempGeom;
 GO
@@ -596,11 +682,23 @@ GO
 SELECT * FROM DistanceTempGeog;
 GO
 
+SELECT * FROM DistanceTempGeomsr;
+GO
+
+SELECT * FROM DistanceTempGeogsr;
+GO
+
 -- STIntersects
 SELECT * FROM IntersectsTempGeom;
 GO
 
 SELECT * FROM IntersectsTempGeog;
+GO
+
+SELECT * FROM IntersectsTempGeomsr;
+GO
+
+SELECT * FROM IntersectsTempGeogsr;
 GO
 
 
@@ -611,11 +709,23 @@ GO
 SELECT * FROM EqualsTempGeog;
 GO
 
+SELECT * FROM EqualsTempGeomsr;
+GO
+
+SELECT * FROM EqualsTempGeogsr;
+GO
+
 -- STContains
 SELECT * FROM ContainTempGeom;
 GO
 
 SELECT * FROM ContainsTempGeog;
+GO
+
+SELECT * FROM ContainTempGeomsr;
+GO
+
+SELECT * FROM ContainsTempGeogsr;
 GO
 
 -- Operator = ( Equals)
@@ -625,9 +735,21 @@ GO
 SELECT * FROM equal_opgeog;
 GO
 
+SELECT * FROM equals_opgeomsr;
+GO
+
+SELECT * FROM equal_opgeogsr;
+GO
+
 -- Operator <> ( Not Equals )
 SELECT * FROM notequal_opgeom;
 GO
 
 SELECT * FROM notequal_opgeog;
+GO
+
+SELECT * FROM notequal_opgeomsr;
+GO
+
+SELECT * FROM notequal_opgeogsr;
 GO

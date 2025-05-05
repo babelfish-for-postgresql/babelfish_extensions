@@ -134,19 +134,22 @@ rewrite_point_dim_query(POINT coord)
                     FLOAT8_TO_CSTRING(coord.x),
                     FLOAT8_TO_CSTRING(coord.y));
 
-    /* Add Z coordinate if present */
-    if (FLAGS_GET_Z(coord.flags) && FLAGS_GET_M(coord.flags)) 
+    if (FLAGS_GET_Z(coord.flags) && FLAGS_GET_M(coord.flags) && (!isnan(coord.z) || !isnan(coord.m))) 
     {
-        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
-        appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
+        if (!isnan(coord.z))
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
+        else
+            appendStringInfoString(&output, " NULL");
+
+        if (!isnan(coord.m))
+            appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
     }
-    else if (FLAGS_GET_M(coord.flags))
+    else if (FLAGS_GET_M(coord.flags) && !isnan(coord.m))
     {
         appendStringInfoString(&output, " NULL");
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
-
     }
-    else if (FLAGS_GET_Z(coord.flags))
+    else if (FLAGS_GET_Z(coord.flags) && !isnan(coord.z))
     {
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
     }

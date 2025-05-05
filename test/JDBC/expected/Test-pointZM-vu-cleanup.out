@@ -83,30 +83,62 @@ DROP VIEW  DisjointTempGeom
 
 DROP VIEW  DisjointTempGeog
 
+DROP VIEW  DisjointTempGeomsr
+
+DROP VIEW  DisjointTempGeogsr
+
 DROP VIEW  DistanceTempGeom
 
 DROP VIEW  DistanceTempGeog
+
+DROP VIEW  DistanceTempGeomsr
+
+DROP VIEW  DistanceTempGeogsr
 
 DROP VIEW  IntersectsTempGeom
 
 DROP VIEW  IntersectsTempGeog
 
+DROP VIEW  IntersectsTempGeomsr
+
+DROP VIEW  IntersectsTempGeogsr
+
 DROP VIEW  EqualsTempGeom
 
 DROP VIEW  EqualsTempGeog
+
+DROP VIEW  EqualsTempGeomsr
+
+DROP VIEW  EqualsTempGeogsr
 
 DROP VIEW  ContainTempGeom
 
 DROP VIEW  ContainsTempGeog
 
+DROP VIEW  ContainTempGeomsr
+
+DROP VIEW  ContainsTempGeogsr
+
 DROP VIEW  equals_opgeom
 
 DROP VIEW  equal_opgeog
+
+DROP VIEW  equals_opgeomsr
+
+DROP VIEW  equal_opgeogsr
 
 DROP VIEW  notequal_opgeom
 
 DROP VIEW  notequal_opgeog
 
+DROP VIEW  notequal_opgeomsr
+
+DROP VIEW  notequal_opgeogsr
+
+
+DROP TABLE  GEOSPATIALPOINTGEOGR_sr
+
+DROP TABLE  GEOSPATIALPOINTGEOM_sr
 
 DROP TABLE  GEOSPATIALPOINTGEOGR_dt
 
