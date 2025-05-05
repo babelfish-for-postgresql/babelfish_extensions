@@ -942,10 +942,9 @@ SELECT
 GO
 
 -- 13. Testing procedure execution
--- TODO : failing after UDT fix
--- DECLARE @outSm SmallMoneyType; DECLARE @outM MoneyType
--- EXEC babel_5512_p2  @sm1 = 100.00, @sm2 = 200.00,@m1 = 1000.00, @m2 = 2000.00, @resultSm = @outSm OUTPUT, @resultM = @outM OUTPUT SELECT @outSm AS SmallMoneyResult, @outM AS MoneyResult
--- GO
+DECLARE @outSm SmallMoneyType; DECLARE @outM MoneyType
+EXEC babel_5512_p2  @sm1 = 100.00, @sm2 = 200.00,@m1 = 1000.00, @m2 = 2000.00, @resultSm = @outSm OUTPUT, @resultM = @outM OUTPUT SELECT @outSm AS SmallMoneyResult, @outM AS MoneyResult
+GO
 
 -- 14. Aggregate functions with UDTs
 SELECT 

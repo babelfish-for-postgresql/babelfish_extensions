@@ -2850,9 +2850,9 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 */
 	if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(type_oid) ||
 		(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type_oid))
-		{
-			typemod = -1;
-		}
+	{
+		typemod = -1;
+	}
 
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 

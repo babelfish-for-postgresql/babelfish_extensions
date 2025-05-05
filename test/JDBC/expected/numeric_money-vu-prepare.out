@@ -83,11 +83,10 @@ GO
 CREATE TYPE MoneyType FROM MONEY
 GO
 
-
 -- Procedure with multiple UDT parameters
--- TODO : failing after UDT fix
--- CREATE PROCEDURE babel_5512_p2  @sm1 SmallMoneyType, @sm2 SmallMoneyType, @m1 MoneyType, @m2 MoneyType, @resultSm SmallMoneyType OUTPUT, @resultM MoneyType OUTPUT AS BEGIN SET @resultSm = @sm1 + @sm2 SET @resultM = @m1 + @m2 END
--- GO
+CREATE PROCEDURE babel_5512_p2  @sm1 SmallMoneyType, @sm2 SmallMoneyType, @m1 MoneyType, @m2 MoneyType, @resultSm SmallMoneyType OUTPUT, @resultM MoneyType OUTPUT AS BEGIN SET @resultSm = @sm1 + @sm2 SET @resultM = @m1 + @m2 END
+GO
+
 -- Tables with UDT Columns
 CREATE TABLE babel_5512_t4
 (
