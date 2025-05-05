@@ -73,6 +73,13 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
+static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
+static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
+static bool is_numeric_cast(Oid func_oid);
+static bool is_tsql_fixeddecimal_numeric(Oid oid);
+static bool is_tsql_numeric_fixeddecimal(Oid oid);
+static bool is_tsql_bit_numeric(Oid oid);
+static bool is_tsql_int4_bit(Oid oid);
 
 #define SMALLINT_PRECISION_RADIX 5
 #define INT_PRECISION_RADIX 10
@@ -88,8 +95,8 @@ static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *ex
 #define NUMERIC_UPLUS_OID 1915
 #define NUMERIC_UMINUS_OID 1771
 
-int			tds_default_numeric_precision = 38;
-int			tds_default_numeric_scale = 8;
+int		tds_default_numeric_precision = 38;
+int		tds_default_numeric_scale = 8;
 
 static Oid tsql_fixeddecimal_numeric_oid = InvalidOid;
 static Oid tsql_numeric_fixeddecimal_oid = InvalidOid;
@@ -1043,7 +1050,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-Oid
+static Oid
 get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;
@@ -1191,6 +1198,10 @@ is_numeric_datatype(Oid typid)
 	return false;
 }
 
+/* 
+ * look for a typmod to return from a numeric expression,
+ * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
+ */
 int32
 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 {
@@ -1228,7 +1239,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 			}
 		case T_Const:
 			{
-				Const	   *con = (Const *) expr;
+				Const		*con = (Const *) expr;
 				Numeric		num;
 				int64		val;
 				
@@ -1254,32 +1265,28 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					 * numeric precision handling in Babelfish TSQL operations.
 					 */
 					if (con->consttype == INT4OID ||
-						 con->consttype == INT8OID ||
-						 con->consttype == INT2OID)
+						con->consttype == INT8OID ||
+						con->consttype == INT2OID)
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
-						if (*pltsql_protocol_plugin_ptr)
-						{
+						if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
 							return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
-						}
-						return (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (num);
+						return -1;
 					}
 
 					num = (Numeric) con->constvalue;
-					if (*pltsql_protocol_plugin_ptr)
-					{
+					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
 						return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
-					}
-					return (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (num);
+					return -1;
 				}
 			}
 		case T_Var:
 			{
-				Var            *var = (Var *) expr;
-				TargetEntry    *tle;
-				int             rettypmod;
-				bool            found_typmod;
+				Var		*var = (Var *) expr;
+				TargetEntry	*tle;
+				int		rettypmod;
+				bool		found_typmod;
 
 				/* If the current node is a subqueryscan,
 				 * find the original target list entry from subplan.
@@ -1363,7 +1370,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (var->vartypmod == -1)
 				{
-					/* UDT handling in T_var*/
+					/* UDT handling in T_var */
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
@@ -1374,37 +1381,33 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 							return var->vartypmod;
 					}
 
+					/* handling for fixed length datatypes */
 					if (plan && var->vartype == INT4OID)
-					{
 						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
-					}
 					else if (plan && var->vartype == INT8OID)
-					{
 						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
-					}
 					else if (plan && var->vartype == INT2OID)
-					{
 						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
-					}
+
 					if (found != NULL) *found = false;
 				}
 				return var->vartypmod;
 			}
 		case T_OpExpr:
 			{
-				OpExpr	   *op = (OpExpr *) expr;
-				Node	   *arg1 = NULL,
-						   *arg2 = NULL;
-				Oid	        arg1type = InvalidOid,
-							arg2type = InvalidOid;
+				OpExpr		*op = (OpExpr *) expr;
+				Node		*arg1 = NULL,
+						*arg2 = NULL;
+				Oid		arg1type = InvalidOid,
+						arg2type = InvalidOid;
 				int32		typmod1 = -1,
-							typmod2 = -1;
+						typmod2 = -1;
 				uint8_t		scale1,
-							scale2,
-							precision1,
-							precision2;
+						scale2,
+						precision1,
+						precision2;
 				uint8_t		scale,
-							precision;
+						precision;
 				uint8_t		integralDigitCount = 0;
 				bool		found_typmod;
 
@@ -1566,16 +1569,15 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						if (found != NULL) *found = false;
 					}
 				}
-				elog(LOG, "Yashneet : precision: %d, scale: %d", precision, scale);
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
 		case T_FuncExpr:
 			{
-				FuncExpr   *func = (FuncExpr *) expr;
-				Oid			func_oid = InvalidOid;
-				int			rettypmod = -1;
-				bool        found_typmod;
-				Node	   *arg = NULL;
+				FuncExpr	*func = (FuncExpr *) expr;
+				Oid		func_oid = InvalidOid;
+				int		rettypmod = -1;
+				bool		found_typmod;
+				Node		*arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
 				{
@@ -1629,10 +1631,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * expressions are equal, Otherwise it returns the first
 				 * argument.
 				 */
-				NullIfExpr *nullif = (NullIfExpr *) expr;
-				Node	   *arg1;
-				bool        found_typmod;
-				int         rettypmod;
+				NullIfExpr	*nullif = (NullIfExpr *) expr;
+				Node		*arg1;
+				bool		found_typmod;
+				int		rettypmod;
 
 				Assert(nullif->args != NIL);
 
@@ -1650,15 +1652,15 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * Find max possible integral_precision and scale (fractional
 				 * precision) in a CoalesceExpr
 				 */
-				CoalesceExpr *coale = (CoalesceExpr *) expr;
-				ListCell   *lc;
-				Node	   *arg;
+				CoalesceExpr	*coale = (CoalesceExpr *) expr;
+				ListCell	*lc;
+				Node		*arg;
 				int32		arg_typmod;
 				uint8_t		precision,
-							max_integral_precision = 0,
-							scale,
-							max_scale = 0;
-				bool        found_typmod;
+						max_integral_precision = 0,
+						scale,
+						max_scale = 0;
+				bool		found_typmod;
 
 				Assert(coale->args != NIL);
 
@@ -1694,16 +1696,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 * Find max possible integral_precision and scale (fractional
 				 * precision) in a CoalesceExpr
 				 */
-				CaseExpr   *case_expr = (CaseExpr *) expr;
-				ListCell   *lc;
-				CaseWhen   *casewhen;
-				Node	   *casewhen_result;
+				CaseExpr	*case_expr = (CaseExpr *) expr;
+				ListCell	*lc;
+				CaseWhen	*casewhen;
+				Node		*casewhen_result;
 				int32		typmod;
 				uint8_t		precision,
-							max_integral_precision = 0,
-							scale,
-							max_scale = 0;
-				bool        found_typmod;
+						max_integral_precision = 0,
+						scale,
+						max_scale = 0;
+				bool		found_typmod;
 
 				Assert(case_expr->args != NIL);
 
@@ -1741,13 +1743,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Aggref:
 			{
 				/* select max(a) from t; max(a) is an Aggref */
-				Aggref	   *aggref = (Aggref *) expr;
-				TargetEntry *te;
-				char	   *aggFuncName;
+				Aggref		*aggref = (Aggref *) expr;
+				TargetEntry	*te;
+				char		*aggFuncName;
 				int32		typmod;
 				uint8_t		precision,
-							scale;
-				bool        found_typmod;
+						scale;
+				bool		found_typmod;
 
 				if (aggref->aggstar)
 				{
@@ -1809,9 +1811,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 			}
 		case T_PlaceHolderVar:
 			{
-				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
-				int             rettypmod;
-				bool            found_typmod;
+				PlaceHolderVar	*phv = (PlaceHolderVar *) expr;
+				int		rettypmod;
+				bool		found_typmod;
 
 				rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr, &found_typmod);
 				if (!found_typmod)
@@ -1822,9 +1824,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 			}
 		case T_RelabelType:
 			{
-				RelabelType *rlt = (RelabelType *) expr;
-				int          rettypmod;
-				bool         found_typmod;
+				RelabelType	*rlt = (RelabelType *) expr;
+				int		rettypmod;
+				bool		found_typmod;
 
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
@@ -1841,9 +1843,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_CoerceToDomain:
 			{
 				/* Copied from exprTypmod. */
-				CoerceToDomain *rlt = (CoerceToDomain *) expr;
-				int             rettypmod;
-				bool            found_typmod;
+				CoerceToDomain	*rlt = (CoerceToDomain *) expr;
+				int		rettypmod;
+				bool		found_typmod;
 
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
@@ -1860,9 +1862,9 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_SubLink:
 			{
 				/* Copied from exprTypmod. */
-				const SubLink *sublink = (const SubLink *) expr;
-				int            rettypmod;
-				bool           found_typmod;
+				const SubLink	*sublink = (const SubLink *) expr;
+				int		rettypmod;
+				bool		found_typmod;
 
 				if (sublink->subLinkType == EXPR_SUBLINK ||
 					sublink->subLinkType == ARRAY_SUBLINK)
@@ -2976,7 +2978,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			if (OidIsValid(immediate_base_type))
 				type = getBaseTypeAndTypmod(type, &typmod);
 			
-			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
+			if (typmod == -1)
 				typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
 			
 			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
