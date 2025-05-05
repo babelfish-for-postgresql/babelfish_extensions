@@ -130,3 +130,126 @@ numeric
 
 drop table num_zero;
 go
+
+-- Create test table with different integer types
+CREATE TABLE variable_test (
+    size_int INT,
+    size_smallint SMALLINT,
+    size_bigint BIGINT
+);
+GO
+
+-- Test data insertion
+INSERT INTO variable_test VALUES 
+(707072, 32767, 9223372036854775807);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Basic multiplication
+SELECT 
+    size_int * 8.00 as int_mult,
+    size_smallint * 8.00 as smallint_mult,
+    size_bigint * 8.00 as bigint_mult
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+5656576.00#!#262136.00#!#73786976294838206456.00
+~~END~~
+
+
+-- Decimal multiplication
+SELECT 
+    size_int * 1.23 as int_mult,
+    size_smallint * 1.23 as smallint_mult,
+    size_bigint * 1.23 as bigint_mult
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+869698.56#!#40303.41#!#11344747605331374242.61
+~~END~~
+
+
+-- Small decimal multiplication
+SELECT 
+    size_int * 0.01 as int_mult,
+    size_smallint * 0.01 as smallint_mult,
+    size_bigint * 0.01 as bigint_mult
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+7070.72#!#327.67#!#92233720368547758.07
+~~END~~
+
+
+-- Large decimal multiplication
+SELECT 
+    size_int * 999999.99 as int_mult,
+    size_smallint * 999999.99 as smallint_mult,
+    size_bigint * 999999.99 as bigint_mult
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+707071992929.28#!#32766999672.33#!#9223371944621055438452241.93
+~~END~~
+
+
+-- Basic division
+SELECT 
+    size_int / 2.00 as int_div,
+    size_smallint / 2.00 as smallint_div,
+    size_bigint / 2.00 as bigint_div
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+353536.000000#!#16383.500000#!#4611686018427387903.500000
+~~END~~
+
+
+-- Decimal division
+SELECT 
+    size_int / 1.23 as int_div,
+    size_smallint / 1.23 as smallint_div,
+    size_bigint / 1.23 as bigint_div
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+574855.284552#!#26639.837398#!#7498676452727460005.690000
+~~END~~
+
+
+-- Small decimal division
+SELECT 
+    size_int / 0.01 as int_div,
+    size_smallint / 0.01 as smallint_div,
+    size_bigint / 0.01 as bigint_div
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+70707200.000000#!#3276700.000000#!#922337203685477580700.000000
+~~END~~
+
+
+-- Complex calculations
+SELECT 
+    size_int * 1.23 / 4.56 as int_complex,
+    size_smallint * 1.23 / 4.56 as smallint_complex,
+    size_bigint * 1.23 / 4.56 as bigint_complex
+FROM variable_test;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+190723.368421#!#8838.467105#!#2487883246783196105.840000
+~~END~~
+
+
+-- Cleanup
+DROP TABLE variable_test;
+GO
