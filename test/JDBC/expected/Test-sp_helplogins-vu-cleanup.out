@@ -2,46 +2,38 @@
 drop user if exists userof_testlogin 
 GO
 
--- tsql
 drop login testlogin
 GO
 
--- tsql
 drop user if exists userof_testloginwithsecurityadmin
 GO
 
--- tsql
 drop user if exists userof_testloginwithsecurityadmin_indb1
 GO
 
--- tsql
 drop login testloginwithsecurityadmin
 GO
 
--- tsql
 drop database db1
 GO
 
--- tsql
 drop user if exists userof_testloginwithsecurityadmin2
 GO
 
--- tsql
 drop login testloginwithsecurityadmin2
 GO
 
--- tsql
 drop login testloginwithsecurityadmin3
 GO
 
--- tsql
 drop database db2
 GO
 
--- tsql
 drop login testloginindb1
 GO
 
--- tsql
 drop user if exists userof_testloginindb1
+GO
+
+drop login testloginwithoutusers
 GO

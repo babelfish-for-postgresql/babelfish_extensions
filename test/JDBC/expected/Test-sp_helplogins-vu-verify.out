@@ -1,105 +1,15 @@
-
--- tsql
--- prepare script for sp_helplogins
--- create login with user in master with db_securityadmin role
-create login testlogin with password = '12345678'
-create user userof_testlogin for login testlogin
-GO
-
--- tsql
-alter role db_securityadmin add member userof_testlogin
-GO
-
--- tsql
--- create a dummy db
-create database db1
-GO
-
--- tsql
--- create a login with user in master with securityadmin server role
-create login testloginwithsecurityadmin with password = '12345678'
-create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
-GO
-
--- tsql
-alter server role securityadmin add member testloginwithsecurityadmin
-GO
-
--- tsql
--- create another user for login testloginwithsecurityadmin in db1
-use db1
-GO
-create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
-GO
-
--- tsql
-use master
-GO
-
--- tsql
--- create a login which is a member of securityadmin server role
--- and has a user with db_securityadmin role in db1
-create login testloginwithsecurityadmin2 with password = '12345678'
-GO
-
--- tsql
-alter server role securityadmin add member testloginwithsecurityadmin2
-GO
-
--- tsql
--- create a login and a user in db1
-create login testloginindb1 with password = '12345678'
-GO
-
--- tsql
-use db1
-GO
-
--- tsql
-create user userof_testloginindb1 for login testloginindb1
-GO
-
--- tsql
-create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
-GO
-
--- tsql
-alter role db_securityadmin add member userof_testloginwithsecurityadmin2
-GO
-
-
--- tsql
--- create a login which is a member of securityadmin server role
--- with a default database and ownership on db2
-create database db2
-GO
-
--- tsql
-create login testloginwithsecurityadmin3 with password = '12345678', default_database = db2
-GO
-
--- tsql
-alter server role securityadmin add member testloginwithsecurityadmin3
-GO
-
--- tsql
-alter AUTHORIZATION on database::db2 to testloginwithsecurityadmin3
-GO
-
-
-
--- tsql
--- verify script for sp_helplogins
+-- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins
 GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
 jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
-testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
-testloginindb1#!#0001611F#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+testlogin#!#00014F5C#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin#!#00014F98#!#master#!#English#!#YES#!#NO
+testloginwithoutusers#!#00014FAA#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
+testloginindb1#!#00014FB9#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#00014FFF#!#db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -138,11 +48,12 @@ GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
 jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
-testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
-testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+testlogin#!#00014F5C#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin#!#00014F98#!#master#!#English#!#YES#!#NO
+testloginwithoutusers#!#00014FAA#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
+testloginindb1#!#00014FB9#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#00014FFF#!#db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -166,11 +77,12 @@ GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
 jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
-testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin#!#00016105#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
-testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+testlogin#!#00014F5C#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin#!#00014F98#!#master#!#English#!#YES#!#NO
+testloginwithoutusers#!#00014FAA#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
+testloginindb1#!#00014FB9#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#00014FFF#!#db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -198,11 +110,12 @@ GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
 jdbc_user#!#00004000#!#master#!#English#!#YES#!#NO
-testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin#!#00016105#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#NO#!#NO
-testloginindb1#!#0001611F#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin3#!#00016164#!#db2#!#English#!#NO#!#NO
+testlogin#!#00014F5C#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin#!#00014F98#!#master#!#English#!#YES#!#NO
+testloginwithoutusers#!#00014FAA#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
+testloginindb1#!#00014FB9#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#00014FFF#!#db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -239,12 +152,11 @@ jdbc_user#!#tempdb#!#dbo#!#User
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins 'testlogin'
 GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
-testlogin#!#000160C9#!#master#!#English#!#NO#!#NO
+testlogin#!#00014F5C#!#master#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -254,12 +166,11 @@ testlogin#!#master#!#userof_testlogin#!#User
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins 'testloginwithsecurityadmin'
 GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
-testloginwithsecurityadmin#!#00016105#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin#!#00014F98#!#master#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -269,12 +180,11 @@ testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins 'testloginwithsecurityadmin2'
 GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -284,12 +194,11 @@ testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins 'testloginwithsecurityadmin2  '
 GO
 ~~START~~
 varchar#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar
-testloginwithsecurityadmin2#!#00016117#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#00014FB1#!#master#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -299,7 +208,6 @@ testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins ' testloginwithsecurityadmin2 '
 GO
 ~~START~~
@@ -311,7 +219,6 @@ varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
--- tsql user=jdbc_user password=12345678
 EXEC sp_helplogins ' '
 GO
 ~~START~~
