@@ -1798,7 +1798,6 @@ CLOSE style_cursor;
 DEALLOCATE style_cursor;
 GO
 
-[Previous binary, varbinary, and char cases as shown above]
 
 -- varchar
 DECLARE @Styles TABLE (StyleID INT);

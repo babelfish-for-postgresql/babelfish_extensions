@@ -625,7 +625,7 @@ EXEC TestDateTimeFormat 'Invalid - Bad MS', '2023-06-16 14:30:20.1234';
 GO
 
 -- Display results
-SELECT * FROM DateTimeFormatTest ORDER BY ID, Collation;
+SELECT * FROM DateTimeFormatTest ORDER BY ID;
 GO
 
 -- Create a test table

@@ -3298,7 +3298,6 @@ datetime2
 
 
 
-[Previous binary, varbinary, and char cases as shown above]
 -- varchar
 DECLARE @Styles TABLE (StyleID INT);
 INSERT INTO @Styles (StyleID)
@@ -3319,9 +3318,16 @@ END
 CLOSE style_cursor;
 DEALLOCATE style_cursor;
 GO
+~~ROW COUNT: 33~~
+
+~~START~~
+datetime2
+2023-06-16 14:22:59.1234570
+~~END~~
+
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure previous binary, varbinary, and char cases as shown above() does not exist)~~
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- nchar
