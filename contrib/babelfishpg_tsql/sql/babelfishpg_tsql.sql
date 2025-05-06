@@ -3871,16 +3871,14 @@ $$;
 CREATE OR REPLACE PROCEDURE sys.sp_helplogins()
 LANGUAGE pltsql
 AS $$
-DECLARE @error_on_logins INT
-DECLARE @error_on_user_mappings INT
 BEGIN
 	SET NOCOUNT ON;
 
   CREATE TABLE #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
-	INSERT INTO #sp_helplogins_internal_logins_temp EXEC @error_on_logins = sp_helplogins_internal_logins;
+	INSERT INTO #sp_helplogins_internal_logins_temp EXEC sp_helplogins_internal_logins;
 
 	CREATE TABLE #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
-	INSERT INTO #sp_helplogins_internal_user_mappings_temp EXEC @error_on_user_mappings = sp_helplogins_internal_user_mappings;
+	INSERT INTO #sp_helplogins_internal_user_mappings_temp EXEC sp_helplogins_internal_user_mappings;
 
 	SET NOCOUNT OFF;
 
@@ -3899,13 +3897,6 @@ DECLARE @input_loginname sys.SYSNAME;
 BEGIN
 
   SET @input_loginname = sys.RTRIM(@loginname);
-
-  IF is_srvrolemember('securityadmin') = 0 
-  BEGIN
-    RAISERROR('User does not have permission to perform this action.', 16, 1);
-	RETURN 1;
-  END
-
 	SET NOCOUNT ON;
 
   CREATE TABLE #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))

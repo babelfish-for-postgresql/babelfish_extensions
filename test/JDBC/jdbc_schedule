@@ -579,8 +579,3 @@ ignore#!#test_constraint_like-16-6-vu-cleanup
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-prepare
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-verify
 ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-cleanup
-
-# More info: BABEL-5742
-ignore#!#Test-sp_helplogins-vu-prepare
-ignore#!#Test-sp_helplogins-vu-verify
-ignore#!#Test-sp_helplogins-vu-cleanup
