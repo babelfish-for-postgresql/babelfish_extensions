@@ -437,7 +437,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -460,7 +460,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		IF Geomtype = 'ST_Point' THEN
 			RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'Invalid input: Expected "POINT"';
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
