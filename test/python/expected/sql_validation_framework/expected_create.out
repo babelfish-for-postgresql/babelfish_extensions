@@ -15,8 +15,8 @@ Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
 Could not find tests for function sys.columns_internal
-Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.dateadd_internal
+Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.datediff_internal
 Could not find tests for function sys.datepart_internal
 Could not find tests for function sys.default_domain
@@ -77,6 +77,7 @@ Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
 Could not find tests for procedure sys.printarg
 Could not find tests for procedure sys.sp_describe_cursor
+Could not find tests for procedure sys.sp_helplogins
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_partition_function
 Could not find tests for table sys.babelfish_partition_scheme
@@ -86,6 +87,7 @@ Could not find tests for table sys.spt_datatype_info_table
 Could not find tests for table sys.versions
 Could not find tests for view babelfish_has_perms_by_name_permissions
 Could not find tests for view information_schema_tsql.columns_internal
+Could not find tests for view sys.all_database_users
 Could not find tests for view sys.all_sql_modules_internal
 Could not find tests for view sys.pg_namespace_ext
 Could not find tests for view sys.shipped_objects_not_in_sys
@@ -116,8 +118,8 @@ Could not find upgrade tests for function sys.bbf_xmlexist
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status
-Could not find upgrade tests for function sys.date_bucket_internal_helper
 Could not find upgrade tests for function sys.dateadd_internal
+Could not find upgrade tests for function sys.date_bucket_internal_helper
 Could not find upgrade tests for function sys.datediff_internal
 Could not find upgrade tests for function sys.datepart_internal
 Could not find upgrade tests for function sys.default_domain
@@ -189,6 +191,7 @@ Could not find upgrade tests for procedure sys.printarg
 Could not find upgrade tests for procedure sys.sp_column_privileges
 Could not find upgrade tests for procedure sys.sp_cursor_list
 Could not find upgrade tests for procedure sys.sp_describe_cursor
+Could not find upgrade tests for procedure sys.sp_helplogins
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_reset_connection
@@ -204,6 +207,7 @@ Could not find upgrade tests for table sys.spt_datatype_info_table
 Could not find upgrade tests for table sys.versions
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view information_schema_tsql.columns_internal
+Could not find upgrade tests for view sys.all_database_users
 Could not find upgrade tests for view sys.all_sql_modules_internal
 Could not find upgrade tests for view sys.pg_namespace_ext
 Could not find upgrade tests for view sys.shipped_objects_not_in_sys
