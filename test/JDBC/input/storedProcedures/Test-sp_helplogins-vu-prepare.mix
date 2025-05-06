@@ -1,3 +1,53 @@
+-- sp_helplogins returns two result sets 
+-- creating test sp by omitting sid since it is an identifier which will change on every run
+-- psql
+create procedure sys.sp_helplogins_vu_test()
+language pltsql
+as $$
+begin
+  SET NOCOUNT ON;
+
+  create table #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+	insert into #sp_helplogins_internal_logins_temp exec sp_helplogins_internal_logins;
+
+	create table #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+	insert into #sp_helplogins_internal_user_mappings_temp exec sp_helplogins_internal_user_mappings;
+
+	SET NOCOUNT OFF;
+
+  SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp;
+  SELECT * FROM #sp_helplogins_internal_user_mappings_temp;
+end;
+$$;
+GO
+
+create procedure sys.sp_helplogins_vu_test_with_input("@loginname" sys.SYSNAME)
+language pltsql
+as $$
+declare @input_loginname sys.SYSNAME;
+begin
+
+  SET @input_loginname = sys.RTRIM(@loginname);
+
+  SET NOCOUNT ON;
+
+  create table #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+	insert into #sp_helplogins_internal_logins_temp exec sp_helplogins_internal_logins;
+
+	create table #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+	insert into #sp_helplogins_internal_user_mappings_temp exec sp_helplogins_internal_user_mappings;
+
+	SET NOCOUNT OFF;
+
+  SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp
+  where loginname = @input_loginname
+
+  SELECT * FROM #sp_helplogins_internal_user_mappings_temp
+  where loginname = @input_loginname
+end;
+$$;
+GO
+
 -- create login with user in master with db_securityadmin role
 -- tsql
 create login testlogin with password = '12345678'

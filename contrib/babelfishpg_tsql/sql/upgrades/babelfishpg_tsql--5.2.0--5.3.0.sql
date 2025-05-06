@@ -112,7 +112,6 @@ END;
 $$ 
 LANGUAGE plpgsql IMMUTABLE;
 
-
 CREATE OR REPLACE VIEW sys.all_database_users AS
 SELECT DISTINCT
 CASE 
@@ -131,21 +130,17 @@ ON Db.owner = Base3.rolname
 WHERE Ext.type != 'R' AND Ext.orig_username IS NOT NULL;
 GRANT SELECT on sys.all_database_users TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_helplogins()
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins_internal_logins() 
 LANGUAGE pltsql
 AS $$
-DECLARE @current_username sys.nvarchar(128)
 BEGIN
-
-  IF is_srvrolemember('securityadmin') = 0 
+	IF is_srvrolemember('securityadmin') = 0 
   BEGIN
     RAISERROR('User does not have permission to perform this action.', 16, 1);
-	RETURN 1;
+		RETURN 1;
   END
 
-	SET @current_username = sys.suser_name();
-
-  SELECT
+	SELECT
     CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
     CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
     CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
@@ -160,7 +155,25 @@ BEGIN
   LEFT JOIN sys.all_database_users Dp ON Dp.oid = Base.oid -- In order to find out if a login has any users associated with it
   WHERE LExt.type NOT IN ('R', 'Z');
 
-  CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
+	RETURN 0;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins_internal_user_mappings() 
+LANGUAGE pltsql
+AS $$
+DECLARE @current_username sys.nvarchar(128)
+BEGIN
+
+	IF is_srvrolemember('securityadmin') = 0 
+  BEGIN
+    RAISERROR('User does not have permission to perform this action.', 16, 1);
+		RETURN 1;
+  END
+
+	SET @current_username = sys.suser_name();
+
+	CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
   INSERT INTO #DB_ROLE_MAPPING(database_name, role_name, member_login)
   SELECT
     UExt2.database_name as database_name,
@@ -176,7 +189,7 @@ BEGIN
 
   SELECT
     CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-		CAST(UExt.database_name AS sys.SYSNAME) AS DefDBName,
+		CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		'User' AS UserOrAlias 
   FROM sys.babelfish_authid_user_ext UExt
@@ -190,12 +203,10 @@ BEGIN
 		  UExt.login_name = LOWER(@current_username) OR
 		  ISNULL(UExt.login_name, '') = ''
     )
-
   UNION
-
   SELECT
 		CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-    CAST(UExt2.database_name AS sys.SYSNAME) AS DefDBName,
+    CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
     CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
     'Member of' AS UserOrAlias 
   FROM pg_catalog.pg_auth_members AS Authmbr
@@ -210,6 +221,28 @@ BEGIN
 			UExt2.login_name = LOWER(@current_username) OR
 			ISNULL(UExt2.login_name, '') = ''
 		)
+	RETURN 0;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins()
+LANGUAGE pltsql
+AS $$
+DECLARE @error_on_logins INT
+DECLARE @error_on_user_mappings INT
+BEGIN
+	SET NOCOUNT ON;
+
+  CREATE TABLE #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+	INSERT INTO #sp_helplogins_internal_logins_temp EXEC @error_on_logins = sp_helplogins_internal_logins;
+
+	CREATE TABLE #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+	INSERT INTO #sp_helplogins_internal_user_mappings_temp EXEC @error_on_user_mappings = sp_helplogins_internal_user_mappings;
+
+	SET NOCOUNT OFF;
+
+	SELECT * FROM #sp_helplogins_internal_logins_temp;
+	SELECT * FROM #sp_helplogins_internal_user_mappings_temp;
 
   RETURN 0;
 END;
@@ -219,12 +252,10 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helplogins() TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_helplogins("@loginname" sys.SYSNAME)
 LANGUAGE pltsql
 AS $$
-DECLARE @current_username sys.nvarchar(128)
 DECLARE @input_loginname sys.SYSNAME;
 BEGIN
 
   SET @input_loginname = sys.RTRIM(@loginname);
-	SET @current_username = sys.suser_name();
 
   IF is_srvrolemember('securityadmin') = 0 
   BEGIN
@@ -232,76 +263,20 @@ BEGIN
 	RETURN 1;
   END
 
-  SELECT * FROM 
-  (
-		SELECT
-			CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-			CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
-			CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
-			CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
-			CASE 
-				WHEN Dp.oid IS NOT NULL THEN 'YES'
-				ELSE 'NO'
-			END as AUser,
-			'NO' AS ARemote -- Currently we do not support linking local logins to remote logins
-		FROM pg_catalog.pg_roles AS Base 
-		INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
-		LEFT JOIN sys.all_database_users Dp ON Dp.oid = Base.oid -- In order to find out if a login has any users associated with it
-		WHERE LExt.type NOT IN ('R', 'Z')
-  )
+	SET NOCOUNT ON;
+
+  CREATE TABLE #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+	INSERT INTO #sp_helplogins_internal_logins_temp EXEC sp_helplogins_internal_logins;
+
+	CREATE TABLE #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+	INSERT INTO #sp_helplogins_internal_user_mappings_temp EXEC sp_helplogins_internal_user_mappings;
+
+	SET NOCOUNT OFF;
+
+  SELECT * FROM #sp_helplogins_internal_logins_temp
   WHERE LoginName = @input_loginname;
 
-  CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
-  INSERT INTO #DB_ROLE_MAPPING(database_name, role_name, member_login)
-  SELECT
-    UExt2.database_name as database_name,
-		UExt1.orig_username as role_name,
-		UExt2.login_name as member_login
-  FROM pg_catalog.pg_auth_members AS Authmbr
-  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
-  WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin')
-  AND UExt2.login_name = @current_username
-
-  SELECT * FROM 
-  (
-		SELECT
-      CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-	  	CAST(UExt.database_name AS sys.SYSNAME) AS DefDBName,
-	  	CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
-	  	'User' AS UserOrAlias 
-    FROM sys.babelfish_authid_user_ext UExt
-    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name
-    WHERE UExt.type != 'R' AND  
-			UExt.orig_username != 'guest' AND 
-			has_dbaccess(UExt.database_name) = 1 AND
-			(
-				is_srvrolemember('sysadmin') = 1 OR 
-				EXISTS (SELECT 1 from #DB_ROLE_MAPPING WHERE database_name = UExt.database_name) OR
-				UExt.login_name = LOWER(@current_username) OR
-				ISNULL(UExt.login_name, '') = ''
-			)
-    UNION
-  	SELECT
-      CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-      CAST(UExt2.database_name AS sys.SYSNAME) AS DefDBName,
-      CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
-      'Member of' AS UserOrAlias 
-    FROM pg_catalog.pg_auth_members AS Authmbr
-    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-    INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
-    INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name
-    WHERE has_dbaccess(UExt2.database_name) = 1 AND
-			(
-				is_srvrolemember('sysadmin') = 1 OR 
-				UExt2.login_name = LOWER(@current_username) OR
-				ISNULL(UExt2.login_name, '') = ''
-			)
-  )
+  SELECT * FROM #sp_helplogins_internal_user_mappings_temp
   WHERE LoginName = @input_loginname;
 
   RETURN 0;
