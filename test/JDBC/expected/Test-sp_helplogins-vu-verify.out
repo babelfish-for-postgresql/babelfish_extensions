@@ -4,37 +4,37 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
-testloginwithoutusers#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#db2#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-jdbc_user#!#db1#!#db_owner#!#Member of
-jdbc_user#!#db1#!#dbo#!#User
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
 jdbc_user#!#msdb#!#db_owner#!#Member of
 jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
-testlogin#!#master#!#db_securityadmin#!#Member of
-testlogin#!#master#!#userof_testlogin#!#User
-testloginindb1#!#db1#!#userof_testloginindb1#!#User
-testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+sp_helplogins_testlogin#!#master#!#db_securityadmin#!#Member of
+sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User
+testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
 testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
-testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
-testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
-testloginwithsecurityadmin3#!#db2#!#db_owner#!#Member of
-testloginwithsecurityadmin3#!#db2#!#dbo#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#db_owner#!#Member of
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#dbo#!#User
 ~~END~~
 
 
--- tsql user=testlogin password=12345678
+-- tsql user=sp_helplogins_testlogin password=12345678
 EXEC sp_helplogins_vu_test
 GO
 ~~ERROR (Code: 50000)~~
@@ -56,26 +56,26 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
-testloginwithoutusers#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#db2#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-jdbc_user#!#db1#!#db_owner#!#Member of
-jdbc_user#!#db1#!#dbo#!#User
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
 jdbc_user#!#msdb#!#db_owner#!#Member of
 jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
-testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 ~~END~~
 
 
@@ -85,28 +85,28 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
-testloginwithoutusers#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#db2#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-jdbc_user#!#db1#!#db_owner#!#Member of
-jdbc_user#!#db1#!#dbo#!#User
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
 jdbc_user#!#msdb#!#db_owner#!#Member of
 jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
-testloginindb1#!#db1#!#userof_testloginindb1#!#User
-testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
-testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
-testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
 
@@ -116,12 +116,12 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
-testloginwithoutusers#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#db2#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -132,8 +132,8 @@ jdbc_user#!#msdb#!#db_owner#!#Member of
 jdbc_user#!#msdb#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
-testloginwithsecurityadmin3#!#db2#!#db_owner#!#Member of
-testloginwithsecurityadmin3#!#db2#!#dbo#!#User
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#db_owner#!#Member of
+testloginwithsecurityadmin3#!#sp_helplogins_db2#!#dbo#!#User
 ~~END~~
 
 
@@ -147,28 +147,28 @@ jdbc_user#!#master#!#English#!#YES#!#NO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-jdbc_user#!#db1#!#db_owner#!#Member of
-jdbc_user#!#db1#!#dbo#!#User
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
 jdbc_user#!#msdb#!#db_owner#!#Member of
 jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
 ~~END~~
 
 
-EXEC sp_helplogins_vu_test_with_input 'testlogin'
+EXEC sp_helplogins_vu_test_with_input 'sp_helplogins_testlogin'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
-testlogin#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-testlogin#!#master#!#db_securityadmin#!#Member of
-testlogin#!#master#!#userof_testlogin#!#User
+sp_helplogins_testlogin#!#master#!#db_securityadmin#!#Member of
+sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User
 ~~END~~
 
 
@@ -181,8 +181,8 @@ testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-testloginwithsecurityadmin#!#db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 ~~END~~
 
 
@@ -195,8 +195,8 @@ testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
-testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
 
@@ -209,8 +209,8 @@ testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
 
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar
-testloginwithsecurityadmin2#!#db1#!#db_securityadmin#!#Member of
-testloginwithsecurityadmin2#!#db1#!#userof_testloginwithsecurityadmin2#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
 ~~END~~
 
 

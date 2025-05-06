@@ -1,8 +1,8 @@
 -- tsql user=jdbc_user password=12345678 database=master
-drop user if exists userof_testlogin 
+drop user if exists userof_sp_helplogins_testlogin 
 GO
 
-drop login testlogin
+drop login sp_helplogins_testlogin
 GO
 
 drop user if exists userof_testloginwithsecurityadmin
@@ -14,7 +14,7 @@ GO
 drop login testloginwithsecurityadmin
 GO
 
-drop database db1
+drop database sp_helplogins_db1
 GO
 
 drop user if exists userof_testloginwithsecurityadmin2
@@ -26,7 +26,7 @@ GO
 drop login testloginwithsecurityadmin3
 GO
 
-drop database db2
+drop database sp_helplogins_db2
 GO
 
 drop login testloginindb1

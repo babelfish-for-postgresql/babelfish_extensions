@@ -15,8 +15,10 @@ begin
 
 	SET NOCOUNT OFF;
 
-  SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp;
-  SELECT * FROM #sp_helplogins_internal_user_mappings_temp;
+  SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp
+  order by loginname;
+  SELECT * FROM #sp_helplogins_internal_user_mappings_temp
+  order by loginname;
 end;
 $$;
 GO
@@ -41,24 +43,26 @@ begin
 
   SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp
   where loginname = @input_loginname
+  order by loginname;
 
   SELECT * FROM #sp_helplogins_internal_user_mappings_temp
   where loginname = @input_loginname
+  order by loginname;
 end;
 $$;
 GO
 
 -- create login with user in master with db_securityadmin role
 -- tsql
-create login testlogin with password = '12345678'
-create user userof_testlogin for login testlogin
+create login sp_helplogins_testlogin with password = '12345678'
+create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
 GO
 
-alter role db_securityadmin add member userof_testlogin
+alter role db_securityadmin add member userof_sp_helplogins_testlogin
 GO
 
 -- create a dummy db
-create database db1
+create database sp_helplogins_db1
 GO
 
 -- create a login with user in master with securityadmin server role
@@ -69,8 +73,8 @@ GO
 alter server role securityadmin add member testloginwithsecurityadmin
 GO
 
--- create another user for login testloginwithsecurityadmin in db1
-use db1
+-- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
+use sp_helplogins_db1
 GO
 create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
 GO
@@ -83,18 +87,18 @@ create login testloginwithoutusers with password = '12345678'
 GO
 
 -- create a login which is a member of securityadmin server role
--- and has a user with db_securityadmin role in db1
+-- and has a user with db_securityadmin role in sp_helplogins_db1
 create login testloginwithsecurityadmin2 with password = '12345678'
 GO
 
 alter server role securityadmin add member testloginwithsecurityadmin2
 GO
 
--- create a login and a user in db1
+-- create a login and a user in sp_helplogins_db1
 create login testloginindb1 with password = '12345678'
 GO
 
-use db1
+use sp_helplogins_db1
 GO
 
 create user userof_testloginindb1 for login testloginindb1
@@ -108,15 +112,15 @@ GO
 
 
 -- create a login which is a member of securityadmin server role
--- with a default database and ownership on db2
-create database db2
+-- with a default database and ownership on sp_helplogins_db2
+create database sp_helplogins_db2
 GO
 
-create login testloginwithsecurityadmin3 with password = '12345678', default_database = db2
+create login testloginwithsecurityadmin3 with password = '12345678', default_database = sp_helplogins_db2
 GO
 
 alter server role securityadmin add member testloginwithsecurityadmin3
 GO
 
-alter AUTHORIZATION on database::db2 to testloginwithsecurityadmin3
+alter AUTHORIZATION on database::sp_helplogins_db2 to testloginwithsecurityadmin3
 GO

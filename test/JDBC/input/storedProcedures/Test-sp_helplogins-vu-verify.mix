@@ -2,7 +2,7 @@
 EXEC sp_helplogins_vu_test
 GO
 
--- tsql user=testlogin password=12345678
+-- tsql user=sp_helplogins_testlogin password=12345678
 EXEC sp_helplogins_vu_test
 GO
 
@@ -22,7 +22,7 @@ GO
 EXEC sp_helplogins_vu_test_with_input 'jdbc_user'
 GO
 
-EXEC sp_helplogins_vu_test_with_input 'testlogin'
+EXEC sp_helplogins_vu_test_with_input 'sp_helplogins_testlogin'
 GO
 
 EXEC sp_helplogins_vu_test_with_input 'testloginwithsecurityadmin'
