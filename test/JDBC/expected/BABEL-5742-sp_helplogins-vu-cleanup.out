@@ -41,6 +41,3 @@ GO
 -- psql
 drop procedure sys.sp_helplogins_vu_test;
 GO
-
-drop procedure sys.sp_helplogins_vu_test_with_input;
-GO

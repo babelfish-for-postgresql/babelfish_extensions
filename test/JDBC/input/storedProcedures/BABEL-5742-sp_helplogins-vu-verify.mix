@@ -1,0 +1,99 @@
+-- sp_helplogins returns two result sets 
+-- creating test sp by omitting sid since it is an identifier which will change on every run
+-- psql
+create procedure sys.sp_helplogins_vu_test(IN "@loginname" sys.sysname DEFAULT NULL)
+language pltsql
+as $$
+declare @input_loginname sys.sysname
+begin
+
+  IF is_srvrolemember('securityadmin') = 0 
+  BEGIN
+    RAISERROR('User does not have permission to perform this action.', 16, 1);
+		RETURN 0;
+  END
+
+  IF @loginname IS NULL
+	BEGIN
+    SET NOCOUNT ON;
+		create table #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+    insert into #sp_helplogins_internal_logins_temp exec sp_helplogins_internal_logins;
+
+    create table #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+    insert into #sp_helplogins_internal_user_mappings_temp exec sp_helplogins_internal_user_mappings;
+    SET NOCOUNT OFF;
+    
+    select loginname, DefDBName, DefLangName, AUser, ARemote from #sp_helplogins_internal_logins_temp
+    order by loginname;
+    select * FROM #sp_helplogins_internal_user_mappings_temp
+    order by loginname;
+	END
+	ELSE
+	BEGIN
+		SET @input_loginname = sys.RTRIM(@loginname);
+
+    SET NOCOUNT ON;
+
+    create table #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
+    insert into #sp_helplogins_internal_logins_temp exec sp_helplogins_internal_logins;
+
+    create table #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
+    insert into #sp_helplogins_internal_user_mappings_temp exec sp_helplogins_internal_user_mappings;
+
+    SET NOCOUNT OFF;
+
+    SELECT loginname, DefDBName, DefLangName, AUser, ARemote FROM #sp_helplogins_internal_logins_temp
+    where loginname = @input_loginname
+    order by loginname;
+
+    SELECT * FROM #sp_helplogins_internal_user_mappings_temp
+    where loginname = @input_loginname
+    order by loginname;
+	END;
+  RETURN 0;
+end;
+$$;
+GO
+
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins_vu_test
+GO
+
+-- tsql user=sp_helplogins_testlogin password=12345678
+EXEC sp_helplogins_vu_test
+GO
+
+-- tsql user=testloginwithsecurityadmin password=12345678
+EXEC sp_helplogins_vu_test
+GO
+
+-- tsql user=testloginwithsecurityadmin2 password=12345678
+EXEC sp_helplogins_vu_test
+GO
+
+-- tsql user=testloginwithsecurityadmin3 password=12345678
+EXEC sp_helplogins_vu_test
+GO
+
+-- tsql user=jdbc_user password=12345678
+EXEC sp_helplogins_vu_test 'jdbc_user'
+GO
+
+EXEC sp_helplogins_vu_test 'sp_helplogins_testlogin'
+GO
+
+EXEC sp_helplogins_vu_test 'testloginwithsecurityadmin'
+GO
+
+EXEC sp_helplogins_vu_test 'testloginwithsecurityadmin2'
+GO
+
+EXEC sp_helplogins_vu_test 'testloginwithsecurityadmin2  '
+GO
+
+EXEC sp_helplogins_vu_test ' testloginwithsecurityadmin2 '
+GO
+
+EXEC sp_helplogins_vu_test ' '
+GO

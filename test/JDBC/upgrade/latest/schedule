@@ -453,7 +453,7 @@ Test-sp_rename
 Test-sp_rename-dep
 Test-sp_set_session_context
 Test-sp_set_session_context-dep
-Test-sp_helplogins
+BABEL-5742-sp_helplogins
 Test-Role-Member
 TestSQLVariant
 TestTableType
@@ -621,4 +621,3 @@ round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
-sys_db_role_mapping
