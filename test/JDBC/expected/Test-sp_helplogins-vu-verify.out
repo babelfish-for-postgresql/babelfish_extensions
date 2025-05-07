@@ -123,8 +123,6 @@ testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 varchar#!#varchar#!#varchar#!#nvarchar
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
-jdbc_user#!#msdb#!#db_owner#!#Member of
-jdbc_user#!#msdb#!#dbo#!#User
 jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
 jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
@@ -152,8 +150,6 @@ testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 varchar#!#varchar#!#varchar#!#nvarchar
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
-jdbc_user#!#msdb#!#db_owner#!#Member of
-jdbc_user#!#msdb#!#dbo#!#User
 jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
 jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
@@ -183,8 +179,6 @@ testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 varchar#!#varchar#!#varchar#!#nvarchar
 jdbc_user#!#master#!#db_owner#!#Member of
 jdbc_user#!#master#!#dbo#!#User
-jdbc_user#!#msdb#!#db_owner#!#Member of
-jdbc_user#!#msdb#!#dbo#!#User
 jdbc_user#!#tempdb#!#db_owner#!#Member of
 jdbc_user#!#tempdb#!#dbo#!#User
 testloginwithsecurityadmin3#!#sp_helplogins_db2#!#db_owner#!#Member of
