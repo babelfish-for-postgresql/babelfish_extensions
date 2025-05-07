@@ -143,6 +143,8 @@ static Oid tsql_int4_bit_oid = InvalidOid;
 static Oid sys_nspoid = InvalidOid;
 static Oid tsql_bit_oid = InvalidOid;
 static Oid tsql_fixeddecimal_oid = InvalidOid;
+static Oid tsql_money_oid = InvalidOid;
+static Oid tsql_smallmoney_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -158,6 +160,7 @@ static bool is_tsql_int4_bit(Oid oid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 static bool is_tsql_money_datatype(Oid oid);
 static bool is_tsql_smallmoney_datatype(Oid oid);
+static Oid	lookup_tsql_datatype_oid(const char *typename);
 
 static inline void
 SendPendingDone(bool more)
@@ -531,6 +534,21 @@ is_numeric_datatype(Oid typid)
 		return true;
 
 	return false;
+}
+
+/* TODO : remove later. */
+static Oid
+lookup_tsql_datatype_oid(const char *typename)
+{
+	Oid			nspoid;
+	Oid			typoid;
+
+	nspoid = get_namespace_oid("sys", true);
+	if (nspoid == InvalidOid)
+		return InvalidOid;
+
+	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+	return typoid;
 }
 
 /* TODO : remove later. */
