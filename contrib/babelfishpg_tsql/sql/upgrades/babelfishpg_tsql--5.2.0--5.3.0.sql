@@ -130,6 +130,19 @@ ON Db.owner = Base3.rolname
 WHERE Ext.type != 'R' AND Ext.orig_username IS NOT NULL;
 GRANT SELECT on sys.all_database_users TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.db_role_mapping AS
+SELECT
+	UExt2.database_name as database_name,
+	UExt1.orig_username as role_name,
+	UExt2.login_name as member_login
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin');
+GRANT SELECT on sys.db_role_mapping TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_helplogins_internal_logins() 
 LANGUAGE pltsql
 AS $$
@@ -173,33 +186,19 @@ BEGIN
 
 	SET @current_username = sys.suser_name();
 
-	CREATE TABLE #DB_ROLE_MAPPING(database_name sys.nvarchar(128), role_name sys.nvarchar(128), member_login sys.nvarchar(128))
-  INSERT INTO #DB_ROLE_MAPPING(database_name, role_name, member_login)
-  SELECT
-    UExt2.database_name as database_name,
-		UExt1.orig_username as role_name,
-		UExt2.login_name as member_login
-  FROM pg_catalog.pg_auth_members AS Authmbr
-  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
-  WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin')
-  AND UExt2.login_name = @current_username
-
   SELECT
     CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
 		CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		'User' AS UserOrAlias 
   FROM sys.babelfish_authid_user_ext UExt
-  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name
+  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name COLLATE database_default
   WHERE UExt.type != 'R' AND  
 		UExt.orig_username != 'guest' AND 
 		has_dbaccess(UExt.database_name) = 1 AND
 		(
       is_srvrolemember('sysadmin') = 1 OR 
-		  EXISTS (SELECT 1 from #DB_ROLE_MAPPING WHERE database_name = UExt.database_name) OR
+		  EXISTS (SELECT 1 from sys.db_role_mapping WHERE database_name = UExt.database_name AND member_login = @current_username) OR
 		  UExt.login_name = LOWER(@current_username) OR
 		  ISNULL(UExt.login_name, '') = ''
     )
@@ -214,7 +213,7 @@ BEGIN
   INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
   INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
   INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name
+  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name COLLATE database_default
   WHERE has_dbaccess(UExt2.database_name) = 1 AND
 		(
 			is_srvrolemember('sysadmin') = 1 OR 
@@ -229,19 +228,8 @@ CREATE OR REPLACE PROCEDURE sys.sp_helplogins()
 LANGUAGE pltsql
 AS $$
 BEGIN
-	SET NOCOUNT ON;
-
-  CREATE TABLE #sp_helplogins_internal_logins_temp(LoginName sys.sysname, sid sys.varbinary(85), DefDBName sys.sysname, DefLangName sys.sysname, AUser sys.nvarchar(8), ARemote sys.nvarchar(8))
-	INSERT INTO #sp_helplogins_internal_logins_temp EXEC sp_helplogins_internal_logins;
-
-	CREATE TABLE #sp_helplogins_internal_user_mappings_temp(LoginName sys.sysname, DBName sys.sysname, UserName sys.sysname, UserOrAlias sys.nvarchar(16))
-	INSERT INTO #sp_helplogins_internal_user_mappings_temp EXEC sp_helplogins_internal_user_mappings;
-
-	SET NOCOUNT OFF;
-
-	SELECT * FROM #sp_helplogins_internal_logins_temp;
-	SELECT * FROM #sp_helplogins_internal_user_mappings_temp;
-
+	EXEC sp_helplogins_internal_logins;
+	EXEC sp_helplogins_internal_user_mappings;
   RETURN 0;
 END;
 $$;
