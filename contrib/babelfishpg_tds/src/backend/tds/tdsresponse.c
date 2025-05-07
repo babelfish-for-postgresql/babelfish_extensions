@@ -156,6 +156,8 @@ static bool is_tsql_numeric_fixeddecimal(Oid oid);
 static bool is_tsql_bit_numeric(Oid oid);
 static bool is_tsql_int4_bit(Oid oid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
+static bool is_tsql_money_datatype(Oid oid);
+static bool is_tsql_smallmoney_datatype(Oid oid);
 
 static inline void
 SendPendingDone(bool more)
@@ -532,7 +534,7 @@ is_numeric_datatype(Oid typid)
 }
 
 /* TODO : remove later. */
-bool
+static bool
 is_tsql_money_datatype(Oid oid)
 {
 	if (tsql_money_oid == InvalidOid)
@@ -541,7 +543,7 @@ is_tsql_money_datatype(Oid oid)
 }
 
 /* TODO : remove later after resolve_numeric_typmod_from_exp is moved to tsql */
-bool
+static bool
 is_tsql_smallmoney_datatype(Oid oid)
 {
 	if (tsql_smallmoney_oid == InvalidOid)
