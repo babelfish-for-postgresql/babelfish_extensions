@@ -160,15 +160,9 @@ SELECT
     END
   AS sys.BIT) AS is_policy_checked,
   CAST(0 AS sys.BIT) AS is_expiration_checked,
-  CAST(
-    CASE
-      WHEN (sys.suser_name() = (SELECT super_user FROM super_user) OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')) THEN Auth.rolpassword
-      ELSE NULL
-    END
-  AS sys.varbinary(256)) AS password_hash 
+  CAST(NULL AS sys.varbinary(256)) AS password_hash 
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
-LEFT JOIN pg_authid Auth ON Auth.rolname = Base.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = sys.suser_name()
