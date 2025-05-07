@@ -756,69 +756,15 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT) RETURNS INTEGER AS
-$BODY$
-DECLARE 
-    x NUMERIC;
-    y MONEY;
-BEGIN
-    IF (expr IS NULL) THEN
-	    RETURN 0;
-    END IF;
-    IF ($1::VARCHAR COLLATE "C" ~ '^\s*$') THEN 
-	    RETURN 0;
-    END IF;
-    IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
-    'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'sys.money'::regtype)
-	THEN
-		RETURN 1;
-	END IF;
-    x = $1::NUMERIC;
-    RETURN 1;
-EXCEPTION WHEN others THEN
-    BEGIN
-        y = $1::sys.MONEY;
-        RETURN 1;
-        EXCEPTION WHEN others THEN
-            RETURN 0;
-    END;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE CALLED ON NULL INPUT;
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT) RETURNS INTEGER AS
-$BODY$
-DECLARE 
-    x NUMERIC;
-    y MONEY;
-BEGIN
-    IF (expr IS NULL) THEN
-	    RETURN 0;
-    END IF;
-
-    -- IF ($1::VARCHAR ~ '^\s*$') THEN 
-    IF (expr COLLATE "C" ~ '^\s*$') THEN 
-	    RETURN 0;
-    END IF;
-    IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
-    'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'sys.money'::regtype)
-	THEN
-		RETURN 1;
-	END IF;
-    x = $1::NUMERIC;
-    RETURN 1;
-EXCEPTION WHEN others THEN
-    BEGIN
-        y = $1::sys.MONEY;
-        RETURN 1;
-        EXCEPTION WHEN others THEN
-            RETURN 0;
-    END;
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE CALLED ON NULL INPUT;
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Return the object ID given the object name. Can specify optional type.
 CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)

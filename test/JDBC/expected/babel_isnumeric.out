@@ -284,7 +284,7 @@ select isnumeric(' ')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 select isnumeric('1 .1234')
