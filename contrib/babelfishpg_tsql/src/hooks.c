@@ -1301,11 +1301,8 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 			result_numeric_val = DatumGetNumeric(result);
 			val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (result_numeric_val);
 
-			if (val_typmod != -1)
-			{
-				val_scale = (val_typmod - VARHDRSZ) & 0xffff;
-				val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
-			}
+			val_scale = (val_typmod - VARHDRSZ) & 0xffff;
+			val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
 			
 			target_precision = val_precision + (scale - val_scale);
 			if (target_precision > TDS_NUMERIC_MAX_PRECISION ||
