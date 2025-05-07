@@ -90,6 +90,9 @@
 #include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
+#define TDS_MONEY_PRECISION 19
+#define TDS_SMALLMONEY_PRECISION 10
+#define TDS_FIXEDDECIMAL_SCALE 4
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
@@ -6393,6 +6396,15 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 			if (!found_typmod)
 				return -1;
 		}
+	}
+	/*TODO : Add handling for UDT. */
+	if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(expr_type))
+	{
+		result_typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(expr_type))
+	{
+		result_typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
 	}
 	return result_typmod;
 }

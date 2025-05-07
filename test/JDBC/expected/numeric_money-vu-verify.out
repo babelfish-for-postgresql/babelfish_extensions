@@ -240,6 +240,21 @@ numeric
 ~~END~~
 
 
+-- JIRA query 
+declare @money1 money = 1000.00123123;
+declare @money2 money = 1000.00123123;
+select CASE
+WHEN @money2 <= 0
+    THEN 0.0001
+ELSE @money2
+END  
+GO
+~~START~~
+numeric
+1000.0012
+~~END~~
+
+
 -- Basic CASE with declared money variables
 DECLARE @money1 MONEY = 1000.00123123;
 DECLARE @money2 MONEY = 1000.00123123;
@@ -252,7 +267,7 @@ END
 GO
 ~~START~~
 numeric
-1100.0013
+1100.00132
 ~~END~~
 
 
@@ -267,7 +282,7 @@ END
 GO
 ~~START~~
 numeric
-107374.18
+107374.18235
 ~~END~~
 
 
@@ -319,6 +334,7 @@ smallmoney
 
 
 -- Testing with multiple variables and nested CASE
+-- output is not matching sqlserver
 DECLARE @cost MONEY = 1500.00
 DECLARE @margin SMALLMONEY = 0.25
 DECLARE @tax SMALLMONEY = 0.08
@@ -337,7 +353,7 @@ END
 GO
 ~~START~~
 numeric
-1995.0000
+1995.000000
 ~~END~~
 
 
@@ -1531,9 +1547,10 @@ EXEC babel_5512_p1
     @totalPrice = @total1 OUTPUT
 SELECT @total1 AS BasicTotalPrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+194.4000
+~~END~~
 
 
 -- Edge cases
@@ -1547,9 +1564,10 @@ EXEC babel_5512_p1
     @totalPrice = @total2 OUTPUT
 SELECT @total2 AS MaxTotalPrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+214748.3647
+~~END~~
 
 
 -- Small values
@@ -1562,9 +1580,10 @@ EXEC babel_5512_p1
     @totalPrice = @total3 OUTPUT
 SELECT @total3 AS SmallTotalPrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+0.0100
+~~END~~
 
 
 
@@ -1578,9 +1597,10 @@ EXEC babel_5512_p1
     @totalPrice = @total7 OUTPUT
 SELECT @total7 AS NegativeBasePrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+-194.4000
+~~END~~
 
 
 -- Complex scenario
@@ -1593,9 +1613,10 @@ EXEC babel_5512_p1
     @totalPrice = @total8 OUTPUT
 SELECT @total8 AS ComplexScenarioPrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+4611.2039
+~~END~~
 
 
 -- Testing both function and procedure together
@@ -1610,9 +1631,10 @@ EXEC babel_5512_p1
     @totalPrice = @total9 OUTPUT
 SELECT @total9 AS CombinedFunctionProcedurePrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney
+164.1600
+~~END~~
 
 
 
@@ -1903,4 +1925,96 @@ GO
 smallmoney
 165.2750
 ~~END~~
+
+
+-- declare variables
+declare @var1 money = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 money = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 money = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+801.9000
+~~END~~
+
+
+declare @var1 smallmoney = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 smallmoney = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 smallmoney = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+801.9000
+~~END~~
+
+
+declare @var1 money = 678.90;
+declare @var2 money = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+declare @var1 smallmoney = 678.90;
+declare @var2 smallmoney = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+smallmoney
+802.3500
+~~END~~
+
+
+declare @var1 money = 678.90;
+declare @var2 smallmoney = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
 

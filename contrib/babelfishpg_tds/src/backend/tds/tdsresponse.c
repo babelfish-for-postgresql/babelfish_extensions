@@ -71,6 +71,10 @@
 #define NUMERIC_UPLUS_OID 1915
 #define NUMERIC_UMINUS_OID 1771
 
+#define TDS_MONEY_PRECISION 19
+#define TDS_SMALLMONEY_PRECISION 10
+#define TDS_FIXEDDECIMAL_SCALE 4
+
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
@@ -527,6 +531,23 @@ is_numeric_datatype(Oid typid)
 	return false;
 }
 
+/* TODO : remove later. */
+bool
+is_tsql_money_datatype(Oid oid)
+{
+	if (tsql_money_oid == InvalidOid)
+		tsql_money_oid = lookup_tsql_datatype_oid("money");
+	return tsql_money_oid == oid;
+}
+
+/* TODO : remove later after resolve_numeric_typmod_from_exp is moved to tsql */
+bool
+is_tsql_smallmoney_datatype(Oid oid)
+{
+	if (tsql_smallmoney_oid == InvalidOid)
+		tsql_smallmoney_oid = lookup_tsql_datatype_oid("smallmoney");
+	return tsql_smallmoney_oid == oid;
+}
 
 /* 
  * look for a typmod to return from a numeric expression,
@@ -552,6 +573,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
+				/* Note : This will be moved to TSQL, then we can use the common_utility_plugin_ptr.*/
+				/* TODO : Add UDT handling. */
+				if (is_tsql_money_datatype(param->paramtype))
+				{
+					return ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+				}
+				if (is_tsql_smallmoney_datatype(param->paramtype))
+				{
+					return ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+				}
 				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */

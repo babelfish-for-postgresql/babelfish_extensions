@@ -53,10 +53,6 @@
 
 #define TDS_MAX_NUM_PRECISION 38
 
-#define TDS_MONEY_PRECISION 19
-#define TDS_SMALLMONEY_PRECISION 10
-#define TDS_FIXEDDECIMAL_SCALE 4
-
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
@@ -2149,15 +2145,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			/* If UDT then calculate typmod.*/
 			if (OidIsValid(immediate_base_type))
 				type = getBaseTypeAndTypmod(type, &typmod);
-			
-			if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
-			{
-				typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
-			}
-			else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
-			{
-				typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
-			}
 
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
 				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);

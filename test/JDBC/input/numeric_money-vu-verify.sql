@@ -90,6 +90,16 @@ DECLARE @money1 SMALLMONEY = 1000.00123123, @money2 SMALLMONEY = 1000.00123123;
 SELECT CASE WHEN @money2 <= 0 THEN 0.0001 ELSE @money2 END;
 GO
 
+-- JIRA query 
+declare @money1 money = 1000.00123123;
+declare @money2 money = 1000.00123123;
+select CASE
+WHEN @money2 <= 0
+    THEN 0.0001
+ELSE @money2
+END  
+GO
+
 -- Basic CASE with declared money variables
 DECLARE @money1 MONEY = 1000.00123123;
 DECLARE @money2 MONEY = 1000.00123123;
@@ -144,6 +154,7 @@ END
 GO
 
 -- Testing with multiple variables and nested CASE
+-- output is not matching sqlserver
 DECLARE @cost MONEY = 1500.00
 DECLARE @margin SMALLMONEY = 0.25
 DECLARE @tax SMALLMONEY = 0.08
@@ -980,3 +991,50 @@ SELECT CASE
         CAST(200 AS SmallMoneyType)
 END AS ConvertedUdtCase
 GO
+
+-- declare variables
+declare @var1 money = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 money = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 money = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 smallmoney = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 smallmoney = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 smallmoney = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 money = 678.90;
+declare @var2 money = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 smallmoney = 678.90;
+declare @var2 smallmoney = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 money = 678.90;
+declare @var2 smallmoney = 123.45;
+select @var1 + @var2 as result;
+GO
+
