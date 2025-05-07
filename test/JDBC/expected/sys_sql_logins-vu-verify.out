@@ -14,11 +14,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -26,9 +26,9 @@ sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -36,9 +36,9 @@ sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -46,9 +46,9 @@ sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -60,11 +60,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -76,9 +76,9 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -90,11 +90,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -107,11 +107,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -124,11 +124,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#PASSWORD_HASH
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -141,11 +141,11 @@ GO
 SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
-jdbc_user#!#SQL_LOGIN#!#0#!#0#!#NULL
-sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#NULL
-sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#NULL
-sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#NULL
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
+jdbc_user#!#SQL_LOGIN#!#0#!#0#!#<NULL>
+sys_sql_logins_vu_login1#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login2#!#SQL_LOGIN#!#1#!#0#!#<NULL>
+sys_sql_logins_vu_login3#!#SQL_LOGIN#!#1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -154,7 +154,7 @@ SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'bbf_role_admin';
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
 ~~END~~
 
 
@@ -162,7 +162,7 @@ SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'public';
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'sysadmin';
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
 ~~END~~
 
 
@@ -178,7 +178,7 @@ SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'securityadmin';
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
 ~~END~~
 
 
@@ -186,6 +186,6 @@ SELECT * FROM dbo.sys_sql_logins_vu_prepare_view
 WHERE name =  'dbcreator';
 GO
 ~~START~~
-varchar#!#nvarchar#!#bit#!#bit#!#varchar
+varchar#!#nvarchar#!#bit#!#bit#!#varbinary
 ~~END~~
 
