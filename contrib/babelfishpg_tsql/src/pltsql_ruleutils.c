@@ -2856,13 +2856,6 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 
-	/* In case of smallmoney/money we don't want to display typmod with it*/
-	// if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(type_oid) ||
-    // 	(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type_oid))
-	// 	{
-	// 		with_typemod = false;
-	// 	}
-
 	nspname = get_namespace_name_or_temp(typeform->typnamespace);
 
 	buf = NULL;
