@@ -653,6 +653,9 @@ GO
 EXEC TestDateFormat 'Invalid - Non-existent date', '2023-02-29';
 GO
 
+SET DATEFORMAT mdy;
+GO
+
 -- Display results
 SELECT * FROM DateFormatTest ORDER BY ID;
 GO
@@ -1009,6 +1012,9 @@ GO
 SET DATEFORMAT dmy;
 INSERT INTO UDDTDateTest (ID, RegularDate, BusinessDateCol, HistoricalDateCol)
 VALUES (8, '21/06/2023', '21/06/2023', '04/07/1776');
+GO
+
+SET DATEFORMAT mdy;
 GO
 
 SELECT * FROM UDDTDateTest WHERE ID IN (7, 8);
@@ -4094,6 +4100,9 @@ GO
 -- Test with two-digit years and DATEFORMAT
 SET DATEFORMAT ymd;
 SELECT CAST('23/06/15' AS DATE);
+GO
+
+SET DATEFORMAT mdy;
 GO
 
 -- Test date arithmetic

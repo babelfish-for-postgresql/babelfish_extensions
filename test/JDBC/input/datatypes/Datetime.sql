@@ -1120,6 +1120,9 @@ INSERT INTO UDDTDateTimeTest (ID, RegularDateTime, BusinessDateTimeCol, Historic
 VALUES (8, '21/06/2023 15:30:20.123', '21/06/2023 15:30:20.123', '04/07/1776 12:00:00');
 GO
 
+SET DATEFORMAT mdy;
+GO
+
 -- 13. Test time precision
 INSERT INTO UDDTDateTimeTest (ID, RegularDateTime, BusinessDateTimeCol, HistoricalDateTimeCol)
 VALUES 
@@ -4418,6 +4421,8 @@ SET DATEFORMAT mdy;
 SELECT CAST('06/15/2023 14:30:20.123' AS DATETIME);
 SET DATEFORMAT dmy;
 SELECT CAST('15/06/2023 14:30:20.123' AS DATETIME);
+GO
+SET DATEFORMAT mdy;
 GO
 
 -- Test datetime parts extraction

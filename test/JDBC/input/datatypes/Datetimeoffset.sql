@@ -691,6 +691,9 @@ GO
 EXEC InsertDateTimeOffsetTest2 'YMD format with offset', '2023-06-16 14:30:45 +05:30';
 GO
 
+SET DATEFORMAT mdy;
+GO
+
 -- Edge cases
 EXEC InsertDateTimeOffsetTest2 'Minimum date with offset', '0001-01-01 00:00:00 +00:00';
 GO

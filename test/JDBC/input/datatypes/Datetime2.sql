@@ -307,6 +307,9 @@ GO
 EXEC InsertDateTime2Test 'YMD format with time', '2023-06-16 14:30:20.1234567';
 GO
 
+SET DATEFORMAT mdy;
+GO
+
 -- Helper procedure to insert test cases for DATETIME2
 CREATE PROCEDURE InsertDateTime2Test1
     @Description NVARCHAR(100),
@@ -490,6 +493,9 @@ GO
 SET DATEFORMAT ymd;
 GO
 EXEC TestDateTime2Format 'DT2 - YMD slash', '2023/06/16 14:30:20.1234567';
+GO
+
+SET DATEFORMAT mdy;
 GO
 
 -- Invalid formats (these should fail)
@@ -4520,6 +4526,8 @@ SELECT CAST('16-06-2023 14:30:20.1234567' AS DATETIME2);
 GO
 SET DATEFORMAT ymd;
 SELECT CAST('2023-06-16 14:30:20.1234567' AS DATETIME2);
+GO
+SET DATEFORMAT mdy;
 GO
 
 -- Test with different language date formats

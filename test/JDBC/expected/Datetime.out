@@ -2128,6 +2128,9 @@ GO
 ~~ERROR (Message: date/time field value out of range: "21/06/2023 15:30:20.123")~~
 
 
+SET DATEFORMAT mdy;
+GO
+
 -- 13. Test time precision
 INSERT INTO UDDTDateTimeTest (ID, RegularDateTime, BusinessDateTimeCol, HistoricalDateTimeCol)
 VALUES 
@@ -10012,7 +10015,7 @@ SELECT
 FROM sys.objects a
 CROSS JOIN sys.objects b;
 GO
-~~ROW COUNT: 2704~~
+~~ROW COUNT: 2601~~
 
 
 -- 1. Index on single DATETIME column
@@ -11033,6 +11036,8 @@ datetime
 
 ~~ERROR (Message: date/time field value out of range: "15/06/2023 14:30:20.123")~~
 
+SET DATEFORMAT mdy;
+GO
 
 -- Test datetime parts extraction
 DECLARE @dt DATETIME = '2023-06-15 14:30:20.123';

@@ -1162,6 +1162,9 @@ GO
 ~~ROW COUNT: 8~~
 
 
+SET DATEFORMAT mdy;
+GO
+
 -- Display results
 SELECT * FROM DateFormatTest ORDER BY ID;
 GO
@@ -1880,6 +1883,9 @@ GO
 
 ~~ERROR (Message: date/time field value out of range: "21/06/2023")~~
 
+
+SET DATEFORMAT mdy;
+GO
 
 SELECT * FROM UDDTDateTest WHERE ID IN (7, 8);
 GO
@@ -9819,6 +9825,9 @@ GO
 
 ~~ERROR (Message: date/time field value out of range: "23/06/15")~~
 
+
+SET DATEFORMAT mdy;
+GO
 
 -- Test date arithmetic
 DECLARE @d DATE = '2023-06-15';

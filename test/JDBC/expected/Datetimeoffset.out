@@ -1130,6 +1130,9 @@ GO
 ~~ROW COUNT: 1~~
 
 
+SET DATEFORMAT mdy;
+GO
+
 -- Edge cases
 EXEC InsertDateTimeOffsetTest2 'Minimum date with offset', '0001-01-01 00:00:00 +00:00';
 GO

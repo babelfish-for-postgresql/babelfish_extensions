@@ -513,6 +513,9 @@ GO
 ~~ROW COUNT: 1~~
 
 
+SET DATEFORMAT mdy;
+GO
+
 -- Helper procedure to insert test cases for DATETIME2
 CREATE PROCEDURE InsertDateTime2Test1
     @Description NVARCHAR(100),
@@ -769,6 +772,9 @@ EXEC TestDateTime2Format 'DT2 - YMD slash', '2023/06/16 14:30:20.1234567';
 GO
 ~~ROW COUNT: 8~~
 
+
+SET DATEFORMAT mdy;
+GO
 
 -- Invalid formats (these should fail)
 EXEC TestDateTime2Format 'DT2 Invalid - Hour too high', '2023-06-16 25:00:00';
@@ -10331,6 +10337,8 @@ datetime2
 2023-06-16 14:30:20.1234570
 ~~END~~
 
+SET DATEFORMAT mdy;
+GO
 
 -- Test with different language date formats
 SET LANGUAGE French;

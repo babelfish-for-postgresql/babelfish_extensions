@@ -681,7 +681,7 @@ EXEC TestSmallDateTimeFormat 'SDT Invalid - With MS', '2023-06-16 14:30:00.123';
 GO
 
 -- Display results
-SELECT * FROM SmalldateTimeFormatTest ORDER BY ID, Collation;
+SELECT * FROM SmalldateTimeFormatTest ORDER BY ID;
 GO
 
 -- Create a test table
@@ -1209,6 +1209,9 @@ GO
 SET DATEFORMAT dmy;
 INSERT INTO UDDTSmallDateTimeTest (ID, RegularSmallDateTime, BusinessSmallDateTimeCol, HistoricalSmallDateTimeCol)
 VALUES (8, '21/06/2023 15:30', '21/06/2023 15:30', '04/07/1900 12:00');
+GO
+
+SET DATEFORMAT mdy;
 GO
 
 -- 13. Test rounding behavior
@@ -4691,6 +4694,8 @@ SET DATEFORMAT mdy;
 SELECT CAST('06/15/2023 14:30' AS SMALLDATETIME);
 SET DATEFORMAT dmy;
 SELECT CAST('15/06/2023 14:30' AS SMALLDATETIME);
+GO
+SET DATEFORMAT mdy;
 GO
 
 -- Test datetime parts extraction

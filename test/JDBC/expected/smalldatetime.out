@@ -1211,11 +1211,109 @@ GO
 
 
 -- Display results
-SELECT * FROM SmalldateTimeFormatTest ORDER BY ID, Collation;
+SELECT * FROM SmalldateTimeFormatTest ORDER BY ID;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "collation" does not exist)~~
+~~START~~
+int#!#nvarchar#!#nvarchar#!#smalldatetime
+1#!#MDY Slash Full#!#04/15/1996 14:30#!#1996-04-15 14:30:00.0
+2#!#MDY Slash Short#!#4/15/96 14:30#!#1996-04-15 14:30:00.0
+3#!#MDY Hyphen Full#!#04-15-1996 14:30#!#1996-04-15 14:30:00.0
+4#!#MDY Hyphen Short#!#4-15-96 14:30#!#1996-04-15 14:30:00.0
+5#!#MDY Period Full#!#04.15.1996 14:30#!#1996-04-15 14:30:00.0
+6#!#MDY Period Short#!#4.15.96 14:30#!#1996-04-15 14:30:00.0
+7#!#MDY Round Up#!#04/15/1996 14:30:31#!#1996-04-15 14:31:00.0
+8#!#MDY Round Down#!#04/15/1996 14:30:29#!#1996-04-15 14:30:00.0
+15#!#YMD Slash Full#!#1996/04/15 14:30#!#1996-04-15 14:30:00.0
+17#!#YMD Hyphen Full#!#1996-04-15 14:30#!#1996-04-15 14:30:00.0
+19#!#YMD Period Full#!#1996.04.15 14:30#!#1996-04-15 14:30:00.0
+27#!#Time 24hr#!#1996-04-15 14:30#!#1996-04-15 14:30:00.0
+28#!#Time AM#!#1996-04-15 09:30 AM#!#1996-04-15 09:30:00.0
+29#!#Time PM#!#1996-04-15 02:30 PM#!#1996-04-15 14:30:00.0
+32#!#Time AM No Space#!#1996-04-15 9:30AM#!#1996-04-15 09:30:00.0
+33#!#Time PM No Space#!#1996-04-15 2:30PM#!#1996-04-15 14:30:00.0
+34#!#Midnight#!#1996-04-15 00:00#!#1996-04-15 00:00:00.0
+35#!#Noon#!#1996-04-15 12:00#!#1996-04-15 12:00:00.0
+36#!#Alpha Full MDY Comma#!#April 15, 1996 14:30#!#1996-04-15 14:30:00.0
+37#!#Alpha Full MDY No Comma#!#April 15 1996 14:30#!#1996-04-15 14:30:00.0
+38#!#Alpha Full DMY#!#15 April 1996 14:30#!#1996-04-15 14:30:00.0
+39#!#Alpha Full YMD#!#1996 April 15 14:30#!#1996-04-15 14:30:00.0
+40#!#Alpha Abbr MDY Comma#!#Apr 15, 1996 14:30#!#1996-04-15 14:30:00.0
+41#!#Alpha Abbr MDY No Comma#!#Apr 15 1996 14:30#!#1996-04-15 14:30:00.0
+42#!#Alpha Abbr DMY#!#15 Apr 1996 14:30#!#1996-04-15 14:30:00.0
+43#!#Alpha Abbr YMD#!#1996 Apr 15 14:30#!#1996-04-15 14:30:00.0
+44#!#ISO8601 Basic#!#19960415T1430#!#1996-04-15 14:30:00.0
+45#!#ISO8601 Extended#!#1996-04-15T14:30#!#1996-04-15 14:30:00.0
+46#!#ISO8601 Basic With Space#!#19960415 14:30#!#1996-04-15 14:30:00.0
+47#!#ISO8601 Extended With Space#!#1996-04-15 14:30#!#1996-04-15 14:30:00.0
+56#!#Min SmallDateTime#!#1900-01-01 00:00#!#1900-01-01 00:00:00.0
+57#!#Max SmallDateTime#!#2079-06-06 23:59#!#2079-06-06 23:59:00.0
+58#!#Leap Year#!#2000-02-29 14:30#!#2000-02-29 14:30:00.0
+59#!#Century Transition#!#2000-01-01 00:00#!#2000-01-01 00:00:00.0
+60#!#Round 14:30:29#!#1996-04-15 14:30:29#!#1996-04-15 14:30:00.0
+61#!#Round 14:30:30#!#1996-04-15 14:30:30#!#1996-04-15 14:31:00.0
+62#!#Round 14:30:31#!#1996-04-15 14:30:31#!#1996-04-15 14:31:00.0
+69#!#Invalid Seconds Specified#!#1996-04-15 14:30:20#!#1996-04-15 14:30:00.0
+70#!#Invalid Milliseconds Specified#!#1996-04-15 14:30:20.123#!#1996-04-15 14:30:00.0
+71#!#Two-Digit Year 20th Century#!#04/15/96 14:30#!#1996-04-15 14:30:00.0
+72#!#Two-Digit Year 21st Century#!#04/15/05 14:30#!#2005-04-15 14:30:00.0
+73#!#Midnight Start#!#1996-04-15 00:00#!#1996-04-15 00:00:00.0
+74#!#Midnight End#!#1996-04-15 23:59#!#1996-04-15 23:59:00.0
+75#!#Noon#!#1996-04-15 12:00#!#1996-04-15 12:00:00.0
+76#!#Almost Midnight#!#1996-04-15 23:59:59#!#1996-04-16 00:00:00.0
+77#!#SDT - Standard 24hr#!#2023,06,05 14:30#!#2023-06-05 14:30:00.0
+78#!#SDT - Standard AM#!#2023,06,05 10:30 AM#!#2023-06-05 10:30:00.0
+79#!#SDT - Standard PM#!#2023,06,05 2:30 PM#!#2023-06-05 14:30:00.0
+80#!#SDT MDY - d,mm,yyyy - Comma with time#!#5,06,2023 14:30#!#2023-05-06 14:30:00.0
+81#!#SDT MDY - d,mm,yyyy - Comma with AM#!#5,06,2023 10:30 AM#!#2023-05-06 10:30:00.0
+82#!#SDT MDY - d,mm,yyyy - Comma with PM#!#5,06,2023 2:30 PM#!#2023-05-06 14:30:00.0
+83#!#SDT MDY - d,mm,yyyy - Period with time#!#5.06.2023 14:30#!#2023-05-06 14:30:00.0
+84#!#SDT MDY - d,mm,yyyy - Hyphen with time#!#5-06-2023 14:30#!#2023-05-06 14:30:00.0
+85#!#SDT MDY - d,mm,yyyy - Space with time#!#5 06 2023 14:30#!#2023-05-06 14:30:00.0
+86#!#SDT MDY - dd,m,yy - Comma with time#!#05,6,23 14:30#!#2023-05-06 14:30:00.0
+87#!#SDT MDY - dd,m,yy - Comma with AM#!#05,6,23 10:30 AM#!#2023-05-06 10:30:00.0
+88#!#SDT MDY - dd,m,yy - Comma with PM#!#05,6,23 2:30 PM#!#2023-05-06 14:30:00.0
+89#!#SDT MDY - dd,m,yy - Period with time#!#05.6.23 14:30#!#2023-05-06 14:30:00.0
+90#!#SDT MDY - dd,m,yy - Hyphen with time#!#05-6-23 14:30#!#2023-05-06 14:30:00.0
+91#!#SDT MDY - dd,m,yy - Space with time#!#05 6 23 14:30#!#2023-05-06 14:30:00.0
+92#!#SDT DMY - d,mm,yyyy - Full time#!#5,06,2023 14:30#!#2023-05-06 14:30:00.0
+93#!#SDT DMY - d,mm,yyyy - AM time#!#5,06,2023 10:30 AM#!#2023-05-06 10:30:00.0
+94#!#SDT DMY - d,mm,yyyy - PM time#!#5,06,2023 2:30 PM#!#2023-05-06 14:30:00.0
+95#!#SDT DMY - dd,m,yy - Basic time#!#05,6,23 14:30#!#2023-05-06 14:30:00.0
+96#!#SDT DMY - d,m,y - Short time AM#!#5,6,3 10:30AM#!#2003-05-06 10:30:00.0
+97#!#SDT DMY - d,m,y - Short time PM#!#5,6,3 2:30PM#!#2003-05-06 14:30:00.0
+98#!#SDT YMD - yyyy,m,d - Full time#!#2023,6,5 14:30#!#2023-06-05 14:30:00.0
+99#!#SDT YMD - yyyy,m,d - AM time#!#2023,6,5 10:30 AM#!#2023-06-05 10:30:00.0
+100#!#SDT YMD - yyyy,m,d - PM time#!#2023,6,5 2:30 PM#!#2023-06-05 14:30:00.0
+102#!#SDT YMD - y,m,d - AM time#!#3,6,5 10:30 AM#!#2005-03-06 10:30:00.0
+103#!#SDT YMD - y,m,d - PM time#!#3,6,5 2:30 PM#!#2005-03-06 14:30:00.0
+104#!#SDT ISO - Basic with T#!#2023,06,05T14:30#!#2023-06-05 14:30:00.0
+105#!#SDT ISO - Extended with T#!#2023-06-05T14:30#!#2023-06-05 14:30:00.0
+106#!#SDT Mixed - Date/Time seps#!#2023/06/05 14:30#!#2023-06-05 14:30:00.0
+107#!#SDT Mixed - Date.Time seps#!#2023.06.05 14:30#!#2023-06-05 14:30:00.0
+108#!#SDT Mixed - Date Space seps#!#2023 06 05 14:30#!#2023-06-05 14:30:00.0
+109#!#SDT Alpha - Full month with time#!#June 5, 2023 14:30#!#2023-06-05 14:30:00.0
+110#!#SDT Alpha - Abbr month with time#!#Jun 5, 2023 14:30#!#2023-06-05 14:30:00.0
+111#!#SDT Alpha - Full month AM#!#June 5, 2023 10:30 AM#!#2023-06-05 10:30:00.0
+112#!#SDT Alpha - Full month PM#!#June 5, 2023 2:30 PM#!#2023-06-05 14:30:00.0
+119#!#SDT Edge - Min DateTime#!#1900-01-01 00:00#!#1900-01-01 00:00:00.0
+120#!#SDT Edge - Max DateTime#!#2079-06-06 23:59#!#2079-06-06 23:59:00.0
+121#!#SDT Edge - Midnight#!#2023-06-05 00:00#!#2023-06-05 00:00:00.0
+122#!#SDT Edge - Last Minute#!#2023-06-05 23:59#!#2023-06-05 23:59:00.0
+123#!#SDT Edge - Noon#!#2023-06-05 12:00#!#2023-06-05 12:00:00.0
+124#!#SDT Edge - Leap Year#!#2024-02-29 14:30#!#2024-02-29 14:30:00.0
+125#!#SDT AMPM - Standard#!#2023-06-05 2:30 PM#!#2023-06-05 14:30:00.0
+126#!#SDT AMPM - No space#!#2023-06-05 2:30PM#!#2023-06-05 14:30:00.0
+127#!#SDT AMPM - Lowercase#!#2023-06-05 2:30 pm#!#2023-06-05 14:30:00.0
+128#!#SDT AMPM - Mixed case#!#2023-06-05 2:30 Pm#!#2023-06-05 14:30:00.0
+129#!#SDT Round - 14:30:29#!#2023-06-05 14:30:29#!#2023-06-05 14:30:00.0
+130#!#SDT Round - 14:30:31#!#2023-06-05 14:30:31#!#2023-06-05 14:31:00.0
+131#!#SDT Round - 14:30:45#!#2023-06-05 14:30:45#!#2023-06-05 14:31:00.0
+134#!#SDT Invalid - Bad Hour#!#2023-06-05 24:00#!#2023-06-06 00:00:00.0
+136#!#SDT Invalid - With Seconds#!#2023-06-05 14:30:20#!#2023-06-05 14:30:00.0
+137#!#SDT Invalid - With MS#!#2023-06-05 14:30:00.123#!#2023-06-05 14:30:00.0
+140#!#SDT TimeSep - Colon#!#2023-06-05 14:30#!#2023-06-05 14:30:00.0
+142#!#SDT TimeSep - No Sep#!#2023-06-05 1430#!#2023-06-05 14:30:00.0
+~~END~~
 
 
 -- Create a test table
@@ -2143,6 +2241,9 @@ GO
 
 ~~ERROR (Message: date/time field value out of range: "21/06/2023 15:30")~~
 
+
+SET DATEFORMAT mdy;
+GO
 
 -- 13. Test rounding behavior
 INSERT INTO UDDTSmallDateTimeTest (ID, RegularSmallDateTime, BusinessSmallDateTimeCol, HistoricalSmallDateTimeCol)
@@ -11391,6 +11492,8 @@ smalldatetime
 
 ~~ERROR (Message: date/time field value out of range: "15/06/2023 14:30")~~
 
+SET DATEFORMAT mdy;
+GO
 
 -- Test datetime parts extraction
 DECLARE @sdt SMALLDATETIME = '2023-06-15 14:30';
