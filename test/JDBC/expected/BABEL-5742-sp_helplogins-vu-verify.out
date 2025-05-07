@@ -63,7 +63,6 @@ GO
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#NO#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
@@ -108,7 +107,6 @@ GO
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#NO#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
@@ -138,7 +136,6 @@ GO
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#NO#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
@@ -170,7 +167,6 @@ GO
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
 jdbc_user#!#master#!#English#!#YES#!#NO
 sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
-testlogin#!#master#!#English#!#NO#!#NO
 testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
