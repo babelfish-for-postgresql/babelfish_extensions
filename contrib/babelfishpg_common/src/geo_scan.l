@@ -1,7 +1,7 @@
 %{
 #include "geo_data.h"
 
-#define YY_READ_BUF_SIZE 16777216
+#define YY_READ_BUF_SIZE 16 * 1024 * 1024
 
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
@@ -70,14 +70,21 @@ void yyerror(char **result, const char *message) {
 
 void geo_scanner_init(const char *str)
 {
-    Size slen = strlen(str);
+    Size slen;
 
     if (YY_CURRENT_BUFFER)
         yy_delete_buffer(YY_CURRENT_BUFFER);
 
-    /* Check for empty input */
-    if (!str || !*str || (strspn(str, " \t\n\r") == slen)) {
-        yyerror(NULL, "Invalid input: string is either NULL, empty, or contains only whitespace characters");
+    /* Check for NULL input first */
+    if (str == NULL) {
+       yyerror(NULL, "Invalid input: string is NULL");
+    }
+
+    slen = strlen(str);
+
+    /* Check for empty or whitespace-only input */
+    if (slen == 0  || (strspn(str, " \t\n\r") == slen)) {
+        yyerror(NULL, "Invalid input: string is empty or contains only whitespace characters");
     }
 
     scanbuflen = slen;

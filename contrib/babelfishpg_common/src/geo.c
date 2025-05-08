@@ -70,7 +70,13 @@ create_point(double x, double y, double z, double m, int has_z, int has_m)
     coord.z = z;
     coord.m = m;
     coord.flags = 0;
-    
+
+    /* Check for NaN values since X and Y never allow NaN coordinates */
+    if (isnan(coord.x) || isnan(coord.y))
+    ereport(ERROR,
+            (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Invalid coordinate value (NaN)")));
+             
     if (has_z)
         FLAGS_SET_Z(coord.flags, 1);
     if (has_m)
@@ -80,17 +86,30 @@ create_point(double x, double y, double z, double m, int has_z, int has_m)
 }
 
 
-/* Rewrites a POINT coordinate into a WKT (Well-Known Text) string representation. */
+/* Rewrites a TSQL's POINT coordinate into a PostGIS's WKT (Well-Known Text) string representation. */
 char*
 rewrite_point_query(POINT coord)
 {
     StringInfoData output;
+
+    /* Check for NaN values in Z nd M coordinate if present */
+    if ((FLAGS_GET_Z(coord.flags) && isnan(coord.z)) ||
+        (FLAGS_GET_M(coord.flags) && isnan(coord.m)))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Invalid coordinate value (NaN)")));
+    }
+    
     initStringInfo(&output);
     
     /* Start the WKT string with "POINT" */
     appendStringInfoString(&output, "POINT");
 
-    /* Add 'M' if the point has M coordinate and doesn't have Z coordinate */
+    /* 
+     * Add 'M' if the point has M coordinate and doesn't have Z coordinate since PostGIS can't interpret it without M value
+     * We don't need to  add Z or ZM for their respective conditions because PostGIS also understands TSQL format for these cases
+     */
     if (FLAGS_GET_M(coord.flags) && !FLAGS_GET_Z(coord.flags) )
         appendStringInfoString(&output, " M");
 
@@ -117,46 +136,56 @@ rewrite_point_query(POINT coord)
     return output.data; 
 }
 
+/* Rewrites a PostGIS's POINT coordinate into a TSQL's WKT (Well-Known Text) string representation. */
 char*
 rewrite_point_dim_query(POINT coord)
 {
     StringInfoData output;
+
     initStringInfo(&output);
 
-    /* Start the WKT string with "POINT" */
+    /* Start the WKT string with "POINT" keyword  */
     appendStringInfoString(&output, "POINT");
 
     /* Open parenthesis for coordinate values */
     appendStringInfoChar(&output, '(');
 
-    /* Add X and Y coordinates */
+    /* Add X and Y coordinates (always required) */
     appendStringInfo(&output, "%s %s", 
                     FLOAT8_TO_CSTRING(coord.x),
                     FLOAT8_TO_CSTRING(coord.y));
 
+    /* Handle case: Both Z and M dimensions are present */
     if (FLAGS_GET_Z(coord.flags) && FLAGS_GET_M(coord.flags) && (!isnan(coord.z) || !isnan(coord.m))) 
     {
+        /* Add Z coordinate if not NaN, otherwise add NULL placeholder */
         if (!isnan(coord.z))
             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
         else
             appendStringInfoString(&output, " NULL");
 
+        /* Add M coordinate if not NaN  */
         if (!isnan(coord.m))
             appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
     }
+    /* Handle case: Only M dimension is present and not NaN */
     else if (FLAGS_GET_M(coord.flags) && !isnan(coord.m))
     {
+        /* Add NULL placeholder for Z (even though Z flag is not set) to maintain position */
         appendStringInfoString(&output, " NULL");
+        /* Add M coordinate value */
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.m));
     }
+    /* Handle case: Only Z dimension is present and not NaN */
     else if (FLAGS_GET_Z(coord.flags) && !isnan(coord.z))
     {
         appendStringInfo(&output, " %s", FLOAT8_TO_CSTRING(coord.z));
     }
+    /* Implicit else: Neither Z nor M dimensions are present or both are NaN, 
+       so only X and Y coordinates are included */
 
-    /* Close parenthesis */
+    /* Close parenthesis to complete the WKT representation */
     appendStringInfoChar(&output, ')');
 
-    /* Return the resulting string */
     return output.data; 
 }

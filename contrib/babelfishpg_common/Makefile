@@ -1,5 +1,9 @@
 include Version.config
 
+# Define tools for generating parser and scanner files
+BISON = bison
+FLEX = flex
+
 EXTENSION = babelfishpg_common
 EXTVERSION = $(BBFPGCMN_MAJOR_VERSION).$(BBFPGCMN_MINOR_VERSION).$(BBFPGCMN_MICRO_VERSION)
 
@@ -50,6 +54,9 @@ OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
 OBJS += src/geo.o 
 OBJS += src/geo_parser.o
 
+# Add generated source files
+GENERATED_SOURCES = src/geo_parser.c src/geo_scan.c
+
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
@@ -91,9 +98,23 @@ GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 
+# Generate parser and scanner files from .y and .l files
+src/geo_parser.c: src/geo_parser.y
+	$(BISON) -o $@ $<
+
+src/geo_scan.c: src/geo_scan.l
+	$(FLEX) -o $@ $<
+
+# Dependencies for object files
 src/geo_parser.o: src/geo_scan.c src/geo_data.h
 src/geo.o: src/geo_scan.c src/geo_parser.c src/geo_data.h
-distprep: src/geo_scan.c src/geo_parser.c
+
+# Add generated files to the clean target
+clean: clean-generated-files
+
+.PHONY: clean-generated-files
+clean-generated-files:
+	rm -f src/geo_parser.c src/geo_scan.c
 
 include $(PGXS)
 
@@ -101,6 +122,9 @@ ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
 all: $(GENERATED_UPGRADES)
 endif
+
+# Ensure generated source files are created before compilation starts
+all: $(GENERATED_SOURCES)
 
 $(EXTENSION).control: $(EXTENSION).control.in
 	cat $< \

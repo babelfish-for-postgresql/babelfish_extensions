@@ -323,6 +323,26 @@ GO
 SELECT CAST(CAST(0x000000000104000000000000000001000000ffffffffffffff01 as geometry) As varchar(MAX))
 GO
 
+--  Negative Tests for Nan coordinates
+SELECT geometry::STGeomFromText('Point ( 1 NaN 2 3)', 0);
+GO
+
+SELECT geometry::STGeomFromText('Point ( NaN 1 2 3)', 0);
+GO
+
+SELECT geometry::STGeomFromText('Point ( 1 2 NaN)', 0);
+GO
+
+SELECT geometry::STGeomFromText('Point ( 1 2 NULL NaN)', 0);
+GO
+
+SELECT geometry::STGeomFromText('Point ( 1 2 NaN 3)', 0);
+GO
+
+SELECT geometry::STGeomFromText('Point ( 1 2 3 NaN)', 0);
+GO
+
+
 -- Test with unsupported geometry instances (these should raise errors)
 -- TODO: Update these tests as we implement support for each geometry instance
 
