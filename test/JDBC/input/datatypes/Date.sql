@@ -3252,7 +3252,7 @@ GO
 SELECT $PARTITION.DATE_dt_partition_func(a) AS PartitionNumber, type, COUNT(*) AS FileCount
     FROM DATE_dt_partition
     GROUP BY $PARTITION.DATE_dt_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 
 -- 3. Function returning Date types

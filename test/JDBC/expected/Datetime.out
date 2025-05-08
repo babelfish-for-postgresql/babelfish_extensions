@@ -9401,14 +9401,14 @@ datetime#!#varchar#!#int
 SELECT $PARTITION.DATETIME_partition_func(a) AS PartitionNumber, type, COUNT(*) AS FileCount
     FROM DATETIME_partition
     GROUP BY $PARTITION.DATETIME_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 ~~START~~
 int#!#varchar#!#int
-1#!#JPEG#!#2
 1#!#GIF#!#2
-1#!#PNG#!#2
+1#!#JPEG#!#2
 1#!#PDF#!#2
+1#!#PNG#!#2
 ~~END~~
 
 
@@ -10015,7 +10015,7 @@ SELECT
 FROM sys.objects a
 CROSS JOIN sys.objects b;
 GO
-~~ROW COUNT: 2601~~
+~~ROW COUNT: 2704~~
 
 
 -- 1. Index on single DATETIME column

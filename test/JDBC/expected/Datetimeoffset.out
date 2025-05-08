@@ -9608,7 +9608,7 @@ SELECT
 FROM sys.objects a
 CROSS JOIN sys.objects b;
 GO
-~~ROW COUNT: 2500~~
+~~ROW COUNT: 2601~~
 
 
 -- 1. Index on single column

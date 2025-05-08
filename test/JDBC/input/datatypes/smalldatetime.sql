@@ -3689,7 +3689,7 @@ GO
 SELECT $PARTITION.SMALLDATETIME_partition_func(a) AS PartitionNumber, type, COUNT(*) AS FileCount
     FROM SMALLDATETIME_partition
     GROUP BY $PARTITION.SMALLDATETIME_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 
 -- 3. Function returning SMALLDATETIME

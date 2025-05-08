@@ -3488,7 +3488,7 @@ GO
 SELECT $PARTITION.DATETIME_partition_func(a) AS PartitionNumber, type, COUNT(*) AS FileCount
     FROM DATETIME_partition
     GROUP BY $PARTITION.DATETIME_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 
 -- 3. Function returning DATETIME
