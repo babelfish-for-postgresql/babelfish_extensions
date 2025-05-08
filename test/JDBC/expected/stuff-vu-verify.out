@@ -1,0 +1,2909 @@
+-- NULL
+SELECT stuff(NULL, 2, 1, 'ab')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('ab', 2, 1, NULL)
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+SELECT stuff('ab', NULL, 1, 'bc')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('ab', 2, NULL, 'bc')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('ab', NULL, '1', 'bc')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('ab', '2', NULL, 'bc')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('ab', NULL, NULL, 'bc')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- Different no. of arguments
+SELECT stuff('abc', 1, 2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The stuff function requires 4 arguments)~~
+
+
+SELECT stuff('abc', 1, 1, 'xy', 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The stuff function requires 4 arguments)~~
+
+
+-- edge case values for second parameter
+SELECT stuff('AbdefGhi', 0, 1, 'xy')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT '|' + stuff('AbdefGhi', -1, 1, 'xy') + '|'
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 1, 1, 'xy')
+GO
+~~START~~
+varchar
+xybdefGhi
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 8, 1, 'xy')
+GO
+~~START~~
+varchar
+AbdefGhxy
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 9, 1, 'xy')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 2147483648, 1, 'xy')
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- edge case values for third parameter
+SELECT stuff('AbdefGhi', 1, 0, 'xy')
+GO
+~~START~~
+varchar
+xyAbdefGhi
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 8, 0, 'xy')
+GO
+~~START~~
+varchar
+AbdefGhxyi
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 1, -1, 'xy')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 8, -1, 'xy')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 2, 9, 'xy')
+GO
+~~START~~
+varchar
+Axy
+~~END~~
+
+
+SELECT stuff('AbdefGhi', 2, 2147483648, 'xy')
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- input type char
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?            efghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?efghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcefefghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcefefghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 4, 2, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?efghi??             
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 0, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 26, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, -1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, 25, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+axyz??wuytgdy?
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·?·??                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·ef?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·ef?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+varchar
+??·?·??                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比')
+GO
+~~START~~
+varchar
+??·?
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+??·ef?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+??·ef?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+?拉·比
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?            efghi??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi🙂🙂
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?efghi??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcefefghi??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+abcefefghi??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 4, 2, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?efghi??
+~~END~~
+
+SELECT stuff('abc🙂defghi🙂🙂', 4, 2, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?efghi??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 0, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 26, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, -1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, 25, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+varchar
+axyz??wuytgdy?
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·?·?                      ?
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·?·??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·ef?
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varchar
+??·ef?
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+varchar
+??·?·??
+~~END~~
+
+SELECT stuff('比尔·拉莫斯', 4, 2, '拉·比')
+GO
+~~START~~
+varchar
+??·?·??
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比')
+GO
+~~START~~
+varchar
+??·?
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·ef斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·ef斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+SELECT stuff('比尔·拉莫斯', 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比拉·比
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') FROM babel_4838_stuff_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE CHINESE_PRC_CI_AS FROM babel_4838_stuff_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS FROM babel_4838_stuff_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') FROM babel_4838_stuff_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE CHINESE_PRC_CS_AS FROM babel_4838_stuff_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') COLLATE CHINESE_PRC_CS_AS FROM babel_4838_stuff_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') FROM babel_4838_stuff_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE CHINESE_PRC_CI_AI FROM babel_4838_stuff_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·比尔·拉莫斯斯
+~~END~~
+
+SELECT stuff(a, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AI FROM babel_4838_stuff_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉·比斯
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_arabic_ci_as
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') FROM babel_4838_stuff_arabic_ci_as
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE ARABIC_CI_AS FROM babel_4838_stuff_arabic_ci_as
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') COLLATE ARABIC_CI_AS FROM babel_4838_stuff_arabic_ci_as
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_arabic_cs_as
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') FROM babel_4838_stuff_arabic_cs_as
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE ARABIC_CS_AS FROM babel_4838_stuff_arabic_cs_as
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') COLLATE ARABIC_CS_AS FROM babel_4838_stuff_arabic_cs_as
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_arabic_ci_ai
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') FROM babel_4838_stuff_arabic_ci_ai
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+SELECT stuff(a, 4, 2, a) COLLATE ARABIC_CI_AI FROM babel_4838_stuff_arabic_ci_ai
+GO
+~~START~~
+varchar
+اللالله مع المتقينمع المتقين
+~~END~~
+
+SELECT stuff(a, 4, 2, 'معقيال') COLLATE ARABIC_CI_AI FROM babel_4838_stuff_arabic_ci_ai
+GO
+~~START~~
+varchar
+اللمعقيالمع المتقين
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abc晥efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abc晥efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 4, 2, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi??             
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 0, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 26, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, -1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, 25, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+axyz🙂🙂wuytgdy🙂
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·晥?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+??·晥?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比')
+GO
+~~START~~
+nvarchar
+?拉·比
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·?·?                      ?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·晥?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·晥?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+??·拉·比?                   
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+?拉·比
+~~END~~
+
+
+-- with table column of type nchar
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_t1 
+GO
+~~START~~
+nvarchar
+abcabc🙂defghi🙂🙂                                      efghi🙂🙂                                      
+比尔·比尔·拉莫斯                                            斯                                            
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz??wuytgdy?            efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abc晥efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+abc晥efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 4, 2, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 0, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 26, 1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, -1, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT stuff(@inputString, 2, 25, 'xyz🙂🙂wuytgdy🙂')
+GO
+~~START~~
+nvarchar
+axyz🙂🙂wuytgdy🙂
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·晥斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+nvarchar
+比尔·晥斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比')
+GO
+~~START~~
+nvarchar
+比拉·比
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString CHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·?·?                      斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString NVARCHAR(25) = N'拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARCHAR(25) = '拉·比'
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·晥斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·晥斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 4, 2, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比尔·拉·比斯
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 0, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 26, 1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, -1, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT stuff(@inputString, 2, 25, '拉·比') COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+nvarchar
+比拉·比
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F202020202020202020202020666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F202020202020202020202020666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, 0x6566)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+varbinary
+6162633FB73F666768
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, '拉·比')  COLLATE CHINESE_PRC_CI_AS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: collations are not supported by type varbinary)~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 0, 1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 13, 1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 2, -1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 2, 15, 0x6566)
+GO
+~~START~~
+varbinary
+616566
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString CHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F202020202020202020202020666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString NCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F202020202020202020202020666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString NVARCHAR(25) = N'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString VARCHAR(25) = 'xyz🙂🙂wuytgdy🙂'
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+61626378797A3F3F777579746764793F666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString BINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+DECLARE @replaceString VARBINARY(10) = 0x6566
+SELECT stuff(@inputString, 4, 2, @replaceString)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, 0x6566)
+GO
+~~START~~
+varbinary
+6162636566666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, '拉·比')
+GO
+~~START~~
+varbinary
+6162633FB73F666768
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 4, 2, '拉·比')  COLLATE CHINESE_PRC_CI_AS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: collations are not supported by type varbinary)~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 0, 1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 13, 1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 2, -1, 0x6566)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT stuff(@inputString, 2, 15, 0x6566)
+GO
+~~START~~
+varbinary
+616566
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4838_stuff_dep_view
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+
+EXEC babel_4838_stuff_dep_proc
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_func()
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_itvf_func()
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_1
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂                                      
+比尔·xyz🙂🙂wuytgdy🙂斯                                            
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_2
+GO
+~~START~~
+nvarchar
+abcxyz🙂🙂wuytgdy🙂efghi🙂🙂
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_3
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?fghi                                         
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_4
+GO
+~~START~~
+varchar
+abcxyz??wuytgdy?fghi
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_5
+GO
+~~START~~
+varbinary
+2020616566642020
+~~END~~
+
+
+SELECT * FROM babel_4838_stuff_dep_view_6
+GO
+~~START~~
+varchar
+abcabc?defghi??efghi??
+~~END~~
+
+
+-- input type UDT
+-- in table babel_4838_stuff_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT stuff(a, 4, 2, a) FROM babel_4838_stuff_UDT
+GO
+~~START~~
+varchar
+abcabcdeff
+~~END~~
+
+
+SELECT stuff(b, 4, 2, b) FROM babel_4838_stuff_UDT
+GO
+~~START~~
+varchar
+abcabcdeff
+~~END~~
+
+
+-- Arguments with pg datatypes
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t1
+GO
+~~START~~
+varchar
+abpqrstefghi
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t2
+GO
+~~START~~
+varchar
+abpqrstefghi
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t3
+GO
+~~START~~
+varchar
+abpqrstefghi
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t4
+GO
+~~START~~
+varchar
+abpqrst efghi
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t5
+GO
+~~START~~
+varchar
+abpqrst efghi
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t6
+GO
+~~START~~
+varchar
+1278956
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t7
+GO
+~~START~~
+varchar
+1278956
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t9
+GO
+~~START~~
+varchar
+\x\x7172736667686970
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t10
+GO
+~~START~~
+varchar
+202016-12-21 00:00:00-12-21 00:00:00
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t11
+GO
+~~START~~
+varchar
+202016-12-21-12-21
+~~END~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT stuff(a, 3, 2, b) FROM dbo.babel_4838_stuff_psql_t14
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+-- other different datatypes
+DECLARE @inputString sysname = N'abc🙂defghi🙂🙂';
+SELECT stuff(@inputString, 3, 4, 'pqrs')
+GO
+~~START~~
+varchar
+abpqrsfghi??
+~~END~~
+
+
+DECLARE @inputString date = '2016-12-21';
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+201abcd-12-21
+~~END~~
+
+DECLARE @inputString date = '2016-12-21';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString date = '2016-12-21';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString date = '2016-12-21';
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc2016-12-21
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+201abcd-12-21 00:00:00
+~~END~~
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc2016-12-21 00:00:00
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+195abcd-12-13 12:43:00
+~~END~~
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc1955-12-13 12:43:00
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+12:abcd0:05.1237
+~~END~~
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12:10:05.1237
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+196abcd-10-23 12:45:37.1234 +10:00
+~~END~~
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc1968-10-23 12:45:37.1234 +10:00
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+196abcd-10-23 12:45:37.1237
+~~END~~
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc1968-10-23 12:45:37.1237
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd56
+~~END~~
+
+DECLARE @inputString decimal = 123456;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString decimal = 123456;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString decimal = 123456;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc123456
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd5
+~~END~~
+
+DECLARE @inputString numeric = 12345.12;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString numeric = 12345.12;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString numeric = 12345.12;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12345
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd5.1
+~~END~~
+
+DECLARE @inputString float = 12345.1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString float = 12345.1;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString float = 12345.1;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12345.1
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd5.1
+~~END~~
+
+DECLARE @inputString real = 12345.1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString real = 12345.1;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString real = 12345.1;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12345.1
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd5678
+~~END~~
+
+DECLARE @inputString bigint = 12345678;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString bigint = 12345678;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString bigint = 12345678;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12345678
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd5678
+~~END~~
+
+DECLARE @inputString int = 12345678;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12345678
+~~END~~
+
+DECLARE @inputString int = 1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+abcdysd
+~~END~~
+
+DECLARE @inputString int = 12345678;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString CHAR(25) = 'xyzd';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
+
+DECLARE @inputString CHAR(25) = 'xyzd';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
+
+DECLARE @inputString VARCHAR(25) = 'xyzd';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
+
+DECLARE @inputString VARCHAR(25) = 'xyzd';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd6
+~~END~~
+
+DECLARE @inputString smallint = 12356;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12356
+~~END~~
+
+DECLARE @inputString smallint = 1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+abcdysd
+~~END~~
+
+DECLARE @inputString smallint = 12356;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString NCHAR(25) = N'xyzd';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
+
+DECLARE @inputString NCHAR(25) = N'xyzd';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd                     ")~~
+
+DECLARE @inputString NVARCHAR(25) = N'xyzd';
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
+
+DECLARE @inputString NVARCHAR(25) = N'xyzd';
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "xyzd")~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString tinyint = 235;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc235
+~~END~~
+
+DECLARE @inputString tinyint = 1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+abcdysd
+~~END~~
+
+DECLARE @inputString tinyint = 235;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString BINARY(10) = 0x6162636465666768;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd6.00
+~~END~~
+
+DECLARE @inputString money = 12356;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString money = 12356;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString money = 12356;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12356.00
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+123abcd6.00
+~~END~~
+
+DECLARE @inputString smallmoney = 12356;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString smallmoney = 12356;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+DECLARE @inputString smallmoney = 12356;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc12356.00
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DECLARE @inputString bit = 1;
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~START~~
+varchar
+abcdysd
+~~END~~
+
+DECLARE @inputString bit = 1;
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~START~~
+varchar
+abcdysd
+~~END~~
+
+DECLARE @inputString bit = 1;
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc1
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+6F9abcd19FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+SELECT stuff(a, 4, 2, 'abcd') from babel_4838_stuff_image;
+GO
+~~START~~
+varchar
+6F9abcd9FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+SELECT stuff('abcd', a, 2, 'abcd') from babel_4838_stuff_image;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+SELECT stuff('abcd', 4, a, 'abcd') from babel_4838_stuff_image;
+GO
+~~START~~
+varchar
+abcabcd
+~~END~~
+
+SELECT stuff('abcd', 4, 2, a) from babel_4838_stuff_image;
+GO
+~~START~~
+varchar
+abc6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+-- input datatype text
+SELECT stuff(a, 4, 2, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+abcabcdefghi??
+~~END~~
+
+SELECT stuff('abcd', a, 2, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc🙂defghi🙂🙂")~~
+
+SELECT stuff('abcd', 4, a, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc🙂defghi🙂🙂")~~
+
+SELECT stuff('abcd', 4, 2, a) FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+abcabc?defghi??
+~~END~~
+
+
+-- input datatype ntext
+SELECT stuff(b, 4, 2, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+nvarchar
+abcabcdefghi🙂🙂
+~~END~~
+
+SELECT stuff('abcd', b, 2, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc🙂defghi🙂🙂")~~
+
+SELECT stuff('abcd', 4, b, 'abcd') FROM babel_4838_stuff_text
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc🙂defghi🙂🙂")~~
+
+SELECT stuff('abcd', 4, 2, b) FROM babel_4838_stuff_text
+GO
+~~START~~
+nvarchar
+abcabc🙂defghi🙂🙂
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+6F9abcd19FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~START~~
+varchar
+abc6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT stuff(@inputString, 4, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT stuff('xysd', @inputString, 1, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT stuff('xysd', 1, @inputString, 'abcd')
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT stuff('abcd', 4, 1, @inputString)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function stuff is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff(CAST(@inputString AS VARCHAR(50)), 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+6F9abcd19FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT stuff('abcd', 4, 1, CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+abc6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff(CAST(@inputString AS VARCHAR(50)), 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+<boabcdy><fruit/></body>
+~~END~~
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT stuff('abcd', 4, 1, CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+abc<body><fruit/></body>
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff(CAST(@inputString AS VARCHAR(50)), 4, 1, 'abcd')
+GO
+~~START~~
+varchar
+POIabcdT(1 2)
+~~END~~
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT stuff('abcd', 4, 1, CAST(@inputString AS VARCHAR(50)))
+GO
+~~START~~
+varchar
+abcPOINT(1 2)
+~~END~~
+

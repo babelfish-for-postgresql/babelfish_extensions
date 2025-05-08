@@ -81,12 +81,10 @@ int
 begin tran;
 GO
 
--- should throw permission denied error
+-- should succeed as login is the owner of underlying table psql_tbl_2
 insert into test_tbl_trig_bbf_2 values (1);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table psql_tbl_2)~~
+~~ROW COUNT: 1~~
 
 
 select @@trancount

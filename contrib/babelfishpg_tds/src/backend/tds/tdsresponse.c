@@ -24,9 +24,12 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_cast.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/pathnodes.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -127,15 +130,28 @@ static TdsColumnMetaData *colMetaData = NULL;
 static List *relMetaDataInfoList = NULL;
 
 static Oid sys_vector_oid = InvalidOid;
+static Oid sys_sparsevec_oid = InvalidOid;
+static Oid sys_halfvec_oid = InvalidOid;
+static Oid tsql_fixeddecimal_numeric_oid = InvalidOid;
+static Oid tsql_numeric_fixeddecimal_oid = InvalidOid;
+static Oid tsql_bit_numeric_oid = InvalidOid;
+static Oid tsql_int4_bit_oid = InvalidOid;
+static Oid sys_nspoid = InvalidOid;
+static Oid tsql_bit_oid = InvalidOid;
+static Oid tsql_fixeddecimal_oid = InvalidOid;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
+static bool is_numeric_cast(Oid func_oid);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
-static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
-static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
-static bool is_sys_vector_datatype(Oid oid);
+static bool is_this_a_vector_datatype(Oid oid);
+static bool is_tsql_fixeddecimal_numeric(Oid oid);
+static bool is_tsql_numeric_fixeddecimal(Oid oid);
+static bool is_tsql_bit_numeric(Oid oid);
+static bool is_tsql_int4_bit(Oid oid);
+static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 
 static inline void
 SendPendingDone(bool more)
@@ -409,155 +425,288 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
-static int32
-resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
+static Oid
+LookupCastFuncName(Oid castsource, Oid casttarget)
 {
-	ListCell	*lc;
-	int32		max_precision = 0,
-				max_scale = 0,
-				precision = 0,
-				scale = 0,
-				integralDigitCount = 0,
-				typmod = -1,
-				result_typmod = -1;
-	List		*planlist = NIL;
-	if (IsA(plan, Append))
-	{
-		planlist = ((Append *) plan)->appendplans;
-	}
-	else if(IsA(plan, MergeAppend))
-	{
-		planlist = ((MergeAppend *) plan)->mergeplans; 
-	}
+	HeapTuple	tuple;
+	Form_pg_cast castForm;
 
-	Assert(planlist != NIL);
-	foreach(lc, planlist)
+	tuple = SearchSysCache2(CASTSOURCETARGET,
+								ObjectIdGetDatum(castsource),
+								ObjectIdGetDatum(casttarget));
+	if (HeapTupleIsValid(tuple))
 	{
-		TargetEntry *tle;
-		Plan 		*outerplan = (Plan *) lfirst(lc);
-
-		/* if outerplan is SubqueryScan then use actual subplan */
-		if (IsA(outerplan, SubqueryScan))
-			outerplan = ((SubqueryScan *)outerplan)->subplan;
-
-		tle = get_tle_by_resno(outerplan->targetlist, attno);
-		if (IsA(tle->expr, Var))
-		{
-			Var *var = (Var *)tle->expr;
-			if (var->varno == OUTER_VAR)
-			{
-				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
-			}
-			else
-			{
-				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
-			}
-		}
-		else
-		{
-			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
-		}
-		if (typmod == -1)
-			continue;
-		scale = (typmod - VARHDRSZ) & 0xffff;
-		precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
-		integralDigitCount = Max(precision - scale, max_precision - max_scale);
-		max_scale = Max(max_scale, scale);
-		max_precision = integralDigitCount + max_scale;
-		/*
-		 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
-		 * to TDS_MAX_NUM_PRECISION at the cost of scale.
-		 */
-		if (max_precision > TDS_MAX_NUM_PRECISION)
-		{
-			max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
-			max_precision = TDS_MAX_NUM_PRECISION;
-		}
-		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+		castForm = (Form_pg_cast) GETSTRUCT(tuple);
+		ReleaseSysCache(tuple);
+		return castForm->castfunc;
 	}
-	/* If max_precision is still default then use tds specific defaults */
-	if (result_typmod == -1)
-	{
-		result_typmod = ((tds_default_numeric_precision << 16) | tds_default_numeric_scale) + VARHDRSZ;
-	}
-	return result_typmod;
+	return InvalidOid;
 }
 
-static int32
-resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
+static bool
+is_tsql_bit_numeric(Oid oid)
 {
-	TargetEntry	*tle;
-	Plan		*outerplan = NULL;
-
-	if (IsA(plan, Append) || IsA(plan, MergeAppend))
-		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
-	else
-		outerplan = outerPlan(plan);
-
-	/* if outerplan is SubqueryScan then use actual subplan */
-	if (IsA(outerplan, SubqueryScan))
-		outerplan = ((SubqueryScan *)outerplan)->subplan;
-
-	/* outerplan must not be NULL */
-	Assert(outerplan);
-	tle = get_tle_by_resno(outerplan->targetlist, attno);
-	if (IsA(tle->expr, Var))
-	{
-		Var *var = (Var *)tle->expr;
-		if (var->varno == OUTER_VAR)
-		{
-			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
-		}
-	}
-	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+	if (!OidIsValid(tsql_bit_numeric_oid))
+		tsql_bit_numeric_oid = LookupCastFuncName(tsql_bit_oid, NUMERICOID);
+	return tsql_bit_numeric_oid == oid;
 }
 
-/* look for a typmod to return from a numeric expression */
-static int32
-resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
+static bool
+is_tsql_fixeddecimal_numeric(Oid oid)
 {
+	if (!OidIsValid(tsql_fixeddecimal_numeric_oid))
+		tsql_fixeddecimal_numeric_oid = LookupCastFuncName(tsql_fixeddecimal_oid, NUMERICOID);
+	return tsql_fixeddecimal_numeric_oid == oid;
+}
+
+static bool
+is_tsql_numeric_fixeddecimal(Oid oid)
+{
+	if (!OidIsValid(tsql_numeric_fixeddecimal_oid))
+		tsql_numeric_fixeddecimal_oid = LookupCastFuncName(NUMERICOID, tsql_fixeddecimal_oid);
+	return tsql_numeric_fixeddecimal_oid == oid;
+}
+
+static bool
+is_tsql_int4_bit(Oid oid)
+{
+	if (!OidIsValid(tsql_int4_bit_oid))
+		tsql_int4_bit_oid = LookupCastFuncName(INT4OID, tsql_bit_oid);
+	return tsql_int4_bit_oid == oid;
+}
+
+/*
+ * is_numeric_cast checks if the given datatype can be cast to NUMERIC.
+ * This information is used when processing T_FuncExpr nodes to determine
+ * if resolve_numeric_typmod_from_exp should be called recursively.
+ * This ensures proper typmod resolution for nested numeric conversions.
+ */
+static bool
+is_numeric_cast(Oid func_oid)
+{
+	if (!OidIsValid(sys_nspoid))
+		sys_nspoid = get_namespace_oid("sys", false);
+
+	if (!OidIsValid(tsql_bit_oid))
+		tsql_bit_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("bit"), ObjectIdGetDatum(sys_nspoid));
+		
+	if (!OidIsValid(tsql_fixeddecimal_oid))
+		tsql_fixeddecimal_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("fixeddecimal"), ObjectIdGetDatum(sys_nspoid));
+
+	if (func_oid == F_NUMERIC_INT4 ||
+		func_oid == F_NUMERIC_INT8 ||
+		func_oid == F_NUMERIC_INT2 ||
+		func_oid == F_NUMERIC_FLOAT4 ||
+		func_oid == F_NUMERIC_FLOAT8 ||
+		func_oid == F_INT8_INT4 ||
+		func_oid == F_INT4_INT8 ||
+		func_oid == F_INT8_INT2 ||
+		func_oid == F_INT2_INT8 ||
+		func_oid == F_INT4_INT2 ||
+		func_oid == F_INT2_INT4 ||
+		func_oid == F_INT4_NUMERIC ||
+		func_oid == F_INT2_NUMERIC ||
+		func_oid == F_INT8_NUMERIC ||
+		is_tsql_bit_numeric(func_oid) ||
+		is_tsql_int4_bit(func_oid) ||
+		is_tsql_fixeddecimal_numeric(func_oid) ||
+		is_tsql_numeric_fixeddecimal(func_oid))
+		return true;
+	return false;
+}
+
+/*
+ * is_numeric_datatype - returns bool if given datatype is numeric, decimal, UDT on numeric or decimal.
+ */
+static bool
+is_numeric_datatype(Oid typid)
+{
+	if (OidIsValid(typid) && getBaseType(typid) == NUMERICOID)
+		return true;
+
+	return false;
+}
+
+
+/* 
+ * look for a typmod to return from a numeric expression,
+ * Also for cases where we cannot compute the expression typmod return -1 and set found as false.
+ */
+int32
+resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
+{
+	/*
+	 * set found value as true by default, if we are unable to 
+	 * find the expression typmod found will be set to false.
+	 */
+	if (found != NULL)
+		*found = true;
+
 	if (expr == NULL)
+	{
+		if (found != NULL) *found = false;
 		return -1;
+	}
 	switch (nodeTag(expr))
 	{
+		case T_Param:
+			{
+				Param *param = (Param *) expr;
+				if (!is_numeric_datatype(param->paramtype))
+				{
+					/* typmod is undefined */
+					if (found != NULL) *found = false;
+					return -1;
+				}
+				else
+				{
+					if (param->paramtypmod == -1)
+					{
+						if (found != NULL) *found = false;
+					}
+					return param->paramtypmod;
+				}
+			}
 		case T_Const:
 			{
 				Const	   *con = (Const *) expr;
 				Numeric		num;
+				int64		val;
+				
+				if (con->consttypmod != -1)
+					return con->consttypmod;
 
-				/*
-				 * TODO: We used a workaround here, that we will assume typmod
-				 * is 0 if the value we have is not numeric. See walkaround in
-				 * T_FuncExpr part of this function. JIRA: BABEL-1007
-				 */
-				if (con->consttype != NUMERICOID || con->constisnull)
+				if (con->constisnull || 
+					(!(con->consttype == INT8OID) &&
+					 !(con->consttype == INT4OID) &&
+					 !(con->consttype == INT2OID) &&
+					 !is_numeric_datatype(con->consttype)))
 				{
-					return 0;
-					/* Typmod doesn 't really matter since it' s a const NULL. */
+					if (found != NULL) *found = false;
+					/* typmod is undefined */
+					return -1;
 				}
 				else
 				{
+					/*
+					 * This function calculates the typmod for INT4
+					 * constants. It converts the INT4 value to NUMERIC and then
+					 * determines the appropriate typmod. This process ensures correct 
+					 * numeric precision handling in Babelfish TSQL operations.
+					 */
+					if (con->consttype == INT4OID ||
+						 con->consttype == INT8OID ||
+						 con->consttype == INT2OID)
+					{
+						val = con->constvalue;
+						num = int64_to_numeric(val);
+						return numeric_get_typmod(num);
+					}
+
 					num = (Numeric) con->constvalue;
 					return numeric_get_typmod(num);
 				}
 			}
 		case T_Var:
 			{
-				Var		   *var = (Var *) expr;
+				Var            *var = (Var *) expr;
+				TargetEntry    *tle;
+				int             rettypmod;
+				bool            found_typmod;
 
-				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
-				if (var->varno == OUTER_VAR)
+				/* If the current node is a subqueryscan,
+				 * find the original target list entry from subplan.
+				 */
+				if (plan && IsA(plan, SubqueryScan))
+				{	Plan		*subplan;
+					Assert(plan);
+					subplan = ((SubqueryScan *)plan)->subplan;
+					if (subplan)
+					{
+						tle = get_tle_by_resno(subplan->targetlist, var->varattno);
+						if (!tle)
+							elog(ERROR, "bogus varattno for SubqueryScan's subplan: %d", var->varattno);
+						rettypmod = resolve_numeric_typmod_from_exp(subplan, (Node *)tle->expr, &found_typmod);
+						if (!found_typmod)
+						{
+							if (found != NULL) *found = false;
+						}
+						return rettypmod;
+					}
+					else
+					{
+						elog(ERROR, "subplan is NULL for SubqueryScan");
+					}
+				}
+				/* If the current node is a not UNION node and it has either
+				 * Outer/Inner query,find the original target list entry from
+				 * Outer/Inner plan.
+				 */
+				if (plan && (!IsA(plan, Append) && !IsA(plan, MergeAppend)))
 				{
 					Assert(plan);
-					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+					if (var->varno == OUTER_VAR)
+					{	Plan		*outerplan;
+						outerplan = outerPlan(plan);
+						if (outerplan)
+						{
+							tle = get_tle_by_resno(outerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for OUTER_VAR var: %d", var->varattno);
+							rettypmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr, &found_typmod);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							return rettypmod;
+						}
+						else
+						{
+							elog(ERROR, "outerplan is NULL for OUTER_VAR");
+						}
+					}
+					else if (var->varno == INNER_VAR)
+					{	Plan		*innerplan;
+						innerplan = innerPlan(plan);
+						if (innerplan)
+						{
+							tle = get_tle_by_resno(innerplan->targetlist, var->varattno);
+							if (!tle)
+								elog(ERROR, "bogus varattno for INNER_VAR var: %d", var->varattno);
+							rettypmod = resolve_numeric_typmod_from_exp(innerplan, (Node *)tle->expr, &found_typmod);
+							if (!found_typmod)
+							{
+								if (found != NULL) *found = false;
+							}
+							return rettypmod;
+						}
+						else
+						{
+							elog(ERROR, "innerplan is NULL for INNER_VAR");
+						}
+					}
+				}
+
+				/* if varno is INNER_VAR or OUTER_VAR then we need plan, else we cannot find typmod, hence set found as false and return -1 */
+				if (plan == NULL && (var->varno == INNER_VAR || var->varno == OUTER_VAR))
+				{
+					if (found != NULL) *found = false;
+					return -1;
+				}
+
+				if (var->vartypmod == -1)
+				{
+					if (found != NULL) *found = false;
 				}
 				return var->vartypmod;
 			}
 		case T_OpExpr:
 			{
 				OpExpr	   *op = (OpExpr *) expr;
-				Node	   *arg1,
+				Node	   *arg1 = NULL,
 						   *arg2 = NULL;
+				Oid	        arg1type = InvalidOid,
+							arg2type = InvalidOid;
 				int32		typmod1 = -1,
 							typmod2 = -1;
 				uint8_t		scale1,
@@ -567,22 +716,23 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				uint8_t		scale,
 							precision;
 				uint8_t		integralDigitCount = 0;
-
-				/*
-				 * If one of the operands is part of aggregate function SUM()
-				 * or AVG(), set has_aggregate_operand to true; in those cases
-				 * resultant precision and scale calculation would be a bit
-				 * different
-				 */
-				bool		has_aggregate_operand = false;
+				bool		found_typmod;
 
 				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
 				if (list_length(op->args) == 2)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
-					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
@@ -591,7 +741,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				else if (list_length(op->args) == 1)
 				{
 					arg1 = linitial(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = 0;
@@ -621,9 +775,21 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				 */
 				if (typmod1 == -1 && typmod2 == -1)
 				{
-					precision = tds_default_numeric_precision;
-					scale = tds_default_numeric_scale;
-					return ((precision << 16) | scale) + VARHDRSZ;
+					/*
+					 * if either of the expression is of type numeric then we can use default precision and scale
+					 * else when both expressions are non-numeric the typmod should be -1.
+					 */
+					arg1type = exprType(arg1);
+					arg2type = exprType(arg2);
+					if (is_numeric_datatype(arg1type) || is_numeric_datatype(arg2type))
+					{
+						precision = tds_default_numeric_precision;
+						scale = tds_default_numeric_scale;
+						return ((precision << 16) | scale) + VARHDRSZ;
+					}
+
+					if (found != NULL) *found = false;
+					return -1;
 				}
 				else if (typmod1 == -1)
 				{
@@ -636,14 +802,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					scale2 = scale1;
 				}
 
-				/*
-				 * Refer to details of precision and scale calculation in the
-				 * following link:
-				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
-				 */
-				has_aggregate_operand = arg1->type == T_Aggref ||
-					(list_length(op->args) == 2 && arg2->type == T_Aggref);
-
 				switch (op->opfuncid)
 				{
 					case NUMERIC_ADD_OID:
@@ -653,12 +811,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = integralDigitCount + 1 + scale;
 
 						/*
-						 * For addition and subtraction, skip scale adjustment
-						 * when none of the operands is part of any aggregate
-						 * function
+						 * For addition and subtraction, adjust the scale
+						 * and precision, in precision overflow cases.
 						 */
-						if (has_aggregate_operand &&
-							integralDigitCount < (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+						if (integralDigitCount > (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
@@ -670,14 +826,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					case NUMERIC_MUL_OID:
 						scale = scale1 + scale2;
 						precision = precision1 + precision2 + 1;
-
-						/*
-						 * For multiplication, skip scale adjustment when
-						 * atleast one of the operands is part of aggregate
-						 * function
-						 */
-						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
-							precision = TDS_MAX_NUM_PRECISION;
 						break;
 					case NUMERIC_DIV_OID:
 						scale = Max(6, scale1 + precision2 + 1);
@@ -694,6 +842,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = precision1;
 						break;
 					default:
+						if (found != NULL) *found = false;
 						return -1;
 				}
 
@@ -726,11 +875,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = Max(scale - delta, 0);
 					}
-
 					/*
 					 * Control reaching here for only arithmetic overflow
 					 * cases
 					 */
+					else
+					{
+						if (found != NULL) *found = false;
+					}
 				}
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
@@ -739,10 +891,17 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				FuncExpr   *func = (FuncExpr *) expr;
 				Oid			func_oid = InvalidOid;
 				int			rettypmod = -1;
-
+				bool        found_typmod;
+				Node	   *arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
+				{
+					if (rettypmod == -1)
+					{
+						if (found != NULL) *found = false;
+					}
 					return rettypmod;
+				}
 
 				/*
 				 * Look up the return type typmod from a persistent store
@@ -755,6 +914,29 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 					rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
 																					  func->args == NIL ? 0 : func->args->length,
 																					  func->funcresulttype);
+
+				/*
+				 * If the following conditions are met then we will recursively find typmod from arg.
+				 * 1) rettypmod == -1 means unable to find typmod till now.
+				 * 2) check if only one args and then is that castable to numeric.
+				 */
+				if (rettypmod == -1 &&
+					list_length(func->args) == 1 &&
+					is_numeric_cast(func_oid))
+				{
+					arg = linitial(func->args);
+					rettypmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+					return rettypmod;
+				}
+
+				if (rettypmod == -1)
+				{
+					if (found != NULL) *found = false;
+				}
 				return rettypmod;
 			}
 		case T_NullIfExpr:
@@ -766,11 +948,18 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				 */
 				NullIfExpr *nullif = (NullIfExpr *) expr;
 				Node	   *arg1;
+				bool        found_typmod;
+				int         rettypmod;
 
 				Assert(nullif->args != NIL);
 
 				arg1 = linitial(nullif->args);
-				return resolve_numeric_typmod_from_exp(plan, arg1);
+				rettypmod = resolve_numeric_typmod_from_exp(plan, arg1, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+				}
+				return rettypmod;
 			}
 		case T_CoalesceExpr:
 			{
@@ -786,6 +975,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 							max_integral_precision = 0,
 							scale,
 							max_scale = 0;
+				bool        found_typmod;
 
 				Assert(coale->args != NIL);
 
@@ -793,7 +983,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				foreach(lc, coale->args)
 				{
 					arg = lfirst(lc);
-					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg);
+					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
 					/* return -1 if we fail to resolve one of the arg's typmod */
 					if (arg_typmod == -1)
 						return -1;
@@ -826,6 +1020,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 							max_integral_precision = 0,
 							scale,
 							max_scale = 0;
+				bool        found_typmod;
 
 				Assert(case_expr->args != NIL);
 
@@ -834,7 +1029,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
-					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result);
+					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
 
 					/*
 					 * return -1 if we fail to resolve one of the result's
@@ -865,15 +1064,29 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 				int32		typmod;
 				uint8_t		precision,
 							scale;
+				bool        found_typmod;
 
-				Assert(aggref->args != NIL);
+				if (aggref->aggstar)
+				{
+					if (found != NULL) *found = false;
+					typmod = -1;
+				}
+				else
+				{
+					Assert(aggref->args != NIL);
 
-				te = (TargetEntry *) linitial(aggref->args);
-				typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
+					te = (TargetEntry *) linitial(aggref->args);
+					typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+
+					scale = (typmod - VARHDRSZ) & 0xffff;
+					precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+				}
 				aggFuncName = get_func_name(aggref->aggfnoid);
 
-				scale = (typmod - VARHDRSZ) & 0xffff;
-				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
 				/*
 				 * If we recieve typmod as -1 we should fallback to default
@@ -914,20 +1127,87 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 		case T_PlaceHolderVar:
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
+				int             rettypmod;
+				bool            found_typmod;
 
-				return resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr);
+				rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr, &found_typmod);
+				if (!found_typmod)
+				{
+					if (found != NULL) *found = false;
+				}
+				return rettypmod;
 			}
 		case T_RelabelType:
 			{
 				RelabelType *rlt = (RelabelType *) expr;
+				int          rettypmod;
+				bool         found_typmod;
 
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
 				else
-					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
+				{
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+					return rettypmod;
+				}
+			}
+		case T_CoerceToDomain:
+			{
+				/* Copied from exprTypmod. */
+				CoerceToDomain *rlt = (CoerceToDomain *) expr;
+				int             rettypmod;
+				bool            found_typmod;
+
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
+				else
+				{
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+					return rettypmod;
+				}
+			}
+		case T_SubLink:
+			{
+				/* Copied from exprTypmod. */
+				const SubLink *sublink = (const SubLink *) expr;
+				int            rettypmod;
+				bool           found_typmod;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get type for untransformed sublink");
+					tent = linitial_node(TargetEntry, qtree->targetList);
+					Assert(!tent->resjunk);					
+					rettypmod = resolve_numeric_typmod_from_exp(plan, (Node *) tent->expr, &found_typmod);
+					if (!found_typmod)
+					{
+						if (found != NULL) *found = false;
+					}
+					return rettypmod;
+					/* note we don't need to care if it's an array */
+				}
+
+				if (found != NULL) *found = false;
+				/* otherwise, result is RECORD or BOOLEAN, typmod is -1 */
+				return -1;
 			}
 			/* TODO handle more Expr types if needed */
 		default:
+			if (found != NULL) *found = false;
 			return -1;
 	}
 }
@@ -1090,8 +1370,8 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_VARCHAR:
-			/* If this is vector datatype, we should adjust the typmod */
-			if (is_sys_vector_datatype(col->pgTypeOid))
+			/* If this is one of the vector datatypes we should adjust the typmod. */
+			if (is_this_a_vector_datatype(col->pgTypeOid))
 				atttypmod = -1;
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 											attcollation, (atttypmod == -1) ?
@@ -1738,6 +2018,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		/*
 		 * Get the IO function info from our type cache
 		 */
+		if (atttypmod == TSQLMaxTypmod)
+			atttypmod = -1;
 		finfo = TdsLookupTypeFunctionsByOid(atttypid, &atttypmod);
 		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */
 #if 0
@@ -1852,8 +2134,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
-				/* If this is vector datatype, we should adjust the typmod */
-				if (is_sys_vector_datatype(col->pgTypeOid))
+				/* If this is one of the vector datatypes we should adjust the typmod. */
+				if (is_this_a_vector_datatype(col->pgTypeOid))
 					atttypmod = -1;
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
@@ -1921,7 +2203,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 									 errmsg("Internal error detected while calculating the precision of numeric expression"),
 									 errhint("plannedstmt is NULL while calculating the precision of numeric expression when it contains outer var")));
 						}
-						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr);
+						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr, NULL);
 					}
 
 					/*
@@ -2499,7 +2781,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (new_val)
 	{
-		temp8 = strlen(new_val);
+		temp8 = newUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(newUtf16.data, newUtf16.len);
 	}
@@ -2511,7 +2793,7 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 	if (old_val)
 	{
-		temp8 = strlen(old_val);
+		temp8 = oldUtf16.len / 2;
 		TdsPutbytes(&temp8, sizeof(temp8));
 		TdsPutbytes(oldUtf16.data, oldUtf16.len);
 	}
@@ -2618,7 +2900,7 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	int			messageLen = strlen(message);
 	int			serverNameLen = strlen(serverName);
 	int			procNameLen = strlen(procName);
-	int16_t		messageLen_16 = pg_mbstrlen(message);
+	int16_t		messageLen_16;
 	int32_t		number_32 = (int32_t) number;
 	int32_t		lineNo_32 = (int32_t) lineNo;
 	int16_t		totalLen;
@@ -2641,6 +2923,8 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	TdsUTF8toUTF16StringInfo(&messageUtf16, message, messageLen);
 	TdsUTF8toUTF16StringInfo(&serverNameUtf16, serverName, serverNameLen);
 	TdsUTF8toUTF16StringInfo(&procNameUtf16, procName, procNameLen);
+
+	messageLen_16 = messageUtf16.len / 2;
 
 	SendPendingDone(true);
 
@@ -3542,9 +3826,10 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 }
 
 static bool
-is_sys_vector_datatype(Oid oid)
+is_this_a_vector_datatype(Oid oid)
 {
 	Oid nspoid;
+
 	if (sys_vector_oid == InvalidOid)
 	{
 		nspoid = get_namespace_oid("sys", true);
@@ -3553,5 +3838,27 @@ is_sys_vector_datatype(Oid oid)
 
 		sys_vector_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("vector"), ObjectIdGetDatum(nspoid));
 	}
-	return sys_vector_oid == oid;
+	if (sys_vector_oid == oid)
+		return true;
+
+	if (sys_halfvec_oid == InvalidOid)
+	{
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return false;
+
+		sys_halfvec_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("halfvec"), ObjectIdGetDatum(nspoid));
+	}
+	if (sys_halfvec_oid == oid)
+		return true;
+
+	if (sys_sparsevec_oid == InvalidOid)
+	{
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return false;
+
+		sys_sparsevec_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("sparsevec"), ObjectIdGetDatum(nspoid));
+	}
+	return sys_sparsevec_oid == oid;
 }

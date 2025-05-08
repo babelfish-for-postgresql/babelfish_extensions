@@ -14,3 +14,18 @@ use master
 go
 drop database mydb
 go
+
+create database mydb COLLATE BBF_Unicode_CP1_CI_AI
+go
+use mydb
+go
+SELECT DB_NAME()
+go
+SELECT DATABASEPROPERTYEX('mydb', 'Collation')
+go
+SELECT CONVERT(VARCHAR(100), DATABASEPROPERTYEX(DB_NAME(), 'Collation'))
+go
+use master
+go
+drop database mydb
+go

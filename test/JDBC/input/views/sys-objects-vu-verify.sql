@@ -27,6 +27,10 @@ GO
 USE master
 GO
 
+select case when object_id([name]) = object_id then 'equal' else 'not equal' end
+from sys_objects_vu_prepare_db1.sys.objects where [name] = 'sys_objects_vu_prepare_trig1'
+go
+
 -- Verify cross db reference, it should show the same rows as displayed by the cross db query above.
 select name from sys_objects_vu_prepare_db1.sys.objects order by name;
 GO

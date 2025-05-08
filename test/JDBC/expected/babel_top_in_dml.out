@@ -1247,6 +1247,11 @@ Update on top_with_output_tbl
                     TID Cond: (top_with_output_tbl.ctid = ctid)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 24.340 ms
+~~END~~
+
 
 DELETE TOP (1)
 FROM top_with_output_tbl
@@ -1267,6 +1272,11 @@ Delete on top_with_output_tbl
   ->  Limit
         ->  Seq Scan on top_with_output_tbl
               Filter: (no_w_id = 'foo'::"varchar")
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.331 ms
 ~~END~~
 
 

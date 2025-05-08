@@ -90,6 +90,8 @@ typedef struct PLtsql_stmt_exec
 	char	   *db_name;
 	char	   *proc_name;
 	char	   *schema_name;
+		
+	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;
 
 typedef struct
@@ -308,6 +310,5 @@ extern char *yytext;
 extern void pltsql_convert_ident(const char *s, char **output, int numidents);
 extern PLtsql_expr *pltsql_read_expression(int until, const char *expected);
 extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
-
 
 #endif

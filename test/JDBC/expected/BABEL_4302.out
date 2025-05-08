@@ -6042,10 +6042,9 @@ int
 -- Min Limits checked for dates
 SELECT DATEPART(day, '0001-01-01 -1');
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "0001-01-01 -1")~~
 
 
 SELECT DATEPART(week, '0001-01-01 00:00:00.0000000 +00:00');

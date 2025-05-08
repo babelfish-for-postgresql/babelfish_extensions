@@ -9,7 +9,7 @@
  *       | XXX_TSQL {}
  */
 
-/* Start of exsiting grammar rule in gram.y */
+/* Start of existing grammar rule in gram.y */
 
 parse_toplevel:
 			DIALECT_TSQL tsql_stmtmulti
@@ -521,11 +521,11 @@ tsql_enable_disable_trigger:
 
 					if ($1)
 					{
-						n1->subtype = AT_EnableTrigAll;
+						n1->subtype = AT_EnableTrigUser;
 					}
 					else
 					{
-						n1->subtype = AT_DisableTrigAll;
+						n1->subtype = AT_DisableTrigUser;
 					}
 
 					n2->relation = $5;
@@ -1616,16 +1616,19 @@ simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_name '(' columnref ')' FOR columnref IN_P '(' columnList ')' ')'
 				{						
 					ColumnRef 		*a_star;
+					ColumnRef		*agg_col;
 					ResTarget 		*a_star_restarget;
 					RangeSubselect 	*range_sub_select;
 					Alias 			*temptable_alias;
-					List    *ret;
-					List    *value_col_strlist = NULL;
-					List	*subsel_valuelists = NULL;
-					String 	*pivot_colstr;
+					String 			*pivot_colstr;
+					String 			*agg_colstr;
+					List    		*ret;
+					List 			*column_list;
+					List			*column_const_list;
+					ListCell 		*lc;
 					
 					SelectStmt 	*category_sql = makeNode(SelectStmt);
 					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
@@ -1640,42 +1643,45 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					a_star_restarget->indirection = NIL;
 					a_star_restarget->val = (Node *) a_star;
 					a_star_restarget->location = -1;
-					
 
 					/* prepare aggregation function for pivot source sql */
+					agg_col = (ColumnRef *)$5;
 					restarget_aggfunc->name = NULL;
 					restarget_aggfunc->name_location = -1;
 					restarget_aggfunc->indirection = NIL;
-					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->val = (Node *) makeFuncCall($3, list_make1(agg_col),
+																   COERCE_EXPLICIT_CALL,
+																   @3);
 					restarget_aggfunc->location = -1;
-					
-					if (IsA((List *)$7, List))
+
+					agg_colstr = list_nth_node(String, agg_col->fields, ((List *)agg_col->fields)->length - 1);
+					column_list = (List *)$11;
+					column_const_list = NIL;
+
+					foreach(lc ,column_list)
 					{
-						for (int i = 0; i < ((List *)$7)->length; i++)
-						{
-							ColumnRef	*tempRef = list_nth((List *)$7, i);
-							String		*s = list_nth(tempRef->fields, 0);
-							Node		*n = makeStringConst(s->sval, -1);
-							List 		*l = list_make1(copyObject(n));
-							if (value_col_strlist == NULL || subsel_valuelists == NULL)
-							{
-								value_col_strlist = list_make1(s);
-								subsel_valuelists = list_make1(l);
-							}else
-							{
-								value_col_strlist = lappend(value_col_strlist, s);
-								subsel_valuelists = lappend(subsel_valuelists, l);
-							}
-						}
+						Node 	*column_const;
+						String 	*column_str;
+
+						column_str = (String *)lfirst(lc);
+
+						if (column_str != NULL && strcmp(column_str->sval, agg_colstr->sval) == 0)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+										errmsg("The column name \"%s\" specified in the PIVOT operator conflicts with the existing column name in the PIVOT argument.", agg_colstr->sval),
+										parser_errposition(@5)));
+
+						column_const = makeStringConst(pstrdup(column_str->sval), -1);
+						column_const_list = lappend(column_const_list, list_make1(column_const));
 					}
 
 					temptable_alias = makeNode(Alias);
 					temptable_alias->aliasname = "pivotTempTable";
 					/* get the column name from the columnref*/
-					pivot_colstr = llast(((ColumnRef *)$5)->fields);
+					pivot_colstr = llast(((ColumnRef *)$8)->fields);
 					temptable_alias->colnames = list_make1(copyObject(pivot_colstr));
 					
-					valuelists_sql->valuesLists = subsel_valuelists;
+					valuelists_sql->valuesLists = column_const_list;
 
 					range_sub_select = makeNode(RangeSubselect);
 					range_sub_select->subquery = (Node *) valuelists_sql;
@@ -1684,7 +1690,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					category_sql->targetList = list_make1(a_star_restarget);
 					category_sql->fromClause = list_make1(range_sub_select);
 
-					ret = list_make4($5, restarget_aggfunc, category_sql, value_col_strlist);
+					ret = list_make4($8, restarget_aggfunc, category_sql, column_list);
 					$$ = (Node*) ret; 
 				} 
 			;
@@ -1772,6 +1778,11 @@ table_ref:	relation_expr tsql_table_hint_expr
 					 * Standard openjson case
 					 */
 					$$ = (Node *) $1;
+				}
+			| table_ref TSQL_UNPIVOT tsql_unpivot_clause alias_clause
+				{
+					List *unpivot_info = list_make3($1, (List *)$3, $4);
+                    $$ = tsql_unpivot_transformation(unpivot_info, @1);
 				}
 		;
 
@@ -1892,6 +1903,13 @@ joined_table:
 					$$ = n;
 				}
 		;
+
+tsql_unpivot_clause:
+            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+                {
+					$$ = (Node *)list_make3($2, $4, $7);
+                }
+            ;
 
 func_expr_common_subexpr:
 			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
@@ -2470,6 +2488,7 @@ tsql_stmt :
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
 			| tsql_AlterUserStmt
+			| tsql_AlterViewStmt
 			| AnalyzeStmt
 			| CallStmt
 			| CheckPointStmt
@@ -2499,6 +2518,7 @@ tsql_stmt :
 			| CreatePLangStmt
 			| CreateSchemaStmt
 			| CreateSeqStmt
+			| tsql_CreatePartitionStmt
 			| CreateStmt
 			| CreateSubscriptionStmt
 			| CreateStatsStmt
@@ -2566,6 +2586,75 @@ tsql_stmt :
 			| tsql_alter_server_role
 			| /*EMPTY*/
 				{ $$ = NULL; }
+		;
+
+/*
+ * The Opt clauses are included in the tsql_CreatePartitionStmt rule
+ * to resolve a shift-reduce conflict with the CreateStmt rule.
+ * Although semantically it is not required for TSQL partitioned table creation,
+ * its inclusion ensures that the parser can unambiguously distinguish
+ * between regular table creation and TSQL partitioned table creation statements.
+ */
+tsql_CreatePartitionStmt:
+			CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
+			OptInherit OptPartitionSpec table_access_method_clause OptWith
+			tsql_PartitionSpec
+				{
+					CreateStmt *n = makeNode(CreateStmt);
+					n->relation = $4;
+					n->tableElts = $6;
+					n->inhRelations = NIL;
+					n->partspec = $12;
+					n->ofTypename = NULL;
+					n->constraints = NIL;
+					n->accessMethod = NULL;
+					n->options = NIL;
+					n->oncommit = ONCOMMIT_NOOP;
+					n->tablespacename = NULL;
+					n->if_not_exists = false;
+					$$ = (Node *) n;
+				}
+		;
+
+tsql_PartitionSpec:
+			ON tsql_untruncated_IDENT '(' part_params ')'
+				{
+					PartitionSpec *n = makeNode(PartitionSpec);
+					n->tsql_partition_scheme = $2;
+					n->strategy = PARTITION_STRATEGY_RANGE;
+					n->partParams = $4;
+					n->location = @1;
+					$$ = n;
+				}
+		;
+
+
+ /*
+  * TSQL untruncated identfiers:
+  *	This rule handles the parsing of untruncated identifiers in TSQL.
+  *	Unlike PostgreSQL, which truncates identifier when they exceeds the
+  *	maximum allowed length (NAMEDATALEN), while in TSQL, for certain cases we
+  *	want to parse identifiers with lengths exceeding such limit.
+  *	
+  *	This rule extract the entire identifier string from the input buffer,
+  *	regardless of its length.
+  */
+tsql_untruncated_IDENT:
+			IDENT
+				{
+					/*
+					 * Retrieve the "extra" information attached to the scanner
+					 * to access the input string (the string being parsed).
+					 */
+					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+
+					/*
+					 * Extract the original, untruncated identifier from the input buffer.
+					 * Here, @1 represents the start location of the identifier token.
+					 */
+					$$ = extract_identifier(yyextra->core_yy_extra.scanbuf + @1, NULL);
+					
+				}
 		;
 
 tsql_opt_INTO:
@@ -3051,12 +3140,9 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
 			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
+
 			ap->priv_name = $4;
 			n->is_grant = true;
 			n->granted_roles = list_make1(ap);
@@ -3069,11 +3155,8 @@ tsql_alter_server_role:
 		{
 			GrantRoleStmt *n = makeNode(GrantRoleStmt);
 			AccessPriv *ap = makeNode(AccessPriv);
-
-			if (0 != strcmp($4, "sysadmin"))
-				ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                               errmsg("only sysadmin role is supported in ALTER SERVER ROLE statement"),
-                               parser_errposition(@4)));
+			
+			check_server_role_and_throw_if_unsupported($4, @4, yyscanner);
 
 			ap->priv_name = $4;
 			n->is_grant = false;
@@ -3239,7 +3322,7 @@ tsql_IndexStmt:
 			INDEX opt_concurrently opt_single_name
 			ON relation_expr access_method_clause '(' index_params ')'
 			opt_include where_clause opt_reloptions
-			tsql_opt_on_filegroup
+			tsql_opt_partition_scheme_or_filegroup
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -3252,7 +3335,7 @@ tsql_IndexStmt:
 					n->nulls_not_distinct = $2;
 					n->whereClause = $15;
 					n->options = $16;
-					n->excludeOpNames = NIL;
+					n->excludeOpNames = $17;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
 					n->oldNumber = InvalidOid;
@@ -3305,6 +3388,25 @@ tsql_on_filegroup: ON name {}
 tsql_opt_on_filegroup:
 			tsql_on_filegroup					    {}
 			| /*EMPTY*/				    {}
+		;
+
+/*
+ * TSQL support for partition scheme and filegroup
+ */
+
+tsql_opt_partition_scheme_or_filegroup:
+			ON tsql_untruncated_IDENT '(' ColId ')'
+				{
+					$$ =  list_make2(makeString($2), makeString($4));
+				}
+			| tsql_on_filegroup
+				{
+					$$ = NIL;
+				}
+			| /*EMPTY*/
+				{
+					$$ = NIL;
+				}
 		;
 
 /*
@@ -3895,54 +3997,7 @@ tsql_CreateFunctionStmt:
 			| CREATE opt_or_replace FUNCTION func_name tsql_createfunc_args
 			  RETURNS param_name TABLE '(' OptTableElementList ')' opt_as tokens_remaining
 				{
-					CreateStmt *n1 = makeNode(CreateStmt);
-					CreateFunctionStmt *n2 = makeNode(CreateFunctionStmt);
-					char *tbltyp_name = psprintf("%s_%s", $7, strVal(llast($4)));
-					List *tbltyp = list_copy($4);
-					FunctionParameter *out_param;
-
-					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
-					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($13)), @13);
-					DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, @1);
-					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
-					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
-					if (sql_dialect != SQL_DIALECT_TSQL)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
-								 parser_errposition(@1)));
-
-					tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
-					tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
-					n1->relation = makeRangeVarFromAnyName(tbltyp, @4, yyscanner);
-					n1->tableElts = $10;
-					n1->inhRelations = NIL;
-					n1->partspec = NULL;
-					n1->ofTypename = NULL;
-					n1->constraints = NIL;
-					n1->options = NIL;
-					n1->oncommit = ONCOMMIT_NOOP;
-					n1->tablespacename = NULL;
-					n1->if_not_exists = false;
-					n1->tsql_tabletype = true;
-
-					/* Add a param for the output table variable */
-					out_param = makeNode(FunctionParameter);
-					out_param->name = $7;
-					out_param->argType = makeTypeNameFromNameList(tbltyp);
-					out_param->mode = FUNC_PARAM_TABLE;
-					out_param->defexpr = NULL;
-
-					n2->is_procedure = false;
-					n2->replace = $2;
-					n2->funcname = $4;
-					n2->parameters = lappend($5, out_param);
-					n2->returnType = makeTypeNameFromNameList(tbltyp);
-					n2->returnType->setof = true;
-					n2->returnType->location = @8;
-					n2->options = list_make4(lang, body, tbltypStmt, location);
-
-					$$ = (Node *)n2;
+					$$ = buildTsqlMultiLineTvfNode(@1, $2, $4, @4, $5, $7, @8, $10, $13, @13, false, yyscanner);
 				}
 			/* TSQL inline table-valued function */
 			| CREATE opt_or_replace FUNCTION func_name tsql_createfunc_args
@@ -3997,8 +4052,106 @@ tsql_AlterFunctionStmt:
 					n->actions = list_concat(list_make3(lang, body, location), $5); // piggy-back on actions to just put the new proc body instead
 					$$ = (Node *) n;
 				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+			  RETURNS func_return tsql_createfunc_options opt_as tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($9)), @9);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+					/* 
+					 *	Adding a option for volatility with value STABLE. 
+					 *	Function created from tsql dialect will be created as STABLE
+					 *	by default
+					 */
+					DefElem *vol = makeDefElem("volatility", (Node *) makeString("stable"), @1);
+					
+					/* Remove return defelem from list after extracting in pl_handler*/
+					DefElem *ret = makeDefElem("return", (Node *) $6, @6);
+
+					/* Fill in the ObjectWithArgs node */
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+					n->func = owa;
+					n->actions = list_concat(list_make5(lang, body, location, vol, ret), $7); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *) n;
+				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+			  RETURNS TABLE opt_as tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($8)), @8);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+					TypeName *returnType = SystemTypeName("record");
+					DefElem *ret;
+					
+					/*
+					 * Do not include table parameters here, will be added in
+					 * pltsql_validator()
+					 */
+					
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					/*
+					 * Use RECORD type here. In case of single result column,
+					 * will be changed to that column's type in
+					 * pltsql_validator()
+					 */
+					
+					returnType = SystemTypeName("record");
+					returnType->setof = true;
+					returnType->location = @6;
+					ret = makeDefElem("return", (Node *) returnType, @6);
+
+					n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+					n->func = owa;
+					n->actions = list_make4(lang, body, location, ret); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *)n;
+				}
+			| TSQL_ALTER FUNCTION func_name tsql_createfunc_args
+              RETURNS param_name TABLE '(' OptTableElementList ')' opt_as tokens_remaining
+                {
+					$$ = buildTsqlMultiLineTvfNode(@1, false, $3, @3, $4, $6, @7, $9, $12, @12, true, yyscanner);
+                }
 		;
 
+tsql_AlterViewStmt: 
+            TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $3;
+                    n->aliases = $4;
+                    n->query = $7;
+                    n->replace = true;
+                    n->options = $5;
+                    n->withCheckOption = $8;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+            | CREATE OR TSQL_ALTER VIEW qualified_name opt_column_list opt_reloptions
+                AS SelectStmt opt_check_option
+                {
+                    ViewStmt *n = makeNode(ViewStmt);
+                    n->view = $5;
+                    n->aliases = $6;
+                    n->query = $9;
+                    n->replace = false;
+                    n->options = $7;
+                    n->withCheckOption = $10;
+                    n->createOrAlter = true;
+                    $$ = (Node *) n;
+                }
+        ;
+		
 /*
  * These rules define the WITH clause in a CREATE PROCEDURE
  * or CREATE FUNCTION statement.  This is very similar to
@@ -4058,6 +4211,11 @@ tsql_func_opt_item:
 					 * procedure/function/view, the possibility seems remote
 					 */
 					$$ = makeDefElem("schemabinding", (Node *)makeBoolean(false), @1);
+				}
+				| TSQL_RECOMPILE
+				{
+					/* Only applies to procedures, the ANTLR parser has already processed this clause */
+					$$ = makeDefElem("recompile", (Node *) makeBoolean(true), @1);
 				}
 		;
 
@@ -4609,6 +4767,7 @@ unreserved_keyword:
 			| TSQL_READCOMMITTED
 			| TSQL_READPAST
 			| TSQL_READUNCOMMITTED
+			| TSQL_RECOMPILE
 			| TSQL_REPEATABLEREAD
 			| TSQL_REPLICATION
 			| TSQL_ROOT
@@ -4880,5 +5039,3 @@ tsql_for_json_common_directive:
 			| TSQL_INCLUDE_NULL_VALUES					{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES, -1); }
 			| TSQL_WITHOUT_ARRAY_WRAPPER				{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER, -1); }
 		;
-
-

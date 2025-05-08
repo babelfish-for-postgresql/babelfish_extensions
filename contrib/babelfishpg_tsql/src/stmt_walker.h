@@ -92,6 +92,8 @@ typedef bool (*Stmt_alter_db_act) ACTION_SIGNITURE(alter_db);
 typedef bool (*Stmt_dbcc_act) ACTION_SIGNITURE(dbcc);
 typedef bool (*Stmt_fulltextindex_act) ACTION_SIGNITURE(fulltextindex);
 typedef bool (*Stmt_grantschema_act) ACTION_SIGNITURE(grantschema);
+typedef bool (*Stmt_partition_function_act) ACTION_SIGNITURE(partition_function);
+typedef bool (*Stmt_partition_scheme_act) ACTION_SIGNITURE(partition_scheme);
 
  /* TSQL-only executable node */
 typedef bool (*Stmt_save_ctx) ACTION_SIGNITURE(save_ctx);
@@ -147,6 +149,8 @@ typedef struct Walker_context
 	Stmt_dbcc_act dbcc_act;
 	Stmt_fulltextindex_act fulltextindex_act;
 	Stmt_grantschema_act grantschema_act;
+	Stmt_partition_function_act partition_function_act;
+	Stmt_partition_scheme_act partition_scheme_act;
 
 	/* TSQL-only executable node */
 	Stmt_save_ctx save_ctx_act;

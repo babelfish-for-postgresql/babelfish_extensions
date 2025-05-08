@@ -1,0 +1,1762 @@
+-- different no. of arguments
+select CONCAT('a')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+
+select 1  select concat('a') select 2
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+
+select concat()
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+
+select concat(CAST('12' AS sql_variant))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+
+SELECT CONCAT( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' );
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot pass more than 100 arguments to a function)~~
+
+-- 100 args, PG upper limit
+SELECT CONCAT( 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', 'f')
+GO
+~~START~~
+varchar
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcdef
+~~END~~
+
+
+-- NULL
+SELECT CONCAT(NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The concat function requires 2 to 100 arguments.)~~
+
+
+SELECT CONCAT(NULL, NULL)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SELECT CONCAT('scd', NULL, '123')
+GO
+~~START~~
+varchar
+scd123
+~~END~~
+
+
+SELECT CONCAT('scd', NULL)
+GO
+~~START~~
+varchar
+scd
+~~END~~
+
+
+SELECT CONCAT(NULL, '123')
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+SELECT CONCAT('比尔', NULL, '莫斯')
+GO
+~~START~~
+varchar
+比?莫斯
+~~END~~
+
+
+SELECT CONCAT('c🙂', NULL, '🙂🙂')
+GO
+~~START~~
+varchar
+c???
+~~END~~
+
+
+SELECT CONCAT('scd', CAST(NULL AS varbinary), '123')
+GO
+~~START~~
+varchar
+scd123
+~~END~~
+
+
+SELECT CONCAT('scd', CAST(NULL AS sql_variant), '123')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+
+
+SELECT CONCAT('scd', CAST(NULL AS geometry), '123')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+
+
+-- tests with different datatypes
+-- input type char
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab🙂', 'x🙂y') + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??                                    ab?x?y|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab?', 'x🙂y') + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??                                    ab?x?y|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯                                      比拉斯 ??比?|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯                                      比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @inputString1 CHAR(10) = '比拉斯 ', @inputString2 CHAR(10) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯                                      比拉斯    比拉斯    |
+~~END~~
+
+
+DECLARE @inputString CHAR(50) = '  比尔·拉莫斯    ', @inputString1 CHAR(10) = '比拉斯 ', @inputString2 CHAR(10) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯                                      比拉斯    比拉斯    |
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab🙂', 'x🙂y') + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??    ab?x?y|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab?', 'x🙂y') + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??    ab?x?y|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab😎', 'x🙂y') + '|'
+GO
+~~START~~
+varchar
+|  abc?defghi??    ab?x?y|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯    比拉斯 ??比?|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯    比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @inputString1 VARCHAR(10) = '比拉斯 ', @inputString2 VARCHAR(10) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @inputString1 VARCHAR(10) = '比拉斯 ', @inputString2 VARCHAR(10) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @inputString1 VARCHAR(MAX) = '比拉斯 ', @inputString2 VARCHAR(MAX) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+varchar
+|  比??拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString VARCHAR(50) = '  比尔·拉莫斯    ', @inputString1 VARCHAR(MAX) = '比拉斯 ', @inputString2 VARCHAR(MAX) = '比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+-- test with all varchar returning datatypes
+SELECT CONCAT( 'a', 'b', 'c', 'd', 'e', CAST('f' AS char(1)), '比尔', 'h', 'i', 'j', 'k', 'l', CAST('m' AS text), 'n', 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
+GO
+~~START~~
+varchar
+abcdef比?hijklmnopqrstuvwxyzABCDEFGHIJKLMefOPQRST??VWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcdefg
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab🙂', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc?defghi??                                    ab🙂x🙂y|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab?', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc?defghi??                                    ab?x🙂y|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab😎', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc?defghi??                                    ab😎x🙂y|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') + '|'
+GO
+~~START~~
+nvarchar
+|  比??拉莫斯                                      比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+nvarchar
+|  比??拉莫斯                                      比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NCHAR(10) = N'比拉斯 ', @inputString2 NCHAR(10) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+nvarchar
+|  比??拉莫斯                                      比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString NCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NCHAR(10) = N'比拉斯 ', @inputString2 NCHAR(10) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+nvarchar
+|  比??拉莫斯                                      比拉斯 比拉斯 |
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab🙂', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂    ab🙂x🙂y|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab?', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂    ab?x🙂y|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  abc🙂defghi🙂🙂    '
+SELECT '|' + CONCAT(@inputString, 'ab😎', 'x🙂y') + '|'
+GO
+~~START~~
+nvarchar
+|  abc🙂defghi🙂🙂    ab😎x🙂y|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    '
+SELECT '|' + CONCAT(@inputString, '比拉斯 ', '尔·比?') COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 尔·比?|
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NVARCHAR(10) = N'比拉斯 ', @inputString2 NVARCHAR(10) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NVARCHAR(10) = N'比拉斯 ', @inputString2 NVARCHAR(10) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NVARCHAR(MAX) = N'比拉斯 ', @inputString2 NVARCHAR(MAX) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(50) = N'  比尔·拉莫斯    ', @inputString1 NVARCHAR(MAX) = N'比拉斯 ', @inputString2 NVARCHAR(MAX) = N'比拉斯 '
+SELECT '|' + CONCAT(@inputString, @inputString1, @inputString2) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+nvarchar
+|  比尔·拉莫斯    比拉斯 比拉斯 |
+~~END~~
+
+
+-- test with all varchar returning datatypes and one nvarchar returning datatype
+SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', 'h', 'i', 'j', 'k', 'l', CAST('m' AS text), 'n', 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
+GO
+~~START~~
+nvarchar
+ab🙂🙂def比尔hijklmnopqrstuvwxyzABCDEFGHIJKLMefOPQRST🙂🙂VWXYZ0123456789.,-_!@#$%^&*()[]{}<>/\\|:;"\?+=~`abcdefg
+~~END~~
+
+
+-- any invalid datatype
+SELECT CONCAT( 'a', 'b', CAST('🙂🙂' AS nvarchar), 'd', 'e', CAST('f' AS char(1)), '比尔', geometry::Point(1,2,4326), 'i', geography::Point(1,2,4326), 'k', 'l', CAST('m' AS text), CAST('SD' as sql_variant), 'o', 'p', 'q', CAST('r' AS text), 's', CAST('t' AS varchar), 'u', Cast('<head></head>' as xml), 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', CAST(0x6566 AS varbinary), 'O', 'P', 'Q', 'R', 'S', 'T', '🙂🙂', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ',', '-', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\', '|', ':', ';', '"', '\', '?', '+', '=', '~', '`', 'a', 'b', 'c', 'd', 'e', CAST(0x6667 AS varbinary))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type geometry to varchar is not allowed.)~~
+
+
+SELECT CONCAT(col_varchar, col_varchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcabc
+?defghi?defghi
+????
+比??拉比??拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_nchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc                 
+🙂defghi🙂defghi             
+🙂🙂🙂🙂                  
+比尔·拉比尔·拉                
+莫斯莫斯                  
+
+
+AnikaitAnikait             
+
+AgrawalAgrawal             
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_nvarchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_int) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_bigint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_smallint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_tinyint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_numeric) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_float) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12.1
+?defghi13.1
+??14.1
+比??拉15.1
+莫斯16.1
+
+
+Anikait17.1
+
+Agrawal18.1
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_real) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12.1
+?defghi13.1
+??14.1
+比??拉15.1
+莫斯16.1
+
+
+Anikait17.1
+
+Agrawal18.1
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_bit) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc1
+?defghi0
+??1
+比??拉0
+莫斯1
+
+
+Anikait0
+
+Agrawal0
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_decimal) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12
+?defghi13
+??14
+比??拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_smallmoney) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12.0000
+?defghi13.0000
+??14.0000
+比??拉15.0000
+莫斯16.0000
+
+
+Anikait17.0000
+
+Agrawal18.0000
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_money) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12.0000
+?defghi13.0000
+??14.0000
+比??拉15.0000
+莫斯16.0000
+
+
+Anikait17.0000
+
+Agrawal18.0000
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_datetime) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc2000-12-12 12:43:10
+?defghi2000-12-13 12:43:10
+??2000-12-14 12:43:10
+比??拉2000-12-15 12:43:10
+莫斯2000-12-16 12:43:10
+
+
+Anikait2000-12-17 12:43:10
+
+Agrawal2000-12-18 12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_datetime2) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc2000-12-12 12:43:10
+?defghi2000-12-13 12:43:10
+??2000-12-14 12:43:10
+比??拉2000-12-15 12:43:10
+莫斯2000-12-16 12:43:10
+
+
+Anikait2000-12-17 12:43:10
+
+Agrawal2000-12-18 12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_binary) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcab
+?defghicd
+??ef
+比??拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_varbinary) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcab
+?defghicd
+??ef
+比??拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_date) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc2000-12-12
+?defghi2000-12-13
+??2000-12-14
+比??拉2000-12-15
+莫斯2000-12-16
+
+
+Anikait2000-12-17
+
+Agrawal2000-12-18
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_time) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc12:43:10
+?defghi12:43:10
+??12:43:10
+比??拉12:43:10
+莫斯12:43:10
+
+
+Anikait12:43:10
+
+Agrawal12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_datetimeoffset) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc2000-12-12 12:43:10.1234 +10:00
+?defghi2000-12-13 12:43:10.1234 +10:00
+??2000-12-14 12:43:10.1234 +10:00
+比??拉2000-12-15 12:43:10.1234 +10:00
+莫斯2000-12-16 12:43:10.1234 +10:00
+
+
+Anikait2000-12-17 12:43:10.1234 +10:00
+
+Agrawal2000-12-18 12:43:10.1234 +10:00
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_smalldatetime) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abc2000-12-12 12:43:00
+?defghi2000-12-13 12:43:00
+??2000-12-14 12:43:00
+比??拉2000-12-15 12:43:00
+莫斯2000-12-16 12:43:00
+
+
+Anikait2000-12-17 12:43:00
+
+Agrawal2000-12-18 12:43:00
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcabc
+?defghi?defghi
+????
+比??拉比??拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_ntext) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_sql_variant) from babel_3409_concat_t1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+
+
+SELECT CONCAT(col_varchar, col_xml) from babel_3409_concat_t1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+
+
+SELECT CONCAT(col_varchar, col_varUDT) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abcabc
+?defghi?defghi
+????
+比??拉比??拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, col_imageUDT) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+varchar
+abccd
+?defghicd
+??ef
+比??拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_varchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_nchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc                 
+🙂defghi🙂defghi             
+🙂🙂🙂🙂                  
+比尔·拉比尔·拉                
+莫斯莫斯                  
+
+
+AnikaitAnikait             
+
+AgrawalAgrawal             
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_nvarchar) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_int) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_bigint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_smallint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_tinyint) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_numeric) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_float) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12.1
+🙂defghi13.1
+🙂🙂14.1
+比尔·拉15.1
+莫斯16.1
+
+
+Anikait17.1
+
+Agrawal18.1
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_real) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12.1
+🙂defghi13.1
+🙂🙂14.1
+比尔·拉15.1
+莫斯16.1
+
+
+Anikait17.1
+
+Agrawal18.1
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_bit) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc1
+🙂defghi0
+🙂🙂1
+比尔·拉0
+莫斯1
+
+
+Anikait0
+
+Agrawal0
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_decimal) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12
+🙂defghi13
+🙂🙂14
+比尔·拉15
+莫斯16
+
+
+Anikait17
+
+Agrawal18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_smallmoney) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12.0000
+🙂defghi13.0000
+🙂🙂14.0000
+比尔·拉15.0000
+莫斯16.0000
+
+
+Anikait17.0000
+
+Agrawal18.0000
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_money) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12.0000
+🙂defghi13.0000
+🙂🙂14.0000
+比尔·拉15.0000
+莫斯16.0000
+
+
+Anikait17.0000
+
+Agrawal18.0000
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_datetime) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc2000-12-12 12:43:10
+🙂defghi2000-12-13 12:43:10
+🙂🙂2000-12-14 12:43:10
+比尔·拉2000-12-15 12:43:10
+莫斯2000-12-16 12:43:10
+
+
+Anikait2000-12-17 12:43:10
+
+Agrawal2000-12-18 12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_datetime2) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc2000-12-12 12:43:10
+🙂defghi2000-12-13 12:43:10
+🙂🙂2000-12-14 12:43:10
+比尔·拉2000-12-15 12:43:10
+莫斯2000-12-16 12:43:10
+
+
+Anikait2000-12-17 12:43:10
+
+Agrawal2000-12-18 12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_binary) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcab
+🙂defghicd
+🙂🙂ef
+比尔·拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_varbinary) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcab
+🙂defghicd
+🙂🙂ef
+比尔·拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_date) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc2000-12-12
+🙂defghi2000-12-13
+🙂🙂2000-12-14
+比尔·拉2000-12-15
+莫斯2000-12-16
+
+
+Anikait2000-12-17
+
+Agrawal2000-12-18
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_time) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc12:43:10
+🙂defghi12:43:10
+🙂🙂12:43:10
+比尔·拉12:43:10
+莫斯12:43:10
+
+
+Anikait12:43:10
+
+Agrawal12:43:10
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_datetimeoffset) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc2000-12-12 12:43:10.1234 +10:00
+🙂defghi2000-12-13 12:43:10.1234 +10:00
+🙂🙂2000-12-14 12:43:10.1234 +10:00
+比尔·拉2000-12-15 12:43:10.1234 +10:00
+莫斯2000-12-16 12:43:10.1234 +10:00
+
+
+Anikait2000-12-17 12:43:10.1234 +10:00
+
+Agrawal2000-12-18 12:43:10.1234 +10:00
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_smalldatetime) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abc2000-12-12 12:43:00
+🙂defghi2000-12-13 12:43:00
+🙂🙂2000-12-14 12:43:00
+比尔·拉2000-12-15 12:43:00
+莫斯2000-12-16 12:43:00
+
+
+Anikait2000-12-17 12:43:00
+
+Agrawal2000-12-18 12:43:00
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_text) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_ntext) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_sql_variant) from babel_3409_concat_t1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type sql_variant to varchar is not allowed.)~~
+
+
+SELECT CONCAT(col_nvarchar, col_xml) from babel_3409_concat_t1 ORDER BY id
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type xml to varchar is not allowed.)~~
+
+
+SELECT CONCAT(col_nvarchar, col_varUDT) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abcabc
+🙂defghi🙂defghi
+🙂🙂🙂🙂
+比尔·拉比尔·拉
+莫斯莫斯
+
+
+AnikaitAnikait
+
+AgrawalAgrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, col_imageUDT) from babel_3409_concat_t1 ORDER BY id
+GO
+~~START~~
+nvarchar
+abccd
+🙂defghicd
+🙂🙂ef
+比尔·拉gh
+莫斯ip
+
+
+Anikaitqr
+
+Agrawalrs
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT CONCAT(col1_cias, '-', col1_cias) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+比尔·拉-比尔·拉
+莫-莫
+斯-斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT CONCAT(col1_csas, '-', col1_csas) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+比尔·拉-比尔·拉
+莫-莫
+斯-斯
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT CONCAT(col1_ciai, '-', col1_ciai) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+比尔·拉-比尔·拉
+莫-莫
+斯-斯
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT CONCAT(col2_cias, '-', col2_cias) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+الله-الله
+ مع - مع 
+المتقين-المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT CONCAT(col2_csas, '-', col2_csas) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+الله-الله
+ مع - مع 
+المتقين-المتقين
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT CONCAT(col2_ciai, '-', col2_ciai) FROM babel_3409_concat_t2 ORDER BY id
+GO
+~~START~~
+varchar
+الله-الله
+ مع - مع 
+المتقين-المتقين
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_3409_concat_dep_view1
+GO
+~~START~~
+text
+abc120x6162abc
+?defghi130x6364?defghi
+??140x6566??
+比??拉150x6768比??拉
+莫斯160x6970莫斯
+
+
+Anikait170x7172Anikait
+
+Agrawal180x7273Agrawal
+~~END~~
+
+
+EXEC babel_3409_concat_dep_proc1
+GO
+~~START~~
+varchar
+abc12ababc
+?defghi13cd?defghi
+??14ef??
+比??拉15gh比??拉
+莫斯16ip莫斯
+
+
+Anikait17qrAnikait
+
+Agrawal18rsAgrawal
+~~END~~
+
+
+SELECT babel_3409_concat_dep_func1()
+GO
+~~START~~
+nvarchar
+abcabc                 ababc
+~~END~~
+
+
+SELECT babel_3409_concat_itvf_func1()
+GO
+~~START~~
+text
+abcabc                 121212121212.112.11
+~~END~~
+
+
+SELECT * FROM babel_3409_concat_dep_view2
+GO
+~~START~~
+text
+abcabc                 abc1212.00002000-12-12 12:43:00
+?defghi?defghi             ?defghi1313.00002000-12-13 12:43:00
+????                  ??1414.00002000-12-14 12:43:00
+比??拉比??拉                比??拉1515.00002000-12-15 12:43:00
+莫斯莫斯                  莫斯1616.00002000-12-16 12:43:00
+
+
+AnikaitAnikait             Anikait1717.00002000-12-17 12:43:00
+
+AgrawalAgrawal             Agrawal1818.00002000-12-18 12:43:00
+~~END~~
+
+
+EXEC babel_3409_concat_dep_proc2
+GO
+~~START~~
+nvarchar
+abc12.00002000-12-12 12:43:102000-12-12 12:43:10ab2000-12-1212:43:102000-12-12 12:43:10.1234 +10:00
+🙂defghi13.00002000-12-13 12:43:102000-12-13 12:43:10cd2000-12-1312:43:102000-12-13 12:43:10.1234 +10:00
+🙂🙂14.00002000-12-14 12:43:102000-12-14 12:43:10ef2000-12-1412:43:102000-12-14 12:43:10.1234 +10:00
+比尔·拉15.00002000-12-15 12:43:102000-12-15 12:43:10gh2000-12-1512:43:102000-12-15 12:43:10.1234 +10:00
+莫斯16.00002000-12-16 12:43:102000-12-16 12:43:10ip2000-12-1612:43:102000-12-16 12:43:10.1234 +10:00
+
+
+Anikait17.00002000-12-17 12:43:102000-12-17 12:43:10qr2000-12-1712:43:102000-12-17 12:43:10.1234 +10:00
+
+Agrawal18.00002000-12-18 12:43:102000-12-18 12:43:10rs2000-12-1812:43:102000-12-18 12:43:10.1234 +10:00
+~~END~~
+
+
+SELECT babel_3409_concat_dep_func2()
+GO
+~~START~~
+nvarchar
+abcababcabc
+~~END~~
+
+
+SELECT babel_3409_concat_itvf_func2()
+GO
+~~START~~
+text
+abcabcabc                 abc                 
+~~END~~
+
+
+-- Testing implicit cast from time to varchar
+DECLARE @a time = '12:30:00';
+EXEC babel_3409_cast_time_to_varchar_proc @a
+GO
+~~START~~
+varchar
+12:30:00
+~~END~~
+
+
+DECLARE @a time = '12:30:00';
+SELECT babel_3409_cast_time_to_varchar_func(@a)
+GO
+~~START~~
+varchar
+12:30:00
+~~END~~
+
+
+DECLARE @a time = '12:30:00';
+EXEC babel_3409_cast_time_to_nvarchar_proc @a
+GO
+~~START~~
+nvarchar
+12:30:00
+~~END~~
+
+
+DECLARE @a time = '12:30:00';
+SELECT babel_3409_cast_time_to_nvarchar_func(@a)
+GO
+~~START~~
+nvarchar
+12:30:00
+~~END~~
+
+
+-- Testing implicit cast from date to varchar
+DECLARE @a date = '12/12/12';
+EXEC babel_3409_cast_date_to_varchar_proc @a
+GO
+~~START~~
+varchar
+2012-12-12
+~~END~~
+
+
+DECLARE @a date = '12/12/12';
+SELECT babel_3409_cast_date_to_varchar_func(@a)
+GO
+~~START~~
+varchar
+2012-12-12
+~~END~~
+
+
+DECLARE @a date = '12/12/12';
+EXEC babel_3409_cast_date_to_nvarchar_proc @a
+GO
+~~START~~
+nvarchar
+2012-12-12
+~~END~~
+
+
+DECLARE @a date = '12/12/12';
+SELECT babel_3409_cast_date_to_nvarchar_func(@a)
+GO
+~~START~~
+nvarchar
+2012-12-12
+~~END~~
+
+
+-- Testing implicit cast from datetimeoffset to varchar
+DECLARE @a datetimeoffset = '12:30:00';
+EXEC babel_3409_cast_datetimeoffset_to_varchar_proc @a
+GO
+~~START~~
+varchar
+1900-01-01 12:30:00 +00:00
+~~END~~
+
+
+DECLARE @a datetimeoffset = '12:30:00';
+SELECT babel_3409_cast_datetimeoffset_to_varchar_func(@a)
+GO
+~~START~~
+varchar
+1900-01-01 12:30:00 +00:00
+~~END~~
+
+
+DECLARE @a datetimeoffset = '12:30:00';
+EXEC babel_3409_cast_datetimeoffset_to_nvarchar_proc @a
+GO
+~~START~~
+nvarchar
+1900-01-01 12:30:00 +00:00
+~~END~~
+
+
+DECLARE @a datetimeoffset = '12:30:00';
+SELECT babel_3409_cast_datetimeoffset_to_nvarchar_func(@a)
+GO
+~~START~~
+nvarchar
+1900-01-01 12:30:00 +00:00
+~~END~~
+
+
+-- psql
+-- all of the following queries should use PG_CATALOG.CONCAT function
+SELECT CONCAT(col_text, '-', col_varchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_ntext, '-', col_varchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_nchar, '-', col_varchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc                 -abc
+🙂defghi             -🙂defghi
+🙂🙂                  -🙂🙂
+比尔·拉                -比尔·拉
+莫斯                  -莫斯
+-
+-
+Anikait             -Anikait
+-
+Agrawal             -Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, '-', col_varchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_varchar, cast('-' as sys.varchar), col_nvarchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, '-', col_nvarchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_nvarchar, cast('-' as sys.varchar), col_nvarchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+abc-abc
+🙂defghi-🙂defghi
+🙂🙂-🙂🙂
+比尔·拉-比尔·拉
+莫斯-莫斯
+-
+-
+Anikait-Anikait
+-
+Agrawal-Agrawal
+~~END~~
+
+
+SELECT CONCAT(col_varbinary, '-', col_nvarchar) FROM master_dbo.babel_3409_concat_t1 ORDER BY id;
+GO
+~~START~~
+text
+0x6162-abc
+0x6364-🙂defghi
+0x6566-🙂🙂
+0x6768-比尔·拉
+0x6970-莫斯
+-
+-
+0x7172-Anikait
+-
+0x7273-Agrawal
+~~END~~
+

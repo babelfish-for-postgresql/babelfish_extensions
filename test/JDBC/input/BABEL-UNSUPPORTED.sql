@@ -251,18 +251,10 @@ GO
 -- escape hatch: storage_on_partition.
 -- 'strict' is default
 
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_storage_on_partition', 'ignore', 'false')
-GO
-
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-DROP TABLE t_unsupported_sop1;
 GO
 
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);
@@ -283,6 +275,16 @@ DROP DATABASE db_unsupported1;
 GO
 
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
+GO
+DROP DATABASE db_unsupported2;
+GO
+
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+DROP DATABASE db_unsupported1;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
 GO
 DROP DATABASE db_unsupported2;
 GO
@@ -317,6 +319,16 @@ GO
 DROP DATABASE db_unsupported8;
 GO
 
+CREATE DATABASE db_unsupported9 CONTAINMENT = PARTIAL COLLATE Arabic_CI_AS;
+GO
+DROP DATABASE db_unsupported9;
+GO
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
 CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 DROP DATABASE db_unsupported9;
@@ -328,7 +340,13 @@ GO
 CREATE DATABASE db_unsupported1 CONTAINMENT = NONE;
 GO
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
 GO
 
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
@@ -495,6 +513,34 @@ CREATE SCHEMA t_unsupported_schema REVOKE SELECT on schema::t_unsupported_schema
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+
+-- escape hatch: INLINE
+-- 'strict' is default, check if throws error when INLINE is used
+
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f1](@input INT)
+RETURNS INT WITH INLINE = ON
+AS
+BEGIN
+    RETURN @input * 2
+END
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore', 'false')
+GO
+
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f2](@input INT)
+RETURNS INT WITH INLINE = OFF
+AS
+BEGIN
+    RETURN @input * 3
+END
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[t_unsupported_inline_function_f2];
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'strict', 'false')
 GO
 
 
@@ -1317,9 +1363,6 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_schemabinding_%', 'ig
 GO
 
 -- test automatically generated message for unsupported DDL
-CREATE PARTITION FUNCTION f_unsupported_1(datetime) AS RANGE RIGHT FOR VALUES (N'2017-07-11T00:00:00.000', N'2017-07-12T00:00:00.000', N'2017-07-13T00:00:00.000');
-GO
-
 ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 
@@ -1640,6 +1683,64 @@ CREATE FUNCTION babel_3571_f1()
 RETURNS TABLE (id1 INT, id2 VARCHAR(30), id3 VARBINARY(30), INDEX babel_3571_idx_inline (id1, id2))
 AS
 EXTERNAL NAME babel_3571
+GO
+
+-- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Servicesomething\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT ServiceNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT ServiceNT SerViCe\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [somethingNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT S\ervice\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN ["NT Service"\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [[NT Service]\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [["NT Service"]\MSSQLSERVER] FROM WINDOWS
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
 GO
 
 -- INSERT BULK is No op. No point in failing this 

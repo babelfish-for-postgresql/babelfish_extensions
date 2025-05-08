@@ -30,6 +30,7 @@ PG_FUNCTION_INFO_V1(quotename);
 PG_FUNCTION_INFO_V1(string_escape);
 PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
+PG_FUNCTION_INFO_V1(tsql_varbinary_substr);
 PG_FUNCTION_INFO_V1(float_str);
 
 /*
@@ -55,18 +56,31 @@ static Datum return_varchar_pointer(char *buf, int size);
 Datum
 hashbytes(PG_FUNCTION_ARGS)
 {
-	const char *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
-	bytea	   *in = PG_GETARG_BYTEA_PP(1);
-	size_t		len = VARSIZE_ANY_EXHDR(in);
-	const uint8 *data = (unsigned char *) VARDATA_ANY(in);
-	bytea	   *result;
+        Oid	        input_type = get_fn_expr_argtype(fcinfo->flinfo,1);
+        const char      *algorithm = text_to_cstring(PG_GETARG_TEXT_P(0));
+        bytea	        *in = PG_GETARG_BYTEA_PP(1);
+        size_t		len = VARSIZE_ANY_EXHDR(in);
+        const uint8     *data = (unsigned char *) VARDATA_ANY(in);
+        bytea	        *result;
+        StringInfoData	utf16_data;
+
+        /* If the input_type is nvarchar then we convert it to UTF-16 encoding */
+	initStringInfo(&utf16_data);
+        if(((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_type)))
+        {
+                (common_utility_plugin_ptr->TsqlUTF8toUTF16StringInfo)(&utf16_data, data, len);
+                len = utf16_data.len;
+        	data = (const uint8 *)utf16_data.data;
+        }
 
 	if (strcasecmp(algorithm, "MD2") == 0)
 	{
+		pfree(utf16_data.data);
 		PG_RETURN_NULL();
 	}
 	else if (strcasecmp(algorithm, "MD4") == 0)
 	{
+		pfree(utf16_data.data);
 		PG_RETURN_NULL();
 	}
 	else if (strcasecmp(algorithm, "MD5") == 0)
@@ -86,6 +100,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
+		pfree(utf16_data.data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -100,6 +115,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
+		pfree(utf16_data.data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -120,6 +136,7 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
+		pfree(utf16_data.data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
@@ -133,11 +150,13 @@ hashbytes(PG_FUNCTION_ARGS)
 
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);
 		memcpy(VARDATA(result), buf, sizeof(buf));
+		pfree(utf16_data.data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
 	else
 	{
+		pfree(utf16_data.data);
 		PG_RETURN_NULL();
 	}
 }
@@ -497,10 +516,19 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 Datum
 tsql_varchar_substr(PG_FUNCTION_ARGS)
 {
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
-		PG_RETURN_NULL();
-
 	return DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
+											PG_GETARG_INT32(1),
+											PG_GETARG_INT32(2));
+}
+
+/*
+ * tsql_varbinary_substr()
+ * Return a substring starting at the specified position.
+ */
+Datum
+tsql_varbinary_substr(PG_FUNCTION_ARGS)
+{
+	return DirectFunctionCall3(bytea_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
 											PG_GETARG_INT32(2));
 }

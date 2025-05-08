@@ -1,18 +1,11 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 CREATE DATABASE db1;
 GO
 
 CREATE DATABASE db2;
+GO
+
+CREATE DATABASE db3 COLLATE bbf_unicode_cp1_ci_ai;
 GO
 
 SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
@@ -21,6 +14,7 @@ GO
 varchar#!#tinyint#!#varchar
 db1#!#120#!#chinese_prc_ci_as
 db2#!#120#!#chinese_prc_ci_as
+db3#!#120#!#bbf_unicode_cp1_ci_ai
 master#!#120#!#chinese_prc_ci_as
 msdb#!#120#!#chinese_prc_ci_as
 tempdb#!#120#!#chinese_prc_ci_as
@@ -33,6 +27,7 @@ GO
 varchar#!#tinyint#!#nvarchar
 db1#!#1#!#Not Applicable
 db2#!#1#!#Not Applicable
+db3#!#1#!#Not Applicable
 master#!#1#!#Not Applicable
 msdb#!#1#!#Not Applicable
 tempdb#!#1#!#Not Applicable
@@ -41,14 +36,5 @@ tempdb#!#1#!#Not Applicable
 
 DROP DATABASE db1;
 DROP DATABASE db2;
+DROP DATABASE db3;
 GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-

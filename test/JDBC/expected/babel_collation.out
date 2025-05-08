@@ -224,7 +224,7 @@ int
 SELECT CASE WHEN 'a' = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
 go
 ~~START~~
-text
+varchar
 case-insensitive
 ~~END~~
 
@@ -234,7 +234,7 @@ SELECT @str = 'a';
 SELECT CASE WHEN @str = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
 go
 ~~START~~
-text
+varchar
 case-insensitive
 ~~END~~
 
@@ -322,11 +322,11 @@ int#!#int
 
 DECLARE @haystack VARCHAR(100);  
 SELECT @haystack = 'This is a haystack';  
-SELECT CHARINDEX('', @haystack); -- empty string - expect 1
+SELECT CHARINDEX('', @haystack); -- empty string - expect 0
 go
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -395,32 +395,32 @@ bike
 ~~END~~
 
 ~~START~~
-text
+varchar
 B A R bar B A RBar
 ~~END~~
 
 ~~START~~
-text
+varchar
 empty pattern
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 bar bar FooBar
 ~~END~~
 
 ~~START~~
-text
+varchar
 nothing to do
 ~~END~~
 

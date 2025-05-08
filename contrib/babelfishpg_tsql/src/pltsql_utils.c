@@ -2,14 +2,17 @@
 #include "varatt.h"
 
 #include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "funcapi.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "pltsql.h"
 #include "storage/lock.h"
 #include "utils/builtins.h"
@@ -27,6 +30,9 @@
 #include "tcop/utility.h"
 
 #include "multidb.h"
+#include "session.h"
+#include "rolecmds.h"
+#include "parser/scansup.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -34,11 +40,6 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
-bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
-bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
-bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
-bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 
 bool
@@ -50,7 +51,8 @@ extern bool babelfish_dump_restore;
 extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
-extern const char *get_dbo_schema_name(const char *dbname);
+extern char *get_dbo_schema_name(const char *dbname);
+PG_FUNCTION_INFO_V1(split_identifier_internal);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -176,6 +178,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	Node *trigStmt = NULL;
 	ObjectAddress tbltyp;
 	int origname_location = -1;
+	bool with_recompile = false;
 
 	pstate->p_sourcetext = queryString;
 
@@ -210,16 +213,39 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			Oid func_oid = InvalidOid;
 			char *schemaname = NULL;
 			char *funcname = NULL;
+			List *path_oids = NULL;
+			char *cur_schema_name = NULL;
 
 			func = makeNode(ObjectWithArgs);
-			func->objname = stmt->funcname;
-			func->args_unspecified = true;
 
 			/* Get the schema name and function name. */
 			DeconstructQualifiedName(stmt->funcname, &schemaname, &funcname);
 
-			/* function, procedure */
+			/* If schema name is not specified, use the current default schema */
+			if (schemaname == NULL || !strlen(schemaname))
+			{
+				path_oids = fetch_search_path(false);
+				if (path_oids != NIL)
+				{
+					cur_schema_name = get_namespace_name(linitial_oid(path_oids));
+					if (unlikely(cur_schema_name == NULL))
+					{
+						ereport(ERROR, (errcode(ERRCODE_UNDEFINED_SCHEMA),
+										errmsg("Current schema name could not be determined")));
+					}
+					func->objname = list_make2(makeString(cur_schema_name), makeString(funcname));
+					list_free(path_oids);
+				}
+			} 
+			else
+				func->objname = stmt->funcname;
+
+			func->args_unspecified = true;
+
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
+
+			if (cur_schema_name)
+				pfree(cur_schema_name);
 
 			if (OidIsValid(func_oid))
 			{
@@ -272,6 +298,14 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 					location_cell = option;
 					pfree(defel);
 				}
+				else if (strcmp(defel->defname, "recompile") == 0)
+				{
+					/*
+					 * CREATE PROCEDURE ... WITH RECOMPILE
+					 * Record RECOMPILE in catalog
+					 */
+					with_recompile = true;
+				}					
 			}
 
 			/* delete location cell if it exists as it is for internal use only */
@@ -312,7 +346,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			address = CreateFunction(pstate, stmt);
 
 			/* Store function/procedure related metadata in babelfish catalog */
-			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
+			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile);
 
 			if (tbltypStmt || restore_tsql_tabletype)
 			{
@@ -372,13 +406,17 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 }
 
 /*
- * Setup default typmod for sys types/domains when typmod isn't specified
- * (that is, typmod = -1).
+ * Helper function to setup default typmod for sys types/domains
+ * when typmod isn't specified (that is, typmod = -1).
  * We only care to do this in TSQL dialect, this means sys.varchar
  * defaults to sys.varchar(1) only in TSQL dialect.
  *
  * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
  * length of string and binary type will be set to 30.
+ *
+ * is_procedure_or_func indicates if it's a procedure/function statement,
+ * if it's true the default length of string and binary type will be set to 1
+ * otherwise we will add VARHDRSZ to it.
  *
  * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
  * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
@@ -388,7 +426,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
 void
-pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -444,10 +482,13 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 						 * atttypmod is the declared length of the type plus
 						 * VARHDRSZ.
 						 */
-						*typmod = 30 + VARHDRSZ;
+						*typmod = 30;
 					else
 						/* Default length is 1 in the general case */
-						*typmod = 1 + VARHDRSZ;
+						*typmod = 1;
+
+					if (!is_procedure_or_func)
+						*typmod += VARHDRSZ;
 				}
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
@@ -483,6 +524,12 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 			}
 		}
 	}
+}
+
+void
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
+{
+    pltsql_check_or_set_default_typmod_helper(typeName, typmod, is_cast, false);
 }
 
 /*
@@ -826,6 +873,13 @@ pltsql_rollback_txn(void)
 	StartTransactionCommand();
 }
 
+void
+pltsql_abort_any_transaction(void)
+{
+	NestedTranCount = 0;
+	AbortOutOfAnyTransaction();
+}
+
 bool
 pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state)
 {
@@ -985,12 +1039,7 @@ update_DropOwnedStmt(Node *n, List *role_list)
 	foreach(elem, role_list)
 	{
 		char	   *name = (char *) lfirst(elem);
-		RoleSpec   *tmp = makeNode(RoleSpec);
-
-		tmp->roletype = ROLESPEC_CSTRING;
-		tmp->location = -1;
-		tmp->rolename = pstrdup(name);
-		rolespec_list = lappend(rolespec_list, tmp);
+		rolespec_list = lappend(rolespec_list, make_rolespec_node(name));
 	}
 	stmt->roles = rolespec_list;
 }
@@ -1036,7 +1085,7 @@ update_DropStmt(Node *n, const char *object)
 }
 
 void
-update_GrantRoleStmt(Node *n, List *privs, List *roles)
+update_GrantRoleStmt(Node *n, List *privs, List *roles, const char *grantor)
 {
 	GrantRoleStmt *stmt = (GrantRoleStmt *) n;
 
@@ -1045,6 +1094,11 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 
 	stmt->granted_roles = privs;
 	stmt->grantee_roles = roles;
+
+	if (grantor && stmt->grantor)
+	{
+		stmt->grantor->rolename = pstrdup(grantor);
+	}
 }
 
 void
@@ -1080,8 +1134,8 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	}
 }
 
-static void
-update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
+void
+update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
 	ListCell *lc;
@@ -1089,18 +1143,23 @@ update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grant
 	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
 
-	if (grantee && priv && stmt->action)
+	if (grantee && stmt->action)
 	{
 		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
 	}
 
 	foreach(lc, stmt->options)
 	{
-		if (object)
+		DefElem    *defel = (DefElem *) lfirst(lc);
+
+		if (schema && defel->arg && strcmp(defel->defname, "schemas") == 0)
 		{
-			DefElem *tmp = (DefElem *) lfirst(lc);
-			tmp->defname = pstrdup("schemas");
-			tmp->arg = (Node *)list_make1(makeString((char *)object));
+			defel->arg = (Node *)list_make1(makeString((char *)schema));
+		}
+
+		else if (role1 && role2 && defel->arg && strcmp(defel->defname, "roles") == 0)
+		{
+			defel->arg = (Node *)list_make2(makeString((char *)role1), makeString((char *)role2));
 		}
 	}
 }
@@ -1233,30 +1292,7 @@ varchar_to_cstring(const VarChar *varchar)
 	return result;
 }
 
-/*
- * Convert list of schema OIDs to schema names.
- */
-
 char *
-flatten_search_path(List *oid_list)
-{
-	StringInfoData pathbuf;
-	ListCell   *lc;
-
-	initStringInfo(&pathbuf);
-
-	foreach(lc, oid_list)
-	{
-		Oid			schema_oid = lfirst_oid(lc);
-		char	   *schema_name = get_namespace_name(schema_oid);
-
-		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
-	}
-	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
-	return pathbuf.data;
-}
-
-const char *
 get_pltsql_function_signature_internal(const char *funcname,
 									   int nargs, const Oid *argtypes)
 {
@@ -1292,7 +1328,6 @@ get_pltsql_function_signature_internal(const char *funcname,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
-
 	return argbuf.data;			/* return palloc'd string buffer */
 }
 
@@ -1571,6 +1606,71 @@ split_object_name(char *name)
 	return res;
 }
 
+/*
+ * Wrapper over split_object_name function above to expose it as a SQL function.
+ */
+Datum
+split_identifier_internal(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	*funcctx;
+	char        	**split_parts = NULL;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		int         	num_parts = 0;
+		MemoryContext	oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		if (!PG_ARGISNULL(0))
+		{
+			char	*input;
+			char	**splited_object_name;
+			int 	i, j = 0;
+
+			input = text_to_cstring(PG_GETARG_TEXT_P(0));
+			splited_object_name = split_object_name(input);
+
+			for (i = 0; i < 4; i++)
+			{
+				if (strlen(splited_object_name[i]) > 0)
+					num_parts++;
+			}
+
+			if (num_parts > 0)
+			{
+				split_parts = (char **) palloc(num_parts * sizeof(char *));
+
+				for (i = 0; i < 4; i++)
+				{
+					if (i >= (4 - num_parts))
+						split_parts[j++] = splited_object_name[i];
+					else
+						pfree(splited_object_name[i]);
+				}
+			}
+			pfree(splited_object_name);
+		}
+
+		funcctx->max_calls = num_parts;
+		funcctx->user_fctx = split_parts;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	split_parts = (char **) funcctx->user_fctx;
+
+	if (funcctx->call_cntr < funcctx->max_calls)
+	{
+		VarChar *val = (*common_utility_plugin_ptr->tsql_varchar_input) (split_parts[funcctx->call_cntr],
+																		 strlen(split_parts[funcctx->call_cntr]),
+																		 -1);
+		SRF_RETURN_NEXT(funcctx, PointerGetDatum(val));
+	}
+	else
+		SRF_RETURN_DONE(funcctx);
+}
+
 
 /*
  * is_schema_from_db
@@ -1749,6 +1849,56 @@ exec_utility_cmd_helper(char *query_str)
 	/* do this step */
 	ProcessUtility(wrapper,
 				   query_str,
+				   false,
+				   PROCESS_UTILITY_QUERY,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+}
+
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+void
+exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+	AlterTableStmt *atstmt;
+	AlterTableCmd *cmd_orig_name;
+	char *query_str = "ALTER INDEX dummy SET (dummy=dummy)";
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	atstmt = castNode(AlterTableStmt, stmt);
+	atstmt->relation->relname = idxname;
+	if (schemaname != NULL)
+		atstmt->relation->schemaname = schemaname;
+	cmd_orig_name = castNode(AlterTableCmd, linitial(atstmt->cmds));
+	cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	ProcessUtility(wrapper,
+				   "(ALTER INDEX )",
 				   false,
 				   PROCESS_UTILITY_QUERY,
 				   NULL,
@@ -2142,6 +2292,22 @@ static List
 	Node	   *stmt;
 	int			expected_stmts = 2;
 	int			i = 0;
+	bool		owner_other_than_dbo = false;
+	char 		*dbname = get_cur_db_name();
+	const char	*dbo_role = get_dbo_role_name(dbname);
+	const char	*db_owner_role = get_db_owner_name(dbname);
+	const char	*schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+
+	/*
+	 * Don't need multiple ALTER DEFAULT PRIVILEGE statements, if:
+	 * 1. If the schema owner is dbo
+	 * 2. If the schema owner is db_owner (dbo_schema owner is a db_owner)
+	 */
+	if ((strcmp(dbo_role, schema_owner) != 0) && (strcmp(db_owner_role, schema_owner) != 0))
+	{
+		owner_other_than_dbo = true;
+	}
+
 	initStringInfo(&query);
 	if (is_grant)
 	{
@@ -2164,7 +2330,14 @@ static List
 				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
 			else
 				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			
+			if (owner_other_than_dbo)
+			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+			}
+			else
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 		}
 	}
 	else
@@ -2177,7 +2350,13 @@ static List
 		else
 		{
 			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
+			if (owner_other_than_dbo)
+			{
+				/* Grant ALTER DEFAULT PRIVILEGES on schema owner and dbo user. */
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
+			}
+			else
+				appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
 		}
 	}
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
@@ -2194,7 +2373,16 @@ static List
 	if (privilege == ACL_EXECUTE)
 		update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 	else
-		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege_to_string(privilege));
+	{
+		if (owner_other_than_dbo)
+		{
+			update_AlterDefaultPrivilegesStmt(stmt, schema, dbo_role, schema_owner, rolname, privilege_to_string(privilege));
+		}
+		else
+		{
+			update_AlterDefaultPrivilegesStmt(stmt, schema, NULL, NULL, rolname, privilege_to_string(privilege));
+		}
+	}
 
 	pfree(query.data);
 	return stmt_list;
@@ -2210,32 +2398,52 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
+	const char *dbo_role;
+	const char *dbname = get_cur_db_name();
+	Oid 			save_userid;
+	int 			save_sec_context;
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+	dbo_role = get_dbo_role_name_by_mode(dbname, baseline_mode);
 
-	parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
-	/* Run all subcommands */
-	foreach(parsetree_item, parsetree_list)
+	/* Need dbo user to execute the statements. */
+	PG_TRY();
 	{
-		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-		PlannedStmt *wrapper;
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+					save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
 
-		/* need to make a wrapper PlannedStmt */
-		wrapper = makeNode(PlannedStmt);
-		wrapper->commandType = CMD_UTILITY;
-		wrapper->canSetTag = false;
-		wrapper->utilityStmt = stmt;
-		wrapper->stmt_location = 0;
-		wrapper->stmt_len = 0;
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
 
-		/* do this step */
-		ProcessUtility(wrapper,
-					"(GRANT SCHEMA )",
-					false,
-					PROCESS_UTILITY_SUBCOMMAND,
-					NULL,
-					NULL,
-					None_Receiver,
-					NULL);
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(GRANT SCHEMA )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
 	}
+	PG_CATCH();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 AclMode
@@ -2278,4 +2486,249 @@ privilege_to_string(AclMode privilege)
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
 	return NULL;
+}
+
+AccessPriv *
+make_accesspriv_node(const char *priv_name)
+{
+	AccessPriv *n = makeNode(AccessPriv);
+
+	Assert(priv_name != NULL || strlen(priv_name) != 0);
+
+	n->priv_name = pstrdup(priv_name);
+	n->cols = NIL;
+
+	return n;
+}
+
+RoleSpec *
+make_rolespec_node(const char *rolename)
+{
+	RoleSpec *n = makeNode(RoleSpec);
+
+	Assert(rolename != NULL || strlen(rolename) != 0);
+
+	n->roletype = ROLESPEC_CSTRING;
+	n->location = -1;
+	n->rolename = pstrdup(rolename);
+
+	return n;
+}
+
+/* 
+ * Returns the oid of schema owner.
+ */
+Oid
+get_owner_of_schema(const char *schema)
+{
+	HeapTuple	tup;
+	Form_pg_namespace nspform;
+	Oid result;
+
+	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(schema));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", schema)));
+
+	nspform = (Form_pg_namespace) GETSTRUCT(tup);
+	result = ((Oid) nspform->nspowner);
+	ReleaseSysCache(tup);
+
+	return result;
+}
+
+/*
+ * exec_database_roles_subcmds:
+ * Alter default privileges on all the objects in a schema to the db_datareader/db_datareader while creating a schema.
+ */
+void
+exec_database_roles_subcmds(const char *schema)
+{
+	StringInfoData	query;
+	char		*db_datareader;
+	char		*db_datawriter;
+	char		*db_ddladmin;
+	char		*dbo_role;
+	char		*db_owner;
+	char		*schema_owner;
+	const char	*dbname = get_current_pltsql_db_name();
+	List		*stmt_list;
+	int 		expected_stmts = 5;
+	ListCell	*parsetree_item;
+	Node		*stmts;
+	int		i=0;
+	Oid save_userid;
+	int save_sec_context;
+
+	db_datareader = get_db_datareader_name(dbname);
+	db_datawriter = get_db_datawriter_name(dbname);
+	db_ddladmin = get_db_ddladmin_role_name(dbname);
+	dbo_role = get_dbo_role_name(dbname);
+	db_owner = get_db_owner_name(dbname);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	schema_owner = GetUserNameFromId(get_owner_of_schema(schema), false);
+
+	initStringInfo(&query);
+
+	/* Grant privileges to db_datareader */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT SELECT ON TABLES TO dummy; ");
+	/* Grant privileges to db_datawriter */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT INSERT, UPDATE, DELETE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT UPDATE ON SEQUENCES TO dummy; ");
+	/* Grant privileges to db_ddladmin */
+	appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES FOR ROLE dummy, dummy IN SCHEMA dummy GRANT TRUNCATE ON TABLES TO dummy; ");
+	appendStringInfo(&query, "GRANT CREATE ON SCHEMA dummy TO dummy ; ");
+
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datareader, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_datawriter, NULL);
+
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_AlterDefaultPrivilegesStmt(stmts, schema, schema_owner, dbo_role, db_ddladmin, NULL);
+	stmts = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmts, schema, NULL, db_ddladmin, NULL);
+
+	PG_TRY();
+	{
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		/* Run all subcommands */
+		foreach(parsetree_item, stmt_list)
+		{
+			Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 0;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						ALTER_DEFAULT_PRIVILEGES,
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+		}
+		CommandCounterIncrement();
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		pfree(db_datareader);
+		pfree(db_datawriter);
+		pfree(db_ddladmin);
+		pfree(dbo_role);
+		pfree(db_owner);
+	}
+	PG_END_TRY();
+	pfree(query.data);
+}
+
+void
+throw_error_for_fixed_db_role(char *rolname, char *dbname)
+{
+	if (rolname != NULL &&
+		IS_FIXED_DB_PRINCIPAL(get_authid_user_ext_original_name(rolname, dbname, false)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+	}
+}
+
+void
+update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role)
+{
+	ReassignOwnedStmt *stmt = (ReassignOwnedStmt *) n;
+	RoleSpec   *old_rolespec = make_rolespec_node(old_role);
+	RoleSpec   *new_rolespec = make_rolespec_node(new_role);
+
+	if (!IsA(stmt, ReassignOwnedStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a ReassignOwnedStmt")));
+
+	stmt->roles = list_make1(old_rolespec);
+	stmt->newrole = new_rolespec;
+}
+
+void
+update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role)
+{
+	AccessPriv	*granted_rolespec = make_accesspriv_node(granted_role);
+	RoleSpec	*grantee_rolespec = make_rolespec_node(grantee_role);
+
+	update_GrantRoleStmt(n, list_make1(granted_rolespec), list_make1(grantee_rolespec), NULL);
+}
+
+/*
+ * downcase_truncate_split_object_name:
+ * Resolve the four part object name. Downcase and truncate identifier if needed.
+ * Specify NULL for any of the server_name, db_name, schema_name, object_name if
+ * we don't need to resolve them.
+ */
+void
+downcase_truncate_split_object_name(char *four_part_object_name, char **server_name,
+									char **db_name, char **schema_name, char **object_name)
+{
+	char **splited_object_name;
+	char *temp_server_name;
+	char *temp_db_name;
+	char *temp_schema_name;
+	char *temp_object_name;
+
+	/* Resolve the four part name. */
+	splited_object_name = split_object_name(four_part_object_name);
+	temp_server_name = splited_object_name[0];
+	temp_db_name = splited_object_name[1];
+	temp_schema_name = splited_object_name[2];
+	temp_object_name = splited_object_name[3];
+
+	/* Downcase identifier if needed. */
+	if (pltsql_case_insensitive_identifiers)
+	{
+		temp_server_name = downcase_identifier(temp_server_name, strlen(temp_server_name), false, false);
+		temp_db_name = downcase_identifier(temp_db_name, strlen(temp_db_name), false, false);
+		temp_schema_name = downcase_identifier(temp_schema_name, strlen(temp_schema_name), false, false);
+		temp_object_name = downcase_identifier(temp_object_name, strlen(temp_object_name), false, false);
+		for (int j = 0; j < 4; j++)
+			pfree(splited_object_name[j]);
+	}
+	else
+		pfree(splited_object_name[0]);
+
+	pfree(splited_object_name);
+
+	/* Truncate identifiers if needed. */
+	truncate_tsql_identifier(temp_server_name);
+	truncate_tsql_identifier(temp_db_name);
+	truncate_tsql_identifier(temp_schema_name);
+	truncate_tsql_identifier(temp_object_name);
+
+	if (server_name != NULL)
+		*server_name = temp_server_name;
+	if (db_name != NULL)
+		*db_name = temp_db_name;
+	if (schema_name != NULL)
+		*schema_name = temp_schema_name;
+	if (object_name != NULL)
+		*object_name = temp_object_name;
 }

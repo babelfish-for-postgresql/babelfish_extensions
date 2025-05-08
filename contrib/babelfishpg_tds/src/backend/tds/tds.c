@@ -155,7 +155,7 @@ typedef struct LocalTdsStatus
 } LocalTdsStatus;
 
 static TdsStatus *TdsStatusArray = NULL;
-static TdsStatus *MyTdsStatusEntry;
+static TdsStatus *MyTdsStatusEntry = NULL;
 static LocalTdsStatus *localTdsStatusTable = NULL;
 
 uint32_t	MyTdsClientVersion = 0;
@@ -441,13 +441,19 @@ tds_status_shmem_startup(void)
 static void
 tds_stats_shmem_shutdown(int code, Datum arg)
 {
-	/* Don't try to save the outlines during a crash. */
-	if (code)
-		return;
+	volatile TdsStatus *myTdsStatusEntry = MyTdsStatusEntry;
 
 	/* Safety check ... shouldn't get here unless shmem is set up. */
-	if (TdsStatusArray == NULL)
+	if (TdsStatusArray == NULL || MyTdsStatusEntry == NULL)
 		return;
+
+	PGSTAT_BEGIN_WRITE_ACTIVITY(myTdsStatusEntry);
+
+	myTdsStatusEntry->st_procpid = 0;	/* mark invalid */
+
+	PGSTAT_END_WRITE_ACTIVITY(myTdsStatusEntry);
+
+	MyTdsStatusEntry = NULL;
 
 	return;
 }
@@ -595,6 +601,21 @@ tdsstat_fetch_stat_local_tdsentry(int beid)
 }
 
 /* ----------
+ * tdsstat_fetch_stat_numbackends() -
+ *
+ *	Support function for the SQL-callable pgstat* functions. Returns
+ *	the number of sessions known in the localTdsStatusTable, i.e.
+ *	the maximum 1-based index to pass to tdsstat_fetch_stat_local_tdsentry().
+ * ----------
+ */
+int
+tdsstat_fetch_stat_numbackends(void)
+{
+	tdsstat_read_current_status();
+	return localNumBackends;
+}
+
+/* ----------
  * tdsstat_read_current_status() -
  *
  *	Copy the current contents of the TdsStatus array to local memory,
@@ -616,7 +637,7 @@ tdsstat_read_current_status(void)
 	 * Allocate storage for local copy of state data.
 	 */
 	localtable = (LocalTdsStatus *)
-		palloc(sizeof(LocalTdsStatus) * NumBackendStatSlots);
+		palloc0(sizeof(LocalTdsStatus) * NumBackendStatSlots);
 
 	localNumBackends = 0;
 
@@ -735,14 +756,16 @@ tdsstat_read_current_status(void)
 
 		/* Only valid entries get included into the local array */
 		if (localentry->tdsStatus.st_procpid > 0)
+		{
 			BackendIdGetTransactionIds(i, 
 									   &localentry->backend_xid, 
 									   &localentry->backend_xmin, 
 									   &localentry->backend_subxact_count, 
 									   &localentry->backend_subxact_overflowed);
 
-		localentry++;
-		localNumBackends++;
+			localentry++;
+			localNumBackends++;
+		}
 	}
 
 	localTdsStatusTable = localtable;
@@ -785,7 +808,8 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 		 * i.e. increment count to 1 and return true
 		 * only when we find another connection using same database.
 		 */
-		if (tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
+		if (tdsentry->st_procpid > 0 &&
+			tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
 		{
 			if (ignore_current_connection && number_of_connections == 0)
 				number_of_connections++;

@@ -7,9 +7,10 @@
  */
 
 #include "postgres.h"
-#include "varatt.h"
 
 #include "access/htup_details.h"
+#include "access/genam.h"
+#include "access/table.h"
 #include "access/parallel.h"	/* InitializingParallelWorker */
 #include "miscadmin.h"
 #include "catalog/pg_authid.h"
@@ -29,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
+#include "utils/fmgroids.h"
 #include "common/int.h"
 #include "utils/numeric.h"
 #include "utils/memutils.h"
@@ -41,23 +43,36 @@
 #include <math.h>
 #include "pltsql.h"
 
+/* 
+ * This macro is to define typmod of sysname to 128 beacause
+ * sysname is created as CREATE DOMAIN sys.SYSNAME AS sys.VARCHAR(128);
+ */
+#define SYSNAME_TYPMOD 128
+#define NCHAR_MAX_TYPMOD 4000
+#define BPCHAR_MAX_TYPMOD 8000
+
+#define TDS_MAX_NUM_PRECISION 38
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
+extern is_tsql_base_datatype_hook_type is_tsql_base_datatype_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 extern handle_constant_literals_hook_type handle_constant_literals_hook;
+extern set_common_typmod_case_expr_hook_type set_common_typmod_case_expr_hook;
 
 extern bool babelfish_dump_restore;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
+PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 
-static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
+static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
+static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -118,11 +133,13 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "nvarchar", "varbinarysysnvarchar", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "binaryrowversion", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "nvarchar", "binarysysnvarchar", 'i', 'f'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
 /*  rowversion */
 	{PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
@@ -218,6 +235,13 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_varbinary", "nvarcharvarbinary", 'a', 'f'},
+	{TSQL_CAST_ENTRY, "sys", "nvarchar", "sys", "bbf_binary", "nvarcharbinary", 'a', 'f'},
+/*  fixeddecimal */
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "pg_catalog", "varchar", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "fixeddecimal", "sys", "varchar", NULL, 'i', 'f'},
 /*  string -> float8 via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
@@ -276,10 +300,6 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float4", "sys", "varchar", NULL, 'i', 'i'},
 /*  float8 -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float8", "pg_catalog", "text", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float8", "pg_catalog", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float8", "sys", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float8", "pg_catalog", "varchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "float8", "sys", "varchar", NULL, 'i', 'i'},
 /*  numeric -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "numeric", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "numeric", "pg_catalog", "bpchar", NULL, 'i', 'i'},
@@ -288,16 +308,14 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "numeric", "sys", "varchar", NULL, 'i', 'i'},
 /*  // fixeddecimal -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "text", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "sys", "bpchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "pg_catalog", "varchar", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "fixeddecimal", "sys", "varchar", NULL, 'i', 'i'},
-/*  fixeddecimal -> string via I/O */
+/*  uniqueidentifier -> string via I/O */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "bpchar", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "sys", "bpchar", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "varchar", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "sys", "varchar", NULL, 'i', 'i'},
+/*  bit -> string via I/O */
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bit", "sys", "varchar", NULL, 'i', 'i'},
 /*  oid -> int4 */
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "oid", "pg_catalog", "int4", NULL, 'i', 'b'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "oid", "pg_catalog", "text", NULL, 'i', 'i'},
@@ -318,6 +336,10 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bytea", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "pg_catalog", "text", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "pg_catalog", "text", NULL, 'i', 'i'},
+/*  date/time -> string via I/O */
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "date", "sys", "varchar", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "sys", "varchar", NULL, 'i', 'i'},
 };
 
 #define TOTAL_TSQL_CAST_COUNT (sizeof(tsql_cast_raw_infos)/sizeof(tsql_cast_raw_infos[0]))
@@ -375,6 +397,44 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
+/* struct to store details of special function */
+typedef struct tsql_special_function
+{
+	const char             *nsp;                              /* namespace of special function */
+	const char             *funcname;                         /* name of special function */
+	const char             *formatted_funcname;               /* formatted name of special function */
+	bool                    is_variadic;                      /* need to handle variadic functions differently */
+	int                     nargs;                            /* number of arguments of special function (for variadic function number of fixed arguments will be stored) */
+} tsql_special_function_t;
+
+tsql_special_function_t tsql_special_function_list[] = 
+{
+	{"sys", "replace", "replace", false, 3},
+	{"sys", "string_agg", "string_agg", false, 2},
+	{"sys", "substring", "substring", false, 3},
+	{"sys", "stuff", "stuff", false, 4},
+	{"sys", "translate", "translate", false, 3},
+	{"sys", "trim", "Trim", false, 1},
+	{"sys", "hashbytes", "hashbytes", false, 2},
+	{"sys", "trim", "Trim", false, 2},
+	{"sys", "ltrim", "ltrim", false, 1},
+	{"sys", "rtrim", "rtrim", false, 1},
+	{"sys", "left", "left", false, 2},
+	{"sys", "right", "right", false, 2},
+	{"sys", "replicate", "replicate", false, 2},
+	{"sys", "reverse", "reverse", false, 1},
+	{"sys", "lower", "lower", false, 1},
+	{"sys", "upper", "upper", false, 1},
+	{"sys", "concat", "concat", true, 0},
+	{"sys", "concat_ws", "concat_ws", true, 1},
+
+	/* Since sql server round() function can take either 2 or 3 parameters, it doesn't fit into case of variable length of paraemters */
+	{"sys", "round", "round", false, 2},
+	{"sys", "round", "round", false, 3}
+};
+
+#define TOTAL_TSQL_SPECIAL_FUNCTION_COUNT (sizeof(tsql_special_function_list)/sizeof(tsql_special_function_list[0]))
+
 /* T-SQL Cast */
 typedef struct tsql_cast_info_key
 {
@@ -396,6 +456,18 @@ static tsql_cast_info_entry_t *tsql_cast_info_entries = NULL;
 static HTAB *ht_tsql_cast_info = NULL;
 bool		inited_ht_tsql_cast_info = false;
 
+/* Returns true if the oid belongs to binary, bbf_binary, varbinary, bbf_varbinary datatype */
+static bool
+is_tsql_binary_family_datatype(Oid oid)
+{
+	if((*common_utility_plugin_ptr->is_tsql_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(oid)
+	|| (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(oid) || (*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(oid))
+	{
+		return true;
+	}
+	return false;
+}
+
 static CoercionPathType
 tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -409,8 +481,12 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 	bool		isSqlVariantCast = false;
 	bool		isInt8Type = false;
 	bool		isInt8ToMoney = false;
+	bool		isVarbinaryToNvarchar = false;
+	bool		isNvarchartoVarbinary = false;
 
 	Oid			typeIds[2] = {sourceTypeId, targetTypeId};
+	Oid			UDT_sourceBaseType = InvalidOid;
+	Oid			UDT_targetBaseType = InvalidOid;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -441,22 +517,61 @@ tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext c
 				ReleaseSysCache(tuple);
 				break;
 			}
+			if( i == 0 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_sourceBaseType = get_immediate_base_type_of_UDT_internal(sourceTypeId);
+			}
+
+			if(i == 1 && strcmp(type_nsname, "sys") != 0 && strcmp(type_nsname, "pg_catalog") != 0)
+			{
+				UDT_targetBaseType = get_immediate_base_type_of_UDT_internal(targetTypeId);
+			}
+
+
 			ReleaseSysCache(tuple);
 		}
 	}
 
+	/* Check if the UDT's base type is nvarchar or varbinary.
+	 * If so, use the immediate base type for further processing.
+	 */
+	if(UDT_sourceBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_sourceBaseType) || is_tsql_binary_family_datatype(UDT_sourceBaseType)))
+	{
+		typeIds[0] = UDT_sourceBaseType;
+		sourceTypeId = UDT_sourceBaseType;
+	}
+
+	if(UDT_targetBaseType != InvalidOid && ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(UDT_targetBaseType) || is_tsql_binary_family_datatype(UDT_targetBaseType)))
+	{
+		typeIds[1] = UDT_targetBaseType;
+		targetTypeId = UDT_targetBaseType;
+	}
+
+	/* We've found VARBINARY To NVARCHAR casting */
+	if (is_tsql_binary_family_datatype(typeIds[0]) && (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[1]))
+		isVarbinaryToNvarchar = true;
+
+	/* We've found NVARCHAR TO (bbf)(VAR)BINARY casting */
+	if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(typeIds[0]) && is_tsql_binary_family_datatype(typeIds[1]))
+		isNvarchartoVarbinary = true;
+
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (!isSqlVariantCast)
 	{
-		if (OidIsValid(sourceTypeId))
+		/*
+		 * if we are casting from NVARCHAR TO VARBINARY, don't look for base type of
+		 * source so that it can call the cast function which matches with the
+		 * exact types
+		 */
+		if (OidIsValid(sourceTypeId) && !isNvarchartoVarbinary)
 			sourceTypeId = getBaseType(sourceTypeId);
 
 		/*
-		 * if we are casting from INT8 to MONEY, don't look for base type of
+		 * if we are casting from INT8 to MONEY or VARBINARY To NVARCHAR, don't look for base type of
 		 * target so that it can call the cast function which matches with the
 		 * exact types
 		 */
-		if (OidIsValid(targetTypeId) && !isInt8ToMoney)
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney && !isVarbinaryToNvarchar)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 
@@ -735,6 +850,15 @@ tsql_has_higher_precedence(Oid typeId1, Oid typeId2)
 	return type1_precedence < type2_precedence;
 }
 
+/*
+ * Returns if given data type is a base type in T-SQL.
+ */
+static bool
+is_tsql_base_datatype(Oid typeId)
+{
+	return tsql_get_type_precedence(typeId) != -1;
+}
+
 static bool
 is_vectorized_binary_operator(FuncCandidateList candidate)
 {
@@ -889,17 +1013,482 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 	return new_candidates;
 }
 
+/*
+ * get_immediate_base_type_of_UDT_internal()
+ * This function returns the Immediate base type for UDT.
+ * Returns InvalidOid if given type is not an UDT
+ */
+static Oid
+get_immediate_base_type_of_UDT_internal(Oid typeid)
+{
+	HeapTuple					tuple;
+	bool						isnull;
+	Datum						datum;
+	Datum                       tsql_typename;
+	Oid							base_type;
+	LOCAL_FCINFO(fcinfo, 1);
+
+	if (!OidIsValid(typeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("typeid is invalid!")));
+
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
+	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
+	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
+	fcinfo->args[0].isnull = false;
+	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+
+	/* if given type is not an UDT then return InvalidOid */
+	if (tsql_typename)
+		return InvalidOid;
+
+	/* Get immediate base type id of given type id */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
+	if (!HeapTupleIsValid(tuple))
+		return InvalidOid;
+
+	datum = SysCacheGetAttr(TYPEOID, tuple, Anum_pg_type_typbasetype, &isnull);
+	if (isnull)
+		return InvalidOid;
+
+	base_type = DatumGetObjectId(datum);
+	ReleaseSysCache(tuple);
+
+	return base_type;
+}
+
+Datum
+get_immediate_base_type_of_UDT(PG_FUNCTION_ARGS)
+{
+	Oid			base_type;
+	
+	base_type = get_immediate_base_type_of_UDT_internal(PG_GETARG_OID(0));
+	if (!OidIsValid(base_type))
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(base_type);
+}
+
+/*
+ * For a given function details, validate whether it is in special function list
+ */
+bool
+validate_special_function(char *func_nsname, char *func_name, int nargs, bool num_args_match)
+{
+	tsql_special_function_t    *special_func;
+
+	/* Sanity checks */
+	if (func_name == NULL)
+		return false;
+
+	/* 
+	 * Special function handling is only for some specific system functions.
+	 * If func_nsname is NULL, consider it to be a "sys".
+	 */
+	if (func_nsname != NULL &&
+		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
+		return false;
+
+	/* Get Special function details */
+	special_func = NULL;
+
+	for (int i = 0; i < TOTAL_TSQL_SPECIAL_FUNCTION_COUNT; i++)
+	{
+		if (strcmp(func_name, tsql_special_function_list[i].funcname) == 0
+			&& (tsql_special_function_list[i].is_variadic || nargs == tsql_special_function_list[i].nargs))
+		{
+			special_func = &tsql_special_function_list[i];
+			break;
+		}
+	}
+
+	/* If function is not a special function no additional handling required */
+	if (special_func == NULL)
+		return false;
+
+	/* if the function is not variadic and number of args don't match, no need for special handling */
+	if (!(special_func->is_variadic || num_args_match))
+		return false;
+
+	/* For variadic function add check on number of arguments */
+	if (special_func->is_variadic)
+	{
+		/* PG has limitation for max number of args = 100. */
+		if ((strlen(func_name) == 6 && strncmp(func_name, "concat", 6) == 0)
+			&& (nargs < 1 || nargs > 100))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("The concat function requires 1 to 100 arguments.")));
+		else if ((strlen(func_name) == 9 && strncmp(func_name, "concat_ws", 9) == 0)
+				&& (nargs < 2 || nargs > 100))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("The concat_ws function requires 2 to 100 arguments.")));
+	}
+
+	return true;
+}
+
+/*
+ * tsql_func_select_candidate_for_special_func()
+ *
+ * For functions present in special function list, and try to find best candidate 
+ * based on matching return type. Also throw error in case of invalid argument data type.
+ */
 static FuncCandidateList
-tsql_func_select_candidate(int nargs,
+tsql_func_select_candidate_for_special_func(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
+{
+	FuncCandidateList	current_candidate, best_candidate;
+	Oid 			expr_result_type;
+	char		       *proc_nsname;
+	char		       *proc_name;
+	bool			is_func_validated;
+	int			ncandidates;
+	Oid			rettype;
+	Oid			sys_oid = get_namespace_oid("sys", false);
+	Oid		       *new_input_typeids;
+	Oid		       *argtypes;
+	int			nargs_func;
+	Oid			second_arg_type = InvalidOid;
+        Oid                     expr_arg_type;
+
+	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
+
+	is_func_validated = validate_special_function(proc_nsname, proc_name, nargs, true);
+
+	/* Return NULL if function is not a special function */
+	if (!is_func_validated)
+		return NULL;
+
+	/*
+	 * If input type ids are UDT then we should use its immediate base type to pick the correct definition.
+	 */
+	new_input_typeids = (Oid *) palloc0(nargs * sizeof(Oid));
+	for (int i = 0; i < nargs; i++)
+	{
+		new_input_typeids[i] = get_immediate_base_type_of_UDT_internal(input_typeids[i]);
+		if (!OidIsValid(new_input_typeids[i]))
+		{
+			new_input_typeids[i] = input_typeids[i];
+		}
+	}
+
+	/* if common_utility_plugin_ptr is not initialised */
+	if (common_utility_plugin_ptr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Failed to find common utility plugin.")));
+
+	/* function based logic to decide return type */
+	expr_result_type = InvalidOid;
+	expr_arg_type = InvalidOid;
+	if (strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0 && nargs == 2)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "translate", 9) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 7 && strncmp(proc_name,"replace", 7) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[2])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[2])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[2]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 5 && strncmp(proc_name, "stuff", 5) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(new_input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary"); 
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[3])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[3])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[3]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 10 && strncmp(proc_name, "string_agg", 10) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(new_input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(new_input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_text_datatype)(new_input_typeids[0])
+				|| new_input_typeids[0] == UNKNOWNOID)
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+		else
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "concat_ws", 9) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
+		}
+	}
+	else if (strlen(proc_name) == 6 && strncmp(proc_name, "concat", 6) == 0)
+	{
+		expr_result_type = get_sys_varcharoid();
+		for (int i = 0; i < nargs; i++)
+		{
+			if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[i])
+				|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[i]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+				break;
+			}
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name, "substring", 9) == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_image_datatype)(new_input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("varbinary"); 
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if ((strlen(proc_name) == 4 && strncmp(proc_name,"trim", 4) == 0 && nargs == 1)
+			|| (strlen(proc_name) == 5 && strncmp(proc_name,"ltrim", 5) == 0)
+			|| (strlen(proc_name) == 5 && strncmp(proc_name,"rtrim", 5) == 0)
+			|| (strlen(proc_name) == 4 && strncmp(proc_name,"left", 4) == 0)
+			|| (strlen(proc_name) == 5 && strncmp(proc_name,"right", 5) == 0)
+			|| (strlen(proc_name) == 7 && strncmp(proc_name,"reverse", 7) == 0)
+			|| (strlen(proc_name) == 9 && strncmp(proc_name,"replicate", 9) == 0)
+			|| (strlen(proc_name) == 5 && strncmp(proc_name,"upper", 5) == 0)
+			|| (strlen(proc_name) == 5 && strncmp(proc_name,"lower", 5) == 0))
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(new_input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar"); 
+		}
+		else
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+	else if (strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_text_datatype) (new_input_typeids[1])
+			|| new_input_typeids[1] == UNKNOWNOID)
+		{
+			expr_arg_type = get_sys_varcharoid();
+		}
+		else if((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (new_input_typeids[1])
+			|| (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
+		}
+		else if(is_tsql_binary_family_datatype(new_input_typeids[1]))
+		{
+			expr_arg_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bbf_varbinary");
+		}
+	}
+	/* The return type of sys.round() will be based on input argument type */
+	else if (strlen(proc_name) == 5 && strncmp(proc_name, "round", 5) == 0)
+	{
+		/*
+		 * 2 and 3 are the only valid options for nargs of sys.round() in sql server 2022 (version 16), but since the version supported here
+		 * is version 12, will follow the existing behavior.
+		 * The existing behavior throws error message if nargs is not from 1 to 3.
+		 */
+		if (nargs == 2 || nargs == 3)
+		{
+			/* tinyint, smallint and int will have return type int */
+			if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(new_input_typeids[0])
+			|| (new_input_typeids[0] == INT2OID)
+			|| (new_input_typeids[0] == INT4OID))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
+			}
+			/* bigint will have return type bigint */
+			else if (new_input_typeids[0] == INT8OID)
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
+			}
+			/* decimal and numeric(p,s) will have return type decimal(p,s) */
+			else if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype)(new_input_typeids[0])
+			|| (new_input_typeids[0] == NUMERICOID))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("decimal");
+			}
+			/* money and smallmoney will have return type money */
+			else if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(new_input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(new_input_typeids[0]))
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("money");
+			}
+			/* float and real will have return type float */
+			/* in all other cases it will default to float data type */
+			else
+			{
+				expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("float");
+			}
+		}
+	}
+
+	/* free new_input_typeids, as they are no longer needed */
+	if (new_input_typeids)
+		pfree(new_input_typeids);
+
+	if (!OidIsValid(expr_result_type) && !OidIsValid(expr_arg_type))
+		return NULL;
+
+	/* 
+	 * Get the candidate with matching return type or 
+	 * second argument type(specifically for hashbytes function) 
+	 */
+	ncandidates = 0;
+	best_candidate = NULL;
+	for (current_candidate = candidates;
+			current_candidate != NULL;
+			current_candidate = current_candidate->next)
+	{
+		/* we should only consider candidates for special function from sys schema */
+		if (get_func_namespace(current_candidate->oid) != sys_oid)
+			continue;
+
+		rettype = get_func_rettype(current_candidate->oid);
+		/* get the function second argument if we have hashbytes function */
+		if(strlen(proc_name) == 9 && strncmp(proc_name,"hashbytes", 9) == 0 && nargs == 2)
+		{
+			get_func_signature(current_candidate->oid, &argtypes, &nargs_func);
+			second_arg_type = argtypes[1];
+		}
+		
+		/* Ignore following definitions as these are used when no other potential definition can be used. */
+		if ((current_candidate->args[0] == TEXTOID && rettype == get_sys_varcharoid())
+			|| (current_candidate->args[0] == BYTEAOID && rettype == BYTEAOID))
+			continue;
+		/*
+                 * Find the best candidate based on second_arg_type(this will be valid only for the case of hasbytes) 
+		 * for hashbytes function. For other special functions we are selecting best candidate on the basis 
+		 * of return type.
+		 */
+		if ((OidIsValid(expr_result_type) && expr_result_type == rettype)
+			|| (OidIsValid(expr_arg_type) && OidIsValid(second_arg_type) && expr_arg_type == second_arg_type))
+		{
+			best_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+
+	/* if there are no suitable candidates in sys schema, let PG decide which canidate to use. */
+	if (ncandidates == 0)
+	{
+		return NULL;
+	}
+	/* multiple suitable candidates with same return type should not exist in sys schema.  */
+	else if (ncandidates > 1)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("multiple definitions of function %s.%s with return type %s found.", proc_nsname, proc_name, format_type_be(expr_result_type))));
+	}
+
+	if (best_candidate != NULL)
+		best_candidate->next = NULL;
+	return best_candidate;
+}
+
+static FuncCandidateList
+tsql_func_select_candidate(List *names,
+						   List *fargs,
+						   int nargs,
 						   Oid *input_typeids,
 						   FuncCandidateList candidates,
-						   bool unknowns_resolved)
+						   bool unknowns_resolved,
+						   bool is_special)
 {
 	FuncCandidateList new_candidates;
 	FuncCandidateList current_candidate;
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
+
+	if (is_special)
+	{
+		/*
+		 * In case of dump restore we don't require special handling as PG handling will be sufficient
+		 */
+		if (babelfish_dump_restore)
+			return NULL;
+
+		return tsql_func_select_candidate_for_special_func(names, nargs, input_typeids, candidates);
+	}
 
 	if (unknowns_resolved)
 	{
@@ -980,13 +1569,24 @@ tsql_func_select_candidate(int nargs,
 }
 
 static bool
-is_tsql_char_type_with_len(Oid type)
+is_tsql_char_type_with_len(Oid type, bool is_case_expr)
 {
+	bool		       result;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
+	result =  utilptr->is_tsql_bpchar_datatype(type) ||
+			  utilptr->is_tsql_nchar_datatype(type) ||
+			  utilptr->is_tsql_varchar_datatype(type) ||
+			  utilptr->is_tsql_nvarchar_datatype(type);
+	
+	/* 
+         * For case expr we need to find common type based on TSQL's
+	 * precedence for text and ntext also.
+	 */
+	if(is_case_expr)
+		result |= utilptr->is_tsql_text_datatype(type) ||
+			  	  utilptr->is_tsql_ntext_datatype(type);
+
+	return result;
 }
 
 static bool
@@ -1016,7 +1616,7 @@ starts_with(const char *text, const char *pat)
 }
 
 static Node *
-tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
+tsql_coerce_string_literal_hook(Oid targetTypeId,
 								int32 targetTypeMod, int32 baseTypeMod,
 								Const *newcon, char *value,
 								CoercionContext ccontext, CoercionForm cformat,
@@ -1142,14 +1742,12 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 
 							args = list_make1(makeConst(TEXTOID,
 														-1,
-														tsql_get_server_collation_oid_internal(false),
+														tsql_get_database_or_server_collation_oid_internal(false),
 														-1,
 														PointerGetDatum(cstring_to_text(msg)),
 														false,
 														false));
 							errFunc = makeFuncExpr(errFuncOid, targetTypeId, args, 0, 0, COERCE_EXPLICIT_CALL);
-
-							cancel_parser_errposition_callback(pcbstate);
 
 							result = (Node *) errFunc;
 
@@ -1183,7 +1781,8 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 			}
 		}
 		else if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
-				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId))
+				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (baseTypeId))
 		{
 			/*
 			 * binary datatype should be passed in client encoding
@@ -1198,7 +1797,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
 
 			tempcon = makeConst(baseTypeId, -1,
-								tsql_get_server_collation_oid_internal(false),
+								tsql_get_database_or_server_collation_oid_internal(false),
 								-1, PointerGetDatum(cstring_to_text(value)),
 								false, false);
 
@@ -1263,21 +1862,23 @@ static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
 {
-	if (sql_dialect != SQL_DIALECT_TSQL)
+	int32  len;
+	if (sql_dialect != SQL_DIALECT_TSQL || !context)
 		return InvalidOid;
-
-	if (!context)
-		return InvalidOid;
-	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
+    
+	len = strlen(context);
+	
+	if (len == 6 && strncmp(context, "ISNULL", 6) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
-	else if(strncmp(context, "TSQL_COALESCE", strlen("TSQL_COALESCE")) == 0)
+	else if(len == 13 && strncmp(context, "TSQL_COALESCE", 13) == 0)
 		return select_common_type_for_coalesce_function(pstate, exprs);
-	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
-			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
-			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
-			strncmp(context, "VALUES", strlen("VALUES")) == 0 ||
-			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")) == 0)
-		return select_common_type_setop(pstate, exprs, which_expr);
+	else if ((len == 5 && strncmp(context, "UNION", 5) == 0) || 
+            (len == 9 && strncmp(context, "INTERSECT", 9) == 0) ||
+            (len == 6 && strncmp(context, "EXCEPT", 6) == 0) ||
+            (len == 6 && strncmp(context, "VALUES", 6) == 0) ||
+            (len == 22 && strncmp(context, "UNION/INTERSECT/EXCEPT", 22) == 0) ||
+            (len == 4 && strncmp(context, "CASE", 4) == 0))
+		return select_common_type_setop(pstate, exprs, which_expr, context);
 
 	return InvalidOid;
 }
@@ -1327,25 +1928,48 @@ tsql_handle_constant_literals_hook(ParseState *pstate, Node *e)
  * output type based on TSQL's precedence rules
  */ 
 static Oid
-select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr)
+select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context)
 {
 	Node		*result_expr = (Node*) linitial(exprs);
 	Oid			result_type = InvalidOid;
 	ListCell	*lc;
+	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
-	 * or NVARCHAR is present, let engine handle finding the type. */
+	 * or NVARCHAR is present, let engine handle finding the type.
+	 * But if it is CASE expr then it will also check for text and ntext.
+	 */
 	foreach(lc, exprs)
 	{
-		Node	*expr = (Node *) lfirst(lc);
+		Node		*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
+
+		if (is_case_expr)
+		{
+			Oid		baseType = get_immediate_base_type_of_UDT_internal(type);
+
+			/*
+			 * If any of the branch is of UDT, then we will find the baseType using
+			 * get_immediate_base_type_of_UDT_internal(), to find common type using TSQL precedence.
+			 * If type is not UDT then baseType will be NULL.
+			 */
+			if (OidIsValid(baseType))
+					type = baseType;
+			
+			/* 
+			 * If any of the branch is of sysname or UDT is made from sysname
+			 * We need to assign type to "varchar" (As sysname is created from "varchar").
+			 */
+ 			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+					type = get_sys_varcharoid();
+		}
 
 		if (expr_is_null(expr))
 			continue;
 		else if (is_tsql_str_const(expr))
 			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
-		else if (!is_tsql_char_type_with_len(type))
+		else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
 			return InvalidOid;
 		
 		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
@@ -1458,49 +2082,197 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 	return commontype;
 }
 
+static bool
+is_tsql_exact_numeric_type(Oid type)
+{
+	Oid basetype = getBaseType(type);
+	return	basetype == INT2OID ||
+			basetype == INT4OID ||
+			basetype == INT8OID ||
+			basetype == NUMERICOID ||
+			((*common_utility_plugin_ptr->is_tsql_bit_datatype) (basetype)) ||
+			((*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype) (basetype));
+}
+
 /* 
- * When we must merge types together (i.e. UNION), if the target type
- * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
- * equal to that of the largest expression
- * 
+ * When we must merge types together (i.e. UNION, CASE), if the target 
+ * type is CHAR, NCHAR, BINARY, NUMERIC or DECIMAL make the typmod 
+ * (representing the length)  equal to that of the largest expression
  * If -1 is returned, engine will handle finding a common typmod as usual
  */
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
-	int32		max_typmods=0;
+	int32		max_typmods=0,
+			max_precision = 0,
+			max_scale = 0,
+			precision = 0,
+			scale = 0,
+			integralDigitCount = 0,
+			numeric_result_typmod = -1;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return -1;
 
-	if (!is_tsql_char_type_with_len(common_type) &&
+	if (!is_tsql_char_type_with_len(common_type, false) &&
 			 !utilptr->is_tsql_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_sys_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_varbinary_datatype(common_type) &&
-			 !utilptr->is_tsql_sys_varbinary_datatype(common_type))
+			 !utilptr->is_tsql_sys_varbinary_datatype(common_type) &&
+			 !utilptr->is_tsql_decimal_datatype(common_type) &&
+			 !((common_type == NUMERICOID)))
 		return -1;
 
-	/* If resulting type is a length, need to be max of length types */
+	/* 
+	 * If resulting type is a length, need to be max of length types,
+	 * If the type is numeric or decimal then we calculate scale as 
+	 * max(s1, s2) and precision as max(s1, s2) + max(p1 - s1, p2 - s2)
+	 * where s1, s2 are the scale of branches b1 & b2 and p1, p2 are the precision.
+	 */
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
 		int32 typmod = exprTypmod(expr);
+		Oid   type = exprType(expr);
+		Oid   immediate_base_type = get_immediate_base_type_of_UDT_internal(type);
 
-		if (is_tsql_str_const(expr))
-			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
-
-		if (expr_is_var_max(expr))
-			return -1;
-
-		if (lc == list_head(exprs))
-			max_typmods = typmod;
+		if (common_type == NUMERICOID ||
+			getBaseType(common_type) == NUMERICOID)
+		{
+			/* If UDT then calculate typmod.*/
+			if (OidIsValid(immediate_base_type))
+				type = getBaseTypeAndTypmod(type, &typmod);
+			
+			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
+				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);
+			
+			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
+				continue;
+			
+			scale = (typmod - VARHDRSZ) & 0xffff;
+			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+			integralDigitCount = Max(precision - scale, max_precision - max_scale);
+			max_scale = Max(max_scale, scale);
+			max_precision = integralDigitCount + max_scale;
+			/*
+		 	 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 	 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 	 */
+			if (max_precision > TDS_MAX_NUM_PRECISION)
+			{
+				max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
+				max_precision = TDS_MAX_NUM_PRECISION;
+			}
+			numeric_result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+		}
 		else
-			max_typmods = Max(max_typmods, typmod);
+		{
+			/* 
+			 * Handling for UDT, If immediate_base_type is Valid Oid that mean we need to handle typmod for UDT,
+			 * By calculating typmod of its base type using getBaseTypeAndTypmod.
+			 * Other wise if immediate_base_type is not Valid Oid We don't need any handling for UDT.
+			 */
+			if (OidIsValid(immediate_base_type))
+			{
+				/* Finding the typmod of base type of UDT using getBaseTypeAndTypmod() */
+				int32 base_typmod = -1;
+				Oid   base_type = getBaseTypeAndTypmod(type, &base_typmod);
+
+				/* 
+				 * This conditon is for the datatype with MAX typmod.
+				 * -1 will only be returned if common_type is a datatype
+				 * that supports MAX typmod. If common type is nchar(maxtypmod = 4000)
+				 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+				 */
+				if (base_typmod == -1 && 
+					is_tsql_datatype_with_max_scale_expr_allowed(base_type))
+				{
+					if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+						return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+					else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+						return NCHAR_MAX_TYPMOD + VARHDRSZ;
+					else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+						return -1;
+				}
+
+				typmod = base_typmod;	
+			}
+
+			/* 
+			 * Handling for sysname, In CASE expression if one of the branch is 
+			 * of type sysname then set typmod as SYSNAME_TYPMOD (i.e. 128).
+			 */
+			if ((*common_utility_plugin_ptr->is_tsql_sysname_datatype) (type))
+				typmod = SYSNAME_TYPMOD + VARHDRSZ;
+
+			if (is_tsql_str_const(expr))
+				typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
+
+			/* 
+			 * This conditon is for the datatype with MAX typmod.
+			 * -1 will only be returned if common_type is a datatype
+			 * that supports MAX typmod.If common type is nchar(maxtypmod = 4000)
+			 * or bpchar(maxtypmod = 8000) return the MAX typmod for them.
+			 */
+			if (expr_is_var_max(expr))
+			{
+				if ((*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(common_type))
+					return BPCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if ((*common_utility_plugin_ptr->is_tsql_nchar_datatype)(common_type))
+					return NCHAR_MAX_TYPMOD + VARHDRSZ;
+				else if (is_tsql_datatype_with_max_scale_expr_allowed(common_type))
+					return -1;
+			}
+
+			if (lc == list_head(exprs))
+				max_typmods = typmod;
+			else
+				max_typmods = Max(max_typmods, typmod);
+		}
 	}
 
+	if (common_type == NUMERICOID || getBaseType(common_type) == NUMERICOID)
+		return numeric_result_typmod;
+		
 	return max_typmods;
+}
+
+/* 
+ * For CASE expression, this function will set the typmod to all the CASE branches from coerce_type_typmod().
+ */
+static void
+tsql_set_common_typmod_case_expr_hook(ParseState *pstate, List *exprs, CaseExpr *newc)
+{
+        /* calculating common_typemod for case expr */
+        int32           typmod = select_common_typmod(pstate, exprs, newc->casetype);
+        ListCell       *l;
+        
+        newc->defresult = (Expr *) 
+                coerce_to_target_type(pstate,
+                                (Node *) newc->defresult, 
+                                newc->casetype, 
+                                newc->casetype, 
+                                typmod, 
+                                COERCION_IMPLICIT,
+				COERCE_IMPLICIT_CAST,
+                                -1);
+
+        foreach(l, newc->args)
+        {
+                CaseWhen   *w = (CaseWhen *) lfirst(l);
+
+                w->result = (Expr *)
+                        coerce_to_target_type(pstate,
+                                (Node *) w->result, 
+                                newc->casetype, 
+                                newc->casetype, 
+                                typmod, 
+                                COERCION_IMPLICIT,
+				COERCE_IMPLICIT_CAST,
+                                -1);
+        }
 }
 
 Datum
@@ -1517,11 +2289,13 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
+	is_tsql_base_datatype_hook = is_tsql_base_datatype;
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
 	handle_constant_literals_hook = tsql_handle_constant_literals_hook;
+	set_common_typmod_case_expr_hook = tsql_set_common_typmod_case_expr_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);

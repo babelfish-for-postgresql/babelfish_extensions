@@ -256,6 +256,8 @@ extern ProcessUtility_hook_type next_ProcessUtility;
 #define PUBLIC_ROLE_NAME "public"
 #define BABELFISH_SYSADMIN "sysadmin"
 #define BABELFISH_ROLE_ADMIN "bbf_role_admin"
+#define BABELFISH_SECURITYADMIN "securityadmin"
+#define BABELFISH_DBCREATOR "dbcreator"
 
 /* Functions in backend/tds/tdscomm.c */
 extern void TdsSetMessageType(uint8_t msgType);
@@ -302,6 +304,8 @@ extern int	TdsProcessLogin(Port *port, bool LoadSsl);
 extern void TdsSendLoginAck(Port *port);
 extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
+extern void TdsSetDbContext(void);
+extern void TdsResetLoginFlags(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
 extern int	TdsSocketBackend(void);
@@ -338,6 +342,7 @@ extern void TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool get_tds_database_backend_count(int16 db_id, bool ignore_current_connection);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
+extern int tdsstat_fetch_stat_numbackends(void);
 extern void invalidate_stat_table(void);
 extern char *get_tds_host_name(void);
 extern uint32_t get_tds_client_pid(void);
@@ -379,5 +384,8 @@ extern char *TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, 
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 extern Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale);
 extern Datum TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int scale);
+
+/* Functions in tdsbulkload.c */
+extern void TdsResetBcpOffset(void);
 
 #endif							/* TDS_INT_H */

@@ -62,7 +62,6 @@
 #include "guc.h"
 #include "multidb.h"
 #include "session.h"
-#include "guc.h"
 #include "catalog.h"
 
 uint64		rowcount_var = 0;
@@ -70,6 +69,7 @@ List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
 int			fetch_status_var = 0;
+int			saved_expr_kind = -1;
 
 typedef struct
 {
@@ -466,7 +466,6 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
-static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -490,6 +489,18 @@ extern int
 
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
+
+static bool	called_for_tsql_itvf_function = false;
+bool  		called_for_tsql_itvf_func(void);
+
+
+bool
+called_for_tsql_itvf_func()
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+	return called_for_tsql_itvf_function;
+}
 
 /* ----------
  * pltsql_exec_function	Called by the call handler for
@@ -668,7 +679,13 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 		if (pltsql_trace_exec_time)
 			config.trace_mode |= TRACE_EXEC_TIME;
 
+		/* 
+		 * Following variable will be used inside exec_stmt_iterative function to 
+		 * identify whether the function is ITVF function or not 
+		 */
+		called_for_tsql_itvf_function = func->is_itvf;
 		rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
+		called_for_tsql_itvf_function = false;
 
 		if (rc != PLTSQL_RC_RETURN)
 		{
@@ -1018,9 +1035,10 @@ pltsql_exec_trigger(PLtsql_function *func,
 	PLtsql_rec *rec_new,
 			   *rec_old;
 	HeapTuple	rettup;
+	bool     	support_tsql_trans = pltsql_support_tsql_transactions();
 
 	/* Check if this trigger is called as part of any of postgres' function, procedure or trigger. */
-	if (!pltsql_support_tsql_transactions())
+	if (!support_tsql_trans)
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1032,7 +1050,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 	 */
 	pltsql_estate_setup(&estate, func, NULL, NULL);
 
-	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers)
+	if (support_tsql_trans && !pltsql_disable_txn_in_triggers)
 		estate.atomic = false;
 
 	estate.trigdata = trigdata;
@@ -1155,7 +1173,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		 * TSQL triggers terminate if there is no transaction active at the
 		 * end
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 					 errmsg("The transaction ended in the trigger. The batch has been aborted.")));
@@ -1163,7 +1181,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 		/*
 		 * If an error was encountered when executing trigger.
 		 */
-		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 					 errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
@@ -4350,6 +4368,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_init_exec_error_data(&(es_cs_entry->error_data));
 	es_cs_entry->next = exec_state_call_stack;
 	exec_state_call_stack = es_cs_entry;
+	saved_expr_kind = -1;
 }
 
 /* ----------
@@ -4603,54 +4622,24 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		fmtonly_enabled = true;
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
+	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	StringInfoData query;
-	Oid			current_user_id = GetUserId();
-	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
-	bool		reset_session_properties = false;
-	bool		inside_trigger = false;
+	bool		is_cross_db = stmt->is_cross_db && stmt->db_name && strcmp(cur_dbname, stmt->db_name) != 0;
+	bool		ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
+						  (estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
+						  (strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
-	/* fetch current search_path */
-	char	   *old_search_path = NULL;
+	original_query_string = stmt->original_query ? stmt->original_query : NULL;
 
-	if (stmt->original_query)
-		original_query_string = stmt->original_query;
-
-	if (stmt->is_cross_db)
+	if (is_cross_db)
 	{
-		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
-		char	   *user = get_user_for_database(stmt->db_name);
-
-		if (stmt->insert_exec)
-		{
-			estate->db_name = stmt->db_name;
-		}
-
-		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, stmt->db_name)));
-
 		/*
 		 * When there is cross db reference to sys or information_schema
 		 * schemas, Change the session property.
 		 */
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-			set_session_properties(stmt->db_name);
-	}
-	if (stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
-	{
-		if (stmt->is_schema_specified)
-			estate->schema_name = stmt->schema_name;
-		else
-			estate->schema_name = NULL;
-		if (estate->trigdata)
-			inside_trigger = true;
-		need_path_reset = reset_search_path(stmt, &old_search_path, &reset_session_properties, inside_trigger);
+			set_cur_user_db_and_path(stmt->db_name, true);
 	}
 
 	PG_TRY();
@@ -4660,17 +4649,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
-			if (stmt->is_cross_db)
+			if (is_cross_db)
 			{
 				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_session_properties(cur_dbname);
-
-				SetCurrentRoleId(current_user_id, false);
-			}
-			if (reset_session_properties)
-			{
-				set_session_properties(cur_dbname);
-				SetCurrentRoleId(current_user_id, false);
+					set_cur_user_db_and_path(cur_dbname, true);
 			}
 			return ret;
 		}
@@ -4786,7 +4768,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is
 		 * handled in PLtsql_stmt_query_set.
 		 */
-		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
+		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || ro_func)
 			enable_txn_in_triggers = false;
 
 		if (enable_txn_in_triggers)
@@ -4794,7 +4776,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			/* Open nesting level in engine */
 			BeginCompositeTriggers(CurrentMemoryContext);
 			/* TSQL commands must run inside an explicit transaction */
-			if (!pltsql_disable_batch_auto_commit && pltsql_support_tsql_transactions() &&
+			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
 				stmt->txn_data == NULL && !IsTransactionBlockActive())
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
@@ -4820,7 +4802,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 										  portal, expr, cmd, paramLI);
 		else if (stmt->need_to_push_result)
 			rc = execute_plan_and_push_result(estate, expr, paramLI);
-		else if (stmt->txn_data != NULL && !pltsql_support_tsql_transactions())
+		else if (stmt->txn_data != NULL && !support_tsql_trans)
 		{
 			elog(DEBUG2, "TSQL TXN Execute transaction command with PG semantics");
 			rc = execute_txn_command(estate, stmt);
@@ -5053,12 +5035,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
-			pltsql_support_tsql_transactions() &&
+			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!(estate->func->fn_prokind == PROKIND_FUNCTION &&
-			  estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER &&
-			  strcmp(estate->func->fn_signature, "inline_code_block") != 0) &&
-			!estate->insert_exec)
+			!ro_func && !estate->insert_exec)
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -5068,42 +5047,19 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				restore_session_properties();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		if (need_path_reset)
-			(void) set_config_option("search_path", old_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-		if (reset_session_properties)
-		{
-			set_session_properties(cur_dbname);
-			SetCurrentRoleId(current_user_id, false);
-		}
-		if (stmt->is_cross_db)
+		original_query_string = NULL;
+
+		if (is_cross_db)
 		{
 			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-				set_session_properties(cur_dbname);
-			SetCurrentRoleId(current_user_id, false);
+				set_cur_user_db_and_path(cur_dbname, true);
 		}
-		PG_RE_THROW();
+
+		pfree(cur_dbname);
 	}
 	PG_END_TRY();
-
-	if (need_path_reset)
-		(void) set_config_option("search_path", old_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-	if (reset_session_properties)
-	{
-		set_session_properties(cur_dbname);
-		SetCurrentRoleId(current_user_id, false);
-	}
-	if (stmt->is_cross_db)
-	{
-		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-			set_session_properties(cur_dbname);
-		SetCurrentRoleId(current_user_id, false);
-	}
 
 	return PLTSQL_RC_OK;
 }
@@ -5494,6 +5450,47 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			Oid			seqid = InvalidOid;
 			SPITupleTable *tuptable = SPI_tuptable;
 			uint64		n_processed = SPI_processed;
+			bool		is_cross_db;
+			char	   *schema_name = NULL;
+			HeapTuple	schema_tuple;
+			Oid			current_user_id = InvalidOid;
+
+			schema_name = get_namespace_name(get_rel_namespace(tsql_identity_insert.rel_oid));
+			schema_tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(schema_name));
+
+			if (HeapTupleIsValid(schema_tuple))
+			{
+				Datum		datum;
+				int16		db_id;
+				bool		isnull;
+
+				datum = SysCacheGetAttr(SYSNAMESPACENAME, schema_tuple, Anum_namespace_ext_dbid, &isnull);
+				db_id = DatumGetInt16(datum);
+
+				if (!DbidIsValid(db_id) || db_id != get_cur_db_id())
+				{
+					char *db_name = get_db_name(db_id);
+					char *user = get_user_for_database(db_name);
+
+					if (user)
+					{
+						is_cross_db = true;
+						pfree(db_name);
+					}
+					else
+					{
+						char *login = GetUserNameFromId(GetSessionUserId(), false);
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("The server principal \"%s\" is not able to access "
+							"the database \"%s\" under the current security context",
+							login, db_name)));
+					}
+
+				}
+
+				ReleaseSysCache(schema_tuple);
+			}
 
 			/* Get the identity column name */
 			rel = RelationIdGetRelation(tsql_identity_insert.rel_oid);
@@ -5577,6 +5574,12 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 
 						PG_TRY();
 						{
+							if (is_cross_db)
+							{
+								current_user_id = GetUserId();
+								SetCurrentRoleId(GetSessionUserId(), false);
+							}
+
 							/*
 							 * We want the T-SQL behavior of setval function.
 							 * Please check the variable definition for
@@ -5601,6 +5604,9 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 						{
 							/* reset the value */
 							pltsql_setval_identity_mode = false;
+
+							if (is_cross_db)
+								SetCurrentRoleId(current_user_id, false);
 						}
 						PG_END_TRY();
 
@@ -7872,12 +7878,22 @@ pltsql_param_fetch(ParamListInfo params,
 		}
 	}
 
+	if (saved_expr_kind == EXPRKIND_TARGET)
+	{
+		/* Let extension to set value of param dynamically during execution when variables appears in TargetList */
+		prm->pflags = 0;
+	}
+	else
+	{
+		/* For other cases, for example, Quals, we can always mark params as "const" for executor's purposes */
+		prm->pflags = PARAM_FLAG_CONST;
+	}
+
 	/* Return "no such parameter" if not ok */
 	if (!ok)
 	{
 		prm->value = (Datum) 0;
 		prm->isnull = true;
-		prm->pflags = 0;
 		prm->ptype = InvalidOid;
 		return prm;
 	}
@@ -7886,8 +7902,6 @@ pltsql_param_fetch(ParamListInfo params,
 	exec_eval_datum(estate, datum,
 					&prm->ptype, &prmtypmod,
 					&prm->value, &prm->isnull);
-	/* We can always mark params as "const" for executor's purposes */
-	prm->pflags = PARAM_FLAG_CONST;
 
 	/*
 	 * If it's a read/write expanded datum, convert reference to read-only,
@@ -10124,7 +10138,6 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int			rc;
 	PLtsql_tbl *tbl;
 	bool		old_pltsql_explain_only = pltsql_explain_only;
-	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 	bool old_abort_curr_txn = AbortCurTransaction;
 
@@ -10146,7 +10159,13 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 			if (!tbl->need_drop)
 				continue;
 
-			query = psprintf(query_fmt, tbl->tblname);
+			/*
+			 * Use delimiters for names like @@var or @var#
+			 */
+			if (is_tsql_atatuservar(tbl->tblname))
+				query = psprintf("DROP TABLE [%s]", tbl->tblname);
+			else
+				query = psprintf("DROP TABLE %s", tbl->tblname);	
 
 			pltsql_explain_only = false;	/* Drop temporary table even in
 											 * EXPLAIN ONLY mode */
@@ -10222,159 +10241,6 @@ pltsql_clone_estate_err(PLtsql_estate_err *err)
 	return clone;
 }
 
-static bool
-reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger)
-{
-	PLExecStateCallStack *top_es_entry;
-	char	   *cur_dbname = get_cur_db_name();
-	char	   *new_search_path;
-	char	   *physical_schema;
-	const char *dbo_schema;
-
-	top_es_entry = exec_state_call_stack->next;
-
-	while (top_es_entry != NULL)
-	{
-		/*
-		 * Traverse through the estate stack. If the occurrence of exec in the
-		 * call stack, update the search path accordingly.
-		 */
-		if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC || 
-			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL && 
-			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->insert_exec &&
-			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->is_cross_db)
-			))
-		{
-			if (top_es_entry->estate->schema_name != NULL && stmt->is_dml)
-			{
-				if (top_es_entry->estate->db_name == NULL)
-				{
-					/*
-					 * Don't change the search path, if the statement inside
-					 * the procedure is a function or schema qualified.
-					 */
-					if (stmt->func_call || stmt->is_schema_specified)
-						break;
-					else
-					{
-						physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(cur_dbname);
-					}
-				}
-				else
-				{
-					if (stmt->func_call || stmt->is_schema_specified)
-					{
-						set_session_properties(top_es_entry->estate->db_name);
-						*reset_session_properties = true;
-						break;
-					}
-					else
-					{
-						physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
-					}
-				}
-				if (!*old_search_path)
-				{
-					List	   *path_oids = fetch_search_path(false);
-
-					*old_search_path = flatten_search_path(path_oids);
-					list_free(path_oids);
-				}
-				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-
-				/*
-				 * Add the schema where the object is referenced and dbo
-				 * schema to the new search path
-				 */
-				(void) set_config_option("search_path", new_search_path,
-										 PGC_USERSET, PGC_S_SESSION,
-										 GUC_ACTION_SAVE, true, 0, false);
-				return true;
-			}
-			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
-			{
-				set_session_properties(top_es_entry->estate->db_name);
-				*reset_session_properties = true;
-				break;
-			}
-		}
-		/* if the stmt is inside an exec_batch, return false */
-		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-			return false;
-
-		/*
-		 * Traverse through the estate stack, if the stmt is inside trigger we
-		 * set the search path accordingly.
-		 */
-		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
-		{
-			if (inside_trigger && top_es_entry->estate->schema_name)
-			{
-				/*
-				 * If the object in the stmt is schema qualified or it's a ddl
-				 * we don't need to update the searh path.
-				 */
-				if (stmt->is_schema_specified || stmt->is_ddl)
-					return false;
-				else
-				{
-					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-					dbo_schema = get_dbo_schema_name(cur_dbname);
-					if (!*old_search_path)
-					{
-						List	   *path_oids = fetch_search_path(false);
-
-						*old_search_path = flatten_search_path(path_oids);
-						list_free(path_oids);
-					}
-					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-
-					/*
-					 * Add the schema where the object is referenced and dbo
-					 * schema to the new search path
-					 */
-					(void) set_config_option("search_path", new_search_path,
-											 PGC_USERSET, PGC_S_SESSION,
-											 GUC_ACTION_SAVE, true, 0, false);
-					return true;
-				}
-			}
-		}
-		top_es_entry = top_es_entry->next;
-	}
-
-	if (stmt->is_create_view && stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") != 0 
-			&& strcmp(stmt->schema_name, "pg_catalog") != 0))
-	{
-		cur_dbname = get_cur_db_name();
-		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
-		dbo_schema = get_dbo_schema_name(cur_dbname);
-		if (!*old_search_path)
-		{
-			List	   *path_oids = fetch_search_path(false);
-
-			*old_search_path = flatten_search_path(path_oids);
-			list_free(path_oids);
-		}
-		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-
-		/*
-		 * Add the schema where the object is referenced and dbo schema to the
-		 * new search path
-		 */
-		(void) set_config_option("search_path", new_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-		return true;
-	}
-	return false;
-}
-
 /*
  * Get the original_query_string which stores the original query.
  */
@@ -10420,4 +10286,39 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(pltsql_assign_var);
+
+/*
+ * pltsql_assign_var - Helper function to update local variables dynamically during execution.
+ * Any statement which updates local variables as part of TargetList will be re-written using
+ * this function. for example,
+ * @var = expr will be re-written to @var=sys.pltsql_assign_var(dno, cast((expr) as type)).
+ */
+Datum
+pltsql_assign_var(PG_FUNCTION_ARGS)
+{
+	int dno = PG_GETARG_INT32(0);
+	Datum data = PG_GETARG_DATUM(1);
+	Oid valtype = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	bool isNull = PG_ARGISNULL(1);
+	int32 valtypmod = -1;
+	PLtsql_datum *target;
+	MemoryContext oldcontext;
+
+	PLtsql_execstate *estate = get_current_tsql_estate();
+	Assert(estate != NULL);
+	oldcontext = MemoryContextSwitchTo(estate->datum_context);
+	target = estate->datums[dno];
+
+	/* we will reuse exec_assign_value function here provided in pl_exec.c */
+	exec_assign_value(estate, target, data, isNull, valtype, valtypmod);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (isNull)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(data);
 }

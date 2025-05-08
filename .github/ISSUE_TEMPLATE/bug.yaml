@@ -22,7 +22,10 @@ body:
       label: Version
       description: Which version of Babelfish are you running?
       options:
-        - BABEL_3_X_DEV (Default)
+        - BABEL_4_X_DEV (Default)
+        - BABEL_3_X_DEV
+        - BABEL_2_X_DEV
+        - BABEL_1_X_DEV
     validations:
       required: true
   - type: dropdown

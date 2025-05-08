@@ -45,3 +45,70 @@ INSERT INTO babel_datetime_vu_prepare_testing VALUES('2020-03-14')
 go
 ~~ROW COUNT: 1~~
 
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B022)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C0)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x00008EE700C5C100)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0xFFFF2E4600000000)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x0000B02200EF28C1)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B81FF)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_datetime_vu_prepare_testing VALUES(0x002D247F018B8200)
+go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+create view babel_datetime_vu_view1
+as
+	select cast(0x0000B02200EF28C1 as datetime)
+go
+
+create view babel_datetime_vu_view2
+as
+	select cast(0x00008EE700C5C100 as datetime)
+go
+
+CREATE PROCEDURE babel_datetime_vu_procedure
+AS
+BEGIN
+	select cast(0x00008EE700C5C100 as datetime)
+END;
+GO
+
+CREATE FUNCTION babel_datetime_vu_function1 (@inputdate DATETIME)
+RETURNS varchar(50)
+AS
+BEGIN
+	RETURN @inputdate
+END
+GO
+
+-- convert string to datetime test
+CREATE VIEW babel_datetime_empty_string_vw as (SELECT CONVERT(datetime, ''));
+GO
+CREATE PROCEDURE babel_datetime_empty_string_p as (SELECT CONVERT(datetime, ''));
+GO
+CREATE FUNCTION babel_datetime_empty_string_f()
+RETURNS datetime AS
+BEGIN
+RETURN (SELECT CONVERT(datetime, ''));
+END
+GO

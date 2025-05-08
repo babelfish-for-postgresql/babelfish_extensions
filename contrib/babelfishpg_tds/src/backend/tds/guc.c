@@ -343,7 +343,7 @@ TdsDefineGucs(void)
 
 	DefineCustomIntVariable(
 							"babelfishpg_tds.tds_default_packet_size",
-							gettext_noop("Sets the default packet size for"
+							gettext_noop("Sets the default packet size for "
 										 "all the clients being connected"),
 							NULL,
 							&tds_default_packet_size,

@@ -379,6 +379,244 @@ hello#!#jello
 2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#create table sourceTable(c1 int identity, c2 CHAR(1024))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#INSERT INTO sourceTable (c1, c2) SELECT generate_series(1, 1001, 1), 'Foo';
+#Q# set IDENTITY_INSERT sourceTable OFF
+#Q#create table destinationTable(c1 int identity, c2 CHAR(1024), check (c1 < 500))
+#Q#create table sourceTable1(c1 int identity, c2 CHAR(1024))
+#Q# set IDENTITY_INSERT sourceTable1 ON
+#Q#INSERT INTO sourceTable1 (c1, c2) VALUES(1001, 'Foo')
+#Q#INSERT INTO sourceTable1 (c1, c2) SELECT generate_series(1, 1000, 1), 'Foo';
+#Q# set IDENTITY_INSERT sourceTable1 OFF
+#Q#Select count(c1) from sourceTable
+#D#int
+1001
+#Q#select count(c1) from sourceTable1
+#D#int
+1001
+#Q#select count(c1) from destinationTable
+#D#int
+0
+#Q#select Ident_CURRENT('sourceTable')
+#D#decimal
+1001
+#Q#select Ident_CURRENT('sourceTable1')
+#D#decimal
+1001
+#Q#select Ident_CURRENT('destinationTable')
+#D#decimal
+1
+#Q#drop table sourceTable
+#Q#drop table sourceTable1
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int identity, b int)
+#Q#Create table destinationTable(a int identity(1, 2), b int)
+#Q#insert into sourceTable values (1)
+#Q#insert into sourceTable values (2)
+#Q# set IDENTITY_INSERT destinationTable ON
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+1
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int identity, b int)
+#Q#Create table destinationTable(a int identity(1, 2), b int)
+#Q#insert into sourceTable values (1)
+#Q#insert into sourceTable values (2)
+#Q# set IDENTITY_INSERT destinationTable ON
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity)
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, -4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#-4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity)
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+4
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity)
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, 2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity)
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, 2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity(-1, -1))
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -2)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-2
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+-2
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, -4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#-4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+1
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity(-1, -1))
+#Q# set IDENTITY_INSERT sourceTable ON
+#Q#insert into sourceTable (a, b) values (1, -1)
+#Q#insert into sourceTable (a ,b) values (2, 4)
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#-1
+2#!#4
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#-1
+2#!#-2
+#Q#Select Ident_CURRENT('sourceTable')
+#D#decimal
+4
+#Q#Select Ident_CURRENT('destinationTable')
+#D#decimal
+-2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
 #Q#create table t_rcv (a int)
 #Q#create table t_rcv2 (b int)
 #Q#create trigger tri on t_rcv for insert as begin insert t_rcv2 select a*-1 from inserted end
@@ -407,3 +645,53 @@ hello#!#jello
 10#!#hello
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable (a int);
+#Q#Create table destinationTable(a int, check (a < 2))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1);
+#Q#INSERT INTO sourceTable values (2);
+#Q#Select count(*) from sourceTable
+#D#int
+1001
+#Q#select count(*) from destinationTable
+#D#int
+1001
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable (a int);
+#Q#Create table destinationTable(a int)
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1500, 1);
+#Q#Select count(*) from sourceTable
+#D#int
+1500
+#Q#select count(*) from destinationTable
+#D#int
+1500
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#create table sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#create table destinationTable(c1 int PRIMARY KEY, c2 CHAR(1024))
+#Q#INSERT INTO destinationTable VALUES(1000, 'Foo')
+#Q#Select count(*) from sourceTable
+#D#int
+1000
+#Q#select count(*) from destinationTable
+#D#int
+1
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#CREATE TABLE sourceTable(c1 int, c2 CHAR(1024))
+#Q#INSERT INTO sourceTable SELECT generate_series(1, 1000, 1), 'Foo'
+#Q#CREATE PARTITION FUNCTION IntPartitionFunction (int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+#Q#CREATE PARTITION SCHEME IntPartitionScheme AS PARTITION IntPartitionFunction ALL TO ([PRIMARY])
+#Q#CREATE TABLE partitionedTable(c1 int, c2 CHAR(1024)) ON IntPartitionScheme(c1)
+#Q#Select count(*) from sourceTable
+#D#int
+1000
+#Q#select count(*) from partitionedTable
+#D#int
+0
+#Q#DROP TABLE partitionedTable
+#Q#DROP PARTITION SCHEME IntPartitionScheme
+#Q#DROP PARTITION FUNCTION IntPartitionFunction
+#Q#DROP TABLE sourceTable

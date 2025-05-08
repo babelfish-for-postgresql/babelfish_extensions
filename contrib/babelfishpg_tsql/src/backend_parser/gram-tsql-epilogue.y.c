@@ -94,6 +94,17 @@ construct_unique_index_name(char *index_name, char *relation_name)
 	return name;
 }
 
+PG_FUNCTION_INFO_V1(bbf_construct_unique_index_name);
+
+Datum
+bbf_construct_unique_index_name(PG_FUNCTION_ARGS)
+{
+	char	*index_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	*table_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	PG_RETURN_TEXT_P(cstring_to_text(construct_unique_index_name(index_name, table_name)));
+}
+
 /*
  * Convert a list of (dotted) names for a table type to a RangeVar.
  * This differs from makeRangeVarFromAnyName in that it only allows 1 prefix,
@@ -216,6 +227,19 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 		 */
 		result = makeTypeCast(helperFuncCall, typename, location);
 	}
+
+	else if (strcmp(typename_string, "binary") == 0 || strcmp(typename_string, "varbinary") == 0)
+	{
+			Node	   *helperFuncCall;
+
+			if(typmod > VARHDRSZ)
+				helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod - VARHDRSZ, location), args), COERCE_EXPLICIT_CALL, location);
+			else
+				helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varbinary"), lcons(makeIntConst(typmod, location), args), COERCE_EXPLICIT_CALL, location);
+			// add a type cast on top of the CONVERT helper function so typmod can be applied
+			result = makeTypeCast(helperFuncCall, typename, location);
+	}
+
 	else
 	{
 		if (try)
@@ -563,20 +587,12 @@ createOpenJsonWithColDef(char *elemName, TypeName *elemType)
 TypeName *
 setCharTypmodForOpenjson(TypeName *t)
 {
-	int			curTMod = getElemTypMod(t);
 	List	   *tmods = (List *) t->typmods;
 
 	if (tmods == NULL)
 	{
 		/* Default value when no typmod is provided is 1 */
 		t->typmods = list_make1(makeIntConst(1, -1));
-		return t;
-	}
-	else if (curTMod == TSQLMaxTypmod)
-	{
-		/* TSQLMaxTypmod is represented as -8000 so we need to change to */
-		/* the actual max value of 4000 */
-		t->typmods = list_make1(makeIntConst(4000, -1));
 		return t;
 	}
 	else
@@ -1867,6 +1883,87 @@ TsqlForClauseSubselect(Node *selectstmt)
 	return rss;
 }
 
+static Node *
+buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func_name, int func_name_loc, List *tsql_createfunc_args,
+							char *param_name, int table_loc, List *table_elts, char *tokens_remaining, int tokens_loc, bool alter, core_yyscan_t yyscanner)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		CreateStmt *n1 = makeNode(CreateStmt);
+		CreateFunctionStmt *n2;
+		ObjectWithArgs *owa;
+		AlterFunctionStmt *n;
+		char *tbltyp_name = psprintf("%s_%s", param_name, strVal(llast(func_name)));
+		List *tbltyp = list_copy(func_name);
+		FunctionParameter *out_param = makeNode(FunctionParameter);
+
+		DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), create_loc);
+		DefElem *body = makeDefElem("as", (Node *) list_make1(makeString(tokens_remaining)), tokens_loc);
+		DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, create_loc);
+		DefElem *location = makeDefElem("location", (Node *) makeInteger(func_name_loc), func_name_loc);
+		DefElem *ret;
+		TypeName *returnType;
+
+		tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
+		tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
+		n1->relation = makeRangeVarFromAnyName(tbltyp, func_name_loc, yyscanner);
+		n1->tableElts = table_elts;
+		n1->inhRelations = NIL;
+		n1->partspec = NULL;
+		n1->ofTypename = NULL;
+		n1->constraints = NIL;
+		n1->options = NIL;
+		n1->oncommit = ONCOMMIT_NOOP;
+		n1->tablespacename = NULL;
+		n1->if_not_exists = false;
+		n1->tsql_tabletype = true;
+
+		out_param->name = param_name;
+		out_param->argType = makeTypeNameFromNameList(tbltyp);
+		out_param->mode = FUNC_PARAM_TABLE;
+		out_param->defexpr = NULL;
+
+		if(alter)
+		{
+			returnType = out_param->argType;
+			returnType->setof = true;
+			returnType->location = table_loc;
+			ret = makeDefElem("return", (Node *) returnType, table_loc);
+
+			owa = makeNode(ObjectWithArgs);
+			owa->objname = func_name;
+			owa->objargs = lappend(extractArgTypes(tsql_createfunc_args), out_param->argType);
+			owa->objfuncargs = lappend(tsql_createfunc_args, out_param);
+
+			n = makeNode(AlterFunctionStmt);
+			n->objtype = OBJECT_PROCEDURE; /* Set as proc to avoid psql alter func impl */
+			n->func = owa;
+			n->actions = list_make5(lang, body, location, tbltypStmt, ret);
+
+			return (Node *) n;
+		} 
+
+		TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
+		n2 = makeNode(CreateFunctionStmt);
+		n2->is_procedure = false;
+		n2->replace = replace;
+		n2->funcname = func_name;
+		n2->parameters = lappend(tsql_createfunc_args, out_param);
+		n2->returnType = makeTypeNameFromNameList(tbltyp);
+		n2->returnType->setof = true;
+		n2->returnType->location = table_loc;
+		n2->options = list_make4(lang, body, tbltypStmt, location);
+		return (Node *) n2;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
+					parser_errposition(create_loc)));
+	}
+}
+
 /* pivot select transformation*/
 static Node *
 tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl)
@@ -1925,6 +2022,286 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	return (Node *)pivot_sl;
 }
 
+/*
+ * Generate unique alias for source table/query in UNPIVOT transformation
+ *
+ * base: Base name to use for the alias (table name/"src"/"subq"/"joined")
+ *
+ * Returns: Unique alias string in format "<base>_XXXXXX" where X is random digit
+ *
+ * Note: Ensures unique alias in query and length within NAMEDATALEN
+ */
+char *
+generate_unpivot_source_table_alias(const char *base)
+{
+    char *result;
+    int base_len;
+    /* Constant for suffix length: underscore + 6 digits */
+    const int ALIAS_SUFFIX_LEN = 7;  
+
+    /* Use "src" as base if none provided */
+    if (!base)
+        base = "src";
+        
+    /* Ensure base name length fits within NAMEDATALEN with suffix */
+    base_len = strlen(base);
+    if (base_len + ALIAS_SUFFIX_LEN > NAMEDATALEN)
+        base_len = NAMEDATALEN - ALIAS_SUFFIX_LEN;
+
+    /* Generate unique name: base_XXXXXX where X is random digit */
+    result = palloc(base_len + ALIAS_SUFFIX_LEN + 1);
+    memcpy(result, base, base_len);
+    sprintf(result + base_len, "_%06d", rand() % 1000000);
+    
+    return result;
+}
+
+/* 
+ * Helper function to get the alias of the unpivot source
+ *
+ * table_ref: Table, Subquery, Join, Function Call, json, another unpivot (List)
+ *
+ * Returns: new alias of the unpivot source; error if unexpected object
+ */
+char *
+get_unpivot_source_alias(Node *table_ref) {
+
+    Assert(table_ref != NULL);
+
+    if (IsA(table_ref, RangeVar))
+    {
+        /* Source is a table */
+        RangeVar *larg = (RangeVar *)table_ref;
+        if (larg->alias == NULL)
+            larg->alias = makeAlias(generate_unpivot_source_table_alias(larg->relname), NIL);
+
+        return larg->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeSubselect))
+    {
+        /* Source is a subquery */
+        RangeSubselect *rsq = (RangeSubselect *)table_ref;
+        if (rsq->alias == NULL)
+            rsq->alias = makeAlias(generate_unpivot_source_table_alias("subq"), NIL);
+
+        return rsq->alias->aliasname;
+    }
+    else if (IsA(table_ref, JoinExpr))
+    {
+        /* For JOIN, we need to ensure the joined tables have a grouped alias */
+        JoinExpr *join = (JoinExpr *)table_ref;
+
+        if (join->alias == NULL) 
+            join->alias = makeAlias(generate_unpivot_source_table_alias("joined"), NIL);
+
+            return join->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeFunction))
+    {
+        /* Source is a function call */
+        RangeFunction *rf = (RangeFunction *)table_ref;
+        if (rf->alias == NULL)
+            rf->alias = makeAlias(generate_unpivot_source_table_alias("func"), NIL);
+
+        return rf->alias->aliasname;
+    }
+    else if (IsA(table_ref, RangeTableFunc))
+    {
+        RangeTableFunc *rtf = (RangeTableFunc *)table_ref;
+        if (rtf->alias == NULL)
+            rtf->alias = makeAlias(generate_unpivot_source_table_alias("json"), NIL);
+
+        return rtf->alias->aliasname;
+    }
+    else if (IsA(table_ref, List))
+    {
+        /* Handle case where table_ref is an UNPIVOT node */
+        List *prev_unpivot = (List *)table_ref;
+        if (prev_unpivot != NULL &&
+            list_length(prev_unpivot) == 7 &&
+            IsA(linitial(prev_unpivot), String) &&
+            strcmp(strVal(linitial(prev_unpivot)), "UNPIVOT") == 0)
+        {
+            /* Use the alias from previous UNPIVOT */
+            return strVal(list_nth(prev_unpivot, 1));
+        }
+
+    }
+    /* Future addition: RangeTableSample, when it is supported. */
+    ereport(ERROR,
+            (errcode(ERRCODE_SYNTAX_ERROR),
+             errmsg("Invalid source structure for UNPIVOT operation")));
+}
+
+/*
+ * Create an NVARCHAR constant with proper typmod
+ *
+ * str: input string to be cast as NVARCHAR
+ * location: parse location (-1 if unknown)
+ *
+ * Returns: Node representing a TypeCast to sys.nvarchar
+ *
+ * Note: Create a TypeCast node for a string constant to sys.nvarchar type
+ * Follows same logic as N'string literal' syntax in TSQL (rule: TSQL_NVARCHAR Sconst)
+ */
+Node *
+make_nvarchar_const(const char *str, int location)
+{
+    TypeName *nvarcharTypeName;
+    int32 typmod;
+
+    /* Create sys.nvarchar type */
+    nvarcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"), 
+                                                           makeString("nvarchar")));
+
+    /* Set appropriate typmod */
+    typmod = strlen(str);
+    if (typmod == 0)
+        typmod = 2;
+    else if (typmod > 4000)
+        typmod = TSQLMaxTypmod;
+
+    nvarcharTypeName->typmods = list_make1(makeIntConst(typmod, -1));
+    nvarcharTypeName->location = -1;
+
+    return makeStringConstCast(pstrdup(str), location, nvarcharTypeName);
+}
+
+/*
+ * Transform TSQL UNPIVOT operation into equivalent CROSS JOIN LATERAL structure
+ * Builds a JoinExpr node representing the transformation and returns additional
+ * context for analyzer stage processing.
+ *
+ * components = input list containing nodes: table_ref, unpivot_clause, alias
+ * 
+ * Returns: List node containing:
+ * [ "UNPIVOT",
+ *   unpivot alias name,
+ *   dimension column name,
+ *   measure column name,
+ *   source table/query alias name,
+ *   List of unpivot source columns,
+ *   transformed JoinExpr node representing unpivot operation
+ * ]
+ *
+ * Note:
+ * The function:
+ * - Extracts measure, dimension and source columns from unpivot clause
+ * - Generates/validates source table alias
+ * - Creates VALUES list for LATERAL subquery from source columns
+ * - Builds complete JOIN structure with proper aliases
+ */
+static Node *
+tsql_unpivot_transformation(List *components, int location)
+{
+    Node *table_ref;
+    Node *measure_col;
+    Node *dim_col;
+
+    List *unpivot_info;
+    List *source_cols;
+    List *values_list = NIL;
+    List *value_pair;
+    List *result_info;
+
+    char *source_alias;
+    char *measure_colname;
+    char *dim_colname;
+    char *inner_alias_name;
+
+    Alias *alias;
+    SelectStmt *values_subquery;
+    JoinExpr *n;
+    RangeSubselect *rarg;
+    ListCell *lc;
+    ColumnRef *col_ref;
+    
+    /* Extract components */
+    Assert(components != NULL && list_length(components) == 3);
+    table_ref = (Node *)linitial(components);
+    unpivot_info = (List *)lsecond(components);
+    alias = (Alias *)lthird(components);
+
+    /* An alias for unpivot is mandatory */
+    Assert(alias != NULL);
+    
+    /* Extract unpivot components */
+    measure_col = (Node *)linitial(unpivot_info);
+    dim_col = (Node *)lsecond(unpivot_info);
+    source_cols = (List *)lthird(unpivot_info);
+    
+    measure_colname = strVal(llast(((ColumnRef *)measure_col)->fields));
+    dim_colname = strVal(llast(((ColumnRef *)dim_col)->fields));
+    
+    /* Create basic nodes for equivalent CROSS JOIN LATERAL query tree */
+    n = makeNode(JoinExpr);
+    rarg = makeNode(RangeSubselect);
+    values_subquery = makeNode(SelectStmt);
+    
+    n->jointype = JOIN_INNER;
+    n->isNatural = false;
+
+    /* Set up left side with alias if not present */
+    source_alias = get_unpivot_source_alias(table_ref);
+
+    n->larg = table_ref;
+    
+    /* Build VALUES list from unpivot source columns */
+    foreach(lc, source_cols)
+    {	
+        /* 
+         * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
+         * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
+         * solution: lfirst needs to be "llast" if aliases are used in values list
+         */
+        String *col_name = (String *)lfirst(lc);
+
+        /* Create ColumnRef with pair (source table alias, column name) */
+        col_ref = makeNode(ColumnRef);
+        col_ref->fields = list_make2(makeString(source_alias), col_name);
+        
+        /* Create pair (ColumnRef, column name) and append to VALUES list */
+        value_pair = list_make2(col_ref, make_nvarchar_const(strVal(col_name), location));
+        values_list = lappend(values_list, value_pair);
+    }
+    
+    /* Set up LATERAL VALUES */
+    rarg->lateral = true;
+    values_subquery->valuesLists = values_list;
+    rarg->subquery = (Node *)values_subquery;
+    
+    /* 
+     * Handle alias for Join-Values (RangeSubSelect) clause: 
+     * Basically, replace unpivot_alias with generated "inner" unpivot_alias_XXXXXX 
+     * and use the unpivot alias as the complete Join operation alias
+     */
+    inner_alias_name = generate_unpivot_source_table_alias(alias->aliasname);
+
+    rarg->alias = makeAlias(inner_alias_name, 
+                            list_make2(makeString(measure_colname),
+                                       makeString(dim_colname)));
+
+    n->rarg = (Node *)rarg;
+    n->usingClause = NIL;
+    n->quals = NULL;
+    /* Rewrite by adding unpivot alias as the complete Join operation alias */
+    n->alias = alias;
+    
+    /* Create result info list */
+    result_info = list_make5(makeString("UNPIVOT"),
+                             makeString(alias->aliasname),
+                             makeString(dim_colname),
+                             makeString(measure_colname),
+                             makeString(source_alias));
+
+    /* Append the unpivot source columns and transformed node */
+    result_info = lappend(result_info, source_cols);
+    result_info = lappend(result_info, n);
+
+    return (Node *) result_info;
+}
+
+
 /* 
  * Adjust index nulls order to match SQL Server behavior.
  * For ASC (or unspecified) index, default should be NULLS FIRST;
@@ -1965,5 +2342,26 @@ tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 			default:
 				break;
 		}
+	}
+}
+
+static void
+check_server_role_and_throw_if_unsupported (const char *serverrole, int position, core_yyscan_t yyscanner)
+{
+	if (strcmp(serverrole, "serveradmin") == 0
+		|| strcmp(serverrole, "setupadmin") == 0
+		|| strcmp(serverrole, "processadmin") == 0
+		|| strcmp(serverrole, "diskadmin") == 0
+		|| strcmp(serverrole, "bulkadmin") == 0) 
+	{
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Fixed server role '%s' is currently not supported in Babelfish", serverrole),
+										parser_errposition(position)));
+	}
+	else if (!IS_BBF_FIXED_SERVER_ROLE(serverrole))
+	{
+		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Only fixed server role is supported in ALTER SERVER ROLE statement"),
+							parser_errposition(position)));
 	}
 }

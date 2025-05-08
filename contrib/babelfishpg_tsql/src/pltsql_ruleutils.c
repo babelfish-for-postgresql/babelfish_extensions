@@ -345,7 +345,6 @@ static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static text *tsql_get_expr_worker(text *expr, Oid relid, const char *relname,
 								  int prettyFlags);
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
-static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 int			tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 										  bool print_table_args, bool print_defaults, int **typmod_arr_arg, bool *has_tvp);
 char	   *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
@@ -399,11 +398,16 @@ PG_FUNCTION_INFO_V1(tsql_get_expr);
 Datum
 tsql_get_expr(PG_FUNCTION_ARGS)
 {
-	text	   *expr = PG_GETARG_TEXT_PP(0);
-	Oid			relid = PG_GETARG_OID(1);
+	text	   *expr;
+	Oid			relid;
 	int			prettyFlags;
 	char	   *relname;
-
+	
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	
+	expr = PG_GETARG_TEXT_PP(0);
+	relid = PG_GETARG_OID(1);
 	prettyFlags = PRETTYFLAG_INDENT;
 
 	if (OidIsValid(relid))
@@ -527,7 +531,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if (!isnull)
 		probin_c = TextDatumGetCString(tmp);
 	if (!probin_c || probin_c[0] != '{')
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	number_args = proc->pronargs;
 	if (isfunction)
@@ -538,7 +545,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
+	{
+		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
+	}
 
 	if (isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
@@ -859,7 +869,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 			char	   *str;
 
 			/* Fetch default positions */
-			arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+			arg_default_positions = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
 													bbffunctuple,
 													Anum_bbf_function_ext_default_positions,
 													&isnull);
@@ -873,7 +883,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 				pfree(str);
 			}
 			else
-				ReleaseSysCache(bbffunctuple);
+				heap_freetuple(bbffunctuple);
 		}
 	}
 
@@ -979,7 +989,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 	}
 
 	if (default_positions_available)
-		ReleaseSysCache(bbffunctuple);
+		heap_freetuple(bbffunctuple);
 
 	return argsprinted;
 }
@@ -1444,7 +1454,17 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, ')');
 			}
 			break;
+		
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 
+				appendStringInfoString(buf, "COALESCE(");
+				get_rule_expr((Node *) coalesceexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+		
 		case T_SetToDefault:
 			appendStringInfoString(buf, "DEFAULT");
 			break;
@@ -2793,7 +2813,7 @@ find_recursive_union(deparse_namespace *dpns, WorkTableScan *wtscan)
  *
  * Returns a palloc'd string.
  */
-static char *
+char *
 tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
 	HeapTuple	tuple;

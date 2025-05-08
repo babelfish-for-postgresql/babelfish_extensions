@@ -112,7 +112,7 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	svhdr = SV_HDR_5B(result);
 	SV_SET_METADATA(svhdr, VARCHAR_T, HDR_VER); /* hardcode as VARCHAR */
 	svhdr->typmod = VARSIZE_ANY_EXHDR(data_val);
-	svhdr->collid = get_server_collation_collidx();
+	svhdr->collid = get_database_or_server_collation_collidx();
 
 	/* Cleanup */
 	pfree(data_val);
@@ -221,7 +221,7 @@ get_varchar128_sv_datum(const char *value)
 	svhdr = SV_HDR_5B(result);
 	SV_SET_METADATA(svhdr, VARCHAR_T, HDR_VER);
 	svhdr->typmod = len;		/* Actual Data Length */
-	svhdr->collid = get_server_collation_collidx();
+	svhdr->collid = get_database_or_server_collation_collidx();
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -277,6 +277,7 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 	CoercionPathType path;
 	Oid			typioparam;
 	bool		isVarlena;
+	int 		nargs;
 
 	path = find_coercion_pathway(target_type, source_type, ccontext, &funcid);
 
@@ -285,7 +286,18 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 	{
 		case COERCION_PATH_FUNC:
 			*cast_by_relabel = false;
-			return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) ccontext == COERCION_EXPLICIT);
+			nargs = get_func_nargs(funcid);
+			switch (nargs) 
+			{
+				case 1:
+					return OidFunctionCall1Coll(funcid, coll, value);
+				case 2:
+					return OidFunctionCall2Coll(funcid, coll, value, (Datum) typmod);
+				case 3:
+					return OidFunctionCall3Coll(funcid, coll, value, (Datum) typmod, (Datum) (ccontext == COERCION_EXPLICIT));
+				default:
+					elog(ERROR, "Unsupported number of arguments (%d) for function %u", nargs, funcid);
+			}
 			break;
 		case COERCION_PATH_COERCEVIAIO:
 			*cast_by_relabel = false;

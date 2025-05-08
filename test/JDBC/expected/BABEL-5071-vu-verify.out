@@ -1,0 +1,31 @@
+
+-- Test case found in 5071
+insert tab5071_1 values (123)
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+-123
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- Test case found in 4992
+DELETE FROM tab4992_1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM tab4992_1
+GO
+~~START~~
+int#!#int
+~~END~~
+

@@ -67,6 +67,22 @@ go
 exec sp_describe_first_result_set N'select * from nums'
 go
 
+use master
+go
+drop database db_result_set
+go
+
+-- Tests for db level collation
+-- cross db testing
+create database db_result_set COLLATE BBF_Unicode_CP1_CI_AI
+go
+
+use db_result_set
+go
+
+exec sp_describe_first_result_set N'select * from nums'
+go
+
 -- clean-up
 use master
 go

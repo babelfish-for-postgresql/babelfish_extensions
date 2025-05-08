@@ -9,6 +9,9 @@ GO
 DROP PROC sys_all_sql_modules_vu_prepare_p1
 GO
 
+DROP PROC sys_all_sql_modules_more_than_4k
+GO
+
 DROP TRIGGER sys_all_sql_modules_vu_prepare_tr1
 GO
 

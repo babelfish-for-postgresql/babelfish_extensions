@@ -9,6 +9,9 @@
 
 #define ENVCHANGE_ROLLBACKTXN		0x0a
 
+/* To show ANTLR Batch parsing time */
+instr_time     antlr_parse_time;
+
 /***************************************************************************************
  *                         Execution Actions
  **************************************************************************************/
@@ -23,6 +26,7 @@ static void restore_ctx_full(PLtsql_execstate *estate);
 static ErrorData *restore_ctx_partial1(PLtsql_execstate *estate);
 static void restore_ctx_partial2(PLtsql_execstate *estate);
 static void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow);
+static void set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt);
 static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
@@ -35,12 +39,14 @@ static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
 static void send_env_change_token_on_txn_abort(void);
 
-static void process_explain(PLtsql_execstate *estate);
-static void process_explain_analyze(PLtsql_execstate *estate);
+static void process_antlr_parsing_time(PLtsql_execstate *estate);
+static void process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
+static void process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
 
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 								  Datum *args, Oid *argtypes, bool *argisnull);
+
 
 static int
 exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
@@ -641,6 +647,8 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 	/* reset number of tuple processed in previous command */
 	estate->eval_processed = 0;
 
+	set_search_path_for_pltsql_stmt(estate, stmt);
+
 	switch (stmt->cmd_type)
 	{
 		case PLTSQL_STMT_ASSIGN:
@@ -814,6 +822,24 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			break;
 		case PLTSQL_STMT_GRANTSCHEMA:
 			exec_stmt_grantschema(estate, (PLtsql_stmt_grantschema *) stmt);
+			break;
+		case PLTSQL_STMT_PARTITION_FUNCTION:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for PARTITION FUNCTION statment is not yet supported")));
+			}
+			exec_stmt_partition_function(estate, (PLtsql_stmt_partition_function *) stmt);
+			break;
+		case PLTSQL_STMT_PARTITION_SCHEME:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for PARTITION SCHEME statment is not yet supported")));
+			}
+			exec_stmt_partition_scheme(estate, (PLtsql_stmt_partition_scheme *) stmt);
 			break;
 		case PLTSQL_STMT_FULLTEXTINDEX:
 			if (pltsql_explain_only)
@@ -1062,6 +1088,26 @@ is_xact_abort_on_error(PLtsql_execstate *estate)
 {
 	if (exec_state_call_stack->error_data.xact_abort_on)
 		return true;
+	return false;
+}
+
+/*
+ * For Unmapped PostgreSQL errors: ERRCODE_UNDEFINED_COLUMN and ERRCODE_UNDEFINED_TABLE, 
+ * we will allow it to go to CATCH block of a TRY CATCH STATEMENT, 
+ * if error is raised from lower level of execution and CATCH block is not part of trigger.
+ */
+static
+bool
+ignore_catch_block_for_unmapped_error(PLtsql_execstate *estate)
+{
+	if (last_error_mapping_failed)
+	{
+		if (!is_part_of_pltsql_trigger(estate) && !is_error_raising_batch(estate) && (latest_pg_error_code == ERRCODE_UNDEFINED_TABLE || latest_pg_error_code == ERRCODE_UNDEFINED_COLUMN))
+			return false;
+		else
+			return true;
+	}
+
 	return false;
 }
 
@@ -1452,6 +1498,7 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 	bool		terminate_batch = false;
 	int			active_non_tsql_procs = pltsql_non_tsql_proc_entry_count;
 	int			active_sys_functions = pltsql_sys_func_entry_count;
+	bool		show_antlr_parsing_time = false;
 
 	if (!exec_codes)
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Empty execution code")));
@@ -1558,7 +1605,7 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 									 * error context */
 						}
 					}
-					if (last_error_mapping_failed || terminate_batch)
+					if (ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
 					{
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
 						ReThrowError(estate->cur_error->error);
@@ -1608,9 +1655,11 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
 				((*pltsql_protocol_plugin_ptr)->stmt_end) (estate, stmt);
 
-			process_explain_analyze(estate);
+			process_explain_analyze(estate, &show_antlr_parsing_time);
 		}
-		process_explain(estate);
+		process_explain(estate, &show_antlr_parsing_time);
+		if (show_antlr_parsing_time)
+			process_antlr_parsing_time(estate);
 	}
 	PG_CATCH();
 	{
@@ -1668,9 +1717,80 @@ free_exec_codes(ExecCodes *exec_codes)
  *                         Helper Functions
  **************************************************************************************/
 
+static void
+process_antlr_parsing_time(PLtsql_execstate *estate)
+{
+	TupleDesc		tupdesc;
+	DestReceiver	*receiver;
+	Portal			portal;
+	TupOutputState	*tstate;
+	ExplainState 	*es;
+
+	if (!estate)
+		return;
+
+	if (!pltsql_explain_analyze && !pltsql_explain_only)
+		return;
+
+	es = NewExplainState();
+	/*
+	 * Format would always be TEXT if it is EXPLAIN ONLY mode. Obey setting of pltsql_explain_format otherwise.
+	 */
+	es->format = is_explain_analyze_mode() ? pltsql_explain_format : EXPLAIN_FORMAT_TEXT;
+	ExplainBeginOutput(es);
+	ExplainPropertyFloat("Babelfish T-SQL Batch Parsing Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(antlr_parse_time), 3, es);
+	ExplainEndOutput(es);
+
+	/*
+	 * Let the protocol plugin know that we are about to start execution
+	 */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
+		((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
+
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, NULL, es->format == EXPLAIN_FORMAT_XML ? XMLOID : TEXTOID, -1, 0);
+
+	receiver = CreateDestReceiver(DestRemote);
+	portal = CreateNewPortal();
+	SetRemoteDestReceiverParams(receiver, portal);
+
+	tstate = begin_tup_output_tupdesc(receiver, tupdesc, &TTSOpsVirtual);
+
+	if (pltsql_explain_format == EXPLAIN_FORMAT_TEXT)
+		do_text_output_multiline(tstate, es->str->data);
+	else
+		do_text_output_oneline(tstate, es->str->data);
+	end_tup_output(tstate);
+
+	receiver->rDestroy(receiver);
+	SPI_cursor_close(portal);
+
+	/* Let the protocol plugin know that we have finished execution */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
+		((*pltsql_protocol_plugin_ptr)->stmt_end) (estate, NULL);
+
+	/*
+	 * We need to manually send DONE token because there is no associated stmt
+	 */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_done)
+		((*pltsql_protocol_plugin_ptr)->send_done) (
+													0xFD /* TDS_TOKEN_DONE */ ,
+													0x00 /* TDS_DONE_FINAL */ ,
+													0xF7 /* TDS_CMD_INFO */ ,
+													0	/* nprocessed */
+		);
+
+	/* And free the resources allocated to explain state */
+	pfree(es->str->data);
+	pfree(es->str);
+	pfree(es);
+
+	return ;
+}
+
 static
 void
-process_explain(PLtsql_execstate *estate)
+process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 {
 	ExplainInfo *einfo;
 	TupleDesc	tupdesc;
@@ -1684,6 +1804,15 @@ process_explain(PLtsql_execstate *estate)
 		return;
 	if (!pltsql_explain_only)
 		return;
+
+	/*
+	 * Set show_antlr_parsing_time to indicate showing ANTLR Batch Parsing time for given batch.
+	 * This is particulary useful in order to avoid showing unnecessary ANTLR parsing time when
+	 * batch only contains statement like SET BABELFISH_STATISTICS PROFILE ON or
+	 * set BABELFISH_SHOWPLAN_ALL on.
+	 * We should set show_antlr_parsing_time to true if babelfishpg_tsql.explain_summary is enabled.
+	 */
+	*show_antlr_parsing_time = pltsql_explain_summary;
 
 	/* Let the protocol plugin know that we are about to start execution */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
@@ -1743,7 +1872,7 @@ process_explain(PLtsql_execstate *estate)
 
 static
 void
-process_explain_analyze(PLtsql_execstate *estate)
+process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 {
 	if (!estate || !estate->explain_infos || estate->explain_infos->length == 0)
 		return;
@@ -1763,6 +1892,15 @@ process_explain_analyze(PLtsql_execstate *estate)
 
 		foreach(lc, estate->explain_infos)
 		{
+			/*
+			 * Set show_antlr_parsing_time to indicate showing ANTLR Batch Parsing time for given batch.
+			 * This is particulary useful in order to avoid showing unnecessary ANTLR parsing time when
+			 * batch only contains statement like SET BABELFISH_STATISTICS PROFILE ON or
+			 * set BABELFISH_SHOWPLAN_ALL on.
+			 * We should set show_antlr_parsing_time to true if babelfishpg_tsql.explain_summary is enabled.
+			 */
+			*show_antlr_parsing_time = pltsql_explain_summary;
+
 			/*
 			 * Let the protocol plugin know that we are about to start
 			 * execution
@@ -2049,4 +2187,92 @@ send_env_change_token_on_txn_abort(void)
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change_binary)
 		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (ENVCHANGE_ROLLBACKTXN, NULL, 0, &txnId, sizeof(uint64_t));
+}
+
+/*
+ * We will keep verifying the search path is correct
+ * before executing any pltsql statement
+ */
+static void
+set_search_path_for_pltsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
+{
+	char		*cur_dbname;
+	char 		*new_search_path = NULL;
+	char 		*pltsql_func_search_path = NULL;
+	const char 	*current_db_search_path;
+
+	Assert(stmt != NULL);
+
+	if (!IS_TDS_CONN() || IsInParallelMode() || stmt->cmd_type == PLTSQL_STMT_USEDB)
+		return;
+
+	cur_dbname = get_cur_db_name();
+	current_db_search_path = get_current_db_search_path();
+	pltsql_func_search_path = estate->func->fn_search_path;
+
+	if (stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+	{
+		PLtsql_stmt_execsql *execsqlstmt = (PLtsql_stmt_execsql *)stmt;
+
+		if (execsqlstmt->is_create_view && execsqlstmt->schema_name != NULL && strcmp(execsqlstmt->schema_name, "sys") != 0
+			&& strcmp(execsqlstmt->schema_name, "pg_catalog") != 0)
+		{
+			char *physical_schema = get_physical_schema_name(cur_dbname, execsqlstmt->schema_name);
+			char *dbo_schema = get_dbo_schema_name(cur_dbname);
+
+			new_search_path = psprintf(PLTSQL_SEARCH_PATH_BUFFER, quote_identifier(physical_schema), quote_identifier(dbo_schema));
+
+			pfree(physical_schema);
+			pfree(dbo_schema);
+		}
+		else if (execsqlstmt->is_ddl)
+		{
+			new_search_path = pstrdup(current_db_search_path);
+		}
+	}
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+	{
+		PLtsql_stmt_exec *execstmt = (PLtsql_stmt_exec *)stmt;
+
+		if (strncmp(execstmt->proc_name, "sp_", 3) == 0 &&
+			(execstmt->schema_name == NULL || strcmp(execstmt->schema_name, "dbo") == 0))
+		{
+			/* handled in exec_stmt_exec() */
+		}
+		else if (execstmt->db_name != NULL && strcmp(execstmt->db_name, cur_dbname) != 0 &&
+				execstmt->schema_name != NULL && strcmp(execstmt->schema_name, "sys") == 0)
+		{
+			/* handled in exec_stmt_exec() */
+		}
+		else
+		{
+			new_search_path = pstrdup(current_db_search_path);
+		}
+	}
+
+	if (new_search_path == NULL)
+	{
+		if (pltsql_func_search_path)
+			new_search_path = pstrdup(pltsql_func_search_path);
+		else if (current_db_search_path)
+			new_search_path = pstrdup(current_db_search_path);
+	}
+
+	PG_TRY();
+	{
+		pltsql_check_search_path = false;
+
+		if (new_search_path && strcmp(new_search_path, namespace_search_path) != 0)
+		{
+			SetConfigOption("search_path", new_search_path,
+							PGC_SUSET, PGC_S_SESSION);
+			pfree(new_search_path);
+		}
+	}
+	PG_FINALLY();
+	{
+		pltsql_check_search_path = true;
+		pfree(cur_dbname);
+	}
+	PG_END_TRY();
 }

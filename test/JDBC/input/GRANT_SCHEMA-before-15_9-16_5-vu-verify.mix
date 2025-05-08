@@ -1,0 +1,189 @@
+-- tsql user=babel_5172_l2 password=123
+-- new tables/views created by babel_5172_u1 should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t5;
+go
+
+select * from babel_5172_s1.v5;
+go
+
+exec babel_5172_s1.p5;
+go
+
+select babel_5172_s1.f5();
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- objects created by dbo should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+select * from babel_5172_s1.v1;
+go
+
+exec babel_5172_s1.p1;
+go
+
+select babel_5172_s1.f1();
+go
+
+-- objects created by babel_5172_u1 should be accessible
+select * from babel_5172_s1.t2;
+go
+
+select * from babel_5172_s1.v2;
+go
+
+exec babel_5172_s1.p2;
+go
+
+select babel_5172_s1.f2();
+go
+
+use master
+go
+
+-- tsql
+-- create new objects using dbo
+use babel_5172_db
+go
+
+create table babel_5172_s1.t3(a int);
+go
+
+create view babel_5172_s1.v3 as select 1;
+go
+
+create proc babel_5172_s1.p3 as select 1;
+go
+
+create function babel_5172_s1.f3() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- create new objects using babel_5172_u1 user
+use babel_5172_db
+go
+
+create table babel_5172_s1.t4(a int);
+go
+
+create view babel_5172_s1.v4 as select 1;
+go
+
+create proc babel_5172_s1.p4 as select 1;
+go
+
+create function babel_5172_s1.f4() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- new objects created by dbo should be accessible
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t3;
+go
+
+select * from babel_5172_s1.v3;
+go
+
+exec babel_5172_s1.p3;
+go
+
+select babel_5172_s1.f3();
+go
+
+select * from babel_5172_s1.t4;
+go
+
+select * from babel_5172_s1.v4;
+go
+
+exec babel_5172_s1.p4;
+go
+
+select babel_5172_s1.f4();
+go
+
+use master
+go
+
+-- tsql user=babel_5172_l1 password=123
+-- revoke privilege from the schema
+use babel_5172_db;
+go
+
+-- revoke select privilege on the schema with user babel_5172_u1
+revoke select, execute on schema::babel_5172_s1 from babel_5172_u2;
+go
+
+use master;
+go
+
+-- tsql user=babel_5172_l2 password=123
+-- no objects should be accessible, since schema privilege is revoked
+use babel_5172_db;
+go
+
+select * from babel_5172_s1.t1;
+go
+
+select * from babel_5172_s1.v1;
+go
+
+exec babel_5172_s1.p1;
+go
+
+select babel_5172_s1.f1();
+go
+
+select * from babel_5172_s1.t2;
+go
+
+select * from babel_5172_s1.v2;
+go
+
+exec babel_5172_s1.p2;
+go
+
+select babel_5172_s1.f2();
+go
+
+select * from babel_5172_s1.t3;
+go
+
+select * from babel_5172_s1.v3;
+go
+
+exec babel_5172_s1.p3;
+go
+
+select babel_5172_s1.f3();
+go
+
+select * from babel_5172_s1.t4;
+go
+
+select * from babel_5172_s1.v4;
+go
+
+exec babel_5172_s1.p4;
+go
+
+select babel_5172_s1.f4();
+go
+
+use master
+go

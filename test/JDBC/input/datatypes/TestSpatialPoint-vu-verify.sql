@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
@@ -18,7 +19,7 @@ GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT @point1.STDistance(@point2) AS Distance;
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6)) AS Distance;
 GO
 
 DECLARE @point geometry;
@@ -30,7 +31,7 @@ SELECT @point.STY;
 Go
 
 DECLARE @point geometry;
-SET @point = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
 SELECT STX(@point);
 SELECT STY(@point);
 SELECT @point.STX;
@@ -41,9 +42,9 @@ Go
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
-SELECT @point1.STDistance(@point2);
-SELECT @point1 . STDistance ( @point2 );
+SELECT CAST(STDistance(@point1, @point2) AS numeric(20, 6));
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6));
+SELECT CAST(@point1 . STDistance ( @point2 ) AS numeric(20, 6));
 Go
 
 DECLARE @point geometry;
@@ -65,7 +66,7 @@ go
 DECLARE @point1 geometry, @point2 geometry, @point3 geometry;
 SET @point1 = geometry::STPointFromText(null, 4326);
 SET @point2 = geometry::STGeomFromText(null, 4326);
-SET @point3 = geometry::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geometry::Point(22.34900, -47.65100, 4326);
 SELECT @point1.STX;
 SELECT @point1.STY;
 SELECT @point1.STAsText();
@@ -77,7 +78,7 @@ Go
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
-SET @point1 = geometry::POINT(22.34900, -47.65100, 4326);;
+SET @point1 = geometry::Point(22.34900, -47.65100, 4326);;
 SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
@@ -311,15 +312,15 @@ UPDATE YourTable SET PointColumn = @referencePoint
 WHERE PointColumn.STX >= @referencePoint.STX;
 GO
 
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(PointColumn1.STDistance(@point1) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+SELECT ID, CAST(@point1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -373,8 +374,8 @@ SELECT * FROM YourTable ORDER BY @referencePoint.STDistance(PointColumn);
 GO
 
 DECLARE @thresholdDistance float = 3.0;
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS DistanceBetweenPoints,
-CASE WHEN PointColumn1.STDistance(PointColumn2) <= @thresholdDistance THEN 'Close' ELSE 'Far'
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS DistanceBetweenPoints,
+CASE WHEN CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) <= @thresholdDistance THEN 'Close' ELSE 'Far'
 END AS Proximity
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
@@ -414,8 +415,8 @@ ORDER BY DistanceGroup;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance,
-PointColumn1.STDistance(@referencePoint) - LAG(PointColumn1.STDistance(PointColumn2)) OVER (ORDER BY ID) AS DistanceDifference 
+SELECT ID, CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6)) AS Distance,
+CAST(PointColumn1.STDistance(@referencePoint) AS numeric(20, 6)) - LAG(CAST(PointColumn1.STDistance(PointColumn2) AS numeric(20, 6))) OVER (ORDER BY ID) AS DistanceDifference 
 FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
@@ -489,7 +490,7 @@ JSON_QUERY('{"Distance":' + CAST(@referencePoint.STDistance(PointColumn) AS NVAR
 FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
+SELECT CAST([PointColumn1].STDistance([PointColumn2]) AS numeric(20, 6)) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -568,6 +569,46 @@ Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geometry)
 GO
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
 GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary)
+GO
+Select CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS varbinary) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) AS bytea) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS varbinary) AS geometry)
+GO
+Select CAST(CAST (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) AS bytea) AS geometry)
+GO
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+Select Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+Select Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+Select Convert(geometry, Convert(bytea, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+Select Convert(geometry, Convert(varbinary, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
 
 -- UnSupported CASTs to and from Geometry data type
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS datetime)
@@ -629,7 +670,7 @@ SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
 SELECT @point.STAsText();
 Go
@@ -643,7 +684,7 @@ SELECT @point.Lat;
 Go
 
 DECLARE @point geography;
-SET @point = geography::POINT(22.34900, -47.65100, 4326);
+SET @point = geography::Point(22.34900, -47.65100, 4326);
 SELECT Long(@point);
 SELECT Lat(@point);
 SELECT @point.Long;
@@ -653,8 +694,8 @@ Go
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
-SELECT @point1.STDistance(@point2);
+SELECT CAST(STDistance(@point1, @point2) AS numeric(20, 6));
+SELECT CAST(@point1.STDistance(@point2) AS numeric(20, 6));
 Go
 
 DECLARE @point geography;
@@ -675,7 +716,7 @@ go
 SELECT
     SpatialData.ID,
     SPATIALPOINTGEOG_dt.location.Lat,
-    SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location)
+    CAST(SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location) AS numeric(20, 6))
 FROM
     SpatialData
 JOIN
@@ -719,7 +760,7 @@ go
 DECLARE @point1 geography, @point2 geography, @point3 geography;
 SET @point1 = geography::STPointFromText(null, 4326);
 SET @point2 = geography::STGeomFromText(null, 4326);
-SET @point3 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point3 = geography::Point(22.34900, -47.65100, 4326);
 SELECT @point1.Long;
 SELECT @point1.Lat;
 SELECT @point1.STAsText();
@@ -731,7 +772,7 @@ Go
 
 -- Negative test for Geospatial functions
 DECLARE @point1 geography, @point2 varchar(50), @point3 int;
-SET @point1 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point1 = geography::Point(22.34900, -47.65100, 4326);
 SET @point2 = 'Test_String';
 SELECT @point2.STDistance(@point1);
 Go
@@ -845,6 +886,30 @@ Select CAST(CAST ('POINT(1 2)' AS nvarchar) as geography)
 GO
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nvarchar)
 GO
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0))
+GO
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999))
+GO
+Select Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+Select Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+GO
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 0)))
+GO
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 999999)))
+GO
+Select Convert(geography, Convert(bytea, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
+Select Convert(geography, Convert(varbinary, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326)))
+GO
 
 -- UnSupported CASTs to and from Geography data type
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS datetime)
@@ -899,7 +964,7 @@ SELECT
     GeomColumn.STX AS XCoordinate,
     GeomColumn.STY AS YCoordinate,
     PrimaryKey,
-    GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
+    CAST(GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS numeric(20, 6)) AS DistanceToFixedPoint
 FROM
     SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
@@ -910,7 +975,7 @@ SET @sql =
     N'GeomColumn.STX AS XCoordinate, ' +
     N'GeomColumn.STY AS YCoordinate, ' +
     N'PrimaryKey, ' +
-    N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
+    N'CAST(GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS numeric(20, 6)) AS DistanceToFixedPoint ' +
     N'FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX';
 
 -- Execute the dynamic SQL
@@ -920,21 +985,27 @@ GO
 SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
 
+SELECT * FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+SELECT CAST(GeomColumn as bytea), CAST(GeomColumn as varbinary) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+SELECT PrimaryKey, CAST(ByteaColumn as geometry), CAST(ByteaColumn as varbinary) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+SELECT Convert(geometry, Convert(bytea, GeomColumn)), Convert(geometry, Convert(varbinary, GeomColumn)) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+SELECT Convert(bytea, GeomColumn), Convert(varbinary, GeomColumn) FROM geomTabWithoutSrid ORDER BY GeomColumn.STX;
+GO
+SELECT Convert(varbinary, Convert(geometry, ByteaColumn)), Convert(geometry, Convert(varbinary, ByteaColumn)) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+SELECT Convert(geometry, ByteaColumn), Convert(varbinary, ByteaColumn) FROM geomTabWithoutSrid ORDER BY PrimaryKey;
+GO
+
 -- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
 SELECT geom_schema.STDistance(geom_schema) from geometry_test ORDER BY geom_schema.STX
 GO
 
 -- Here we are testing ambiguity scenario for col_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
 SELECT STX.STX from STX ORDER BY STX.STX
-GO
-
-INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
-GO
-
--- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
-GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
 GO
 
 CREATE DATABASE db1;
@@ -1003,13 +1074,71 @@ GO
 DROP DATABASE db2;
 GO
 
-SELECT set_config('role', 'jdbc_user', false);
+-- Tests for db level collation
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
 GO
 
--- Reset migration mode to default
-DECLARE @mig_mode VARCHAR(10)
-SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
-SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
+CREATE DATABASE db2 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+
+USE db2;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
 GO
 
 SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry' ORDER BY name

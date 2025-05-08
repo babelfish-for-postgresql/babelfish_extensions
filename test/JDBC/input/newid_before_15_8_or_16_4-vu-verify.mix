@@ -1,0 +1,50 @@
+-- tsql
+-- should still show 5
+EXEC babel_4923_newid_proc
+GO
+
+-- should fail because primary key already exists before upgrade
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+ALTER TABLE babel_4923_newid_tab2 DROP COLUMN uuid
+GO
+
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+ALTER TABLE babel_4923_newid_tab2 DROP COLUMN uuid
+GO
+
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+-- psql
+ANALYZE master_dbo.babel_4923_newid_tab3
+GO
+
+ANALYZE master_dbo.babel_4923_newid_tab4
+GO
+
+-- tsql
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+
+-- should still show seqscan after upgrade otherwise something changed
+SELECT * FROM babel_4923_newid_tab3 WHERE uuid=NEWID()
+GO
+
+SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWID()
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO

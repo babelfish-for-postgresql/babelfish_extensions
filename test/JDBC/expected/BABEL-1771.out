@@ -38,7 +38,7 @@ SELECT * FROM .fake_schema.t
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_fake_schema.t" does not exist)~~
+~~ERROR (Message: relation "fake_schema.t" does not exist)~~
 
 
 EXEC test.bar
@@ -61,7 +61,7 @@ EXEC master..bar
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure master_dbo.bar() does not exist)~~
+~~ERROR (Message: procedure dbo.bar() does not exist)~~
 
 
 EXEC ..bar

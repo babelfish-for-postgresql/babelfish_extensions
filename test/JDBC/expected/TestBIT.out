@@ -25,9 +25,12 @@ INSERT INTO BIT_dt(a) values(1)
 INSERT INTO BIT_dt(a) values(0)
 ~~ROW COUNT: 1~~
 
-#next two lines are not allowed
-#INSERT INTO BIT_dt(a) values(false)
-#INSERT INTO BIT_dt(a) values(true)
+INSERT INTO BIT_dt(a) values(false)
+~~ROW COUNT: 1~~
+
+INSERT INTO BIT_dt(a) values(true)
+~~ROW COUNT: 1~~
+
 INSERT INTO BIT_dt(a) values(NULL)
 ~~ROW COUNT: 1~~
 
@@ -39,6 +42,8 @@ bit
 <NULL>
 1
 0
+0
+1
 <NULL>
 ~~END~~
 

@@ -350,6 +350,8 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 	 */
 	save_cur_lineno = cstate->cur_rowno;
 
+	/* Open indices to update them after the multi insert */
+	ExecOpenIndices(resultRelInfo, false);
 	/*
 	 * table_multi_insert may leak memory, so switch to short-lived memory
 	 * context before calling it.
@@ -361,7 +363,6 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 					   mycid,
 					   ti_options,
 					   buffer->bistate);
-	MemoryContextSwitchTo(oldcontext);
 
 	for (i = 0; i < nused; i++)
 	{
@@ -383,6 +384,36 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 		ExecClearTuple(slots[i]);
 	}
 
+	/* 
+	 * ExecInsertIndexTuples also leaks memory, so only switch back to old
+	 * context after it.
+	 */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Close the indices we've opened before multi insert */
+	ExecCloseIndices(resultRelInfo);
+
+	/*
+	 * ExecCloseIndices does not free neither resulsting arrays, allocated
+	 * in ExecOpenIndices, nor its contents. Instead of moving open/close into
+	 * short-lived context lets clean it up explicitly, so indices open/close
+	 * can be untied from batch handling in future if needed.
+	 * 
+	 * There is an additional call to ExecCloseIndices in
+	 * EndBulkCopy->ExecCloseResultRelations, we reset ri_NumIndices to make
+	 * it no-op.
+	 */
+	if (resultRelInfo->ri_NumIndices > 0)
+	{
+		for (i = 0; i < resultRelInfo->ri_NumIndices; i++)
+		{
+			pfree(resultRelInfo->ri_IndexRelationInfo[i]);
+		}
+		pfree(resultRelInfo->ri_IndexRelationInfo);
+		pfree(resultRelInfo->ri_IndexRelationDescs);
+		resultRelInfo->ri_NumIndices = 0;
+	}
+
 	/* Mark that all slots are free. */
 	buffer->nused = 0;
 
@@ -395,15 +426,14 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  *
  * The buffer must be flushed before cleanup.
  * Code is copied from src/backend/commands/copyfrom.c
+ *
+ * For TSQL, this can be called in abort phase to cleanup.
  */
 static inline void
 CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
 							 CopyMultiInsertBuffer *buffer)
 {
 	int			i;
-
-	/* Ensure buffer was flushed. */
-	Assert(buffer->nused == 0);
 
 	/* Remove back-link to ourself. */
 	buffer->resultRelInfo->ri_CopyMultiInsertBuffer = NULL;
@@ -557,12 +587,11 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 	Assert(list_length(cstate->range_table) == 1);
 
 	/*
-	 * The target must be a plain, foreign, or partitioned relation, or have
+	 * The target must be a plain, or foreign relation, or have
 	 * an INSTEAD OF INSERT row trigger.
 	 */
 	if (cstate->rel->rd_rel->relkind != RELKIND_RELATION &&
 		cstate->rel->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
-		cstate->rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
 		!(cstate->rel->trigdesc &&
 		  cstate->rel->trigdesc->trig_insert_instead_row))
 	{
@@ -581,14 +610,16 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to sequence \"%s\"",
 							RelationGetRelationName(cstate->rel))));
+		else if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Bulk Copy to partitioned-table is not yet supported in Babelfish.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot bulk copy to non-table relation \"%s\"",
 							RelationGetRelationName(cstate->rel))));
 	}
-
-	ExecOpenIndices(cstate->resultRelInfo, false);
 
 	econtext = GetPerTupleExprContext(cstate->estate);
 
@@ -650,6 +681,15 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					 */
 					if (cstate->seq_index == i)
 					{
+						/* 
+						 * For an identity column if there is identity_insert ON for the table and
+					 	 * we do not receive any data for this column, then we throw an error.
+						 */
+						if (tsql_identity_insert.valid)
+							ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								errmsg("Explicit value must be specified for identity column in table '%s' when IDENTITY_INSERT is set to ON", cstate->cur_relname)));
+
 						myslot->tts_values[i] = Int64GetDatum(nextval_internal(cstate->seqid, true));
 					}
 					else
@@ -672,6 +712,15 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					else
 					{
 						myslot->tts_values[col_index_to_insert] = Values[col_index_to_fetch];
+
+						/* In case of identity column, store the updated identity sequence value. */
+						if (cstate->seq_index == i)
+						{
+							if (cstate->identity_col_incr_value > 0)
+								cstate->cur_identity_value = Max(cstate->cur_identity_value, DatumGetInt64(Values[col_index_to_fetch]));
+							else
+								cstate->cur_identity_value = Min(cstate->cur_identity_value, DatumGetInt64(Values[col_index_to_fetch]));
+						}
 					}
 					j++;
 
@@ -728,7 +777,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		/*
 		 * If the target is a plain table, check the constraints of the tuple.
 		 */
-		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
+		if (insert_bulk_check_constraints && cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
 			ExecConstraints(cstate->resultRelInfo, myslot, cstate->estate);
 
 		/*
@@ -839,6 +888,7 @@ BeginBulkCopy(Relation rel,
 
 	/* Assign range table. */
 	cstate->range_table = pstate->p_rtable;
+	cstate->rteperminfos = pstate->p_rteperminfos;
 
 	tupDesc = RelationGetDescr(cstate->rel);
 	num_phys_attrs = tupDesc->natts;
@@ -889,6 +939,31 @@ BeginBulkCopy(Relation rel,
 		}
 	}
 
+	/* Store the increment value of Identity column. */
+	cstate->identity_col_incr_value = 1;
+	if (cstate->seqid != InvalidOid)
+	{
+		ListCell   *seq_lc;
+		List	*seq_options = sequence_options(cstate->seqid);
+
+		foreach(seq_lc, seq_options)
+		{
+			DefElem    *defel = (DefElem *) lfirst(seq_lc);
+
+			if (strcmp(defel->defname, "increment") == 0)
+			{
+				cstate->identity_col_incr_value = defGetInt64(defel);
+				break;
+			}
+		}
+		pfree(seq_options);
+	}
+	/* Initialize the current identity value variable based on the increment value. */
+	if (cstate->identity_col_incr_value > 0)
+		cstate->cur_identity_value = INT64_MIN;
+	else
+		cstate->cur_identity_value = INT64_MAX;
+
 	/* We keep those variables in cstate. */
 	cstate->defmap = defmap;
 	cstate->defexprs = defexprs;
@@ -924,7 +999,7 @@ BeginBulkCopy(Relation rel,
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...).
 	 */
-	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->estate->es_rteperminfos);
+	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->rteperminfos);
 	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
@@ -943,12 +1018,63 @@ BeginBulkCopy(Relation rel,
  * EndBulkCopy - Clean up storage and release resources for BULK COPY.
  */
 void
-EndBulkCopy(BulkCopyState cstate)
+EndBulkCopy(BulkCopyState cstate, bool aborted)
 {
 	if (cstate)
 	{
+		/* 
+		 * for identity column reseed the identity sequence value, 
+		 * if cur_identity_value is more suitable as compared to previous seed value.
+		 */
+		if (cstate->seqid != InvalidOid && !aborted)
+		{
+			/* calculate the previous seed value */
+			int64	init_identity_value = 1;
+			bool	found_last_identity_value = false;
+
+			/* 
+			 * Fetch the last identity sequence value stored in the pg_sequences catalog. 
+			 * If not set, use the seed value instead.
+			 */
+			PG_TRY();
+			{
+				init_identity_value = DirectFunctionCall1(pg_sequence_last_value,
+															ObjectIdGetDatum(cstate->seqid));
+				found_last_identity_value = true;
+			}
+			PG_CATCH();
+			{
+				FlushErrorState();
+			}
+			PG_END_TRY();
+
+			if (!found_last_identity_value)
+			{
+				ListCell	*seq_lc;
+				List	*seq_options = sequence_options(cstate->seqid);
+
+				foreach(seq_lc, seq_options)
+				{
+					DefElem    *defel = (DefElem *) lfirst(seq_lc);
+
+					if (strcmp(defel->defname, "start") == 0)
+					{
+						init_identity_value = defGetInt64(defel);
+						break;
+					}
+				}
+				pfree(seq_options);
+			}
+
+			if ((cstate->identity_col_incr_value > 0 && cstate->cur_identity_value > init_identity_value) || 
+				(cstate->identity_col_incr_value < 0 && cstate->cur_identity_value < init_identity_value))
+				DirectFunctionCall2(setval_oid,
+								ObjectIdGetDatum(cstate->seqid),
+								Int64GetDatum(cstate->cur_identity_value));
+		}
+
 		/* Flush any remaining bufferes out to the table. */
-		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo))
+		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo) && !aborted)
 			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, NULL);
 
 		if (cstate->bistate != NULL)

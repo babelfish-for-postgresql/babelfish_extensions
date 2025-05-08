@@ -64,10 +64,9 @@ GO
 
 Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00') -- Wrong output , Need to fix BABEL-4328
 GO
-~~START~~
-datetimeoffset
-2000-04-22 16:23:51.7668000 +12:00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 Select todatetimeoffset('2000-05-22 16:23:51.766890','+1d:00')
@@ -153,10 +152,9 @@ GO
 
 Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342) -- Wrong output , Need to fix BABEL-4328
 GO
-~~START~~
-datetimeoffset
-2000-04-22 16:23:51.7668000 -05:42
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 Select todatetimeoffset('2000-05-22 16:23:51.766890',234)

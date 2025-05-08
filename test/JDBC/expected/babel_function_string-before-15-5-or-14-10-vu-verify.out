@@ -10,7 +10,7 @@ varchar
 SELECT REPLICATE(N'abc', 3)
 GO
 ~~START~~
-varchar
+nvarchar
 abcabcabc
 ~~END~~
 

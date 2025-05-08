@@ -1,0 +1,74 @@
+-- tsql
+
+CREATE PROCEDURE tsql_proc1
+AS
+    BEGIN TRAN
+    CREATE TABLE #t1(a int)
+    INSERT INTO #t1 VALUES (1)
+    SELECT * FROM #t1
+    ROLLBACK
+GO
+
+
+-- psql
+
+CREATE PROCEDURE pg_proc1()
+AS
+$$
+BEGIN
+    INSERT INTO my_table VALUES(1);    
+    ROLLBACK;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE pg_proc2()
+AS
+$$
+BEGIN
+    INSERT INTO my_table VALUES(2);    
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql 
+CREATE TABLE my_table(a int)
+GO
+
+EXEC tsql_proc1
+EXEC [public].pg_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN TRAN
+EXEC [public].pg_proc2
+ROLLBACK
+GO
+
+SELECT * FROM my_table
+DROP TABLE my_table
+GO
+~~START~~
+int
+~~END~~
+
+
+
+-- tsql
+
+DROP PROCEDURE tsql_proc1;
+GO
+
+-- psql
+
+DROP PROCEDURE pg_proc1;
+GO
+
+DROP PROCEDURE pg_proc2;
+GO

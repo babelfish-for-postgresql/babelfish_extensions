@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 using Serilog;
 using Serilog.Core;
 using Xunit;
+using System.Collections.Specialized;
 
 namespace BabelfishDotnetFramework
 {
@@ -39,10 +40,57 @@ namespace BabelfishDotnetFramework
 			DbDataReader reader = null;
 			try
 			{
+				/* To Enforce Reset Connection. */
 				reader = bblCmd.ExecuteReader();
-				SqlBulkCopy bulkCopy = new SqlBulkCopy(ConfigSetup.BblConnectionString);
+				using (SqlConnection destinationConnection =
+                       new SqlConnection(ConfigSetup.BblConnectionString))
+				{
+					destinationConnection.Open();
+
+					SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
+					bulkCopy.DestinationTableName = destinationTable;
+					bulkCopy.WriteToServer(reader);
+				}
+			}
+			catch (Exception e)
+			{
+				PrintToLogsOrConsole("#################################################################", logger, "information");
+				PrintToLogsOrConsole(
+					$"############# ERROR IN EXECUTING WITH BABEL  ####################\n{e}\n",
+					logger, "information");
+				stCount--;
+				return false;
+			}
+			finally
+			{
+				reader.Close();
+			}
+			return true;
+		}
+
+		public bool insertBulkCopyWithTransaction(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, String bulkCopyOption, DbTransaction transaction, Logger logger, ref int stCount)
+		{
+			bblCmd.CommandText = "Select * from " + sourceTable;
+			bblCmd.Transaction = transaction;
+			DbDataReader reader = null;
+			DataTable dataTable = new DataTable();
+			try
+			{
+				reader = bblCmd.ExecuteReader();
+				dataTable.Load(reader);
+				reader.Close();
+
+				SqlBulkCopy bulkCopy = null;
+
+				if (bulkCopyOption.Equals("keepIdentity"))
+					/* Set KeepIdentity option */
+					bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.KeepIdentity, (SqlTransaction) transaction);
+				else
+					/* Set CheckConstraints default for this API since this is the only mechanism to use BCP Options. */
+					bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn, SqlBulkCopyOptions.CheckConstraints, (SqlTransaction) transaction);
+
 				bulkCopy.DestinationTableName = destinationTable;
-				bulkCopy.WriteToServer(reader);
+				bulkCopy.WriteToServer(dataTable);
 			}
 			catch (Exception e)
 			{
@@ -173,6 +221,16 @@ namespace BabelfishDotnetFramework
 			finally
 			{
 				rdr?.Close();
+			}
+		}
+		public void ResultSetWriter(StringCollection sc, string fileName)
+		{
+			using var file =
+				new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, fileName + ".out"), true);
+			foreach (string script in sc)
+			{
+				file.WriteLine(script);
+				file.WriteLine("GO");
 			}
 		}
 
@@ -403,7 +461,7 @@ namespace BabelfishDotnetFramework
 					dictionary["others"] = result[i].Split("|-|")[1];
 			}
 			return @"Data Source = " + dictionary["url"] + "; Initial Catalog = " + dictionary["db"] +
-												"; User ID = " + dictionary["user"] + "; Password = " + dictionary["pwd"] + ";Pooling=false;" + dictionary["others"];
+												"; User ID = " + dictionary["user"] + "; Password = " + dictionary["pwd"] + ";" + dictionary["others"];
 		}
 
 		/* Depending on the OS we use the appropriate diff command. */
@@ -413,7 +471,7 @@ namespace BabelfishDotnetFramework
                 return new  ProcessStartInfo
                 {
                     FileName = @"powershell.exe",
-                    Arguments = $"-c \"diff (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
+                    Arguments = $"-c \"diff -u --strip-trailing-cr (cat {output}) (cat {expectedOutput}) > {diffFile}\"",
                     UseShellExecute = false,
                     CreateNoWindow = false,
                     RedirectStandardError = true
@@ -421,7 +479,7 @@ namespace BabelfishDotnetFramework
             return new  ProcessStartInfo
             {
                 FileName = @"bash",
-                Arguments = $"-c \"diff {output} {expectedOutput} > {diffFile}\"",
+                Arguments = $"-c \"diff -u --strip-trailing-cr {output} {expectedOutput} > {diffFile}\"",
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 RedirectStandardError = true

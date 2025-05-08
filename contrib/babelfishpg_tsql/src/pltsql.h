@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "collation.h"
 #include "executor/spi.h"
+#include "libpq/libpq-be.h"
 #include "optimizer/planner.h"
 #include "utils/expandedrecord.h"
 #include "utils/plancache.h"
@@ -63,6 +64,7 @@
 #define PREPARE_STMT_MAX_ARGS 2100
 
 #define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
+
 
 /*
  * Compiler's namespace item types
@@ -198,7 +200,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_ALTER_DB,
 	PLTSQL_STMT_FULLTEXTINDEX,
-	PLTSQL_STMT_GRANTSCHEMA
+	PLTSQL_STMT_GRANTSCHEMA,
+	PLTSQL_STMT_PARTITION_FUNCTION,
+	PLTSQL_STMT_PARTITION_SCHEME
 } PLtsql_stmt_type;
 
 /*
@@ -946,6 +950,7 @@ typedef struct PLtsql_stmt_insert_bulk
 	char	   *kilobytes_per_batch;
 	char	   *rows_per_batch;
 	bool		keep_nulls;
+	bool		check_constraints;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -1092,6 +1097,35 @@ typedef struct PLtsql_stmt_grantschema
 	char		*schema_name;	/* schema name */
 } PLtsql_stmt_grantschema;
 
+
+/*
+ * Partition Function
+ */
+typedef struct PLtsql_stmt_partition_function
+{
+	PLtsql_stmt_type	cmd_type;
+	int			lineno;
+	char			*function_name;
+	bool			is_create;
+	bool			is_right;
+	PLtsql_type		*datatype;
+	List			*args;		/* the arguments (list of exprs) */
+	char			*collation;
+} PLtsql_stmt_partition_function;
+
+/*
+ * Partition Scheme
+ */
+typedef struct PLtsql_stmt_partition_scheme
+{
+	PLtsql_stmt_type	cmd_type;
+	int			lineno;
+	char			*scheme_name;
+	bool			is_create;
+	char			*function_name;
+	int			filegroups;	/* filegroups count, -1 indicates ALL is specified */
+} PLtsql_stmt_partition_scheme;
+
 /*
  * ASSERT statement
  */
@@ -1133,12 +1167,9 @@ typedef struct PLtsql_stmt_execsql
 											 * SELECT @a=1) */
 	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
-	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
-	bool		func_call;		/* Function call? */
 	char	   *schema_name;	/* Schema specified */
 	char	   *db_name;		/* db_name: only for cross db query */
-	bool		is_schema_specified;	/* is schema name specified? */
 	bool		is_create_view; /* CREATE VIEW? */
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
@@ -1273,6 +1304,8 @@ typedef struct PLtsql_function
 	int			fetch_status_varno;
 	int			new_varno;
 	int			old_varno;
+	int16			fn_dbid;         /* logical db which contains the function */
+	char			*fn_search_path;
 
 	TupleDesc	fn_tupdesc;		/* tuple descriptor for return info */
 
@@ -1504,8 +1537,6 @@ typedef struct PLtsql_execstate
 	bool		insert_exec;
 
 	List	   *explain_infos;
-	char	   *schema_name;
-	const char *db_name;
 	instr_time	planning_start;
 	instr_time	planning_end;
 	instr_time	execution_start;
@@ -1661,6 +1692,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_tds_database_backend_count) (int16 db_id, bool ignore_current_connection);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	int		(*get_tds_numbackends) (void);
 	char	       *(*get_host_name) (void);
 	uint32_t        (*get_client_pid) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
@@ -1736,6 +1768,10 @@ typedef struct PLtsql_protocol_plugin
 	uint64		(*bulk_load_callback) (int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
 
+	void 		(*pltsql_rollback_txn_callback) (void);
+
+	void		(*pltsql_abort_any_transaction_callback) (void);
+
 	int			(*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
 	const char *(*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
@@ -1760,6 +1796,12 @@ typedef struct PLtsql_protocol_plugin
 
 	char	   *(*get_physical_schema_name) (char *db_name, const char *schema_name);
 
+	void		(*set_reset_tds_connection_flag) ();
+
+	bool		(*get_reset_tds_connection_flag) ();
+	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
+													char **tvp_type_name, char **tvp_type_schema_name);
+	int32		(*get_numeric_typmod_from_exp) (Plan *plan, Node *expr, bool *found);
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -1773,7 +1815,6 @@ typedef struct PLtsql_protocol_plugin
 	int			datefirst;
 	int			lock_timeout;
 	const char *language;
-
 } PLtsql_protocol_plugin;
 
 /*
@@ -1827,6 +1868,21 @@ typedef struct tsql_identity_insert_fields
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
 
+/* 
+ * It is modified version of compare_context, which is used to
+ * provide extra arg during sort operation to compare function.
+ * Please check tsql_compare_values() and exec_stmt_partition_function()
+ * for more details.
+ */
+typedef struct tsql_compare_context
+{
+	Oid function_oid; /* oid of comparator operator */
+	Oid colloid; /* collation which needs to used during comparison */
+	bool contains_duplicate; /* true if the array contains duplicate values */
+} tsql_compare_context;
+
+extern int tsql_compare_values(const void *a, const void *b, void *arg);
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;
@@ -1864,6 +1920,8 @@ extern common_utility_plugin *common_utility_plugin_ptr;
 
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
+
+#define IS_TDS_CONN() (MyProcPort && MyProcPort->is_tds_conn)
 
 extern Oid	procid_var;
 extern uint64 rowcount_var;
@@ -1924,10 +1982,48 @@ extern char *bulk_load_table_name;
 extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
+extern bool insert_bulk_check_constraints;
+
+
+/* BBF SUBCOMMANDS QUERY STRING */
+#define CREATE_LOGICAL_DATABASE "(CREATE LOGICAL DATABASE )"
+#define CREATE_GUEST_SCHEMAS_DURING_UPGRADE "(CREATE GUEST SCHEMAS DURING UPGRADE )"
+#define CREATE_FIXED_DB_ROLES "(CREATE FIXED DATABASE ROLES )"
+#define ALTER_DEFAULT_PRIVILEGES "(ALTER DEFAULT PRIVILEGES )"
+#define INTERNAL_GRANT_STATEMENT "(GRANT STATEMENT )"
+#define INTERNAL_REVOKE_ALL_ON_ROUTINE "(REVOKE ALL ON ROUTINE )"
+#define INTERNAL_ALTER_ROLE "(ALTER ROLE ADD )"
+#define CREATE_FULLTEXT_INDEX "(CREATE FULLTEXT INDEX STATEMENT )"
+#define DELETE_FULLTEXT_INDEX "(DELETE FULLTEXT INDEX STATEMENT )"
+
+/* FIXED DB PRINCIPALS */
+#define DBO "dbo"
+#define DB_OWNER "db_owner"
+#define DB_ACCESSADMIN "db_accessadmin"
+#define DB_SECURITYADMIN "db_securityadmin"
+#define DB_DATAREADER "db_datareader"
+#define DB_DATAWRITER "db_datawriter"
+#define DB_DDLADMIN "db_ddladmin"
+
+#define IS_BBF_BUILT_IN_DB(dbname) \
+    ((strlen(dbname) == 6 && strncmp(dbname, "master", 6) == 0)|| \
+     (strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)|| \
+     (strlen(dbname) == 4 && strncmp(dbname, "msdb", 4) == 0))
+
+#define IS_FIXED_DB_PRINCIPAL(rolname) \
+	((strlen(rolname) == 3 && strncmp(rolname, DBO, 3) == 0) || \
+	 (strlen(rolname) == 8 && strncmp(rolname, DB_OWNER, 8) == 0) || \
+	 (strlen(rolname) == 14 && strncmp(rolname, DB_ACCESSADMIN, 14) == 0) || \
+	 (strlen(rolname) == 16 && strncmp(rolname, DB_SECURITYADMIN, 16) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAREADER, 13) == 0) || \
+	 (strlen(rolname) == 13 && strncmp(rolname, DB_DATAWRITER, 13) == 0) || \
+	 (strlen(rolname) == 11 && strncmp(rolname, DB_DDLADMIN, 11) == 0))
 
 /**********************************************************************
  * Function declarations
  **********************************************************************/
+
+# define PLTSQL_SEARCH_PATH_BUFFER "%s, %s, sys, pg_catalog"
 
 /*
  * Functions in pl_comp.c
@@ -2006,6 +2102,8 @@ extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
+extern Oid get_owner_of_schema(const char *schema);
+extern void exec_database_roles_subcmds(const char *physical_schema);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -2032,6 +2130,9 @@ extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
+extern void check_restricted_object(Oid object_id, ObjectType object_type);
+extern bool is_tsql_atatglobalvar(const char *varname);
+extern bool is_tsql_atatuservar(const char *varname);
 
 /*
  * Scanner functions in pl_scanner.c
@@ -2060,6 +2161,9 @@ extern void pltsql_scanner_finish(void);
  */
 extern int	pltsql_yyparse(void);
 
+/* functions in hooks.c */
+extern char *extract_identifier(const char *start, int *last_pos);
+
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
@@ -2069,6 +2173,7 @@ extern bool check_fulltext_exist(const char *schema_name, const char *table_name
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
 extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
+extern void exec_add_original_index_name(char *idxname, char *schemaname, char *original_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2087,13 +2192,13 @@ void PLTsqlProcessTransaction(Node *parsetree,
 						            ParamListInfo params,
 						 			QueryCompletion *qc);
 
-
 extern void PLTsqlStartTransaction(char *txnName);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);
 extern void PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain);
 extern void pltsql_start_txn(void);
 extern void pltsql_commit_txn(void);
 extern void pltsql_rollback_txn(void);
+extern void pltsql_abort_any_transaction(void);
 extern bool pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 extern void pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource);
 extern bool is_sysname_column(ColumnDef *coldef);
@@ -2106,17 +2211,23 @@ extern void update_CreateSchemaStmt(Node *n, const char *schemaname, const char 
 extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
-extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
+extern void update_GrantRoleStmt(Node *n, List *privs, List *roles, const char *grantor);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
+extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *schema, const char *role1, const char *role2, const char *grantee, const char *priv);
+extern AccessPriv *make_accesspriv_node(const char *priv_name);
+extern RoleSpec   *make_rolespec_node(const char *rolename);
+extern void throw_error_for_fixed_db_role(char *rolname, char *dbname);
+extern void pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, bool is_cast, bool is_procedure_or_func);
+extern void update_GrantRoleStmtByName(Node *n, const char *granted_role, const char *grantee_role);
+extern void update_ReassignOwnedStmt(Node *n, const char* old_role, const char* new_role);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
-extern char *flatten_search_path(List *oid_list);
-extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char *message);
 extern void init_and_check_common_utility(void);
 extern Oid	tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
@@ -2132,6 +2243,12 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern bool is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+extern bool is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+extern bool is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+extern bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
+extern bool is_tsql_text_ntext_or_image_datatype(Oid oid); /* sys.text, sys.ntext, sys.image */
+extern void downcase_truncate_split_object_name(char *four_part_object_name, char** server_name, char** db_name, char** schema_name, char** object_name);
 
 typedef struct
 {
@@ -2157,6 +2274,13 @@ extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
 
 /*
+ * saved_expr_kind - special context to store which kind of expression if being processed.
+ * This is useful specially when handling declared variables because variables are dynamic only when it appears
+ * in the TargetList. Should be folded as const otherwise.
+ */
+extern int saved_expr_kind;
+
+/*
  * Functions in cursor.c
  */
 int			execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List *values);
@@ -2171,6 +2295,7 @@ int			execute_sp_cursorfetch(int cursor_handle, int *fetchtype, int *rownum, int
 int			execute_sp_cursoroption(int cursor_handle, int code, int value);
 int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
+void		reset_cached_cursor(void);
 
 /*
  * Functions in string.c
@@ -2206,6 +2331,8 @@ extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 extern int64 last_scope_identity_value(void);
+extern Oid	get_table_identity(Oid tableOid);
+extern void reseed_identity_post_select_into(Oid relid);
 
 /*
  * Functions in linked_servers.c
@@ -2213,5 +2340,19 @@ extern int64 last_scope_identity_value(void);
 void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc);
 extern void 	exec_utility_cmd_helper(char *query_str);
 extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
+
+/*
+ * Functions in pltsql_coerce.c
+ */
+extern bool validate_special_function(char *proc_nsname, char *proc_name, int nargs, bool num_args_match);
+
+/*
+ * Function in pltsql_ruleutils.c
+ */
+extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
+#define NUM_DB_OBJECTS 11
+
+extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
 
 #endif							/* PLTSQL_H */

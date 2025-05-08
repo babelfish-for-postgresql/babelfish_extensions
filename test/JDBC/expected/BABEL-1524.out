@@ -80,7 +80,7 @@ go
 select IIF(timestamp = NULL, 'null', 'not null') from t1;
 go
 ~~START~~
-text
+varchar
 not null
 not null
 ~~END~~
@@ -93,7 +93,7 @@ select case when x.b = y.timestamp then 'equal' else 'not-equal' end
 				from mycte x inner join t1 y on x.a = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -106,7 +106,7 @@ select case when x.timestamp = y.timestamp then 'equal' else 'not-equal' end
 				from v1 x inner join t1 y on x.id = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -123,7 +123,7 @@ select case when f.timestamp = t.timestamp then 'equal' else 'not-equal' end
                 from tvf(1) f inner join t1 t on f.id = t.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -165,7 +165,7 @@ go
 ~~ROW COUNT: 1~~
 
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 
@@ -177,7 +177,7 @@ select case when x.timestamp = y.timestamp then 'equal' else 'not-equal' end
                 from t1 x inner join t2 y on x.id = y.id;
 go
 ~~START~~
-text
+varchar
 equal
 equal
 ~~END~~
@@ -325,7 +325,7 @@ go
 ~~ROW COUNT: 1~~
 
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 

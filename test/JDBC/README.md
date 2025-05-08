@@ -20,7 +20,9 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 - [Adding the test cases](#adding-the-test-cases)
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
 - [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled)
+- [Running Tests with Single-DB Migration Mode](#running-tests-with-single-db-migration-mode)
 - [Running Tests with Non Default Server Collation](#running-tests-with-non-default-server-collation)
+- [Running Tests with Non Default Database Collation](#running-tests-with-non-default-database-collation)
 
 ## Running the test framework
 
@@ -462,6 +464,41 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
    ```
 If you encounter failing or crashing tests in the "JDBC tests with parallel query" GitHub workflow, consider adding the names of these problematic test cases to the `parallel_query_jdbc_schedule` file. Prefix these test case names with `ignore#!#`. As we work towards resolving these issues in the future, we will gradually remove these excluded tests from the `parallel_query_jdbc_schedule` scheduling file.
 
+## Running Tests with Single-DB Migration Mode
+
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and initialize Babelfish extensions with single-db migration mode by adding following line in `postgres/data/postgresql.conf` and restart engine, then initialize Babelfish extensions using the [online instructions](../../contrib/README.md)
+
+   ```bash
+   babelfishpg_tsql.migration_mode = 'single-db'
+    ```
+2. Before running JDBC tests, set the `isSingleDbMode` environment variable to `true`:
+
+   ```bash
+    export isSingleDbMode=true
+    # Verify if isSingleDbMode is set to true
+    echo $isSingleDbMode
+   ```
+3. Now Run the tests:
+    ```bash
+    mvn test
+    ```
+4. How to add expected output for some test
+    1. By default expected output of a test should be added into `expected` folder.
+    2. If the expected output is different for single-db migration mode compared to multi-db migration mode, one can add a different expected output specially for single-db migration mode in `expected/single_db/` folder. Additionally, one needs to add `-- single_db_mode_expected` flag in the corresponding input file.
+    
+5. To exclude some tests from running via the JDBC in single-db migration mode, you can add test-case name with prefix `ignore#!#` in `singledb_jdbc_schedule` file.
+
+6. Cleanup all the objects, users, roles and databases created while running the tests:
+    ```bash
+    ./cleanup.sh
+    ```
+7. Please note that whenever you had changed the migration mode and reinitialised Babelfish extensions. Update the `isSingleDbMode` environment variable with appropriate value and unset when migration mode is set to 'multi-db'.
+    ```bash
+    unset isSingleDbMode
+    ```
+    This ensures that correct expected output is picked for current migration mode.
+
 ## Running Tests with Non Default Server Collation
 
 After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
@@ -496,3 +533,42 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     unset serverCollationName
     ```
     This ensures that correct expected output is picked for current server collation name.
+
+## Running Tests with Non Default Database Collation
+
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and initialize Babelfish extensions using the [online instructions](../../contrib/README.md). Update the collation of master database using the following query from psql endpoint
+
+   ```bash
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_ai' where name = 'master';
+   ```
+2. Before running JDBC tests, set the `isdbCollationMode` environment variable to true:
+
+   ```bash
+    export isdbCollationMode=true
+    # Verify if isdbCollationMode is set to true
+    echo $isdbCollationMode
+   ```
+3. Now Run the tests:
+    ```bash
+    mvn test
+    ```
+4. How to add expected output for some test
+    1. By default expected output of a test should be added into `expected` folder.
+    2. If JDBC is running in normal mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/db_collation` folder.
+    3. If JDBC is running in parallel query mode with default database collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
+    4. If JDBC is running in parallel query mode with isdbCollationMode=true and expected output of some test is different then add this new expected output in `expected/parallel_query/db_collation` folder.
+
+5. Cleanup all the objects, users, roles and databases created while running the tests:
+    ```bash
+    ./cleanup.sh
+    ```
+6. Please note that whenever you had changed the database collation update the `isdbCollationMode` environment variable with appropriate value and unset when database collation name is set to default database collation.
+    ```bash
+    unset isdbCollationMode
+    ```
+    This ensures that correct expected output is picked for current database collation name.
+    And make sure to revert back the collation of the master database to its previous value using the following query from psql endpoint
+    ```bash
+   update sys.babelfish_sysdatabases set default_collation = 'bbf_unicode_cp1_ci_as' where name = 'master';
+   ```

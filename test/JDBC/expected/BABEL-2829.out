@@ -66,7 +66,7 @@ SELECT DISTINCT db_name(dbid), loginname FROM db_2829.dbo.sysprocesses WHERE spi
 GO
 ~~START~~
 nvarchar#!#nchar
-master#!#jdbc_user                                                                                                                       
+db_2829#!#jdbc_user                                                                                                                       
 ~~END~~
 
 

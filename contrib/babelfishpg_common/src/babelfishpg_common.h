@@ -41,6 +41,7 @@ typedef struct common_utility_plugin
 	bytea	   *(*convertIntToSQLVariantByteA) (int ret);
 	void	   *(*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 	void	   *(*tsql_bpchar_input) (const char *s, size_t len, int32 atttypmod);
+	bool		(*is_tsql_sysname_datatype) (Oid oid);
 	bool		(*is_tsql_bpchar_datatype) (Oid oid);
 	bool		(*is_tsql_nchar_datatype) (Oid oid);
 	bool		(*is_tsql_varchar_datatype) (Oid oid);
@@ -52,15 +53,26 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_sys_binary_datatype) (Oid oid);
 	bool		(*is_tsql_sys_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_varbinary_datatype) (Oid oid);
+	bool		(*is_tsql_geography_datatype) (Oid oid);
+	bool		(*is_tsql_geometry_datatype) (Oid oid);
 	bool		(*is_tsql_timestamp_datatype) (Oid oid);
 	bool		(*is_tsql_datetime2_datatype) (Oid oid);
 	bool		(*is_tsql_smalldatetime_datatype) (Oid oid);
 	bool		(*is_tsql_datetimeoffset_datatype) (Oid oid);
 	bool		(*is_tsql_decimal_datatype) (Oid oid);
+	bool		(*is_tsql_fixeddecimal_datatype) (Oid oid);
+	bool		(*is_tsql_bit_datatype) (Oid oid);
+	bool		(*is_tsql_sqlvariant_datatype) (Oid oid);
 	bool		(*is_tsql_rowversion_or_timestamp_datatype) (Oid oid);
+	bool		(*is_tsql_tinyint_datatype) (Oid oid);
+	bool		(*is_tsql_money_datatype) (Oid oid);
+	bool		(*is_tsql_smallmoney_datatype) (Oid oid);
+	
 	Datum		(*datetime_in_str) (char *str, Node *escontext);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
-	Datum		(*timestamp_datetimeoffset) (PG_FUNCTION_ARGS);
+	Datum		(*timestamptz_datetimeoffset) (PG_FUNCTION_ARGS);
+	Datum		(*timestamptz_datetime2) (PG_FUNCTION_ARGS);
+	Datum		(*timestamptz_datetime) (PG_FUNCTION_ARGS);
 	Datum		(*datetimeoffset_timestamp) (PG_FUNCTION_ARGS);
 	Datum		(*tinyint2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*translate_pg_type_to_tsql) (PG_FUNCTION_ARGS);
@@ -77,6 +89,8 @@ typedef struct common_utility_plugin
 										  bool *isBaseDec, bool *isBaseBin,
 										  bool *isBaseDate, int *variantHeaderLen);
 	Oid			(*lookup_tsql_datatype_oid) (const char *typestr);
+	const char	   	*(*resolve_pg_type_to_tsql) (Oid oid);
 	int32_t		(*GetUTF8CodePoint) (const unsigned char *in, int len, int *consumed_p);
 	int			(*TsqlUTF8LengthInUTF16) (const void *vin, int len);
+	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);
 } common_utility_plugin;

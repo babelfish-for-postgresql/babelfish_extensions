@@ -1,3 +1,4 @@
+-- tsql
 drop table if exists babel_3292_t1
 go
 
@@ -56,6 +57,11 @@ Bitmap Heap Scan on babel_3292_t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 146.162 ms
+~~END~~
+
 
 /*
  * Run SELECT queries and give the hint to follow a index scan using different syntaxes.
@@ -70,6 +76,11 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.537 ms
+~~END~~
+
 
 select * from babel_3292_t1 (index=index_babel_3292_t1_b1) where b1 = 1
 go
@@ -78,6 +89,11 @@ text
 Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.183 ms
 ~~END~~
 
 
@@ -90,6 +106,11 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.644 ms
+~~END~~
+
 
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
@@ -98,6 +119,11 @@ text
 Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
 ~~END~~
 
 
@@ -110,6 +136,11 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 28.197 ms
+~~END~~
+
 
 select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
@@ -118,6 +149,11 @@ text
 Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 as t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.891 ms
 ~~END~~
 
 
@@ -130,6 +166,11 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.267 ms
+~~END~~
+
 
 select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
 go
@@ -138,6 +179,11 @@ text
 Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1 where b1=1                                                      
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 12.017 ms
 ~~END~~
 
 
@@ -156,6 +202,11 @@ Bitmap Heap Scan on babel_3292_t1
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.290 ms
+~~END~~
+
 
 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)) where b1 = 1 and c1 = 1
 go
@@ -165,6 +216,11 @@ Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eae
 Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.254 ms
 ~~END~~
 
 
@@ -178,6 +234,11 @@ Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c
   Filter: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.358 ms
+~~END~~
+
 
 select * from BABEL_3292_t1 where b1 = 1 and c1 = 1 option(table hint(Babel_3292_t1, index(IndeX_BABEL_3292_t1_b1), index(Index_baBel_3292_t1_C1)))
 go
@@ -187,6 +248,11 @@ Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eae
 Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.517 ms
 ~~END~~
 
 
@@ -208,6 +274,11 @@ Nested Loop
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.730 ms
+~~END~~
+
 
 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)), babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
 go
@@ -220,6 +291,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.228 ms
 ~~END~~
 
 
@@ -236,6 +312,11 @@ Nested Loop
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.220 ms
+~~END~~
+
 
 select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2)))
 go
@@ -248,6 +329,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.517 ms
 ~~END~~
 
 
@@ -264,6 +350,11 @@ Nested Loop
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.691 ms
+~~END~~
+
 
 select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
@@ -276,6 +367,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.702 ms
 ~~END~~
 
 
@@ -292,6 +388,11 @@ Insert on babel_3292_t2
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.088 ms
+~~END~~
+
 
 insert into babel_3292_t2 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
@@ -303,6 +404,11 @@ Insert on babel_3292_t2
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.188 ms
+~~END~~
+
 
 insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
@@ -312,6 +418,11 @@ Query Text: insert/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eae
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
 ~~END~~
 
 
@@ -328,6 +439,11 @@ Update on babel_3292_t1
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 36.175 ms
+~~END~~
+
 
 update babel_3292_t1 with(index(index_babel_3292_t1_b1)) set a1 = 1 where b1 = 1
 go
@@ -339,6 +455,11 @@ Update on babel_3292_t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.165 ms
+~~END~~
+
 
 update babel_3292_t1 set a1 = 1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
@@ -348,6 +469,11 @@ Query Text: update/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eae
 Update on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -364,6 +490,11 @@ Delete on babel_3292_t1
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 47.219 ms
+~~END~~
+
 
 delete from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
@@ -375,6 +506,11 @@ Delete on babel_3292_t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.326 ms
+~~END~~
+
 
 delete from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
@@ -384,6 +520,11 @@ Query Text: delete/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eae
 Delete on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -406,6 +547,11 @@ HashAggregate
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.705 ms
+~~END~~
+
 
 select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Only one query has a hint
 go
@@ -421,6 +567,11 @@ HashAggregate
                     Index Cond: (b1 = 1)
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.248 ms
 ~~END~~
 
 
@@ -440,6 +591,11 @@ HashAggregate
                     Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.290 ms
+~~END~~
+
 
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Both queries have a hint
 go
@@ -455,6 +611,11 @@ HashAggregate
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.259 ms
+~~END~~
+
 
 select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
@@ -468,6 +629,11 @@ HashAggregate
               Index Cond: (b1 = 1)
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.281 ms
 ~~END~~
 
 
@@ -486,6 +652,11 @@ Bitmap Heap Scan on babel_3292_t1
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 19.640 ms
+~~END~~
+
 
 with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
 go
@@ -495,6 +666,11 @@ Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.010 ms
 ~~END~~
 
 
@@ -508,6 +684,11 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
   Filter: (c1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.303 ms
+~~END~~
+
 
 with BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1 with(index=INDEX_BABEL_3292_T1_B1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
 go
@@ -517,6 +698,11 @@ Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.334 ms
 ~~END~~
 
 
@@ -535,6 +721,11 @@ Bitmap Heap Scan on babel_3292_t1
               Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.283 ms
+~~END~~
+
 
 -- Only the hint given on an existing table will be applied
 with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte with(index=index_babel_3292_t1_c1) where c1 = 1
@@ -545,6 +736,11 @@ Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.291 ms
 ~~END~~
 
 
@@ -602,6 +798,11 @@ Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 65.303 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
@@ -610,6 +811,11 @@ text
 Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1                                        where b1 = 1
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 47.424 ms
 ~~END~~
 
 
@@ -622,6 +828,11 @@ Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297
   Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 37.687 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)))
 go
@@ -630,6 +841,11 @@ text
 Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1 where b1=1                                                             
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 24.195 ms
 ~~END~~
 
 
@@ -643,6 +859,11 @@ Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0
   Filter: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.347 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)))
 go
@@ -652,6 +873,11 @@ Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e
 Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0 on t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.295 ms
 ~~END~~
 
 
@@ -668,6 +894,11 @@ Nested Loop
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.305 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
 go
@@ -680,6 +911,11 @@ Nested Loop
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.111 ms
 ~~END~~
 
 
@@ -696,6 +932,11 @@ Nested Loop
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 68.691 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
@@ -710,6 +951,11 @@ Nested Loop
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 7.398 ms
+~~END~~
+
 
 insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
@@ -719,6 +965,11 @@ Query Text: insert/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 2.120 ms
 ~~END~~
 
 
@@ -732,6 +983,11 @@ Insert on babel_3292_t2
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.285 ms
+~~END~~
+
 
 update tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) set a1 = 1 where b1 = 1
 go
@@ -741,6 +997,11 @@ Query Text: update/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e
 Update on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
 ~~END~~
 
 
@@ -754,6 +1015,11 @@ Update on t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.909 ms
+~~END~~
+
 
 delete from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
@@ -765,6 +1031,11 @@ Delete on t1
         Index Cond: (b1 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.230 ms
+~~END~~
+
 
 delete from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
@@ -774,6 +1045,11 @@ Query Text: delete/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e
 Delete on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
 ~~END~~
 
 
@@ -791,6 +1067,11 @@ HashAggregate
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.314 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b2 = 1
 go
@@ -804,6 +1085,11 @@ HashAggregate
               Index Cond: (b1 = 1)
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.312 ms
 ~~END~~
 
 
@@ -821,6 +1107,11 @@ HashAggregate
               Index Cond: (b2 = 1)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.346 ms
+~~END~~
+
 
 select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
@@ -834,6 +1125,11 @@ HashAggregate
               Index Cond: (b1 = 1)
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.351 ms
 ~~END~~
 
 

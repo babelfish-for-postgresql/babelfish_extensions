@@ -7,7 +7,7 @@ jobs:
       INSTALL_DIR: psql
       SERVER_COLLATION_NAME: chinese_prc_ci_as
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -65,7 +65,7 @@ jobs:
           cd test/JDBC/
           # set env variable serverCollationName to current server collation name
           export serverCollationName=${{ env.SERVER_COLLATION_NAME }}
-          mvn test
+          mvn -B -ntp test
           # reset env variable
           unset serverCollationName
 
@@ -82,8 +82,8 @@ jobs:
         id: setup-pub-sub
         if: always() && steps.start-secondary.outcome == 'success'
         run: |
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE PUBLICATION my_pub;"
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=jdbc_testdb password=12345678' PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CREATE PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=babelfish_db password=12345678' PUBLICATION my_pub;"
 
       - name: Run Replication Tests
         id: replication
@@ -97,11 +97,11 @@ jobs:
         id: cleanup
         if: always() && steps.replication.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log
           path: |
@@ -129,14 +129,14 @@ jobs:
       
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
       
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff

@@ -29,8 +29,6 @@
 #include "src/pltsql.h"
 #include "tcop/tcopprot.h"
 
-int			pgtsql_base_yydebug;
-
 List	   *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 
 /*
@@ -53,7 +51,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	/*
 	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */
-	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI_AS();
+	pltsql_case_insensitive_identifiers = tsql_is_database_or_server_collation_CI();
 	INSTR_TIME_SET_CURRENT(parseStart);
 
 	/* initialize the flex scanner */
@@ -322,6 +320,8 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 			{
 				case PROCEDURE:
 				case TSQL_PROC:
+				case FUNCTION:
+				case VIEW:
 					cur_token = TSQL_ALTER;
 					break;
 			}

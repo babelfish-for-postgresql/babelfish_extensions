@@ -585,7 +585,7 @@ inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
 ORDER BY upper(babel4210_t3.val);
 go
 ~~START~~
-int#!#varchar#!#text
+int#!#varchar#!#varchar
 1#!#x#!#A
 2#!#Y#!#B
 3#!#z#!#C

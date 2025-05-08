@@ -12,6 +12,8 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
+#include "catalog/pg_proc.h"
 
 static int
 cmpfunc(const void *a, const void *b)
@@ -350,6 +352,141 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 	return exprTypmod((Node *) linitial(cexpr->args));
 }
 
+/*
+ * Check if the given object is in the restricted list
+ */
+static bool
+is_object_restricted(const char *objname, const char *schema_name)
+{
+	for (int idx = 0; idx < NUM_DB_OBJECTS; idx++)
+	{
+		if (pg_strcasecmp(shipped_objects_not_in_sys_db[idx][0], objname) == 0 &&
+			pg_strcasecmp(shipped_objects_not_in_sys_db[idx][1], schema_name) == 0)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * Main function to check and error out for restricted objects
+ */
+void
+check_restricted_object(Oid object_id, ObjectType object_type)
+{
+	HeapTuple	tuple;
+	char		*objname;
+	char		*schema_name;
+	Oid			schema_oid;
+
+	/* Skip checks for superusers */
+	if (superuser())
+		return;
+
+	/* Get object information */
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+	else
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("object with OID %u does not exist", object_id)));
+
+	/* Get object name and schema */
+	if (object_type == OBJECT_PROCEDURE || object_type == OBJECT_FUNCTION)
+	{
+		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+		objname = pstrdup(NameStr(procform->proname));
+		schema_oid = procform->pronamespace;
+	}
+	else
+	{
+		Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
+		objname = pstrdup(NameStr(classform->relname));
+		schema_oid = classform->relnamespace;
+	}
+
+	/* Get schema name */
+	if (OidIsValid(schema_oid))
+		schema_name = get_namespace_name(schema_oid);
+	else
+	{
+		ReleaseSysCache(tuple);
+		return;
+	}
+
+	/* Check if object is restricted and error out if it is */
+	if (is_object_restricted(objname, schema_name))
+	{
+		if (schema_name)
+			pfree(schema_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of %s %s",
+				 		 object_type == OBJECT_PROCEDURE ? "procedure" :
+						 object_type == OBJECT_VIEW ? "view" :
+						 "function",
+						 objname)));
+	}
+	if (schema_name)
+		pfree(schema_name);
+	if (objname)
+		pfree(objname);
+	ReleaseSysCache(tuple);
+}
+
+/* Determine whether a variable name is a predefined T-SQL global variable */
+bool 
+is_tsql_atatglobalvar(const char *varname)
+{
+	size_t varname_len = strlen(varname);
+	if ((varname_len < 6) || (varname_len > 18))
+		return false;
+		
+	// List of all T-SQL global "@@" variables:
+	if (
+		(pg_strcasecmp("@@CONNECTIONS",      varname) == 0) ||
+		(pg_strcasecmp("@@CPU_BUSY",         varname) == 0) ||
+		(pg_strcasecmp("@@CURSOR_ROWS",      varname) == 0) ||
+		(pg_strcasecmp("@@DATEFIRST",        varname) == 0) ||
+		(pg_strcasecmp("@@DBTS",             varname) == 0) ||
+		(pg_strcasecmp("@@ERROR",            varname) == 0) ||
+		(pg_strcasecmp("@@PGERROR",          varname) == 0) ||   // added by Babelfish
+		(pg_strcasecmp("@@FETCH_STATUS",     varname) == 0) ||
+		(pg_strcasecmp("@@IDENTITY",         varname) == 0) ||
+		(pg_strcasecmp("@@IDLE",             varname) == 0) ||
+		(pg_strcasecmp("@@IO_BUSY",          varname) == 0) ||
+		(pg_strcasecmp("@@LANGID",           varname) == 0) ||
+		(pg_strcasecmp("@@LANGUAGE",         varname) == 0) ||
+		(pg_strcasecmp("@@LOCK_TIMEOUT",     varname) == 0) ||
+		(pg_strcasecmp("@@MAX_CONNECTIONS",  varname) == 0) ||
+		(pg_strcasecmp("@@MAX_PRECISION",    varname) == 0) ||
+		(pg_strcasecmp("@@NESTLEVEL",        varname) == 0) ||
+		(pg_strcasecmp("@@OPTIONS",          varname) == 0) ||
+		(pg_strcasecmp("@@PACKET_ERRORS",    varname) == 0) ||
+		(pg_strcasecmp("@@PACK_RECEIVED",    varname) == 0) ||
+		(pg_strcasecmp("@@PACK_SENT",        varname) == 0) ||
+		(pg_strcasecmp("@@PROCID",           varname) == 0) ||
+		(pg_strcasecmp("@@REMSERVER",        varname) == 0) ||
+		(pg_strcasecmp("@@ROWCOUNT",         varname) == 0) ||
+		(pg_strcasecmp("@@SERVERNAME",       varname) == 0) ||
+		(pg_strcasecmp("@@SERVICENAME",      varname) == 0) ||
+		(pg_strcasecmp("@@SPID",             varname) == 0) ||
+		(pg_strcasecmp("@@TEXTSIZE",         varname) == 0) ||
+		(pg_strcasecmp("@@TIMETICKS",        varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_ERRORS",     varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_READ",       varname) == 0) ||
+		(pg_strcasecmp("@@TOTAL_WRITE",      varname) == 0) ||
+		(pg_strcasecmp("@@TRANCOUNT",        varname) == 0) ||
+		(pg_strcasecmp("@@VERSION",          varname) == 0) ||
+		(pg_strcasecmp("@@MICROSOFTVERSION", varname) == 0) 
+	   ) 
+	   	return true;
+	else
+		return false;	
+}
+
 /***********************************************************************************
  *                            FREE FUNCTIONS
  **********************************************************************************/
@@ -487,6 +624,8 @@ free_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_FULLTEXTINDEX:
 		case PLTSQL_STMT_GRANTSCHEMA:
+		case PLTSQL_STMT_PARTITION_FUNCTION:
+		case PLTSQL_STMT_PARTITION_SCHEME:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			{
 				/* Nothing to free */

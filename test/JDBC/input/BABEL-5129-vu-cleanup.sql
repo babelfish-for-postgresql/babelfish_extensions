@@ -1,0 +1,2 @@
+DROP TABLE babel_5129
+GO

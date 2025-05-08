@@ -1,0 +1,70 @@
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+GO
+
+CREATE PROCEDURE test_nested_rollback_in_proc AS
+BEGIN
+    CREATE TABLE #t1_proc1(a int)
+    INSERT INTO #t1_proc1 values (6)
+    BEGIN TRAN;
+        ALTER TABLE #t1_proc1 ADD b varchar(50)
+        TRUNCATE TABLE #t1_proc1
+        INSERT INTO #t1_proc1 VALUES (1, 'two')
+        -- Should just be (1, 'two')
+        select * from #t1_proc1
+
+        SAVE TRAN s1
+            DROP TABLE #t1_proc1
+            CREATE TABLE #t1_proc1(a varchar(100))
+            INSERT INTO #t1_proc1 VALUES ('three')
+            -- Should just be 'three'
+            select * from #t1_proc1
+        ROLLBACK TRAN s1
+
+        -- Should just be (1, 'two')
+        select * from #t1_proc1
+
+        CREATE TABLE #t2_proc1(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc1 VALUES ('four')
+
+        -- ('four', 1)
+        SELECT * FROM #t2_proc1
+        DROP TABLE #t2_proc1
+    ROLLBACK;
+    -- Should have just 6
+    SELECT * FROM #t1_proc1
+    -- Should not exist
+    SELECT * FROM #t2_proc1
+END
+GO
+
+CREATE PROCEDURE implicit_rollback_in_proc AS 
+BEGIN
+    BEGIN TRAN
+        SAVE TRAN S1
+        CREATE TABLE #t1_proc2(a int)
+        ALTER TABLE #t1_proc2 ADD b varchar(50)
+        INSERT INTO #t1_proc2 VALUES (1, 'two')
+        select * from #t1_proc2
+        DROP TABLE #t1_proc2
+        CREATE TABLE #t1_proc2(a varchar(100))
+        INSERT INTO #t1_proc2 VALUES ('three')
+        select * from #t1_proc2
+
+        CREATE TABLE #t2_proc2(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc2 VALUES ('four')
+        SELECT * FROM #t2_proc2
+        DROP TABLE #t2_proc2
+
+        INSERT INTO #t1_proc2 values (1, 2, 3, 4, 5)
+        SELECT * FROM #t1_proc2
+        SELECT * FROM #t2_proc2
+    COMMIT
+END
+GO

@@ -11,3 +11,7 @@ py_auth#!#others|-|packetSize=0
 py_auth#!#others|-|packetSize=-1
 py_auth#!#others|-|packetSize=4096
 py_auth#!#database|-|test1 SELECT 1
+
+CREATE DATABASE ["龙漫远龍漫😃😄漫遠.¢£€¥"]
+py_auth#!#database|-|"龙漫远龍漫😃😄漫遠.¢£€¥"
+DROP DATABASE ["龙漫远龍漫😃😄漫遠.¢£€¥"]

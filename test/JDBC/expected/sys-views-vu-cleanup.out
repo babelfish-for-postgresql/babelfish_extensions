@@ -4,7 +4,19 @@ GO
 DROP VIEW sys_views_vu_prepare_t1;
 GO
 
+DROP schema sys_views_vu_prepare_s2;
+GO
+
 USE master;
+GO
+
+DROP user sys_views_user_u1;
+GO
+
+DROP login sys_views_login_l1;
+GO
+
+DROP SCHEMA sys_views_vu_prepare_s1;
 GO
 
 DROP DATABASE sys_views_vu_prepare_db1;

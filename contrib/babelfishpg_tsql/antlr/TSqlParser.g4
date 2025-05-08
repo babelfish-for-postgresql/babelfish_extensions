@@ -358,7 +358,7 @@ raiseerror_statement
     ;
 	
 raiseerror_msg
-    : DECIMAL | char_string | LOCAL_ID
+    : DECIMAL | char_string | local_id
     ;		
     
 raiseerror_option
@@ -1163,7 +1163,7 @@ alter_partition_function
     ;
 
 create_partition_function
-    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
+    : CREATE PARTITION FUNCTION partition_function_name=id LR_BRACKET data_type collation? RR_BRACKET AS RANGE (LEFT | RIGHT)? FOR VALUES LR_BRACKET expression_list? RR_BRACKET
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-partition-scheme-transact-sql
@@ -1172,7 +1172,13 @@ alter_partition_scheme
     ;
 
 create_partition_scheme
-    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET id (COMMA id)* RR_BRACKET
+    : CREATE PARTITION SCHEME partition_scheme_name=id AS PARTITION partition_function_name=id ALL? TO LR_BRACKET filegroup_type (COMMA filegroup_type)* RR_BRACKET
+    ;
+
+filegroup_type
+    : PRIMARY_SQBRACKET // [PRIMARY] filegroup
+    | char_string       // can be 'PRIMARY'
+    | id                // user filegroup
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-remote-service-binding-transact-sql
@@ -1998,7 +2004,7 @@ func_body_return_select_body
     ;
 
 func_body_returns_table
-    : RETURNS LOCAL_ID table_type_definition
+    : RETURNS local_id table_type_definition
         (WITH function_option (COMMA function_option)*)?
         AS?
         BEGIN sql_clauses* SEMI? END
@@ -2025,7 +2031,7 @@ atomic_func_body
 
 // CREATE PROC p @p INT NULL --> this appears to be accepted syntax for non-native compiled procs, though formally not allowed
 procedure_param
-    : LOCAL_ID AS? data_type VARYING? (NOT? NULL_P)? (EQUAL default_val=expression)? param_option=(OUT | OUTPUT | READONLY)?
+    : local_id AS? data_type VARYING? (NOT? NULL_P)? (EQUAL default_val=expression)? param_option=(OUT | OUTPUT | READONLY)?
     ;
 
 //  drop_procedure_param can be used in a DROP FUNCTION or DROP PROCEDURE command
@@ -2048,6 +2054,7 @@ function_option
     | RETURNS NULL_P ON NULL_P INPUT
     | CALLED ON NULL_P INPUT
     | execute_as_clause
+    | inline_clause
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188038.aspx
@@ -2117,7 +2124,8 @@ file_table_option
 
 storage_partition_clause
     : id (LR_BRACKET id RR_BRACKET)?
-    | char_string  // can be "DEFAULT"
+    | PRIMARY_SQBRACKET
+    | DEFAULT_DOUBLE_QUOTE
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms187956.aspx
@@ -2633,7 +2641,7 @@ predict_function
 
 // https://msdn.microsoft.com/en-us/library/ms188927.aspx
 declare_statement
-    : DECLARE LOCAL_ID AS? table_type_definition SEMI?
+    : DECLARE local_id AS? table_type_definition SEMI?
     | DECLARE loc+=declare_local (COMMA loc+=declare_local)* SEMI?
     ;
     
@@ -2835,7 +2843,7 @@ execute_statement_arg
     ;    
 
 execute_statement_arg_named
-    : name=LOCAL_ID  EQUAL  value=execute_parameter
+    : name=local_id  EQUAL  value=execute_parameter
     ;
 
 execute_statement_arg_unnamed
@@ -2844,13 +2852,13 @@ execute_statement_arg_unnamed
 
 execute_parameter
     : constant   
-    | LOCAL_ID (OUTPUT | OUT)?
+    | local_id (OUTPUT | OUT)?
     | id
     | DEFAULT    
     ;    
 
 execute_var_string
-    : LOCAL_ID
+    : local_id
     | char_string
     ;
     
@@ -2884,7 +2892,7 @@ deny_statement
     ;
      
 permission_object
-    : (object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
+    : (permission_object_type colon_colon)? full_object_name (LR_BRACKET column_name_list RR_BRACKET)? 
     ;
 
 principals
@@ -2927,6 +2935,28 @@ single_permission
     | SUBSCRIBE QUERY NOTIFICATIONS
     | UNMASK
     | UNSAFE ASSEMBLY
+    ;
+
+permission_object_type
+    : (APPLICATION|SERVER)? ROLE
+    | ASSEMBLY
+    | (ASYMMETRIC|SYMMETRIC) KEY
+    | AVAILABILITY GROUP
+    | CERTIFICATE
+    | CONTRACT
+    | DATABASE (SCOPED CREDENTIAL)?
+    | ENDPOINT
+    | FULLTEXT (CATALOG|STOPLIST)
+    | LOGIN
+    | (MESSAGE)? TYPE
+    | OBJECT
+    | REMOTE SERVICE BINDING
+    | ROUTE
+    | SCHEMA
+    | SEARCH PROPERTY LIST
+    | SERVICE
+    | USER
+    | XML SCHEMA COLLECTION
     ;
 
 object_type
@@ -3069,21 +3099,21 @@ set_statement
 // https://msdn.microsoft.com/en-us/library/ms174377.aspx
 transaction_statement
     // https://msdn.microsoft.com/en-us/library/ms188386.aspx
-    : BEGIN DISTRIBUTED (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    : BEGIN DISTRIBUTED (TRAN | TRANSACTION) (id | local_id)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms188929.aspx
-    | BEGIN (TRAN | TRANSACTION) ((id | LOCAL_ID) (WITH MARK char_string)?)? SEMI?
+    | BEGIN (TRAN | TRANSACTION) ((id | local_id) (WITH MARK char_string)?)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms190295.aspx
-    | COMMIT (TRAN | TRANSACTION) (id | LOCAL_ID)? (WITH LR_BRACKET DELAYED_DURABILITY EQUAL (OFF | ON) RR_BRACKET )? SEMI?
+    | COMMIT (TRAN | TRANSACTION) (id | local_id)? (WITH LR_BRACKET DELAYED_DURABILITY EQUAL (OFF | ON) RR_BRACKET )? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms178628.aspx
     | COMMIT WORK? SEMI?
     | COMMIT id
     | ROLLBACK id
     // https://msdn.microsoft.com/en-us/library/ms181299.aspx
-    | ROLLBACK (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    | ROLLBACK (TRAN | TRANSACTION) (id | local_id)? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms174973.aspx
     | ROLLBACK WORK? SEMI?
     // https://msdn.microsoft.com/en-us/library/ms188378.aspx
-    | SAVE (TRAN | TRANSACTION) (id | LOCAL_ID)? SEMI?
+    | SAVE (TRAN | TRANSACTION) (id | local_id)? SEMI?
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms188366.aspx
@@ -3106,7 +3136,7 @@ shutdown_statement
     ;
 
 dbcc_statement
-    : DBCC CHECKIDENT ( LR_BRACKET table_name_string ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
+    : DBCC CHECKIDENT ( LR_BRACKET dbcc_table_name ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? checkident_new_value)?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
     | DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
     //These are dbcc commands with strange syntax that doesn't fit the regular dbcc syntax
     | DBCC SHRINKLOG ( LR_BRACKET SIZE  EQUAL   (constant_expression| id | DEFAULT) (KB | MB | GB | TB)? RR_BRACKET )? (WITH dbcc_options)? SEMI?
@@ -3146,15 +3176,24 @@ dbcc_options
     :  ID (COMMA ID)?
     ;
 
-
-table_name_string
+dbcc_table_name
     : table = id
     | char_string
+    | local_id
     ;
 
+checkident_new_value
+    : DECIMAL
+    | FLOAT
+    | local_id
+    ;
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
+    ;
+
+inline_clause
+    : INLINE EQUAL on_off
     ;
 
 execute_as_statement
@@ -3430,7 +3469,7 @@ set_offsets_keyword
 
 constant_LOCAL_ID
     : constant
-    | LOCAL_ID
+    | local_id
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/expressions-transact-sql
@@ -3780,6 +3819,7 @@ function_call
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
     | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
+    | xml_proc_name_table_column LR_BRACKET expression_list? RR_BRACKET
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3789,7 +3829,7 @@ function_call
     ;
 
 partition_function_call
-    : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET function_arg_list RR_BRACKET
+    : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET expression RR_BRACKET
     ;
 
 freetext_function
@@ -3869,7 +3909,10 @@ spatial_methods
     ;
         
 geospatial_col
-    : STX
+    : STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
+    | STX
     | STX_SQBRACKET
     | STX_DOUBLE_QUOTE
     | STY
@@ -3886,10 +3929,19 @@ geospatial_col
 geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
+    | STAREA
+    | STDIMENSION
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     ;
 
 geospatial_func_arg
     : STDISTANCE
+    | STEQUALS
+    | STCONTAINS
+    | STDISJOINT 
+    | STINTERSECTS
     ;
 
 hierarchyid_methods
@@ -3904,43 +3956,15 @@ spatial_coloncolon_methods
     : data_type colon_colon function_call
     ;
 
-// this is no longer used:
-xml_data_type_methods
-    : xml_value_method
-    | xml_query_method
-    | xml_exist_method
-    | xml_modify_method
-    ;
-
 xml_methods
-    : xml_value_call
-    | xml_query_call
-    | xml_exist_call
-    | xml_modify_call
+    : xml_func_arg LR_BRACKET expression_list? RR_BRACKET
     ;
 
-xml_value_method
-    : (loc_id=LOCAL_ID | value_id=id | eventdata=EVENTDATA LR_BRACKET RR_BRACKET | query=xml_query_method | subquery)  DOT call=xml_value_call
-    ;
-
-xml_value_call
-    :  VALUE LR_BRACKET xquery=char_string COMMA sqltype=char_string RR_BRACKET
-    ;
-
-xml_query_method
-    : (loc_id=LOCAL_ID | value_id=id | table=full_object_name | subquery) DOT call=xml_query_call
-    ;
-
-xml_query_call
-    : QUERY LR_BRACKET xquery=char_string RR_BRACKET
-    ;
-
-xml_exist_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT call=xml_exist_call
-    ;
-
-xml_exist_call
-    : EXIST LR_BRACKET xquery=char_string RR_BRACKET
+xml_func_arg
+    : EXIST
+    | VALUE
+    | QUERY
+    | MODIFY
     ;
 
 xml_modify_method
@@ -4382,6 +4406,7 @@ keyword
     | COMPRESSION
     | CONCAT
     | CONCAT_NULL_YIELDS_NULL
+    | CONCAT_WS
     | CONFIGURATION
     | CONNECT
     | CONNECTION
@@ -4822,6 +4847,7 @@ keyword
     | PREDICATE
     | PREDICT
     | PRIMARY_ROLE
+    | PRIMARY_SQBRACKET
     | PRIOR
     | PRIORITY
     | PRIORITY_LEVEL
@@ -4992,6 +5018,7 @@ keyword
     | STALE_QUERY_THRESHOLD_DAYS
     | STANDBY
     | START
+    | STAREA
     | STARTED
     | STARTUP_STATE
     | START_DATE
@@ -5005,9 +5032,17 @@ keyword
     | STATS_STREAM
     | STATUS
     | STATUSONLY
+    | STCONTAINS
     | STDEV
     | STDEVP
+    | STDIMENSION
+    | STDISJOINT 
     | STDISTANCE
+    | STEQUALS
+    | STINTERSECTS
+    | STISCLOSED
+    | STISEMPTY
+    | STISVALID
     | STOP
     | STOPAT
     | STOPATMARK
@@ -5017,6 +5052,9 @@ keyword
     | STOP_ON_ERROR
     | STRING_AGG
     | STRING_DELIMITER
+    | STSRID
+    | STSRID_DOUBLE_QUOTE
+    | STSRID_SQBRACKET
     | STUFF
     | STX
     | STX_DOUBLE_QUOTE
@@ -5068,6 +5106,7 @@ keyword
     | TRANSACTION_ID
     | TRANSFER
     | TRANSFORM_NOISE_WORDS
+    | TRANSLATE
     | TRIM
     | TRIPLE_DES
     | TRIPLE_DES_3KEY
@@ -5179,6 +5218,10 @@ spatial_proc_name_server_database_schema
     : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
     ;
 
+xml_proc_name_table_column
+    : (table=id? DOT)? column=id DOT xml_func_arg
+    ;
+
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
@@ -5209,7 +5252,22 @@ column_name_list_with_order
 
 /* We introduce specific index methods so as to avoid PG syntax leaks. */
 column_name_list_with_order_for_vector
-    : simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)? (COMMA simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)?)*
+    : simple_column_name (ASC | DESC)? vector_index_ops? (COMMA simple_column_name (ASC | DESC)? vector_index_ops?)*
+    ;
+
+vector_index_ops
+    : VECTOR_COSINE_OPS
+    | VECTOR_IP_OPS
+    | VECTOR_L1_OPS
+    | VECTOR_L2_OPS
+    | HALFVEC_COSINE_OPS
+    | HALFVEC_IP_OPS
+    | HALFVEC_L1_OPS
+    | HALFVEC_L2_OPS
+    | SPARSEVEC_COSINE_OPS
+    | SPARSEVEC_IP_OPS
+    | SPARSEVEC_L1_OPS
+    | SPARSEVEC_L2_OPS
     ;
 
 //For some reason, sql server allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
@@ -5256,7 +5314,11 @@ comparison_operator
     ;
 
 vector_operator
-    : VECTOR_COSINE | VECTOR_IP | VECTOR_L2
+    : VECTOR_COSINE
+    | VECTOR_IP
+    | VECTOR_L2
+    | VECTOR_L1
+    | VECTOR_CONCATENATE
     ;
 
 assignment_operator

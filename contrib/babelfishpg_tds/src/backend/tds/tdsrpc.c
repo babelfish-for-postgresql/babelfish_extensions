@@ -40,6 +40,8 @@
  */
 #define INT32_STRLEN	12
 
+#define VARCHAR_MAX_LEN	0x1F40 /* 8000 */
+
 /* For checking the invalid length parameters */
 #define CheckForInvalidLength(temp) \
 do \
@@ -1182,6 +1184,15 @@ GetSetColMetadataForCharType(ParameterToken temp, StringInfo message, uint8_t td
 		return STATUS_ERROR;
 
 	memcpy(&tempLen, &message->data[offset], sizeof(tempLen));
+
+	/*
+	 * Technically maxLen can be 0 but since typmod of
+	 * 0 is not supported in PG, we will translate it
+	 * to max supported typmod of char based datatypes.
+	 */
+	if (tempLen == 0)
+		tempLen = VARCHAR_MAX_LEN;
+
 	temp->maxLen = tempLen;
 	offset += sizeof(tempLen);
 	memcpy(&collation, &message->data[offset], sizeof(collation));
@@ -1587,7 +1598,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					 * Sets the col metadata and also the corresponding row
 					 * data.
 					 */
-					SetColMetadataForTvp(temp, message, &offset);
+					SetColMetadataForTvp(temp, message, &offset, request->name.data);
 				}
 				break;
 			case TDS_TYPE_BINARY:
@@ -3684,7 +3695,14 @@ TdsFetchInParamValues(ParamListInfo params)
 		if (!isNull && token->type != TDS_TYPE_TABLE)
 			pval = tempFuncInfo->recvFuncPtr(req->messageData, token);
 		else if (token->type == TDS_TYPE_TABLE)
+		{
+			/*
+			 * We are only logging the tvp name and not the record variable
+			 * So set the datatype to CString so that pval is treated as such
+			 */
+			ptype = CSTRINGOID;
 			pval = (Datum) token->tvpInfo->tvpTypeName;
+		}
 		else
 			pval = (Datum) 0;
 

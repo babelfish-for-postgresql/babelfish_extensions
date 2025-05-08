@@ -14,6 +14,7 @@
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
+#define PLTSQL_MIGRATION_MODE "babelfishpg_tsql.migration_mode"
 #define PLTSQL_DEFAULT_LANGUAGE "us_english"
 
 static int	migration_mode = SINGLE_DB;
@@ -1163,10 +1164,19 @@ define_custom_variables(void)
 							gettext_noop("Temp oid buffer size"),
 							NULL,
 							&temp_oid_buffer_size,
-							0, 0, 131072,
+							65536, 0, 131072,
 							PGC_SUSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.temp_table_xact_support",
+							 gettext_noop("Enable temp table changes to respect transactional behavior"),
+							 NULL,
+							 &temp_table_xact_support,
+							 true,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
@@ -1255,6 +1265,7 @@ int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
+int			escape_hatch_inline_function_option = EH_STRICT;
 int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
@@ -1642,13 +1653,26 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	
+	/* INLINE option */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_inline_function_option",
+							 gettext_noop("escape hatch for INLINE option in CREATE FUNCTION"),
+							 NULL,
+							 &escape_hatch_inline_function_option,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 }
 
 void
 pltsql_validate_set_config_function(char *name, char *value)
 {
 	if (strncmp(name, PLTSQL_SESSION_ISOLATION_LEVEL, strlen(PLTSQL_SESSION_ISOLATION_LEVEL)) == 0 ||
-		strncmp(name, PLTSQL_TRANSACTION_ISOLATION_LEVEL, strlen(PLTSQL_TRANSACTION_ISOLATION_LEVEL)) == 0)
+		strncmp(name, PLTSQL_TRANSACTION_ISOLATION_LEVEL, strlen(PLTSQL_TRANSACTION_ISOLATION_LEVEL)) == 0 ||
+		strncmp(name, PLTSQL_MIGRATION_MODE, strlen(PLTSQL_MIGRATION_MODE)) == 0 ||
+		strncmp(name, "role", strlen("role")) == 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

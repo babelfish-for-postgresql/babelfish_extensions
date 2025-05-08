@@ -9,7 +9,6 @@ import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class batch_run {
 
@@ -213,7 +212,7 @@ public class batch_run {
                 } else if (strLine.startsWith("java_auth")) {
                     jdbcAuthentication.javaAuthentication(strLine, bw, logger);
 
-                } else if (strLine.startsWith("include") && !isSQLFile) {
+                } else if (strLine.startsWith("include") && (!isSQLFile || isCrossDialectFile)) {
                     String[] result = strLine.split("#!#");
                     String filePath = new File(result[1]).getAbsolutePath();
 
@@ -295,6 +294,11 @@ public class batch_run {
 
                     if (strLine.toLowerCase().startsWith("-- parallel_query_expected")){
                         checkParallelQueryExpected = true;
+                        continue;
+                    }
+
+                    if (strLine.toLowerCase().startsWith("-- single_db_mode_expected")){
+                        checkSingleDbModeExpected = true;
                         continue;
                     }
                     // execute statement as a normal SQL statement

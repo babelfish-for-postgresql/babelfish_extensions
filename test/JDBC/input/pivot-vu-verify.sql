@@ -331,7 +331,6 @@ FROM SalesTotal AS st
 ORDER BY 1
 GO
 
-
 -- CTE test 2
 WITH
 SalesTotal AS
@@ -424,7 +423,77 @@ FROM SalesTotal AS st
 ORDER BY 1
 GO
 
+-- Test stmt of CTE table and PIVOT stmt in different level 
+WITH
+SalesTotal AS
+(
+    SELECT FruitType,
+        [2023] AS [2023_Total],
+        [2024] AS [2024_Total]
+    FROM #FruitSales
+    PIVOT(SUM(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+)
+SELECT st.FruitType, st.[2023_Total], sa.[2023_Avg],
+  st.[2024_Total], sa.[2024_Avg]
+FROM SalesTotal AS st
+JOIN (
+    SELECT FruitType,
+        [2023] AS [2023_Avg],
+        [2024] AS [2024_Avg]
+    FROM #FruitSales
+    PIVOT(AVG(FruitSales)
+    FOR SalesYear IN([2023], [2024])
+    ) AS PivotSales
+) sa ON st.FruitType = sa.FruitType;
+GO
+
 DROP TABlE IF EXISTS #FruitSales
+GO
+
+-- PIVOT with CTE as source table
+WITH cte_table AS (
+    SELECT [p].productName, [o].[employeeName]
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT CAST('COUNT' AS VARCHAR(10)), [mac],[ipad],[charger] FROM cte_table
+PIVOT (
+    COUNT(employeeName)
+    FOR productName IN (mac, [iphone], [ipad], [charger])
+) as pvt
+GO
+
+-- string is not allowed in PIVOT column value list
+WITH cte_table AS (
+    SELECT o.[orderId], o.[productId], [p].productName,
+        [p].productPrice, [o].[employeeName], [o].employeeCode, [o].date
+    FROM orders [o] JOIN products AS [p] on (o.productId = p.productId)
+)
+SELECT * FROM cte_table
+PIVOT (
+    COUNT(orderId)
+    FOR productName IN ('mac', 'iphone', 'ipad', 'charger')
+) as p
+GO
+
+-- aggregate column in PIVOT column value list is not allowed
+WITH cte_table AS
+(
+  SELECT
+    CAST('COUNT' AS VARCHAR(10)) AS COUNT,
+    [mac], [ipad], [charger], [employeeName]
+  FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+  ) AS dervied_table
+PIVOT
+  (
+      COUNT(employeeName)
+      FOR productName IN ([mac], [employeeName], [iphone], [ipad], [charger])
+  ) as pvt
+)
+SELECT * FROM cte_table
 GO
 
 -- Join stmts inside PIVOT statment (BABEL-4558)
@@ -796,14 +865,6 @@ PIVOT (
 ) AS pvt
 GO
 
--- Test view of a stmt with pivot operator
--- Expected to fail since we failed to create view with pivot at prepare script. 
--- Create view with pivot is not yet supported,
-SELECT ManufactureID, STORE2, STORE3, STORE4, STORE5, STORE6
-FROM pivot_view
-ORDER BY ManufactureID
-GO
-
 -- aggregate string value, when no row is selected, should output NULL
 SELECT [seatings], [LEFT], [RIGHT] 
 FROM
@@ -816,4 +877,124 @@ PIVOT (
     FOR left_right IN ([LEFT], [RIGHT]) 
 ) AS p2
 ORDER BY 1
+GO
+
+-- test pivot with table in different schemas 1
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN products AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+
+-- test pivot with table in different schemas 2
+SELECT CAST('COUNT' AS VARCHAR(10)) AS COUNT, [mac], [ipad], [charger]
+FROM (
+    SELECT [o].employeeName, [p].productName
+    FROM dbo.orders [o] JOIN pivot_schema.products_sch AS [p] on ([o].productId = [p].productId)
+) AS dervied_table
+PIVOT(
+     COUNT(employeeName)
+     FOR productName IN ([mac], [iphone], [ipad], [charger])
+) as pvt
+GO
+
+--PIVOT VIEW TESTS
+-- VIEW WITH 2 COLUMN SRC TABLE PIVOT
+SELECT * FROM PIVOT_VIEW2 ORDER BY 1
+GO
+
+-- VIEW WITH 3 COLUMN SRC TABLE PIVOT
+SELECT * FROM PIVOT_VIEW3 ORDER BY 1
+GO
+
+-- VIEW OF 4 COLUMN SRC TABLE PIVOT
+SELECT * FROM PIVOT_VIEW4 ORDER BY 1
+GO
+
+-- VIEW OF TOP PIVOT
+SELECT * FROM TOP_PIVOT ORDER BY 1
+GO
+
+-- VIEW OF DISTINCT PIVOT
+SELECT * FROM DISTINCT_PIVOT ORDER BY 1
+GO
+
+-- VIEW OF UNION PIVOT
+SELECT * FROM UNION_PIVOT ORDER BY 1
+GO
+
+-- VIEW OF PIVOT IN SUBQUERY
+SELECT * FROM SUBQUERY_PIVOT ORDER BY 1
+GO
+
+-- VIEW OF PIVOT FUNCTION
+SELECT * FROM PIVOT_FUNCTION ORDER BY 1
+GO
+
+-- VIEW OF CTE PIVOT  SRC TABLE
+SELECT * FROM CTE_VIEW1 ORDER BY 1
+GO
+
+-- VIEW OF CTE PIVOT  SRC TABLE JOIN ANOTHER PIVOT
+SELECT * FROM CTE_VIEW2 ORDER BY 1
+GO
+
+-- VIEW OF CTE TABLE  PIVOT SRC TABLE
+SELECT * FROM CTE_VIEW3 ORDER BY 1
+GO
+
+-- VIEW OF JOIN PIVOT
+SELECT * FROM JOIN_PIVOT1 ORDER BY 1
+GO
+
+-- VIEW OF INNER JOIN PIVOT
+SELECT * FROM JOIN_PIVOT2 ORDER BY 1
+GO
+
+-- VIEW OF LEFT JOIN PIVOT
+SELECT * FROM JOIN_PIVOT3 ORDER BY 1
+GO
+
+-- VIEW OF RIGHT JOIN PIVOT
+SELECT * FROM JOIN_PIVOT4 ORDER BY 1
+GO
+
+-- VIEW OF FULL JOIN PIVOT
+SELECT * FROM JOIN_PIVOT5 ORDER BY 1
+GO
+
+-- VIEW OF CROSS JOIN PIVOT
+SELECT * FROM JOIN_PIVOT6 ORDER BY 1
+GO
+
+-- VIEW OF COMMA JOIN PIVOT
+SELECT * FROM JOIN_PIVOT7 ORDER BY 1
+GO
+
+-- VIEW OF COMMA CROSS JOIN PIVOT
+SELECT * FROM JOIN_PIVOT8 ORDER BY 1
+GO
+
+-- TEST VIEW HAS SAME SCHEMA NAME AS SOURCE TABLE'S
+SELECT * FROM pivot_schema.QUAL_NAME_VIEW ORDER BY 1
+GO
+
+-- BABEL-5603
+SELECT extra_column, [0], [1], [2], [3], [4]
+FROM
+    (SELECT pivot_column, aggregate_column, extra_column
+     FROM SalesDataPivot) AS table_source
+PIVOT
+(
+    AVG(aggregate_column)
+    FOR pivot_column IN ([0], [1], [2], [3], [4])
+) AS PivotTable;
+GO
+
+SELECT * FROM vw_SalesPivot;
 GO

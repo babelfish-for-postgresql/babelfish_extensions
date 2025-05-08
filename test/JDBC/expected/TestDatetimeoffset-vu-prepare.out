@@ -38,7 +38,7 @@ INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('10000-01-01 00:00:00 +
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for datetimeoffset)~~
+~~ERROR (Message: invalid input syntax for type datetimeoffset: "10000-01-01 00:00:00 +0:00")~~
 
 
 CREATE INDEX TestDatetimeoffset_vu_prepare_idx ON TestDatetimeoffset_vu_prepare_testing (df);

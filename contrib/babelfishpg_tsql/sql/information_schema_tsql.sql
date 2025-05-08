@@ -57,7 +57,7 @@ $$SELECT
 		THEN 1073741823
 		WHEN type = 'sysname'
 		THEN 128
-		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
+		WHEN type IN ('xml', 'vector', 'halfvec', 'sparsevec', 'geometry', 'geography')
 		THEN -1
 		WHEN type = 'sql_variant'
 		THEN 0
@@ -241,16 +241,28 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	SELECT c.oid AS "TABLE_OID",
 			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-			CAST(CASE
-				 	WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
-				 	ELSE c.relname
-			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(
+				COALESCE(
+					(SELECT PG_CATALOG.string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+					c.relname)
+				AS sys.nvarchar(128)) AS "TABLE_NAME",
 
-			CAST(CASE
-				 	WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
-				 	ELSE a.attname 
-			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
-			
+			CAST(
+				COALESCE(
+					(SELECT PG_CATALOG.string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
+						ELSE NULL
+						END, ',')
+					FROM unnest(a.attoptions) AS option),
+					a.attname)
+				AS sys.nvarchar(128)) AS "COLUMN_NAME",
+
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
 			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
 			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -333,6 +345,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -448,9 +461,15 @@ CREATE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
-			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
-                  ELSE c.relname END
-			 AS sys._ci_sysname) AS "TABLE_NAME",
+				COALESCE(
+					(SELECT PG_CATALOG.string_agg(
+						CASE
+						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23)
+						ELSE NULL
+						END, ',')
+					FROM unnest(c.reloptions) AS option),
+				c.relname)
+			AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
@@ -463,6 +482,7 @@ CREATE VIEW information_schema_tsql.tables AS
 		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
+		AND c.relispartition = false
 		AND (NOT pg_is_other_temp_schema(nc.oid))
 		AND tt.typrelid IS NULL
 		AND (pg_has_role(c.relowner, 'USAGE')
@@ -473,16 +493,27 @@ CREATE VIEW information_schema_tsql.tables AS
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
-/*
- * TABLE_CONSTRAINTS view
- */
-
-CREATE VIEW information_schema_tsql.table_constraints AS
-    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-           CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+CREATE OR REPLACE FUNCTION information_schema_tsql.table_constraints_internal()
+RETURNS TABLE (
+    "CONSTRAINT_CATALOG" sys.nvarchar(128),
+    "CONSTRAINT_SCHEMA" sys.nvarchar(128),
+    "CONSTRAINT_NAME" sys.sysname,
+    "TABLE_CATALOG" sys.nvarchar(128),
+    "TABLE_SCHEMA" sys.nvarchar(128),
+    "TABLE_NAME" sys.sysname,
+    "CONSTRAINT_TYPE" sys.varchar(11),
+    "IS_DEFERRABLE" sys.varchar(2),
+    "INITIALLY_DEFERRED" sys.varchar(2)
+)
+AS
+$$
+BEGIN
+    RETURN QUERY
+    SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
-           CAST(nr.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-           CAST(extr.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+           CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
@@ -492,21 +523,39 @@ CREATE VIEW information_schema_tsql.table_constraints AS
              AS sys.varchar(11)) COLLATE sys.database_default AS "CONSTRAINT_TYPE",
            CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
            CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
-
-    FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-         sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
-         pg_constraint c,
-         pg_class r
-
-    WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
-          AND c.conrelid = r.oid
-          AND c.contype NOT IN ('t', 'x')
+    FROM 
+        pg_constraint c
+        INNER JOIN pg_class r ON c.conrelid = r.oid
+        INNER JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+        INNER JOIN sys.babelfish_namespace_ext ext ON nsp.nspname = ext.nspname AND ext.dbid = sys.db_id()
+        , sys.db_name() AS db_name
+    WHERE 
+        c.contype IN ('c', 'f', 'p', 'u')
           AND r.relkind IN ('r', 'p')
-          AND (NOT pg_is_other_temp_schema(nr.oid))
+          AND relispartition = false
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		  AND  extc.dbid = sys.db_id();
+               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
+END;
+$$
+LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+/*
+ * TABLE_CONSTRAINTS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
+    SELECT 
+        CAST("CONSTRAINT_CATALOG" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_SCHEMA" AS sys.nvarchar(128)),
+        CAST("CONSTRAINT_NAME" AS sys.sysname),
+        CAST("TABLE_CATALOG" AS sys.nvarchar(128)),
+        CAST("TABLE_SCHEMA" AS sys.nvarchar(128)),
+        CAST("TABLE_NAME" AS sys.sysname),
+        CAST("CONSTRAINT_TYPE" AS sys.varchar(11)),
+        CAST("IS_DEFERRABLE" AS sys.varchar(2)),
+        CAST("INITIALLY_DEFERRED" AS sys.varchar(2))
+    FROM information_schema_tsql.table_constraints_internal();
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
@@ -565,6 +614,7 @@ CREATE VIEW information_schema_tsql.check_constraints AS
           AND c.conrelid = r.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -605,6 +655,7 @@ FROM (
           AND c.connamespace = nc.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
           AND NOT a.attisdropped
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -627,6 +678,7 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+          AND r.relispartition = false
 	  AND (pg_has_role(r.relowner, 'USAGE')
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
@@ -799,25 +851,25 @@ GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
-		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
 		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
-		CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
-		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
-		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
-		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p') AND r.relispartition = false
+		JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nsp.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
-		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j
+		, sys.db_name() AS db_name
 	WHERE
 		pg_has_role(r.relowner, 'USAGE'::text) 
   		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
-		AND NOT pg_is_other_temp_schema(nc.oid)
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
@@ -826,16 +878,16 @@ GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
  */
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
-	CAST(CASE WHEN np.nspname LIKE CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	CAST(CASE WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
 	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
 	-- For system-defined schemas, schema-owner name will be same as schema_name
 	-- For user-defined schemas having default owner, schema-owner will be dbo
 	-- For user-defined schemas with explicit owners, rolname contains dbname followed
 	-- by owner name, so need to extract the owner name from rolname always.
 	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
-		  WHEN r.rolname LIKE CONCAT(sys.db_name(),'%') THEN
-			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
-			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
+		  WHEN r.rolname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN
+			CASE WHEN PG_CATALOG.RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
+			     ELSE PG_CATALOG.RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
 			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
 	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
 	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",

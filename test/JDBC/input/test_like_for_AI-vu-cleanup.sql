@@ -66,3 +66,6 @@ GO
 
 DROP TABLE test_like_for_AI_prepare_index;
 GO
+
+DROP TABLE test_babel_5006;
+GO

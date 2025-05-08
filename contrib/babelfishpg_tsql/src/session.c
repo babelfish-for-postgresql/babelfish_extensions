@@ -15,9 +15,12 @@
 #include "dbcmds.h"
 #include "multidb.h"
 #include "session.h"
+#include "pl_explain.h"
 #include "pltsql.h"
 #include "guc.h"
 #include "storage/shm_toc.h"
+#include "collation.h"
+#include "bbf_parallel_query.h"
 
 /* Core Session Properties */
 
@@ -27,6 +30,8 @@
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND + 1] = {'\0'};
 static Oid	current_user_id = InvalidOid;
+/* search path for current active logical database */
+static char *current_db_search_path = NULL;
 static void set_search_path_for_user_schema(const char *db_name, const char *user);
 void		reset_cached_batch(void);
 
@@ -47,16 +52,39 @@ get_cur_db_id(void)
 	return current_db_id;
 }
 
+/* same as get_current_pltsql_db_name but reurn value is palloc'd */
 char *
 get_cur_db_name(void)
 {
 	return pstrdup(current_db_name);
 }
 
+/*
+ * returns current active babelfish db name
+ * Callers should NOT pfree the return value
+ */
+const char *
+get_current_pltsql_db_name(void)
+{
+	return current_db_name;
+}
+
+/*
+ * Get search path corresponding to current active logical database
+ * Only valid for TDS connections
+ */
+const char *
+get_current_db_search_path(void)
+{
+	Assert(IS_TDS_CONN() && current_db_search_path != NULL);
+	return current_db_search_path;
+}
+
 void 
 set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 {
 	int len;
+	int16 db_id;
 
 	if (logical_db_name == NULL)
 		ereport(ERROR,
@@ -67,13 +95,15 @@ set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
-	if(!DbidIsValid(get_db_id(logical_db_name)))
+	db_id = get_db_id(logical_db_name);
+	if(!DbidIsValid(db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", logical_db_name)));
 	
 	strncpy(current_db_name, logical_db_name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
+	current_db_id = db_id;
 }
 
 
@@ -102,21 +132,6 @@ bbf_set_current_user(const char *user_name)
 	SetCurrentRoleId(userid, false);
 }
 
-void
-set_session_properties(const char *db_name)
-{
-	int16		db_id = get_db_id(db_name);
-
-	if (!DbidIsValid(db_id))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", db_name)));
-
-	check_session_db_access(db_name);
-
-	set_cur_user_db_and_path(db_name);
-}
-
 /*
  * Raises an error if the current session does not have access to the given database
  * Caller responsible for checking db_name is valid
@@ -140,12 +155,26 @@ check_session_db_access(const char *db_name)
 	}
 }
 
-/* Caller responsible for checking db_name is valid */
 void
-set_cur_user_db_and_path(const char *db_name)
+set_cur_user_db_and_path(const char *db_name, bool check_db_id)
 {
 	const char *user = get_user_for_database(db_name);
 	int16		db_id = get_db_id(db_name);
+
+	if (check_db_id && !DbidIsValid(db_id))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", db_name)));
+
+	if (!user)
+	{
+		char *login = GetUserNameFromId(GetSessionUserId(), false);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("The server principal \"%s\" is not able to access "
+						"the database \"%s\" under the current security context",
+						login, db_name)));
+	}
 
 	/* set current DB */
 	set_cur_db(db_id, db_name);
@@ -156,42 +185,54 @@ set_cur_user_db_and_path(const char *db_name)
 
 	/* set search path */
 	set_search_path_for_user_schema(db_name, user);
+
+	/* set database level collation */
+	set_db_collation_internal(db_name);
 }
 
 static void
 set_search_path_for_user_schema(const char *db_name, const char *user)
 {
-	const char *path;
-	const char *buffer = "%s, \"$user\", sys, pg_catalog";
-	const char *physical_schema;
-	const char *dbo_role_name = get_dbo_role_name(db_name);
-	const char *guest_role_name = get_guest_role_name(db_name);
+	char		*path;
+	char		*db_name_copy = pstrdup(db_name);
+	char		*schema;
+	char		*physical_schema = NULL;
+	char 		*dbo_schema_name = get_dbo_schema_name(db_name);
 
-	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
+	Assert (db_name != NULL && strlen(db_name) > 0);
+
+	schema = get_authid_user_ext_schema_name(db_name, user);
+	if (schema)
 	{
-		physical_schema = get_dbo_schema_name(db_name);
+		physical_schema = get_physical_schema_name(db_name_copy, schema);
+		pfree(schema);
 	}
-	else if (guest_role_name && strcmp(user, guest_role_name) == 0)
-	{
-		const char *guest_schema = get_authid_user_ext_schema_name(db_name, "guest");
+	path = psprintf(PLTSQL_SEARCH_PATH_BUFFER,
+					physical_schema ? quote_identifier(physical_schema) : quote_identifier(dbo_schema_name),
+					quote_identifier(dbo_schema_name));
 
-		if (!guest_schema)
-			guest_schema = "guest";
-		physical_schema = get_physical_schema_name(pstrdup(db_name), guest_schema);
-	}
-	else
-	{
-		const char *schema;
+	if (current_db_search_path)
+		pfree(current_db_search_path);
+	current_db_search_path = MemoryContextStrdup(TopMemoryContext, path);
 
-		schema = get_authid_user_ext_schema_name(db_name, user);
-		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
-	}
+	/* set search path default so transaction rollback does not affect it */
+	SetConfigOption("search_path", path,
+					PGC_SUSET, PGC_S_SESSION);
+	/*
+	 * Incase of error inside parallel worker we could reach here before transaction
+	 * abort. Do not try to set_config since it will fail inside a parallel worker
+	 * This function is used in code path where error is never expected
+	 */
+	if (!IsAbortedTransactionBlockState())
+		SetConfigOption("search_path", path,
+						PGC_SUSET, PGC_S_DATABASE_USER);
+	
+	pfree(path);
+	pfree(dbo_schema_name);
+	pfree(db_name_copy);
 
-	path = psprintf(buffer, physical_schema);
-	SetConfigOption("search_path",
-					path,
-					PGC_SUSET,
-					PGC_S_DATABASE_USER);
+	if (physical_schema)
+		pfree(physical_schema);
 }
 
 /*
@@ -202,7 +243,9 @@ void
 reset_session_properties(void)
 {
 	reset_cached_batch();
-	set_session_properties(get_cur_db_name());
+	reset_cached_cursor();
+	pltsql_explain_only = false;
+	pltsql_explain_analyze = false;
 }
 
 void

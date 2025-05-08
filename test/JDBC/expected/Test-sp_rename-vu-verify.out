@@ -300,7 +300,7 @@ GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#SP_RENAME_vu_TABLE1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
@@ -318,7 +318,7 @@ GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#SP_RENAME_vu_TABLE1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_case_insensitive1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
@@ -356,7 +356,7 @@ GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#SP_RENAME_vu_TABLE1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
@@ -531,7 +531,7 @@ GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#SP_RENAME_vu_TABLE1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
@@ -563,7 +563,7 @@ GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#SP_RENAME_vu_TABLE1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
@@ -816,8 +816,27 @@ EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Feature not supported: renaming object type Index)~~
+~~ERROR (Message: Either the parameter @objname is ambiguous or the claimed @objtype (INDEX) is wrong.)~~
 
+
+-- create index with len
+CREATE INDEX sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghi ON sp_rename_vu_table1(sp_rename_vu_t1_col1_new);
+GO
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghi',
+        'sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghijkl', 'INDEX';
+GO
+
+SELECT name FROM sys.indexes WHERE name like 'sp_rename_indexnamegreaterthan64%';
+GO
+~~START~~
+varchar
+sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghijkl
+~~END~~
+
+
+DROP INDEX sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghijkl ON sp_rename_vu_table1;
+GO
 
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
@@ -825,4 +844,21 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Feature not supported: renaming object type Statistics)~~
+
+
+IF OBJECT_ID('babelfish_split_identifier_view') IS NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
+
+SELECT * FROM babelfish_split_identifier_view;
+GO
+~~START~~
+varchar
+ABC
+DEF
+GHI
+~~END~~
 

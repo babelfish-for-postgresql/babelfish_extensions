@@ -173,6 +173,11 @@ Gather
         Filter: (uuid = newid())
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 28.810 ms
+~~END~~
+
 
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
@@ -209,6 +214,11 @@ Gather
   Workers Planned: 2
   ->  Parallel Seq Scan on testnewid
         Filter: (uuid = newid())
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.287 ms
 ~~END~~
 
 

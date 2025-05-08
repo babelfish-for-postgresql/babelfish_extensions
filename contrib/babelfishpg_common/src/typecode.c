@@ -53,6 +53,8 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
 	{0, 1, "rowversion", "timestamp", 8, 32, 3},
 	{0, 1, "timestamp", "timestamp", 8, 33, 3},
 	{0, 1, "vector", "vector", 9, 34, 3},
+	{0, 1, "sparsevec", "sparsevec", 9, 34, 3},
+	{0, 1, "halfvec", "halfvec", 9, 34, 3},
 	/*
 	 * Geospatial types cannot be stored in SQL variant so setting sqlvariant header size to 1
 	 */
@@ -283,6 +285,15 @@ Oid			tsql_datetime2_oid = InvalidOid;
 Oid			tsql_smalldatetime_oid = InvalidOid;
 Oid			tsql_datetimeoffset_oid = InvalidOid;
 Oid			tsql_decimal_oid = InvalidOid;
+Oid			tsql_sqlvariant_oid = InvalidOid;
+Oid			tsql_geography_oid = InvalidOid;
+Oid			tsql_geometry_oid = InvalidOid;
+Oid			tsql_sysname_oid = InvalidOid;
+Oid			tsql_tinyint_oid = InvalidOid;
+Oid			tsql_money_oid = InvalidOid;
+Oid			tsql_smallmoney_oid = InvalidOid;
+Oid			tsql_fixeddecimal_oid = InvalidOid;
+Oid			tsql_bit_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -296,6 +307,46 @@ lookup_tsql_datatype_oid(const char *typename)
 
 	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 	return typoid;
+}
+
+/* type_infos will return const char * so caller should not attempt to modify it */
+const char *
+resolve_pg_type_to_tsql(Oid oid)
+{
+	ht_oid2typecode_entry_t *entry;
+
+	if (OidIsValid(oid))
+	{
+		entry = hash_search(ht_oid2typecode, &oid, HASH_FIND, NULL);
+
+		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
+			return type_infos[entry->persist_id].tsql_typname;
+	}
+	return NULL;
+}
+
+bool
+is_tsql_bit_datatype(Oid oid)
+{
+	if (tsql_bit_oid == InvalidOid)
+		tsql_bit_oid = lookup_tsql_datatype_oid("bit");
+	return tsql_bit_oid == oid;
+}
+
+bool
+is_tsql_fixeddecimal_datatype(Oid oid)
+{
+	if (tsql_fixeddecimal_oid == InvalidOid)
+		tsql_fixeddecimal_oid = lookup_tsql_datatype_oid("fixeddecimal");
+	return tsql_fixeddecimal_oid == oid;
+}
+
+bool
+is_tsql_sysname_datatype(Oid oid)
+{
+	if (tsql_sysname_oid == InvalidOid)
+		tsql_sysname_oid = lookup_tsql_datatype_oid("sysname");
+	return tsql_sysname_oid == oid;
 }
 
 bool
@@ -393,6 +444,22 @@ is_tsql_rowversion_datatype(Oid oid)
 }
 
 bool
+is_tsql_geometry_datatype(Oid oid)
+{
+	if (tsql_geometry_oid == InvalidOid)
+		tsql_geometry_oid = lookup_tsql_datatype_oid("geometry");
+	return tsql_geometry_oid == oid;
+}
+
+bool
+is_tsql_geography_datatype(Oid oid)
+{
+	if (tsql_geography_oid == InvalidOid)
+		tsql_geography_oid = lookup_tsql_datatype_oid("geography");
+	return tsql_geography_oid == oid;
+}
+
+bool
 is_tsql_timestamp_datatype(Oid oid)
 {
 	if (tsql_timestamp_oid == InvalidOid)
@@ -436,6 +503,38 @@ is_tsql_decimal_datatype(Oid oid)
 	if (tsql_decimal_oid == InvalidOid)
 		tsql_decimal_oid = lookup_tsql_datatype_oid("decimal");
 	return tsql_decimal_oid == oid;
+}
+
+bool
+is_tsql_sqlvariant_datatype(Oid oid)
+{
+	if (tsql_sqlvariant_oid == InvalidOid)
+		tsql_sqlvariant_oid = lookup_tsql_datatype_oid("sql_variant");
+	return tsql_sqlvariant_oid == oid;
+}
+
+bool
+is_tsql_tinyint_datatype(Oid oid)
+{
+	if (tsql_tinyint_oid == InvalidOid)
+		tsql_tinyint_oid = lookup_tsql_datatype_oid("tinyint");
+	return tsql_tinyint_oid == oid;
+}
+
+bool
+is_tsql_money_datatype(Oid oid)
+{
+	if (tsql_money_oid == InvalidOid)
+		tsql_money_oid = lookup_tsql_datatype_oid("money");
+	return tsql_money_oid == oid;
+}
+
+bool
+is_tsql_smallmoney_datatype(Oid oid)
+{
+	if (tsql_smallmoney_oid == InvalidOid)
+		tsql_smallmoney_oid = lookup_tsql_datatype_oid("smallmoney");
+	return tsql_smallmoney_oid == oid;
 }
 
 /*

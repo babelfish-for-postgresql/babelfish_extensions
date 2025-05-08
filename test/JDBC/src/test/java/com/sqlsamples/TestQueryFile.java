@@ -19,7 +19,6 @@ import static com.sqlsamples.JDBCTempTable.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
-import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class TestQueryFile {
     
@@ -40,7 +39,7 @@ public class TestQueryFile {
     static File diffFile;
     
     String inputFileName;
-    Connection connection_bbl;  // connection object for Babel instance
+    static Connection connection_bbl;  // connection object for Babel instance
     
     public static void createTestFilesListUtil(String directory, String testToRun) {
         File dir = new File(directory);
@@ -165,6 +164,8 @@ public class TestQueryFile {
         File dir = new File(inputFilesDirectoryPath);
         File scheduleFile = new File(scheduleFileName);
         File parallelQueryTestIgnoreFile = new File(parallelQueryTestIgnoreFileName);
+        File dbCollationIgnoreFile = new File(dbCollationIgnoreFileName);
+        File singleDBIgnoreFile = new File(singleDBIgnoreFileName);
         
         try (BufferedReader br = new BufferedReader(new FileReader(scheduleFile))) {
             String line;
@@ -188,12 +189,38 @@ public class TestQueryFile {
                 e.printStackTrace();
             }
         }
+
+        /* Ignore tests in case of single-db mode test */
+        if (isSingleDbMode) {
+            try (BufferedReader br = new BufferedReader(new FileReader(singleDBIgnoreFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
+                        testsToIgnore.add(line.split("#!#", -1)[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /* Ignore tests in case of database level collation test */
+        if (isdbCollationMode) {
+            try (BufferedReader br = new BufferedReader(new FileReader(dbCollationIgnoreFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (!line.startsWith("#") && line.trim().length() > 0 && line.startsWith("ignore#!#"))
+                        testsToIgnore.add(line.split("#!#", -1)[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         
         createTestFilesList(dir.getAbsolutePath());
 
         // if this is a normal JDBC test run, we need to run the prepare, verify
         // and cleanup scripts for one use-case, one after the other
-        if (!isUpgradeTestMode) {
+        // if (!isUpgradeTestMode) {
             // first sort all files based only on file prefix
             Collections.sort(fileList, new Comparator<String>() {
                 @Override
@@ -214,7 +241,7 @@ public class TestQueryFile {
                     }
                 }
             });
-        }
+        // }
 
         return fileList.stream();
     }
@@ -240,8 +267,20 @@ public class TestQueryFile {
     
     // close connections that are not null after every test
     @AfterEach
-    public void closeConnections() throws SQLException {
-        if (connection_bbl != null) connection_bbl.close();
+    public void closeConnections() throws SQLException, ClassNotFoundException, Throwable {
+        if (isUpgradeTestMode) {
+            if (connection_bbl != null) connection_bbl.close();
+            connection_bbl = null;
+            return;
+        }
+        if (connection_bbl == null)
+            return;
+        try{
+            connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // write summary log after all tests have been executed
@@ -345,11 +384,12 @@ public class TestQueryFile {
         String expectedFilePath = expectedFile.getAbsolutePath();
         ProcessBuilder diffProcessBuilder;
 
-        // if expected file is generated from SQL Server, do not compare error code and message
         if (expectedFilePath.contains("sql_expected")) {
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", expectedFilePath, outputFilePath);
+            // if expected file is generated from T-SQL, do not compare error code and error message
+            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         } else {
-            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", expectedFilePath, outputFilePath);
+            // Do not compare T-SQL Batch parsing time
+            diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "Babelfish T-SQL Batch Parsing Time", "-I", "<Babelfish-T-SQL-Batch-Parsing-Time", expectedFilePath, outputFilePath);
         }
 
         try {
@@ -395,7 +435,8 @@ public class TestQueryFile {
             return;
         } else {
             selectDriver();
-            connection_bbl = DriverManager.getConnection(connectionString);
+            if (connection_bbl == null)
+                connection_bbl = DriverManager.getConnection(connectionString);
         }
 
         summaryLogger.info("RUNNING " + inputFileName);
@@ -423,6 +464,7 @@ public class TestQueryFile {
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
+        checkSingleDbModeExpected = false;
         if (inputFileName.equals("temp_table_jdbc")) {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
@@ -435,15 +477,24 @@ public class TestQueryFile {
         }
         File expectedFile;
         File nonDefaultServerCollationExpectedFile;
+        File dbCollationExpectedFile;
 
         if (isParallelQueryMode && checkParallelQueryExpected){
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
+        }
+        else if (isSingleDbMode && checkSingleDbModeExpected){
+            expectedFile = new File(generatedFilesDirectoryPath + "single_db/" + outputFileName + ".out");
+            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "single_db/" + "db_collation/" + outputFileName + ".out");
         }
         else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
             nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+            dbCollationExpectedFile = new File(generatedFilesDirectoryPath + "db_collation/" + outputFileName + ".out");
         }
+
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
@@ -457,6 +508,10 @@ public class TestQueryFile {
         if (serverCollationName != "default" && nonDefaultServerCollationExpectedFile.exists()){    /* If server collation name is non-default then use it's corresponding expected file if exists */
             // get the diff
             result = compareOutFiles(outputFile, nonDefaultServerCollationExpectedFile);
+        }
+        else if (isdbCollationMode && dbCollationExpectedFile.exists()){    /* If database collation name is non-default then use it's corresponding expected file if exists */
+            // get the diff
+            result = compareOutFiles(outputFile, dbCollationExpectedFile);
         }
         else if (expectedFile.exists()) {
             // get the diff

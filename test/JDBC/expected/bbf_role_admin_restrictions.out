@@ -20,7 +20,7 @@ ALTER SERVER ROLE bbf_role_admin ADD MEMBER bbf_role_admin_restrictions_role;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 ALTER ROLE bbf_role_admin_restrictions_role ADD MEMBER bbf_role_admin;
@@ -118,7 +118,7 @@ SET SESSION AUTHORIZATION bbf_role_admin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "bbf_role_admin"
     Server SQLState: 42501)~~
 
 
@@ -208,7 +208,7 @@ SET SESSION AUTHORIZATION bbf_role_admin;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set session authorization
+~~ERROR (Message: ERROR: permission denied to set session authorization "bbf_role_admin"
     Server SQLState: 42501)~~
 
 
@@ -232,6 +232,15 @@ GO
 bool
 t
 t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
 ~~END~~
 
 

@@ -89,6 +89,11 @@ Query Text: select "@a", "@b"
 Result  (cost=0.00..0.01 rows=1 width=8)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 42.904 ms
+~~END~~
+
 
 set BABELFISH_SHOWPLAN_ALL Off;
 go

@@ -1,0 +1,51 @@
+-- parallel_query_expected
+-- tsql
+CREATE TABLE babel_3513_t1(a1 int PRIMARY KEY, b1 int, c1 int)
+GO
+
+CREATE TABLE babel_3513_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+GO
+
+CREATE PROCEDURE babel_3513_proc_1 AS SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2
+GO
+
+-- psql
+analyze master_dbo.babel_3513_t1;
+go
+
+analyze master_dbo.babel_3513_t2;
+go
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+set babelfish_showplan_all on;
+go
+
+-- expect nested loop join
+exec babel_3513_proc_1;
+
+go
+set babelfish_showplan_all off;
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'on'
+go
+
+set babelfish_showplan_all on;
+go
+
+-- expect nested loop join because of plan caching
+exec babel_3513_proc_1;
+go
+
+-- expect merge join
+SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2;
+go
+
+set babelfish_showplan_all off;
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
+go

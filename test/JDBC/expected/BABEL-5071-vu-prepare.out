@@ -1,0 +1,35 @@
+create table tab5071_1 (a int)
+go
+
+create trigger trig5071_1 on tab5071_1 for insert as begin
+create table #temp_tst (a int)
+insert #temp_tst select a*-1 from inserted;
+select * from #temp_tst;
+drop table #temp_tst
+end
+go
+
+CREATE TABLE tab4992_1 (c1 int, c2 int)
+GO
+
+CREATE TABLE tab4992_2 (c1 int, c2 int)
+GO
+
+INSERT INTO tab4992_1 VALUES(1, 2)
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TRIGGER tab4992_1deleteOperation on [dbo].[tab4992_1]
+after delete AS
+BEGIN
+            CREATE TABLE #tmp
+            (
+                c1 INT PRIMARY KEY,
+                c2 INT,
+                c3 VARCHAR(64) NOT NULL DEFAULT ''
+            )
+            INSERT INTO #tmp VALUES (1, 2, '')
+            INSERT INTO tab4992_2 SELECT c1,c2 FROM #tmp --> Crash
+END
+GO

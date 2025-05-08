@@ -6,10 +6,10 @@ jobs:
     env:
       OLD_INSTALL_DIR: psql_source
       NEW_INSTALL_DIR: psql_target
-      ENGINE_BRANCH_FROM: BABEL_2_7_STABLE__PG_14_10
-      EXTENSION_BRANCH_FROM: BABEL_2_7_STABLE
+      ENGINE_BRANCH_FROM: BABEL_2_X_DEV__PG_14_X
+      EXTENSION_BRANCH_FROM: BABEL_2_X_DEV
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -20,24 +20,18 @@ jobs:
 
       - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_FROM}}
         id: build-modified-postgres-old
+        uses: ./.github/composite-actions/build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
-        run: |
-          cd ..
-          git clone --branch ${{env.ENGINE_BRANCH_FROM}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
-          cd postgresql_modified_for_babelfish
-          ./configure --prefix=$HOME/${{env.OLD_INSTALL_DIR}} --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-          make clean
-          make -j 4 2>error.txt
-          make install
-          make check
-          cd contrib && make && sudo make install
-        shell: bash
+        with:
+          engine_branch: ${{ env.ENGINE_BRANCH_FROM }}
+          install_dir: ${{ env.OLD_INSTALL_DIR }}
       
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
+          version: 4.9.3
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - uses: actions/checkout@v2
@@ -123,11 +117,15 @@ jobs:
           } > pg_hba.conf
           ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -c -D ~/${{env.OLD_INSTALL_DIR}}/data -l ~/${{env.OLD_INSTALL_DIR}}/data/logfile restart
           cd ~/work/babelfish_extensions/babelfish_extensions/
-          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -v migration_mode="multi-db" -v tsql_port="1433" -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
         shell: bash
 
       - uses: actions/checkout@v2
+
+      - name: Save cache
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
 
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
@@ -136,13 +134,17 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
           release_mode: 'yes'
-
-      - name: Copy ANTLR
-        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+      
+      - name: Compile new ANTLR
+        id: compile-new-antlr
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
@@ -167,6 +169,10 @@ jobs:
         uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
+      
+      - name: Save cache
+        if: always() && steps.build-postgis-extension.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
 
       - name: Setup new data directory
         id: setup-new-datadir
@@ -197,9 +203,8 @@ jobs:
       - name: Run pg_upgrade
         id: run-pg_upgrade
         if: |
-          always() && steps.setup-new-datadir.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 0
+          always() && steps.setup-new-datadir.outcome == 'success'
+          && steps.check-babelfish-inconsistency.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - name: Disable TDS fault injection tests in release mode
@@ -224,18 +229,18 @@ jobs:
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
-          mvn test
+          mvn -B -ntp test
      
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
          name: postgres-log
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
         if: always() && steps.run-pg_upgrade.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-logs
           path: |
@@ -255,14 +260,14 @@ jobs:
 
       - name: Upload Run Summary
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
 
       - name: Upload Output Diff
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff

@@ -7,9 +7,12 @@ GO
 DROP PROCEDURE alter_proc_p3
 GO
 
+DROP PROCEDURE alter_proc_p4
+GO
+
+DROP PROCEDURE alter_proc_p5
+GO
+
 DROP TABLE alter_proc_users
 DROP TABLE alter_proc_orders
 GO
-
-drop function alter_proc_f1
-go

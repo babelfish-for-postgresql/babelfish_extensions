@@ -1,0 +1,106 @@
+-- Test strict mode where path does not exist
+-- Expect error
+CREATE PROCEDURE openjson_3820_p1
+AS
+BEGIN
+    SELECT * FROM OPENJSON('{}') WITH(field int 'strict$.field')
+END;
+GO
+
+-- Test lax mode where path does not exist
+-- Expect empty result and no error
+CREATE PROCEDURE openjson_3820_p2
+AS
+BEGIN
+    DECLARE @json_p2 NVarChar(max)=N'{"someKey" : "someValue"}';
+    SELECT * from OPENJSON(@json_p2,'$.somePathWhichDoesNotExists') WITH (id VARCHAR(100) '$')
+END;
+GO
+
+-- Test strict mode where path does not exist
+-- Expect an error for no path
+CREATE PROCEDURE openjson_3820_p3
+AS
+BEGIN
+    DECLARE @json_p3 NVarChar(max)=N'{"someKey" : "someValue"}';
+    SELECT * from OPENJSON(@json_p3,'strict $.somePathWhichDoesNotExists') WITH (id VARCHAR(100) '$')
+END;
+GO
+
+-- Test standard OPENJSON call
+-- Expect result
+CREATE PROCEDURE openjson_3820_p4
+AS
+BEGIN
+    DECLARE @json_p4 NVarChar(max)=N'{"obj":{"a":1}}';
+    SELECT * FROM OPENJSON(@json_p4, 'strict $.obj') WITH (a char(20))
+END;
+GO
+
+-- Test strict mode where path does not exist
+-- Expect error in strict mode
+CREATE PROCEDURE openjson_3820_p5
+AS
+BEGIN
+    SELECT * FROM OPENJSON(N'[{"Item": {"Price":2024.9940}}]') WITH(field int 'strict $.field')
+END;
+GO
+
+-- Test lax mode where path does not exist
+-- Expect empty result because path does not exist
+CREATE PROCEDURE openjson_3820_p6
+AS
+BEGIN
+    DECLARE @json_p6 NVARCHAR(4000) = N'{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}';
+    SELECT [key], value FROM OPENJSON(@json_p6,'lax$.path.to."sub-object"')
+END;
+GO
+
+-- Test OPENJSON strict call where path exists
+-- Expect json result
+CREATE PROCEDURE openjson_3820_p7
+AS
+BEGIN
+    DECLARE @json_p7 NVARCHAR(4000) = N'{"path": {"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}'; 
+    SELECT [key], value FROM OPENJSON(@json_p7,'strict $.path.to."sub-object"')
+END;
+GO
+
+-- Test OPENJSON strict call where path exists, strict is mixed case, 
+-- and no space between "strict" and the path. Expect json result
+CREATE PROCEDURE openjson_3820_p8
+AS
+BEGIN
+    DECLARE @json_p8 NVARCHAR(4000) = N'{"path": {"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}'; 
+    SELECT [key], value FROM OPENJSON(@json_p8,'sTrIct$.path.to."sub-object"')
+END;
+GO
+
+-- Test OPENJSON strict with incorrect path
+-- Expect error
+CREATE PROCEDURE openjson_3820_p9
+AS
+BEGIN
+    DECLARE @json_p9 NVARCHAR(4000) = N'{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}'; 
+    SELECT [key], value FROM OPENJSON(@json_p9,'strict $.path.to."sub-object"')
+END;
+GO
+
+-- Test OPENJSON with incorrect path
+-- Expect empty result
+CREATE PROCEDURE openjson_3820_p10
+AS
+BEGIN
+    DECLARE @json_p10 NVARCHAR(4000) = N'{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}'; 
+    SELECT [key], value FROM OPENJSON(@json_p10,'$.path.to."sub-object"')
+END;
+GO
+
+-- Test strict mode where path does not exist
+-- Expect error in strict mode
+CREATE PROCEDURE openjson_3820_p11
+AS
+BEGIN
+    SELECT * FROM OPENJSON(N'{}') WITH(field int 'strict $.field')
+END;
+GO

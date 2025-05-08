@@ -1,7 +1,31 @@
-SELECT * FROM sys.data_spaces;
+SELECT * FROM sys.data_spaces
 GO
 ~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
+~~END~~
+
+
+SELECT * FROM sys_data_spaces_vu_prepare_view
+GO
+~~START~~
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
+~~END~~
+
+
+EXEC sys_data_spaces_vu_prepare_proc
+GO
+~~START~~
+nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
+PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
+~~END~~
+
+
+SELECT dbo.sys_data_spaces_vu_prepare_func()
+GO
+~~START~~
+int
+1
 ~~END~~
 

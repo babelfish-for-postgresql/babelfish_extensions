@@ -6,6 +6,7 @@
 
 #include "postgres.h"
 #include "access/hash.h"
+#include "access/nbtree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -59,6 +60,8 @@
 #include "../src/catalog.h"
 #include "../src/timezone.h"
 #include "../src/collation.h"
+#include "../src/dbcmds.h"
+#include "../src/hooks.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
@@ -67,6 +70,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "parser/parse_oper.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -139,6 +143,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(search_partition);
 PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(type_id);
@@ -199,14 +204,12 @@ void	   *get_language(void);
 void	   *get_host_id(void);
 
 Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
-int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
-static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
-static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
-												const char 	*sourcetext,
-												const char 	*funcName,
-												HTAB 		*bbf_pivot_hash,
-												TupleDesc 	tupdesc,
-												bool 		randomAccess);
+static HTAB *load_categories_hash(const char *sourcetext, MemoryContext per_query_ctx);
+static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
+												 const char 	*funcName,
+												 HTAB 			*bbf_pivot_hash,
+												 TupleDesc 		tupdesc,
+												 bool 			randomAccess);
 
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
@@ -234,6 +237,19 @@ extern char *replace_special_chars_fts_impl(char *input_str);
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
+const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
+	{"xp_qv","master_dbo"},
+	{"xp_instance_regread","master_dbo"},
+	{"sp_addlinkedserver", "master_dbo"},
+	{"sp_addlinkedsrvlogin", "master_dbo"},
+	{"sp_dropserver", "master_dbo"},
+	{"sp_droplinkedsrvlogin", "master_dbo"},
+	{"sp_testlinkedserver", "master_dbo"},
+	{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
+	{"syspolicy_configuration", "msdb_dbo"},
+	{"syspolicy_system_health_state", "msdb_dbo"},
+	{"sp_enum_oledb_providers", "master_dbo"}
+};
 #define MD5_HASH_LEN 32
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -370,7 +386,6 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	Timestamp	tsql_first_day, first_day;
 	struct pg_tm tt1, *tm = &tt1;
 	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
-	int 		tz1;
 
 	/*
 	 * This block is used when the second argument in datepart is not a 
@@ -393,7 +408,7 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	}
 		
 	/* Gets the date time related fields back from timestamp into struct tm pointer */
-	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec1, NULL, NULL) != 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -938,21 +953,21 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
-						TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime, 
+						DirectFunctionCall2(timestamptz_trunc,CStringGetTextDatum("millisecond"),
+											TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
 	
 }
 
 Datum sysdatetime(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetime2, 
+							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
 Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
-	
-
-	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamptz_datetimeoffset,
 							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
@@ -1300,11 +1315,13 @@ schema_id(PG_FUNCTION_ARGS)
 	{
 		char	   *db_name = get_cur_db_name();
 		const char *user = get_user_for_database(db_name);
-		const char *guest_role_name = get_guest_role_name(db_name);
+		char 	   *guest_role_name = get_guest_role_name(db_name);
 
 		if (!user)
 		{
 			pfree(db_name);
+			pfree(guest_role_name);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -1317,6 +1334,7 @@ schema_id(PG_FUNCTION_ARGS)
 			physical_name = get_physical_schema_name(db_name, name);
 		}
 		pfree(db_name);
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -1743,7 +1761,7 @@ Datum
 tsql_stat_get_activity(PG_FUNCTION_ARGS)
 {
 	Oid			sysadmin_oid = get_role_oid("sysadmin", false);
-	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			num_backends = 0;
 	int			curr_backend;
 	char	   *view_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			pid = -1;
@@ -1828,6 +1846,9 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 
 	MemoryContextSwitchTo(oldcontext);
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numbackends)
+		num_backends = (*pltsql_protocol_plugin_ptr)->get_tds_numbackends();
 
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
@@ -1917,6 +1938,218 @@ checksum(PG_FUNCTION_ARGS)
 }
 
 /*
+ * tsql_bsearch_arg
+ *	This function performs a binary search on a sorted array to find the
+ *	position of a given key value. It compares the key with array elements
+ *	using the provided comparator function and argument.
+ *	
+ *	Note: This is a modified version of the standard bsearch_arg() function
+ *	to return the index of key instead of a boolean indicating the presence of
+ *	the key value.
+ */
+static int
+tsql_bsearch_arg(const void *key, const void *base0,
+			size_t nmemb, size_t size,
+			int (*compar) (const void *, const void *, void *),
+			void *arg)
+{
+	const char *base = (const char *) base0;
+	int			lim,
+				cmp;
+	const void *p;
+
+	for (lim = nmemb; lim != 0; lim >>= 1)
+	{
+		p = base + (lim >> 1) * size;
+		cmp = (*compar) (key, p, arg);
+		if (cmp == 0)
+			return (((const char *)p - (const char *)base0) / size) + 2;
+		if (cmp > 0)
+		{						/* key > p: move right */
+			base = (const char *) p + size;
+			lim--;
+		}						/* else move left */
+	}
+	return ((base - (const char *)base0) / size) + 1;
+}
+
+
+/*
+ * search_partition
+ *	This function performs a search to find the partition number
+ *	for a given value in a specified partition function by retrieving
+ *	the partition function metadata, and performing a binary search 
+ *	on the sorted array of partition range values.
+ *
+ *	Returns:
+ *		- The index of the partition to which the input value belongs.
+ *		- 1, if the provided value is NULL and partition function exists in provided database.
+ */
+Datum
+search_partition(PG_FUNCTION_ARGS)
+{
+	char			*partition_func_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	int32			result;
+	Relation		rel;
+	HeapTuple		tuple;
+	SysScanDesc		scan;
+	ScanKeyData		scanKey[2];
+	int16			dbid;
+	ArrayType		*values;
+	bool			isnull;
+	Datum			arg;
+	Oid			argtypeid;
+	char			*func_param_typname = NULL;
+	char			*func_param_collation = NULL;
+	Oid			collation_oid = InvalidOid;
+	Oid			func_param_typoid;
+	Oid			sqlvariant_typoid;
+	Datum			*range_values;
+	bool			*nulls;
+	int			nelems;
+	Oid			cmpfunction_oid;
+	tsql_compare_context	cxt;
+	Oid			*arg_types;
+
+	if (!PG_ARGISNULL(2)) /* Database is specified. */
+	{
+		char *db_name = text_to_cstring(PG_GETARG_TEXT_P(2));
+		/* Lowercase the db_name, if needed. */
+		if (pltsql_case_insensitive_identifiers)
+		{
+			char *tmp = db_name;
+			db_name = downcase_identifier(tmp, strlen(tmp), false, false);
+			pfree(tmp);
+		}
+		dbid = get_db_id(db_name);
+		if (!DbidIsValid(dbid))
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("Invalid database name '%s'.", db_name)));
+		pfree(db_name);
+	}
+	else /* Database is not specified. */
+		dbid = get_cur_db_id();
+	
+	/* Get OID of sql_variant type. */
+	sqlvariant_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
+	
+	/*
+	 * Get metadata of partition function for the provided partition
+	 * function name, if it exists in the provided database.
+	 */
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_function_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_function_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_func_name));
+	
+	/* Scan using index. */
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+			false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		func_param_typname = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_type, RelationGetDescr(rel), &isnull));
+		func_param_collation = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_partition_function_input_parameter_collation, RelationGetDescr(rel), &isnull)));
+		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
+		deconstruct_array(values, sqlvariant_typoid,
+					-1, false, 'i', &range_values, &nulls, &nelems);
+	}
+
+	/* Raise error if provided partition function doesn't exist in the provided database. */
+	if (!func_param_typname)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("Invalid object name '%s'.", partition_func_name)));
+	
+	/*
+	 * If the partition function exists in the provided database and
+	 * provided value is NULL then return 1 because NULL values will always
+	 * belong to first partition.
+	 */
+	if (PG_ARGISNULL(1))
+	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		pfree(partition_func_name);
+		pfree(func_param_typname);
+		pfree(nulls);
+		pfree(range_values);
+		PG_RETURN_INT32(1);
+	}
+
+	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	arg = PG_GETARG_DATUM(1);
+
+	/* Get OID of partition function parameter type. */
+	func_param_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (func_param_typname);
+	
+	/* Get collation oid from partition function collation. */
+	if (func_param_collation)
+	{
+		collation_oid = get_collation_oid(list_make1(makeString(func_param_collation)), false);
+		/* Sanity check. */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", func_param_collation)));
+	}
+
+	/* 
+	 * Implicitly convert input value to parameter type of
+	 * partition function and it will raise error if conversion fails.
+	 */
+	arg = pltsql_exec_tsql_cast_value(arg, &isnull, argtypeid, -1, func_param_typoid, -1);
+
+	/* Cast it to sql_variant */
+	arg = pltsql_exec_tsql_cast_value(arg, &isnull,
+						func_param_typoid, -1,
+						sqlvariant_typoid, -1);
+
+	/*
+	 * Find oid of comparator function for sqlvariant type, which will be
+	 * used for comparison during binary search. Here, we are searching the
+	 * for "sqlvarint_cmp" function in "sys" schema with sqlvariant arg types
+	 * to ensure that we get a unique result.
+	 */
+	arg_types = (Oid *) palloc(2 * sizeof(Oid));
+	arg_types[0] = sqlvariant_typoid;
+	arg_types[1] = sqlvariant_typoid;
+	cmpfunction_oid = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
+								CStringGetDatum("sqlvariant_cmp"),
+								PointerGetDatum(buildoidvector(arg_types, 2)),
+								ObjectIdGetDatum(get_namespace_oid("sys", false)));
+
+	cxt.function_oid = cmpfunction_oid;
+	cxt.colloid = collation_oid;
+	
+	/* Perform binary search on sorted range values. */
+	result = tsql_bsearch_arg(&arg, range_values, nelems, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* Close the catalog. */
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	/* Free the allocated memory. */
+	pfree(arg_types);
+	pfree(partition_func_name);
+	pfree(func_param_typname);
+	pfree(nulls);
+	pfree(range_values);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
  * object_id
  * 	Returns the object ID with object name and object type as input where object type is optional
  * Returns NULL
@@ -1934,11 +2167,11 @@ object_id(PG_FUNCTION_ARGS)
 	char	   *physical_schema_name;
 	char	   *input;
 	char	   *object_type = NULL;
-	char	  **splited_object_name;
 	Oid			schema_oid;
 	Oid			user_id = GetUserId();
 	Oid result = InvalidOid;
 	bool		is_temp_object;
+	bool		search_in_sys_for_sp_procs;
 	int			i;
 
 	if (PG_ARGISNULL(0))
@@ -1974,31 +2207,13 @@ object_id(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
 				 errmsg("input value is too long for object name")));
 
-	/* resolve the three part name */
-	splited_object_name = split_object_name(input);
-	db_name = splited_object_name[1];
-	schema_name = splited_object_name[2];
-	object_name = splited_object_name[3];
-
-	/* downcase identifier if needed */
-	if (pltsql_case_insensitive_identifiers)
-	{
-		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
-		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
-		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-		for (int j = 0; j < 4; j++)
-			pfree(splited_object_name[j]);
-	}
-	else
-		pfree(splited_object_name[0]);
+	/*
+	 * Split the input string, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
 
 	pfree(input);
-	pfree(splited_object_name);
-
-	/* truncate identifiers if needed */
-	truncate_tsql_identifier(db_name);
-	truncate_tsql_identifier(schema_name);
-	truncate_tsql_identifier(object_name);
 
 	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
@@ -2027,15 +2242,18 @@ object_id(PG_FUNCTION_ARGS)
 		 * name
 		 */
 		const char *user = get_user_for_database(db_name);
-		const char *guest_role_name = get_guest_role_name(db_name);
+		char 	   *guest_role_name = get_guest_role_name(db_name);
 
 		if (!user)
 		{
 			pfree(db_name);
 			pfree(schema_name);
 			pfree(object_name);
+			pfree(guest_role_name);
+
 			if (object_type)
 				pfree(object_type);
+
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2048,6 +2266,8 @@ object_id(PG_FUNCTION_ARGS)
 			schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 			physical_schema_name = get_physical_schema_name(db_name, schema_name);
 		}
+
+		pfree(guest_role_name);
 	}
 	else
 	{
@@ -2059,6 +2279,9 @@ object_id(PG_FUNCTION_ARGS)
 	 * user don't have lookup access
 	 */
 	schema_oid = get_namespace_oid(physical_schema_name, true);
+	/* search in sys when proc name is sp_ prefixed and schema name is empty or dbo */
+	search_in_sys_for_sp_procs = (OidIsValid(sys_schema_oid) && strncmp(object_name, "sp_", 3) == 0 &&
+								 (strcmp(schema_name, "dbo") == 0 || strlen(schema_name) == 0));
 
 	/* free unnecessary pointers */
 	pfree(db_name);
@@ -2095,7 +2318,11 @@ object_id(PG_FUNCTION_ARGS)
 				}
 				else if (enr == NULL)
 				{
-					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					Oid relid = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
 				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
@@ -2114,7 +2341,7 @@ object_id(PG_FUNCTION_ARGS)
 				/* search in pg_class by name and schema oid */
 				Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 				{
 					result = relid;
 				}
@@ -2130,8 +2357,22 @@ object_id(PG_FUNCTION_ARGS)
 					 !strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
 					 !strcmp(object_type, "x"))
 			{
+				/*
+				 * If the object type is not specified as 'tr' and it's actually a trigger,
+				 * then object_id() should return NULL.
+				 */
+				if (OidIsValid(tsql_get_trigger_oid(object_name, schema_oid, user_id)))
+				{
+					pfree(object_name);
+					pfree(object_type);
+					PG_RETURN_NULL();
+				}
+				
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
+					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
 			{
@@ -2165,7 +2406,15 @@ object_id(PG_FUNCTION_ARGS)
 			} 
 			else if (enr == NULL)
 			{
-				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				Oid temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+				if (OidIsValid(temp_nsp_oid))
+				{
+					Oid relid = get_relname_relid((const char *) object_name, temp_nsp_oid);
+					if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX)
+					{
+						result = relid;
+					}
+				}
 			}
 		}
 		else
@@ -2173,7 +2422,7 @@ object_id(PG_FUNCTION_ARGS)
 			/* search in pg_class by name and schema oid */
 			Oid			relid = get_relname_relid((const char *) object_name, schema_oid);
 
-			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			if (OidIsValid(relid) && get_rel_relkind(relid) != RELKIND_INDEX && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
 				result = relid;
 			}
@@ -2188,6 +2437,9 @@ object_id(PG_FUNCTION_ARGS)
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+
+				if (!OidIsValid(result) && search_in_sys_for_sp_procs)
+					result = tsql_get_proc_oid(object_name, sys_schema_oid, user_id);
 			}
 
 			if (!OidIsValid(result))
@@ -2258,7 +2510,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP);
+	enr = GetENRTempTableWithOid(object_id);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
@@ -2400,7 +2652,6 @@ type_id(PG_FUNCTION_ARGS)
                *object_name;
     char       *physical_schema_name;
     char       *input;
-    char       **splitted_object_name;
     Oid        schema_oid = InvalidOid;
     Oid        user_id = GetUserId();
     Oid        result = InvalidOid;
@@ -2423,42 +2674,22 @@ type_id(PG_FUNCTION_ARGS)
     if (i > SYSVARCHAR_MAX_LENGTH)
         ereport(ERROR,
                 (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
-                 errmsg("input value is too long for object name")));
+                errmsg("input value is too long for object name")));
 
-    /* resolve the two part name */
-    splitted_object_name = split_object_name(input);
+    /*
+	 * Split the input string, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+    downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+
+    pfree(input);
+
     /* If three part name(db_name also included in input) then return null */
-    if(pg_mbstrlen(splitted_object_name[1]) != 0)
+    if(pg_mbstrlen(db_name) != 0)
     {
-        pfree(input);
-        for (int j = 0; j < 4; j++)
-            pfree(splitted_object_name[j]);
-        pfree(splitted_object_name);
         PG_RETURN_NULL();
     }
     db_name = get_cur_db_name();
-    schema_name = splitted_object_name[2];
-    object_name = splitted_object_name[3];
-
-    /* downcase identifier if needed */
-    if (pltsql_case_insensitive_identifiers)
-    {
-        db_name = downcase_identifier(db_name, strlen(db_name), false, false);
-        schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
-        object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-        for (int k = 0; k < 4; k++)
-            pfree(splitted_object_name[k]);
-    }
-    else
-        pfree(splitted_object_name[0]);
-
-    pfree(input);
-    pfree(splitted_object_name);
-
-    /* truncate identifiers if needed */
-    truncate_tsql_identifier(db_name);
-    truncate_tsql_identifier(schema_name);
-    truncate_tsql_identifier(object_name);
 
     if (!strcmp(schema_name, ""))
     {
@@ -2469,14 +2700,16 @@ type_id(PG_FUNCTION_ARGS)
         if (!OidIsValid(result))
         {
             /* find the default schema for current user and get physical schema name */
-            const char *user = get_user_for_database(db_name);
-            const char *guest_role_name = get_guest_role_name(db_name);
+            const char  *user = get_user_for_database(db_name);
+            char        *guest_role_name = get_guest_role_name(db_name);
 
             if (!user)
             {
                 pfree(db_name);
                 pfree(schema_name);
                 pfree(object_name);
+                pfree(guest_role_name);
+
                 PG_RETURN_NULL();
             }
             else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
@@ -2489,6 +2722,8 @@ type_id(PG_FUNCTION_ARGS)
                 schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
                 physical_schema_name = get_physical_schema_name(db_name, schema_name);
             }
+			
+            pfree(guest_role_name);
         }
         else
         {
@@ -2618,19 +2853,20 @@ replace_special_chars_fts(PG_FUNCTION_ARGS)
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
-	char	   *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char        *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
 
 	/*
 	 * Ensure the database name input argument is lower-case, as all Babel
 	 * table names are lower-case
 	 */
-	char	   *lowercase_db_name = lowerstr(db_name);
+	char        *lowercase_db_name = lowerstr(db_name);
 
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
-	int			i;
-	const char *user = NULL;
-	const char *login;
-	int16		db_id;
+	int         i;
+	char        *user = NULL;
+	const char  *login;
+	int16       db_id;
+	bool        login_is_db_owner;
 
 	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
@@ -2643,6 +2879,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(lowercase_db_name), NAMEDATALEN);
 
 	/*
 	 * Special cases: Database Owner should always have access If this DB has
@@ -2653,7 +2890,11 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		Oid			datdba;
 
 		datdba = get_role_oid("sysadmin", false);
-		if (is_member_of_role(GetSessionUserId(), datdba))
+		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
+			/* 
+			 * The login will have access to the database if it is a member
+			 * of sysadmin or it is the owner of the database.
+			 */
 			user = get_dbo_role_name(lowercase_db_name);
 		else
 		{
@@ -2671,7 +2912,10 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	if (!user)
 		PG_RETURN_INT32(0);
 	else
+	{
+		pfree(user);
 		PG_RETURN_INT32(1);
+	}
 }
 
 Datum
@@ -2688,7 +2932,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	int			i;
 	Oid			sys_varcharoid = get_sys_varcharoid();
-	Oid			colloid = tsql_get_server_collation_oid_internal(false);
+	Oid			colloid = tsql_get_database_or_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -3642,30 +3886,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	int	i = 0;
 	bool	is_ms_shipped = false;
 	char	*namespace_name = NULL;
+
 	/*
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-#define NUM_DB_OBJECTS 11
-	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
+	static int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
 		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
-	};
-	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
-		{"xp_qv","master_dbo"},
-		{"xp_instance_regread","master_dbo"},
-		{"sp_addlinkedserver", "master_dbo"},
-		{"sp_addlinkedsrvlogin", "master_dbo"},
-		{"sp_dropserver", "master_dbo"},
-		{"sp_droplinkedsrvlogin", "master_dbo"},
-		{"sp_testlinkedserver", "master_dbo"},
-		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
-		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"},
-		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
@@ -4365,68 +4596,6 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-/*
-* We transformed tsql pivot stmt to 3 parsetree. The outer parsetree is a wrapper stmt
-* while the other two are helper stmts. Since postgres does not natively support execute
-* raw parsetree, and we can only get raw parsetree after the analyzer, we created this 
-* SPI function to help execute raw parsetree.
-*/
-int 
-SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
-{
-	_SPI_plan			plan;
-	int					ret = 0;
-	List				*plancache_list;
-	CachedPlanSource	*plansource;
-	int					prev_sql_dialect;
-
-	if (parsetree == NULL || tcount < 0)
-		return SPI_ERROR_ARGUMENT;
-	
-	/*
-	 * set sql_dialect to tsql, which is needed for raw parsetree parsing 
-	 * and processing
-	 */
-	prev_sql_dialect = sql_dialect;
-	sql_dialect = SQL_DIALECT_TSQL;
-	
-	memset(&plan, 0, sizeof(_SPI_plan));
-	plan.magic = _SPI_PLAN_MAGIC;
-	plan.parse_mode = RAW_PARSE_DEFAULT;
-	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
-
-	/*
-	 * Construct plancache entries, but don't do parse analysis yet.
-	 */
-	plancache_list = NIL;
-
-	/*
-	 * there are some parsetree node copied from the orginial parsetree,
-	 * and the node's location is fixed with the sourcetext. So we are 
-	 * passing the orginal sourcetext to the following function to prevent
-	 * analyzing error.
-	 */
-	plansource = CreateOneShotCachedPlan(parsetree,
-										sourcetext,
-										CreateCommandTag(parsetree->stmt));
-
-	plancache_list = lappend(plancache_list, plansource);
-	plan.plancache_list = plancache_list;
-	plan.oneshot = true;
-	PG_TRY();
-	{
-		ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
-	}
-	PG_FINALLY();
-	{
-		/* reset sql_dialect */
-		sql_dialect = prev_sql_dialect;
-	}
-	PG_END_TRY();
-
-	return ret;
-}
-
 PG_FUNCTION_INFO_V1(bbf_pivot);
 Datum
 bbf_pivot(PG_FUNCTION_ARGS)
@@ -4436,13 +4605,9 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
 	HTAB	   	   	*bbf_pivot_hash;
-	RawStmt	   		*bbf_pivot_src_sql;
-	RawStmt	   		*bbf_pivot_cat_sql;
-	List			*pivot_parsetree;
-	List			*pivot_extrainfo;
-	char			*query_string;
+	char			*src_sql_string;
+	char			*cat_sql_string;
 	char			*funcName;
-	Node 			*node;	
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -4455,33 +4620,19 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 	
-	if (fcinfo->context == NULL || !IsA(fcinfo->context, List) || list_length((List *) fcinfo->context) != 3)
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
+	src_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	cat_sql_string = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	funcName = text_to_cstring(PG_GETARG_TEXT_PP(2));
 
-	node = list_nth((List *)fcinfo->context, 0);
-	if (!IsA(node, List) 
-			|| !IsA(list_nth((List *)node, 0), String) 
-			|| strcmp(((String *)list_nth((List *)node, 0))->sval, "bbf_pivot_func") != 0)
+	/* check if babelfish pivot metadata is complete */
+	if (src_sql_string == NULL || cat_sql_string == NULL || funcName == NULL 
+		|| strlen(src_sql_string) == 0 || strlen(src_sql_string) == 0 || strlen(funcName) == 0)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 				errmsg("Babelfish PIVOT is not properly initialized.")));
 	}
-	pivot_parsetree = (List *) list_nth((List *) fcinfo->context, 1);
-	pivot_extrainfo = (List *) list_nth((List *) fcinfo->context, 2);
-	
-	if (!IsA(pivot_parsetree, List) || !IsA(pivot_extrainfo, List))
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("Babelfish PIVOT is not properly initialized.")));
-
-	bbf_pivot_src_sql = (RawStmt *) list_nth(pivot_parsetree, 0);
-	bbf_pivot_cat_sql = (RawStmt *) list_nth(pivot_parsetree, 1);
-	query_string = ((String *) list_nth(pivot_extrainfo, 0))->sval;
-	funcName = ((String *) list_nth(pivot_extrainfo, 1))->sval;
-
+		
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -4502,14 +4653,13 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(cat_sql_string, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
-	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
-												query_string,
+	rsinfo->setResult = get_bbf_pivot_tuplestore(src_sql_string,
 												funcName,
 												bbf_pivot_hash,
 												tupdesc,
@@ -4532,7 +4682,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
  * load up the categories hash table
  */
 static HTAB *
-load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx)
+load_categories_hash(const char 	*sourcetext, 
+					 MemoryContext 	per_query_ctx)
 {
 	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
@@ -4560,7 +4711,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
 	/* Retrieve the category name rows */
-	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
+	ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -4619,18 +4770,15 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 	return bbf_pivot_hash;
 }
 
-
-
 /*
  * create and populate the bbf_pivot tuplestore
  */
 static Tuplestorestate *
-get_bbf_pivot_tuplestore(RawStmt 	*sql,
-						const char 	*sourcetext,
-						const char	*funcName,
-						HTAB 		*bbf_pivot_hash,
-						TupleDesc 	tupdesc,
-						bool 		randomAccess)
+get_bbf_pivot_tuplestore(const char 	*sourcetext,
+						 const char		*funcName,
+						 HTAB 			*bbf_pivot_hash,
+						 TupleDesc 		tupdesc,
+						 bool 			randomAccess)
 {
 	Tuplestorestate *tupstore;
 	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
@@ -4649,7 +4797,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the bbf_pivot source rows */
-	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
+	ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -4789,15 +4937,14 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 			 * the hash table
 			 */
 			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
-			catname_lower = downcase_identifier(catname, strlen(catname), false, false);
-			if (catname_lower != NULL)
-			{
-				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
+            if (catname != NULL) {
+                catname_lower = downcase_identifier(catname, strlen(catname), false, false);
+                bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
 
-				if (catdesc)
-					values[catdesc->attidx + non_pivot_columns] =
-						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
-			}
+                if (catdesc)
+                    values[catdesc->attidx + non_pivot_columns] =
+                        SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+            }
 
 			if (ncols > 2)
 			{

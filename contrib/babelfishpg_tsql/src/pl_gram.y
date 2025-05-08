@@ -7232,8 +7232,18 @@ parse_datatype(const char *string, int location)
 		typmod = 1 + VARHDRSZ;
 	
 	/* for varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
-	else if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
-		typmod = -1;
+	else if (typmod == TSQLMaxTypmod)
+	{
+		if (is_tsql_datatype_with_max_scale_expr_allowed(type_id))
+			typmod = -1;
+		else
+		{
+			DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Incorrect syntax near the keyword '%s'.", dataTypeName)));
+		}
+	}
 	
 	else if (typmod > (VARCHAR_MAX_SCALE + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
 	{

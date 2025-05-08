@@ -1,7 +1,7 @@
 EXEC test_sp_set_session_context_proc;
 GO
 ~~START~~
-text
+varchar
 Match
 ~~END~~
 

@@ -1,0 +1,87 @@
+REVOKE EXECUTE ON babel_4390_prepare_p1 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p3 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p4 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p5 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p6 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p7 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p8 TO guest;
+GO
+
+REVOKE EXECUTE ON babel_4390_prepare_p9 TO guest;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p1;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p3;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p4;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p5;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p6;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p7;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p8;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_prepare_p9;
+GO
+
+-- tsql user=babel_4390_user_l1 password=abc
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s1.xp_qv;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4390_test_schema_s1.sp_addlinkedsrvlogin;
+GO
+
+-- tsql
+DROP SCHEMA IF EXISTS babel_4390_test_schema_s1;
+GO
+
+DROP USER IF EXISTS babel_4390_user_u1;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4390_user_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4390_user_l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN babel_4390_user_l1;
+GO
+
+DROP LOGIN babel_4390_user_l2;
+GO

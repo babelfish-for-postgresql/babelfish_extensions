@@ -1,0 +1,882 @@
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+
+CREATE VIEW enr_view AS
+    SELECT
+        CASE
+            WHEN relname LIKE '#pg_toast%' AND relname LIKE '%index%' THEN '#pg_toast_#oid_masked#_index'
+            WHEN relname LIKE '#pg_toast%' THEN '#pg_toast_#oid_masked#'
+            ELSE relname
+        END AS relname
+    FROM sys.babelfish_get_enr_list()
+GO
+
+
+
+
+
+CREATE PROCEDURE test_nested_rollback_in_proc AS
+BEGIN
+    CREATE TABLE #t1_proc1(a int)
+    INSERT INTO #t1_proc1 values (6)
+    BEGIN TRAN;
+        ALTER TABLE #t1_proc1 ADD b varchar(50)
+        TRUNCATE TABLE #t1_proc1
+        INSERT INTO #t1_proc1 VALUES (1, 'two')
+        -- Should just be (1, 'two')
+        select * from #t1_proc1
+        SAVE TRAN s1
+            DROP TABLE #t1_proc1
+            CREATE TABLE #t1_proc1(a varchar(100))
+            INSERT INTO #t1_proc1 VALUES ('three')
+            -- Should just be 'three'
+            select * from #t1_proc1
+        ROLLBACK TRAN s1
+        -- Should just be (1, 'two')
+        select * from #t1_proc1
+        CREATE TABLE #t2_proc1(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc1 VALUES ('four')
+        -- ('four', 1)
+        SELECT * FROM #t2_proc1
+        DROP TABLE #t2_proc1
+    ROLLBACK;
+    -- Should have just 6
+    SELECT * FROM #t1_proc1
+    -- Should not exist
+    SELECT * FROM #t2_proc1
+END
+GO
+
+
+
+CREATE PROCEDURE implicit_rollback_in_proc AS 
+BEGIN
+    BEGIN TRAN
+        SAVE TRAN S1
+        CREATE TABLE #t1_proc2(a int)
+        ALTER TABLE #t1_proc2 ADD b varchar(50)
+        INSERT INTO #t1_proc2 VALUES (1, 'two')
+        select * from #t1_proc2
+        DROP TABLE #t1_proc2
+        CREATE TABLE #t1_proc2(a varchar(100))
+        INSERT INTO #t1_proc2 VALUES ('three')
+        select * from #t1_proc2
+        CREATE TABLE #t2_proc2(b varchar(50), a int identity primary key)
+        INSERT INTO #t2_proc2 VALUES ('four')
+        SELECT * FROM #t2_proc2
+        DROP TABLE #t2_proc2
+        INSERT INTO #t1_proc2 values (1, 2, 3, 4, 5)
+        SELECT * FROM #t1_proc2
+        SELECT * FROM #t2_proc2
+    COMMIT
+END
+GO
+----------------------------------------------------------
+-- Nested transactions
+----------------------------------------------------------
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a varchar(16))
+    INSERT INTO #t1 VALUES ('t1')
+    SAVE TRANSACTION T2
+        INSERT INTO #t1 VALUES ('t2')
+        SAVE TRANSACTION T3
+            INSERT INTO #t1 VALUES ('t3')
+            SAVE TRANSACTION T4
+                INSERT INTO #t1 VALUES ('t4')
+                SELECT * FROM #t1
+            ROLLBACK TRANSACTION T4
+            SELECT * FROM #t1
+        ROLLBACK TRANSACTION T3
+        SELECT * FROM #t1
+    ROLLBACK TRANSACTION T2
+    SELECT * FROM #t1
+ROLLBACK TRANSACTION T1
+SELECT * FROM #t1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+t1
+t2
+t3
+t4
+~~END~~
+
+~~START~~
+varchar
+t1
+t2
+t3
+~~END~~
+
+~~START~~
+varchar
+t1
+t2
+~~END~~
+
+~~START~~
+varchar
+t1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t1" does not exist)~~
+
+
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+~~END~~
+
+
+BEGIN TRANSACTION T1
+    SAVE TRANSACTION S2
+        create table #t3(a int)
+        create table #t4(a int identity primary key, b varchar(50))
+        insert into #t3 values (5)
+        insert into #t4 values ('six')
+        SELECT * FROM #t3
+        SELECT * FROM #t4
+        SELECT * FROM enr_view;
+    ROLLBACK TRANSACTION S2
+    SELECT * FROM enr_view;
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#six
+~~END~~
+
+~~START~~
+text
+#t3
+#t4_a_seq
+#t4
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#t4_pkey
+~~END~~
+
+~~START~~
+text
+~~END~~
+
+
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int)
+    SAVE TRANSACTION S1
+        DROP TABLE #t1
+        CREATE TABLE #t2(a int)
+        SAVE TRANSACTION S2
+            DROP TABLE #t2
+            CREATE TABLE #t3(a int)
+            SAVE TRANSACTION S3
+            DROP TABLE #t3
+    ROLLBACK TRANSACTION S1
+COMMIT
+GO
+
+-- Should be just #t1. 
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+#t1
+~~END~~
+
+
+DROP TABLE #t1
+GO
+
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int)
+    SAVE TRANSACTION S1
+        DROP TABLE #t1
+        CREATE TABLE #t2(a int)
+        SAVE TRANSACTION S2
+            DROP TABLE #t2
+            CREATE TABLE #t3(a int)
+            SAVE TRANSACTION S3
+            DROP TABLE #t3
+    ROLLBACK TRANSACTION S1
+ROLLBACK
+GO
+
+-- Should be empty. 
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+~~END~~
+
+
+CREATE TABLE #t1(a int)
+GO
+BEGIN TRANSACTION T1
+    SAVE TRANSACTION s1
+        DROP TABLE #t1
+        CREATE TABLE #t1(a int identity primary key)  
+        SAVE TRANSACTION s2
+            DROP TABLE #t1
+            CREATE TABLE #t1(a varchar(1000))
+            SAVE TRANSACTION S3
+                DROP TABLE #t1
+    ROLLBACK TRANSACTION s1
+COMMIT
+GO
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE #t1
+GO
+
+----------------------------------------------------------
+-- General Subtransaction tests
+----------------------------------------------------------
+BEGIN TRANSACTION T1
+    CREATE TABLE #t1(a int primary key, b varchar(16))
+    SAVE TRANSACTION T2
+        INSERT INTO #t1 VALUES (1, 't2')
+        SAVE TRANSACTION T3
+            UPDATE #t1 SET a = 2 WHERE a = 1
+            SELECT * FROM #t1
+            SAVE TRANSACTION T4
+                DROP TABLE #t1
+            ROLLBACK TRANSACTION T4
+        ROLLBACK TRANSACTION T3
+        SELECT * FROM #t1
+    ROLLBACK TRANSACTION T2
+    select * from enr_view
+    DROP TABLE #t1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#t2
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#t2
+~~END~~
+
+~~START~~
+text
+#t1_pkey
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#t1
+~~END~~
+
+
+-- Simple nested savepoint rollback
+BEGIN TRAN
+    CREATE TABLE #t1_exists(a int)
+    SAVE TRAN save1
+        CREATE TABLE #t2(a int)
+        SAVE TRAN save2
+            CREATE TABLE #t3(a int)
+    ROLLBACK TRAN save1
+    CREATE TABLE #t2_exists(a int)
+COMMIT
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#t1_exists
+#t2_exists
+~~END~~
+
+
+DROP TABLE #t1_exists
+DROP TABLE #t2_exists
+GO
+
+-- Multiple savepoint rollback in one xact
+BEGIN TRAN 
+    CREATE TABLE #t1(a int identity primary key)
+    SAVE TRAN save1
+        CREATE TABLE #t2(a int identity primary key, b varchar)
+        SAVE TRAN save2
+            DROP TABLE #t2
+            DROP TABLE #t1
+    ROLLBACK TRAN save1
+    CREATE TABLE #t3(a varchar, b int identity primary key)
+    SAVE TRAN save3
+        CREATE TABLE #t4(a int identity primary key, b varchar)
+        SAVE TRAN save4
+            DROP TABLE #t4
+            DROP TABLE #t3
+    ROLLBACK TRAN save3
+    CREATE TABLE #t5(a int)
+COMMIT
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#t1_pkey
+#t1_a_seq
+#t1
+#t3_pkey
+#pg_toast_#oid_masked#_index
+#pg_toast_#oid_masked#
+#t3_b_seq
+#t3
+#t5
+~~END~~
+
+
+SELECT * FROM #t1
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM #t3
+GO
+~~START~~
+varchar#!#int
+~~END~~
+
+
+SELECT * FROM #t5
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE #t1
+DROP TABLE #t3
+DROP TABLE #t5
+GO
+
+
+-- Multiple savepoint rollback in one xact with entire rollback
+BEGIN TRAN 
+    CREATE TABLE #t1(a int identity primary key)
+    SAVE TRAN save1
+        CREATE TABLE #t2(a int identity primary key, b varchar)
+        SAVE TRAN save2
+            DROP TABLE #t2
+            DROP TABLE #t1
+    ROLLBACK TRAN save1
+    CREATE TABLE #t3(a varchar, b int identity primary key)
+    SAVE TRAN save3
+        CREATE TABLE #t4(a int identity primary key, b varchar)
+        SAVE TRAN save4
+            DROP TABLE #t4
+            DROP TABLE #t3
+    ROLLBACK TRAN save3
+    CREATE TABLE #t5(a int)
+ROLLBACK
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+
+-- Multiple savepoint rollback entire transaction to beginning
+BEGIN TRAN 
+    CREATE TABLE #t1(a int identity primary key)
+    SAVE TRAN save1
+        CREATE TABLE #t2(a int identity primary key, b varchar)
+        SAVE TRAN save2
+            DROP TABLE #t2
+            DROP TABLE #t1
+    ROLLBACK TRAN save1
+    CREATE TABLE #t3(a varchar, b int identity primary key)
+    SAVE TRAN save3
+        CREATE TABLE #t4(a int identity primary key, b varchar)
+        SAVE TRAN save4
+            DROP TABLE #t4
+            DROP TABLE #t3
+    ROLLBACK
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+
+
+----------------------------------------------------------
+-- Index CREATE/DROP in subtransaction
+----------------------------------------------------------
+-- CREATE TABLE
+CREATE TABLE #temp_table_rollback_t5(a int, b varchar, c int, d int)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+        INSERT INTO #temp_table_rollback_t5 VALUES (1, 'a', 2, 3)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+~~END~~
+
+
+INSERT INTO #temp_table_rollback_t5 VALUES (2, 'b', 3, 4)
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+    CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+CREATE INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5(a)
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+DROP INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#temp_table_rollback_t5
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+~~END~~
+
+
+
+-- DROP INDEX
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+        INSERT INTO #temp_table_rollback_t5 VALUES (3, 'c', 4, 5)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+BEGIN TRAN
+    DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+
+CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)
+GO
+
+DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
+GO
+
+
+-- CREATE + DROP
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+        DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+BEGIN TRAN T1
+    CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+    DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+CREATE INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5(c)
+DROP INDEX #temp_table_rollback_t5_idx3 ON #temp_table_rollback_t5
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+
+-- DROP + CREATE
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(d)
+GO
+
+BEGIN TRAN T1
+    SAVE TRANSACTION S2
+        DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+        CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+    ROLLBACK TRANSACTION S2
+COMMIT
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+BEGIN TRAN T1
+    DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+    CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+ROLLBACK
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+DROP INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5
+CREATE INDEX #temp_table_rollback_t5_idx4 ON #temp_table_rollback_t5(c)
+GO
+
+SELECT * FROM #temp_table_rollback_t5
+GO
+~~START~~
+int#!#varchar#!#int#!#int
+2#!#b#!#3#!#4
+~~END~~
+
+
+DROP TABLE #temp_table_rollback_t5
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+
+-- Nested index creation
+BEGIN TRAN 
+    CREATE TABLE #t1(a int identity primary key, b int)
+    SAVE TRAN save1
+        CREATE TABLE #t2(a int identity primary key, b int)
+        CREATE INDEX #idx1 ON #t1(b)
+        SAVE TRAN save2
+            CREATE INDEX #idx2 ON #t2(b)
+    ROLLBACK TRAN save1
+    SELECT * FROM #t1
+    CREATE TABLE #t3(a varchar, b int identity primary key)
+    SAVE TRAN save3
+        CREATE TABLE #t4(a int identity primary key, b varchar)
+        CREATE INDEX #idx3 ON #t3(b)
+        SAVE TRAN save4
+            CREATE INDEX #idx4 ON #t4(b)
+            DROP INDEX #idx4 ON #t4
+            DROP INDEX #idx3 ON #t3
+        ROLLBACK TRAN save4
+    ROLLBACK TRAN save3
+    COMMIT
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+#t1_a_seq
+#t1
+#t1_pkey
+#t3_b_seq
+#t3
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#t3_pkey
+~~END~~
+
+
+DROP TABLE #t1
+DROP TABLE #t3
+GO
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+
+----------------------------------------------------------
+-- Subtransactions with procedures
+----------------------------------------------------------
+exec test_nested_rollback_in_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t2_proc1" does not exist)~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+-- Implicit rollback to top level transaction
+BEGIN TRANSACTION
+    CREATE TABLE #outer_tab1(a int)
+    SELECT * FROM enr_view
+    exec implicit_rollback_in_proc
+COMMIT
+GO
+~~START~~
+text
+#outer_tab1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#two
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+three
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int
+four#!#1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
+
+-- This table is rolled back due to error in procedure
+select * from #outer_tab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#outer_tab1" does not exist)~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+----------------------------------------------------------
+-- implicit rollback with postgres builtin procedures
+----------------------------------------------------------
+BEGIN TRANSACTION
+    CREATE TABLE #t1(a int)
+    SELECT UPPER(abc) -- Should fail 
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+
+BEGIN TRANSACTION
+    CREATE TABLE #t2(a int)
+    SAVE TRAN s1
+        SELECT UPPER(abc)
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+
+CREATE PROCEDURE my_bad_proc AS
+BEGIN
+    SELECT UPPER(abc)
+END
+GO
+
+BEGIN TRANSACTION
+    CREATE TABLE #t3(a int)
+    SAVE TRAN s1
+        exec my_bad_proc
+COMMIT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+
+DROP PROCEDURE my_bad_proc
+GO
+
+SELECT * FROM #t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t1" does not exist)~~
+
+
+SELECT * FROM #t2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t2" does not exist)~~
+
+
+SELECT * FROM #t3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "#t3" does not exist)~~
+
+
+SELECT * FROM enr_view
+GO
+~~START~~
+text
+~~END~~
+
+
+DROP VIEW enr_view;
+GO
+
+DROP PROCEDURE test_nested_rollback_in_proc
+GO
+
+DROP PROCEDURE implicit_rollback_in_proc
+GO

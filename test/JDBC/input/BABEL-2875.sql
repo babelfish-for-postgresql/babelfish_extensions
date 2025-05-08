@@ -31,6 +31,23 @@ go
 use master
 go
 
+drop database BABEL2875
+go
+
+-- Tests for db level collation
+-- checking if UDDTs leak through to other databases
+Create database BABEL2875 COLLATE BBF_Unicode_CP1_CI_AI
+go
+
+Use BABEL2875
+go
+
+Select count(*) from sys.types where name = 'type_int'
+go
+
+use master
+go
+
 drop table t_sksql
 drop type type_int
 drop database BABEL2875

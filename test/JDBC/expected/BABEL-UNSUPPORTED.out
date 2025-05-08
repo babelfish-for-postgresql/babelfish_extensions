@@ -437,13 +437,6 @@ ignore
 
 -- escape hatch: storage_on_partition.
 -- 'strict' is default
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'partition scheme' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_on_partition to ignore)~~
-
-
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);
 GO
 ~~ERROR (Code: 33557097)~~
@@ -458,11 +451,6 @@ text
 ignore
 ~~END~~
 
-
-CREATE TABLE t_unsupported_sop1(a int) ON partition(a);
-GO
-DROP TABLE t_unsupported_sop1;
-GO
 
 CREATE TABLE t_unsupported_sop2(a int) FILESTREAM_ON partition(a);
 GO
@@ -487,6 +475,16 @@ DROP DATABASE db_unsupported1;
 GO
 
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
+GO
+DROP DATABASE db_unsupported2;
+GO
+
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+DROP DATABASE db_unsupported1;
+GO
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
 GO
 DROP DATABASE db_unsupported2;
 GO
@@ -521,11 +519,29 @@ GO
 DROP DATABASE db_unsupported8;
 GO
 
+CREATE DATABASE db_unsupported9 CONTAINMENT = PARTIAL COLLATE Arabic_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "arabic_ci_as" is not currently supported for database collation )~~
+
+DROP DATABASE db_unsupported9;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db_unsupported9" does not exist)~~
+
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS WITH DB_CHAINING ON;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
 CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: "arabic_ci_as" is not currently supported for database collation )~~
 
 DROP DATABASE db_unsupported9;
 GO
@@ -549,11 +565,25 @@ GO
 ~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
 
 
+CREATE DATABASE db_unsupported1 CONTAINMENT = NONE COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
 CREATE DATABASE db_unsupported2 CONTAINMENT = PARTIAL;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'CONTAINMENT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
+CREATE DATABASE db_unsupported2 COLLATE BBF_Unicode_CP1_CI_AI WITH DB_CHAINING ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
 
 
 CREATE DATABASE db_unsupported3 WITH DB_CHAINING ON;
@@ -800,6 +830,48 @@ GO
 
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+
+-- escape hatch: INLINE
+-- 'strict' is default, check if throws error when INLINE is used
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f1](@input INT)
+RETURNS INT WITH INLINE = ON
+AS
+BEGIN
+    RETURN @input * 2
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'INLINE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_inline_function_option to ignore)~~
+
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+CREATE FUNCTION [dbo].[t_unsupported_inline_function_f2](@input INT)
+RETURNS INT WITH INLINE = OFF
+AS
+BEGIN
+    RETURN @input * 3
+END
+GO
+
+DROP FUNCTION IF EXISTS [dbo].[t_unsupported_inline_function_f2];
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_inline_function_option', 'strict', 'false')
 GO
 ~~START~~
 text
@@ -1653,7 +1725,7 @@ INSERT INTO t_unsupported_cac1 VALUES (0, 0);
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "t_unsupported_cac1" violates check constraint "chk1t_unsupported_cac1848ea8bb1121ee393ad72ae0d412d8d2")~~
+~~ERROR (Message: new row for relation "t_unsupported_cac1" violates check constraint "chk1")~~
 
 DROP TABLE t_unsupported_cac1
 GO
@@ -1680,7 +1752,7 @@ ALTER TABLE t_unsupported_cec1 ADD constraint chk1 check (a > 0)
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: check constraint "chk1t_unsupported_cec1848ea8bb1121ee393ad72ae0d412d8d2" of relation "t_unsupported_cec1" is violated by some row)~~
+~~ERROR (Message: check constraint "chk1" of relation "t_unsupported_cec1" is violated by some row)~~
 
 ALTER TABLE t_unsupported_cec1 CHECK constraint chk1
 GO
@@ -1709,7 +1781,7 @@ ALTER TABLE t_unsupported_cec1 ADD constraint chk1 check (a > 0)
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: check constraint "chk1t_unsupported_cec1848ea8bb1121ee393ad72ae0d412d8d2" of relation "t_unsupported_cec1" is violated by some row)~~
+~~ERROR (Message: check constraint "chk1" of relation "t_unsupported_cec1" is violated by some row)~~
 
 ALTER TABLE t_unsupported_cec1 CHECK constraint chk1
 GO
@@ -2008,6 +2080,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
@@ -2077,6 +2150,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
@@ -2127,6 +2201,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
+babelfishpg_tsql.escape_hatch_inline_function_option#!#strict#!#escape hatch for INLINE option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
@@ -2370,13 +2445,6 @@ GO
 
 
 -- test automatically generated message for unsupported DDL
-CREATE PARTITION FUNCTION f_unsupported_1(datetime) AS RANGE RIGHT FOR VALUES (N'2017-07-11T00:00:00.000', N'2017-07-12T00:00:00.000', N'2017-07-13T00:00:00.000');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'CREATE PARTITION FUNCTION' is not currently supported in Babelfish)~~
-
-
 ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -2391,16 +2459,8 @@ CREATE VIEW v_babel_2017 AS SELECT * FROM t_babel_2017;
 GO
 ALTER VIEW v_babel_2017 AS SELECT a FROM t_babel_2017;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER VIEW' is not currently supported in Babelfish)~~
-
 CREATE OR ALTER VIEW v_babel_2017 AS SELECT b FROM t_babel_2017;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER VIEW' is not currently supported in Babelfish)~~
-
 DROP VIEW v_babel_2017;
 GO
 DROP TABLE t_babel_2017;
@@ -2459,7 +2519,7 @@ CREATE DATABASE t448 COLLATE NOT_VALID_COLLATION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+~~ERROR (Message: "not_valid_collation" is not currently supported for database collation )~~
 
 
 
@@ -2968,4 +3028,118 @@ GO
 
 ~~ERROR (Message: 'EXTERNAL NAME' is not currently supported in Babelfish)~~
 
+
+-- create login from windows
+-- Add 'dummydomain' domain entry
+exec sys.babelfish_add_domain_mapping_entry 'dummydomain', 'dummydomain.babel';
+GO
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name '\MSSQLSERVER' is invalid. The domain can not be empty.)~~
+
+
+CREATE LOGIN [NT Servicesomething\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Servicesomething\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT ServiceNT SerViCe\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT ServiceNT SerViCe\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [somethingNT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'somethingNT Service\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\NT Service\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name 'NT Service\NT Service\MSSQLSERVER' has invalid length. Login name length should be between 1 and 20 for windows login.)~~
+
+
+CREATE LOGIN [NT S\ervice\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT S\ervice\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN [NT Service\\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service\\MSSQLSERVER' is not a valid name because it contains invalid characters.)~~
+
+
+CREATE LOGIN ["NT Service"\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '"NT Service"\MSSQLSERVER' is not valid because the domain name contains invalid characters.)~~
+
+
+CREATE LOGIN [[NT Service]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 26)~~
+
+
+CREATE LOGIN [["NT Service"]\MSSQLSERVER] FROM WINDOWS
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '\' at line 1 and character position 28)~~
+
+
+CREATE LOGIN [NT Service\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT Service' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [NT SerViCe\MSSQLSERVER] FROM WINDOWS WITH DEFAULT_DATABASE=[test]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NT SerViCe' domain is not yet supported in Babelfish.)~~
+
+
+CREATE LOGIN [dummydomain\NT Service] FROM WINDOWS
+GO
+
+-- Dropping 'nt service@DUMMYDOMAIN.BABEL'
+DROP LOGIN [dummydomain\NT Service]
+GO
+
+-- Remove entry for 'dummydomain'
+exec babelfish_remove_domain_mapping_entry 'dummydomain'
+GO
 

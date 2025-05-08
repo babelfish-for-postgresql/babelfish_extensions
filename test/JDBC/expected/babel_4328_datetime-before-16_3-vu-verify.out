@@ -1,0 +1,875 @@
+-- DATE
+-- -- Numeric: [m]m<seperator>[d]d<seperator>([y]y|yyyy)
+select cast('3-2-4' as datetime)
+go
+~~START~~
+datetime
+2004-03-02 00:00:00.0
+~~END~~
+
+
+select cast('3-12-4' as datetime)
+go
+~~START~~
+datetime
+2004-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3-12-24' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3-12-2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3     -        12 -           2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3.2.4' as datetime)
+go
+~~START~~
+datetime
+2004-03-02 00:00:00.0
+~~END~~
+
+
+select cast('3.12.4' as datetime)
+go
+~~START~~
+datetime
+2004-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3.12.24' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3.12.2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3     .        12 .           2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3/2/4' as datetime)
+go
+~~START~~
+datetime
+2004-03-02 00:00:00.0
+~~END~~
+
+
+select cast('3/12/4' as datetime)
+go
+~~START~~
+datetime
+2004-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3/12/24' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3/12/2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('3     /        12 /           2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select cast('04-02-03' as datetime)
+go
+~~START~~
+datetime
+2003-04-02 00:00:00.0
+~~END~~
+
+
+-- invalid syntax
+select cast('3#12#2024' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "3#12#2024")~~
+
+
+select cast('3/12.2024' as datetime)
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+-- Alphabetical
+select cast('Apr 12,2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-12 00:00:00.0
+~~END~~
+
+
+select cast('Apr 12 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-12 00:00:00.0
+~~END~~
+
+
+select cast('Apr 1 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 1,2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 16, 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+select cast('Apr 1, 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-01 00:00:00.0
+~~END~~
+
+
+select cast('April 16, 2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+select cast('April 16  2000' as datetime)
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+select cast('Apr 16, 24' as datetime)
+go
+~~START~~
+datetime
+2024-04-16 00:00:00.0
+~~END~~
+
+
+select cast('Apr 16,4' as datetime)
+go
+~~START~~
+datetime
+2004-04-16 00:00:00.0
+~~END~~
+
+
+select cast('Apr 1,4' as datetime)
+go
+~~START~~
+datetime
+2004-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 16    24' as datetime)
+go
+~~START~~
+datetime
+2024-04-16 00:00:00.0
+~~END~~
+
+
+select cast('Apr 16 4' as datetime)
+go
+~~START~~
+datetime
+2004-04-16 00:00:00.0
+~~END~~
+
+
+select cast('April 16' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "April 16")~~
+
+
+select cast('Apr 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 2024 22' as datetime)
+go
+~~START~~
+datetime
+2024-04-22 00:00:00.0
+~~END~~
+
+
+select cast('Apr 2024 2' as datetime)
+go
+~~START~~
+datetime
+2024-04-02 00:00:00.0
+~~END~~
+
+
+select cast('24 Apr, 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-24 00:00:00.0
+~~END~~
+
+
+select cast('3 Apr, 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-03 00:00:00.0
+~~END~~
+
+
+select cast('Apr, 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-01 00:00:00.0
+~~END~~
+
+
+select cast('Apr 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-01 00:00:00.0
+~~END~~
+
+
+select cast('3 Apr 2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-03 00:00:00.0
+~~END~~
+
+
+select cast('3Apr2024' as datetime)
+go
+~~START~~
+datetime
+2024-04-03 00:00:00.0
+~~END~~
+
+
+select cast('3Apr24' as datetime)
+go
+~~START~~
+datetime
+2024-04-03 00:00:00.0
+~~END~~
+
+
+select cast('Apr24' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr24")~~
+
+
+select cast('Apr,24' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "Apr,24")~~
+
+
+select cast('24 Apr' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "24 Apr")~~
+
+
+select cast('12 24 Apr' as datetime)
+go
+~~START~~
+datetime
+2024-04-12 00:00:00.0
+~~END~~
+
+
+select cast('12 2024 Apr' as datetime)
+go
+~~START~~
+datetime
+2024-04-12 00:00:00.0
+~~END~~
+
+
+select cast('2024 Apr' as datetime)
+go
+~~START~~
+datetime
+2024-04-01 00:00:00.0
+~~END~~
+
+
+select cast('2024 12 Apr' as datetime)
+go
+~~START~~
+datetime
+2024-04-12 00:00:00.0
+~~END~~
+
+
+select cast('2024 9 Apr' as datetime)
+go
+~~START~~
+datetime
+2024-04-09 00:00:00.0
+~~END~~
+
+
+select cast('2024 Apr 12' as datetime)
+go
+~~START~~
+datetime
+2024-04-12 00:00:00.0
+~~END~~
+
+
+-- ISO 8601	
+select cast('2023-11-27' as datetime)
+go
+~~START~~
+datetime
+2023-11-27 00:00:00.0
+~~END~~
+
+
+select cast('2023-2-29' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "2023-2-29")~~
+
+
+select cast('2022-10-30T03:00:00.123' as datetime)
+go
+~~START~~
+datetime
+2022-10-30 03:00:00.123
+~~END~~
+
+
+select cast('2022-10-30T03:00:00.123-11:11' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2022-10-30T03:00:00.123-11:11")~~
+
+
+-- Unseparated
+select cast('20240129' as datetime)
+go
+~~START~~
+datetime
+2024-01-29 00:00:00.0
+~~END~~
+
+
+select cast('20241329' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "20241329")~~
+
+
+select cast('240129' as datetime)
+go
+~~START~~
+datetime
+2024-01-29 00:00:00.0
+~~END~~
+
+
+select cast('241329' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "241329")~~
+
+
+select cast('2001' as datetime)
+go
+~~START~~
+datetime
+2001-01-01 00:00:00.0
+~~END~~
+
+
+select cast('0001' as datetime)
+go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+-- -- invalid syntax
+select cast('0' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "0")~~
+
+
+select cast('1' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "1")~~
+
+
+select cast('11' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "11")~~
+
+
+select cast('111' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "111")~~
+
+
+select cast('11111' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "11111")~~
+
+
+select cast('1111111' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "1111111")~~
+
+
+-- W3C XML format
+select cast('2000-04-22-05:12' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-05:12")~~
+
+
+select cast('2000-04-22+05:12' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22+05:12")~~
+
+
+select cast('2000-04-22-14:00' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-14:00")~~
+
+
+select cast('2000-04-22+14:00' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22+14:00")~~
+
+
+select cast('2000-04-22-14:10' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22-14:10")~~
+
+
+select cast('2000-04-22+14:10' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22+14:10")~~
+
+
+select cast('2000-04-22Z' as datetime)
+go
+~~START~~
+datetime
+2000-04-22 00:00:00.0
+~~END~~
+
+
+-- should return default date
+select cast('16:23:51' as datetime)
+go
+~~START~~
+datetime
+1900-01-01 16:23:51.0
+~~END~~
+
+
+select cast('4:12:12:123' as datetime)
+go
+~~START~~
+datetime
+1900-01-01 04:12:12.123
+~~END~~
+
+
+select cast('4:12:12:1234' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "4:12:12:1234")~~
+
+
+select cast('4:12:12.1234' as datetime)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
+
+-- out of bound values
+SELECT cast('2022-10-00' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "2022-10-00")~~
+
+
+SELECT cast('0000-10-01' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "0000-10-01")~~
+
+
+SELECT cast('2023-00-01' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "2023-00-01")~~
+
+
+SELECT cast('0000-00-00' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "0000-00-00")~~
+
+
+-- -- misc
+SELECT cast('2022-10-29 20:01:00.000' as datetime)
+GO
+~~START~~
+datetime
+2022-10-29 20:01:00.0
+~~END~~
+
+
+SELECT cast('2020' as datetime)
+GO
+~~START~~
+datetime
+2020-01-01 00:00:00.0
+~~END~~
+
+
+SELECT cast('2000-04-22 16:23:51.7668c0' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22 16:23:51.7668c0")~~
+
+
+SELECT cast('2000-04-22 16:23:51.7668c0' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2000-04-22 16:23:51.7668c0")~~
+
+
+SELECT cast('2001-04-022 16:23:51.766890 +12:00' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "2001-04-022 16:23:51.766890 +12:00")~~
+
+
+
+SELECT cast('02001-04-22 16:23:51.766890 +12:00' as datetime) 
+GO 
+SELECT cast(' 2001- 04 - 22 16: 23: 51. 766890 +12:00' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "02001-04-22 16:23:51.766890 +12:00")~~
+
+
+SELECT cast('02001-04-22 16:23:51' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "02001-04-22 16:23:51")~~
+
+
+SELECT cast('1900-05-06 13:59:29.050 -8:00' as datetime)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime: "1900-05-06 13:59:29.050 -8:00")~~
+
+
+SELECT cast('2011-08-15 14:30.00' as datetime)
+GO
+~~START~~
+datetime
+2011-08-15 14:30:00.0
+~~END~~
+
+
+SELECT cast('2011-08-15 14:30.00' as datetime)
+GO
+~~START~~
+datetime
+2011-08-15 14:30:00.0
+~~END~~
+
+
+SELECT cast('2022-10-29 20:01:00.000' as datetime)
+GO
+~~START~~
+datetime
+2022-10-29 20:01:00.0
+~~END~~
+
+
+SELECT cast('2020' as datetime)
+GO
+~~START~~
+datetime
+2020-01-01 00:00:00.0
+~~END~~
+
+
+SELECT cast('2022-10-30T03:00:00' as datetime)
+GO
+~~START~~
+datetime
+2022-10-30 03:00:00.0
+~~END~~
+
+
+exec babel_4328_datetime_p1
+go
+~~START~~
+datetime
+2020-01-01 00:00:00.0
+~~END~~
+
+
+select babel_4328_datetime_f1()
+go
+~~START~~
+datetime
+2020-01-01 00:00:00.0
+~~END~~
+
+
+select * from babel_4328_datetime_v2
+go
+~~START~~
+datetime
+2003-04-02 00:00:00.0
+~~END~~
+
+
+exec babel_4328_datetime_p2
+go
+~~START~~
+datetime
+2003-04-02 00:00:00.0
+~~END~~
+
+
+select babel_4328_datetime_f2()
+go
+~~START~~
+datetime
+2003-04-02 00:00:00.0
+~~END~~
+
+
+select * from babel_4328_datetime_v3
+go
+~~START~~
+datetime
+2024-01-29 00:00:00.0
+~~END~~
+
+
+exec babel_4328_datetime_p3
+go
+~~START~~
+datetime
+2024-01-29 00:00:00.0
+~~END~~
+
+
+select babel_4328_datetime_f3()
+go
+~~START~~
+datetime
+2024-01-29 00:00:00.0
+~~END~~
+
+
+exec babel_4328_datetime_p4
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select babel_4328_datetime_f4()
+go
+~~START~~
+datetime
+2024-03-12 00:00:00.0
+~~END~~
+
+
+select * from babel_4328_datetime_v5
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+exec babel_4328_datetime_p5
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+select babel_4328_datetime_f5()
+go
+~~START~~
+datetime
+2000-04-16 00:00:00.0
+~~END~~
+
+
+select * from babel_4328_datetime_v6
+go
+~~START~~
+datetime
+2022-10-30 03:00:00.123
+~~END~~
+
+
+exec babel_4328_datetime_p6
+go
+~~START~~
+datetime
+2022-10-30 03:00:00.123
+~~END~~
+
+
+select babel_4328_datetime_f6()
+go
+~~START~~
+datetime
+2022-10-30 03:00:00.123
+~~END~~
+

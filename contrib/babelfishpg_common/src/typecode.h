@@ -45,7 +45,7 @@
 #define FIXEDDECIMAL_MULTIPLIER 10000LL
 #endif
 
-#define TOTAL_TYPECODE_COUNT 36
+#define TOTAL_TYPECODE_COUNT 38
 
 struct Node;
 
@@ -85,6 +85,9 @@ extern Oid	tsql_datetimeoffset_oid;
 extern Oid	tsql_decimal_oid;
 
 extern Oid	lookup_tsql_datatype_oid(const char *typename);
+extern bool is_tsql_fixeddecimal_datatype(Oid oid);
+extern bool is_tsql_bit_datatype(Oid oid);
+extern bool is_tsql_sysname_datatype(Oid oid);
 extern bool is_tsql_bpchar_datatype(Oid oid);
 extern bool is_tsql_nchar_datatype(Oid oid);
 extern bool is_tsql_varchar_datatype(Oid oid);
@@ -98,16 +101,23 @@ extern bool is_tsql_varbinary_datatype(Oid oid);
 extern bool is_tsql_sys_varbinary_datatype(Oid oid);
 extern bool is_tsql_rowversion_datatype(Oid oid);
 extern bool is_tsql_timestamp_datatype(Oid oid);
+extern bool is_tsql_geography_datatype(Oid oid);
+extern bool is_tsql_geometry_datatype(Oid oid);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 extern bool is_tsql_datetime2_datatype(Oid oid);
 extern bool is_tsql_smalldatetime_datatype(Oid oid);
 extern bool is_tsql_datetimeoffset_datatype(Oid oid);
 extern bool is_tsql_decimal_datatype(Oid oid);
+extern bool is_tsql_sqlvariant_datatype(Oid oid);
+extern bool is_tsql_tinyint_datatype(Oid oid);
+extern bool is_tsql_money_datatype(Oid oid);
+extern bool is_tsql_smallmoney_datatype(Oid oid);
 
 extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collationid);
 extern bool check_target_type_is_sys_varchar(Oid funcid);
 extern type_info_t get_tsql_type_info(uint8_t type_code);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
+extern const char *resolve_pg_type_to_tsql(Oid oid);
 extern Oid get_tsql_datatype_oid(char *type_name);
 
 /*

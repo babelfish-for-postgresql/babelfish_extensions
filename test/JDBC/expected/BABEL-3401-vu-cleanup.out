@@ -1,0 +1,10 @@
+DROP PROCEDURE IF EXISTS sys_check_constraints_dep_vu_prepare_proc2
+DROP VIEW IF EXISTS sys_check_constraints_dep_vu_prepare_view2
+DROP TABLE IF EXISTS sys_check_constraints_dep_vu_prepare_t2
+DROP PROCEDURE IF EXISTS sys_computed_columns_dep_vu_prepare_p2
+DROP VIEW IF EXISTS sys_computed_columns_dep_vu_prepare_v2
+DROP TABLE IF EXISTS sys_computed_columns_dep_vu_prepare_t2
+DROP PROCEDURE IF EXISTS sys_default_constraints_dep_vu_prepare_p2
+DROP VIEW IF EXISTS sys_default_constraints_dep_vu_prepare_v2
+DROP TABLE IF EXISTS sys_default_constraints_dep_vu_prepare_t2
+GO

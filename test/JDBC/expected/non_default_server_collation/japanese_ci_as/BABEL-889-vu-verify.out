@@ -86,7 +86,7 @@ select cast(cast(cast('3.1415926' as float) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-3.1415926
+3.14159
 ~~END~~
 
 -- real
@@ -131,7 +131,7 @@ select cast(cast(cast('$123.123' as money) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-123.1230
+123.12
 ~~END~~
 
 -- smallmoney
@@ -146,7 +146,7 @@ select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-123.1230
+123.12
 ~~END~~
 
 -- bigint

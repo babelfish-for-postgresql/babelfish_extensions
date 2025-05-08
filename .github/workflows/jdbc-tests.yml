@@ -1,11 +1,11 @@
-name: JDBC Tests
+name: JDBC Tests With Multi-DB Migration Mode
 on: [workflow_call]
 
 jobs:
   run-babelfish-jdbc-tests:
     env:
       INSTALL_DIR: psql
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -74,8 +74,8 @@ jobs:
         id: setup-pub-sub
         if: always() && steps.start-secondary.outcome == 'success'
         run: |
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE PUBLICATION my_pub;"
-          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=jdbc_testdb password=12345678' PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "CREATE PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=babelfish_db password=12345678' PUBLICATION my_pub;"
 
       - name: Run Replication Tests
         id: replication
@@ -89,16 +89,30 @@ jobs:
         id: cleanup
         if: always() && steps.replication.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log-jdbc
           path: |
             ~/psql/data/logfile
             ~/psql/data_5433/logfile
+
+      - name: Check for unexpected warnings
+        if: always()
+        id: check-warnings
+        run: |
+            bash ./.github/scripts/scan-warnings.sh
+
+      - name: Upload Unexpected Warning
+        if: always() && steps.check-warnings.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unexpected_warnings.log
+          path: |
+            actual-leak-warnings.out
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
@@ -121,7 +135,7 @@ jobs:
 
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: |
@@ -130,7 +144,7 @@ jobs:
 
       - name: Upload Output Diff
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: jdbc-output-diff.diff
           path: |
@@ -167,7 +181,7 @@ jobs:
 
       - name: Upload Coverage Report for Babelfish Extensions
         if: always() && steps.code-coverage-summary.outcome == 'success'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-babelfish-extensions-jdbc
           path: contrib/jdbc-lcov.info

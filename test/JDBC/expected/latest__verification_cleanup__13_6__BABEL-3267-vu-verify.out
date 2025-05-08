@@ -60,7 +60,7 @@ select c.relname, string_agg(b.orig_name, ',') from pg_class c left join bbf_ori
 where c.relname like 't3267%' group by c.relname order by c.relname;
 go
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 t3267 a#!#bbf_original_rel_name=T3267 a
 t3267"d#!#bbf_original_rel_name=T3267"d
 t3267##!#bbf_original_rel_name=T3267#

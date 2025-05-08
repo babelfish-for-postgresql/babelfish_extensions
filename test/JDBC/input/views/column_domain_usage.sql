@@ -44,6 +44,36 @@ go
 drop database db_column_domain_usage;
 go
 
+CREATE DATABASE db_column_domain_usage COLLATE BBF_Unicode_CP1_CI_AI;
+go
+
+USE db_column_domain_usage;
+go
+
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+go
+
+CREATE TYPE column_domain_usage_NTYP FROM varchar(11) NOT NULL;
+go
+
+create table column_domain_usage_col_test( arg5 int, arg6 nvarchar(8), arg7 column_domain_usage_NTYP);
+go
+
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+go
+
+drop table column_domain_usage_col_test;
+go
+
+drop type column_domain_usage_NTYP;
+go
+
+use master;
+go
+
+drop database db_column_domain_usage;
+go
+
 create schema column_domain_usage_sch;
 go
 

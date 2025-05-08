@@ -58,7 +58,7 @@ ELSE
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 if CAST(0x01 AS binary(1)) <= CAST(0x02 AS binary(1))

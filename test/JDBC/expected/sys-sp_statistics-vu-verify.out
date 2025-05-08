@@ -13,8 +13,8 @@ exec sp_statistics @table_name = 'sys_sp_statistics_vu_prepare_t1'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#1#!#sys_sp_statistics_vu_prepare_t1#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#1#!#sys_sp_statistics_vu_prepare_t1#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 ~~END~~
 
 
@@ -22,9 +22,9 @@ exec sp_statistics @table_name = 'sys_sp_statistics_vu_prepare_t2', @table_quali
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#1#!#sys_sp_statistics_vu_prepare_t2#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#1#!#sys_sp_statistics_vu_prepare_t2#!##!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -32,9 +32,9 @@ exec sp_statistics @table_name = 'sys_sp_statistics_vu_prepare_t3', @table_owner
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#1#!#sys_sp_statistics_vu_prepare_t3#!##!#3#!#1#!#c#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#1#!#sys_sp_statistics_vu_prepare_t3#!##!#3#!#2#!#a#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -42,10 +42,10 @@ exec sp_statistics @table_name = 'sys_sp_statistics_vu_prepare_t4'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#0#!#sys_sp_statistics_vu_prepare_t4#!#sys_sp_statistics_vu_prepare_t4_c2_key#!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#0#!#sys_sp_statistics_vu_prepare_t4#!#sys_sp_statistics_vu_prepare_t4_pkey#!#3#!#1#!#c1#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#1#!#sys_sp_statistics_vu_prepare_t4#!##!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -53,9 +53,9 @@ exec sp_statistics @table_name = 'sys_sp_statistics_vu_prepare_t4', @is_unique =
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#0#!#sys_sp_statistics_vu_prepare_t4#!#sys_sp_statistics_vu_prepare_t4_c2_key#!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#0#!#sys_sp_statistics_vu_prepare_t4#!#sys_sp_statistics_vu_prepare_t4_pkey#!#3#!#1#!#c1#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t4#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -72,8 +72,8 @@ exec sp_statistics 'sys_sp_statistics_vu_prepare_t1', 'dbo', 'sys_sp_statistics_
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#1#!#sys_sp_statistics_vu_prepare_t1#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t1#!#1#!#sys_sp_statistics_vu_prepare_t1#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 ~~END~~
 
 
@@ -82,9 +82,9 @@ EXEC sp_statistics @TABLE_NAME = 'sys_sp_statistics_vu_prepare_t2', @TABLE_OWNER
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#1#!#sys_sp_statistics_vu_prepare_t2#!##!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#1#!#sys_sp_statistics_vu_prepare_t2#!##!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -101,8 +101,8 @@ exec sp_statistics_100 @table_name = 'sys_sp_statistics_vu_prepare_t3'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#1#!#sys_sp_statistics_vu_prepare_t3#!##!#3#!#1#!#c#!#A#!#<NULL>#!#0#!#<NULL>
 sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#1#!#sys_sp_statistics_vu_prepare_t3#!##!#3#!#2#!#a#!#A#!#<NULL>#!#0#!#<NULL>
-sys_sp_statistics_vu_prepare_db1#!#dbo#!#sys_sp_statistics_vu_prepare_t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 

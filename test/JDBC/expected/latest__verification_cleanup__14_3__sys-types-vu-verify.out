@@ -23,7 +23,7 @@ image#!#16#!#0#!#0#!#<NULL>
 int#!#4#!#10#!#0#!#<NULL>
 money#!#8#!#19#!#4#!#<NULL>
 nchar#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
-ntext#!#16#!#0#!#0#!#sql_latin1_general_cp1_ci_as
+ntext#!#16#!#0#!#0#!#bbf_unicode_cp1_ci_as
 numeric#!#17#!#38#!#38#!#<NULL>
 nvarchar#!#8000#!#0#!#0#!#bbf_unicode_cp1_ci_as
 real#!#4#!#24#!#0#!#<NULL>
@@ -32,7 +32,7 @@ smallint#!#2#!#5#!#0#!#<NULL>
 smallmoney#!#4#!#10#!#4#!#<NULL>
 sql_variant#!#8016#!#0#!#0#!#bbf_unicode_cp1_ci_as
 sysname#!#256#!#0#!#0#!#bbf_unicode_cp1_ci_as
-text#!#16#!#0#!#0#!#sql_latin1_general_cp1_ci_as
+text#!#16#!#0#!#0#!#bbf_unicode_cp1_ci_as
 time#!#5#!#15#!#6#!#<NULL>
 timestamp#!#8#!#0#!#0#!#<NULL>
 timestamp#!#8#!#0#!#0#!#<NULL>
@@ -57,7 +57,7 @@ GO
 ~~START~~
 varchar#!#smallint#!#tinyint#!#tinyint#!#varchar
 my_type#!#4#!#10#!#0#!#<NULL>
-my_type2#!#20#!#0#!#0#!#sql_latin1_general_cp1_ci_as
+my_type2#!#20#!#0#!#0#!#bbf_unicode_cp1_ci_as
 tbl_type_sys_types#!#-1#!#0#!#0#!#<NULL>
 ~~END~~
 

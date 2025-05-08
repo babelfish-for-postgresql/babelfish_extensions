@@ -1,0 +1,88 @@
+-- tsql
+CREATE TABLE babel_3513_t1(a1 int PRIMARY KEY, b1 int, c1 int)
+GO
+
+CREATE TABLE babel_3513_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+GO
+
+CREATE PROCEDURE babel_3513_proc_1 AS SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2
+GO
+
+-- psql
+analyze master_dbo.babel_3513_t1;
+go
+
+analyze master_dbo.babel_3513_t2;
+go
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on;
+go
+
+
+-- expect nested loop join
+exec babel_3513_proc_1;
+go
+~~START~~
+text
+Query Text: EXEC babel_3513_proc_1
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  ->  Nested Loop
+        Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
+        ->  Seq Scan on babel_3513_t1
+        ->  Seq Scan on babel_3513_t2
+~~END~~
+
+set babelfish_showplan_all off;
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'on'
+go
+
+set babelfish_showplan_all on;
+go
+
+-- expect nested loop join because of plan caching
+exec babel_3513_proc_1;
+go
+~~START~~
+text
+Query Text: EXEC babel_3513_proc_1
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  ->  Nested Loop
+        Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
+        ->  Seq Scan on babel_3513_t1
+        ->  Seq Scan on babel_3513_t2
+~~END~~
+
+
+-- expect merge join
+SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2;
+go
+~~START~~
+text
+Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+Merge Join
+  Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+  ->  Sort
+        Sort Key: babel_3513_t1.a1
+        ->  Seq Scan on babel_3513_t1
+  ->  Sort
+        Sort Key: babel_3513_t2.b2
+        ->  Seq Scan on babel_3513_t2
+~~END~~
+
+
+set babelfish_showplan_all off;
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
+go

@@ -14,7 +14,7 @@ GO
 -- tsql
 CREATE TABLE babel_4817_t2 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT NOT NULL IDENTITY, col8 INT NOT NULL)
 GO
-ALTER TABLE babel_4817_t2 ADD CONSTRAINT babel_4817_t2_pk PRIMARY KEY NONCLUSTERED (col3, col7);
+ALTER TABLE babel_4817_t2 ADD CONSTRAINT babel_4817_t2_pkkkkkkkkkkkkkkk PRIMARY KEY NONCLUSTERED (col3, col7);
 GO
 -- clustered is ignored
 CREATE UNIQUE NONCLUSTERED INDEX babel_4817_t2_unique_index ON dbo.babel_4817_t2 (col2 DESC, col8) INCLUDE (col4);

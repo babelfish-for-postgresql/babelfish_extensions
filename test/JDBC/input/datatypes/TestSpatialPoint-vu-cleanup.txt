@@ -80,6 +80,8 @@ DROP TABLE IF EXISTS TypeToGeog
 
 DROP TABLE IF EXISTS SPATIALPOINT_dt
 
+DROP TABLE IF EXISTS geomTabWithoutSrid
+
 drop procedure IF EXISTS geometry_proc_1;
 
 drop procedure IF EXISTS geography_proc_1;
@@ -119,8 +121,6 @@ DROP PROCEDURE IF EXISTS GetPointsWithinDistance
 DROP FUNCTION IF EXISTS dbo.CalculateDistance
 
 DROP TABLE IF EXISTS YourTable2
-
-Drop Table IF EXISTS babelfish_migration_mode_table
 
 DROP TABLE IF EXISTS geometry_test
 

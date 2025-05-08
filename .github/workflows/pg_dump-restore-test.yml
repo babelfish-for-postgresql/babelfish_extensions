@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   generate-dump-restore-tests:
     name: Generate Dump/Restore Tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       dump-restore-path-list: ${{ steps.generate-dump-restore-path.outputs.dump-restore-path-list }}
     steps:
@@ -23,7 +23,7 @@ jobs:
           dump_format: itm[itm.length - 1]['dump-format'], \
           type: itm[itm.length - 1]['type']})); \
           console.log(JSON.stringify(p));")
-          echo "::set-output name=dump-restore-path-list::$DUMP_RESTORE_PATH_LIST"
+          echo "dump-restore-path-list=$DUMP_RESTORE_PATH_LIST" >> $GITHUB_OUTPUT
 
   run-dump-restore-test:
     needs: generate-dump-restore-tests
@@ -32,7 +32,7 @@ jobs:
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-dump-restore-tests.outputs.dump-restore-path-list) }}
     name: Dump Restore Test using ${{ matrix.upgrade-path.dump_method }} for ${{ matrix.upgrade-path.title }} - format=${{ matrix.upgrade-path.dump_format }} - type=${{ matrix.upgrade-path.type }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -45,24 +45,24 @@ jobs:
         id: read-base-and-final-version
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
-          echo "::set-output name=base-version::$(
+          echo "base-version=$(
             yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
-          )" && 
-          echo "::set-output name=final-version::$(
+          )"  >> $GITHUB_OUTPUT &&
+          echo "final-version=$(
             yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
-          )"
+          )" >> $GITHUB_OUTPUT
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
         if: always() && steps.read-base-and-final-version.outcome == 'success'
         run: >
-          echo "::set-output name=base-engine-branch::$(
+          echo "base-engine-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
-          echo "::set-output name=base-extension-branch::$(
+          )" >> $GITHUB_OUTPUT &&
+          echo "base-extension-branch=$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
-          echo "::set-output name=base-dir::$(echo psql$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
+          )" >> $GITHUB_OUTPUT &&
+          echo "base-dir=$(echo psql$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))" >> $GITHUB_OUTPUT
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
@@ -73,6 +73,9 @@ jobs:
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
+          dump_restore: 'true'
+          antlr_version: ${{ (steps.read-base-and-final-version.outputs.base-version == 'source.latest' || fromJSON(steps.read-base-and-final-version.outputs.base-version) >= 16.7 ) && '4.13.2' || '4.9.3' }}
+          engine_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca
@@ -85,6 +88,8 @@ jobs:
         id: dump-restore-and-test
         if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
         uses: ./.github/composite-actions/dump-restore
+
+      - uses: actions/checkout@v2
 
       # Due to some action/checkout's in previous step the dynamically generated dump-restore composite action isn't available,
       # hence to avoid error in post action step recreated the dump-restore composite action
@@ -130,7 +135,7 @@ jobs:
  
       - name: Upload Logs
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dump-restore-logs-${{ matrix.upgrade-path.dump_method }}-${{ matrix.upgrade-path.title }}-${{ matrix.upgrade-path.dump_format }}-${{ matrix.upgrade-path.type }}
           path: |

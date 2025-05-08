@@ -5,6 +5,12 @@ drop view babel_sp_tables_vu_prepare_t_sptables5
 go
 drop table babel_sp_tables_vu_prepare_t_sptables
 go
+drop table babel_sp_tables_vu_prepare_t_s_tables2
+go
+drop table babel_sp_tables_vu_prepare_t__tables2
+go
+drop table babel_sp_tables_vu_prepare_test_escape_chars_sp_tables
+go
 drop table babel_sp_tables_vu_prepare_MyTable1
 go
 drop table [babel_sp_tables_vu_prepare_MyTable2]

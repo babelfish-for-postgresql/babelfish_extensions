@@ -11,7 +11,7 @@ GO
 SELECT * FROM babel_4330_t1
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 13131#!#23232
 ~~END~~
 
@@ -24,7 +24,7 @@ GO
 SELECT * FROM babel_4330_t1
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 14141#!#24242
 ~~END~~
 
@@ -35,7 +35,7 @@ GO
 SELECT * FROM babel_4330_t1
 GO
 ~~START~~
-varchar#!#text#!#text
+varchar#!#varchar#!#varchar
 14141#!#24242#!#54545
 ~~END~~
 
@@ -52,7 +52,7 @@ GO
 SELECT * FROM babel_4330_t2
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 13131#!#<NULL>
 ~~END~~
 
@@ -68,7 +68,7 @@ GO
 SELECT * FROM babel_4330_t3
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 13131#!#<NULL>
 ~~END~~
 

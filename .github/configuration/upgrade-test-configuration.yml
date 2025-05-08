@@ -101,6 +101,30 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
+      version: '14.17',
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: major
+    }
+  ],
+},
+{
+  upgrade-path: [
+    {
+      version: '14.19',
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: major
+    }
+  ],
+},
+{
+  upgrade-path: [
+    {
       version: 15.2,
       upgrade-type: null
     },
@@ -113,7 +137,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.7,
+      version: '15.14',
       upgrade-type: null
     },
     { 
@@ -149,15 +173,27 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
+      version: 16.9,
+      upgrade-type: null
+    },
+    { 
+      version: target.latest,
+      upgrade-type: minor
+    }
+  ]
+},
+{
+  upgrade-path: [
+    {
       version: 13.6,
       upgrade-type: null
     },
     {
-      version: '14.12',
+      version: '14.17',
       upgrade-type: major
     },
     {
-      version: 15.7,
+      version: '15.12',
       upgrade-type: major
     },
     { 
@@ -183,7 +219,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.7,
+      version: '15.12',
       upgrade-type: null
     },
     { 
@@ -196,7 +232,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: 15.7,
+      version: '15.12',
       upgrade-type: null
     },
     { 
@@ -213,10 +249,23 @@ upgrade-version: [{
       upgrade-type: null
     },
     {
-      version: 15.7,
+      version: '15.12',
       upgrade-type: minor
     },
     { 
+      version: target.latest,
+      upgrade-type: major
+    }
+  ],
+  babelfishpg_tsql_server_collation_name: chinese_prc_ci_as
+},
+{
+  upgrade-path: [
+    {
+      version: 15.2,
+      upgrade-type: null
+    },
+    {
       version: target.latest,
       upgrade-type: major
     }

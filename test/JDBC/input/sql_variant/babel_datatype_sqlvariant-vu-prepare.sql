@@ -18,9 +18,7 @@ insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-0
 go
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
 go
--- exceeding range error
-insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
-go
+
 -- smalldatetime
 -- exceeding range error
 insert into babel_datatype_sqlvariant_vu_prepare_t1 (a) values ( cast('2079-10-05 09:00:00' as smalldatetime) );

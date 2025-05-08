@@ -14,8 +14,9 @@
 
 %type <node> tsql_stmt
 
-%type <node> tsql_AlterFunctionStmt
+%type <node> tsql_AlterFunctionStmt tsql_CreatePartitionStmt tsql_AlterViewStmt
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
+%type <partspec> tsql_PartitionSpec
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <str> tsql_DropIndexStmtSchema
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
@@ -47,6 +48,7 @@
 
 %type <node> tsql_ExecStmt tsql_output_ExecStmt
 %type <list> tsql_actual_args
+%type <list> tsql_opt_partition_scheme_or_filegroup
 %type <node> tsql_actual_arg
 %type <boolean> tsql_opt_output tsql_opt_readonly
 
@@ -71,7 +73,7 @@
 
 %type <typnam> TSQL_Typename TSQL_SimpleTypename TSQL_GenericType
 
-%type <str> datepart_arg datediff_arg dateadd_arg
+%type <str> datepart_arg datediff_arg dateadd_arg tsql_untruncated_IDENT
 %type <str> tsql_type_function_name
 %type <list> tsql_createproc_args tsql_createfunc_args
 %type <list> tsql_triggername tsql_trigger_list
@@ -98,6 +100,7 @@
 
 %type <node> tsql_contains_search_condition
 %type <node> tsql_pivot_expr
+%type <node> tsql_unpivot_clause
 
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION
 	TSQL_CALLER TSQL_CHOOSE TSQL_CLUSTERED TSQL_COLUMNSTORE TSQL_CONVERT
@@ -122,6 +125,8 @@
 	TSQL_NVARCHAR
 	TSQL_CROSS TSQL_OUTER TSQL_APPLY TSQL_PIVOT TSQL_LOG TSQL_LOG10 TSQL_ALTER
 	TSQL_CONTAINS TSQL_FREETEXT
+	TSQL_RECOMPILE
+	TSQL_UNPIVOT
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),
@@ -130,4 +135,4 @@
  */
 %token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren
 
-%left TSQL_CROSS TSQL_OUTER
+%left TSQL_CROSS TSQL_OUTER TSQL_UNPIVOT

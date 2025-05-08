@@ -1,0 +1,125 @@
+-- Should throw Error , att-centric after normal columns
+SELECT  String as param1, hello.String as [@param2] FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH('hello')
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attribute-centric column '@param2' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.)~~
+
+
+-- Should throw error, PATH supplied is NULL
+SELECT hello.String as [@param2] FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH('')
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+
+-- NORMAL Usecase both types of columns
+SELECT hello.String as [@param2] , string  FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH
+GO
+~~START~~
+ntext
+<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+~~END~~
+
+
+-- Only att-centric columns
+SELECT String as [@param2]  FROM for_xml_path ORDER BY SequenceNumber FOR XML PATH
+GO
+~~START~~
+ntext
+<row param2="SELECT" /><row param2="Product," /><row param2="UnitPrice," /><row param2="EffectiveDate" /><row param2="FROM" /><row param2="Products" /><row param2="WHERE" /><row param2="UnitPrice" /><row param2="&gt; 100" />
+~~END~~
+
+
+-- Complex expression without column name , should not add a <?column?> tag
+SELECT ' '+string  FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH('')
+GO
+~~START~~
+ntext
+ SELECT Product, UnitPrice, EffectiveDate FROM Products WHERE UnitPrice &gt; 100
+~~END~~
+
+
+-- Complex expression without column name , should not add a <?column?> tag
+SELECT ' '+string  FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH
+GO
+~~START~~
+ntext
+<row> SELECT</row><row> Product,</row><row> UnitPrice,</row><row> EffectiveDate</row><row> FROM</row><row> Products</row><row> WHERE</row><row> UnitPrice</row><row> &gt; 100</row>
+~~END~~
+
+
+-- Dep Objects
+SELECT * FROM for_xml_path_v1
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attribute-centric column '@param2' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.)~~
+
+
+SELECT * FROM for_xml_path_v2
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+SELECT * FROM for_xml_path_v3
+GO
+~~START~~
+ntext
+<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+~~END~~
+
+
+SELECT * FROM for_xml_path_v4
+GO
+~~START~~
+ntext
+ SELECT Product, UnitPrice, EffectiveDate FROM Products WHERE UnitPrice &gt; 100
+~~END~~
+
+
+EXEC for_xml_path_p1
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attribute-centric column '@param2' must not come after a non-attribute-centric sibling in XML hierarchy in FOR XML PATH.)~~
+
+
+EXEC for_xml_path_p2
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+EXEC for_xml_path_p3
+GO
+~~START~~
+ntext
+<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+~~END~~
+
+
+EXEC for_xml_path_p4
+GO
+~~START~~
+ntext
+ SELECT Product, UnitPrice, EffectiveDate FROM Products WHERE UnitPrice &gt; 100
+~~END~~
+

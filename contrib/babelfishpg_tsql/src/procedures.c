@@ -51,9 +51,7 @@
 #include "catalog.h"
 #include "extendedproperty.h"
 #include "multidb.h"
-#include "pltsql.h"
 #include "session.h"
-#include "pltsql.h"
 #include "rolecmds.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
@@ -78,6 +76,7 @@ PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
+PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 
 extern void delete_cached_batch(int handle);
@@ -92,7 +91,6 @@ static List *gen_sp_droprolemember_subcmds(const char *user, const char *member)
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
-static void remove_delimited_identifer(char *str);
 static void rename_extended_property(ObjectType objtype,
 									 const char *var_schema_name,
 									 const char *var_major_name,
@@ -102,6 +100,7 @@ List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_un
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets, bool is_sp_describe_undeclared_parameters);
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
 
 char	   *sp_describe_first_result_set_view_name = NULL;
 
@@ -592,6 +591,9 @@ handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_
 	A_Expr	   *xpr;
 	ColumnRef  *ref;
 
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return list;
+
 	foreach(lc, args)
 	{
 		Expr	   *arg = (Expr *) lfirst(lc);
@@ -636,6 +638,9 @@ handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_att
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return target_attnums;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -734,6 +739,9 @@ handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *ex
 	String	   *field;
 	char	   *name;
 	int			attrno;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -847,6 +855,9 @@ handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *e
 	ColumnRef  *ref;
 	String	   *field;
 	ResTarget  *res;
+
+	if (is_sp_describe_undeclared_parameters && !is_supported_case_sp_describe_undeclared_parameters)
+		return extra_restargets;
 
 	if (w_clause && nodeTag(w_clause) == T_A_Expr)
 	{
@@ -1040,98 +1051,101 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				}
 			}
 
-			/*
-			 * Analyze the parsed statement to suggest types for undeclared
-			 * parameters
-			 */
-			switch (node_type)
+			if (is_supported_case_sp_describe_undeclared_parameters)
 			{
-				case T_InsertStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					insert_stmt = (InsertStmt *) parsetree->stmt;
-					relation = insert_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
-					break;
-				case T_UpdateStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					update_stmt = (UpdateStmt *) parsetree->stmt;
-					relation = update_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = list_copy(update_stmt->targetList);
+				/*
+				 * Analyze the parsed statement to suggest types for undeclared
+				 * parameters
+				 */
+				switch (node_type)
+				{
+					case T_InsertStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						insert_stmt = (InsertStmt *) parsetree->stmt;
+						relation = insert_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+						break;
+					case T_UpdateStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						update_stmt = (UpdateStmt *) parsetree->stmt;
+						relation = update_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = list_copy(update_stmt->targetList);
 
-					/*
-					 * Add attnums to cols based on targetList
-					 */
-					foreach(lc, cols)
-					{
-						ResTarget  *col = (ResTarget *) lfirst(lc);
-						char	   *name = col->name;
-						int			attrno;
-
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
+						/*
+						 * Add attnums to cols based on targetList
+						 */
+						foreach(lc, cols)
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
+							ResTarget  *col = (ResTarget *) lfirst(lc);
+							char	   *name = col->name;
+							int			attrno;
+
+							attrno = attnameAttNum(pstate->p_target_relation, name, false);
+							if (attrno == InvalidAttrNumber)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_COLUMN),
+										errmsg("column \"%s\" of relation \"%s\" does not exist",
+												name,
+												RelationGetRelationName(pstate->p_target_relation))));
+							}
+							target_attnums = lappend_int(target_attnums, attrno);
 						}
-						target_attnums = lappend_int(target_attnums, attrno);
-					}
-					target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
-					extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
+						target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums, true);
+						extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets, true);
 
-					cols = list_concat_copy(cols, extra_restargets);
-					break;
-				case T_DeleteStmt:
-					rewrite_object_refs(parsetree->stmt);
-					sql_dialect = sql_dialect_value_old;
-					delete_stmt = (DeleteStmt *) parsetree->stmt;
-					relation = delete_stmt->relation;
-					relid = RangeVarGetRelid(relation, NoLock, false);
-					r = relation_open(relid, AccessShareLock);
-					pstate = (ParseState *) palloc0(sizeof(ParseState));
-					pstate->p_target_relation = r;
-					cols = NIL;
+						cols = list_concat_copy(cols, extra_restargets);
+						break;
+					case T_DeleteStmt:
+						rewrite_object_refs(parsetree->stmt);
+						sql_dialect = sql_dialect_value_old;
+						delete_stmt = (DeleteStmt *) parsetree->stmt;
+						relation = delete_stmt->relation;
+						relid = RangeVarGetRelid(relation, NoLock, false);
+						r = relation_open(relid, AccessShareLock);
+						pstate = (ParseState *) palloc0(sizeof(ParseState));
+						pstate->p_target_relation = r;
+						cols = NIL;
 
-					/*
-					 * Add attnums to cols based on targetList
-					 */
-					foreach(lc, cols)
-					{
-						ResTarget  *col = (ResTarget *) lfirst(lc);
-						char	   *name = col->name;
-						int			attrno;
-
-						attrno = attnameAttNum(pstate->p_target_relation, name, false);
-						if (attrno == InvalidAttrNumber)
+						/*
+						 * Add attnums to cols based on targetList
+						 */
+						foreach(lc, cols)
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_COLUMN),
-									 errmsg("column \"%s\" of relation \"%s\" does not exist",
-											name,
-											RelationGetRelationName(pstate->p_target_relation))));
-						}
-						target_attnums = lappend_int(target_attnums, attrno);
-					}
-					target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
-					extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
+							ResTarget  *col = (ResTarget *) lfirst(lc);
+							char	   *name = col->name;
+							int			attrno;
 
-					cols = list_concat_copy(cols, extra_restargets);
-					break;
-				default:
-					is_supported_case_sp_describe_undeclared_parameters = false;
-					break;
+							attrno = attnameAttNum(pstate->p_target_relation, name, false);
+							if (attrno == InvalidAttrNumber)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_COLUMN),
+										errmsg("column \"%s\" of relation \"%s\" does not exist",
+												name,
+												RelationGetRelationName(pstate->p_target_relation))));
+							}
+							target_attnums = lappend_int(target_attnums, attrno);
+						}
+						target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums, true);
+						extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets, true);
+
+						cols = list_concat_copy(cols, extra_restargets);
+						break;
+					default:
+						is_supported_case_sp_describe_undeclared_parameters = false;
+						break;
+				}
 			}
 
 			if (is_supported_case_sp_describe_undeclared_parameters)
@@ -1199,7 +1213,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						break;
 				}
 
-				if (!(list_length(values_list) > 1) && is_supported_case_sp_describe_undeclared_parameters)
+				if (is_supported_case_sp_describe_undeclared_parameters && !(list_length(values_list) > 1))
 				{
 					foreach(lc, values_list)
 					{
@@ -1207,6 +1221,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						ListCell   *sublc;
 						int			numvalues = 0;
 						int			numtotalvalues = list_length(sublist);
+
+						if (!is_supported_case_sp_describe_undeclared_parameters)
+							break;
 
 						undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
 						undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
@@ -1248,8 +1265,13 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 								default:
 									break;
 							}
-							fields = columnref->fields;
-							if (!(nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt))
+
+							if (is_supported_case_sp_describe_undeclared_parameters)
+								fields = columnref->fields;
+
+							if (is_supported_case_sp_describe_undeclared_parameters &&
+								!(nodeTag(columnref) != T_ColumnRef &&
+								nodeTag(parsetree->stmt) != T_DeleteStmt))
 							{
 								foreach(fieldcell, fields)
 								{
@@ -1322,37 +1344,37 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			"SELECT "
 			"CAST( 0 AS INT ) "		/* AS "parameter_ordinal"  -- Need to get
 									* correct ordinal number in code. */
-			", CAST( NULL AS sysname ) "	/* AS "name"  -- Need to get correct
+			", CAST( NULL AS sysname ) COLLATE sys.database_default "	/* AS "name"  -- Need to get correct
 											* parameter name in code. */
 			", CASE T2.name COLLATE sys.database_default "
-			"WHEN \'bigint\' THEN 127 "
-			"WHEN \'binary\' THEN 173 "
-			"WHEN \'bit\' THEN 104 "
-			"WHEN \'char\' THEN 175 "
-			"WHEN \'date\' THEN 40 "
-			"WHEN \'datetime\' THEN 61 "
-			"WHEN \'datetime2\' THEN 42 "
-			"WHEN \'datetimeoffset\' THEN 43 "
-			"WHEN \'decimal\' THEN 106 "
-			"WHEN \'float\' THEN 62 "
-			"WHEN \'image\' THEN 34 "
-			"WHEN \'int\' THEN 56 "
-			"WHEN \'money\' THEN 60 "
-			"WHEN \'nchar\' THEN 239 "
-			"WHEN \'ntext\' THEN 99 "
-			"WHEN \'numeric\' THEN 108 "
-			"WHEN \'nvarchar\' THEN 231 "
-			"WHEN \'real\' THEN 59 "
-			"WHEN \'smalldatetime\' THEN 58 "
-			"WHEN \'smallint\' THEN 52 "
-			"WHEN \'smallmoney\' THEN 122 "
-			"WHEN \'text\' THEN 35 "
-			"WHEN \'time\' THEN 41 "
-			"WHEN \'tinyint\' THEN 48 "
-			"WHEN \'uniqueidentifier\' THEN 36 "
-			"WHEN \'varbinary\' THEN 165 "
-			"WHEN \'varchar\' THEN 167 "
-			"WHEN \'xml\' THEN 241 "
+			"WHEN \'bigint\' COLLATE sys.database_default THEN 127 "
+			"WHEN \'binary\' COLLATE sys.database_default THEN 173 "
+			"WHEN \'bit\' COLLATE sys.database_default THEN 104 "
+			"WHEN \'char\' COLLATE sys.database_default THEN 175 "
+			"WHEN \'date\' COLLATE sys.database_default THEN 40 "
+			"WHEN \'datetime\' COLLATE sys.database_default THEN 61 "
+			"WHEN \'datetime2\' COLLATE sys.database_default THEN 42 "
+			"WHEN \'datetimeoffset\' COLLATE sys.database_default THEN 43 "
+			"WHEN \'decimal\' COLLATE sys.database_default THEN 106 "
+			"WHEN \'float\' COLLATE sys.database_default THEN 62 "
+			"WHEN \'image\' COLLATE sys.database_default THEN 34 "
+			"WHEN \'int\' COLLATE sys.database_default THEN 56 "
+			"WHEN \'money\' COLLATE sys.database_default THEN 60 "
+			"WHEN \'nchar\' COLLATE sys.database_default THEN 239 "
+			"WHEN \'ntext\' COLLATE sys.database_default THEN 99 "
+			"WHEN \'numeric\' COLLATE sys.database_default THEN 108 "
+			"WHEN \'nvarchar\' COLLATE sys.database_default THEN 231 "
+			"WHEN \'real\' COLLATE sys.database_default THEN 59 "
+			"WHEN \'smalldatetime\' COLLATE sys.database_default THEN 58 "
+			"WHEN \'smallint\' COLLATE sys.database_default THEN 52 "
+			"WHEN \'smallmoney\' COLLATE sys.database_default THEN 122 "
+			"WHEN \'text\' COLLATE sys.database_default THEN 35 "
+			"WHEN \'time\' COLLATE sys.database_default THEN 41 "
+			"WHEN \'tinyint\' COLLATE sys.database_default THEN 48 "
+			"WHEN \'uniqueidentifier\' COLLATE sys.database_default THEN 36 "
+			"WHEN \'varbinary\' COLLATE sys.database_default THEN 165 "
+			"WHEN \'varchar\' COLLATE sys.database_default THEN 167 "
+			"WHEN \'xml\' COLLATE sys.database_default THEN 241 "
 			"ELSE CASE "
 				"WHEN t.typbasetype = 0 THEN "
 					"CAST(a.atttypid AS int) "
@@ -1361,112 +1383,112 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				"END " 
 			"END "					/* AS "suggested_system_type_id" */
 			", CASE T2.name COLLATE sys.database_default "
-			"WHEN \'decimal\' THEN \'decimal(\' + CAST( CASE "
+			"WHEN \'decimal\' COLLATE sys.database_default THEN \'decimal(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \',\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
 					"ELSE "
 						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'numeric\' THEN \'numeric(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'numeric\' COLLATE sys.database_default THEN \'numeric(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_precision_helper(T2.name, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_precision_helper(T2.name, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \',\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \',\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
 					"ELSE "
 						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'char\' THEN \'char(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'char\' COLLATE sys.database_default THEN \'char(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'nchar\' THEN \'nchar(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'nchar\' COLLATE sys.database_default THEN \'nchar(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END /2 AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'binary\' THEN \'binary(\' + CAST( CASE "
+				"END /2 AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'binary\' COLLATE sys.database_default THEN \'binary(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'datetime2\' THEN \'datetime2(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'datetime2\' COLLATE sys.database_default THEN \'datetime2(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
 					"ELSE "
 						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'datetimeoffset\' COLLATE sys.database_default THEN \'datetimeoffset(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
 					"ELSE "
 						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'time\' THEN \'time(\' + CAST( CASE "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default  + \')\' COLLATE sys.database_default "
+			"WHEN \'time\' COLLATE sys.database_default THEN \'time(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_scale_helper(T2.name, a.atttypmod, false) "
 					"ELSE "
 						"sys.tsql_type_scale_helper(T2.name, t.typtypmod, false) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
-			"WHEN \'varchar\' THEN "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
+			"WHEN \'varchar\' COLLATE sys.database_default THEN "
 			"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  = -1 THEN \'varchar(max)\' "
-			"ELSE \'varchar(\' + CAST( CASE "
+				"END  = -1 THEN \'varchar(max)\' COLLATE sys.database_default "
+			"ELSE \'varchar(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
 			"END "
-			"WHEN \'nvarchar\' THEN "
+			"WHEN \'nvarchar\' COLLATE sys.database_default THEN "
 			"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  = -1 THEN \'nvarchar(max)\' "
-			"ELSE \'nvarchar(\' + CAST( CASE "
+				"END  = -1 THEN \'nvarchar(max)\' COLLATE sys.database_default "
+			"ELSE \'nvarchar(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END /2 AS sys.VARCHAR(10) ) + \')\' "
+				"END /2 AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
 			"END "
-			"WHEN \'varbinary\' THEN "
+			"WHEN \'varbinary\' COLLATE sys.database_default THEN "
 			"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  = -1 THEN \'varbinary(max)\' "
-			"ELSE \'varbinary(\' + CAST( CASE "
+				"END  = -1 THEN \'varbinary(max)\' COLLATE sys.database_default "
+			"ELSE \'varbinary(\' COLLATE sys.database_default + CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
 					"ELSE "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
-				"END  AS sys.VARCHAR(10) ) + \')\' "
+				"END  AS sys.VARCHAR(10) ) COLLATE sys.database_default + \')\' COLLATE sys.database_default "
 			"END "
-			"ELSE T2.name "
+			"ELSE T2.name COLLATE sys.database_default "
 			"END "					/* AS "suggested_system_type_name" */
 			", CASE T2.name COLLATE sys.database_default "
-			"WHEN \'image\' THEN -1 "
-			"WHEN \'ntext\' THEN -1 "
-			"WHEN \'text\' THEN -1 "
+			"WHEN \'image\' COLLATE sys.database_default THEN -1 "
+			"WHEN \'ntext\' COLLATE sys.database_default THEN -1 "
+			"WHEN \'text\' COLLATE sys.database_default THEN -1 "
 			"ELSE CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
@@ -1488,55 +1510,55 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				"END "			/* AS "suggested_scale" */
 			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS INT ) ELSE T2.user_type_id END "	/* AS
 																												* "suggested_user_type_id" */
-			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE DB_NAME() END " /* AS
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) COLLATE sys.database_default ELSE DB_NAME() COLLATE sys.database_default END " /* AS
 																											* "suggested_user_type_database" */
-			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE SCHEMA_NAME( T2.schema_id ) END "	/* AS
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) COLLATE sys.database_default ELSE SCHEMA_NAME( T2.schema_id ) COLLATE sys.database_default END "	/* AS
 																																* "suggested_user_type_schema" */
-			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) ELSE T2.name END "	/* AS
+			", CASE WHEN T2.user_type_id = T2.system_type_id THEN CAST( NULL AS sysname) COLLATE sys.database_default ELSE T2.name COLLATE sys.database_default END "	/* AS
 																											* "suggested_user_type_name" */
-			", CAST( NULL AS NVARCHAR(4000) ) " /* AS
+			", CAST( NULL AS NVARCHAR(4000) ) COLLATE sys.database_default " /* AS
 												* "suggested_assembly_qualified_type_name" */
 			", CAST( NULL AS INT )  "				/* AS "suggested_xml_collection_id", equivalent to sys.columns.xml_collection_id */
-			", CAST( NULL AS sysname ) "	/* AS
+			", CAST( NULL AS sysname ) COLLATE sys.database_default "	/* AS
 											* "suggested_xml_collection_database" */
-			", CAST( NULL AS sysname ) "	/* AS
+			", CAST( NULL AS sysname ) COLLATE sys.database_default "	/* AS
 											* "suggested_xml_collection_schema" */
-			", CAST( NULL AS sysname ) "	/* AS "suggested_xml_collection_name" */
+			", CAST( NULL AS sysname ) COLLATE sys.database_default "	/* AS "suggested_xml_collection_name" */
 			", CAST(0 AS sys.bit) "	/* AS "suggested_is_xml_document", equivalent to sys.columns.is_xml_document */
 			", CAST( 0 AS BIT ) "	/* AS "suggested_is_case_sensitive" */
 			", CAST( 0 AS BIT ) "	/* AS "suggested_is_fixed_length_clr_type" */
 			", CAST( 1 AS BIT ) "	/* AS "suggested_is_input" */
 			", CAST( 0 AS BIT ) "	/* AS "suggested_is_output" */
-			", CAST( NULL AS sysname ) "	/* AS "formal_parameter_name" */
+			", CAST( NULL AS sysname ) COLLATE sys.database_default "	/* AS "formal_parameter_name" */
 			", CASE T2.name COLLATE sys.database_default "
-			"WHEN \'tinyint\' THEN 38 "
-			"WHEN \'smallint\' THEN 38 "
-			"WHEN \'int\' THEN 38 "
-			"WHEN \'bigint\' THEN 38 "
-			"WHEN \'float\' THEN 109 " 
-			"WHEN \'real\' THEN 109 "
-			"WHEN \'smallmoney\' THEN 110 "
-			"WHEN \'money\' THEN 110 "
-			"WHEN \'smalldatetime\' THEN 111 "
-			"WHEN \'datetime\' THEN 111 "
-			"WHEN \'binary\' THEN 173 "
-			"WHEN \'bit\' THEN 104 "
-			"WHEN \'char\' THEN 175 "
-			"WHEN \'date\' THEN 40 "
-			"WHEN \'datetime2\' THEN 42 "
-			"WHEN \'datetimeoffset\' THEN 43 "
-			"WHEN \'decimal\' THEN 106 "
-			"WHEN \'image\' THEN 34 "
-			"WHEN \'nchar\' THEN 239 "
-			"WHEN \'ntext\' THEN 99 "
-			"WHEN \'numeric\' THEN 108 "
-			"WHEN \'nvarchar\' THEN 231 "
-			"WHEN \'text\' THEN 35 "
-			"WHEN \'time\' THEN 41 "
-			"WHEN \'uniqueidentifier\' THEN 36 "
-			"WHEN \'varbinary\' THEN 165 "
-			"WHEN \'varchar\' THEN 167 "
-			"WHEN \'xml\' THEN 241 "
+			"WHEN \'tinyint\' COLLATE sys.database_default THEN 38 "
+			"WHEN \'smallint\' COLLATE sys.database_default THEN 38 "
+			"WHEN \'int\' COLLATE sys.database_default THEN 38 "
+			"WHEN \'bigint\' COLLATE sys.database_default THEN 38 "
+			"WHEN \'float\' COLLATE sys.database_default THEN 109 " 
+			"WHEN \'real\' COLLATE sys.database_default THEN 109 "
+			"WHEN \'smallmoney\' COLLATE sys.database_default THEN 110 "
+			"WHEN \'money\' COLLATE sys.database_default THEN 110 "
+			"WHEN \'smalldatetime\' COLLATE sys.database_default THEN 111 "
+			"WHEN \'datetime\' COLLATE sys.database_default THEN 111 "
+			"WHEN \'binary\' COLLATE sys.database_default THEN 173 "
+			"WHEN \'bit\' COLLATE sys.database_default THEN 104 "
+			"WHEN \'char\' COLLATE sys.database_default THEN 175 "
+			"WHEN \'date\' COLLATE sys.database_default THEN 40 "
+			"WHEN \'datetime2\' COLLATE sys.database_default THEN 42 "
+			"WHEN \'datetimeoffset\' COLLATE sys.database_default THEN 43 "
+			"WHEN \'decimal\' COLLATE sys.database_default THEN 106 "
+			"WHEN \'image\' COLLATE sys.database_default THEN 34 "
+			"WHEN \'nchar\' COLLATE sys.database_default THEN 239 "
+			"WHEN \'ntext\' COLLATE sys.database_default THEN 99 "
+			"WHEN \'numeric\' COLLATE sys.database_default THEN 108 "
+			"WHEN \'nvarchar\' COLLATE sys.database_default THEN 231 "
+			"WHEN \'text\' COLLATE sys.database_default THEN 35 "
+			"WHEN \'time\' COLLATE sys.database_default THEN 41 "
+			"WHEN \'uniqueidentifier\' COLLATE sys.database_default THEN 36 "
+			"WHEN \'varbinary\' COLLATE sys.database_default THEN 165 "
+			"WHEN \'varchar\' COLLATE sys.database_default THEN 167 "
+			"WHEN \'xml\' COLLATE sys.database_default THEN 241 "
 			"ELSE CASE "
 					"WHEN t.typbasetype = 0 THEN " 
 						"CAST(a.atttypid AS int) "
@@ -1545,7 +1567,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				"END " 
 			"END "					/* AS "suggested_tds_type_id" */
 			", CASE T2.name COLLATE sys.database_default "
-			"WHEN \'nvarchar\' THEN "
+			"WHEN \'nvarchar\' COLLATE sys.database_default THEN "
 				"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
@@ -1559,7 +1581,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
 				"END  "
 				"END "
-			"WHEN \'varbinary\' THEN "
+			"WHEN \'varbinary\' COLLATE sys.database_default THEN "
 				"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
@@ -1573,7 +1595,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
 				"END  "
 				"END "
-			"WHEN \'varchar\' THEN "
+			"WHEN \'varchar\' COLLATE sys.database_default THEN "
 				"CASE WHEN CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
@@ -1587,12 +1609,12 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, t.typtypmod) "
 				"END  "
 				"END "
-			"WHEN \'decimal\' THEN 17 "
-			"WHEN \'numeric\' THEN 17 "
-			"WHEN \'xml\' THEN 8100 "
-			"WHEN \'image\' THEN 2147483647 "
-			"WHEN \'text\' THEN 2147483647 "
-			"WHEN \'ntext\' THEN 2147483646 "
+			"WHEN \'decimal\' COLLATE sys.database_default THEN 17 "
+			"WHEN \'numeric\' COLLATE sys.database_default THEN 17 "
+			"WHEN \'xml\' COLLATE sys.database_default THEN 8100 "
+			"WHEN \'image\' COLLATE sys.database_default THEN 2147483647 "
+			"WHEN \'text\' COLLATE sys.database_default THEN 2147483647 "
+			"WHEN \'ntext\' COLLATE sys.database_default THEN 2147483646 "
 			"ELSE CAST( CASE "
 					"WHEN a.atttypmod != -1 THEN "
 						"sys.tsql_type_max_length_helper(T2.name, a.attlen, a.atttypmod) "
@@ -1651,7 +1673,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
 		is_supported_case_sp_describe_undeclared_parameters = true;
 		PG_RE_THROW();
@@ -1682,12 +1704,11 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_qv(IN SYS.NVARCHAR(256), IN SYS.NVARCHAR(256))"
 	"AS \'babelfishpg_tsql\', \'xp_qv_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
-
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	query = psprintf(tempq, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1772,13 +1793,12 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char	   *tempq2 = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))"
 	"AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
 
-	const char *dbo_scm = get_dbo_schema_name("master");
-
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
+	char	   *dbo_scm = get_dbo_schema_name("master");
 
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
+
+	pfree(dbo_scm);
 
 	PG_TRY();
 	{
@@ -1836,9 +1856,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	PlannedStmt *wrapper;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_path = "public, \"$user\", sys, pg_catalog";
+	int        save_nestlevel;
 
+	save_nestlevel = NewGUCNestLevel();
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
@@ -1853,7 +1874,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(postgresStmt);
-		while (isspace(postgresStmt[len - 1]))
+		while (len > 0 && isspace(postgresStmt[len - 1]))
 			postgresStmt[--len] = 0;
 
 		/* check if input statement is empty after removing trailing spaces */
@@ -2047,12 +2068,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		set_config_option("search_path", saved_path,
-						  PGC_USERSET, PGC_S_SESSION,
-						  GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 
 	}
+	AtEOXact_GUC(false, save_nestlevel);
 	PG_END_TRY();
 	PG_RETURN_VOID();
 }
@@ -2092,7 +2111,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
@@ -2114,8 +2133,9 @@ sp_addrole(PG_FUNCTION_ARGS)
 							errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the user, group or role already exists */
 		if (role_oid)
@@ -2125,7 +2145,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(rolname);
-		while (isspace(rolname[len - 1]))
+		while (len > 0 && isspace(rolname[len - 1]))
 			rolname[--len] = 0;
 
 		/* Advance cmd counter to make the delete visible */
@@ -2222,6 +2242,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 			   *lowercase_rolname;
 	size_t		len;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2248,7 +2269,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 
 		/* check if role name is empty after removing trailing spaces */
@@ -2257,14 +2278,17 @@ sp_droprole(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
+		pfree(physical_role_name);
 
 		/* Check if the role does not exists */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2357,6 +2381,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	size_t		len;
 	char	   *physical_member_name;
 	char	   *physical_role_name;
+	char	   *db_name = get_cur_db_name();
 	Oid			role_oid,
 				member_oid;
 	List	   *parsetree_list;
@@ -2386,10 +2411,10 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while (isspace(lowercase_membername[len - 1]))
+		while (len > 0 && isspace(lowercase_membername[len - 1]))
 			lowercase_membername[--len] = 0;
 
 		/*
@@ -2407,33 +2432,35 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 					 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		physical_member_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		member_oid = get_role_oid(physical_member_name, true);
 
 		/*
 		 * Check if the user, group or role does not exists and given member
 		 * name is an role or user
 		 */
-		if (member_oid == InvalidOid || (!is_role(member_oid) && !is_user(member_oid)))
+		if (member_oid == InvalidOid || !get_db_principal_kind(member_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("User or role '%s' does not exist in this database.", membername)));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_role_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_role_name, true);
 
 		/* Check if the role does not exists and given role name is an role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Check if the member oid is already a member of given role oid */
-		if (is_member_of_role_nosuper(role_oid, member_oid))
+		if (is_member_of_role_nosuper(role_oid, member_oid) && role_oid != get_db_owner_oid(db_name, false))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("Cannot make a role a member of itself.")));
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2479,6 +2506,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	pfree(physical_member_name);
+	pfree(physical_role_name);
 	PG_RETURN_VOID();
 }
 
@@ -2529,6 +2558,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 			   *lowercase_membername;
 	size_t		len;
 	char	   *physical_name;
+	char	   *db_name= get_cur_db_name();
 	Oid			role_oid;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -2557,10 +2587,10 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
-		while (isspace(lowercase_rolname[len - 1]))
+		while (len > 0 && isspace(lowercase_rolname[len - 1]))
 			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while (isspace(lowercase_membername[len - 1]))
+		while (len > 0 && isspace(lowercase_membername[len - 1]))
 			lowercase_membername[--len] = 0;
 
 		/*
@@ -2572,27 +2602,31 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 							errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname, false);
+		physical_name = get_physical_user_name(db_name, lowercase_rolname, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/* Throw an error id the given role name doesn't exist or isn't a role */
-		if (role_oid == InvalidOid || !is_role(role_oid))
+		if (role_oid == InvalidOid || get_db_principal_kind(role_oid, db_name) != BBF_ROLE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Map the logical member name to its physical name in the database. */
-		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername, false);
+		pfree(physical_name);
+		physical_name = get_physical_user_name(db_name, lowercase_membername, false, true);
 		role_oid = get_role_oid(physical_name, true);
 
 		/*
 		 * Throw an error id the given member name doesn't exist or isn't a
 		 * role or user
 		 */
-		if (role_oid == InvalidOid || (!is_role(role_oid) && !is_user(role_oid)))
+		if (role_oid == InvalidOid || !get_db_principal_kind(role_oid, db_name))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
+
+
+		pfree(db_name);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -2638,6 +2672,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	pfree(physical_name);
 	PG_RETURN_VOID();
 }
 
@@ -2970,6 +3005,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char	   *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char	   *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char	   *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	StringInfoData query;
 
@@ -2995,6 +3032,16 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
 	initStringInfo(&query);
+
+	/*
+	 * check privileges for login
+	 * allow if has privileges of sysadmin or securityadmin.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+				!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("User does not have permission to perform this action.")));
 
 	/*
 	 * We prepare the following query to create a user mapping. This will be
@@ -3031,8 +3078,22 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 		appendStringInfoString(&query, ")");
 	}
+	/*
+	* We have performed all the permissions checks.
+	* Set current user to bbf_role_admin for mapping permissions.
+	*/
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	exec_utility_cmd_helper(query.data);
+	PG_TRY();
+	{
+		exec_utility_cmd_helper(query.data);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	if (servername)
 		pfree(servername);
@@ -3056,6 +3117,8 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char	   *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char	   *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	StringInfoData query;
 
@@ -3076,39 +3139,67 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	remove_trailing_spaces(servername);
 
+	/*
+	 * check privileges for login
+	 * allow if has privileges of sysadmin or securityadmin.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+				!has_privs_of_role(GetSessionUserId(), get_securityadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("User does not have permission to perform this action.")));
+
 	/* Check if servername is valid */
 	get_foreign_server_oid(servername, false);
 
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following queries to drop a linked server login. This will
-	 * be executed using ProcessUtility():
-	 *
-	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
-	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
-	 *
-	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
-	 * was not entirely correct because T-SQL linked logins are not user or login specific.
-	 * To address this we now create user mapping for the PG PUBLIC role internally.
-	 *
-	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
-	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
-	 * and PUBLIC PG roles.
-	 */
-	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
-	exec_utility_cmd_helper(query.data);
+	* We have performed all the permissions checks.
+	* Set current user to bbf_role_admin for mapping permissions.
+	*/
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	resetStringInfo(&query);
+	PG_TRY();
+	{
+		/*
+		* We prepare the following queries to drop a linked server login. This will
+		* be executed using ProcessUtility():
+		*
+		* DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
+		* DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
+		*
+		* Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
+		* was not entirely correct because T-SQL linked logins are not user or login specific.
+		* To address this we now create user mapping for the PG PUBLIC role internally.
+		*
+		* To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
+		* implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
+		* and PUBLIC PG roles.
+		*/
+		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
+		exec_utility_cmd_helper(query.data);
 
-	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
-	exec_utility_cmd_helper(query.data);
+		resetStringInfo(&query);
+
+		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
+		exec_utility_cmd_helper(query.data);
+	}
+
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	if (locallogin)
 		pfree(locallogin);
 
 	if (servername)
 		pfree(servername);
+
+	pfree(query.data);
 
 	return (Datum) 0;
 }
@@ -3293,38 +3384,24 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		char	   *full_function_name = NULL;
 		char	   *logical_schema_name = NULL;
 		char	   *physical_schema_name = NULL;
-		char	  **splited_object_name;
+		char	   *server_name;
+		char	   *object_name;
+		char	   *database_name;
 
-		/* get physical schema name */
-		splited_object_name = split_object_name(function_name);
+		/*
+		* Split the function name, downcase and truncate if needed
+		* and return the server_name, db_name, schema_name and object_name.
+		*/
+		downcase_truncate_split_object_name(function_name, &server_name, &database_name, &logical_schema_name, &object_name);
 
-		if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], ""))
+		if (strcmp(server_name, "") || strcmp(database_name, ""))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("function \"%s\" is not a valid two part name", function_name)));
 
 		pfree(function_name);
-		logical_schema_name = splited_object_name[2];
-		function_name = splited_object_name[3];
 
-		/* downcase identifier */
-		if (pltsql_case_insensitive_identifiers)
-		{
-			logical_schema_name = downcase_identifier(logical_schema_name, strlen(logical_schema_name), false, false);
-			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
-			for (int j = 0; j < 4; j++)
-				pfree(splited_object_name[j]);
-		}
-		else
-		{
-			pfree(splited_object_name[0]);
-			pfree(splited_object_name[1]);
-		}
-		pfree(splited_object_name);
-
-		/* truncate identifiers if needed */
-		truncate_tsql_identifier(logical_schema_name);
-		truncate_tsql_identifier(function_name);
+		function_name = object_name;
 
 		if (!strcmp(function_name, ""))
 			ereport(ERROR,
@@ -3335,7 +3412,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		if (!strcmp(logical_schema_name, ""))
 		{
 			const char *user = get_user_for_database(db_name);
-			const char *guest_role_name = get_guest_role_name(db_name);
+			char	   *guest_role_name = get_guest_role_name(db_name);
 
 			if (!user)
 				ereport(ERROR,
@@ -3353,6 +3430,8 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				physical_schema_name = get_physical_schema_name(db_name, logical_schema_name);
 				pfree(logical_schema_name);
 			}
+			
+			pfree(guest_role_name);
 		}
 		else
 		{
@@ -3528,8 +3607,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-extern bool pltsql_quoted_identifier;
-
 Datum
 sp_renamedb_internal(PG_FUNCTION_ARGS)
 {
@@ -3676,31 +3753,21 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 		/* remove trailing whitespaces for both input */
 		len = strlen(obj_name);
-		while (isspace(obj_name[len - 1]))
+		while (len > 0 && isspace(obj_name[len - 1]))
 			obj_name[--len] = 0;
 		len = strlen(schema_name);
-		while (isspace(schema_name[len - 1]))
+		while (len > 0 && isspace(schema_name[len - 1]))
 			schema_name[--len] = 0;
 		len = strlen(new_name);
-		while (isspace(new_name[len - 1]))
+		while (len > 0 && isspace(new_name[len - 1]))
 			new_name[--len] = 0;
 		len = strlen(objtype);
-		while (isspace(objtype[len - 1]))
+		while (len > 0 && isspace(objtype[len - 1]))
 			objtype[--len] = 0;
 		if (curr_relname != NULL) {
 			len = strlen(curr_relname);
-			while(isspace(curr_relname[len - 1]))
+			while(len > 0 && isspace(curr_relname[len - 1]))
 				curr_relname[--len] = 0;
-		}
-
-		/* remove delimited identifiers if quoted_identifier is on */
-		if (pltsql_quoted_identifier)
-		{
-			remove_delimited_identifer(obj_name);
-			remove_delimited_identifer(schema_name);
-			if (curr_relname != NULL) {
-				remove_delimited_identifer(curr_relname);
-			}
 		}
 
 		/* check if inputs are empty after removing trailing spaces */
@@ -3718,6 +3785,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		{
 			objtype_code = OBJECT_TABLE;
 			process_util_querystr = "(ALTER TABLE )";
+		}
+		else if (strcmp(objtype, "IX") == 0)
+		{
+			objtype_code = OBJECT_INDEX;
+			process_util_querystr = "(ALTER INDEX )";
 		}
 		else if (strcmp(objtype, "V") == 0)
 		{
@@ -3935,6 +4007,7 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 	}
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 static List *
@@ -3951,6 +4024,11 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	{
 		case OBJECT_TABLE:
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER TABLE dummy SET (dummy = 'dummy'); ");
+			break;
+		case OBJECT_INDEX:
+			appendStringInfo(&query, "ALTER INDEX dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER INDEX dummy SET (dummy = 'dummy'); ");
 			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
@@ -3989,7 +4067,11 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	sql_dialect = old_dialect;
 
-	if ((objtype != OBJECT_COLUMN) && (objtype != OBJECT_TRIGGER) && (list_length(res) != 1))
+	if ((objtype != OBJECT_TABLE) &&
+		(objtype != OBJECT_INDEX) &&
+		(objtype != OBJECT_COLUMN) &&
+		(objtype != OBJECT_TRIGGER) &&
+		(list_length(res) != 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -4000,13 +4082,50 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	if (!IsA(renamestmt, RenameStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
 
-	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
+	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_INDEX) ||
+		(objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE))
 	{
+		char *newobjname = downcase_truncate_identifier(newname, strlen(newname), false);
+
 		renamestmt->renameType = objtype;
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+		renamestmt->relation->schemaname = lowerstr(schemaname);
+
+		if (objtype == OBJECT_INDEX)
+		{
+			char *lower_relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
+
+			newobjname = construct_unique_index_name(newobjname, lower_relname);
+			renamestmt->subname = NULL;
+			renamestmt->newname = newobjname;
+			renamestmt->relation->relname = construct_unique_index_name(downcase_truncate_identifier(objname, strlen(objname), false), lower_relname);
+		}
+		else
+		{
+			renamestmt->subname = lowerstr(objname);
+			renamestmt->newname = lowerstr(newobjname);
+			renamestmt->relation->relname = lowerstr(objname);
+		}
+
+		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
+		{
+			AlterTableStmt *altertablestmt;
+			AlterTableCmd *cmd;
+			ListCell *lc = NULL;
+
+			rewrite_object_refs(stmt);
+			/* extra query nodes for modifying reloption */
+			stmt = parsetree_nth_stmt(res, 1);
+			altertablestmt = (AlterTableStmt *) stmt;
+			if (!IsA(altertablestmt, AlterTableStmt))
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
+
+			altertablestmt->relation->schemaname = lowerstr(schemaname);
+			altertablestmt->relation->relname = lowerstr(newobjname);
+			/* get data of the first node */
+			lc = list_head(altertablestmt->cmds);
+			cmd = (AlterTableCmd *) lfirst(lc);
+			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(newname)), -1));
+		}
 	}
 	else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION))
 	{
@@ -4083,23 +4202,6 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	return res;
 }
 
-static void
-remove_delimited_identifer(char *str)
-{
-	size_t len = strlen(str);
-	if ((str[0] == '"' && str[len - 1] == '"') || (str[0] == '[' && str[len - 1] == ']'))
-	{
-		memmove(str, &str[1], len - 1);
-		str[len - 2] = '\0';
-	}
-	if (isspace(str[0]))
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						errmsg("Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")));
-	len = strlen(str);
-	while (isspace(str[len - 1]))
-		str[--len] = 0;
-}
-
 Datum
 sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 {
@@ -4174,6 +4276,17 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	PG_RETURN_VOID();
+}
+
+Datum
+sp_reset_connection_internal(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr) 
+	{
+		(*pltsql_protocol_plugin_ptr)->set_reset_tds_connection_flag();
+	}
 
 	PG_RETURN_VOID();
 }

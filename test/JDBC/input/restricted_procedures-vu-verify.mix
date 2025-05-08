@@ -1,0 +1,49 @@
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4390_user_l1 WITH PASSWORD = 'abc';
+GO
+
+ALTER LOGIN babel_4390_user_l2 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=babel_4390_user_l2 password=abc
+-- should throw error
+EXEC dbo.babel_4390_prepare_p1;
+GO
+
+EXEC dbo.babel_4390_prepare_p3;
+GO
+
+EXEC dbo.babel_4390_prepare_p4;
+GO
+
+BEGIN TRANSACTION;
+EXEC dbo.babel_4390_prepare_p1;
+ROLLBACK;
+GO
+
+DROP PROCEDURE dbo.xp_qv;
+GO
+
+EXEC dbo.babel_4390_prepare_p5;
+GO
+
+EXEC dbo.babel_4390_prepare_p6;
+GO
+
+EXEC dbo.babel_4390_prepare_p7;
+GO
+
+EXEC dbo.babel_4390_prepare_p8;
+GO
+
+EXEC dbo.babel_4390_prepare_p9;
+GO
+
+-- psql user=babel_4390_user_l2 password=abc
+-- should throw error
+DROP PROCEDURE master_dbo.xp_qv;
+GO
+
+DROP PROCEDURE master_dbo.sp_addlinkedsrvlogin;
+GO

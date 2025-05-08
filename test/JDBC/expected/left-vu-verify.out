@@ -1,0 +1,862 @@
+-- customer case, mentioned in the jira description
+DECLARE @custname NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT @custname, 
+    TRIM(@custname) as [TRIM]
+    , LTRIM(@custname) as [LTRIM]
+    , RTRIM(@custname) as [RTRIM]
+    , LEFT(@custname, 4) as [LEFT4]
+    , RIGHT(@custname, 4) as [RIGHT4]
+    , SUBSTRING(@custname, 2, 4) as [SUBSTRING_2_4]
+;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉莫斯#!#比尔·拉#!#·拉莫斯#!#尔·拉莫
+~~END~~
+
+
+-- NULL
+SELECT LEFT(NULL, -2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid length parameter passed to the left function.)~~
+
+
+SELECT LEFT(NULL, 0)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT LEFT(NULL, 2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT LEFT('abc', NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT LEFT(NULL, NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- edge case values for second parameter
+SELECT LEFT('AbdefGhi', -2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid length parameter passed to the left function.)~~
+
+
+SELECT '|' + LEFT('AbdefGhi', 0) + '|'
+GO
+~~START~~
+varchar
+||
+~~END~~
+
+
+SELECT LEFT('AbdefGhi', 2)
+GO
+~~START~~
+varchar
+Ab
+~~END~~
+
+
+SELECT LEFT('AbdefGhi', 2147483646)
+GO
+~~START~~
+varchar
+AbdefGhi
+~~END~~
+
+
+SELECT LEFT('AbdefGhi', 2147483650)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- misc tests
+DECLARE @procedure_name NVARCHAR(134) = ';1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+~~START~~
+nvarchar
+
+~~END~~
+
+
+DECLARE @procedure_name NVARCHAR(134) = 'procedureName;1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+~~START~~
+nvarchar
+procedureName
+~~END~~
+
+
+-- procedure name with length equal to 134
+DECLARE @procedure_name NVARCHAR(134) = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;1'
+SELECT LEFT(@procedure_name, LEN(@procedure_name)-2)
+GO
+~~START~~
+nvarchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+~~END~~
+
+
+-- input type char
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT '|' + LEFT(@inputString, 5) + '|'
+GO
+~~START~~
+varchar
+|abc?d|
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT '|' + LEFT(@inputString, 4) + '|'
+GO
+~~START~~
+varchar
+|??·?|
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = '比尔·拉莫斯'
+SELECT '|' + LEFT(@inputString, 4) COLLATE CHINESE_PRC_CI_AS + '|'
+GO
+~~START~~
+varchar
+|??·?|
+~~END~~
+
+
+DECLARE @inputString CHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT '|' + LEFT(@inputString, 50) + '|'
+GO
+~~START~~
+varchar
+|abc?defghi??             |
+~~END~~
+
+
+-- input type varchar
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT LEFT(@inputString, 5)
+GO
+~~START~~
+varchar
+abc?d
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+??·?
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = '比尔·拉莫斯'
+SELECT LEFT(@inputString, 4) COLLATE CHINESE_PRC_CI_AS
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+DECLARE @inputString VARCHAR(25) = 'abc🙂defghi🙂🙂'
+SELECT LEFT(@inputString, 50)
+GO
+~~START~~
+varchar
+abc?defghi??
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_as
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CI_AS FROM babel_4489_left_chinese_prc_ci_as
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_cs_as
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CS_AS FROM babel_4489_left_chinese_prc_cs_as
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+-- with table column of type varchar with collation chinese_prc_ci_ai
+SELECT LEFT(a, 4) FROM babel_4489_left_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE CHINESE_PRC_CI_AI FROM babel_4489_left_chinese_prc_ci_ai
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_as
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_ci_as
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CI_AS FROM babel_4489_left_arabic_ci_as
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_cs_as
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_cs_as
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CS_AS FROM babel_4489_left_arabic_cs_as
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+-- with table column of type varchar with collation arabic_prc_ci_ai
+SELECT LEFT(a, 4) FROM babel_4489_left_arabic_ci_ai
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+SELECT LEFT(a, 4) COLLATE ARABIC_CI_AI FROM babel_4489_left_arabic_ci_ai
+GO
+~~START~~
+varchar
+الله
+~~END~~
+
+
+-- input type nchar
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT '|' + LEFT(@inputString, 5) + '|'
+GO
+~~START~~
+nvarchar
+|abc?d|
+~~END~~
+
+
+DECLARE @inputString NCHAR(25) = N'比尔·拉莫斯'
+SELECT '|' + LEFT(@inputString, 4) + '|'
+GO
+~~START~~
+nvarchar
+|??·?|
+~~END~~
+
+
+DECLARE @inputString NCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT '|' + LEFT(@inputString, 50) + '|'
+GO
+~~START~~
+nvarchar
+|abc?defghi??             |
+~~END~~
+
+
+-- with table column of type nchar
+SELECT '|' + LEFT(a, 5) + '|' FROM babel_4489_left_t1 
+GO
+~~START~~
+nvarchar
+|abc🙂d|
+|比尔·拉莫|
+~~END~~
+
+
+-- input type nvarchar
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT LEFT(@inputString, 5)
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'比尔·拉莫斯'
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+nvarchar
+比尔·拉
+~~END~~
+
+
+DECLARE @inputString NVARCHAR(25) = N'abc🙂defghi🙂🙂'
+SELECT LEFT(@inputString, 50)
+GO
+~~START~~
+nvarchar
+abc🙂defghi🙂🙂
+~~END~~
+
+
+-- input type binary
+DECLARE @inputString BINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+-- input type varbinary
+DECLARE @inputString VARBINARY(10) = 0x6162636465666768
+SELECT LEFT(@inputString, 4)
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+-- dependent objects
+SELECT * FROM babel_4489_left_dep_view
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+EXEC babel_4489_left_dep_proc
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_func()
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_itvf_func()
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_1
+GO
+~~START~~
+nvarchar
+abc🙂d
+比尔·拉莫
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_2
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_3
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_4
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_5
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_6
+GO
+~~START~~
+varchar
+abc?d
+~~END~~
+
+
+SELECT * FROM babel_4489_left_dep_view_7
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+-- input type UDT
+-- -- in table babel_4489_left_UDT, col 'a' has basetype image and col 'b' has basetype varchar
+SELECT LEFT(a, 3) FROM babel_4489_left_UDT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT LEFT(b, 3) FROM babel_4489_left_UDT
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- Arguments with pg datatypes
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t1
+GO
+~~START~~
+varchar
+  a
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t2
+GO
+~~START~~
+varchar
+  a
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t3
+GO
+~~START~~
+varchar
+  a
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t4
+GO
+~~START~~
+varchar
+  a
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t5
+GO
+~~START~~
+varchar
+  a
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t6
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t7
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t8
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t9
+GO
+~~START~~
+varchar
+\x6
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t10
+GO
+~~START~~
+varchar
+201
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t11
+GO
+~~START~~
+varchar
+201
+~~END~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t12
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t13
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+SELECT LEFT(a, 3) FROM dbo.babel_4489_left_psql_t14
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+-- other different datatypes
+DECLARE @inputString sysname = N'  abc🙂defghi🙂🙂    '
+SELECT LEFT(@inputString, 5)
+GO
+~~START~~
+varchar
+  abc
+~~END~~
+
+
+DECLARE @inputString date = '2016-12-21';
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+201
+~~END~~
+
+
+DECLARE @date date = '12-21-16';  
+DECLARE @inputString datetime = @date;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+201
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+195
+~~END~~
+
+
+DECLARE @inputString time(4) = '12:10:05.1237';
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+12:
+~~END~~
+
+
+DECLARE @inputString datetimeoffset(4) = '1968-10-23 12:45:37.1234 +10:0';
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+196
+~~END~~
+
+
+DECLARE @inputString datetime2(4) = '1968-10-23 12:45:37.1237';
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+196
+~~END~~
+
+
+DECLARE @inputString decimal = 123456;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString numeric = 12345.12;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString float = 12345.1;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString real = 12345.1;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString bigint = 12345678;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString int = 12345678;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString smallint = 12356;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString tinyint = 235;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+235
+~~END~~
+
+
+DECLARE @inputString money = 12356;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString smallmoney = 12356;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+123
+~~END~~
+
+
+DECLARE @inputString bit = 1;
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @inputString uniqueidentifier = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier)
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+6F9
+~~END~~
+
+
+SELECT LEFT(a, 5) from babel_4489_left_image;
+GO
+~~START~~
+varchar
+6F961
+~~END~~
+
+
+-- input datatype text
+SELECT LEFT(a, 5) FROM babel_4489_left_text
+GO
+~~START~~
+varchar
+abc?d
+~~END~~
+
+
+-- input datatype ntext
+SELECT LEFT(b, 5) FROM babel_4489_left_text
+GO
+~~START~~
+nvarchar
+abc🙂d
+~~END~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT LEFT(@inputString, 3)
+GO
+~~START~~
+varchar
+6F9
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT LEFT(@inputString, 3)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT LEFT(@inputString, 3)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT LEFT(@inputString, 3)
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The function left is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+DECLARE @inputString sql_variant = CAST ('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS sql_variant)
+SELECT LEFT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+6F9
+~~END~~
+
+
+DECLARE @inputString xml = CAST ('<body><fruit/></body>' AS xml)
+SELECT LEFT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+<bo
+~~END~~
+
+
+DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
+SELECT LEFT(CAST(@inputString AS VARCHAR(50)), 3)
+GO
+~~START~~
+varchar
+POI
+~~END~~
+

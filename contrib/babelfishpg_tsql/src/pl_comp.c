@@ -42,9 +42,11 @@
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "analyzer.h"
+#include "catalog.h"
 #include "codegen.h"
 #include "iterative_exec.h"
 #include "multidb.h"
+#include "collation.h"
 
 /* ----------
  * Our own local and global variables
@@ -62,9 +64,6 @@ bool		pltsql_DumpExecTree = false;
 bool		pltsql_check_syntax = false;
 
 PLtsql_function *pltsql_curr_compile;
-int			pltsql_curr_compile_body_lineno;	/* lineno of
-												 * function/procedure body in
-												 * CREATE */
 
 /* A context appropriate for short-term allocs during compilation */
 MemoryContext pltsql_compile_tmp_cxt;
@@ -146,6 +145,7 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid);
 
 /* ----------
  * pltsql_compile		Make an execution tree for a PL/tsql function.
@@ -534,8 +534,16 @@ do_compile(FunctionCallInfo fcinfo,
 				 */
 				if (function->is_mstvf)
 				{
+					/* 
+					 * For a user-defined @@var or @var# name,
+					 * delimit with square brackets
+					 */
+					char *typname_fmt = "%s.\"%s\"";
+					if (!is_tsql_atatuservar(argdtype->typname))
+						typname_fmt = pstrdup("%s.%s");
+
 					tbl_dno = argvariable->dno;
-					tbl_typ = psprintf("%s.%s",
+					tbl_typ = psprintf(typname_fmt,
 									   get_namespace_name(
 														  get_rel_namespace(get_typ_typrelid(argtypeid))),
 									   argdtype->typname);
@@ -958,6 +966,18 @@ do_compile(FunctionCallInfo fcinfo,
 	for (i = 0; i < function->fn_nargs; i++)
 		function->fn_argvarnos[i] = in_arg_varnos[i];
 
+	/* store the logical db which contains this function */
+	if (IS_TDS_CONN() && procStruct->provolatile != PROVOLATILE_IMMUTABLE && procStruct->proparallel == PROPARALLEL_UNSAFE)
+	{
+		function->fn_dbid = get_dbid_from_physical_schema_name(get_namespace_name(procStruct->pronamespace), true);
+		function->fn_search_path = get_local_schema_for_bbf_functions(procStruct->pronamespace, function->fn_dbid);
+	}
+	else
+	{
+		function->fn_dbid = InvalidDbid;
+		function->fn_search_path = NULL;
+	}
+
 	pltsql_finish_datums(function);
 
 	/* Debug dump for completed functions */
@@ -1103,6 +1123,8 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	function->fn_retbyval = true;
 	function->fn_rettyplen = sizeof(int32);
 	function->fn_tupdesc = NULL;
+	function->fn_dbid = InvalidDbid;
+	function->fn_search_path = NULL;
 
 	/*
 	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
@@ -2593,6 +2615,10 @@ pltsql_build_datatype(Oid typeOid, int32 typmod,
 
 	typ = build_datatype(typeTup, typmod, collation, origtypname);
 
+	/* Check whether datatype is collatable, if yes then assign database level collation to it */
+	if (OidIsValid(typ->collation))
+		typ->collation = tsql_get_database_or_server_collation_oid_internal(false);
+
 	ReleaseSysCache(typeTup);
 
 	return typ;
@@ -3238,4 +3264,35 @@ reset_cached_batch()
 	while (cur_handle_id > 0)
 		delete_cached_batch(cur_handle_id--);
 	cur_handle_id = 1;
+}
+
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid)
+{
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	char  			*func_dbo_schema;
+
+	if (!IS_TDS_CONN() || !DbidIsValid(dbid))
+		return NULL;
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
+	{
+		func_schema_name = get_namespace_name(proc_nsp_oid);
+		func_dbo_schema = get_dbo_schema_name(get_db_name(dbid));
+
+		new_search_path = psprintf(PLTSQL_SEARCH_PATH_BUFFER,
+									quote_identifier(func_schema_name),
+									quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
+		
+		pfree(func_schema_name);
+		pfree(func_dbo_schema);
+	}
+
+	return new_search_path;
 }

@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "schemacmds.h"
 #include "session.h"
+#include "pltsql.h"
 
 static bool has_ext_info(const char *schemaname);
 
@@ -30,15 +31,16 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 	bool	   *new_record_nulls;
 	HeapTuple	tuple;
 	int16		db_id = get_cur_db_id();
+	NameData    schemaname_namedata;
 
 	/*
 	 * orig_name will be provided only when queryString is not valid. e.g
-	 * CREATE LOGICLA DATABASE
+	 * CREATE LOGICAL DATABASE
 	 */
 	if (!orig_name)
 	{
 		if (stmt->location != -1 && queryString)
-			orig_name = extract_identifier(queryString + stmt->location);
+			orig_name = extract_identifier(queryString + stmt->location, NULL);
 		else
 			orig_name = "";
 	}
@@ -50,8 +52,9 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 
 	new_record = palloc0(sizeof(Datum) * namespace_ext_num_cols);
 	new_record_nulls = palloc0(sizeof(bool) * namespace_ext_num_cols);
+	namestrcpy(&schemaname_namedata, stmt->schemaname);
 
-	new_record[0] = CStringGetDatum(stmt->schemaname);
+	new_record[0] = NameGetDatum(&schemaname_namedata);
 	new_record[1] = Int16GetDatum(db_id);
 	new_record[2] = CStringGetTextDatum(orig_name);
 	new_record[3] = CStringGetTextDatum("{}");	/* place holder */
@@ -73,9 +76,6 @@ del_ns_ext_info(const char *schemaname, bool missing_ok)
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 
-	if (get_namespace_oid(schemaname, missing_ok) == InvalidOid)
-		return;
-
 	rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	ScanKeyInit(&scanKey,
 				Anum_namespace_ext_namespace,
@@ -90,9 +90,10 @@ del_ns_ext_info(const char *schemaname, bool missing_ok)
 	{
 		systable_endscan(scan);
 		table_close(rel, RowExclusiveLock);
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not drop schema created under PostgreSQL dialect: \"%s\"", schemaname)));
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("Could not drop schema created under PostgreSQL dialect: \"%s\"", schemaname)));
 		return;
 	}
 

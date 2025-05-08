@@ -9,7 +9,7 @@ jobs:
       INSTALL_DIR: psql
 
     name: Build and test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -24,11 +24,14 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_FROM}}
+          engine_version: 16.1
 
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres-older.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
+        with:
+          version: 4.9.3
 
       - uses: actions/checkout@v2
         with:
@@ -95,7 +98,7 @@ jobs:
       - name: Build vector Extension
         run: |
           cd ..
-          export VECTOR_VERSION="0.5.1"
+          export VECTOR_VERSION="0.7.2"
           sudo apt-get install wget
           wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz
           tar -xvzf v${VECTOR_VERSION}.tar.gz
@@ -104,20 +107,30 @@ jobs:
           sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         shell: bash
 
+      - uses: actions/checkout@v2
+
       - name: Install extensions
         id: install-extensions-older
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-        
-      - uses: actions/checkout@v2
+
+      - name: Save cache
+        if: always() && steps.build-extensions-older.outcome == 'success'
+        uses: ./.github/composite-actions/save-ccache
 
       - name: Build and run tests for Postgres engine using latest engine
         id: build-modified-postgres-newer
         if: always() && steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile new ANTLR
+        id: compile-new-antlr
+        if: always() && steps.build-modified-postgres-newer.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
 
       - name: Set env variables and build extensions
         id: build-extensions-newer
+        if: always() && steps.compile-new-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
@@ -131,11 +144,12 @@ jobs:
           ulimit -c unlimited
           cd ~
           ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET track_functions = 'pl';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
+          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run JDBC Tests
@@ -145,11 +159,11 @@ jobs:
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
-          mvn test
+          mvn -B -ntp test
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log
           path: ~/psql/data/logfile
@@ -167,14 +181,14 @@ jobs:
 
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-run-summary.log
           path: test/JDBC/Info/upgrade-run-summary.log
 
       - name: Upload Output Diff
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: upgrade-output-diff.diff
           path: test/JDBC/Info/upgrade-output-diff.diff

@@ -61,6 +61,11 @@ Seq Scan on babel4264
   Filter: (flag1 = '1'::"bit")
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.171 ms
+~~END~~
+
 
 set babelfish_showplan_all off
 go
@@ -83,6 +88,11 @@ Seq Scan on babel4264
   Filter: (date1 = '1955-12-13'::date)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.898 ms
+~~END~~
+
 
 SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as datetime2)
 go
@@ -93,6 +103,11 @@ Seq Scan on babel4264
   Filter: ((date1)::datetime2 = '1955-12-13 12:43:10'::datetime2)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.235 ms
+~~END~~
+
 
 SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as smalldatetime)
 go
@@ -101,6 +116,11 @@ text
 Query Text: SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as smalldatetime)
 Seq Scan on babel4264
   Filter: (date1 = '1955-12-13 12:43:00'::smalldatetime(0) without time zone)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.210 ms
 ~~END~~
 
 
@@ -125,6 +145,11 @@ Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = 10)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.603 ms
+~~END~~
+
 
 SELECT * from babel4264 where dollars = 10.0
 go
@@ -133,6 +158,11 @@ text
 Query Text: SELECT * from babel4264 where dollars = 10.0
 Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = 10.0)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.543 ms
 ~~END~~
 
 
@@ -145,6 +175,11 @@ Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = '2147483650'::bigint)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.268 ms
+~~END~~
+
 
 SELECT * from babel4264 where dollars = '10.12'
 go
@@ -153,6 +188,11 @@ text
 Query Text: SELECT * from babel4264 where dollars = '10.12'
 Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = '10.1200'::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
 ~~END~~
 
 
@@ -165,6 +205,11 @@ Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = '10.1235'::fixeddecimal)
 ~~END~~
 
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
+~~END~~
+
 
 SELECT * from babel4264 where dollars = cast('10' as varchar(30))
 go
@@ -173,6 +218,11 @@ text
 Query Text: SELECT * from babel4264 where dollars = cast('10' as varchar(30))
 Seq Scan on babel4264
   Filter: ((dollars)::fixeddecimal = '10.0000'::fixeddecimal)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.241 ms
 ~~END~~
 
 

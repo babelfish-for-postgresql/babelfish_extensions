@@ -77,7 +77,7 @@ select * from grant_connect_db1.dbo.grant_connect_t1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The server principal "grant_connect_abc" is not able to access the database "grant_connect_db1" under the current security context)~~
+~~ERROR (Message: permission denied for table grant_connect_t1)~~
 
 
 -- tsql
@@ -91,6 +91,14 @@ go
 -- should succeed because the grant_connect_db1 has guest user and that's enabled.
 use grant_connect_db1;
 go
+
+select has_dbaccess('grant_connect_db1');
+go
+~~START~~
+int
+1
+~~END~~
+
 
 select user_name();
 go
@@ -182,6 +190,9 @@ go
 grant connect to grant_connect_abc
 go
 
+ALTER USER grant_connect_abc WITH NAME = grant_connect_abc_new;
+go
+
 -- tsql  user=grant_connect_abc password=Babel123
 -- should succeed because login has a user for grant_connect_db1 and it is enabled
 use grant_connect_db1
@@ -191,7 +202,14 @@ select user_name();
 go
 ~~START~~
 nvarchar
-grant_connect_abc
+grant_connect_abc_new
 ~~END~~
 
+
+select has_dbaccess('grant_connect_db1');
+go
+~~START~~
+int
+1
+~~END~~
 

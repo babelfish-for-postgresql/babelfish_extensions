@@ -10,15 +10,14 @@
 
 all
 
+# TODO
+ignore#!#charindex_and_replace_CIAI_collations
+
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
-
-# TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
-ignore#!#tds_faultinjection
-ignore#!#babel_tds_fault_injection
 
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
@@ -46,8 +45,61 @@ ignore#!#sys-table_types-before-dep-vu-cleanup
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-prepare
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-verify
 ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-cleanup
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-prepare
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-verify
+ignore#!#GRANT_SCHEMA-before-15_9-16_5-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
+ignore#!#sys-systypes-before-16-2-vu-prepare
+ignore#!#sys-systypes-before-16-2-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4078-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-3938-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-prepare
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-verify
+ignore#!#BABEL-3221-before-16_4-or-15_9-vu-cleanup
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-4641-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL_OBJECT_ID-before-16_5-or-15_9-vu-cleanup
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-prepare
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-verify
+ignore#!#case_insensitive_collation-before-16_5-or-15_9-vu-cleanup
+ignore#!#host_id-before-16_5-or-15_9-vu-prepare
+ignore#!#host_id-before-16_5-or-15_9-vu-verify
+ignore#!#host_id-before-16_5-or-15_9-vu-cleanup
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-prepare
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-verify
+ignore#!#objectpropertyex-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-verify
+ignore#!#BABEL-CASE_EXPR-before-16_5-or-15_9-vu-cleanup
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-prepare
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-verify
+ignore#!#BABEL-CASE_EXPR-before-16_6-vu-cleanup
+ignore#!#BABEL-2736-before-16_5-vu-prepare
+ignore#!#BABEL-2736-before-16_5-vu-verify
+ignore#!#BABEL-2736-before-16_5-vu-cleanup
+ignore#!#BABEL-2736-before-15_3-vu-prepare
+ignore#!#BABEL-2736-before-15_3-vu-verify
+ignore#!#BABEL-2736-before-15_3-vu-cleanup
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-prepare
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-verify
+ignore#!#smalldatetime_date_cmp-before-15_5-16_1-vu-cleanup
+ignore#!#restricted_procedures-vu-prepare
+ignore#!#restricted_procedures-vu-verify
+ignore#!#restricted_procedures-vu-cleanup
+ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-prepare
+ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-verify
+ignore#!#babel_datetime-before-15_12-or-16_8-or-17_4-vu-cleanup
+ignore#!#fixeddecimal_modulo-vu-prepare
+ignore#!#fixeddecimal_modulo-vu-verify
+ignore#!#fixeddecimal_modulo-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -192,6 +244,12 @@ ignore#!#babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2-vu-verify
 ignore#!#babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2-vu-cleanup
 ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-prepare
 ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-verify
+ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-prepare
+ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-verify
+ignore#!#sys-all_sql_modules-before-15_7-or-16_2-dep-vu-cleanup
+ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-prepare
+ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-verify
+ignore#!#sys-sql_modules-before-15_7-or-16_2-dep-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
@@ -207,8 +265,6 @@ ignore#!#babel_index_nulls_order-before-15-5-vu-cleanup
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-prepare
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-verify
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-cleanup
-
-# These tests are meant for upgrade scenario prior to (potential) 15_7 or 16_3 release
 
 ignore#!#BABEL-404-before-15_7-or-16_3-vu-prepare
 ignore#!#BABEL-404-before-15_7-or-16_3-vu-verify
@@ -235,9 +291,6 @@ ignore#!#load_road
 ignore#!#load_tenk
 ignore#!#load_stud_emp
 ignore#!#load_student
-ignore#!#temp_tables_concurrent-vu-cleanup
-ignore#!#temp_tables_concurrent-vu-prepare
-ignore#!#temp_tables_concurrent-vu-verify
 
 # These tests are meant for upgrade scenario prior to 14_12 or 15_7 or 16_3 release
 ignore#!#BABEL-4641-before-16_3-or-15_7-or-14_12-vu-prepare
@@ -252,6 +305,47 @@ ignore#!#BABEL-4863-before-16_3-or-15_7-or-14_12-vu-cleanup
 ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-prepare
 ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-verify
 ignore#!#babel_726-before-14_12-or-15_7-or-16_3-vu-cleanup
+ignore#!#BABEL-621-after-14_12-before-15-vu-prepare
+ignore#!#BABEL-621-after-14_12-before-15-vu-verify
+ignore#!#BABEL-621-after-14_12-before-15-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-prepare
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-verify
+ignore#!#sys-host_name-before-15_8-or-16_4-vu-cleanup
+ignore#!#left-before-15_8-or-16_4-vu-prepare
+ignore#!#left-before-15_8-or-16_4-vu-verify
+ignore#!#left-before-15_8-or-16_4-vu-cleanup
+ignore#!#right-before-15_8-or-16_4-vu-prepare
+ignore#!#right-before-15_8-or-16_4-vu-verify
+ignore#!#right-before-15_8-or-16_4-vu-cleanup
+ignore#!#ltrim-before-15_8-or-16_4-vu-prepare
+ignore#!#ltrim-before-15_8-or-16_4-vu-verify
+ignore#!#ltrim-before-15_8-or-16_4-vu-cleanup
+ignore#!#rtrim-before-15_8-or-16_4-vu-prepare
+ignore#!#rtrim-before-15_8-or-16_4-vu-verify
+ignore#!#rtrim-before-15_8-or-16_4-vu-cleanup
+ignore#!#trim-before-15_8-or-16_4-vu-prepare
+ignore#!#trim-before-15_8-or-16_4-vu-verify
+ignore#!#trim-before-15_8-or-16_4-vu-cleanup
+ignore#!#upper_lower-before-15_8-or-16_4-vu-prepare
+ignore#!#upper_lower-before-15_8-or-16_4-vu-verify
+ignore#!#upper_lower-before-15_8-or-16_4-vu-cleanup
+ignore#!#sys-data_spaces-before-16-4-vu-prepare
+ignore#!#sys-data_spaces-before-16-4-vu-verify
+ignore#!#sys-data_spaces-before-16-4-vu-cleanup
+ignore#!#sys-filegroups-before-16-4-vu-prepare
+ignore#!#sys-filegroups-before-16-4-vu-verify
+ignore#!#sys-filegroups-before-16-4-vu-cleanup
+ignore#!#translate-before-15_8-or-16_4-vu-prepare
+ignore#!#translate-before-15_8-or-16_4-vu-verify
+ignore#!#translate-before-15_8-or-16_4-vu-cleanup
+ignore#!#substring-before-15_8-or-16_4-vu-prepare
+ignore#!#substring-before-15_8-or-16_4-vu-verify
+ignore#!#substring-before-15_8-or-16_4-vu-cleanup
+ignore#!#stuff-before-15_8-or-16_4-vu-prepare
+ignore#!#stuff-before-15_8-or-16_4-vu-verify
+ignore#!#stuff-before-15_8-or-16_4-vu-cleanup
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
 ignore#!#BABEL-4279-vu-prepare
@@ -283,4 +377,158 @@ ignore#!#newid_before_14_12_or_15_7_or_16_3-vu-cleanup
 ignore#!#newid-vu-prepare
 ignore#!#newid-vu-verify
 ignore#!#newid-vu-cleanup
+ignore#!#newid_before_15_8_or_16_4-vu-prepare
+ignore#!#newid_before_15_8_or_16_4-vu-verify
+ignore#!#newid_before_15_8_or_16_4-vu-cleanup
 
+ignore#!#babel_4328_datetime-before-16_3-vu-prepare
+ignore#!#babel_4328_datetime-before-16_3-vu-verify
+ignore#!#babel_4328_datetime-before-16_3-vu-cleanup
+ignore#!#babel_4328_datetime2-before-16_3-vu-prepare
+ignore#!#babel_4328_datetime2-before-16_3-vu-verify
+ignore#!#babel_4328_datetime2-before-16_3-vu-cleanup
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-prepare
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-verify
+ignore#!#babel_4328_datetimeoffset-before-16_3-vu-cleanup
+
+ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
+ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
+
+ignore#!#catalogs_dbo_sys_schema-upgrade-vu-prepare
+ignore#!#catalogs_dbo_sys_schema-upgrade-vu-verify
+ignore#!#catalogs_dbo_sys_schema-upgrade-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 15_8 or 16_4 release
+ignore#!#reverse-before-15_8-or-16_4-vu-prepare
+ignore#!#reverse-before-15_8-or-16_4-vu-verify
+ignore#!#reverse-before-15_8-or-16_4-vu-cleanup
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-prepare
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-verify
+ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-prepare
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-verify
+ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-cleanup
+ignore#!#replicate-before-15_8-or-16_4-vu-prepare
+ignore#!#replicate-before-15_8-or-16_4-vu-verify
+ignore#!#replicate-before-15_8-or-16_4-vu-cleanup
+ignore#!#replace-before-15_8-or-16_4-vu-prepare
+ignore#!#replace-before-15_8-or-16_4-vu-verify
+ignore#!#replace-before-15_8-or-16_4-vu-cleanup
+ignore#!#BABEL_4330-before-15_8-or-16_4-vu-prepare
+ignore#!#BABEL_4330-before-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-prepare
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-before-15_8-or-16_4-vu-cleanup
+
+
+# These tests are meant for upgrade scenario prior to 15_9 or 16_5 release
+ignore#!#alter-procedure-15_8-or-16_4-vu-prepare
+ignore#!#alter-procedure-15_8-or-16_4-vu-verify
+ignore#!#alter-procedure-15_8-or-16_4-vu-cleanup
+ignore#!#string_agg-before-15_5-or-14_10-vu-prepare
+ignore#!#string_agg-before-15_5-or-14_10-vu-verify
+ignore#!#string_agg-before-15_5-or-14_10-vu-cleanup
+ignore#!#string_agg-before-15_9-or-16_5-vu-prepare
+ignore#!#string_agg-before-15_9-or-16_5-vu-verify
+ignore#!#string_agg-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-cleanup
+ignore#!#getdate-before-15_9-or-16_5-vu-prepare
+ignore#!#getdate-before-15_9-or-16_5-vu-verify
+ignore#!#string_agg-before-14_5-vu-prepare
+ignore#!#string_agg-before-14_5-vu-verify
+ignore#!#string_agg-before-14_5-vu-cleanup
+ignore#!#string_agg_within-16_4-vu-prepare
+ignore#!#string_agg_within-16_4-vu-verify
+ignore#!#string_agg_within-16_4-vu-cleanup
+ignore#!#concat-before-15_9-or-16_5-vu-prepare
+ignore#!#concat-before-15_9-or-16_5-vu-verify
+ignore#!#concat-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_9-or-16_5-vu-prepare
+ignore#!#concat_ws-before-15_9-or-16_5-vu-verify
+ignore#!#concat_ws-before-15_9-or-16_5-vu-cleanup
+ignore#!#concat_ws-before-15_5-or-14_10-vu-prepare
+ignore#!#concat_ws-before-15_5-or-14_10-vu-verify
+ignore#!#concat_ws-before-15_5-or-14_10-vu-cleanup
+ignore#!#xml_exist-before-16_5-vu-prepare
+ignore#!#xml_exist-before-16_5-vu-verify
+ignore#!#xml_exist-before-16_5-vu-cleanup
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-prepare
+ignore#!#BABEL-3166-before-16_5-or-15_9-vu-verify
+ignore#!#forjsonauto-before-16_5-vu-prepare
+ignore#!#forjsonauto-before-16_5-vu-verify
+ignore#!#forjsonauto-before-16_5-vu-cleanup
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-prepare
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-verify
+ignore#!#BABEL-5059-before-14_7-or-15_2-vu-cleanup
+
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-prepare
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-verify
+ignore#!#BABEL_OBJECT_DEFINITION_before_16_5-vu-cleanup
+ignore#!#bbf_view_def_before_16_5-vu-prepare
+ignore#!#bbf_view_def_before_16_5-vu-verify
+ignore#!#bbf_view_def_before_16_5-vu-cleanup
+ignore#!#routines_definition_before_16_5-vu-prepare
+ignore#!#routines_definition_before_16_5-vu-verify
+ignore#!#routines_definition_before_16_5-vu-cleanup
+ignore#!#sys-all_sql_modules_before_16_5-vu-prepare
+ignore#!#sys-all_sql_modules_before_16_5-vu-verify
+ignore#!#sys-all_sql_modules_before_16_5-vu-cleanup
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-prepare
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-verify
+ignore#!#sys-all_sql_modules-dep_before_16_5-vu-cleanup
+ignore#!#sys-sql_modules_before_16_5-vu-prepare
+ignore#!#sys-sql_modules_before_16_5-vu-verify
+ignore#!#sys-sql_modules_before_16_5-vu-cleanup
+ignore#!#sys-sql_modules-dep_before_16_5-vu-prepare
+ignore#!#sys-sql_modules-dep_before_16_5-vu-verify
+ignore#!#sys-sql_modules-dep_before_16_5-vu-cleanup
+ignore#!#babel-4475_before_16_5-vu-prepare
+ignore#!#babel-4475_before_16_5-vu-verify
+ignore#!#babel-4475_before_16_5-vu-cleanup
+ignore#!#BABEL-5119_before_16_5-vu-prepare
+ignore#!#BABEL-5119_before_16_5-vu-verify
+ignore#!#BABEL-5119_before_16_5-vu-cleanup
+ignore#!#BABEL-5059_before_16_5-vu-prepare
+ignore#!#BABEL-5059_before_16_5-vu-verify
+ignore#!#BABEL-5059_before_16_5-vu-cleanup
+ignore#!#cast_nvarchar_test_before_16_5-vu-prepare
+ignore#!#cast_nvarchar_test_before_16_5-vu-verify
+ignore#!#cast_nvarchar_test_before_16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-cleanup
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-prepare
+ignore#!#declare_atatglobalvars_upgrade-before-16_5-vu-verify
+
+ignore#!#trim-before-15_12-or-16_8-vu-prepare
+ignore#!#trim-before-15_12-or-16_8-vu-verify
+ignore#!#trim-before-15_12-or-16_8-vu-cleanup
+ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-prepare
+ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-verify
+ignore#!#test_conv_float_to_varchar_char_before_17_4-vu-cleanup
+ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-prepare
+ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-verify
+ignore#!#babel_index_nulls_order-before-16_8-or-17_4-vu-cleanup
+ignore#!#object_ownership-before-16_8-or-17_4-vu-prepare
+ignore#!#object_ownership-before-16_8-or-17_4-vu-verify
+ignore#!#object_ownership-before-16_8-or-17_4-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_5 or 16_9 release
+ignore#!#test_constraint_like-17-4-or-16-8-vu-prepare
+ignore#!#test_constraint_like-17-4-or-16-8-vu-verify
+ignore#!#test_constraint_like-17-4-or-16-8-vu-cleanup
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
+ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-prepare
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-verify
+ignore#!#test_conv_int_to_varbinary_binary_before_16_4_or_15_8-vu-cleanup
+ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-prepare
+ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-verify
+ignore#!#test_conv_int_to_varbinary_binary_before_17_5_or_16_9-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to 17_6 or 16_10 release
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-prepare
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-verify
+ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-cleanup
+ignore#!#test_constraint_like-16-6-vu-prepare
+ignore#!#test_constraint_like-16-6-vu-verify
+ignore#!#test_constraint_like-16-6-vu-cleanup

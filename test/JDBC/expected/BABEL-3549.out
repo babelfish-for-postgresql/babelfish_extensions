@@ -64,6 +64,52 @@ GO
 USE master
 GO
 
+-- tsql
+DROP DATABASE babel_3549_db1
+GO
+
+-- tsql user=babel_3549_login1 password=12345678
+-- Tests for db level collation
+SELECT SUSER_NAME()
+GO
+~~START~~
+nvarchar
+babel_3549_login1
+~~END~~
+
+
+CREATE DATABASE babel_3549_db1 COLLATE BBF_Unicode_CP1_CI_AI
+GO
+USE babel_3549_db1
+GO
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('master', 'babel_3549_db1');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+master#!#<NULL>#!#jdbc_user#!#<NULL>#!#120
+babel_3549_db1#!#<NULL>#!#babel_3549_login1#!#<NULL>#!#120
+~~END~~
+
+
+USE master
+GO
+
+-- tsql user=babel_3549_login2 password=12345678
+SELECT SUSER_NAME()
+GO
+~~START~~
+nvarchar
+babel_3549_login2
+~~END~~
+
+
+USE babel_3549_db1
+GO
+
+USE master
+GO
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)

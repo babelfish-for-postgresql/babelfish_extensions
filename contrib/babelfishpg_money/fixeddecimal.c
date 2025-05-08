@@ -161,6 +161,7 @@ PG_FUNCTION_INFO_V1(fixeddecimalpl);
 PG_FUNCTION_INFO_V1(fixeddecimalmi);
 PG_FUNCTION_INFO_V1(fixeddecimalmul);
 PG_FUNCTION_INFO_V1(fixeddecimaldiv);
+PG_FUNCTION_INFO_V1(fixeddecimalmod);
 PG_FUNCTION_INFO_V1(fixeddecimalabs);
 PG_FUNCTION_INFO_V1(fixeddecimallarger);
 PG_FUNCTION_INFO_V1(fixeddecimalsmaller);
@@ -233,6 +234,9 @@ static int64 scanfixeddecimal(const char *str, int *precision, int *scale);
 static FixedDecimalAggState *makeFixedDecimalAggState(FunctionCallInfo fcinfo);
 static void fixeddecimal_accum(FixedDecimalAggState *state, int64 newval);
 static int64 int8fixeddecimal_internal(int64 arg, const char *typename);
+extern PGDLLEXPORT char *fixeddecimal2str(int64 val, char *buffer,
+										  int64 fixeddecimal_multiplier,
+										  int64 fixeddecimal_scale);
 
 /***********************************************************************
  **
@@ -393,12 +397,31 @@ pg_int64tostr_zeropad(char *str, int64 value, int64 padding)
  *		Prints the fixeddecimal 'val' to buffer as a string.
  *		Returns a pointer to the end of the written string.
  */
-static char *
-fixeddecimal2str(int64 val, char *buffer)
+char *
+fixeddecimal2str(int64 val, char *buffer,
+				int64 fixeddecimal_multiplier,
+				int64 fixeddecimal_scale)
 {
 	char	   *ptr = buffer;
-	int64		integralpart = val / FIXEDDECIMAL_MULTIPLIER;
-	int64		fractionalpart = val % FIXEDDECIMAL_MULTIPLIER;
+	int64		integralpart;
+	int64		fractionalpart;
+
+	/*
+	 * By default, fixeddecimal contains 4 digits after decimal but if we only need
+	 * 2 decimal points, remove last two decimal digits, round off remaining value.
+	 */
+	if (fixeddecimal_scale < 4)
+	{
+		int64		scale_factor = FIXEDDECIMAL_MULTIPLIER / (fixeddecimal_multiplier * 10);
+		int64		last_digit = abs(val / scale_factor) % 10;
+
+		val = val / fixeddecimal_multiplier;
+		if (last_digit >= 5)
+			val = val >= 0 ? val + 1LL : val - 1LL;
+	}
+
+	integralpart = val / fixeddecimal_multiplier;
+	fractionalpart = val % fixeddecimal_multiplier;
 
 	if (val < 0)
 	{
@@ -414,7 +437,7 @@ fixeddecimal2str(int64 val, char *buffer)
 	}
 	ptr = pg_int64tostr(ptr, integralpart);
 	*ptr++ = '.';
-	ptr = pg_int64tostr_zeropad(ptr, fractionalpart, FIXEDDECIMAL_SCALE);
+	ptr = pg_int64tostr_zeropad(ptr, fractionalpart, fixeddecimal_scale);
 	return ptr;
 }
 
@@ -811,7 +834,7 @@ fixeddecimalout(PG_FUNCTION_ARGS)
 {
 	int64		val = PG_GETARG_INT64(0);
 	char		buf[MAXINT8LEN + 1];
-	char	   *end = fixeddecimal2str(val, buf);
+	char	   *end = fixeddecimal2str(val, buf, FIXEDDECIMAL_MULTIPLIER, FIXEDDECIMAL_SCALE);
 
 	PG_RETURN_CSTRING(pnstrdup(buf, end - buf));
 }
@@ -1748,6 +1771,32 @@ fixeddecimaldiv(PG_FUNCTION_ARGS)
 				 errmsg("fixeddecimal out of range")));
 
 	PG_RETURN_INT64((int64) result);
+}
+
+Datum
+fixeddecimalmod(PG_FUNCTION_ARGS)
+{
+	int64		dividend = PG_GETARG_INT64(0);
+	int64		divisor = PG_GETARG_INT64(1);
+
+	if (divisor == 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+	}
+
+	/*
+»    * Some machines throw a floating-point exception for INT_MIN % -1, which
+»    * is a bit silly since the correct answer is perfectly well-defined,
+»    * namely zero. Refer to function int4mod in Postgres.
+»    */
+	if (divisor == -1)
+		PG_RETURN_INT64(0);
+
+	PG_RETURN_INT64(dividend % divisor);
 }
 
 /* fixeddecimalabs()
@@ -2930,7 +2979,7 @@ fixeddecimalaggstateout(PG_FUNCTION_ARGS)
 	char		buf[MAXINT8LEN + 1 + MAXINT8LEN + 1];
 	char	   *p;
 
-	p = fixeddecimal2str(state->sumX, buf);
+	p = fixeddecimal2str(state->sumX, buf, FIXEDDECIMAL_MULTIPLIER, FIXEDDECIMAL_SCALE);
 	*p++ = ':';
 	p = pg_int64tostr(p, state->N);
 

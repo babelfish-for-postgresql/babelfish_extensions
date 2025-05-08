@@ -1,5 +1,5 @@
-SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_tables_vu_prepare_t1'
-SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'ISC_TABLES_VU_PREPARE_T1'
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE 'isc_tables%' ORDER BY TABLE_NAME
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE 'ISC_TABLES%' ORDER BY TABLE_NAME
 GO
 
 -- Table types should not be a result

@@ -12,6 +12,10 @@ JOIN sys.events e ON e.object_id = ao.object_id
 WHERE name = 'sys_events_vu_prepare_trig3'
 GO
 
+select o.name, case when o.object_id = e.object_id and o.object_id = object_id(o.name) then 'equal' else 'not equal' end
+from sys.objects o join sys.events e on o.object_id = e.object_id where o.name = 'sys_events_vu_prepare_trig3';
+go
+
 USE master
 GO
 

@@ -5,7 +5,7 @@ jobs:
   run-babelfish-jdbc-tests-with-parallel-query-mode:
     env:
       INSTALL_DIR: psql
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -62,7 +62,7 @@ jobs:
           cd test/JDBC/
           # set env variable isParallelQueryMode to true to let jdbc know not to run tests of file parallel_query_jdbc_schedule
           export isParallelQueryMode=true
-          mvn test
+          mvn -B -ntp test
           # reset env variable
           unset isParallelQueryMode
 
@@ -70,11 +70,11 @@ jobs:
         id: cleanup
         if: always() && steps.install-extensions.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="babelfish_db" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: postgres-log
           path: ~/psql/data/logfile
@@ -92,14 +92,14 @@ jobs:
       
       - name: Upload Run Summary 
         if: always() && steps.test-file-rename == 'success'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
       
       - name: Upload Output Diff
         if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff

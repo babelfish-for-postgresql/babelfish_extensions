@@ -1,7 +1,7 @@
 SELECT * FROM host_id_4272_v1
 go
 ~~START~~
-text
+varchar
 HOST_ID() returns number
 ~~END~~
 
@@ -9,7 +9,7 @@ HOST_ID() returns number
 EXEC host_id_4272_p1
 go
 ~~START~~
-text
+varchar
 HOST_ID() returns number
 ~~END~~
 

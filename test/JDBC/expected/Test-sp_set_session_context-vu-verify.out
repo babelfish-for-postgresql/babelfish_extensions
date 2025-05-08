@@ -299,7 +299,7 @@ EXEC sp_set_session_context 'long_val', @val
 SELECT case when CAST( sys.session_context(N'long_val') AS varchar(8000)) = @val  then 'true' else 'false' end
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 
@@ -309,7 +309,7 @@ EXEC sp_set_session_context 'long_val_unicode', @val
 SELECT case when CAST( session_context(N'long_val_unicode') AS varchar(8000)) = @val then 'true' else 'false' end
 GO
 ~~START~~
-text
+varchar
 true
 ~~END~~
 

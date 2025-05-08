@@ -1,0 +1,80 @@
+DROP FUNCTION babel_4839_reverse_itvf_func
+GO
+
+DROP FUNCTION babel_4839_reverse_dep_func
+GO
+
+DROP PROCEDURE babel_4839_reverse_dep_proc
+GO
+
+DROP VIEW babel_4839_reverse_dep_view
+GO
+
+DROP TABLE babel_4839_reverse_UDT
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_1
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_2
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_3
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_4
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_5
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_6
+GO
+
+DROP VIEW babel_4839_reverse_dep_view_7
+GO
+
+DROP TYPE dbo.babel_4839_reverse_varUDT
+GO
+
+DROP TYPE dbo.babel_4839_reverse_imageUDT
+GO
+
+DROP TABLE babel_4839_reverse_text
+GO
+
+DROP TABLE babel_4839_reverse_image
+GO
+
+DROP TABLE babel_4839_reverse_arabic_ci_ai
+GO
+
+DROP TABLE babel_4839_reverse_arabic_cs_as
+GO
+
+DROP TABLE babel_4839_reverse_arabic_ci_as
+GO
+
+DROP TABLE babel_4839_reverse_chinese_prc_ci_ai
+GO
+
+DROP TABLE babel_4839_reverse_chinese_prc_cs_as
+GO
+
+DROP TABLE babel_4839_reverse_chinese_prc_ci_as
+GO
+
+DROP TABLE babel_4839_reverse_t5
+GO
+
+DROP TABLE babel_4839_reverse_t4
+GO
+
+DROP TABLE babel_4839_reverse_t3
+GO
+
+DROP TABLE babel_4839_reverse_t2
+GO
+
+DROP TABLE babel_4839_reverse_t1
+GO

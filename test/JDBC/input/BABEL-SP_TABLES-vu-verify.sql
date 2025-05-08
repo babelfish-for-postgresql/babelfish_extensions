@@ -75,7 +75,7 @@ go
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s_tables2'
 go
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452 -- Fixed in BABEL-4128
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[op]tables2'
 go
 
@@ -83,6 +83,52 @@ exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[^o]tables2'
 go
 
 exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[o-p]tables2'
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sotables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]sptables5', @table_type = "'VIEW'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_]s[_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[_][_]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[__]tables2', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t[[_]]sptables', @table_type = "'TABLE'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test\_escape_chars\_sp_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test\_escape\_chars\_sp\_tables', @table_type = "'TABLE'"
+GO
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_test_escape_chars_sp_tables', @table_type = "'TABLE'"
+GO
+
+-- table type with mixed case
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'Table'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'tAbLe'"
+go
+
+exec sp_tables @table_name = 'babel_sp_tables_vu_prepare_t_s[_]tables2', @table_type = "'table'"
 go
 
 -- unnamed invocation

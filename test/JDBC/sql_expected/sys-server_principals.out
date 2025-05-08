@@ -26,8 +26,25 @@ sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~
 
 
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
+FROM sys.server_principals 
+WHERE name =  'public';
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#bit
+public#!#R#!#SERVER_ROLE#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0
+~~END~~
+
+
 CREATE LOGIN serv_principal_test WITH PASSWORD = 'test';
 GO
+
+CREATE LOGIN [public] WITH PASSWORD = 'test';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role name "public" is reserved)~~
+
 
 SELECT name, type, type_desc, default_database_name, default_language_name
 FROM sys.server_principals 
@@ -50,5 +67,84 @@ GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
+~~END~~
+
+
+select name, principal_id, sid, type, type_desc
+from sys.server_principals where name = 'public'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#char#!#nvarchar
+public#!#2#!#00000002#!#R#!#SERVER_ROLE
+~~END~~
+
+
+select name, principal_id, sid,
+suser_name(principal_id) as suser_name,
+suser_sid(name) as suser_sid,
+suser_sname(sid) as suser_sname,
+suser_sname(suser_sid(name)) as name2
+from sys.server_principals
+where name = 'public'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#public#!#00000002#!#public#!#public
+~~END~~
+
+
+select suser_sid('public')
+GO
+~~START~~
+varbinary
+00000002
+~~END~~
+
+
+select name, principal_id, sid, suser_name(principal_id) as suser_name, suser_sid(name) as suser_sid, suser_sname(sid) as suser_sname, suser_sname(suser_sid(name)) as name2 from sys.server_principals where name = 'pUbLiC'
+GO
+~~START~~
+varchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar
+public#!#2#!#00000002#!#public#!#00000002#!#public#!#public
+~~END~~
+
+
+select suser_name(002)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select suser_name(0000002)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select suser_sid('PuBlIC')
+GO
+~~START~~
+varbinary
+00000002
+~~END~~
+
+
+select user_name(1)
+GO
+~~START~~
+nvarchar
+public
+~~END~~
+
+
+select user_id('public')
+GO
+~~START~~
+int
+1
 ~~END~~
 

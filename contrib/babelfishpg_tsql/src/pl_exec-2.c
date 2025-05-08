@@ -5,6 +5,7 @@
 
 #include "access/table.h"
 #include "access/attmap.h"
+#include "access/nbtree.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
@@ -16,12 +17,20 @@
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
+#include "pltsql_partition.h"
 #include "table_variable_mvcc.h"
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "rolecmds.h"
 #include "pl_explain.h"
+#include "pltsql.h"
+#include "rolecmds.h"
 #include "session.h"
+#include "parser/scansup.h"
+#include "parser/parse_oper.h"
+#include "src/include/lib/qunique.h"
+#include "utils/varlena.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -56,6 +65,8 @@ static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
+static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
+static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -113,13 +124,19 @@ bool		called_from_tsql_insert_execute = false;
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
 bool		insert_bulk_keep_nulls = false;
+bool		insert_bulk_check_constraints = false;
 
 static int	prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 static int	prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
 static bool prev_insert_bulk_keep_nulls = false;
+static bool prev_insert_bulk_check_constraints = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
+
+/* Enclose a user-defined @@var or @var# name in delimiters */
+static char *delimit_tsql_atatuservar(const char *src);
+static void set_search_path_for_sp_procs(char *schema);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -820,66 +837,21 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
-	bool		need_path_reset = false;
+	char 	*save_db_name = get_cur_db_name();
 
-	Oid			current_user_id = GetUserId();
-	char	   *cur_dbname = get_cur_db_name();
-
-	/* fetch current search_path */
-	char	   *old_search_path = NULL;
-	char	   *new_search_path;
-
-	estate->db_name = NULL;
-	if (stmt->proc_name == NULL)
-		stmt->proc_name = "";
-
-	if (stmt->is_cross_db)
-	{
-		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
-		char	   *user = get_user_for_database(stmt->db_name);
-
-		estate->db_name = stmt->db_name;
-		if (user)
-			SetCurrentRoleId(GetSessionUserId(), false);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, stmt->db_name)));
-	}
+	/* whether procedure was created WITH RECOMPILE */
+	bool created_with_recompile = false;		
 
 	/*
-	 * "sp_describe_first_result_set" needs special handling. It is a sys
-	 * function and satisfies the below condition and it appends "master_dbo"
-	 * to the search path which is not required for sys functions.
+	 * We need to disable the explain gucs incase of sp_reset_connection
+	 * execution otherwise we will get explain output for it which is
+	 * not intended.
 	 */
-	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
+	if (strcmp(stmt->proc_name, "sp_reset_connection") == 0)
 	{
-		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& ((stmt->schema_name == NULL || stmt->schema_name[0] == (char) '\0') || strcmp(stmt->schema_name, "dbo") == 0))
-		{
-			if (!old_search_path)
-			{
-				List	   *path_oids = fetch_search_path(false);
-
-				old_search_path = flatten_search_path(path_oids);
-				list_free(path_oids);
-			}
-			new_search_path = psprintf("%s, master_dbo", old_search_path);
-
-			/* Add master_dbo to the new search path */
-			(void) set_config_option("search_path", new_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-			SetCurrentRoleId(GetSessionUserId(), false);
-			need_path_reset = true;
-		}
+		pltsql_explain_only = false;
+		pltsql_explain_analyze = false;
 	}
-	if (stmt->schema_name != NULL && stmt->schema_name[0] != (char) '\0')
-		estate->schema_name = stmt->schema_name;
-	else
-		estate->schema_name = NULL;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -896,6 +868,28 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* for EXEC as part of inline code under INSERT ... EXECUTE */
 		Tuplestorestate *tss;
 		DestReceiver *dest;
+
+		if (IS_TDS_CONN())
+		{
+			if (strncmp(stmt->proc_name, "sp_", 3) == 0 &&
+				(stmt->schema_name == NULL || strcmp(stmt->schema_name, "dbo") == 0))
+			{
+
+				if (stmt->db_name != NULL)
+					set_cur_user_db_and_path(stmt->db_name, false);
+
+				set_search_path_for_sp_procs(stmt->schema_name);
+			}
+			else if (stmt->db_name != NULL && strcmp(stmt->db_name, save_db_name) != 0 &&
+					 stmt->schema_name != NULL && strcmp(stmt->schema_name, "sys") == 0)
+			{
+				/*
+				 * For sys pltsql routines and sp_ procs switch to
+				 * the database specified while calling it.
+				 */
+				set_cur_user_db_and_path(stmt->db_name, false);
+			}
+		}
 
 		if (plan == NULL)
 			plan = prepare_stmt_exec(estate, estate->func, stmt, estate->atomic);
@@ -941,7 +935,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doesn't allow call procedure in function */
+		/* T-SQL doesn't allow procedure calls in a function */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
@@ -1012,6 +1006,19 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			get_param_mode(stmt->params, stmt->paramno, &parammodes);
 
 			ReleaseSysCache(func_tuple);
+			
+			/* handle RECOMPILE */
+			created_with_recompile = is_created_with_recompile(funcexpr->funcid);	
+			if (stmt->exec_with_recompile || created_with_recompile)
+			{
+				/*
+				 * Note: it appears not to be necessary to restore the previous value
+				 * of plan_cache_mode
+				 */
+				(void) set_config_option("plan_cache_mode", "force_custom_plan",
+								  GUC_CONTEXT_CONFIG,
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);			
+			}			
 
 			/*
 			 * Begin constructing row Datum
@@ -1261,18 +1268,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		if (need_path_reset)
-		{
-			(void) set_config_option("search_path", old_search_path,
-									 PGC_USERSET, PGC_S_SESSION,
-									 GUC_ACTION_SAVE, true, 0, false);
-			SetCurrentRoleId(current_user_id, false);
-		}
+		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
+			set_cur_user_db_and_path(save_db_name, false);
 
-		if (stmt->is_cross_db)
-			SetCurrentRoleId(current_user_id, false);
+		pfree(save_db_name);
 
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
@@ -1285,28 +1286,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			expr->plan = NULL;
 			SPI_freeplan(plan);
 		}
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	if (stmt->is_cross_db)
-		SetCurrentRoleId(current_user_id, false);
-
-	if (need_path_reset)
-	{
-		(void) set_config_option("search_path", old_search_path,
-								 PGC_USERSET, PGC_S_SESSION,
-								 GUC_ACTION_SAVE, true, 0, false);
-		SetCurrentRoleId(current_user_id, false);
-	}
-
-	if (expr->plan && !expr->plan->saved)
-	{
-		SPIPlanPtr	plan = expr->plan;
-
-		expr->plan = NULL;
-		SPI_freeplan(plan);
-	}
 
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
@@ -1346,6 +1327,7 @@ static int
 exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 {
 	char	   *tblname;
+	char	   *tblname_create;
 	char	   *query;
 	PLtsql_tbl *var = (PLtsql_tbl *) (estate->datums[stmt->dno]);
 	int			rc;
@@ -1370,8 +1352,8 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 
 		/*
 		 * If the original refname was already >=63 characters (the max limit of PG identifiers),
-		 * then the above construction of tblname will be >63 characters, which will violate the
-		 * max length of PG identiefiers and cause issues down the road. Fix this by truncating
+		 * then the above construction of tblname will be >63 characters, which will exceed the
+		 * max length of PG identifiers and cause issues down the road. Fix this by truncating
 		 * tblname so that adding the "_<@@nestlevel>" suffix will be exactly 63 characters.
 		 */
 		if (strlen(tblname) >= NAMEDATALEN)
@@ -1382,12 +1364,20 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 			tblname = psprintf("%s_%d", tblname, estate->nestlevel);
 		}
 		
+		/*
+		 * Add delimiters for valid T-SQL variable names like @@var or @var#
+		 */
+		if (is_tsql_atatuservar(tblname))
+			tblname_create = psprintf("[%s]", tblname);
+		else
+			tblname_create = psprintf("%s", tblname);			
+					
 		if (stmt->tbltypname)
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-							 tblname, stmt->tbltypname);
+							 tblname_create, stmt->tbltypname);
 		else
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
-							 tblname, stmt->coldef);
+							 tblname_create, stmt->coldef);
 
 		/*
 		 * If a table with the same name already exists, we should just use
@@ -1456,7 +1446,15 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
 	expr = palloc0(sizeof(PLtsql_expr));
-	expr->query = psprintf("select * from %s", tbl->tblname);
+	
+	/*
+	 * Add delimiters for valid T-SQL variable names like @@var or @var#
+	 */	
+	if (is_tsql_atatuservar(tbl->tblname))
+		expr->query = psprintf("select * from [%s]", tbl->tblname);
+	else
+		expr->query = psprintf("select * from %s", tbl->tblname);
+
 	expr->plan = NULL;
 	expr->paramnos = NULL;
 	expr->rwparam = -1;
@@ -1491,21 +1489,21 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	LOCAL_FCINFO(fcinfo, 1);
 
+	/*
+	 * First we evaluate the string expression. Its result is the
+	 * querystring we have to execute.
+	 */
+	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
+	if (isnull)
+	{
+		/* No op in case of null */
+		return PLTSQL_RC_OK;
+	}
+	save_nestlevel = pltsql_new_guc_nest_level();
+	scope_level = pltsql_new_scope_identity_nest_level();
+
 	PG_TRY();
 	{
-		/*
-		 * First we evaluate the string expression. Its result is the
-		 * querystring we have to execute.
-		 */
-		query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
-		if (isnull)
-		{
-			/* No op in case of null */
-			return PLTSQL_RC_OK;
-		}
-		save_nestlevel = pltsql_new_guc_nest_level();
-		scope_level = pltsql_new_scope_identity_nest_level();
-
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1530,12 +1528,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	PG_FINALLY();
 	{
 		/* Restore past settings */
-		cur_db_name = get_cur_db_name();
-		if (strcmp(cur_db_name, old_db_name) != 0)
-			set_session_properties(old_db_name);
-
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
+
+		cur_db_name = get_cur_db_name();
+		if (strcmp(cur_db_name, old_db_name) != 0)
+			set_cur_user_db_and_path(old_db_name, false);
 	}
 	PG_END_TRY();
 
@@ -1784,6 +1782,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	int			ret = 0;
+
+	/* T-SQL doesn't allow procedure calls in a function */
+	if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("Only functions can be executed within a function")));
+	}
 
 	switch (stmt->sp_type_code)
 	{
@@ -2476,6 +2482,179 @@ is_char_identpart(char c)
 }
 
 /*
+ * Check for allowed chars in @variable name
+ * ToDo: support non-standard ASCII chars (Unicode ranges)
+ * and align with is_identifier_char()
+ */
+static inline bool
+is_variable_name_char(unsigned char c)
+{
+	bool valid = (
+					isalpha(c) ||
+					isdigit(c) ||
+					c == '_' || 
+					c == '@' || 
+					c == '$' || 
+					c == '#'
+				);
+
+	return valid;	
+}
+
+/*
+ * Put delimiters around a T-SQL variable/parameter that is
+ * named '@@var' or contains a hash, e.g. '@var#'.
+ * Without delimiters, the backend will raise an error.
+ * This is used for the parameter argument of sp_executesql, so the input
+ * string may contain multiple names, e.g.: @par1 int, @par2 varchar(20), ...
+ * This function calls palloc() to allocate a new string and returns a pointer
+ * to this string.
+ */
+static char *
+delimit_tsql_atatuservar(const char *src)
+{
+	char *s = (char *) src;
+	char *varname_start = NULL;
+	bool add_delimiter = false;
+	
+	/* 
+	 * Reserving twice the amount of space of the input string: since the shortest possible
+	 * parameter definition is 5 characters ('@@p x' , where x would be the type), this will 
+	 * always be enough for adding delimiters.
+	 * Note that there can be multiple parameter names in the input string.
+	 */
+	char *result = (char *) palloc(sizeof(char)*strlen(src)*2);	
+	char *tgt = result;
+
+	while (*s)
+	{
+		/* Look for start of variable name, which is always '@' */
+		if (*s != '@')
+		{
+			*tgt++ = *s++;
+			continue;
+		}
+
+		/* Start of variable name found */
+		add_delimiter = false;
+
+		varname_start = s;
+
+		/* Name starting with @@ */
+		if (*(s+1))
+		{
+			if (*(s+1) == '@')
+			{
+				add_delimiter = true;
+			}
+		}
+
+		/* Find end of variable name */
+		while (*s)
+		{
+			/* Check for allowed chars in @variable name */
+			if (is_variable_name_char(*s))
+			{
+				/* Name contains # */
+				if (*s == '#')
+				{
+					add_delimiter = true;
+				}
+
+				s++;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if (varname_start != src)
+		{
+			/* 
+			 * Do not add delimiters if the name is already delimited.
+			 * Both square brackets and double quotes are used as delimiters for variable names.
+			 */
+			if ((*(varname_start-1) == '[') || (*(varname_start-1) == '"'))
+			{
+				add_delimiter = false;
+			}
+		}
+
+		// Add delimiters to the name if required
+		if (add_delimiter) *tgt++ = '[';
+		while (varname_start != s)
+		{
+			*tgt++ = *varname_start++;
+		}
+		if (add_delimiter) *tgt++ = ']';
+	} /* while */
+
+	*tgt = '\0';
+	return result;
+}
+
+/*
+ * Determine whether the passed name is a T-SQL variable/parameter name that is
+ * named '@@var' or contains a hash, e.g. '@var#'.
+ */
+bool
+is_tsql_atatuservar(const char *varname)
+{
+	char *s = (char *) varname;
+	bool is_atatuservar = false;
+
+	/* The variable names we're looking for are at least 3 chars */
+	if (strlen(varname) <= 2)
+	{
+		return false;
+	} 
+	
+	/* Variable name must start with '@' */
+	if (*s != '@')
+	{
+		return false;
+	}
+	
+	/* Starts with '@@' ? */
+	s++;
+	if (*s == '@')
+	{
+		is_atatuservar = true;
+	}	
+
+	while (*s)
+	{
+		/* Check for allowed chars in @variable name */
+		if (is_variable_name_char(*s))
+		{
+			/* Name contains # */
+			if (*s == '#')
+			{
+				is_atatuservar = true;
+			}
+
+			s++;
+		}
+		else
+		{
+			return false;
+		}
+	} /* while */
+	
+	/* 
+	 * The variable name should continue until end of string; if not, 
+	 * something is wrong
+	 *
+	 * NB: The assertion below is logically true given the loop above,
+	 * but kept in the code for clarity.
+	 */
+	Assert(*s == '\0');  
+	
+	return is_atatuservar;
+}
+
+/*
  * Read parameter definitions
  */
 void
@@ -2500,10 +2679,11 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	/*
 	 * Create a fake CREATE PROCEDURE statement to get the param definition
 	 * parse tree.
+	 * Delimiters will be applied around parameter names like @@par or @par#.
 	 */
 	initStringInfo(&proc_stmt);
 	appendStringInfoString(&proc_stmt, str1);
-	appendStringInfoString(&proc_stmt, paramdefstr);
+	appendStringInfoString(&proc_stmt, delimit_tsql_atatuservar(paramdefstr));
 	appendStringInfoString(&proc_stmt, str2);
 
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
@@ -2877,11 +3057,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	/*
-	 * Same as set_session_properties() but skips checks as they were done
-	 * before locking
-	 */
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	top_es_entry = exec_state_call_stack->next;
 	while (top_es_entry != NULL)
@@ -2898,14 +3074,19 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 			top_es_entry = top_es_entry->next;
 	}
 
-	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
-	/* send env change token to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
-		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
-	/* send message to user */
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
-
+	/*
+	 * In case of reset-connection we do not need to send the environment change token.
+	 */
+	if (!((*pltsql_protocol_plugin_ptr) && (*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag()))
+	{
+		snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+		/* send env change token to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
+			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
+		/* send message to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -2949,7 +3130,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 	/* error if new db is not valid and restore original db */
 	if (!DbidIsValid(new_db_id))
 	{
-		set_session_properties(initial_database_name);
+		set_cur_user_db_and_path(initial_database_name, true);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
@@ -2976,7 +3157,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	return PLTSQL_RC_OK;
 }
@@ -2992,11 +3173,12 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or securityadmin, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner
+					&& !is_member_of_role(GetSessionUserId(), get_securityadmin_oid()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Grantor does not have GRANT permission.")));
@@ -3163,6 +3345,11 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 		prev_insert_bulk_keep_nulls = insert_bulk_keep_nulls;
 		insert_bulk_keep_nulls = true;
 	}
+	if (stmt->check_constraints)
+	{
+		prev_insert_bulk_check_constraints = insert_bulk_check_constraints;
+		insert_bulk_check_constraints = true;
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -3184,31 +3371,29 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	struct	dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
 	Relation	rel;
 	TupleDesc	tupdesc;
-	char	*db_name = NULL;
-	char	*max_identity_value_str = NULL;
-	char	*query = NULL;
-	char	*attname;
-	char	*token;
+	char		*db_name = NULL;
+	char		*max_identity_value_str = NULL;
+	char		*query = NULL;
+	char		*attname;
+	char		*token;
 	const char	*schema_name;
-	const char	*nsp_name;
+	char		*nsp_name;
 	const char	*user;
-	const char	*guest_role_name;
-	const char	*dbo_role_name;
 	const char	*login;
-	int64	max_identity_value = 0;
-	int64	cur_identity_value = 0;
-	int	attnum;
-	int	rc = 0;
-	int64	reseed_value = 0;
-	Oid	nsp_oid;
-	Oid 	table_oid;
-	Oid	seqid = InvalidOid;
-	Oid	current_user_id = GetUserId();
-	volatile bool cur_value_is_null = true;
-	bool	login_is_db_owner;
+	int64		max_identity_value = 0;
+	int64		cur_identity_value = 0;
+	int		attnum;
+	int		rc = 0;
+	int64		reseed_value = 0;
+	Oid		nsp_oid;
+	Oid		table_oid;
+	Oid		seqid = InvalidOid;
+	Oid		current_user_id = GetUserId();
+	volatile bool	cur_value_is_null = true;
+	bool		login_is_db_owner;
 	StringInfoData msg;
-	bool	is_float_value;
-	bool    is_cross_db = false;
+	bool		is_float_value;
+	bool		is_cross_db = false;
 
 
 	if(dbcc_stmt.new_reseed_value)
@@ -3282,8 +3467,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		 * If schema_name is not provided, find default schema for current user
 		 * and get physical schema name
 		 */
-		guest_role_name = get_guest_role_name(db_name);
-		dbo_role_name = get_dbo_role_name(db_name);
+		char		*guest_role_name = get_guest_role_name(db_name);
+		char		*dbo_role_name = get_dbo_role_name(db_name);
 		
 		/* user will never be null here as cross-db calls are already handled */
 		Assert(user != NULL);
@@ -3301,6 +3486,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			nsp_name = get_physical_schema_name(db_name, schema_name);
 		}
+
+		pfree(guest_role_name);
+		pfree(dbo_role_name);
 	}
 	pfree(db_name);
 
@@ -3356,6 +3544,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			errmsg("'%s.%s' does not contain an identity column.",
 				nsp_name, dbcc_stmt.table_name)));
 	}
+	
+	pfree(nsp_name);
 
 	PG_TRY();
 	{
@@ -3544,7 +3734,7 @@ execute_bulk_load_insert(int ncol, int nrow,
 		/* Cleanup all the pointers. */
 		if (cstmt)
 		{
-			EndBulkCopy(cstmt->cstate);
+			EndBulkCopy(cstmt->cstate, false);
 			if (cstmt->attlist)
 				list_free_deep(cstmt->attlist);
 			if (cstmt->relation)
@@ -3556,10 +3746,12 @@ execute_bulk_load_insert(int ncol, int nrow,
 				pfree(cstmt->relation);
 			}
 			pfree(cstmt);
+			cstmt = NULL;
 		}
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_check_constraints = prev_insert_bulk_check_constraints;
 		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
 		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 
@@ -3588,27 +3780,15 @@ execute_bulk_load_insert(int ncol, int nrow,
 		 * In an error condition, the caller calls the function again to do
 		 * the cleanup.
 		 */
-		MemoryContext oldcontext;
+		/* Cleanup cstate. */
+		EndBulkCopy(cstmt->cstate, true);
 
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();
-		oldcontext = CurrentMemoryContext;
-
-		/*
-		 * If a transaction block is already in progress then abort it, else
-		 * rollback entire transaction.
-		 */
-		if (!IsTransactionBlockActive())
-		{
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-		}
-		else
-			pltsql_rollback_txn();
-		MemoryContextSwitchTo(oldcontext);
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_check_constraints = prev_insert_bulk_check_constraints;
 		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
 		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 
@@ -3742,15 +3922,10 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		Oid	role_oid;
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
-			rolname	= get_physical_user_name(dbname, grantee_name, false);
+			rolname	= get_physical_user_name(dbname, grantee_name, false, true);
 		else
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
-
-		/* Special database roles should throw an error. */
-		if (strcmp(grantee_name, "db_owner") == 0)
-			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 
 		if (!is_public && !OidIsValid(role_oid))
 		{
@@ -3770,11 +3945,21 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
+		/* Special database roles should throw an error. */
+		if (IS_FIXED_DB_PRINCIPAL(grantee_name))
+			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+
 		/*
 		 * If the login is not the db owner or the login is not the member of
-		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+		 * sysadmin or login is not the schema owner,
+		 * or current_user is not member of db_securityadmin fixed role
+		 * then it doesn't have the permission to GRANT/REVOKE.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) &&
+			!login_is_db_owner &&
+			!object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()) &&
+			!has_privs_of_role(GetUserId(), get_db_securityadmin_oid(dbname, false)))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
@@ -3794,7 +3979,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		else
 		{
 			/* For REVOKE statement, update privileges in the catalog. */
-			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
+			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, OBJ_SCHEMA))
 			{
 				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 				for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
@@ -3821,6 +4006,8 @@ static int
 exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
 	char *new_owner_is_user;
+	Oid 		save_userid;
+	int 		save_sec_context;
 	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
@@ -3873,9 +4060,29 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
 	}
-					
-	/* All validations done, perform the actual update */
-	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+
+	/* Save the previous user to be restored after granting dbo role to the login. */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+	PG_TRY();
+	{
+		/*
+		* Set current user to bbf_role_admin to grant roles.
+		*/
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		
+		/* Revoke dbo role from the previous owner */
+		grant_revoke_role_to_login(get_owner_of_db(stmt->db_name), get_dbo_role_name(stmt->db_name), NULL, false);
+
+		/* Grant dbo role to the new owner */
+		grant_revoke_role_to_login(stmt->new_owner_name, get_dbo_role_name(stmt->db_name), NULL, true);
+		update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 	return PLTSQL_RC_OK;
 }
 
@@ -4004,7 +4211,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
+				is_create ? CREATE_FULLTEXT_INDEX : DELETE_FULLTEXT_INDEX,
 				false,
 				PROCESS_UTILITY_QUERY,
 				NULL,
@@ -4016,4 +4223,439 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	CommandCounterIncrement();
 
 	return PLTSQL_RC_OK;
+}
+
+/*
+ * tsql_compare_values
+ *		Note: This function is used to sort the values in the array.
+ *		It compare two datum values using the function oid of comparator provided in arg,
+ *		it also sets the contains_duplicate flag in the context if duplicate
+ *		values are found.
+ *		Returns -1 if a < b, 1 if a > b and 0 if a == b.
+ */
+int
+tsql_compare_values(const void *a, const void *b, void *arg)
+{
+	Datum		*da = (Datum *) a;
+	Datum		*db = (Datum *) b;
+	int		result;
+
+	tsql_compare_context *cxt = (tsql_compare_context *) arg;
+
+	result = DatumGetInt32(OidFunctionCall2Coll(cxt->function_oid, cxt->colloid, *da, *db));
+	if (result == 0)
+		cxt->contains_duplicate = true;
+	return result;
+}
+
+/*
+ * check_create_or_drop_permission_for_partition_specifier
+ *	Checks if the current user has permission to create or drop a partition 
+ *	function or partition scheme. It allows only those logins that is either 
+ *	db owner or member of sysadmin.
+ */
+static void
+check_create_or_drop_permission_for_partition_specifier(const char *name, bool is_create, bool is_function)
+{
+	char		*dbname = get_cur_db_name();
+	Oid		session_user_id = GetSessionUserId();
+	char		*login = GetUserNameFromId(session_user_id, false);
+	bool		login_is_db_owner = false;
+
+	if (strncmp(login, get_owner_of_db(dbname), NAMEDATALEN) == 0)
+		login_is_db_owner = true;
+
+	if (!login_is_db_owner && !is_member_of_role(session_user_id, get_role_oid("sysadmin", false)) &&
+		!has_privs_of_role(GetUserId(), get_db_ddladmin_oid(dbname, false)))
+	{
+		if (is_create)
+			ereport(ERROR, 
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+					errmsg("User does not have permission to perform this action.")));
+		else
+			ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_OBJECT), 
+					errmsg("Cannot drop the partition %s '%s', because it does not exist or you do not have permission.", 
+							(is_function? "function": "scheme"), name)));
+	}
+
+	pfree(dbname);
+	pfree(login);
+}
+
+/*
+ * exec_stmt_partition_scheme
+ * 	 Handles the CREATE/DROP PARTITION FUNCTION statement.
+ */
+static int
+exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt)
+{
+	const char		*partition_function_name = stmt->function_name;
+	PLtsql_type		*typ = stmt->datatype;
+	List 			*arg = stmt->args;
+	bool 			isnull;
+	Oid			valtype;
+	int32			valtypmod;
+	Datum			tsql_type_datum;
+	char			*tsql_typename = NULL;
+	char			*collation = NULL;
+	Oid			collation_oid = InvalidOid;
+	bool			type_is_collatable;
+	Datum			*input_values;
+	Datum			*sql_variant_values;
+	ArrayType		*arr_value = NULL;
+	Oid			sql_variant_oid;
+	Oid			basetype_oid;
+	Oid			opclass_oid;
+	Oid			opfamily_oid;
+	Oid			cmpfunction_oid;
+	int			nargs;
+	HeapTuple		tuple;
+	Form_pg_type		typform;
+	int16			dbid = get_cur_db_id();
+	tsql_compare_context	cxt;
+	LOCAL_FCINFO(fcinfo, 1);
+
+	/* check if the login has necessary permissions for CREATE/DROP */
+	check_create_or_drop_permission_for_partition_specifier(partition_function_name, stmt->is_create, true);
+
+	if (!stmt->is_create) /* drop command */
+	{
+		/* delete entry from the sys.babelfish_partition_scheme catalog */
+		remove_entry_from_bbf_partition_function(dbid, partition_function_name);
+		/* make sure later statements in batch can see the updated catalog entry */
+		CommandCounterIncrement();
+		return PLTSQL_RC_OK;
+	}
+
+	/*
+	 * Otherwise, Create Command.
+	 */
+
+	/* check if given name is exceeding the allowed limit */
+	if (strlen(partition_function_name) > 128)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+	}
+
+	/*
+	 * Get collation oid if collation is specified.
+	 */
+	if (stmt->collation)
+	{
+		collation_oid = tsql_get_oid_from_collidx(tsql_find_collation_internal(tsql_translate_tsql_collation_to_bbf_collation(stmt->collation)));
+	
+		/* raise an error if specified collation is invalid */
+		if (!OidIsValid(collation_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Invalid collation '%s'.", stmt->collation)));
+	}
+
+	/* check if there is existing partition function with the given name in the current database */
+	if (partition_function_exists(dbid, partition_function_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				errmsg("There is already an object named '%s' in the database.", partition_function_name)));
+	}
+
+	/*
+	 * Try to find the TSQL type name for the input type and if it fails
+	 * and input type is DOMAIN type created in sys schema then
+	 * find the TSQL type name using the base type of DOMAIN.
+	 */
+	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = ObjectIdGetDatum(typ->typoid);
+	fcinfo->args[0].isnull = false;
+	tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+	if (tsql_type_datum)
+	{
+		tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
+	}
+	else
+	{
+		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typ->typoid));
+		typform = (Form_pg_type) GETSTRUCT(tuple);
+		if (OidIsValid(typform->typbasetype) && typform->typnamespace == get_namespace_oid("sys", false))
+		{
+			/* Input type is DOMAIN type created in sys schema. */
+			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
+			fcinfo->args[0].value = ObjectIdGetDatum(typform->typbasetype);
+			fcinfo->args[0].isnull = false;
+			tsql_type_datum = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
+			if (tsql_type_datum)
+			{
+				tsql_typename = text_to_cstring(DatumGetTextPP(tsql_type_datum));
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+	
+	/*
+	 * Check if datatype is supported or not, if tsql_typename is NULL
+	 * then it implies that type is User Defined Type.
+	 */
+	if (!tsql_typename || is_tsql_text_ntext_or_image_datatype(typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_geography_datatype) (typ->typoid) ||
+		(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typ->typoid) ||
+		typ->typoid == XMLOID) /* we don't have XML type specific to TSQL */
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The type '%s' is not valid for this operation.", typ->typname)));
+	}
+	/*
+	 * Types varchar(max), nvarchar(max), varbinary(max) are also not supported.
+	 */
+	else if (typ->atttypmod == -1 && is_tsql_datatype_with_max_scale_expr_allowed(typ->typoid))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The type '%s(max)' is not valid for this operation.", tsql_typename)));
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype) (typ->typoid))
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("The type '%s' is not yet supported for partition function in Babelfish.", tsql_typename)));
+
+	type_is_collatable = OidIsValid(typ->collation);
+
+	/*
+	 * Raise an error if collate clause is specified and datatype is not collatable.
+	 */
+	if (stmt->collation && !type_is_collatable)
+	{
+		
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 	errmsg("Expression type '%s' is invalid for COLLATE clause.", tsql_typename)));
+	}
+	/*
+	 * Use default database collation if collate clause is not specified and datatype is collatable.
+	 */
+	else if (stmt->collation == NULL && type_is_collatable)
+		collation_oid = tsql_get_database_or_server_collation_oid_internal(false);
+	
+	/* get collation name from collation oid when type is collatable */
+	if (type_is_collatable)
+		collation = get_collation_name(collation_oid);
+	
+	/* check if the given number of boundaries are exceeding allowed limit */
+	nargs = list_length(arg);
+	if (nargs >= MAX_PARTITIONS_LIMIT)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("CREATE/ALTER partition function failed as only a "
+					"maximum of %d partitions can be created.", MAX_PARTITIONS_LIMIT)));
+	}
+
+	input_values = palloc(nargs * sizeof(Datum));
+
+	for (volatile int i = 0; i < nargs; i++)
+	{
+		Datum val;
+
+		/* evaluate the value from the expr */
+		val = exec_eval_expr(estate, list_nth(arg, i), &isnull, &valtype, &valtypmod);
+
+		/* raise error for null value */
+		if (isnull)
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("NULL values are not allowed in partition function boundary values list.")));
+
+		/* 
+		 * implicitly convert range values to specified parameter type
+		 * and raise error with ordinal position if conversion fails
+		 */
+		PG_TRY();
+		{
+			input_values[i] = exec_cast_value(estate, val, &isnull,
+							valtype, valtypmod,
+							typ->typoid, typ->atttypmod);
+		}
+		PG_CATCH();
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("Could not implicitly convert range values type specified at ordinal %d to partition function parameter type.",
+						i+1)));
+		}
+		PG_END_TRY();
+	}
+
+	/*
+	 * Find oid of comparator function for input type, which will be used during the sorting.
+	 * Here, we are first finding the default operator class for the input type then using that
+	 * we are finding the operator family for that operator class and finally using that we are
+	 * finding the defined comparator function for that operator family.
+	 */
+	basetype_oid = getBaseType(typ->typoid);
+	opclass_oid = GetDefaultOpClass(basetype_oid, BTREE_AM_OID);
+	opfamily_oid = get_opclass_family(opclass_oid);
+	cmpfunction_oid = get_opfamily_proc(opfamily_oid, basetype_oid, basetype_oid,
+						BTORDER_PROC);
+
+	/* set the function oid of operator in tsql comparator context */
+	cxt.function_oid = cmpfunction_oid;
+	cxt.colloid = collation_oid;
+	cxt.contains_duplicate = false;
+
+	/* 
+	 * sort the datum values using quick sort, we don't need to worry about worst case
+	 * of quick sort here when the array is already sorted, the function qsort_arg()
+	 * itself first checks and returns the same array if values already sorted.
+	 */
+	qsort_arg(input_values, nargs, sizeof(Datum), tsql_compare_values, &cxt);
+
+	/* raise error if input contains duplicate value */
+	if (cxt.contains_duplicate)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Duplicate values are not allowed in partition function boundary values list.")));
+	}
+
+	sql_variant_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("sql_variant");
+	sql_variant_values = palloc(nargs * sizeof(Datum));
+	/* cast each value to sql_variant datatype */
+	for (int i = 0; i < nargs; i++)
+	{
+		sql_variant_values[i] = exec_cast_value(estate, input_values[i], &isnull,
+							typ->typoid, typ->atttypmod,
+							sql_variant_oid,
+							-1);
+	}
+
+	/* construct array object from the values which needs to inserted in the catalog */
+	arr_value = construct_array(sql_variant_values, nargs, sql_variant_oid,
+					-1, false, 'i');
+
+	/* add entry in the sys.babelfish_partition_function catalog */
+	add_entry_to_bbf_partition_function(dbid, partition_function_name, tsql_typename, stmt->is_right, arr_value, collation);
+
+	pfree(tsql_typename);
+	pfree(input_values);
+	pfree(sql_variant_values);
+	pfree(arr_value);
+	if (collation)
+		pfree(collation);
+
+	/* cleanup estate */
+	exec_eval_cleanup(estate);
+	
+	/* make sure later statements in batch can see the updated catalog entry */
+	CommandCounterIncrement();
+	return PLTSQL_RC_OK;
+}
+
+/*
+ * exec_stmt_partition_scheme
+ * 	 Handles the CREATE/DROP PARTITION SCHEME statement.
+ */
+static int
+exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt)
+{
+	const char *partition_scheme_name = stmt->scheme_name;
+	bool		next_used = false;
+	int		filegroups = stmt->filegroups;
+	char		*partition_func_name = stmt->function_name;
+	int16		dbid = get_cur_db_id();
+
+	/* check if the login has necessary permissions for CREATE/DROP */
+	check_create_or_drop_permission_for_partition_specifier(partition_scheme_name, stmt->is_create, false);
+
+	if (!stmt->is_create) /* drop command */
+	{
+		/* delete entry from the sys.babelfish_partition_scheme catalog */
+		remove_entry_from_bbf_partition_scheme(dbid, partition_scheme_name);
+		/* make sure later statements in batch can see the updated catalog entry */
+		CommandCounterIncrement();
+		return PLTSQL_RC_OK;
+	}
+	
+	/*
+	 * Otherwise, Create Command.
+	 */
+
+	/* check if given name is exceeding the allowed limit */
+	if (strlen(partition_scheme_name) > 128)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
+						partition_scheme_name)));
+	}
+
+	/* raise error if provided partition function doesn't exists in the current database */
+	if (!partition_function_exists(dbid, partition_func_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Invalid object name '%s'.", partition_func_name)));
+	}
+
+	/* 
+	 * perform next_used calculation check if it is specified
+	 * filegroups are sufficient for the partitions which 
+	 * will be created using the given partition function
+	 */
+	if (filegroups == -1) /* implies that ALL option was used */
+	{
+		next_used = true;
+	}
+	else
+	{
+		int	partition_count = get_partition_count(dbid, partition_func_name);
+		if (filegroups < partition_count)
+		{
+			ereport(ERROR, 
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("The associated partition function '%s' generates more partitions than there are file groups mentioned in the scheme '%s'.", 
+							partition_func_name, partition_scheme_name)));
+		}
+		else if (filegroups > partition_count)
+		{
+			next_used = true;
+		}
+	}
+
+	/* check if there is existing partition scheme with the given name in the current database */
+	if (partition_scheme_exists(dbid, partition_scheme_name))
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("There is already an object named '%s' in the database.", partition_scheme_name)));
+	}
+	/* add entry in the sys.babelfish_partition_scheme catalog */
+	add_entry_to_bbf_partition_scheme(dbid, partition_scheme_name, partition_func_name, next_used);
+
+	/* make sure later statements in batch can see the updated catalog entry */
+	CommandCounterIncrement();
+	return PLTSQL_RC_OK;
+}
+
+static void
+set_search_path_for_sp_procs(char *schema)
+{
+	char 		*dbo_schema = get_dbo_schema_name(get_current_pltsql_db_name());
+	char 		*new_search_path;
+
+	if (schema != NULL && strcmp(schema, "dbo") == 0)
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						quote_identifier(dbo_schema), "master_dbo");
+	else
+		new_search_path = psprintf("%s, sys, pg_catalog, %s",
+						get_current_db_search_path(), "master_dbo");
+
+	SetConfigOption("search_path", new_search_path,
+					PGC_SUSET, PGC_S_SESSION);
+
+	pfree(new_search_path);
+	pfree(dbo_schema);
 }

@@ -1,5 +1,4 @@
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = true;
 SELECT pg_reload_conf();
 GO
@@ -209,7 +208,7 @@ GRANT ALL ON db1.dummy_schema TO PUBLIC;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_db1" does not exist)~~
+~~ERROR (Message: schema "db1" does not exist)~~
 
 
 GRANT ALL ON babel1454.dummy_type TO PUBLIC;
@@ -248,7 +247,7 @@ DROP SCHEMA dummy_schema;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy_schema" does not exist)~~
+~~ERROR (Message: schema "dummy_schema" does not exist)~~
 
 
 -- Trigger
@@ -377,14 +376,14 @@ EXEC dummy.foo
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy" does not exist)~~
+~~ERROR (Message: schema "dummy" does not exist)~~
 
 
 EXEC db1.dummy.foo
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "db1_dummy" does not exist)~~
+~~ERROR (Message: schema "dummy" does not exist)~~
 
 
 --- Cleanup
@@ -400,7 +399,6 @@ DROP DATABASE db1;
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
 GO

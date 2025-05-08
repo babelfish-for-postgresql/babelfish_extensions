@@ -400,6 +400,30 @@ GO
 EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
 
+-- create index with len
+CREATE INDEX sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghi ON sp_rename_vu_table1(sp_rename_vu_t1_col1_new);
+GO
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghi',
+        'sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghijkl', 'INDEX';
+GO
+
+SELECT name FROM sys.indexes WHERE name like 'sp_rename_indexnamegreaterthan64%';
+GO
+
+DROP INDEX sp_rename_indexnamegreaterthan64abcdefghijklmnopqrstuvwxyzabcdefghijkl ON sp_rename_vu_table1;
+GO
+
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
+GO
+
+IF OBJECT_ID('babelfish_split_identifier_view') IS NULL
+BEGIN
+    EXEC sp_executesql N'
+        CREATE VIEW babelfish_split_identifier_view AS SELECT * FROM sys.babelfish_split_identifier(''ABC.DEF.GHI'')';
+END
+GO
+
+SELECT * FROM babelfish_split_identifier_view;
 GO

@@ -6,7 +6,7 @@ drop user test_user;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: role "master_test_user" does not exist)~~
+~~ERROR (Message: Cannot drop the user 'test_user', because it does not exist or you do not have permission.)~~
 
 
 drop login [babel\aduser1];

@@ -25,7 +25,7 @@ jobs:
 
   run-babelfish-code-coverage-for-pull_request:
     needs: [run-jdbc-tests, run-odbc-tests, run-dotnet-tests, run-python-tests, run-isolation-tests]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     
     - uses: actions/checkout@v2
@@ -37,31 +37,31 @@ jobs:
       run: |
         sudo apt-get install lcov
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       id: download-jdbc-coverage
       with:
         name:  coverage-babelfish-extensions-jdbc
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       id: download-dotnet-coverage
       with:
         name: coverage-babelfish-extensions-dotnet
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       id: download-odbc-coverage
       with:
         name: coverage-babelfish-extensions-odbc
         path: contrib/
     
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       id: download-python-coverage
       with:
         name: coverage-babelfish-extensions-python
         path: contrib/
         
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       id: download-isolation-coverage
       with:
         name: coverage-babelfish-extensions-isolation

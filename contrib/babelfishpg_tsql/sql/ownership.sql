@@ -41,7 +41,7 @@ CREATE TABLE sys.babelfish_function_ext (
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	definition sys.NTEXT DEFAULT NULL,
-	PRIMARY KEY(nspname, funcsignature)
+	PRIMARY KEY(funcname, nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
@@ -178,54 +178,6 @@ BEGIN
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysname,
-                                                    IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
-                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
-                                                    IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@location" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
-                                                    IN "@catalog" sys.sysname DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
-                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                              IN "@locallogin" sys.sysname)
-  AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_dropserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys.sysname)
-  AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
-
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
-  AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
-
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 END
@@ -259,7 +211,16 @@ CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
 DECLARE
-	reserved_roles varchar[] := ARRAY['sysadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 'msdb_dbo', 'msdb_guest', 'msdb_db_owner'];
+	reserved_roles varchar[] := ARRAY['sysadmin', 'securityadmin', 'dbcreator',
+									  'master_dbo', 'master_guest', 'master_db_owner',
+									  'master_db_accessadmin', 'master_db_securityadmin',
+									  'master_db_datareader', 'master_db_datawriter', 'master_db_ddladmin',
+									  'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 
+									  'tempdb_db_accessadmin', 'tempdb_db_securityadmin',
+									  'tempdb_db_datareader', 'tempdb_db_datawriter', 'tempdb_db_ddladmin',
+									  'msdb_dbo', 'msdb_guest', 'msdb_db_owner',
+									  'msdb_db_accessadmin', 'msdb_db_securityadmin',
+									  'msdb_db_datareader', 'msdb_db_datawriter', 'msdb_db_ddladmin'];
 	user_id  oid := -1;
 	db_name  name := NULL;
 	role_name varchar;
@@ -285,11 +246,17 @@ BEGIN
 		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
 	END IF;
 
+	EXECUTE format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
+	EXECUTE format('CREATE ROLE dbcreator CREATEDB INHERIT PASSWORD NULL');
 	EXECUTE format('CREATE ROLE bbf_role_admin CREATEDB CREATEROLE INHERIT PASSWORD NULL');
-	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
+	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin', CURRENT_DATABASE());
 	EXECUTE format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
 	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE format('GRANT dbcreator TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
+	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
@@ -297,6 +264,8 @@ BEGIN
 	CALL sys.babel_initialize_logins(sa_name);
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_initialize_logins('bbf_role_admin');
+	CALL sys.babel_initialize_logins('securityadmin');
+	CALL sys.babel_initialize_logins('dbcreator');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
 	-- run analyze for all babelfish catalog
@@ -312,10 +281,16 @@ BEGIN
 	CALL sys.babel_drop_all_logins();
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_function_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_scheme_seq RESTART';
 	DROP OWNED BY sysadmin;
 	DROP ROLE sysadmin;
 	DROP OWNED BY bbf_role_admin;
 	DROP ROLE bbf_role_admin;
+	DROP OWNED BY securityadmin;
+	DROP ROLE securityadmin;
+	DROP OWNED BY dbcreator;
+	DROP ROLE dbcreator;
 END
 $$;
 
@@ -359,13 +334,29 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SY
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
-CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
-OR Ext.orig_loginname = suser_name()
-OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
-OR Ext.type = 'R')
-AND Ext.type != 'Z';
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
+  OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(2 AS INT) AS principal_id, 
+CAST(CAST(2 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
@@ -401,11 +392,26 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '')
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '');
 
+CREATE OR REPLACE FUNCTION sys.bbf_is_role_member(member NAME, rolename NAME)
+RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'bbf_is_role_member' LANGUAGE C;
+
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS
 SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+-- PG reserves these oid > 16383 AND oid < 16400 for PG specific internal roles.
+-- Any change here in the oid should be reflected in sys.database_role_members view as well.
+CAST(
+  CASE Ext.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Base.oid
+  END AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -431,10 +437,17 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME()
+  AND (Ext.orig_username IN ('dbo', 'db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin', 'guest') -- system users should always be visible
+  OR bbf_is_role_member(current_user, Ext.rolname)) -- Current user should be able to see users it has permission of
 UNION ALL
 SELECT
 CAST(name AS SYS.SYSNAME) AS name,
-CAST(-1 AS INT) AS principal_id,
+CAST(
+  CASE name
+    WHEN 'public' THEN 1
+    WHEN 'INFORMATION_SCHEMA' THEN 3
+    WHEN 'sys' THEN 4
+  END AS INT) AS principal_id,
 CAST(type AS CHAR(1)) as type,
 CAST(
   CASE
@@ -480,8 +493,16 @@ CAST(Ext.orig_loginname AS sys.nvarchar(128)) AS name,
 CAST('SERVER ROLE' AS sys.nvarchar(128)) AS type,
 CAST ('GRANT OR DENY' as sys.nvarchar(128)) as usage
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE Ext.type = 'R' AND
-(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER'));
+WHERE Ext.type = 'R'
+AND bbf_is_member_of_role_nosuper(sys.suser_id(), Base.oid)
+UNION ALL
+SELECT
+CAST(2 AS INT) AS principal_id,
+CAST(CAST(2 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
+CAST('SERVER ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
+CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE;
+
 
 GRANT SELECT ON sys.login_token TO PUBLIC;
 
@@ -493,6 +514,7 @@ CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.orig_username AS SYS.NVARCHAR(128)) AS NAME,
 CAST(CASE
 WHEN Ext.type = 'U' THEN 'WINDOWS LOGIN'
+WHEN Ext.type = 'R' THEN 'ROLE'
 ELSE 'SQL USER' END
 AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
@@ -501,12 +523,12 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = sys.DB_NAME()
-AND Ext.rolname = CURRENT_USER
-AND Ext.type in ('S','U')
+AND ((Ext.rolname = CURRENT_USER AND Ext.type in ('S','U')) OR
+((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) != 'dbo' AND Ext.type = 'R' AND pg_has_role(current_user, Ext.rolname, 'MEMBER')))
 UNION ALL
 SELECT
-CAST(-1 AS INT) AS principal_id,
-CAST(CAST(-1 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(1 AS INT) AS principal_id,
+CAST(CAST(1 AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST('public' AS SYS.NVARCHAR(128)) AS NAME,
 CAST('ROLE' AS SYS.NVARCHAR(128)) AS TYPE,
 CAST('GRANT OR DENY' as SYS.NVARCHAR(128)) as USAGE
@@ -561,8 +583,26 @@ GRANT SELECT ON sys.sysusers TO PUBLIC;
 -- DATABASE_ROLE_MEMBERS
 CREATE OR REPLACE VIEW sys.database_role_members AS
 SELECT
-CAST(Auth1.oid AS INT) AS role_principal_id,
-CAST(Auth2.oid AS INT) AS member_principal_id
+CAST(
+  CASE Ext1.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth1.oid
+  END AS INT) AS role_principal_id,
+CAST(
+  CASE Ext2.orig_username
+    WHEN 'db_owner' THEN 16384
+    WHEN 'db_accessadmin' THEN 16385
+    WHEN 'db_securityadmin' THEN 16386
+    WHEN 'db_ddladmin' THEN 16387
+    WHEN 'db_datareader' THEN 16390
+    WHEN 'db_datawriter' THEN 16391
+    ELSE Auth2.oid
+  END AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
 INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
 INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
@@ -829,3 +869,161 @@ SELECT
 	END)
 	ORDER BY class, class_desc, major_id, minor_id, ep.orig_name;
 GRANT SELECT ON sys.extended_properties TO PUBLIC;
+
+/* Shows the list of objects where the object owner is not same as schema owner */
+/* Covers tables, views, functions, procedures, sequences, types */
+CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
+RETURNS TABLE (
+    schema_name name,
+    schema_owner_name name,
+    object_name name,
+    object_owner_name name,
+    object_type text
+) AS
+$$
+BEGIN
+    RETURN QUERY
+    WITH common_schemas AS (
+      SELECT
+          b.nspname AS schema_name
+      FROM
+          sys.babelfish_namespace_ext b
+      JOIN
+          pg_namespace n ON b.nspname = n.nspname
+      JOIN
+          pg_roles r ON n.nspowner = r.oid
+      JOIN
+          sys.babelfish_authid_user_ext u ON r.rolname = u.rolname
+      WHERE
+          u.orig_username <> 'db_owner'
+    )
+    -- First query for tables, views, index, types and sequences
+    -- table types are considered as tables
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        c.relname,
+        r2.rolname,
+        CASE c.relkind
+            WHEN 'r' THEN 'table'
+            WHEN 'p' THEN 'table'
+            WHEN 'v' THEN 'view'
+            WHEN 'S' THEN 'sequence'
+            ELSE c.relkind::text
+        END
+    FROM
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN
+        pg_class c ON n.oid = c.relnamespace
+    JOIN
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN
+        pg_roles r2 ON c.relowner = r2.oid
+    WHERE 
+        c.relkind IN ('r', 'p', 'v', 'S')
+        AND c.relname NOT LIKE '@%' -- Ignore temporary tables
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Second query for functions and procedures
+    -- triggers are considered as functions
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        p.proname,
+        r2.rolname,
+        CASE p.prokind
+            WHEN 'f' THEN 'function'
+            WHEN 'p' THEN 'procedure'
+            ELSE p.prokind::text
+        END
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_proc p ON n.oid = p.pronamespace
+    JOIN 
+        pg_roles r2 ON p.proowner = r2.oid
+    WHERE 
+        p.prokind IN ('f', 'p')
+        AND r1.rolname <> r2.rolname
+    UNION ALL
+    -- Third query is for types(excluding table types)
+    SELECT 
+        cs.schema_name::name,
+        r1.rolname,
+        t.typname,
+        r2.rolname,
+        'type'::text
+    FROM 
+        common_schemas cs
+    JOIN 
+        pg_namespace n ON cs.schema_name = n.nspname
+    JOIN 
+        pg_roles r1 ON n.nspowner = r1.oid
+    JOIN 
+        pg_type t ON n.oid = t.typnamespace
+    JOIN 
+        pg_roles r2 ON t.typowner = r2.oid
+    WHERE 
+        t.typtype = 'd' -- Only show domain data type
+        AND r1.rolname <> r2.rolname
+    ORDER BY 1, 3;  -- Order by schema_name, object_name using column positions
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+ * Gives a list of ALTER statements that, when executed, 
+ * will change the ownership of all the objects to match their schema owners.
+ */
+CREATE OR REPLACE FUNCTION sys.generate_alter_ownership_statements()
+RETURNS TABLE (alter_statement text)
+AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM sys.get_schema_object_ownership()
+    LOOP
+        CASE obj.object_type
+            WHEN 'table' THEN
+                alter_statement := format('ALTER TABLE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'view' THEN
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = true;';
+                RETURN NEXT;
+
+                alter_statement := format('ALTER VIEW %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+
+                alter_statement := 'SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;';
+                RETURN NEXT;
+            WHEN 'sequence' THEN
+                alter_statement := format('ALTER SEQUENCE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'function' THEN
+                alter_statement := format('ALTER FUNCTION %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'procedure' THEN
+                alter_statement := format('ALTER PROCEDURE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            WHEN 'type' THEN
+                alter_statement := format('ALTER TYPE %I.%I OWNER TO %I;',
+                                          obj.schema_name, obj.object_name, obj.schema_owner_name);
+                RETURN NEXT;
+            ELSE
+                alter_statement := format('-- Unsupported object type: %s for %I.%I',
+                                          obj.object_type, obj.schema_name, obj.object_name);
+                RETURN NEXT;
+        END CASE;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;

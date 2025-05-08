@@ -89,3 +89,95 @@ GO
 
 DROP DATABASE db1
 GO
+
+CREATE DATABASE db1 COLLATE BBF_Unicode_CP1_CI_AI;
+GO
+
+USE db1
+GO
+
+create table tbl_1 (a int)
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'tbl_1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'tbl_1';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#tbl_1#!#TABLE#!#<NULL>
+~~END~~
+
+
+USE master
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'tbl_1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'tbl_1';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+create table tbl_2 (a int)
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'tbl_2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'tbl_2';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#tbl_2#!#TABLE#!#<NULL>
+~~END~~
+
+
+USE db1
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'tbl_2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'tbl_2';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+drop table tbl_1;
+GO
+
+USE master
+GO
+
+drop table tbl_2;
+GO
+
+DROP DATABASE db1
+GO

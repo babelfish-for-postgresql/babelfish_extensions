@@ -193,10 +193,23 @@ CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
     AS $$
     DECLARE
         byte bytea;
+        srid_flag text;
     BEGIN
         byte := (SELECT sys.bytea_helper($1));
-        byte := substring(byte from 6);
-        byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+        -- Checking the Geometry type currently we support only POINT type -> type = 1
+        IF encode(substring(byte from 2 for 3), 'hex') = encode(E'\\x010000', 'hex') THEN
+            srid_flag := encode(substring(byte from 5 for 1), 'hex');
+            -- Check if the given geometry has SRID flag
+            IF srid_flag = encode(E'\\x20', 'hex') THEN
+                byte := substring(byte from 6);
+                byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+            ELSEIF srid_flag = encode(E'\\x00', 'hex') AND LENGTH(byte) = 21 THEN
+                -- Signifies SRID = 0, pass the driver expected wkb manually
+                byte := substring(byte from 6); -- contains only wkb point coords
+                -- prepend 4 byte SRID (00000000) + 2 bytes (type -> 010C for point)
+                byte := E'\\x00000000010c' || substring(byte from 1);
+            END IF;
+        END IF;
         RETURN byte;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -325,18 +338,53 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
 	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.STArea(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','ST_Area'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
+	RETURNS integer
+	AS '$libdir/postgis-3','LWGEOM_get_srid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSE
+			Return sys.STEquals_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSE
+			Return sys.STContains_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
-    AS $$
-    DECLARE
-        leftvarBin sys.bbf_varbinary;
-		rightvarBin sys.bbf_varbinary;
-    BEGIN
-        leftvarBin := (SELECT sys.bbf_varbinary($1));
-        rightvarBin := (SELECT sys.bbf_varbinary($2));
-        RETURN (SELECT sys.varbinary_eq(leftvarBin, rightvarBin));
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+		Result integer;
+	BEGIN
+		Result := STEquals(leftarg,rightarg);
+		IF Result IS NULL THEN
+			RETURN false;
+		END IF;
+		RETURN Result;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
     LEFTARG = sys.GEOMETRY,
@@ -346,18 +394,19 @@ CREATE OPERATOR sys.= (
     RESTRICT = eqsel
 );
 
-CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
 	AS $$
-    DECLARE
-        leftvarBin sys.bbf_varbinary;
-		rightvarBin sys.bbf_varbinary;
-    BEGIN
-        leftvarBin := (SELECT sys.bbf_varbinary($1));
-        rightvarBin := (SELECT sys.bbf_varbinary($2));
-        RETURN (SELECT sys.varbinary_neq(leftvarBin, rightvarBin));
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	DECLARE
+		Result integer;
+	BEGIN
+		Result := STEquals(leftarg,rightarg);
+		IF Result IS NULL THEN
+			RETURN true;
+		END IF;
+		RETURN 1 - Result;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.<> (
     LEFTARG = sys.GEOMETRY,
@@ -365,6 +414,68 @@ CREATE OPERATOR sys.<> (
     FUNCTION = sys.ST_NotEquals,
     COMMUTATOR = <>
 );
+
+--STDimension
+-- Retrieves spatial dimension
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
+        RETURNS integer
+        AS $$ 
+        BEGIN
+	        -- Check if the geometry is empty
+                IF STIsEmpty(geom) = 1 THEN  
+                        RETURN -1;
+                END IF;
+                RETURN sys.STDimension_helper($1);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--STDisjoint
+-- Checks if two geometries have no points in common
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS $$
+        BEGIN
+	        --Check if the SRIDs do not match
+                IF sys.STSrid(geom1) != sys.STSrid(geom2) THEN
+                        RETURN NULL;
+                END IF;
+                RETURN sys.STDisjoint_helper($1, $2);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIntersects
+-- Checks if two geometries spatially intersect
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS $$
+        BEGIN
+	        --Check if the SRIDs do not match
+                IF STSrid(geom1) != STSrid(geom2) THEN
+                        RETURN NULL;
+                ELSE
+                        RETURN sys.STIntersects_helper($1,$2);
+                END IF;
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
+
+--STIsClosed
+-- Checks if geometry is closed
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS $$
+        DECLARE
+                geom_type text;
+        BEGIN
+                -- Get the geometry type
+                geom_type := ST_GeometryType(geom); 
+                -- Check if any figures of the geometry instance are points
+                IF geom_type = 'ST_Point' THEN
+                        RETURN 0;
+                END IF; 
+
+                RETURN sys.STIsClosed_helper(geom);
+        END;
+        $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance. 2D only.
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -382,7 +493,51 @@ CREATE OR REPLACE FUNCTION sys.sty(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_y_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
+--STIsEmpty
+-- Checks if geometry is empty
+CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isempty'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+--STIsValid
+-- Checks if geometry is valid 
+CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','isvalid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Helper functions for main T-SQL functions
+CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS '$libdir/postgis-3','within'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS '$libdir/postgis-3','ST_Equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
+        RETURNS integer
+        AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','ST_Intersects'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	
 CREATE OR REPLACE FUNCTION sys.stgeomfromtext_helper(text, integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','LWGEOM_from_text'

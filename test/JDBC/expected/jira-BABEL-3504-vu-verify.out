@@ -48,10 +48,19 @@ go
 
 -- psql
 --providing usage privilege to user via psql on as grant on type to user is not currently supported in babelfish
-grant create on schema dbo to jira_babel_3504_dbone_jira_babel_3504_usr1;
-go
-
-grant usage on type dbo.jira_babel_3504_bigint2 to jira_babel_3504_dbone_jira_babel_3504_usr1;
+DO $$
+DECLARE
+    schema_name TEXT = 'dbo';
+    db_name TEXT = 'jira_babel_3504_dbone';
+BEGIN
+    -- In multi-db mode, prepend the database name to the schema name
+    IF current_setting('babelfishpg_tsql.migration_mode') = 'multi-db' THEN
+        schema_name := db_name || '_' || schema_name;
+    END IF;
+    
+    EXECUTE 'GRANT CREATE ON SCHEMA ' || schema_name || ' TO jira_babel_3504_dbone_jira_babel_3504_usr1';
+    EXECUTE 'GRANT USAGE ON TYPE ' || schema_name || '.jira_babel_3504_bigint2 TO jira_babel_3504_dbone_jira_babel_3504_usr1';
+END $$;
 go
 
 -- tsql user=jira_babel_3504_log1 password=123456789

@@ -79,7 +79,7 @@ select @a=a from (select 1 as a) T;
 select case when @a = 1 then 'ok' else 'wrong' end as result;
 go
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 
@@ -138,7 +138,7 @@ select @a=(select 1);
 select case when @a = 1 then 'ok' else 'wrong' end as result;
 go
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 
@@ -173,7 +173,7 @@ with T as (select 1 as a) select @a=a from T;
 select case when @a = 1 then 'ok' else 'wrong' end as result;
 go
 ~~START~~
-text
+varchar
 ok
 ~~END~~
 

@@ -9,6 +9,14 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
+  antlr_version:
+    description: "ANTLR version to use (based on Extension Branch)"
+    required: false
+    default: 4.13.2
+  engine_version:
+    description: 'Engine version'
+    required: no
+    default: 'target.latest'
 
 runs:
   using: "composite"
@@ -20,16 +28,19 @@ runs:
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.pg_new_dir }}
+        engine_version: ${{ inputs.engine_version }}
 
-    - name: Copy ANTLR
-      id: copy-antlr
+    - name: Compile new ANTLR
+      id: compile-new-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
-      run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.pg_new_dir }}/lib/
-      shell: bash
+      uses: ./.github/composite-actions/compile-antlr
+      with:
+        version: ${{ inputs.antlr_version }}
+        install_dir: ${{inputs.pg_new_dir}}
 
     - name: Build Extensions
       id: build-extensions-new
-      if: always() && steps.copy-antlr.outcome == 'success'
+      if: always() && steps.compile-new-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with:
         install_dir: ${{ inputs.pg_new_dir }}
@@ -57,6 +68,10 @@ runs:
       uses: ./.github/composite-actions/build-postgis-extension
       with:
         install_dir: ${{ inputs.pg_new_dir }}
+
+    - name: Save cache
+      if: always() && steps.build-postgis-extension == 'success'
+      uses: ./.github/composite-actions/save-ccache
 
     - name: Setup new data directory
       id: setup-new-datadir

@@ -28,6 +28,7 @@ namespace BabelfishDotnetFramework
         [Fact]
         public void Test()
         {
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal", true);
             BatchRun batchRun = new BatchRun();
             DirectoryInfo dir = new DirectoryInfo(ConfigSetup.QueryFolder);
             IEnumerable<FileInfo> allFiles;
@@ -52,6 +53,8 @@ namespace BabelfishDotnetFramework
                 }
                 allFiles = tempList;
             }
+            allFiles = allFiles.OrderBy(file => file.DirectoryName)
+                   .ThenBy(file => file.Name);
             Task<bool>[] tasksInParallel = new Task<bool>[allFiles.Count()];
             bool [] result = new bool[allFiles.Count()];
             int i = 0;

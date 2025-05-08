@@ -1,0 +1,489 @@
+CREATE PARTITION FUNCTION [BigIntPartitionFunction](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
+GO
+
+CREATE PARTITION FUNCTION [BinaryPartitionFunction](binary(8000)) AS RANGE RIGHT FOR VALUES (0x00000000, 0x04000000, 0x08000000, 0xC0000000)
+GO
+
+CREATE PARTITION FUNCTION [CharPartitionFunction](char(8000)) AS RANGE RIGHT FOR VALUES (N'A    ', N'D    ', N'F    ', N'K    ', N'P    ', N'U    ', N'Z    ')
+GO
+
+CREATE PARTITION FUNCTION [DatePartitionFunction](date) AS RANGE RIGHT FOR VALUES (N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000', N'2023-01-01T00:00:00.000')
+GO
+
+CREATE PARTITION FUNCTION [DateTime2PartitionFunction](datetime2(6)) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
+GO
+
+CREATE PARTITION FUNCTION [DateTimePartitionFunction](datetime) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
+GO
+
+CREATE PARTITION FUNCTION [DecimalPartitionFunction](decimal(38,38)) AS RANGE RIGHT FOR VALUES (0.00000, 100.00000, 200.00000, 300.00000)
+GO
+
+CREATE PARTITION FUNCTION [IntPartitionFunction](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+GO
+
+CREATE PARTITION FUNCTION [MoneyPartitionFunction](money) AS RANGE RIGHT FOR VALUES (2.5679, 3.5679, 4.9100)
+GO
+
+CREATE PARTITION FUNCTION [NCharPartitionFunction](nchar(4000)) AS RANGE RIGHT FOR VALUES (N'A    ', N'B    ', N'F    ', N'K    ', N'P    ', N'U    ', N'Z    ')
+GO
+
+CREATE PARTITION FUNCTION [NumericPartitionFunction](numeric(38,38)) AS RANGE RIGHT FOR VALUES (0.00, 10.00, 20.00, 30.00)
+GO
+
+CREATE PARTITION FUNCTION [NVarCharPartitionFunction](nvarchar(4000)) AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Cherry', N'Date', N'Mango')
+GO
+
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION  유니코드스키마👻  ](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+GO
+
+CREATE PARTITION FUNCTION [PARTITION_FUNCTION 😎$@ #123 🌍rder  ](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+GO
+
+CREATE PARTITION FUNCTION [PARTITION_FUNCTIONログインαιώνια](int) AS RANGE RIGHT FOR VALUES (0, 500, 1000)
+GO
+
+CREATE PARTITION FUNCTION [PartitionFunctionHavingDifferentCollationInput](nvarchar(4000)) AS RANGE RIGHT FOR VALUES (N'châu phố', N'Jane Smith', N'John Doe', N'Müller GmbH')
+GO
+
+CREATE PARTITION FUNCTION [PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
+GO
+
+CREATE PARTITION FUNCTION [PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder](bigint) AS RANGE RIGHT FOR VALUES (0, 100, 1000, 10000)
+GO
+
+CREATE PARTITION FUNCTION [SmallDateTimePartitionFunction](smalldatetime) AS RANGE RIGHT FOR VALUES (N'2019-01-01T00:00:00.000', N'2022-01-01T00:00:00.000', N'2022-07-01T00:00:00.000')
+GO
+
+CREATE PARTITION FUNCTION [SmallIntPartitionFunction](smallint) AS RANGE RIGHT FOR VALUES (-32768, 0, 32767)
+GO
+
+CREATE PARTITION FUNCTION [SmallMoneyPartitionFunction](smallmoney) AS RANGE RIGHT FOR VALUES (2.5679, 3.5679, 4.9100)
+GO
+
+CREATE PARTITION FUNCTION [TinyIntPartitionFunction](tinyint) AS RANGE RIGHT FOR VALUES (0x00, 0x80, 0xFF)
+GO
+
+CREATE PARTITION FUNCTION [UniqueIdentifierPartitionFunction](uniqueidentifier) AS RANGE RIGHT FOR VALUES (N'00000000-0000-0000-0000-000000000000', N'6f9619ff-8b86-d011-b42d-00c04fc964ff', N'ffffffff-ffff-ffff-ffff-ffffffffffff')
+GO
+
+CREATE PARTITION FUNCTION [VarBinaryPartitionFunction](varbinary(8000)) AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x4000000000000000, 0x8000000000000000, 0xC000000000000000)
+GO
+
+CREATE PARTITION FUNCTION [VarCharPartitionFunction](varchar(8000)) AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Cherry', N'Date', N'Mango')
+GO
+
+CREATE PARTITION SCHEME [BigIntPartitionScheme] AS PARTITION [BigIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [BinaryPartitionScheme] AS PARTITION [BinaryPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [CharPartitionScheme] AS PARTITION [CharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [DatePartitionScheme] AS PARTITION [DatePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [DateTime2PartitionScheme] AS PARTITION [DateTime2PartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [DateTimePartitionScheme] AS PARTITION [DateTimePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [DecimalPartitionScheme] AS PARTITION [DecimalPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [IntPartitionScheme] AS PARTITION [IntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [MoneyPartitionScheme] AS PARTITION [MoneyPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [NCharPartitionScheme] AS PARTITION [NCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [NumericPartitionScheme] AS PARTITION [NumericPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [NVarCharPartitionScheme] AS PARTITION [NVarCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [PARTITION_SCHEME  유니코드스키마👻  ] AS PARTITION [PARTITION_FUNCTION  유니코드스키마👻  ] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [PARTITION_SCHEME 😎$@ #123 🌍rder  ] AS PARTITION [PARTITION_FUNCTION 😎$@ #123 🌍rder  ] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [PARTITION_SCHEMEログインαιώνια] AS PARTITION [PARTITION_FUNCTIONログインαιώνια] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz] AS PARTITION [PartitionFunctionNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder] AS PARTITION [PartitionFunctionNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [SmallDateTimePartitionScheme] AS PARTITION [SmallDateTimePartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [SmallIntPartitionScheme] AS PARTITION [SmallIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [SmallMoneyPartitionScheme] AS PARTITION [SmallMoneyPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [TinyIntPartitionScheme] AS PARTITION [TinyIntPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [UniqueIdentifierPartitionScheme] AS PARTITION [UniqueIdentifierPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [VarBinaryPartitionScheme] AS PARTITION [VarBinaryPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+CREATE PARTITION SCHEME [VarCharPartitionScheme] AS PARTITION [VarCharPartitionFunction] TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY])
+GO
+
+GO
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_bigint_table](
+	[id] [bigint] NULL,
+	[value] [varchar](50) NULL
+) ON [BigIntPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_binary_table](
+	[id] [binary](4) NULL,
+	[value] [varchar](50) NULL
+) ON [BinaryPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_char_table](
+	[id] [char](5) NULL,
+	[value] [varchar](50) NULL
+) ON [CharPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_date_table](
+	[id] [date] NULL,
+	[value] [varchar](50) NULL
+) ON [DatePartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_datetime_table](
+	[id] [datetime] NULL,
+	[value] [varchar](50) NULL
+) ON [DateTimePartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_datetime2_table](
+	[id] [datetime2](3) NULL,
+	[value] [varchar](50) NULL
+) ON [DateTime2PartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_decimal_table](
+	[id] [decimal](10, 5) NULL,
+	[value] [varchar](50) NULL
+) ON [DecimalPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_int_table](
+	[id] [int] NULL,
+	[value] [varchar](50) NULL,
+ CONSTRAINT [partition_vu_prepare_int_table_id_key] UNIQUE NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
+) ON [IntPartitionScheme]([id])
+
+ALTER TABLE [dbo].[partition_vu_prepare_int_table]  WITH CHECK ADD  CONSTRAINT [check_value_not_null] CHECK  (((value IS NOT NULL)))
+ALTER TABLE [dbo].[partition_vu_prepare_int_table] CHECK CONSTRAINT [check_value_not_null]
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_money_table](
+	[id] [money] NULL,
+	[value] [varchar](50) NULL
+) ON [MoneyPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_nchar_table](
+	[id] [nchar](5) NULL,
+	[value] [varchar](50) NULL
+) ON [NCharPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_numeric_table](
+	[id] [numeric](5, 2) NULL,
+	[value] [varchar](50) NULL
+) ON [NumericPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_nvarchar_table](
+	[id] [nvarchar](10) NULL,
+	[value] [varchar](50) NULL
+) ON [NVarCharPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_smalldatetime_table](
+	[id] [smalldatetime] NULL,
+	[value] [varchar](50) NULL
+) ON [SmallDateTimePartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_smallint_table](
+	[id] [smallint] NULL,
+	[value] [varchar](50) NULL
+) ON [SmallIntPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_smallmoney_table](
+	[id] [smallmoney] NULL,
+	[value] [varchar](50) NULL
+) ON [SmallMoneyPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_tinyint_table](
+	[id] [tinyint] NULL,
+	[value] [varchar](50) NULL
+) ON [TinyIntPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_uniqueidentifier_table](
+	[id] [uniqueidentifier] NULL,
+	[value] [varchar](50) NULL
+) ON [UniqueIdentifierPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_varbinary_table](
+	[id] [varbinary](8) NULL,
+	[value] [varchar](50) NULL
+) ON [VarBinaryPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partition_vu_prepare_varchar_table](
+	[id] [varchar](10) NULL,
+	[value] [varchar](50) NULL
+) ON [VarCharPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[partitiontablenamegreaterthan64d92cad082de128dbac3bc1a7d749bf53](
+	[id] [int] NULL,
+	[value] [varchar](50) NULL
+) ON [IntPartitionScheme]([id])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a](
+	[partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88] [bigint] NULL,
+	[value] [varchar](50) NULL
+) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80](
+	[partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88] [bigint] NULL,
+	[value] [varchar](50) NULL
+) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_bigint_index] ON [dbo].[partition_vu_prepare_bigint_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BigIntPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_binary_index] ON [dbo].[partition_vu_prepare_binary_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [BinaryPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_char_index] ON [dbo].[partition_vu_prepare_char_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [CharPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_date_index] ON [dbo].[partition_vu_prepare_date_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DatePartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime_index] ON [dbo].[partition_vu_prepare_datetime_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTimePartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_datetime2_index] ON [dbo].[partition_vu_prepare_datetime2_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DateTime2PartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_decimal_index] ON [dbo].[partition_vu_prepare_decimal_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [DecimalPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_int_index] ON [dbo].[partition_vu_prepare_int_table]
+(
+	[value] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
+GO
+
+ALTER TABLE [dbo].[partition_vu_prepare_int_table] ADD  CONSTRAINT [partition_vu_prepare_int_table_id_key] UNIQUE NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [IntPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_money_index] ON [dbo].[partition_vu_prepare_money_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [MoneyPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_nchar_index] ON [dbo].[partition_vu_prepare_nchar_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NCharPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_numeric_index] ON [dbo].[partition_vu_prepare_numeric_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NumericPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_nvarchar_index] ON [dbo].[partition_vu_prepare_nvarchar_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [NVarCharPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smalldatetime_index] ON [dbo].[partition_vu_prepare_smalldatetime_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallDateTimePartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallint_index] ON [dbo].[partition_vu_prepare_smallint_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallIntPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_smallmoney_index] ON [dbo].[partition_vu_prepare_smallmoney_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [SmallMoneyPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_tinyint_index] ON [dbo].[partition_vu_prepare_tinyint_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [TinyIntPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_uniqueidentifier_index] ON [dbo].[partition_vu_prepare_uniqueidentifier_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [UniqueIdentifierPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_varbinary_index] ON [dbo].[partition_vu_prepare_varbinary_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarBinaryPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_index] ON [dbo].[partition_vu_prepare_varchar_table]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarCharPartitionScheme]([id])
+GO
+
+CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12d923846bd8a05b68f3b8643b0449516c] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan1259a3b74cdca75a6c35cdd44037a1056a]
+(
+	[value] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+GO
+
+CREATE NONCLUSTERED INDEX [partitionindexnamegreaterthan12d923846bd8a05b68f3b8643b0449516c] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
+(
+	[value] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamegreaterthan1cd6278b008e04dd31785f1b75b723b88])
+GO
+
+GO
+

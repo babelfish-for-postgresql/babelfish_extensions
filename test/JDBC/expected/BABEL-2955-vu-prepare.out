@@ -52,3 +52,11 @@ insert into babel_2955_vu_prepare_t2 values (1)
 GO
 ~~ROW COUNT: 1~~
 
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
+go
+~~START~~
+text
+ignore
+~~END~~
+

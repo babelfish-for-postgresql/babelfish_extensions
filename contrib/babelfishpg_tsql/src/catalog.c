@@ -14,6 +14,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "commands/schemacmds.h"
 #include "commands/user.h"
@@ -21,12 +22,15 @@
 #include "parser/scansup.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplestore.h"
 #include "utils/rel.h"
+#include "utils/regproc.h"
+#include "utils/array.h"
 #include "utils/timestamp.h"
 #include "nodes/execnodes.h"
 #include "catalog.h"
@@ -68,6 +72,7 @@ Oid			bbf_authid_login_ext_idx_oid;
  *****************************************/
 Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
+Oid			bbf_authid_user_ext_login_dbname_idx_oid;
 
 /*****************************************
  *			VIEW_DEF
@@ -108,6 +113,29 @@ Oid			bbf_extended_properties_oid = InvalidOid;
 Oid			bbf_extended_properties_idx_oid = InvalidOid;
 
 /*****************************************
+ *			PARTITION_FUNCTION
+ *****************************************/
+Oid	bbf_partition_function_oid = InvalidOid;
+Oid	bbf_partition_function_pk_idx_oid = InvalidOid;
+Oid	bbf_partition_function_id_idx_oid = InvalidOid;
+Oid	bbf_partition_function_seq_oid = InvalidOid;
+
+/*****************************************
+ *			PARTITION_SCHEME
+ *****************************************/
+Oid	bbf_partition_scheme_oid = InvalidOid;
+Oid	bbf_partition_scheme_pk_idx_oid = InvalidOid;
+Oid	bbf_partition_scheme_id_idx_oid = InvalidOid;
+Oid	bbf_partition_scheme_seq_oid = InvalidOid;
+
+/*****************************************
+ *			PARTITION_DEPEND
+ *****************************************/
+Oid	bbf_partition_depend_oid = InvalidOid;
+Oid	bbf_partition_depend_idx_oid = InvalidOid;
+
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -146,12 +174,34 @@ static struct cachedesc my_cacheinfo[] = {
 		},
 		16
 	},
-	{-1,						/* PROCNSPSIGNATURE */
+	{-1,						/* PROCNAMENSPSIGNATURE */
 		-1,
-		2,
+		3,
 		{
+			Anum_bbf_function_ext_funcname,
 			Anum_bbf_function_ext_nspname,
 			Anum_bbf_function_ext_funcsignature,
+			0
+		},
+		16
+	},
+	{-1,						/* SYSNAMESPACENAME */
+		-1,
+		1,
+		{
+			Anum_namespace_ext_namespace,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{-1,						/* AUTHIDUSEREXTROLENAME */
+		-1,
+		1,
+		{
+			Anum_bbf_authid_user_ext_rolname,
+			0,
 			0,
 			0
 		},
@@ -182,6 +232,12 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* user ext */
+	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+												sys_schema_oid);
+	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
+													sys_schema_oid);
+
 	/* syscache info */
 	my_cacheinfo[0].reloid = sysdatabases_oid;
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
@@ -189,17 +245,16 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
 	my_cacheinfo[2].reloid = bbf_function_ext_oid;
 	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
+	my_cacheinfo[3].reloid = namespace_ext_oid;
+	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
+	my_cacheinfo[4].reloid = bbf_authid_user_ext_oid;
+	my_cacheinfo[4].indoid = bbf_authid_user_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
 												 sys_schema_oid);
 	bbf_authid_login_ext_idx_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_IDX_NAME,
 													 sys_schema_oid);
-	/* user ext */
-	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-												sys_schema_oid);
-	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
-													sys_schema_oid);
 
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
@@ -230,6 +285,22 @@ init_catalog(PG_FUNCTION_ARGS)
 	spt_datatype_info_table_oid = get_relname_relid(SPT_DATATYPE_INFO_TABLE_NAME, sys_schema_oid);
 	bbf_versions_oid = get_relname_relid(BBF_VERSIONS_TABLE_NAME, sys_schema_oid);
 
+	/* bbf_partition_function */
+	bbf_partition_function_oid = get_bbf_partition_function_oid();
+	bbf_partition_function_pk_idx_oid = get_bbf_partition_function_pk_idx_oid();
+	bbf_partition_function_id_idx_oid = get_bbf_partition_function_id_idx_oid();
+	bbf_partition_function_seq_oid = get_bbf_partition_function_seq_oid();
+
+	/* bbf_partition_scheme */
+	bbf_partition_scheme_oid = get_bbf_partition_scheme_oid();
+	bbf_partition_scheme_pk_idx_oid = get_bbf_partition_scheme_pk_idx_oid();
+	bbf_partition_scheme_id_idx_oid = get_bbf_partition_scheme_id_idx_oid();
+	bbf_partition_scheme_seq_oid = get_bbf_partition_scheme_seq_oid();
+
+	/* bbf_partition_depend */
+	bbf_partition_depend_oid = get_bbf_partition_depend_oid();
+	bbf_partition_depend_idx_oid = get_bbf_partition_depend_idx_oid();
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
@@ -243,7 +314,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 5);
 		tsql_syscache_inited = true;
 	}
 }
@@ -267,7 +338,9 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
 		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
-		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid))
+		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
+		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
+		relationId == bbf_partition_depend_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -302,8 +375,7 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 void pltsql_drop_relation_refcnt_hook(Relation relation)
 {
 	int expected_refcnt = 0;
-	if (sql_dialect != SQL_DIALECT_TSQL ||
-		!RelationIsBBFTableVariable(relation))
+	if (!IsTsqlTableVariable(relation))
 		return;
 
 	expected_refcnt = relation->rd_isnailed ? 2 : 1;
@@ -379,13 +451,12 @@ get_one_user_db_name(void)
 		db_name = TextDatumGetCString(name);
 
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		if (!IS_BBF_BUILT_IN_DB(db_name))
 		{
 			user_db_name = db_name;
 			break;
 		}
+		pfree(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 
@@ -558,90 +629,54 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	const char *logical_name;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (!physical_schema_name || get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
+	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_orig_name, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
+	ReleaseSysCache(tuple);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 	return logical_name;
 }
 
 int16
 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	int16		dbid;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return InvalidDbid;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(SYSNAMESPACENAME, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
 		return InvalidDbid;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
+	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_dbid, &isnull);
 	dbid = DatumGetInt16(datum);
+	ReleaseSysCache(tuple);
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
 	return dbid;
 }
 
@@ -813,117 +848,48 @@ get_authid_login_ext_idx_oid(void)
  *			USER EXT
  *****************************************/
 
-bool
-is_user(Oid role_oid)
+/*
+ * Check if role is a bbf db principal. Returns BBF_ROLE if it is
+ * a db role, returns BBF_USER if it is db user else returns 0
+ */
+
+const int
+get_db_principal_kind(Oid role_oid, const char *db_name)
 {
-	Relation	relation;
-	bool		is_user = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
+	char    	result = 0;
+	bool    	isnull;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-	char	   *type_str = "";
+	char    	*rolname;
 
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+	Assert(OidIsValid(role_oid) && db_name);
 
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
+	rolname = GetUserNameFromId(role_oid, false);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(rolname));
+	pfree(rolname);
 
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(tuple))
-		is_user = false;
-	else
+	if (HeapTupleIsValid(tuple))
 	{
-		Datum		datum;
-		bool		isnull;
-		TupleDesc	dsc;
+		BpChar type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name,
+									  &isnull);
+		char *type_str;
+		char *db_name_cstring;
 
-		dsc = RelationGetDescr(relation);
-		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
-		if (!isnull)
-			type_str = pstrdup(TextDatumGetCString(datum));
-	}
+		Assert(!isnull);
 
-	/*
-	 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
-	 * is "S" or "U" etc, we should drop the user
-	 */
-	if (strcmp(type_str, "R") == 0)
-		is_user = false;
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
-
-	ReleaseSysCache(authtuple);
-
-	return is_user;
-}
-
-bool
-is_role(Oid role_oid)
-{
-	Relation	relation;
-	bool		is_role = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
-	HeapTuple	tuple;
-	HeapTuple	authtuple;
-	NameData	rolname;
-	BpChar		type;
-	char	   *type_str = "";
-
-	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
-	if (!HeapTupleIsValid(authtuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("role with OID %u does not exist", role_oid)));
-	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(tuple))
-		is_role = false;
-	else
-	{
-		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
 		type_str = bpchar_to_cstring(&type);
+		db_name_cstring = TextDatumGetCString(datum);
 
-		if (strcmp(type_str, "R") != 0)
-			is_role = false;
+		if (strcmp(db_name_cstring, db_name) == 0)
+			result = (strcmp(type_str, "R") == 0) ? BBF_ROLE : BBF_USER;
+
+		pfree(type_str);
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple);
 	}
 
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
-
-	ReleaseSysCache(authtuple);
-
-	return is_role;
+	return result;
 }
 
 Oid
@@ -946,15 +912,68 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
+Oid
+get_bbf_authid_user_ext_login_dbname_idx_oid(void)
+{
+	if (!OidIsValid(bbf_authid_user_ext_login_dbname_idx_oid))
+		bbf_authid_user_ext_login_dbname_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_NAME_IDX_NAME,
+														get_namespace_oid("sys", false));
+
+	return bbf_authid_user_ext_login_dbname_idx_oid;
+}
+
+/* Returns palloc'd original name given the physical name of the db principal */
+char *
+get_authid_user_ext_original_name(const char *physical_role_name, const char *db_name, bool suppress_error)
+{
+	char*    	orig_username = NULL;
+	bool    	isnull;
+	HeapTuple	tuple;
+
+	Assert(physical_role_name && strlen(physical_role_name) != 0);
+	Assert(db_name && strlen(db_name) != 0);
+
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_role_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									  Anum_bbf_authid_user_ext_database_name, &isnull);
+		char *db_name_cstring;
+
+		Assert(!isnull);
+
+		db_name_cstring = TextDatumGetCString(datum);
+
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple,
+									Anum_bbf_authid_user_ext_orig_username, &isnull);
+			Assert(!isnull);
+			orig_username = TextDatumGetCString(datum);
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple);
+	}
+
+	if (orig_username == NULL && !suppress_error)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Could not find original name for db principal %s in database %s", physical_role_name, db_name)));
+
+	return orig_username;
+}
+
 char *
 get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
-	TableScanDesc scan;
+	SysScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
+	ScanKeyData key[2];
 
 	if (!db_name || !login)
 		return NULL;
@@ -964,31 +983,35 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+	
 	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_login_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
+			Anum_bbf_authid_user_ext_login_name,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			NameGetDatum(login_name));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	ScanKeyEntryInitialize(&key[1],
+							0,
+							Anum_bbf_authid_user_ext_database_name,
+							BTEqualStrategyNumber,
+							InvalidOid,
+							tsql_get_database_or_server_collation_oid_internal(false),
+							F_TEXTEQ,
+							CStringGetTextDatum(db_name));
 
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_bbf_authid_user_ext_login_dbname_idx_oid(),
+							  true, NULL, 2, key);
+
+	tuple_user_ext = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Form_authid_user_ext userform;
-
+	
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
 		user_name = pstrdup(NameStr(userform->rolname));
 	}
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return user_name;
@@ -997,59 +1020,46 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 char *
 get_authid_user_ext_schema_name(const char *db_name, const char *user)
 {
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
 	char	   *schema_name = NULL;
-	NameData   *user_name;
 
 	if (!db_name || !user)
 		return NULL;
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+	tuple_user_ext = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
 
-	user_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(user_name->data, NAMEDATALEN, "%s", user);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Datum		datum;
-		bool		is_null;
+		Datum datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											 Anum_bbf_authid_user_ext_database_name);
+		char  *db_name_cstring = TextDatumGetCString(datum);
 
-		datum = heap_getattr(tuple_user_ext,
-							 Anum_bbf_authid_user_ext_default_schema_name,
-							 bbf_authid_user_ext_rel->rd_att,
-							 &is_null);
-		schema_name = pstrdup(TextDatumGetCString(datum));
+		if (strcmp(db_name_cstring, db_name) == 0)
+		{
+			Datum 	schema_datum = SysCacheGetAttrNotNull(AUTHIDUSEREXTROLENAME, tuple_user_ext,
+											   Anum_bbf_authid_user_ext_default_schema_name);
+			char  	*default_schema_name = TextDatumGetCString(schema_datum);
+
+			if (strlen(default_schema_name))
+				schema_name = default_schema_name;
+		}
+
+		pfree(db_name_cstring);
+		ReleaseSysCache(tuple_user_ext);
 	}
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return schema_name;
 }
 
 List *
-get_authid_user_ext_db_users(const char *db_name)
+get_authid_user_ext_db_users(const char *db_name, const char *dbo_name, Oid db_owner_oid)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
 	ScanKeyData key;
 	TableScanDesc scan;
 	List	   *db_users_list = NIL;
+	Oid		dbo_oid = get_role_oid(dbo_name, false);
 
 	if (!db_name)
 		return NULL;
@@ -1069,17 +1079,51 @@ get_authid_user_ext_db_users(const char *db_name)
 	{
 		char	   *user_name;
 		Form_authid_user_ext userform;
+		Oid	    user_oid;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
 		user_name = pstrdup(NameStr(userform->rolname));
 		db_users_list = lappend(db_users_list, user_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		user_oid = get_role_oid(user_name, false);
+
+		/*
+		 * We also check if these users/roles are member of db_owner and
+		 * if they are, we append the linked internal role to the list.
+		 *
+		 * dbo user does not have any internal role associated with it
+		 * so we must skip it.
+		 */
+		if (is_member_of_role(user_oid, db_owner_oid) && (user_oid != dbo_oid) && (user_oid != db_owner_oid))
+			db_users_list = lappend(db_users_list, get_obj_role(user_name));
 	}
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return db_users_list;
+}
+
+/* Checks if the user is enabled on a given database. */
+static bool
+user_has_dbaccess(const char *user, const char *db_name)
+{
+	HeapTuple	tuple;
+	bool		has_access = false;
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(user));
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isnull = true;
+		int	user_can_connect = 0;
+		Datum	datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_user_can_connect, &isnull);
+		Assert(!isnull);
+		user_can_connect = DatumGetInt32(datum);
+		if (user_can_connect == 1 || has_privs_of_role(get_role_oid(user, false), get_db_accessadmin_oid(db_name, false)))
+			has_access = true;
+		ReleaseSysCache(tuple);
+	}
+	return has_access;
 }
 
 /*
@@ -1098,6 +1142,9 @@ get_user_for_database(const char *db_name)
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
+
+	if (user && !user_has_dbaccess(user, db_name) && !guest_has_dbaccess((char *) db_name))
+		user = NULL;
 
 	if (!user)
 	{
@@ -1171,12 +1218,12 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 
 	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
+				tsql_get_database_or_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
@@ -1334,10 +1381,10 @@ void
 clean_up_bbf_server_def()
 {
 	/* Fetch the relation */
-	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), AccessExclusiveLock);
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_servers_def_rel);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	table_close(bbf_servers_def_rel, AccessExclusiveLock);
 }
 
 /*****************************************
@@ -1367,10 +1414,13 @@ get_bbf_function_ext_idx_oid()
 HeapTuple
 get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 {
-	HeapTuple	bbffunctuple;
-	Form_pg_proc form;
-	char	   *physical_schemaname;
-	const char *func_signature;
+	CatCList    	*catlist;
+	HeapTuple   	newtup = NULL;
+	HeapTuple   	bbffunctuple;
+	Form_pg_proc	form;
+	char        	*physical_schemaname;
+	NameData    	nsp_name;
+	char        	*func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
@@ -1394,24 +1444,49 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 		return NULL;
 	}
 
+	namestrcpy(&nsp_name, physical_schemaname);
+	pfree(physical_schemaname);
+
+	/* First search just using function name and schema name */
+	catlist = SearchSysCacheList2(PROCNAMENSPSIGNATURE,
+								  NameGetDatum(&form->proname),
+								  NameGetDatum(&nsp_name));
+
+	if (catlist->n_members == 0)
+	{
+		ReleaseSysCacheList(catlist);
+		return NULL;
+	}
+
+	/* Done, found a unique function */
+	if (catlist->n_members == 1)
+	{
+		bbffunctuple = heap_copytuple(&catlist->members[0]->tuple);
+		ReleaseSysCacheList(catlist);
+		return bbffunctuple;
+	}
+
+	/* Now search using function name, schema name and signature */
 	func_signature = get_pltsql_function_signature_internal(NameStr(form->proname),
 															form->pronargs,
 															form->proargtypes.values);
 
 	if (func_signature == NULL)
-	{
-		pfree(physical_schemaname);
 		return NULL;
-	}
 
-	bbffunctuple = SearchSysCache2(PROCNSPSIGNATURE,
-								   CStringGetDatum(physical_schemaname),
+	bbffunctuple = SearchSysCache3(PROCNAMENSPSIGNATURE,
+								   NameGetDatum(&form->proname),
+								   NameGetDatum(&nsp_name),
 								   CStringGetTextDatum(func_signature));
 
-	pfree(physical_schemaname);
-	pfree((char *) func_signature);
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		newtup = heap_copytuple(bbffunctuple);
+		ReleaseSysCache(bbffunctuple);
+	}
+	pfree(func_signature);
 
-	return bbffunctuple;
+	return newtup;
 }
 
 void
@@ -1481,6 +1556,143 @@ clean_up_bbf_function_ext(int16 dbid)
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
+/*
+ * Look up the RECOMPILE flag in the extended catalog
+ * This is called for every procedure execution so overhead should be minimized.
+ */ 
+bool
+is_created_with_recompile(Oid objectId) 
+{
+	HeapTuple	proctuple,
+				bbffunctuple;
+	bool recompile = false;
+
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proctuple))
+	{
+		ReleaseSysCache(proctuple);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot find the object \"%d\", because it does not exist or you do not have permission.", objectId)));
+	}
+
+	/* 
+	 * The next lookup is relevant only for procedures (prokind = 'p') but since the OID 
+	 * can only be for a procedure we do not check this to avoid additonal overhead
+	 */
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
+
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool isnull = false;
+		Datum flag_validity;
+		Datum flag_values;
+		flag_validity = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_validity,
+												&isnull);	
+		Assert(isnull == false);				
+																
+		flag_values   = SysCacheGetAttr(PROCNAMENSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_flag_values,
+												&isnull);		
+		Assert(isnull == false);									
+
+		/* Get the RECOMPILE bit */
+		if ((DatumGetUInt64(flag_values) & DatumGetUInt64(flag_validity)) & FLAG_CREATED_WITH_RECOMPILE) 
+			recompile = true;
+
+		heap_freetuple(bbffunctuple);
+	}
+
+	ReleaseSysCache(proctuple);
+	
+	return recompile;
+}
+
+/*
+ * Check if a catalog name is a classic T-SQL catalog starting with 'sys' (e.g. sysobjects).
+ * Historically (dating back to the Sybase era) these catalogs were located in the
+ * 'dbo' schema but have since been relocated to the 'sys' schema.
+ * They can however still be referenced in the 'dbo' schema which is equivalent to using 'sys'.
+ * Note: newer catalogs do not normally start with 'sys', but some exceptions exist, such as
+ * 'system_sql_modules'. These newer cases are however not referencable via 'dbo'.
+ *
+ * The input parameter is a table/view name, from which enclosing double quotes or square brackets
+ * have been stripped.
+ */
+bool
+is_classic_catalog(const char *name)
+{
+	size_t len;
+	Assert(name);
+	len = strlen(name);
+	if (len <= 7) // sysusers,systypes,syslocks,sysfiles are shortest
+		return false;
+
+	if ((len == 3) && pg_strncasecmp(name, "sys", 3) != 0)
+		return false;
+
+	return (
+		// Currently supported catalogs:
+
+	    // Instance-wide classic catalogs
+	    // NB: sysdatabases does not need its schema mapped from 'dbo' to 'sys',
+	    // but it is included here for completeness.
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysdatabases", len) == 0)) ||
+	    ((len == 11) &&  (pg_strncasecmp(name, "syscharsets", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "sysconfigures", len) == 0)) ||
+	    ((len == 13) &&  (pg_strncasecmp(name, "syscurconfigs", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "syslanguages", len) == 0)) ||
+	    ((len ==  9) &&  (pg_strncasecmp(name, "syslogins", len) == 0)) ||
+	    ((len == 12) &&  (pg_strncasecmp(name, "sysprocesses", len) == 0)) ||
+                         
+	    // DB-specific classic catalogs
+	    ((len ==  10) && (pg_strncasecmp(name, "syscolumns", len) == 0)) ||
+	    ((len ==  14) && (pg_strncasecmp(name, "sysforeignkeys", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysindexes", len) == 0)) ||
+	    ((len ==  10) && (pg_strncasecmp(name, "sysobjects", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "systypes", len) == 0)) ||
+	    ((len ==   8) && (pg_strncasecmp(name, "sysusers", len) == 0))
+	);
+	    
+/*
+ * Additional T-SQL catalogs, not currently supported in Babelfish.
+ *
+ * When adding support for such a catalog, add it to the list above.
+ * We could include all of these in the list above, but that might
+ * impact performance.
+ *
+ * Instance-wide catalogs:
+		sysaltfiles
+		syscacheobjects
+		sysdevices
+		sysfilegroups
+		sysfiles
+		syslockinfo
+		syslocks
+		sysoledbusers
+		sysopentapes
+		sysperfinfo
+		sysremotelogins
+		sysservers
+
+ * DB-specific catalogs:
+		syscomments
+		sysconstraints
+		sysdepends
+		sysforeignkeys
+		sysfulltextcatalogs
+		sysindexkeys
+		sysmembers
+		sysmessages
+		syspermissions
+		sysprotects
+		sysreferences
+ *
+ */
+}
 
 /*****************************************
  *			SCHEMA
@@ -1553,6 +1765,120 @@ get_bbf_extended_properties_idx_oid()
 }
 
 /*****************************************
+ *			PARTITION_FUNCTION
+ *****************************************/
+Oid
+get_bbf_partition_function_oid()
+{
+	if (!OidIsValid(bbf_partition_function_oid))
+		bbf_partition_function_oid = get_relname_relid(BBF_PARTITION_FUNCTION_TABLE_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_function_oid;
+}
+
+Oid
+get_bbf_partition_function_seq_oid()
+{
+	if (!OidIsValid(bbf_partition_function_seq_oid))
+	{
+		bbf_partition_function_seq_oid = get_relname_relid(BBF_PARTITION_FUNCTION_SEQ_NAME,
+									get_namespace_oid("sys", false));
+	}
+
+	return bbf_partition_function_seq_oid;
+}
+
+Oid
+get_bbf_partition_function_pk_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_function_pk_idx_oid))
+		bbf_partition_function_pk_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_PK_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_function_pk_idx_oid;
+}
+
+Oid
+get_bbf_partition_function_id_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_function_id_idx_oid))
+		bbf_partition_function_id_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_ID_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_function_id_idx_oid;
+}
+
+/*****************************************
+ *			PARTITION_SCHEME
+ *****************************************/
+Oid
+get_bbf_partition_scheme_oid()
+{
+	if (!OidIsValid(bbf_partition_scheme_oid))
+		bbf_partition_scheme_oid = get_relname_relid(BBF_PARTITION_SCHEME_TABLE_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_scheme_oid;
+}
+
+Oid
+get_bbf_partition_scheme_pk_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_scheme_pk_idx_oid))
+		bbf_partition_scheme_pk_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_PK_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_scheme_pk_idx_oid;
+}
+
+Oid
+get_bbf_partition_scheme_id_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_scheme_id_idx_oid))
+		bbf_partition_scheme_id_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_ID_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_scheme_id_idx_oid;
+}
+
+Oid
+get_bbf_partition_scheme_seq_oid()
+{
+	if (!OidIsValid(bbf_partition_scheme_seq_oid))
+	{
+		bbf_partition_scheme_seq_oid = get_relname_relid(BBF_PARTITION_SCHEME_SEQ_NAME,
+									get_namespace_oid("sys", false));
+	}
+
+	return bbf_partition_scheme_seq_oid;
+}
+
+
+/*****************************************
+ *			PARTITION_DEPEND
+ *****************************************/
+Oid
+get_bbf_partition_depend_oid()
+{
+	if (!OidIsValid(bbf_partition_depend_oid))
+		bbf_partition_depend_oid = get_relname_relid(BBF_PARTITION_DEPEND_TABLE_NAME,
+								get_namespace_oid("sys", false));
+
+	return bbf_partition_depend_oid;
+}
+
+Oid
+get_bbf_partition_depend_idx_oid()
+{
+	if (!OidIsValid(bbf_partition_depend_idx_oid))
+		bbf_partition_depend_idx_oid = get_relname_relid(BBF_PARTITION_DEPEND_IDX_NAME,
+									get_namespace_oid("sys", false));
+
+	return bbf_partition_depend_idx_oid;
+}
+
+/*****************************************
  * 			Metadata Check
  * ---------------------------------------
  * Babelfish catalogs should comply with
@@ -1602,6 +1928,11 @@ static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_partition_function_dbname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_partition_scheme_dbname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_partition_depend_dbname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_partition_depend_schema_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_partition_depend_table_oid(HeapTuple tuple, TupleDesc dsc);
 
 /* Condition function declaration */
 static bool is_multidb(void);
@@ -1619,7 +1950,6 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
-static char *get_db_owner_role_name(const char *dbname);
 static void alter_guest_schema_for_db(const char *dbname);
 
 /* Helper function Rename BBF catalog update*/
@@ -1644,7 +1974,8 @@ RelData		catalog_data[] =
 	{"pg_namespace", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
 	{"pg_authid", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ},
 	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ},
-	{"pg_foreign_server", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_foreign_server_srvname, F_NAMEEQ}
+	{"pg_foreign_server", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_foreign_server_srvname, F_NAMEEQ},
+	{"pg_class", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_class_oid, F_OIDEQ}
 };
 
 /*****************************************
@@ -1762,6 +2093,41 @@ Rule		must_match_rules_srv_options[] =
 	"pg_foreign_server", "srvname", NULL, get_server_name, NULL, check_exist, NULL}
 };
 
+/*
+ * For consistency of the "dbid" column in partition catalogs, we search on the "name" column
+ * in babelfish_sysdatabases instead of "dbid". The metadata consistency framework does not
+ * support defining multiple rules for the same catalog column, and a rule already exists
+ * for the "name" column in babelfish_sysdatabases.
+ *
+ * Additionally, since there are no explicit indexes on the "partition_function_name" and
+ * "partition_scheme_name" columns, consistency checks cannot be added to validate those.
+ */
+
+/* babelfish_partition_function */
+Rule		must_match_rules_partition_function[] =
+{
+	{"<dbid> in babelfish_partition_function must also exist in babelfish_sysdatabases",
+	"babelfish_sysdatabases", "name", NULL, get_partition_function_dbname, NULL, check_exist, NULL}
+};
+
+/* babelfish_partition_scheme */
+Rule		must_match_rules_partition_scheme[] =
+{
+	{"<dbid> in babelfish_partition_scheme must also exist in babelfish_sysdatabases",
+	"babelfish_sysdatabases", "name", NULL, get_partition_scheme_dbname, NULL, check_exist, NULL}
+};
+
+/* babelfish_partition_depend */
+Rule		must_match_rules_partition_depend[] =
+{
+	{"<dbid> in babelfish_partition_depend must also exist in babelfish_sysdatabases",
+	"babelfish_sysdatabases", "name", NULL, get_partition_depend_dbname, NULL, check_exist, NULL},
+	{"<schema_name> in babelfish_partition_depend must also exist in babelfish_namespace_ext",
+	"babelfish_namespace_ext", "nspname", NULL, get_partition_depend_schema_name, NULL, check_exist, NULL},
+	{"<table_name> in babelfish_partition_depend must also exist in pg_class",
+	"pg_class", "oid", NULL, get_partition_depend_table_oid, NULL, check_exist, NULL}
+};
+
 /*****************************************
  * 			Core function
  *****************************************/
@@ -1853,6 +2219,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
 	size_t		num_must_match_rules_schema_permission = sizeof(must_match_rules_schema_permission) / sizeof(must_match_rules_schema_permission[0]);
 	size_t		num_must_match_rules_srv_options = sizeof(must_match_rules_srv_options) / sizeof(must_match_rules_srv_options[0]);
+	size_t		num_must_match_rules_partition_function = sizeof(must_match_rules_partition_function) / sizeof(must_match_rules_partition_function[0]);
+	size_t		num_must_match_rules_partition_scheme = sizeof(must_match_rules_partition_scheme) / sizeof(must_match_rules_partition_scheme[0]);
+	size_t		num_must_match_rules_partition_depend = sizeof(must_match_rules_partition_depend) / sizeof(must_match_rules_partition_depend[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -1887,6 +2256,15 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_srv_options, num_must_match_rules_srv_options,
 								 bbf_servers_def_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_partition_function, num_must_match_rules_partition_function,
+								 bbf_partition_function_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_partition_scheme, num_must_match_rules_partition_scheme,
+								 bbf_partition_scheme_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_partition_depend, num_must_match_rules_partition_depend,
+								 bbf_partition_depend_oid, res_tupstore, res_tupdesc))
 		)
 		return;
 }
@@ -2175,26 +2553,35 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 {
-	bool		isNull;
-	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+	bool		schema_is_null, dbid_is_null;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &schema_is_null);
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_schema_perms_dbid, dsc, &dbid_is_null);
+	char		*physical_schema_name;
 
-	if (isNull)
+	if (dbid_is_null)
 		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("schema name should not be null.")));
-	return schema_name;
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_schema_permissions catalog")));
+	if (schema_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema name should not be null in babelfish_schema_permissions catalog")));
+
+	/* get_physical_schema_name() itself handles truncation, no explicit truncation needed */
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), TextDatumGetCString(schema_name));
+
+	return CStringGetDatum(physical_schema_name);
 }
 
 static Datum
 get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
-	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-	if (isNull)
-		ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					errmsg("grantee name should not be null.")));
-	return grantee_name;
+	Datum		grantee_datum = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
+	char *grantee_name = pstrdup(TextDatumGetCString(grantee_datum));
+	truncate_identifier(grantee_name, strlen(grantee_name), false);
+
+	return CStringGetDatum(grantee_name);
 }
 
 static Datum
@@ -2205,6 +2592,165 @@ get_server_name(HeapTuple tuple, TupleDesc dsc)
 	char 			*servername = text_to_cstring(srv_name);
 
 	return CStringGetDatum(servername);
+}
+
+static Datum
+get_partition_function_dbname(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		is_null;
+	char		*dbname;
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_partition_function_dbid, dsc, &is_null);
+
+	if (is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_partition_function catalog")));
+
+	/* Another way to check for existence of dbid in babelfish_sysdatabases catalog. */
+	dbname = get_db_name(DatumGetInt16(dbid));
+
+	if (!dbname) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid in babelfish_partition_function catalog doesn't exists in babelfish_sysdatabases catalog")));
+
+	return CStringGetTextDatum(dbname);
+}
+
+static Datum
+get_partition_scheme_dbname(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		is_null;
+	char		*dbname;
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_partition_scheme_dbid, dsc, &is_null);
+
+	if (is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_partition_scheme catalog")));
+	
+	/* Another way to check for existence of dbid in babelfish_sysdatabases catalog.*/
+	dbname = get_db_name(DatumGetInt16(dbid));
+
+	if (!dbname) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("dbid in babelfish_partition_scheme catalog doesn't exists in babelfish_sysdatabases catalog")));
+
+	return CStringGetTextDatum(dbname);
+}
+
+static Datum
+get_partition_depend_dbname(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		is_null;
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_partition_depend_dbid, dsc, &is_null);
+	char		*dbname;
+
+	if (is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_partition_depend catalog")));
+	
+	/* Another way to check for existence of dbid in babelfish_sysdatabases catalog */
+	dbname = get_db_name(DatumGetInt16(dbid));
+
+	if (!dbname) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("dbid in babelfish_partition_depend catalog doesn't exists in babelfish_sysdatabases catalog")));
+
+	return CStringGetTextDatum(dbname);
+}
+
+static Datum
+get_partition_depend_schema_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		schema_is_null, dbid_is_null;
+	char		*physical_schema_name, *schema_name, *org_schema_name;
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_partition_depend_dbid, dsc, &dbid_is_null);
+	Datum		schema_name_datum = heap_getattr(tuple, Anum_bbf_partition_depend_table_schema_name, dsc, &schema_is_null);
+
+	if (dbid_is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_partition_depend catalog")));
+
+	if (schema_is_null) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema_name should not be null in babelfish_partition_depend catalog")));
+
+	org_schema_name = TextDatumGetCString(schema_name_datum);
+	/*
+	 * Downcase the orginal schema name and don't truncate it since
+	 * truncation will be handled inside get_physical_schema_name().
+	 */
+	schema_name = downcase_identifier(org_schema_name, strlen(org_schema_name), false, false);
+	physical_schema_name = get_physical_schema_name(get_db_name(DatumGetInt16(dbid)), schema_name);
+
+	pfree(schema_name);
+	pfree(org_schema_name);
+	return CStringGetDatum(physical_schema_name);
+}
+
+static Datum
+get_partition_depend_table_oid(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		schema_is_null, dbid_is_null, table_is_null;
+	char		*physical_schema_name, *db_name, *schema_name, *table_name, *org_schema_name;
+	Oid		schema_oid, table_oid;
+	Datum		dbid = heap_getattr(tuple, Anum_bbf_partition_depend_dbid, dsc, &dbid_is_null);
+	Datum		schema_name_datum = heap_getattr(tuple, Anum_bbf_partition_depend_table_schema_name, dsc, &schema_is_null);
+	Datum		table_name_datum = heap_getattr(tuple, Anum_bbf_partition_depend_table_name, dsc, &table_is_null);
+
+	/* Sanity checks. */
+	if (dbid_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("dbid should not be null in babelfish_partition_depend catalog")));
+	if (schema_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema_name should not be null in babelfish_partition_depend catalog")));
+	if (table_is_null)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("table_name should not be null in babelfish_partition_depend catalog")));
+
+	org_schema_name = TextDatumGetCString(schema_name_datum);
+	table_name = TextDatumGetCString(table_name_datum);
+
+	db_name = get_db_name(DatumGetInt16(dbid));
+
+	if (!db_name) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("dbid in babelfish_partition_depend should also exists babelfish_sysdatabases catalog")));
+
+	/*
+	 * Downcase the orginal schema name and don't truncate it since
+	 * truncation will be handled inside get_physical_schema_name().
+	 */
+	schema_name = downcase_identifier(org_schema_name, strlen(org_schema_name), false, false);
+	physical_schema_name = get_physical_schema_name(db_name, schema_name);
+
+	schema_oid = get_namespace_oid(physical_schema_name, true);
+
+	if (!OidIsValid(schema_oid)) /* Sanity check. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("schema_name in babelfish_partition_depend should also exists in babelfish_namespace_ext")));
+
+	table_oid = get_relname_relid(table_name, schema_oid);
+
+	pfree(physical_schema_name);
+	pfree(db_name);
+	pfree(org_schema_name);
+	pfree(schema_name);
+	pfree(table_name);
+
+	return ObjectIdGetDatum(table_oid);
 }
 
 /*****************************************
@@ -2362,6 +2908,12 @@ init_catalog_data(void)
 			catalog_data[i].tbl_oid = ForeignServerRelationId;
 			catalog_data[i].idx_oid = ForeignServerNameIndexId;
 			catalog_data[i].atttype = get_atttype(ForeignServerRelationId, Anum_pg_foreign_server_srvname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_class") == 0)
+		{
+			catalog_data[i].tbl_oid = RelationRelationId;
+			catalog_data[i].idx_oid = ClassOidIndexId;
+			catalog_data[i].atttype = get_atttype(RelationRelationId, Anum_pg_class_oid);
 		}
 		else
 			ereport(ERROR,
@@ -2543,42 +3095,77 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	char		*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	/* Search if the role exists */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(guest_role));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(guest_role));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		role_exists = true;
+		ReleaseSysCache(tuple);
+	}
 
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	pfree(guest_role);
 
 	return role_exists;
+}
+
+/*
+ * get_login_for_user
+ * Get mapped login for given user_id.
+ * Usually login can be retrived from login_name column of bbf_authid_login_ext
+ * catalog although sometimes the column can be empty such as when user_id belongs
+ * to dbo or guest user. In case the user_id is of dbo role then we get owner of
+ * the respective database which can be deduced from physical_schema_name. For all
+ * other cases, return InvalidOid since mapped login does not exist for the rest.
+ */
+Oid
+get_login_for_user(Oid user_id, const char *physical_schema_name)
+{
+	HeapTuple	tuple;
+	Oid loginId = InvalidOid;
+	char *physical_user_name = GetUserNameFromId(user_id, true);
+
+	if (!physical_user_name || !physical_schema_name)
+		return InvalidOid;
+
+	/* Search if the role exists */
+	tuple = SearchSysCache1(AUTHIDUSEREXTROLENAME, CStringGetDatum(physical_user_name));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum datum;
+		bool isnull;
+
+		datum = SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple, Anum_bbf_authid_user_ext_login_name, &isnull);
+		Assert(!isnull);
+		loginId = get_role_oid((DatumGetName(datum)->data), true);
+
+		if (!OidIsValid(loginId))
+		{
+			char *orig_username = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME,
+								tuple, Anum_bbf_authid_user_ext_orig_username, &isnull));
+
+			Assert(!isnull);
+			/* Get owner of the db if the user is dbo */
+			if (strlen(orig_username) == 3 && pg_strcasecmp(orig_username, "dbo") == 0)
+			{
+				int16 dbid = get_dbid_from_physical_schema_name(physical_schema_name, false);
+				loginId = get_role_oid(get_owner_of_db(get_db_name(dbid)), false);
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+
+	return loginId;
 }
 
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char *guest = get_guest_role_name(dbname);
+	char	   *guest = get_guest_role_name(dbname);
 	const char *db_owner_role = get_db_owner_role_name(dbname);
 	List	   *logins = NIL;
 	List	   *res;
@@ -2605,13 +3192,8 @@ create_guest_role_for_db(const char *dbname)
 
 	if (list_length(logins) > 0)
 	{
-		AccessPriv *tmp = makeNode(AccessPriv);
-
-		tmp->priv_name = pstrdup(guest);
-		tmp->cols = NIL;
-
 		stmt = parsetree_nth_stmt(res, i++);
-		update_GrantRoleStmt(stmt, list_make1(tmp), logins);
+		update_GrantRoleStmt(stmt, list_make1(make_accesspriv_node(guest)), logins, NULL);
 	}
 
 	GetUserIdAndSecContext(&save_userid, &save_sec_context);
@@ -2647,7 +3229,7 @@ create_guest_role_for_db(const char *dbname)
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						   "(CREATE LOGICAL DATABASE )",
+						   CREATE_LOGICAL_DATABASE,
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -2669,6 +3251,8 @@ create_guest_role_for_db(const char *dbname)
 		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_END_TRY();
+
+	pfree(guest);
 }
 
 /*
@@ -2676,7 +3260,7 @@ create_guest_role_for_db(const char *dbname)
  * database from the catalog, it doesn't rely on the
  * migration mode GUC.
  */
-static char *
+char *
 get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;
@@ -2808,18 +3392,18 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	ScanKeyEntryInitialize(&key[1], 0,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&key[3], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 
@@ -2863,8 +3447,6 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		pfree(physical_schema_name);
 	if (logical_schema_name != NULL)
 		pfree(logical_schema_name);
-	if (object_name != NULL)
-		pfree(object_name);
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
@@ -2900,12 +3482,12 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
 	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false), 
+				tsql_get_database_or_server_collation_oid_internal(false), 
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(stmt->relation->relname));
 
 	/* scan */
@@ -2959,6 +3541,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	NameData   *objname_data;
+	NameData    newname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
 	char	   *funcsign;
@@ -3014,8 +3597,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	initStringInfo(&new_funcsign);
 	appendStringInfoString(&new_funcsign, stmt->newname);
 	appendStringInfoString(&new_funcsign, strrchr(funcsign, '('));
+	namestrcpy(&newname_data, stmt->newname);
 
-	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = CStringGetDatum(stmt->newname);
+	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = NameGetDatum(&newname_data);
 	new_record_func_ext[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(new_funcsign.data);
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcname - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcsignature - 1] = true;
@@ -3176,14 +3760,14 @@ update_privileges_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyInit(&scanKey[3],
@@ -3194,7 +3778,7 @@ update_privileges_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 
@@ -3237,7 +3821,8 @@ update_privileges_of_object(const char *schema_name,
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
-							const char *grantee)
+							const char *grantee,
+							const char *object_type)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3251,7 +3836,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 
 	if (grantee != NULL)
 	{
-		ScanKeyData	scanKey[4];
+		ScanKeyData	scanKey[5];
 		/* Immediately return false, if grantee is PUBLIC. */
 		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 			return false;
@@ -3266,30 +3851,37 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
 		ScanKeyEntryInitialize(&scanKey[3], 0,
 					Anum_bbf_schema_perms_grantee,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(grantee));
+		ScanKeyEntryInitialize(&scanKey[4], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 4, scanKey);
+					true, NULL, 5, scanKey);
 	}
 	else
 	{
-		ScanKeyData	scanKey[3];
+		ScanKeyData	scanKey[4];
 		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 										AccessShareLock);
 		ScanKeyInit(&scanKey[0],
@@ -3300,20 +3892,27 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
+		ScanKeyEntryInitialize(&scanKey[3], 0,
+					Anum_bbf_schema_perms_object_type,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_database_or_server_collation_oid_internal(false),
+					F_TEXTEQ,
+					CStringGetTextDatum(object_type));
 
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
-					true, NULL, 3, scanKey);
+					true, NULL, 4, scanKey);
 	}
 
 	tuple_bbf_schema = systable_getnext(scan);
@@ -3351,28 +3950,28 @@ get_privilege_of_object(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 	scan = systable_beginscan(bbf_schema_rel,
@@ -3426,28 +4025,28 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_name));
 	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_object_type,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(object_type));
 	scan = systable_beginscan(bbf_schema_rel,
@@ -3476,7 +4075,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, object_type))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
@@ -3514,7 +4113,7 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3532,14 +4131,14 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(schema_name));
 		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber,
 					InvalidOid,
-					tsql_get_server_collation_oid_internal(false),
+					tsql_get_database_or_server_collation_oid_internal(false),
 					F_TEXTEQ,
 					CStringGetTextDatum(object_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3624,14 +4223,14 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(schema_name));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(grantee));
 
@@ -3688,7 +4287,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 
 				/* do this step */
 				ProcessUtility(wrapper,
-							"(GRANT STATEMENT )",
+							INTERNAL_GRANT_STATEMENT,
 							false,
 							PROCESS_UTILITY_SUBCOMMAND,
 							NULL,
@@ -3709,19 +4308,40 @@ grant_perms_to_objects_in_schema(const char *schema_name,
  * implicitly at the time of CREATE function/procedure.
  */
 void
-exec_internal_grant_on_function(const char *logicalschema,
-								const char *object_name,
-								const char *object_type)
+exec_internal_grant_on_function(Oid objectId)
 {
 	SysScanDesc scan;
 	Relation	bbf_schema_rel;
 	TupleDesc	dsc;
 	HeapTuple	tuple_bbf_schema;
+	HeapTuple	proc_tuple;
 	const char	*grantee = NULL;
 	int			current_permission;
 	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
-	const char *db_name = get_cur_db_name();
+	Oid 		phy_sch_oid;
+	char 		*object_name;
+	char 		*schema;
+	const char 	*logicalschema;
+	char 		object_type;
+	Form_pg_proc	procedureStruct;
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
+
+	proc_tuple = SearchSysCache1(PROCOID,
+								ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proc_tuple))
+		elog(ERROR, "cache lookup failed for function %u", objectId);
+
+	procedureStruct = (Form_pg_proc) GETSTRUCT(proc_tuple);
+
+	object_name = NameStr(procedureStruct->proname);
+	phy_sch_oid = procedureStruct->pronamespace;
+	schema = get_namespace_name(phy_sch_oid);
+	logicalschema = get_logical_schema_name(schema, true);
+	object_type = procedureStruct->prokind;
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -3735,14 +4355,14 @@ exec_internal_grant_on_function(const char *logicalschema,
 				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(logicalschema));
 	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber,
 				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
+				tsql_get_database_or_server_collation_oid_internal(false),
 				F_TEXTEQ,
 				CStringGetTextDatum(PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA));
 
@@ -3762,16 +4382,15 @@ exec_internal_grant_on_function(const char *logicalschema,
 		if (current_permission & ALL_PERMISSIONS_ON_FUNCTION)
 		{
 			const char	*query = NULL;
-			char			*schema;
 			List			*res;
 			GrantStmt		*grant;
 			PlannedStmt		*wrapper;
+			Oid     		save_userid;
+			int     		save_sec_context;
 
-			schema = get_physical_schema_name((char *)db_name, logicalschema);
-
-			if (strcmp(object_type, OBJ_FUNCTION) == 0)
+			if (object_type == PROKIND_FUNCTION)
 				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
-			else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
+			else if (object_type == PROKIND_PROCEDURE)
 				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
@@ -3784,20 +4403,37 @@ exec_internal_grant_on_function(const char *logicalschema,
 			wrapper->stmt_location = 0;
 			wrapper->stmt_len = 1;
 
-			/* do this step */
-			ProcessUtility(wrapper,
-						"(GRANT STATEMENT )",
-						false,
-						PROCESS_UTILITY_SUBCOMMAND,
-						NULL,
-						NULL,
-						None_Receiver,
-						NULL);
+			GetUserIdAndSecContext(&save_userid, &save_sec_context);
+
+			PG_TRY();
+			{
+				/*
+				 * babelfish routines could be transferred to schema owner during creation so
+				 * current user may not have grant privilege on this routine when we reach here
+				 */
+				SetUserIdAndSecContext(procedureStruct->proowner, save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+				ProcessUtility(wrapper,
+							INTERNAL_GRANT_STATEMENT,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+			}
+			PG_FINALLY();
+			{
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+			}
+			PG_END_TRY();
 		}
 		tuple_bbf_schema = systable_getnext(scan);
 	}
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
+	pfree(schema);
+	ReleaseSysCache(proc_tuple);
 }
 
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest_schema);
@@ -3894,6 +4530,7 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	ScanKeyData		key;
 	HeapTuple		tuple, db_found;
 	TableScanDesc	tblscan;
+	NameData    	new_owner_namedata;
 		
 	Datum		values[SYSDATABASES_NUM_COLS];
 	bool		nulls[SYSDATABASES_NUM_COLS];
@@ -3936,9 +4573,10 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
+	namestrcpy(&new_owner_namedata, new_owner_name);
 		
 	/* Set up the new owner. */
-	values[Anum_sysdatabases_owner - 1]   = CStringGetDatum(new_owner_name);
+	values[Anum_sysdatabases_owner - 1]   = NameGetDatum(&new_owner_namedata);
 	replaces[Anum_sysdatabases_owner - 1] = true;	
 								  
 	tuple = heap_modify_tuple(db_found,
@@ -4055,11 +4693,13 @@ update_babelfish_namespace_ext_rename_db(int16 db_id, char *new_db_name)
 	{
 		bool		isNull;
 		char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
+		NameData 	physical_schema_name_namedata;
 
+		namestrcpy(&physical_schema_name_namedata, get_physical_schema_name(new_db_name, schema_name));
 		list_of_schemas_to_rename = lappend(list_of_schemas_to_rename, pstrdup(schema_name));
 
 		/* Update the Physical Db Name. */
-		values[Anum_namespace_ext_namespace - 1] = CStringGetDatum(get_physical_schema_name(new_db_name, schema_name));
+		values[Anum_namespace_ext_namespace - 1] = NameGetDatum(&physical_schema_name_namedata);
 		replaces[Anum_namespace_ext_namespace - 1] = true;	
 
 		new_tuple = heap_modify_tuple(old_tuple,
@@ -4127,12 +4767,14 @@ update_babelfish_authid_user_ext_rename_db(
 		bool isNull;
 		char *role_name = TextDatumGetCString(heap_getattr(old_tuple,
 							Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
+		NameData rolename_namedata;
 		
+		namestrcpy(&rolename_namedata, get_physical_user_name((char *)new_db_name, role_name, true, true));
 		list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
 
 		/* update rolname */
 		values[USER_EXT_ROLNAME] 
-						= CStringGetDatum(get_physical_user_name((char *)new_db_name, role_name, true));
+						= NameGetDatum(&rolename_namedata);
 		replaces[USER_EXT_ROLNAME] = true;
 
 		/* update database name */
@@ -4306,6 +4948,17 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Cannot change the name of the system database %s.", old_db_name)));
 
+	/* 
+	 * Check permission on the given database.
+	 * Dbcreator can only alter the databases in which it has a mapped user.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()) && !(get_user_for_database(old_db_name) 
+							&& has_privs_of_role(GetSessionUserId(), get_dbcreator_oid())))
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
+					old_db_name)));
+
 	Assert (*pltsql_protocol_plugin_ptr);
 	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
 	for (tries = 0; tries < 50; tries++)
@@ -4325,13 +4978,6 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		ereport(ERROR,
 			(errcode(ERRCODE_OBJECT_IN_USE),
 				errmsg("The database could not be exclusively locked to perform the operation.")));
-
-	/* Check permission on the given database. */
-	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
-		ereport(ERROR,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("User does not have permission to rename the database \'%s\', the database does not exist, or the database is not in a state that allows access checks.",
-					old_db_name)));
 
 	/*
 	 * Get an exclusive lock on the logical database we are trying to rename.
@@ -4401,14 +5047,15 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			char *old_role_name;
 			char *new_role_name;
 
-			if (SINGLE_DB == get_migration_mode() &&
-				((strlen(role) == 3 && strncmp(role, "dbo", 3) == 0) ||
-				(strlen(role) == 8 && strncmp(role, "db_owner", 8) == 0)))
+			if (SINGLE_DB == get_migration_mode() && IS_FIXED_DB_PRINCIPAL(role))
 				continue;
 
-			old_role_name = get_physical_user_name(old_db_name, role, true);
-			new_role_name = get_physical_user_name(new_db_name, role, true);
+			old_role_name = get_physical_user_name(old_db_name, role, true, true);
+			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
+
+			pfree(old_role_name);
+			pfree(new_role_name);
 		}
 
 		/* Update the default_database field in babelfish_authid_login_ext. */
@@ -4442,5 +5089,1229 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 	SetCurrentRoleId(prev_current_user, true);
 
 	if (!xactStarted)
+		CommitTransactionCommand();
+}
+
+/*
+ * Returns true if the user/role exists in the sys.babelfish_authid_user_ext catalog,
+ * false otherwise.
+ */
+bool
+user_exists_for_db(const char *db_name, const char *user_name)
+{
+	HeapTuple		tuple_cache;
+	NameData		rolname;
+	bool			user_exists = false;
+
+	namestrcpy(&rolname, user_name);
+
+	tuple_cache = SearchSysCache1(AUTHIDUSEREXTROLENAME, NameGetDatum(&rolname));
+
+	if (HeapTupleIsValid(tuple_cache))
+	{
+		bool isnull;
+		char *db_name_from_cache = TextDatumGetCString(SysCacheGetAttr(AUTHIDUSEREXTROLENAME, tuple_cache,
+												 Anum_bbf_authid_user_ext_database_name, &isnull));
+
+		Assert(!isnull);
+
+		if (strcmp(db_name_from_cache, db_name) == 0)
+			user_exists = true;
+		
+		pfree(db_name_from_cache);
+		ReleaseSysCache(tuple_cache);
+	}
+
+	return user_exists;
+}
+
+/*
+ * partition_function_id_exists
+ *		Returns true if provided function id is in use, false otherwise.
+ *
+ * 	This is helper function to find new id for partition function, it checks if provided
+ * 	id is already in use by looking up in sys.babelfish_partition_function catalog.
+ */
+static bool
+partition_function_id_exists(int32 id)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey;
+	bool		exists = false;
+	/* open the relation */
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey,
+					Anum_bbf_partition_function_id,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(id));
+
+	/* scan using index */
+	scan = systable_beginscan(rel,
+			get_bbf_partition_function_id_idx_oid(),
+			false, NULL, 1, &scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		exists = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return exists;
+}
+
+/*
+ * get_available_partition_function_id
+ * 		Returns available id for partition function.
+ * 
+ * 	1. To guard against race conditions for IDs, we check if the
+ * 	   ID generated by sequence is used by an existing partition function.
+ * 	2. To guard rare case where all possible sequence values have been exhausted
+ * 	   and the sequence wraps around, we will loop through the entire range of
+ * 	   sequence values and on loop completion, we should bail out.
+ */
+int32
+get_available_partition_function_id(void)
+{
+	int32		id;
+	int32		start = 0;
+
+	do
+	{
+		id = nextval_internal(get_bbf_partition_function_seq_oid(), false);
+		if (start == 0)
+			start = id;
+		else if (start == id) /* loop completed */
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot find an available ID for new partition function.")));
+
+		}
+	} while (partition_function_id_exists(id));
+
+	return id;
+}
+
+/*
+ * partition_scheme_id_exists
+ *		Returns true if provided scheme id is in use, false otherwise.
+ *
+ * 	This is helper function to find new id for partition scheme, it checks
+ * 	if provided id is already in use by looking up in sys.babelfish_partition_scheme catalog.
+ */
+static bool
+partition_scheme_id_exists(int32 id)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey;
+	bool		exists = false;
+
+	/* open the relation */
+	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey,
+			Anum_bbf_partition_scheme_id,
+			BTEqualStrategyNumber, F_INT4EQ,
+			Int32GetDatum(id));
+
+	/* scan using index */
+	scan = systable_beginscan(rel,
+			get_bbf_partition_scheme_id_idx_oid(),
+			false, NULL, 1, &scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		exists = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return exists;
+}
+
+/*
+ * get_available_partition_scheme_id
+ * 		Returns available id for partition scheme.
+ * 	1. To guard against race conditions for IDs, we check if the
+ * 	   ID generated by sequence is used by an existing partition scheme.
+ * 	2. To guard rare case where all possible sequence values have been exhausted
+ * 	   and the sequence wraps around, we will loop through the entire range of
+ * 	   sequence values and on loop completion, we should bail out.
+ */
+int32
+get_available_partition_scheme_id(void)
+{
+	int32		id;
+	int32		start = 0;
+
+	do
+	{
+		id = nextval_internal(get_bbf_partition_scheme_seq_oid(), false);
+		if (start == 0)
+			start = id;
+		else if (start == id) /* loop completed */
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot find an available ID for new partition scheme.")));
+
+		}
+	} while (partition_scheme_id_exists(id));
+
+	return id;
+}
+
+/*
+ * is_partition_function_used
+ *		Returns true if provided function name is in use, false otherwise.
+ *
+ * 	This function checks if provided function name is used by any partition scheme,
+ * 	by looking up in sys.babelfish_partition_scheme catalog.
+ */
+static bool
+is_partition_function_used(int16 dbid, const char *partition_function_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[2];
+	bool		is_used = false;
+
+	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_scheme_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_scheme_func_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
+
+	scan = systable_beginscan(rel,
+			get_bbf_partition_scheme_pk_idx_oid(),
+			false, NULL, 2, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		is_used = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return is_used;
+}
+
+/*
+ * add_entry_to_bbf_partition_function
+ *		Add a new entry to the sys.babelfish_partition_function catalog table.
+ */
+void
+add_entry_to_bbf_partition_function(int16 dbid, const char *partition_function_name, char *typname,
+					bool partition_option, ArrayType *values, char *collation)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	Datum		new_record[BBF_PARTITION_FUNCTION_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_FUNCTION_NUM_COLS];
+	int32		partition_function_id = get_available_partition_function_id();
+
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	/* open the relation */
+	rel = table_open(get_bbf_partition_function_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	/* Build a tuple to insert */
+	new_record[Anum_bbf_partition_function_dbid - 1] = Int16GetDatum(dbid);
+	new_record[Anum_bbf_partition_function_id - 1] = Int32GetDatum(partition_function_id);
+	new_record[Anum_bbf_partition_function_name - 1] = CStringGetTextDatum(partition_function_name);
+	new_record[Anum_bbf_partition_function_input_parameter_type - 1] =  CStringGetTextDatum(typname);
+	new_record[Anum_bbf_partition_function_partition_option - 1] = BoolGetDatum(partition_option);
+	new_record[Anum_bbf_partition_function_range_values - 1] = PointerGetDatum(values);
+	new_record[6] = new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+
+	if (collation)
+	{
+		NameData input_parameter_collation;
+		namestrcpy(&input_parameter_collation, collation);
+		new_record[Anum_bbf_partition_function_input_parameter_collation - 1] = NameGetDatum(&input_parameter_collation);
+	}
+	else
+		new_record_nulls[Anum_bbf_partition_function_input_parameter_collation - 1] = true;
+
+	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+	/* insert new record in the bbf_partition_function table */
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	/* close the relation */
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * remove_entry_from_bbf_partition_function
+ * 		Tries to remove an entry from the sys.babelfish_partition_function catalog table.
+ * 
+ * 	It raises errors for following cases:
+ * 		1. If partition function doesn't exists in database.
+ * 		2. If there are any dependent partition schemes on this partition function.
+ */
+void
+remove_entry_from_bbf_partition_function(int16 dbid, const char *partition_function_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[2];
+	SysScanDesc	scan;
+	int32		function_exists = false;
+	bool		has_dependent_objects = true;
+
+	/* Fetch the relation */
+	rel = table_open(get_bbf_partition_function_oid(), RowExclusiveLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_function_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_function_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
+	/* scan using index */
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{	
+		function_exists = true;
+		/* remove the entry only if there is no dependent partition scheme on it */
+		if (!is_partition_function_used(dbid, partition_function_name))
+		{
+			has_dependent_objects = false;
+			CatalogTupleDelete(rel, &tuple->t_self);
+		}
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	/* raise error if it doesn't exists in database */
+	if (!function_exists)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Cannot drop the partition function '%s', because it does not exist or you do not have permission.", partition_function_name)));
+	}
+
+	/* raise error if there are dependent partition scheme on it */
+	if (has_dependent_objects)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Partition function '%s' is being used by one or more partition schemes.", partition_function_name)));
+	}
+}
+
+/*
+ * partition_function_exists
+ *	Returns true if provided partition function name exists in database, false otherwise.
+ */
+bool
+partition_function_exists(int16 dbid, const char *partition_function_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[2];
+	bool		exists = false;
+
+	/* open the relation */
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_function_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_function_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
+	
+	/* scan using index */
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		exists = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return exists;
+}
+
+/*
+ * get_partition_count
+ *		Returns the number of partitions that will be generated using the given partition function name.
+ */
+int
+get_partition_count(int16 dbid, const char *partition_function_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[2];
+	int		count = 0;
+	/* Fetch the relation */
+	rel = table_open(get_bbf_partition_function_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_function_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_function_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_function_name));
+	/* scan using index */
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool isnull;
+		ArrayType *values;
+		values = DatumGetArrayTypeP(heap_getattr(tuple, Anum_bbf_partition_function_range_values, RelationGetDescr(rel), &isnull));
+		count = ArrayGetNItems(ARR_NDIM(values), ARR_DIMS(values)) + 1;
+	}
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return count;
+}
+
+/*
+ * is_partition_scheme_used
+ *		Returns true if provided scheme name is in use, false otherwise.
+ *
+ * 	This function checks if provided scheme name is used by any partition scheme,
+ * 	by looking up in sys.babelfish_partition_depend catalog.
+ */
+static bool
+is_partition_scheme_used(int16 dbid, const char *partition_scheme_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData scanKey[2];
+	SysScanDesc scan;
+	bool is_used = false;
+
+ 	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+ 	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_depend_scheme_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
+
+
+	scan = systable_beginscan(rel,
+			get_bbf_partition_depend_idx_oid(),
+			false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		is_used = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return is_used;
+}
+
+/*
+ * add_entry_to_bbf_partition_scheme
+ *		Add a new entry to the sys.babelfish_partition_scheme catalog table.
+ */
+void
+add_entry_to_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name, const char *partition_function_name, bool next_used)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	Datum		new_record[BBF_PARTITION_SCHEME_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_SCHEME_NUM_COLS];
+	int32		partition_scheme_id = get_available_partition_scheme_id();
+
+	/* Fetch the relation */
+	rel = table_open(get_bbf_partition_scheme_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	/* Build a tuple to insert */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[Anum_bbf_partition_scheme_dbid - 1] = Int16GetDatum(dbid);
+	new_record[Anum_bbf_partition_scheme_id - 1] = Int32GetDatum(partition_scheme_id);
+	new_record[Anum_bbf_partition_scheme_name - 1] = CStringGetTextDatum(partition_scheme_name);
+	new_record[Anum_bbf_partition_scheme_func_name - 1] = CStringGetTextDatum(partition_function_name);
+	new_record[Anum_bbf_partition_scheme_next_used - 1] = BoolGetDatum(next_used);
+
+	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+	/* Insert new record in the bbf_partition_scheme table */
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	/* Close bbf_partition_scheme */
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * remove_entry_from_bbf_partition_scheme
+ * 		Tries to remove an entry from the sys.babelfish_partition_scheme catalog table.
+ * 
+ * 	It raises errors for following cases:
+ * 		1. If partition scheme doesn't exists in database.
+ * 		2. If there are any dependent tables on this partition scheme.
+ */
+void
+remove_entry_from_bbf_partition_scheme(int16 dbid, const char *partition_scheme_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[2];
+	SysScanDesc	scan;
+	bool 		scheme_exists = false;
+	bool 		has_dependent_objects = true;
+
+	/* open the relation */
+	rel = table_open(get_bbf_partition_scheme_oid(), RowExclusiveLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_scheme_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_scheme_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
+	/* scan using index */
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		scheme_exists = true;
+		/* remove the entry only if there is no dependent tables on it */
+		if (!is_partition_scheme_used(dbid, partition_scheme_name))
+		{
+			has_dependent_objects = false;
+			CatalogTupleDelete(rel, &tuple->t_self);
+		}
+	}
+
+	systable_endscan(scan);
+	/* close the relation */
+	table_close(rel, RowExclusiveLock);
+
+	/* raise error if it doesn't exists in database */
+	if (!scheme_exists)
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_UNDEFINED_OBJECT), 
+				errmsg("Cannot drop the partition scheme '%s', because it does not exist or you do not have permission.", partition_scheme_name)));
+	}
+
+	/* raise error if there are dependent tables on it */
+	if (has_dependent_objects) 
+	{
+		ereport(ERROR, 
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("The partition scheme \"%s\" is currently being used to partition one or more tables.", partition_scheme_name)));
+	}
+}
+
+/*
+ * partition_scheme_exists
+ * 	Returns true if provided scheme name exists in database, false otherwise.
+ */
+bool
+partition_scheme_exists(int16 dbid, const char *partition_scheme_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[2];
+	bool		exists = false;
+
+	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_scheme_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_scheme_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		exists = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return exists;
+}
+
+/*
+ * get_partition_function_name
+ * 	Returns the partition function name for the given partition scheme name.
+ */
+char*
+get_partition_function_name(int16 dbid, const char *partition_scheme_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey[2];
+	char		*partition_function_name = NULL;
+
+	rel = table_open(get_bbf_partition_scheme_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_scheme_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_scheme_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(partition_scheme_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
+					false, NULL, 2, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool isnull;
+		partition_function_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_scheme_func_name, RelationGetDescr(rel), &isnull));
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return partition_function_name;
+}
+/*
+ * add_entry_to_bbf_partition_depend
+ *	Inserts a new entry into the sys.babelfish_partition_depend catalog
+ *	to track the dependecy between partition scheme and partitioned tables
+ *	created using that.
+ */
+void
+add_entry_to_bbf_partition_depend(int16 dbid, char* partition_scheme_name, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	Datum		new_record[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_DEPEND_NUM_COLS];
+
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	/* Build a tuple to insert. */
+	new_record[Anum_bbf_partition_depend_dbid - 1] = Int16GetDatum(dbid);
+	new_record[Anum_bbf_partition_depend_scheme_name - 1] = CStringGetTextDatum(partition_scheme_name);
+	new_record[Anum_bbf_partition_depend_table_schema_name - 1] = CStringGetTextDatum(schema_name);
+	new_record[Anum_bbf_partition_depend_table_name - 1] = CStringGetTextDatum(table_name);
+
+	tuple = heap_form_tuple(dsc, new_record, new_record_nulls);
+
+	/* Insert new record in the table. */
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * remove_entry_from_bbf_partition_depend
+ *	Removes an entry from the sys.babelfish_partition_depend catalog.
+ */
+void
+remove_entry_from_bbf_partition_depend(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0, 
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+	
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * rename_table_update_bbf_partition_depend_catalog
+ * 	Updates table_name in sys.babelfish_partition_depend catalog for
+ * 	RENAME TABLE command to have consistency with the new names.
+ */
+void
+rename_table_update_bbf_partition_depend_catalog(RenameStmt *stmt, char *logical_schema_name, int16 dbid)
+{
+	Relation	rel;
+	HeapTuple	tuple, new_tuple;
+	TupleDesc	dsc;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	Datum		new_record[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_nulls[BBF_PARTITION_DEPEND_NUM_COLS];
+	bool		new_record_replace[BBF_PARTITION_DEPEND_NUM_COLS];
+	char		*table_name = stmt->relation->relname;
+
+	/* Open the catalog table. */
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+
+	/* Search for the row which needs to be updated. */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyEntryInitialize(&scanKey[1], 0, 
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0, 
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+
+	/* Update the table name of the found row. */
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Get the descriptor of the table. */
+		dsc = RelationGetDescr(rel);
+
+		/* Build a tuple to insert. */
+		MemSet(new_record, 0, sizeof(new_record));
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_replace, false, sizeof(new_record_replace));
+
+		new_record[Anum_bbf_partition_depend_table_name - 1] = CStringGetTextDatum(stmt->newname);
+		new_record_replace[Anum_bbf_partition_depend_table_name - 1] = true;
+		new_tuple = heap_modify_tuple(tuple, dsc, new_record, new_record_nulls, new_record_replace);
+
+		/* Perform the actual catalog update. */
+		CatalogTupleUpdate(rel, &new_tuple->t_self, new_tuple);
+
+		/* Free the allocated tuple. */
+		heap_freetuple(new_tuple);
+	}
+
+	systable_endscan(scan);
+	/* Close the catalog table. */
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * is_bbf_partitioned_table
+ *		Returns true if provided table is babelfish partitioned table, false otherwise.
+ *
+ *	This function checks if provided table is babelfish partitioned table
+ *	by looking up in sys.babelfish_partition_depend catalog.
+ */
+bool
+is_bbf_partitioned_table(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	bool		sucess = false;
+
+	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0,
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+		sucess = true;
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return sucess;
+}
+
+/*
+ * get_partition_scheme_for_partitioned_table
+ * 	Returns the name of partition scheme used to create the partitioned table.
+ */
+char*
+get_partition_scheme_for_partitioned_table(int16 dbid, char *schema_name, char *table_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	char		*partition_scheme_name = NULL;
+
+	rel = table_open(get_bbf_partition_depend_oid(), AccessShareLock);
+	
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_partition_depend_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_partition_depend_table_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(schema_name));
+
+	ScanKeyEntryInitialize(&scanKey[2], 0,
+				Anum_bbf_partition_depend_table_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(table_name));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					false, NULL, 3, scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool isnull;
+		partition_scheme_name = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_partition_depend_scheme_name, RelationGetDescr(rel), &isnull));
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return partition_scheme_name;
+}
+
+/*
+ * clean_up_bbf_partition_metadata
+ *		clean up all the maintained metadata related to partition for
+ * 		provided database
+ */
+void
+clean_up_bbf_partition_metadata(int16 dbid)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData	scanKey;
+
+	/* clean up sys.babelfish_partition_depend catalog */
+	rel = table_open(get_bbf_partition_depend_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey,
+			Anum_bbf_partition_function_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
+
+	scan = systable_beginscan(rel, get_bbf_partition_depend_idx_oid(),
+					true, NULL, 1, &scanKey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple))
+			CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	/* clean up sys.babelfish_partition_scheme catalog */
+	rel = table_open(get_bbf_partition_scheme_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey,
+			Anum_bbf_partition_scheme_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
+
+	scan = systable_beginscan(rel, get_bbf_partition_scheme_pk_idx_oid(),
+					true, NULL, 1, &scanKey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple))
+			CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+	
+	/* clean up sys.babelfish_partition_function catalog */
+	rel = table_open(get_bbf_partition_function_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey,
+			Anum_bbf_partition_function_dbid,
+			BTEqualStrategyNumber, F_INT2EQ,
+			Int16GetDatum(dbid));
+
+	scan = systable_beginscan(rel, get_bbf_partition_function_pk_idx_oid(),
+					true, NULL, 1, &scanKey);
+
+	while ((tuple = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple))
+			CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+/* 
+ * This is a temporary procedure which is called during upgrade to alter
+ * default privileges on all the schemas where the schema owner is not dbo/db_owner.
+ */
+static void
+alter_default_privilege_for_db(char *dbname)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData scanKey[2];
+	int16		dbid = get_db_id(dbname);
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									AccessShareLock);
+	dsc = RelationGetDescr(bbf_schema_rel);
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_schema_perms_object_type,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_database_or_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(OBJ_SCHEMA));
+
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 2, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		bool		isnull;
+		const char	*schema_name;
+		const char	*grantee;
+		int			current_permission;
+		char		*schema_owner;
+		char		*physical_schema;
+		const char	*dbo_user;
+		const char	*db_owner;
+		int			i;
+
+		schema_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_schema_name, dsc, &isnull));
+		grantee = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull));
+		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
+
+		physical_schema = get_physical_schema_name_by_mode(dbname, schema_name, baseline_mode);
+		dbo_user = get_dbo_role_name_by_mode(dbname, baseline_mode);
+		db_owner = get_db_owner_name_by_mode(dbname, baseline_mode);
+		schema_owner = GetUserNameFromId(get_owner_of_schema(physical_schema), false);
+
+		/* If schema owner is other that dbo or db_owner user, only then execute ALTER DEFAULT PRIVILEGES. */
+		if ((strcmp(schema_owner, dbo_user) != 0) && (strcmp(schema_owner, db_owner) != 0))
+		{
+			/* For each permission, grant alter default privileges explicitly. */
+			for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+			{
+				if ((current_permission & permissions[i]) &&  permissions[i] != ACL_EXECUTE)
+				{
+					char	*alter_query = NULL;
+					char	*grant_query = NULL;
+					alter_query = psprintf("ALTER DEFAULT PRIVILEGES FOR ROLE %s, %s IN SCHEMA %s GRANT %s ON TABLES TO %s", dbo_user, schema_owner, physical_schema, privilege_to_string(permissions[i]), grantee);
+					exec_utility_cmd_helper(alter_query);
+					grant_query = psprintf("GRANT %s ON ALL TABLES IN SCHEMA %s TO %s", privilege_to_string(permissions[i]), physical_schema, grantee);
+					exec_utility_cmd_helper(grant_query);
+					pfree(alter_query);
+					pfree(grant_query);
+				}
+			}
+		}
+		pfree(physical_schema);
+		pfree(schema_owner);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+	
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, AccessShareLock);
+}
+
+
+PG_FUNCTION_INFO_V1(alter_default_privilege_on_schema);
+Datum
+alter_default_privilege_on_schema(PG_FUNCTION_ARGS)
+{
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
+												 db_rel->rd_att, &is_null);
+		char *db_name = TextDatumGetCString(db_name_datum);
+
+		alter_default_privilege_for_db(db_name);
+		pfree(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
+/*
+ * get_proc_namespace_oid:
+ * Find namespace oid of a procedure based on proc name.
+ */
+static Oid
+get_proc_namespace_oid(char **proc_name, char *curr_db)
+{
+	char *physical_sch_name;
+	char *db_name;
+	char *schema_name;
+	char *object_name;
+	Oid obj_schema_oid = InvalidOid;
+
+	if (*proc_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("procedure name cannot be NULL")));
+
+	/*
+	 * Split the proc name, downcase and truncate if needed
+	 * and return the db_name, schema_name and object_name.
+	 */
+	downcase_truncate_split_object_name(*proc_name, NULL, &db_name, &schema_name, &object_name);
+	*proc_name = object_name;
+
+	if (!strcmp(db_name, ""))
+		db_name = curr_db;
+
+	if (!strcmp(schema_name, ""))
+	{
+		/* Find the default schema for current user. */
+		char *user = get_user_for_database(db_name);
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, (const char *) user);
+	}
+
+	/* Get physical schema name from logical schema name. */
+	physical_sch_name = get_physical_schema_name(db_name, schema_name);
+	/* Get namespace oid from physical schema name. */
+	obj_schema_oid = get_namespace_oid(physical_sch_name, false);
+
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_sch_name);
+
+	return obj_schema_oid;
+}
+
+/*
+ * get_proargtypes_oid:
+ * Given a procedure name, namespace, user ID, and target argument name
+ * return the OID of the argument's type in the procedure.
+ *
+ * Returns InvalidOid if no matching procedure argument is found.
+ */
+static Oid
+get_proargtypes_oid(char *proname, Oid pronamespace, Oid user_id, char *targeted_arg_name)
+{
+	HeapTuple    tuple;
+	CatCList   *catlist;
+	Oid matched_type = InvalidOid;
+
+	/* Downcase and truncate identifier if needed. */
+	targeted_arg_name = downcase_truncate_identifier(targeted_arg_name, strlen(targeted_arg_name), true);
+
+	/* First search in pg_proc by name. */
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
+
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+		/* Then consider only procs in specified namespace. */
+		if (procform->pronamespace == pronamespace &&
+			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+		{
+			/* Get the list of proargames and corresponding proargtypes oids. */
+			char **proargnames = fetch_func_input_arg_names(tuple);
+			Oid *proargtypes = procform->proargtypes.values;
+
+			/* Find the typeoid corresponding to target TVP argument. */
+			for (int j = 0; j < procform->pronargs; j++)
+			{
+				if (strcmp(proargnames[j], targeted_arg_name) == 0)
+				{
+					matched_type = proargtypes[j];
+					break;
+				}
+			}
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	if (matched_type == InvalidOid)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				errmsg("No procedure found with name \"%s\" that has an argument named \"%s\"",
+						proname, targeted_arg_name)));
+	}
+	return matched_type;
+}
+
+/*
+ * get_tvp_typename_typeschemaname:
+ * Retrieves the type name and schema name of a Table-Valued Parameter (TVP)
+ * for a given stored procedure and argument name.
+ */
+void
+get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name)
+{
+	bool			xactStarted = IsTransactionOrTransactionBlock();
+	Oid 			tvp_proargtype = InvalidOid;
+	Oid 			user_id = InvalidOid;
+	Oid 			obj_schema_oid = InvalidOid;
+	HeapTuple		tuple;
+	char 			*typnamespace;
+	char 			*curr_db;
+	MemoryContext 	oldContext;
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	user_id = GetUserId();
+	curr_db = get_cur_db_name();
+
+	/* Get procedure namespaceid. */
+	obj_schema_oid = get_proc_namespace_oid(&proc_name, curr_db);
+
+	/* Fetch proargtype value of our targeted variable. */
+	tvp_proargtype = get_proargtypes_oid(proc_name, obj_schema_oid, user_id, target_arg_name);
+
+	/* Search in pg_type by object_id and fetch tvpTypeName and tvpTypeSchemaName. */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(tvp_proargtype));
+	/* Check if user have right permission on object. */
+	if (HeapTupleIsValid(tuple) && object_aclcheck(TypeRelationId, tvp_proargtype, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+		*tvp_type_name = NameStr(pg_type->typname);
+		typnamespace = get_namespace_name(pg_type->typnamespace);
+
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		*tvp_type_schema_name = pstrdup((char *) get_logical_schema_name(typnamespace, true));
+		MemoryContextSwitchTo(oldContext);
+		ReleaseSysCache(tuple);
+	}
+
+	if(!xactStarted)
 		CommitTransactionCommand();
 }

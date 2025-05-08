@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 --Under Single-DB mode
 USE master;
 GO
@@ -7,7 +8,7 @@ USE db1;
 GO
 CREATE schema test;
 GO
-SELECT nspname FROM pg_namespace WHERE nspname = 'test';
+SELECT nspname FROM pg_namespace WHERE nspname like '%test%';
 GO
 CREATE table t1 ( a int, b int); -- should be created into dbo.t1
 GO

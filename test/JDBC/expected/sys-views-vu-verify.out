@@ -1,3 +1,4 @@
+-- tsql
 USE sys_views_vu_prepare_db1
 GO
 
@@ -113,3 +114,229 @@ int
 0
 ~~END~~
 
+
+USE master ;
+GO
+
+create login sys_views_login_l1 WITH PASSWORD = '12345678';
+GO
+
+create user sys_views_user_u1 for login sys_views_login_l1;
+GO
+
+CREATE schema sys_views_vu_prepare_s1;
+GO
+
+USE sys_views_vu_prepare_db1
+GO
+
+create user sys_views_user_u2 for login sys_views_login_l1;
+GO
+
+CREATE DATABASE sys_views_vu_prepare_db2;
+GO
+
+USE sys_views_vu_prepare_db2
+GO
+
+CREATE schema sys_views_vu_prepare_s3;
+GO
+
+create user sys_views_user_u3 for login sys_views_login_l1;
+GO
+
+USE master;
+GO
+
+-- psql
+-- checking to make sure that all tsql users have USAGE privilege on tsql schemas.
+SELECT n.nspname, r.rolname, has_schema_privilege(r.rolname, n.nspname, 'USAGE')
+FROM sys.babelfish_namespace_ext n 
+INNER JOIN  sys.babelfish_sysdatabases db on n.dbid = db.dbid
+CROSS JOIN  sys.babelfish_authid_user_ext r
+WHERE db.name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
+and r.database_name in ('master', 'tempdb', 'msdb', 'sys_views_vu_prepare_db1', 'sys_views_vu_prepare_db2')
+and n.orig_name in ('dbo', 'guest', 'sys_views_vu_prepare_s1', 'sys_views_vu_prepare_s2', 'sys_views_vu_prepare_s3')
+and r.orig_username in ('dbo', 'dbo_owner', 'guest', 'sys_views_user_u1', 'sys_views_user_u2', 'sys_views_user_u3')
+ORDER by n.nspname, r.rolname;
+GO
+~~START~~
+name#!#name#!#bool
+master_dbo#!#master_dbo#!#t
+master_dbo#!#master_guest#!#t
+master_dbo#!#master_sys_views_user_u1#!#t
+master_dbo#!#msdb_dbo#!#t
+master_dbo#!#msdb_guest#!#t
+master_dbo#!#sys_views_vu_prepare_db1_dbo#!#t
+master_dbo#!#sys_views_vu_prepare_db1_guest#!#t
+master_dbo#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+master_dbo#!#sys_views_vu_prepare_db2_dbo#!#t
+master_dbo#!#sys_views_vu_prepare_db2_guest#!#t
+master_dbo#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+master_dbo#!#tempdb_dbo#!#t
+master_dbo#!#tempdb_guest#!#t
+master_guest#!#master_dbo#!#t
+master_guest#!#master_guest#!#t
+master_guest#!#master_sys_views_user_u1#!#t
+master_guest#!#msdb_dbo#!#t
+master_guest#!#msdb_guest#!#t
+master_guest#!#sys_views_vu_prepare_db1_dbo#!#t
+master_guest#!#sys_views_vu_prepare_db1_guest#!#t
+master_guest#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+master_guest#!#sys_views_vu_prepare_db2_dbo#!#t
+master_guest#!#sys_views_vu_prepare_db2_guest#!#t
+master_guest#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+master_guest#!#tempdb_dbo#!#t
+master_guest#!#tempdb_guest#!#t
+master_sys_views_vu_prepare_s1#!#master_dbo#!#t
+master_sys_views_vu_prepare_s1#!#master_guest#!#t
+master_sys_views_vu_prepare_s1#!#master_sys_views_user_u1#!#t
+master_sys_views_vu_prepare_s1#!#msdb_dbo#!#t
+master_sys_views_vu_prepare_s1#!#msdb_guest#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db1_dbo#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db1_guest#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db2_dbo#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db2_guest#!#t
+master_sys_views_vu_prepare_s1#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+master_sys_views_vu_prepare_s1#!#tempdb_dbo#!#t
+master_sys_views_vu_prepare_s1#!#tempdb_guest#!#t
+msdb_dbo#!#master_dbo#!#t
+msdb_dbo#!#master_guest#!#t
+msdb_dbo#!#master_sys_views_user_u1#!#t
+msdb_dbo#!#msdb_dbo#!#t
+msdb_dbo#!#msdb_guest#!#t
+msdb_dbo#!#sys_views_vu_prepare_db1_dbo#!#t
+msdb_dbo#!#sys_views_vu_prepare_db1_guest#!#t
+msdb_dbo#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+msdb_dbo#!#sys_views_vu_prepare_db2_dbo#!#t
+msdb_dbo#!#sys_views_vu_prepare_db2_guest#!#t
+msdb_dbo#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+msdb_dbo#!#tempdb_dbo#!#t
+msdb_dbo#!#tempdb_guest#!#t
+msdb_guest#!#master_dbo#!#t
+msdb_guest#!#master_guest#!#t
+msdb_guest#!#master_sys_views_user_u1#!#t
+msdb_guest#!#msdb_dbo#!#t
+msdb_guest#!#msdb_guest#!#t
+msdb_guest#!#sys_views_vu_prepare_db1_dbo#!#t
+msdb_guest#!#sys_views_vu_prepare_db1_guest#!#t
+msdb_guest#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+msdb_guest#!#sys_views_vu_prepare_db2_dbo#!#t
+msdb_guest#!#sys_views_vu_prepare_db2_guest#!#t
+msdb_guest#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+msdb_guest#!#tempdb_dbo#!#t
+msdb_guest#!#tempdb_guest#!#t
+sys_views_vu_prepare_db1_dbo#!#master_dbo#!#t
+sys_views_vu_prepare_db1_dbo#!#master_guest#!#t
+sys_views_vu_prepare_db1_dbo#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db1_dbo#!#msdb_dbo#!#t
+sys_views_vu_prepare_db1_dbo#!#msdb_guest#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db1_dbo#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db1_dbo#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db1_dbo#!#tempdb_guest#!#t
+sys_views_vu_prepare_db1_guest#!#master_dbo#!#t
+sys_views_vu_prepare_db1_guest#!#master_guest#!#t
+sys_views_vu_prepare_db1_guest#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db1_guest#!#msdb_dbo#!#t
+sys_views_vu_prepare_db1_guest#!#msdb_guest#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db1_guest#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db1_guest#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db1_guest#!#tempdb_guest#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#master_dbo#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#master_guest#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#msdb_dbo#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#msdb_guest#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db1_sys_views_vu_prepare_s2#!#tempdb_guest#!#t
+sys_views_vu_prepare_db2_dbo#!#master_dbo#!#t
+sys_views_vu_prepare_db2_dbo#!#master_guest#!#t
+sys_views_vu_prepare_db2_dbo#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db2_dbo#!#msdb_dbo#!#t
+sys_views_vu_prepare_db2_dbo#!#msdb_guest#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db2_dbo#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db2_dbo#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db2_dbo#!#tempdb_guest#!#t
+sys_views_vu_prepare_db2_guest#!#master_dbo#!#t
+sys_views_vu_prepare_db2_guest#!#master_guest#!#t
+sys_views_vu_prepare_db2_guest#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db2_guest#!#msdb_dbo#!#t
+sys_views_vu_prepare_db2_guest#!#msdb_guest#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db2_guest#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db2_guest#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db2_guest#!#tempdb_guest#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#master_dbo#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#master_guest#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#master_sys_views_user_u1#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#msdb_dbo#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#msdb_guest#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db1_dbo#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db1_guest#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db2_dbo#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db2_guest#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#tempdb_dbo#!#t
+sys_views_vu_prepare_db2_sys_views_vu_prepare_s3#!#tempdb_guest#!#t
+tempdb_dbo#!#master_dbo#!#t
+tempdb_dbo#!#master_guest#!#t
+tempdb_dbo#!#master_sys_views_user_u1#!#t
+tempdb_dbo#!#msdb_dbo#!#t
+tempdb_dbo#!#msdb_guest#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db1_dbo#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db1_guest#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db2_dbo#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db2_guest#!#t
+tempdb_dbo#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+tempdb_dbo#!#tempdb_dbo#!#t
+tempdb_dbo#!#tempdb_guest#!#t
+tempdb_guest#!#master_dbo#!#t
+tempdb_guest#!#master_guest#!#t
+tempdb_guest#!#master_sys_views_user_u1#!#t
+tempdb_guest#!#msdb_dbo#!#t
+tempdb_guest#!#msdb_guest#!#t
+tempdb_guest#!#sys_views_vu_prepare_db1_dbo#!#t
+tempdb_guest#!#sys_views_vu_prepare_db1_guest#!#t
+tempdb_guest#!#sys_views_vu_prepare_db1_sys_views_user_u2#!#t
+tempdb_guest#!#sys_views_vu_prepare_db2_dbo#!#t
+tempdb_guest#!#sys_views_vu_prepare_db2_guest#!#t
+tempdb_guest#!#sys_views_vu_prepare_db2_sys_views_user_u3#!#t
+tempdb_guest#!#tempdb_dbo#!#t
+tempdb_guest#!#tempdb_guest#!#t
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+DROP DATABASE sys_views_vu_prepare_db2;
+GO

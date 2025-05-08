@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using Serilog;
 
@@ -217,6 +217,21 @@ namespace BabelfishDotnetFramework
 							string destinationTable = result[2];
 							testFlag &= testUtils.insertBulkCopy(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount);
 						}
+						else if (strLine.ToLowerInvariant().StartsWith("traninsertbulk"))
+						{
+							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
+							testUtils.PrintToLogsOrConsole(
+								$"########################## INSERT BULK:- {strLine} ##########################", logger, "information");
+							string sourceTable = result[1];
+							string destinationTable = result[2];
+							string bulkCopyOption = "";
+							/* Check if bulk copy option is specified explicitly. */
+							if (result.Length > 3)
+							{
+								bulkCopyOption = result[3];
+							}
+							testFlag &= testUtils.insertBulkCopyWithTransaction(bblCnn, bblCmd, sourceTable, destinationTable, bulkCopyOption, bblTransaction, logger, ref stCount);
+						}
 						/* Case for sp_customtype RPC. */
 						else if (strLine.ToLowerInvariant().StartsWith("storedp"))
 						{
@@ -268,6 +283,14 @@ namespace BabelfishDotnetFramework
 							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
 							testUtils.bcp(result[1].Trim(), result[2].Trim(), result[3].Trim(), result[0].Trim(), logger);
 						}
+						else if(strLine.ToLowerInvariant().StartsWith("ddlexport"))
+						{
+							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
+							testUtils.PrintToLogsOrConsole("############################# DDLEXPORT ##############################", logger, "information");
+							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
+							LoginDatabaseScripter.ScriptDatabase(strLine, testName, testUtils, logger);
+							LoginDatabaseScripter.ScriptLogins(testName, testUtils, logger);
+						}
 						else
 						{
 							/*
@@ -290,7 +313,7 @@ namespace BabelfishDotnetFramework
 							}
 							else if (query.ToLowerInvariant().StartsWith("insert") || query.ToLowerInvariant().StartsWith("update") || query.ToLowerInvariant().StartsWith("alter")
 									 || query.ToLowerInvariant().StartsWith("delete") || query.ToLowerInvariant().StartsWith("begin") || query.ToLowerInvariant().StartsWith("commit")
-									 || query.ToLowerInvariant().StartsWith("rollback") || query.ToLowerInvariant().StartsWith("save") || query.ToLowerInvariant().StartsWith("use")
+									 || query.ToLowerInvariant().StartsWith("rollback") || query.ToLowerInvariant().StartsWith("save") || query.ToLowerInvariant().StartsWith("use") || query.ToLowerInvariant().StartsWith(" set")
 									 || query.ToLowerInvariant().StartsWith("create") || query.ToLowerInvariant().StartsWith("drop") || query.ToLowerInvariant().StartsWith("exec") || query.ToLowerInvariant().StartsWith("declare"))
 							{
 								bblCmd?.Dispose();
@@ -304,6 +327,18 @@ namespace BabelfishDotnetFramework
 
 								testUtils.ResultSetWriter(bblCmd, testName, ref stCount);
 								bblCmd.Dispose();								
+							}
+							else if (isSql)
+							{
+								bblCmd?.Dispose();
+								bblCmd = testUtils.CreateDbCommand(null, bblCnn);
+								if (bblTransaction != null)
+								{
+									bblCmd.Transaction = bblTransaction;
+								}
+								bblCmd.CommandText = query;
+
+								testUtils.ResultSetWriter(bblCmd, testName, ref stCount);
 							}
 							else
 							{

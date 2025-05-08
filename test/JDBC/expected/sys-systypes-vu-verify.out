@@ -22,7 +22,7 @@ image#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
 int#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 money#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 nchar#!#0#!#8000#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
-ntext#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
+ntext#!#0#!#16#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 numeric#!#0#!#17#!#0#!#1#!#<NULL>#!#<NULL>
 nvarchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 real#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
@@ -33,7 +33,7 @@ sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
-text#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
+text#!#0#!#16#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 time#!#0#!#5#!#0#!#1#!#<NULL>#!#<NULL>
 timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
@@ -107,9 +107,10 @@ int
 
 SELECT count(*) FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+~~START~~
+int
+1
+~~END~~
 
 
 CREATE TYPE sys_systypes_type FROM int;
@@ -142,9 +143,10 @@ sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 
 SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
 
 
 DROP TYPE sys_systypes_type;

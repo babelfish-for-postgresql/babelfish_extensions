@@ -7,11 +7,11 @@ USE db1;
 GO
 CREATE schema test;
 GO
-SELECT nspname FROM pg_namespace WHERE nspname = 'test';
+SELECT nspname FROM pg_namespace WHERE nspname like '%test%';
 GO
 ~~START~~
 varchar
-test
+db1_test
 ~~END~~
 
 CREATE table t1 ( a int, b int); -- should be created into dbo.t1
@@ -40,7 +40,7 @@ SELECT * FROM dbo.t1; -- error expected, querying master.dbo.t1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "master_dbo.t1" does not exist)~~
+~~ERROR (Message: relation "dbo.t1" does not exist)~~
 
 -- search path
 USE db1;

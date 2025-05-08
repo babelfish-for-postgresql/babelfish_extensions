@@ -1,0 +1,124 @@
+-- tsql
+
+CREATE PROC babel_4923_newid_proc
+AS
+	DECLARE @num_iter INT = 5
+	DECLARE @i INT = 1
+
+	CREATE TABLE babel_4923_newid_tab1 (u uniqueidentifier)
+	WHILE @i <= @num_iter
+	BEGIN
+		INSERT INTO babel_4923_newid_tab1 VALUES (NEWID())
+		SET @i = @i + 1
+	END
+
+	ALTER TABLE babel_4923_newid_tab1 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID()
+
+	-- should be 5
+	SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab1
+
+	DROP TABLE babel_4923_newid_tab1
+GO
+
+EXEC babel_4923_newid_proc
+GO
+
+CREATE PROC babel_4923_newid_proc_2
+AS
+	DECLARE @num_iter INT = 5
+	DECLARE @i INT = 1
+
+	CREATE TABLE babel_4923_newid_tab1 (u uniqueidentifier)
+	WHILE @i <= @num_iter
+	BEGIN
+		INSERT INTO babel_4923_newid_tab1 VALUES (NEWSEQUENTIALID())
+		SET @i = @i + 1
+	END
+
+	ALTER TABLE babel_4923_newid_tab1 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID()
+
+	-- should be 5
+	SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab1
+
+	DROP TABLE babel_4923_newid_tab1
+GO
+
+EXEC babel_4923_newid_proc_2
+GO
+
+-- Also create outside a proc showing we are not able to create primary key
+-- before upgrade but will be able to after the upgrade
+
+CREATE TABLE babel_4923_newid_tab2(
+	id INT,
+	name CHAR(32)
+)
+GO
+
+insert into babel_4923_newid_tab2 values(1, 'aaa')
+insert into babel_4923_newid_tab2 values(2, 'bbb')
+insert into babel_4923_newid_tab2 values(3, 'ccc')
+GO
+
+-- should succeed before 14.7 / 15.2
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+ALTER TABLE babel_4923_newid_tab2 DROP COLUMN uuid
+GO
+
+-- should succeed before 14.7 / 15.2
+ALTER TABLE babel_4923_newid_tab2 ADD uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY;
+GO
+
+SELECT COUNT(DISTINCT uuid) FROM babel_4923_newid_tab2
+GO
+
+CREATE TABLE babel_4923_newid_tab3(
+	id INT,
+	name CHAR(32),
+	uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY
+)
+GO
+
+INSERT INTO babel_4923_newid_tab3(id, name) SELECT generate_series(1, 10000, 1), 'hello'
+GO
+
+CREATE TABLE babel_4923_newid_tab4(
+	id INT,
+	name CHAR(32),
+	uuid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID() PRIMARY KEY
+)
+GO
+
+INSERT INTO babel_4923_newid_tab4(id, name) SELECT generate_series(1, 10000, 1), 'hello'
+GO
+
+
+-- psql
+ANALYZE master_dbo.babel_4923_newid_tab3
+GO
+
+ANALYZE master_dbo.babel_4923_newid_tab4
+GO
+
+-- tsql
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+
+-- should both show seqscan before and after upgrade
+SELECT * FROM babel_4923_newid_tab3 WHERE uuid=NEWID()
+GO
+
+SELECT * FROM babel_4923_newid_tab4 WHERE uuid=NEWSEQUENTIALID()
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO

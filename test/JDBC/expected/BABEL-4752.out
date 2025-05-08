@@ -1,0 +1,206 @@
+-- tsql
+USE master;
+GO
+
+CREATE LOGIN babel_object_id_login1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user1 FOR LOGIN babel_object_id_login1;
+GO
+
+CREATE LOGIN babel_object_id_login2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user2 FOR LOGIN babel_object_id_login2;
+GO
+
+-- tsql      user=babel_object_id_login1 password=12345678
+USE master
+GO
+
+CREATE TABLE #temp(c1 INT PRIMARY KEY, b INT IDENTITY, c CHAR(15) DEFAULT 'Whoops!')
+GO
+
+-- tsql      user=babel_object_id_login2 password=12345678
+USE master
+GO
+
+CREATE TABLE #temp(c1 INT PRIMARY KEY, b INT IDENTITY, c CHAR(15) DEFAULT 'Whoops!')
+GO
+
+
+-- tsql
+USE master;
+GO
+
+DROP USER babel_object_id_master_user1
+GO
+
+DROP USER babel_object_id_master_user2
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_object_id_login1', 'babel_object_id_login2')
+AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+~~END~~
+
+
+-- Wait to sync with another session
+-- (Not a huge fan of this because this could lead to intermittent issue.)
+SELECT pg_sleep(2);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN babel_object_id_login1;
+GO
+
+DROP LOGIN babel_object_id_login2;
+GO
+
+-- tsql
+
+
+-- Test Table Variables
+DECLARE @OrderTable TABLE (ID INT, OrderNumber INT DEFAULT 1)
+INSERT into @OrderTable (ID) VALUES (1), (2)
+select * from @OrderTable
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int
+1#!#1
+2#!#1
+~~END~~
+
+
+-- Test Table and alter default
+CREATE TABLE defaultTest (ID INT, ProductName varchar(20) DEFAULT 'product')
+INSERT into defaultTest (ID) VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'item' FOR ProductName
+GO
+
+INSERT into defaultTest (ID) VALUES (2)
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRANSACTION
+ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'service' FOR ProductName
+INSERT into defaultTest (ID) VALUES (3)
+select * from defaultTest
+ROLLBACK
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#product
+2#!#item
+3#!#service
+~~END~~
+
+
+INSERT into defaultTest (ID) VALUES (4)
+select * from defaultTest
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#product
+2#!#item
+4#!#item
+~~END~~
+
+
+DROP TABLE defaultTest
+GO
+
+-- Test table type
+CREATE TYPE tv_table_constraint AS
+TABLE(a VARCHAR(15), b CHAR(15) DEFAULT 'Whoops!')
+GO
+
+
+DECLARE @tv1 tv_table_constraint;
+INSERT INTO @tv1 (a) VALUES('1')
+select * from @tv1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#char
+1#!#Whoops!        
+~~END~~
+
+
+DROP TYPE tv_table_constraint
+GO
+
+CREATE PROCEDURE babel_4752_p1
+AS
+    CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'Whoops!') 
+    insert into #temp (a, b) values (1, 2)
+    select * from #temp
+GO
+
+EXEC babel_4752_p1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#char
+1#!#2#!#Whoops!        
+~~END~~
+
+
+CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'Whoops!') 
+EXEC babel_4752_p1
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#char
+1#!#2#!#Whoops!        
+~~END~~
+
+
+CREATE PROCEDURE babel_4752_p2
+AS
+    CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'Whoops!') 
+    insert into #temp (a, b) values (1, 2)
+    select * from #temp
+GO
+
+EXEC babel_4752_p2
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#char
+1#!#2#!#Whoops!        
+~~END~~
+
+
+DROP PROCEDURE babel_4752_p1
+GO
+
+DROP PROCEDURE babel_4752_p2
+GO

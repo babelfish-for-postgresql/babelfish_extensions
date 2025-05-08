@@ -189,6 +189,8 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
 	{"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},
 	{"pg_catalog", "sql_identifier", TDS_TYPE_VARCHAR, -1, 1, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"sys", "vector", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_VARCHAR},
+	{"sys", "halfvec", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_VARCHAR},
+	{"sys", "sparsevec", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_VARCHAR},
 	{"pg_catalog", "name", TDS_TYPE_VARCHAR, -1, 1, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "character_data", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "bool", TDS_TYPE_BIT, 1, 1, TDS_SEND_BIT, TDS_RECV_INVALID},

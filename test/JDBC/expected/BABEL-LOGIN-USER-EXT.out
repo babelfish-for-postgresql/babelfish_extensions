@@ -77,7 +77,7 @@ SELECT current_setting('search_path');
 go
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+master_dbo, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -130,14 +130,18 @@ master_r1#!#r1#!#r1#!#master#!#sch2
 
 ALTER USER r1 WITH NAME = new_r1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
 
 SELECT rolname, orig_username, login_name, database_name, default_schema_name
 FROM sys.babelfish_authid_user_ext
-WHERE orig_username = 'new_r1';
+WHERE orig_username = 'new_r1' or orig_username = 'r1';
 go
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
-master_new_r1#!#new_r1#!#r1#!#master#!#sch2
+master_r1#!#r1#!#r1#!#master#!#sch2
 ~~END~~
 
 
@@ -178,7 +182,7 @@ SELECT current_setting('search_path');
 go
 ~~START~~
 text
-master_sch2, "$user", sys, pg_catalog
+master_sch2, master_dbo, sys, pg_catalog
 ~~END~~
 
 
@@ -217,7 +221,7 @@ r2
 
 
 -- tsql
-DROP USER new_r1;
+DROP USER r1;
 go
 
 -- psql
@@ -277,7 +281,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+5
 ~~END~~
 
 
@@ -288,7 +292,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+6
 ~~END~~
 
 
@@ -300,7 +304,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-5
+7
 ~~END~~
 
 
@@ -388,7 +392,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+6
 ~~END~~
 
 
@@ -418,7 +422,7 @@ SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+5
 ~~END~~
 
 
@@ -489,14 +493,14 @@ ALTER SERVER ROLE db_owner ADD MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+~~ERROR (Message: Only fixed server role is supported in ALTER SERVER ROLE statement)~~
 
 
 CREATE LOGIN err_user WITH PASSWORD = '123';
@@ -690,16 +694,36 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_db_accessadmin#!#db_accessadmin#!##!#db1#!#
+db1_db_datareader#!#db_datareader#!##!#db1#!#
+db1_db_datawriter#!#db_datawriter#!##!#db1#!#
+db1_db_ddladmin#!#db_ddladmin#!##!#db1#!#
+db1_db_owner#!#db_owner#!##!#db1#!#
+db1_db_securityadmin#!#db_securityadmin#!##!#db1#!#
+db1_dbo#!#dbo#!##!#db1#!#dbo
 db1_guest#!#guest#!##!#db1#!#guest
-db_owner#!#db_owner#!##!#db1#!#
-dbo#!#dbo#!##!#db1#!#dbo
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
+master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
 ~~END~~
@@ -725,7 +749,7 @@ SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
 GO
 ~~START~~
 varchar
-dbo
+db1_dbo
 ~~END~~
 
 
@@ -863,13 +887,28 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
+master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
 ~~END~~
@@ -897,25 +936,6 @@ void
 DROP LOGIN login1;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
 -- tsql
 -- Test multi-db mode
 USE master;
@@ -933,19 +953,44 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+db1_db_accessadmin#!##!#db_accessadmin#!#db1#!#
+db1_db_datareader#!##!#db_datareader#!#db1#!#
+db1_db_datawriter#!##!#db_datawriter#!#db1#!#
+db1_db_ddladmin#!##!#db_ddladmin#!#db1#!#
 db1_db_owner#!##!#db_owner#!#db1#!#
+db1_db_securityadmin#!##!#db_securityadmin#!#db1#!#
 db1_dbo#!##!#dbo#!#db1#!#dbo
 db1_guest#!##!#guest#!#db1#!#guest
+db2_db_accessadmin#!##!#db_accessadmin#!#db2#!#
+db2_db_datareader#!##!#db_datareader#!#db2#!#
+db2_db_datawriter#!##!#db_datawriter#!#db2#!#
+db2_db_ddladmin#!##!#db_ddladmin#!#db2#!#
 db2_db_owner#!##!#db_owner#!#db2#!#
+db2_db_securityadmin#!##!#db_securityadmin#!#db2#!#
 db2_dbo#!##!#dbo#!#db2#!#dbo
 db2_guest#!##!#guest#!#db2#!#guest
+master_db_accessadmin#!##!#db_accessadmin#!#master#!#
+master_db_datareader#!##!#db_datareader#!#master#!#
+master_db_datawriter#!##!#db_datawriter#!#master#!#
+master_db_ddladmin#!##!#db_ddladmin#!#master#!#
 master_db_owner#!##!#db_owner#!#master#!#
+master_db_securityadmin#!##!#db_securityadmin#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#guest
+msdb_db_accessadmin#!##!#db_accessadmin#!#msdb#!#
+msdb_db_datareader#!##!#db_datareader#!#msdb#!#
+msdb_db_datawriter#!##!#db_datawriter#!#msdb#!#
+msdb_db_ddladmin#!##!#db_ddladmin#!#msdb#!#
 msdb_db_owner#!##!#db_owner#!#msdb#!#
+msdb_db_securityadmin#!##!#db_securityadmin#!#msdb#!#
 msdb_dbo#!##!#dbo#!#msdb#!#dbo
 msdb_guest#!##!#guest#!#msdb#!#guest
+tempdb_db_accessadmin#!##!#db_accessadmin#!#tempdb#!#
+tempdb_db_datareader#!##!#db_datareader#!#tempdb#!#
+tempdb_db_datawriter#!##!#db_datawriter#!#tempdb#!#
+tempdb_db_ddladmin#!##!#db_ddladmin#!#tempdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
+tempdb_db_securityadmin#!##!#db_securityadmin#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#guest
 ~~END~~
@@ -959,7 +1004,12 @@ GO
 varchar#!#varchar
 guest#!#guest
 dbo#!#dbo
+db_accessadmin#!#
+db_datareader#!#
+db_datawriter#!#
+db_ddladmin#!#
 db_owner#!#
+db_securityadmin#!#
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
 sys#!#<NULL>
@@ -991,7 +1041,12 @@ GO
 varchar#!#varchar
 guest#!#guest
 dbo#!#dbo
+db_accessadmin#!#
+db_datareader#!#
+db_datawriter#!#
+db_ddladmin#!#
 db_owner#!#
+db_securityadmin#!#
 INFORMATION_SCHEMA#!#<NULL>
 public#!#<NULL>
 sys#!#<NULL>
@@ -1125,16 +1180,36 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db2_db_accessadmin#!#db_accessadmin#!##!#db2#!#
+db2_db_datareader#!#db_datareader#!##!#db2#!#
+db2_db_datawriter#!#db_datawriter#!##!#db2#!#
+db2_db_ddladmin#!#db_ddladmin#!##!#db2#!#
 db2_db_owner#!#db_owner#!##!#db2#!#
+db2_db_securityadmin#!#db_securityadmin#!##!#db2#!#
 db2_dbo#!#dbo#!##!#db2#!#dbo
 db2_guest#!#guest#!##!#db2#!#guest
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
+master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
 ~~END~~
@@ -1149,13 +1224,28 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_db_accessadmin#!#db_accessadmin#!##!#master#!#
+master_db_datareader#!#db_datareader#!##!#master#!#
+master_db_datawriter#!#db_datawriter#!##!#master#!#
+master_db_ddladmin#!#db_ddladmin#!##!#master#!#
 master_db_owner#!#db_owner#!##!#master#!#
+master_db_securityadmin#!#db_securityadmin#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#guest
+msdb_db_accessadmin#!#db_accessadmin#!##!#msdb#!#
+msdb_db_datareader#!#db_datareader#!##!#msdb#!#
+msdb_db_datawriter#!#db_datawriter#!##!#msdb#!#
+msdb_db_ddladmin#!#db_ddladmin#!##!#msdb#!#
 msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_db_securityadmin#!#db_securityadmin#!##!#msdb#!#
 msdb_dbo#!#dbo#!##!#msdb#!#dbo
 msdb_guest#!#guest#!##!#msdb#!#guest
+tempdb_db_accessadmin#!#db_accessadmin#!##!#tempdb#!#
+tempdb_db_datareader#!#db_datareader#!##!#tempdb#!#
+tempdb_db_datawriter#!#db_datawriter#!##!#tempdb#!#
+tempdb_db_ddladmin#!#db_ddladmin#!##!#tempdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
+tempdb_db_securityadmin#!#db_securityadmin#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#guest
 ~~END~~
@@ -1373,16 +1463,6 @@ DROP USER lgn_3232;
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
 GO
@@ -1399,3 +1479,168 @@ void
 
 ~~END~~
 
+
+-- tsql
+CREATE DATABASE babel_4935_db
+GO
+
+USE babel_4935_db
+GO
+
+-- Login that is member sysadmin
+CREATE LOGIN babel_4935_sysadmin WITH PASSWORD = '123'
+GO
+
+ALTER ROLE sysadmin ADD MEMBER babel_4935_sysadmin
+GO
+
+-- Logins that are not a member of sysadmin but have users associated
+CREATE LOGIN babel_4935_no_sysadmin1 WITH PASSWORD = '123'
+CREATE LOGIN babel_4935_no_sysadmin2 WITH PASSWORD = '123'
+GO
+
+CREATE USER babel_4935_no_sysadmin1
+CREATE USER babel_4935_no_sysadmin2
+GO
+
+-- Login that is not a member of sysadmin and has no user associated
+CREATE LOGIN babel_4935_guest WITH PASSWORD = '123'
+GO
+
+GRANT CONNECT TO guest
+GO
+
+-- jdbc_user is superuser so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+babel_4935_no_sysadmin2
+db_accessadmin
+db_datareader
+db_datawriter
+db_ddladmin
+db_owner
+db_securityadmin
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_sysadmin password=123 database=babel_4935_db
+-- login is member of sysadmin so should see all the users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+babel_4935_no_sysadmin2
+db_accessadmin
+db_datareader
+db_datawriter
+db_ddladmin
+db_owner
+db_securityadmin
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_no_sysadmin1 password=123 database=babel_4935_db
+-- login is not member of sysadmin so should see all the system users and only it's own user
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+babel_4935_no_sysadmin1
+db_accessadmin
+db_datareader
+db_datawriter
+db_ddladmin
+db_owner
+db_securityadmin
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- tsql user=babel_4935_guest password=123 database=babel_4935_db
+-- login is not member of sysadmin and no user associated so should only see system users
+SELECT name FROM sys.database_principals ORDER BY name
+GO
+~~START~~
+varchar
+db_accessadmin
+db_datareader
+db_datawriter
+db_ddladmin
+db_owner
+db_securityadmin
+dbo
+guest
+INFORMATION_SCHEMA
+public
+sys
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_sysadmin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_no_sysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4935_guest' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+USE master
+GO
+
+DROP DATABASE babel_4935_db
+GO
+
+DROP LOGIN babel_4935_sysadmin
+DROP LOGIN babel_4935_no_sysadmin1
+DROP LOGIN babel_4935_no_sysadmin2
+DROP LOGIN babel_4935_guest
+GO

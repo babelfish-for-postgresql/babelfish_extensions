@@ -7,6 +7,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
 #include "parser/parser.h"
+#include "pltsql.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -37,8 +38,6 @@ static bool is_select_for_json(SelectStmt *stmt);
 static void select_json_modify(SelectStmt *stmt);
 static bool is_for_json(FuncCall *fc);
 static bool get_array_wrapper(List *for_json_args);
-static void set_schemaname_dbo_to_sys(RangeVar *rv);
-
 
 
 /*************************************************************
@@ -236,26 +235,11 @@ rewrite_object_refs(Node *stmt)
 				granted = (AccessPriv *) linitial(grant_role->granted_roles);
 				role_name = granted->priv_name;
 
-				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER */
-				if (strcmp(role_name, "db_owner") == 0)
-				{
-					if (grant_role->is_grant)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Adding members to db_owner is not currently supported "
-										"in Babelfish")));
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Dropping members to db_owner is not currently supported "
-										"in Babelfish")));
-				}
-
 				/*
 				 * Try to get physical granted role name, see if it's an
 				 * existing db role
 				 */
-				physical_role_name = get_physical_user_name(db_name, role_name, false);
+				physical_role_name = get_physical_user_name(db_name, role_name, false, true);
 				if (get_role_oid(physical_role_name, true) == InvalidOid)
 					break;
 
@@ -264,17 +248,32 @@ rewrite_object_refs(Node *stmt)
 				principal_name = grantee->rolename;
 
 				/* Forbidden the use of some special principals */
-				if (strcmp(principal_name, "dbo") == 0 ||
-					strcmp(principal_name, "db_owner") == 0)
+				if (IS_FIXED_DB_PRINCIPAL(principal_name))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Cannot use the special principal '%s'", principal_name)));
+
+				physical_principal_name = get_physical_user_name(db_name, principal_name, false, true);
+
+				/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER if MEMBER is a T-SQL database role */
+				if ((strcmp(role_name, DB_OWNER) == 0) && get_db_principal_kind(get_role_oid(physical_principal_name, false), db_name) == BBF_ROLE)
+				{
+					if (grant_role->is_grant)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Adding database roles to db_owner is not currently supported "
+										"in Babelfish")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Dropping database roles from db_owner is not currently supported "
+										"in Babelfish")));
+				}
 
 				/* Rewrite granted and grantee roles */
 				pfree(granted->priv_name);
 				granted->priv_name = physical_role_name;
 
-				physical_principal_name = get_physical_user_name(db_name, principal_name, false);
 				pfree(grantee->rolename);
 				grantee->rolename = physical_principal_name;
 
@@ -344,7 +343,7 @@ rewrite_object_refs(Node *stmt)
 						char	   *user_name;
 						char	   *db_name = get_cur_db_name();
 
-						user_name = get_physical_user_name(db_name, create_role->role, false);
+						user_name = get_physical_user_name(db_name, create_role->role, false, true);
 						pfree(create_role->role);
 						create_role->role = user_name;
 
@@ -354,12 +353,7 @@ rewrite_object_refs(Node *stmt)
 
 							if (strcmp(defel->defname, "rolemembers") == 0)
 							{
-								RoleSpec   *spec;
-
-								spec = makeNode(RoleSpec);
-								spec->roletype = ROLESPEC_CSTRING;
-								spec->location = -1;
-								spec->rolename = pstrdup(get_db_owner_name(db_name));
+								RoleSpec   *spec = make_rolespec_node(get_db_owner_name(db_name));
 
 								if (defel->arg == NULL)
 									defel->arg = (Node *) list_make1(spec);
@@ -393,14 +387,13 @@ rewrite_object_refs(Node *stmt)
 
 						user_name = alter_role->role->rolename;
 						/* TODO: allow ALTER ROLE db_owner */
-						if (strcmp(user_name, "dbo") == 0 ||
-							strcmp(user_name, "db_owner") == 0 ||
+						if (IS_FIXED_DB_PRINCIPAL(user_name) ||
 							strcmp(user_name, "guest") == 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("Cannot alter the user %s", user_name)));
 
-						physical_user_name = get_physical_user_name(db_name, user_name, false);
+						physical_user_name = get_physical_user_name(db_name, user_name, false, false);
 						pfree(alter_role->role->rolename);
 						alter_role->role->rolename = physical_user_name;
 					}
@@ -707,13 +700,6 @@ rewrite_relation_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar   *rv = (RangeVar *) node;
-
-		/*
-		 * For the list of catalog names if the schema name
-		 * specified is 'dbo' then replace with 'sys'.
-		 */
-		set_schemaname_dbo_to_sys(rv);
-
 		rewrite_rangevar(rv);
 		return false;
 	}
@@ -972,51 +958,6 @@ rewrite_rangevar(RangeVar *rv)
 }
 
 static void
-set_schemaname_dbo_to_sys(RangeVar *rv)
-{
-	/*
-	 * list_of_dbo_catalog
-	 * 		Contains the list of sys% views which are not database specific
-	 *
-	 * list_of_dbo_catalog_not_supported_for_cross_db
-	 * 		Contains the list of sys% views which are database specific
-	 *
-	 * NOTE: While adding the sys% views to list check whether view is an database specific or not.
-	 *
-	 */
-	char* list_of_dbo_catalog[6]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syslogins"};
-	char* list_of_dbo_catalog_not_supported_for_cross_db[6]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects", "systypes", "sysusers"};
-	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
-	{
-		for (int i = 0; i < (sizeof(list_of_dbo_catalog)/sizeof(list_of_dbo_catalog[0])); i++)
-		{
-			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
-			{
-				rv->schemaname = pstrdup("sys");
-				break;
-			}
-		}
-		for (int i = 0; i < (sizeof(list_of_dbo_catalog_not_supported_for_cross_db)/sizeof(list_of_dbo_catalog_not_supported_for_cross_db[0])); i++)
-		{
-			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
-			{
-				/* Throw error for dbo catalog which does not support cross-db */
-				if (rv->catalogname && strcmp(get_cur_db_name(), rv->catalogname) != 0) 
-				{
-					ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Cross-DB system view query is not currently supported in Babelfish.")));
-				}
-				else
-				{
-					rv->schemaname = pstrdup("sys");
-					break;
-				}
-			}
-		}
-	}
-}
-static void
 rewrite_objectwithargs(ObjectWithArgs *obj)
 {
 	obj->objname = rewrite_plain_name(obj->objname);
@@ -1034,12 +975,12 @@ rewrite_plain_name(List *name)
 				String	   *new_schema;
 
 				if (is_shared_schema(strVal(schema)))
-					break;		/* do not thing for shared schemas */
+					break;		/* do nothing for shared schemas */
 
 				new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
 
 				/*
-				 * ignoring the return value sinece list is valid and cannot
+				 * ignoring the return value since list is valid and cannot
 				 * be empty
 				 */
 				name = list_delete_first(name);
@@ -1062,7 +1003,7 @@ rewrite_plain_name(List *name)
 					new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 
 					/*
-					 * ignoring the return value sinece list is valid and
+					 * ignoring the return value since list is valid and
 					 * cannot be empty
 					 */
 					name = list_delete_first(name);
@@ -1092,8 +1033,11 @@ static void
 rewrite_role_name(RoleSpec *role)
 {
 	char	   *cur_db = get_cur_db_name();
+	char	   *temp_rolename = get_physical_user_name(cur_db, role->rolename, false, false);
 
-	role->rolename = get_physical_user_name(cur_db, role->rolename, false);
+	pfree(role->rolename);
+	role->rolename = temp_rolename;
+	pfree(cur_db);
 }
 
 bool
@@ -1101,7 +1045,7 @@ is_shared_schema(const char *name)
 {
 	if ((strcmp("sys", name) == 0)
 		|| (strcmp("information_schema_tsql", name) == 0))
-		return true;			/* babelfish shared schema */
+		return true;			/* Babelfish shared schema */
 	else if ((strcmp("public", name) == 0)
 			 || (strcmp("pg_catalog", name) == 0)
 			 || (strcmp("pg_toast", name) == 0)
@@ -1275,7 +1219,7 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	}
 
 	/*
-	 * Parser guarantees identifier will alsways be truncated to 64B. Schema
+	 * Parser guarantees identifier will always be truncated to 64B. Schema
 	 * name that comes from other source (e.g scheam_id function) needs one
 	 * more truncate function call
 	 */
@@ -1283,9 +1227,7 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 
 	if (SINGLE_DB == mode)
 	{
-		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
-			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
-			(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
+		if (IS_BBF_BUILT_IN_DB(db_name))
 		{
 			result = palloc0(MAX_BBF_NAMEDATALEND);
 
@@ -1329,11 +1271,13 @@ get_physical_schema_name(char *db_name, const char *schema_name)
  * Map the logical user name to its physical name in the database.
  */
 char *
-get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
+get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, bool suppress_role_error)
 {
 	char	   *new_user_name;
 	char	   *result;
 	int			len;
+
+	Assert(db_name != NULL);
 
 	if (!user_name)
 		return NULL;
@@ -1342,7 +1286,7 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	if (len == 0)
 		return NULL;
 
-	if (!DbidIsValid(get_db_id(db_name)) && !suppress_error)
+	if (!suppress_db_error && !DbidIsValid(get_db_id(db_name)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist.", db_name)));
@@ -1356,19 +1300,17 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	truncate_tsql_identifier(new_user_name);
 
 	/*
-	 * All the role and user names are prefixed. Historically, dbo and
+	 * All role and user names are prefixed. Historically, dbo and
 	 * db_owner in single-db mode were unprefixed These are two exceptions to
 	 * the naming convention
 	 */
 	if (SINGLE_DB == get_migration_mode())
 	{
 		/* check that db_name is not "master", "tempdb", or "msdb" */
-		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+		if (!IS_BBF_BUILT_IN_DB(db_name))
 		{
-			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
-				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			if (IS_FIXED_DB_PRINCIPAL(user_name)
+				&& (suppress_role_error || user_exists_for_db(db_name, new_user_name)))
 			{
 				return new_user_name;
 			}
@@ -1382,116 +1324,261 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_error)
 	/* Truncate final result to 64 bytes */
 	truncate_tsql_identifier(result);
 
+	/* 
+	 * If the user or role is not found in the sys.babelfish_authid_user_ext 
+	 * catalog, then an error is thrown. The 'suppress_role_error' flag indicates if 
+	 * it is ok for the user or role to be absent from the catalog.
+	 */
+	if(!suppress_role_error && !user_exists_for_db(db_name, result))
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("User or role \"%s\" does not exist", new_user_name)));
+	}
+
+	pfree(new_user_name);
+
 	return result;
 }
 
-const char *
+char *
 get_dbo_schema_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_dbo";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_dbo";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_dbo";
-	if (SINGLE_DB == get_migration_mode())
-		return "dbo";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && !IS_BBF_BUILT_IN_DB(dbname))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
+get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && !IS_BBF_BUILT_IN_DB(dbname))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "dbo");
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
 get_dbo_role_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_dbo";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_dbo";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_dbo";
-	if (SINGLE_DB == get_migration_mode())
-		return "dbo";
-	else
-	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-		truncate_identifier(name, strlen(name), false);
-		return name;
-	}
+	return get_dbo_role_name_by_mode(dbname, get_migration_mode());
 }
 
-const char *
-get_db_owner_name(const char *dbname)
+
+Oid
+get_dbo_oid(const char *dbname, bool missing_ok)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_db_owner";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_db_owner";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_db_owner";
-	if (SINGLE_DB == get_migration_mode())
-		return "db_owner";
+	char *dbo_name = get_dbo_role_name(dbname);
+	Oid  dbo_oid = get_role_oid(dbo_name, missing_ok);
+	pfree(dbo_name);
+
+	return dbo_oid;
+}
+
+char *
+get_db_owner_name_by_mode(const char *dbname, MigrationMode	mode)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == mode && !IS_BBF_BUILT_IN_DB(dbname))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "db_owner");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
-const char *
+char *
+get_db_owner_name(const char *dbname)
+{
+	return get_db_owner_name_by_mode(dbname, get_migration_mode());
+}
+
+Oid
+get_db_owner_oid(const char *dbname, bool missing_ok)
+{
+	char *db_owner_name = get_db_owner_name(dbname);
+	Oid  db_owner_oid = get_role_oid(db_owner_name, missing_ok);
+	pfree(db_owner_name);
+	
+	return db_owner_oid;
+}
+
+char *
+get_db_datareader_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+	Assert(dbname != NULL);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DATAREADER);
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAREADER);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
+get_db_datawriter_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DATAWRITER);
+	}
+	else
+	{
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAWRITER);
+		truncate_identifier(name, strlen(name), false);
+	}
+	return name;
+}
+
+char *
 get_guest_role_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_guest";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_guest";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_guest";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
 
 	/*
 	 * Always prefix with dbname regardless if single or multidb. Note that
 	 * dbo is an exception.
 	 */
-	else
-	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
-		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-		truncate_identifier(name, strlen(name), false);
-		return name;
-	}
+	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+	truncate_identifier(name, strlen(name), false);
+	return name;
 }
 
-const char *
+char *
+get_db_accessadmin_role_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_ACCESSADMIN);
+	else
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_ACCESSADMIN);
+
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
+
+Oid
+get_db_accessadmin_oid(const char *dbname, bool missing_ok)
+{
+	char *db_accessadmin_name = get_db_accessadmin_role_name(dbname);
+	Oid  db_accessadmin_oid = get_role_oid(db_accessadmin_name, missing_ok);
+	pfree(db_accessadmin_name);
+
+	return db_accessadmin_oid;
+}
+
+char *
+get_db_securityadmin_role_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	if (get_migration_mode() == SINGLE_DB && strcmp(dbname, "master") != 0
+	    && strcmp(dbname, "tempdb") != 0 && strcmp(dbname, "msdb") != 0)
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_SECURITYADMIN);
+	else
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_SECURITYADMIN);
+
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
+
+Oid
+get_db_securityadmin_oid(const char *dbname, bool missing_ok)
+{
+	char *db_securityadmin_name = get_db_securityadmin_role_name(dbname);
+	Oid  db_securityadmin_oid = get_role_oid(db_securityadmin_name, missing_ok);
+	pfree(db_securityadmin_name);
+	
+	return db_securityadmin_oid;
+}
+
+char *
+get_db_ddladmin_role_name(const char *dbname)
+{
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
+
+	Assert(dbname != NULL && strlen(dbname) != 0);
+
+	if (get_migration_mode() == SINGLE_DB && !IS_BBF_BUILT_IN_DB(dbname))
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", DB_DDLADMIN);
+	else
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DDLADMIN);
+
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
+
+Oid
+get_db_ddladmin_oid(const char *dbname, bool missing_ok)
+{
+	char *db_ddladmin_name = get_db_ddladmin_role_name(dbname);
+	Oid  db_ddladmin_oid = get_role_oid(db_ddladmin_name, missing_ok);
+	pfree(db_ddladmin_name);
+	
+	return db_ddladmin_oid;
+}
+
+char *
 get_guest_schema_name(const char *dbname)
 {
-	if (0 == strcmp(dbname, "master"))
-		return "master_guest";
-	if (0 == strcmp(dbname, "tempdb"))
-		return "tempdb_guest";
-	if (0 == strcmp(dbname, "msdb"))
-		return "msdb_guest";
+	char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
 
-	if (SINGLE_DB == get_migration_mode())
-		return "guest";
+	Assert(dbname != NULL);
+
+	if (SINGLE_DB == get_migration_mode() && 0 != strcmp(dbname, "master") 
+	                    && 0 != strcmp(dbname, "tempdb") && 0 != strcmp(dbname, "msdb"))
+	{	
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s", "guest");
+	}
 	else
 	{
-		char	   *name = palloc0(MAX_BBF_NAMEDATALEND);
-
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
 		truncate_identifier(name, strlen(name), false);
-		return name;
 	}
+	return name;
 }
 
 bool
@@ -1505,19 +1592,18 @@ is_builtin_database(const char *dbname)
 bool
 physical_schema_name_exists(char *phys_schema_name)
 {
-	return SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name));
+	return SearchSysCacheExists1(SYSNAMESPACENAME, CStringGetDatum(phys_schema_name));
 }
 
 /*
-* Assume the database already exists and it is not a built in database
-*/
+ * Assume the database already exists and it is not a built-in database
+ */
 bool
 is_user_database_singledb(const char *dbname)
 {
 	Assert(DbidIsValid(get_db_id(dbname)));
 	return !is_builtin_database(dbname) && physical_schema_name_exists("dbo");
 }
-
 
 /*************************************************************
  * 					Helper Functions

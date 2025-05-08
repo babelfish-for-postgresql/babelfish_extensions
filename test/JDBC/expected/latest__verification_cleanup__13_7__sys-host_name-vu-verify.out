@@ -77,7 +77,7 @@ us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microso
 EXECUTE sys_host_name_vu_prepare__dm_exec_sessions_proc
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
+nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint
 us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 

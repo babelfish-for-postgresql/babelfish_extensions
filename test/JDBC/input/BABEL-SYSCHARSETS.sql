@@ -19,3 +19,16 @@ GO
 
 DROP DATABASE DB1;
 GO
+
+CREATE DATABASE DB1 COLLATE bbf_unicode_cp1_ci_ai;
+GO
+
+-- In case of cross-db, syscharsets should also exist in dbo schema
+SELECT * FROM db1.sys.SySChaRSets;
+GO
+
+SELECT * FROM db1.dbo.SySChaRSets;
+GO
+
+DROP DATABASE DB1;
+GO

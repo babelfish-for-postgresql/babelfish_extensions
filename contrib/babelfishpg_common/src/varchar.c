@@ -17,6 +17,7 @@
 
 #include "access/hash.h"
 #include "collation.h"
+#include "common/shortest_dec.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "encoding/encoding.h"
@@ -50,6 +51,12 @@ void		TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen)
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
+
+/* Linkage to function in fixeddecimal module */
+typedef char *(*fixeddecimal2str_t) (int64 val, char *buffer,
+									 int64 fixeddecimal_multiplier,
+									 int64 fixeddecimal_scale);
+static fixeddecimal2str_t fixeddecimal2str_p = NULL;
 
 /*
  * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
@@ -175,6 +182,178 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 
 	return code;
 }
+
+static inline void
+AddUTF16ToStringInfo(int32_t code, StringInfo buf)
+{
+	union
+	{
+		uint16_t	value;
+		uint8_t		half[2];
+	}			temp16;
+
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid Unicode code point 0x%x", code)));
+
+	/* Handle single 16-bit code point */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, code & 0xFF);
+		appendStringInfoChar(buf, (code >> 8) & 0xFF);
+		return;
+	}
+
+	temp16.value = 0xD800 + (((code - 0x010000) >> 10) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+	temp16.value = 0xDC00 + ((code - 0x010000) & 0x03FF);
+	appendStringInfoChar(buf, temp16.half[0]);
+	appendStringInfoChar(buf, temp16.half[1]);
+}
+
+/*
+ * AddUTF8ToStringInfo - Add Unicode code point to a StringInfo in UTF-8
+ */
+static inline void
+AddUTF8ToStringInfo(int32_t code, StringInfo buf)
+{
+	/* Check that this is a valid code point */
+	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid Unicode code point 0x%x", code)));
+
+	/* Range U+0000 .. U+007F (7 bit) */
+	if (code <= 0x7F)
+	{
+		appendStringInfoChar(buf, code);
+		return;
+	}
+
+	/* Range U+0080 .. U+07FF (11 bit) */
+	if (code <= 0x7ff)
+	{
+		appendStringInfoChar(buf, 0xC0 | (code >> 6));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+0800 .. U+FFFF (16 bit) */
+	if (code <= 0xFFFF)
+	{
+		appendStringInfoChar(buf, 0xE0 | (code >> 12));
+		appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+		appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+		return;
+	}
+
+	/* Range U+10000 .. U+10FFFF (21 bit) */
+	appendStringInfoChar(buf, 0xF0 | (code >> 18));
+	appendStringInfoChar(buf, 0x80 | ((code >> 12) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | ((code >> 6) & 0x3F));
+	appendStringInfoChar(buf, 0x80 | (code & 0x3F));
+}
+
+static inline int32_t
+GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
+{
+	uint16_t	code1;
+	uint16_t	code2;
+	int32_t		result;
+
+	/* Get the first 16 bits */
+	code1 = in[1] << 8 | in[0];
+	if (code1 < 0xD800 || code1 >= 0xE000)
+	{
+		/*
+		 * This is a single 16 bit code point, which is equal to code1.
+		 * PostgreSQL does not support NUL bytes in character data as it
+		 * internally needs the ability to convert any datum to a NUL
+		 * terminated C-string without explicit length information.
+		 */
+		if (code1 == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("invalid UTF16 byte sequence - "
+							"code point 0 not supported")));
+		if (consumed)
+			*consumed = 2;
+		return (int32_t) code1;
+	}
+
+	/* This is a surrogate pair - check that it is the high part */
+	if (code1 >= 0xDC00)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"high part is (0x%02x, 0x%02x)", in[0], in[1])));
+
+	/* Check that there is a second surrogate half */
+	if (len < 4)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"only 2 bytes (0x%02x, 0x%02x)", in[0], in[1])));
+
+	/* Get the second 16 bits (low part) */
+	code2 = in[3] << 8 | in[2];
+	if (code2 < 0xDC00 || code2 > 0xE000)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"low part is (0x%02x, 0x%02x)", in[2], in[3])));
+
+	/* Valid surrogate pair, convert to code point */
+	result = ((code1 & 0x03FF) << 10 | (code2 & 0x03FF)) + 0x10000;
+
+	/* Valid 32 bit surrogate code point */
+	if (consumed)
+		*consumed = 4;
+	return result;
+}
+
+void
+TsqlUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
+{
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF8CodePoint(&in[i], len - i, &consumed);
+		AddUTF16ToStringInfo(code, out);
+		i += consumed;
+	}
+}
+
+void
+TsqlUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
+{
+	unsigned char *in = vin;
+	int			i;
+	int			consumed;
+	int32_t		code;
+
+	/* UTF16 data allways comes in 16-bit units */
+	if ((len & 0x0001) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF16 byte sequence - "
+						"input data has odd number of bytes")));
+
+	for (i = 0; i < len;)
+	{
+		code = GetUTF16CodePoint(&in[i], len - i, &consumed);
+		AddUTF8ToStringInfo(code, out);
+		i += consumed;
+	}
+}
+
 
 /*
  * TsqlUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
@@ -382,6 +561,10 @@ PG_FUNCTION_INFO_V1(varchar2date);
 PG_FUNCTION_INFO_V1(varchar2time);
 PG_FUNCTION_INFO_V1(varchar2money);
 PG_FUNCTION_INFO_V1(varchar2numeric);
+PG_FUNCTION_INFO_V1(fixeddecimal2varchar);
+PG_FUNCTION_INFO_V1(fixeddecimal2bpchar);
+PG_FUNCTION_INFO_V1(float82varchar);
+PG_FUNCTION_INFO_V1(float82bpchar);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -543,7 +726,7 @@ varchar(PG_FUNCTION_ARGS)
 		 * function, varchar would be called from TDS to send the OUTPUT
 		 * params of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/* count the number of chars present in input string. */
@@ -888,11 +1071,15 @@ Datum
 varchar2time(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	int32		typmod = -1;
 	char	   *str;
 	TimeADT		time;
+	
+	if (PG_NARGS() > 1)
+		typmod = PG_GETARG_INT32(1);
 
 	str = varchar2cstring(source);
-	time = DatumGetTimeADT(DirectFunctionCall1(time_in, CStringGetDatum(str)));
+	time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
 	pfree(str);
 	PG_RETURN_TIMEADT(time);
 }
@@ -918,9 +1105,178 @@ varchar2numeric(PG_FUNCTION_ARGS)
 	char	   *str;
 
 	str = varchar2cstring(source);
-	result = DatumGetNumeric(DirectFunctionCall1(numeric_in, CStringGetDatum(str)));
+	result = DatumGetNumeric(DirectFunctionCall3(numeric_in, 
+												 CStringGetDatum(str), 
+												 ObjectIdGetDatum(InvalidOid),
+												 Int32GetDatum(-1)));
 	pfree(str);
 	PG_RETURN_NUMERIC(result);
+}
+
+#define FIXEDDECIMAL_2_VARCHAR_MULTIPLIER 100LL
+#define FIXEDDECIMAL_2_VARCHAR_SCALE 2
+Datum
+fixeddecimal2varchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	char		buf[MAXINT8LEN + 1];
+	char	   *end;
+	int32		len;
+	Datum		res;
+
+	/* fetch function pointer for cross-module calls. */
+	if (fixeddecimal2str_p == NULL)
+		fixeddecimal2str_p = (fixeddecimal2str_t)
+			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
+
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
+	len = (end - buf);
+
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
+	maxByteLen -= VARHDRSZ;
+	if (len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
+
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(buf),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
+
+	PG_RETURN_DATUM(res);
+}
+
+Datum
+fixeddecimal2bpchar(PG_FUNCTION_ARGS)
+{
+	int64		val = PG_GETARG_INT64(0);
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	char		buf[MAXINT8LEN + 1];
+	char	   *buf_padded;
+	char	   *end;
+	int32		len;
+	Datum		res;
+
+	/* fetch function pointer for cross-module calls. */
+	if (fixeddecimal2str_p == NULL)
+		fixeddecimal2str_p = (fixeddecimal2str_t)
+			load_external_function("$libdir/babelfishpg_money", "fixeddecimal2str", true, NULL);
+
+	end = fixeddecimal2str_p(val, buf, FIXEDDECIMAL_2_VARCHAR_MULTIPLIER, FIXEDDECIMAL_2_VARCHAR_SCALE);
+	len = (end - buf);
+
+	if (maxByteLen < 0)
+		maxByteLen = len + VARHDRSZ;
+	maxByteLen -= VARHDRSZ;
+	if (len > maxByteLen)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				 errmsg("There is insufficient result space to convert a money/smallmoney value to varchar/nvarchar.")));
+
+	/* Left pad money value with the spaces */
+	buf_padded = (char *) palloc(maxByteLen + 1);
+	memset(buf_padded, ' ', maxByteLen - len);
+	memcpy(buf_padded + maxByteLen - len, buf, len);
+	buf_padded[maxByteLen] = '\0';
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(-1));
+
+	PG_RETURN_DATUM(res);
+}
+#undef FIXEDDECIMAL_2_VARCHAR_MULTIPLIER
+#undef FIXEDDECIMAL_2_VARCHAR_SCALE
+
+Datum
+float82varchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	char *result;
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		result = psprintf("%.6g",num);
+	}
+
+	/* Check if the number fits within the specified length */
+	if (maxlen > 0) 
+	{
+		size_t str_len = strlen(result);
+		if (str_len > maxlen) 
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+					 errmsg("There is insufficient result space to convert a float value to varchar/nvarchar.")));
+		}
+	}
+	
+	res = DirectFunctionCall3(varcharin,
+							   CStringGetDatum(result),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
+}
+
+Datum
+float82bpchar(PG_FUNCTION_ARGS)
+{
+	float8 num = PG_GETARG_FLOAT8(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	/* When No Typmod is defined Default Length is 30 */
+	int maxlen = (typmod == -1) ? 30 : (typmod - VARHDRSZ);
+	Datum res;
+	char	   *result;
+	char	   *buf_padded;
+	int		   str_len;
+	
+	/* Handle special cases */
+	if (unlikely(isinf(num)|| isnan(num))) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				errmsg("Error Converting Float Value to String.")));
+	}
+	else
+	{
+		result = psprintf("%.6g",num);
+	}
+
+	/* Check if the number fits within the specified length */
+	str_len = strlen(result);
+	if (str_len > maxlen) 
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				errmsg("There is insufficient result space to convert a float value to char/nchar.")));
+	}
+
+	/* Right pad float value with the spaces */
+	buf_padded = (char *) palloc0(maxlen + 1);
+	memcpy(buf_padded, result, str_len);
+	memset(buf_padded + str_len, ' ', maxlen - str_len);
+	
+	res = DirectFunctionCall3(bpcharin,
+							   CStringGetDatum(buf_padded),
+							   ObjectIdGetDatum(0),
+							   Int32GetDatum(typmod));
+	
+	PG_RETURN_DATUM(res);
+
 }
 
 /*****************************************************************************
@@ -1111,7 +1467,7 @@ bpchar(PG_FUNCTION_ARGS)
 		 * function, bpchar would be called from TDS to send the OUTPUT params
 		 * of stored proc.
 		 */
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		collInfo = lookup_collation_table(get_database_or_server_collation_oid_internal(false));
 	}
 
 	/*

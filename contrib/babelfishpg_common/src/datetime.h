@@ -21,11 +21,16 @@
 /* Check precision is valid for datetime */
 #define IS_VALID_DT_PRECISION(j) (j % (int) DT_PREC_INV == 0)
 
+/* Represents the minimum allowed date: 1753-01-01 */
+#define MIN_DATE_MASK	0xFFFF2E46LL
+
 /* Datetime limits */
 /* lower bound: 1753-01-01 00:00:00.000 */
 #define MIN_DATETIME	INT64CONST(-7794489600000000)
 /* upper bond: 9999-12-31 23:59:29.999 */
 #define END_DATETIME	INT64CONST(252455615999999000)
+/* TSQL default datetime: 1900-01-01 00:00:00.000 */
+#define TSQL_DEFAULT_DATETIME	INT64CONST(-3155673600000000)
 
 extern Timestamp initializeToDefaultDatetime(void);
 /** Utility function to calculate days from '1900-01-01 00:00:00' */
@@ -42,5 +47,45 @@ extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
 
 extern Datum datetime_in_str(char *str, Node *escontext);
+
+typedef enum
+{
+    DATE_TIME, DATE_TIME_2, DATE_TIME_OFFSET
+} DateTimeContext;
+
+static const char *const date_regexes[] = {
+    "[a-zA-Z]{3,10}\\s*[0-9]{1,2}[,]?\\s*([0-9]{4})", // mon [dd][,] yyyy
+    "[a-zA-Z]{3,10}\\s*[0-9]{1,2}([,]\\s*([0-9]{4}|[0-9]{2}|[0-9]{1}))", // mon dd[,] [yy]
+    "[a-zA-Z]{3,10}\\s*[0-9]{1,2}(\\s+([0-9]{4}|[0-9]{2}|[0-9]{1}))", // mon dd[,] [yy]
+    "[a-zA-Z]{3,10}\\s*[0-9]{4}\\s*[0-9]{1,2}?", // mon yyyy [dd]
+    "[0-9]{1,2}?\\s*[a-zA-Z]{3,10}[,]?\\s*[0-9]{4}", // [dd] mon[,] yyyy
+    "[0-9]{1,2}\\s*[a-zA-Z]{3,10}[,]?\\s*[0-9]{2}?[0-9]{2}", // dd mon[,][yy]yy
+    "[0-9]{1,2}\\s*[a-zA-Z]{3,10}[,]?\\s*[0-9]{1}", // dd mon[,] y
+    "[0-9]{1,2}\\s*[0-9]{2}?[0-9]{2}\\s*[a-zA-Z]{3,10}", // dd [yy]yy mon
+    "[0-9]{1,2}?\\s*[0-9]{4}\\s*[a-zA-Z]{3,10}", // [dd] yyyy mon
+    "[0-9]{4}\\s*[a-zA-Z]{3,10}\\s*[0-9]{1,2}?", // yyyy mon [dd]
+    "[0-9]{4}\\s*[0-9]{1,2}?\\s*[a-zA-Z]{3,10}", // yyyy [dd] mon
+    "[0-9]{4}\\s*[-]\\s*[a-zA-Z]{3,10}\\s*[-]\\s*[0-9]{1,2}", // yyyy-mon-dd
+    "[0-9]{4}\\s*[/]\\s*[a-zA-Z]{3,10}\\s*[/]\\s*[0-9]{1,2}", // yyyy/mon/dd
+    "[0-9]{4}\\s*[.]\\s*[a-zA-Z]{3,10}\\s*[.]\\s*[0-9]{1,2}", // yyyy.mon.dd
+    "[0-9]{1,2}\\s*[-]\\s*[a-zA-Z]{3,10}\\s*[-]\\s*[0-9]{4}", // dd-mon-[yy]yy
+    "[0-9]{1,2}\\s*[/]\\s*[a-zA-Z]{3,10}\\s*[/]\\s*[0-9]{4}", // dd/mon/[yy]yy
+    "[0-9]{1,2}\\s*[.]\\s*[a-zA-Z]{3,10}\\s*[.]\\s*[0-9]{4}" // dd.mon.[yy]yy
+};
+
+#define NUM_DATE_REGEXES lengthof(date_regexes)
+
+static const char *const time_regexes[] = {
+    "[0-9]{1,2}:[0-9]{1,2}\\s*([AP]M)?", // hh:mm
+    "[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}\\s*([AP]M)?", // hh:mm:ss
+    "[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}[.][0-9]{1,9}\\s*([AP]M)?", // hh:mm:ss.fffff
+    "[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,9}\\s*([AP]M)?", // hh:mm:ss:fffff
+    "[0-9]{1,2}\\s*([AP]M)" // hh AM/PM
+};
+
+#define NUM_TIME_REGEXES lengthof(time_regexes)
+
+extern bool check_regex_for_text_month(char *str, DateTimeContext context);
+extern char* clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context);
 
 #endif							/* PLTSQL_DATETIME_H */

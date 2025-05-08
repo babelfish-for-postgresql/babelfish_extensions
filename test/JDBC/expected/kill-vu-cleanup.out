@@ -17,3 +17,29 @@ go
 DROP TABLE tab_kill_test
 go
 
+DROP Database test_kill_db1
+GO
+DROP Database test_kill_db2
+GO
+DROP Database test_kill_db3
+GO
+DROP Database test_kill_db4
+GO
+DROP Database test_kill_db5
+GO
+DROP Database test_kill_db6
+GO
+DROP Database test_kill_db7
+GO
+DROP Database test_kill_db8
+GO
+DROP Database test_kill_db9
+GO
+DROP Database test_kill_db10
+GO
+DROP Database test_kill_db11
+GO
+
+DROP LOGIN test_kill;
+GO
+

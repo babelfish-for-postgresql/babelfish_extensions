@@ -59,6 +59,8 @@ int
 
 SELECT COALESCE(NULL, 'I am a string', 1, 2)
 go
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "I am a string")~~
@@ -618,6 +620,37 @@ float
 
 ~~ERROR (Message: invalid input syntax for type double precision: "abcde")~~
 
+
+DECLARE @ID_UNDE INT = 7;
+select COALESCE(@ID_UNDE, 'Não Informado')
+go
+~~START~~
+int
+7
+~~END~~
+
+
+select coalesce(CAST('x'AS VARBINARY), CAST('x' AS NVARCHAR(4000)), 'x')
+go
+~~START~~
+nvarchar
+x
+~~END~~
+
+
+-- check that duplicate view with varbinary cast does not cause crash (#2693)
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+
+create view babel_726_v1 as select cast('a' as varbinary)
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "babel_726_v1" already exists)~~
+
+
+drop view babel_726_v1
+go
 
 drop table babel_726_t1
 go
