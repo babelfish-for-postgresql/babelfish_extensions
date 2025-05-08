@@ -1272,12 +1272,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						num = int64_to_numeric(val);
 						if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
 							return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
+
+						if (found != NULL) *found = false;
 						return -1;
 					}
 
 					num = (Numeric) con->constvalue;
 					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
 						return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
+					
+					if (found != NULL) *found = false;
 					return -1;
 				}
 			}
@@ -1374,9 +1378,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
-						Oid type = var->vartype;
-						var->vartype = getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
-						var->vartype = type;
+						getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
 						if (var->vartypmod != -1)
 							return var->vartypmod;
 					}
@@ -1559,14 +1561,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						precision = TDS_MAX_NUM_PRECISION;
 						scale = 6;
-					}
-					/*
-					 * Control reaching here for only arithmetic overflow
-					 * cases
-					 */
-					else
-					{
-						if (found != NULL) *found = false;
 					}
 				}
 				return ((precision << 16) | scale) + VARHDRSZ;

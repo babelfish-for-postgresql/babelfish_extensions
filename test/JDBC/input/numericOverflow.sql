@@ -194,3 +194,18 @@ DECLARE @o NUMERIC(38,0) = 9999999999999999999999999999999999999;
 DECLARE @p NUMERIC(38,0)= 3;
 SELECT CAST(@o / @p AS NUMERIC(38,4)) AS result;
 GO
+
+CREATE TABLE numeric_overflow_test (value1 numeric(5,3));
+GO
+
+INSERT INTO numeric_overflow_test (value1) VALUES (12.345);
+GO
+
+INSERT INTO numeric_overflow_test (value1) VALUES (12.34);
+GO
+
+INSERT INTO numeric_overflow_test (value1) VALUES (123.4);
+GO
+
+DROP TABLE numeric_overflow_test;
+GO

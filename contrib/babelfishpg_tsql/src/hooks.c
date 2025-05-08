@@ -1266,14 +1266,6 @@ contains_truncation_functions_checker(Oid func_id, void *context)
 static Datum
 adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
 {
-	int32		scale,
-			precision,
-			val_scale = 0,
-			val_precision = 0,
-			val_typmod = -1,
-			target_precision = 0;
-	Numeric		result_numeric_val;
-
 	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
 		return result;
 
@@ -1287,6 +1279,14 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 
 		if (result_typmod != -1)
 		{
+			int32		scale,
+					precision,
+					val_scale = 0,
+					val_precision = 0,
+					val_typmod = -1,
+					target_precision = 0;
+			Numeric		result_numeric_val;
+
 			scale = (result_typmod - VARHDRSZ) & 0xffff; 
 			precision = ((result_typmod - VARHDRSZ) >> 16) & 0xffff;
 			/*
@@ -1298,6 +1298,13 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 			else
 				result = DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
 			
+			/*
+			 * For the result, we need to check if the precision is within
+			 * the limit. If not, we need to throw an error. We need to throw this 
+			 * error in execution stage as if we don't throw error at this stage it
+			 * will try to throw error after setting metadata that will result in
+			 * TDS protocol violation leading to server hang.
+			 */
 			result_numeric_val = DatumGetNumeric(result);
 			val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (result_numeric_val);
 
