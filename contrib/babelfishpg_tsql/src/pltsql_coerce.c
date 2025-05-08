@@ -52,6 +52,9 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
+#define TDS_MONEY_PRECISION 19
+#define TDS_SMALLMONEY_PRECISION 10
+#define TDS_FIXEDDECIMAL_SCALE 4
 
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
@@ -73,7 +76,7 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
+Oid get_immediate_base_type_of_UDT_internal(Oid type_oid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -1019,8 +1022,8 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * This function returns the Immediate base type for UDT.
  * Returns InvalidOid if given type is not an UDT
  */
-static Oid
-get_immediate_base_type_of_UDT_internal(Oid typeid)
+Oid
+get_immediate_base_type_of_UDT_internal(Oid type_oid)
 {
 	HeapTuple					tuple;
 	bool						isnull;
@@ -1029,7 +1032,7 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 	Oid							base_type;
 	LOCAL_FCINFO(fcinfo, 1);
 
-	if (!OidIsValid(typeid))
+	if (!OidIsValid(type_oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("typeid is invalid!")));
@@ -1042,7 +1045,7 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 
 	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
+	fcinfo->args[0].value = ObjectIdGetDatum(type_oid);
 	fcinfo->args[0].isnull = false;
 	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
 
@@ -1051,7 +1054,7 @@ get_immediate_base_type_of_UDT_internal(Oid typeid)
 		return InvalidOid;
 
 	/* Get immediate base type id of given type id */
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
 
@@ -2145,6 +2148,16 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			/* If UDT then calculate typmod.*/
 			if (OidIsValid(immediate_base_type))
 				type = getBaseTypeAndTypmod(type, &typmod);
+
+			/* Handling for money/smallmoney. */
+				if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
+			{
+				typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+			}
+			else if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
+			{
+				typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+			}
 
 			if (typmod == -1 && (*pltsql_protocol_plugin_ptr))
 				typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(NULL, expr, NULL);

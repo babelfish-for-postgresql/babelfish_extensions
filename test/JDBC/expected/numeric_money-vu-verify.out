@@ -334,7 +334,7 @@ smallmoney
 
 
 -- Testing with multiple variables and nested CASE
--- output is not matching sqlserver
+-- FIXME : value mismatch
 DECLARE @cost MONEY = 1500.00
 DECLARE @margin SMALLMONEY = 0.25
 DECLARE @tax SMALLMONEY = 0.08
@@ -1872,9 +1872,10 @@ smallmoney#!#money
 DECLARE @outSm SmallMoneyType; DECLARE @outM MoneyType
 EXEC babel_5512_p2  @sm1 = 100.00, @sm2 = 200.00,@m1 = 1000.00, @m2 = 2000.00, @resultSm = @outSm OUTPUT, @resultM = @outM OUTPUT SELECT @outSm AS SmallMoneyResult, @outM AS MoneyResult
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@resultsm" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+smallmoney#!#money
+300.0000#!#3000.0000
+~~END~~
 
 
 -- 14. Aggregate functions with UDTs
@@ -1925,6 +1926,61 @@ GO
 smallmoney
 165.2750
 ~~END~~
+
+
+-- smallmoney to money conversion
+DECLARE @total1 smallmoney; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+smallmoney
+102.0000
+~~END~~
+
+
+-- money to money
+DECLARE @total1 money; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+money
+102.0000
+~~END~~
+
+
+-- procedure executions with UDT
+-- MoneyType -> money
+DECLARE @total1 MoneyType; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+money
+102.0000
+~~END~~
+
+
+-- MoneyType -> MoneyType
+DECLARE @total1 MoneyType; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+money
+102.0000
+~~END~~
+
+
+-- not working
+-- money -> MoneyType
+DECLARE @total1 money; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+
+
+-- money -> MoneyType (all other args also MoneyType)
+DECLARE @total1 money; EXEC babel_5512_p5 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+
 
 
 -- declare variables
@@ -2015,6 +2071,16 @@ GO
 ~~START~~
 money
 802.3500
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+declare @var2 smallmoney = 123.45;
+select @inputString + @var2
+GO
+~~START~~
+smalldatetime
+1956-04-14 23:31:00.0
 ~~END~~
 
 

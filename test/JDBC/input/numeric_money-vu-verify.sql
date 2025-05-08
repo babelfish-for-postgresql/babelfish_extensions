@@ -154,7 +154,7 @@ END
 GO
 
 -- Testing with multiple variables and nested CASE
--- output is not matching sqlserver
+-- FIXME : value mismatch
 DECLARE @cost MONEY = 1500.00
 DECLARE @margin SMALLMONEY = 0.25
 DECLARE @tax SMALLMONEY = 0.08
@@ -992,6 +992,33 @@ SELECT CASE
 END AS ConvertedUdtCase
 GO
 
+-- smallmoney to money conversion
+DECLARE @total1 smallmoney; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- money to money
+DECLARE @total1 money; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- procedure executions with UDT
+-- MoneyType -> money
+DECLARE @total1 MoneyType; EXEC babel_5512_p3 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- MoneyType -> MoneyType
+DECLARE @total1 MoneyType; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- not working
+-- money -> MoneyType
+DECLARE @total1 money; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- money -> MoneyType (all other args also MoneyType)
+DECLARE @total1 money; EXEC babel_5512_p5 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+
 -- declare variables
 declare @var1 money = 678.90;
 declare @var2 numeric(5,2) = 123.45;
@@ -1036,5 +1063,10 @@ GO
 declare @var1 money = 678.90;
 declare @var2 smallmoney = 123.45;
 select @var1 + @var2 as result;
+GO
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+declare @var2 smallmoney = 123.45;
+select @inputString + @var2
 GO
 

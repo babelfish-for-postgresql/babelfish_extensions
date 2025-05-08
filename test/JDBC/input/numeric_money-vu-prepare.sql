@@ -95,3 +95,13 @@ INSERT INTO babel_5512_t4 VALUES
 (2, 200.75, 2000.1234),
 (3, 300.25, 3000.9876)
 GO
+
+-- Stored Procedures
+CREATE PROCEDURE babel_5512_p3 @basePrice money, @quantity money, @totalPrice money OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO
+
+CREATE PROCEDURE babel_5512_p4 @basePrice money, @quantity money, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO
+
+CREATE PROCEDURE babel_5512_p5 @basePrice MoneyType, @quantity MoneyType, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO

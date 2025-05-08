@@ -103,3 +103,13 @@ INSERT INTO babel_5512_t4 VALUES
 GO
 ~~ROW COUNT: 3~~
 
+
+-- Stored Procedures
+CREATE PROCEDURE babel_5512_p3 @basePrice money, @quantity money, @totalPrice money OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO
+
+CREATE PROCEDURE babel_5512_p4 @basePrice money, @quantity money, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO
+
+CREATE PROCEDURE babel_5512_p5 @basePrice MoneyType, @quantity MoneyType, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO

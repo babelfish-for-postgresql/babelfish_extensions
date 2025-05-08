@@ -71,10 +71,6 @@
 #define NUMERIC_UPLUS_OID 1915
 #define NUMERIC_UMINUS_OID 1771
 
-#define TDS_MONEY_PRECISION 19
-#define TDS_SMALLMONEY_PRECISION 10
-#define TDS_FIXEDDECIMAL_SCALE 4
-
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
@@ -594,14 +590,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 			{
 				Param *param = (Param *) expr;
 				/* Note : This will be moved to TSQL, then we can use the common_utility_plugin_ptr.*/
-				/* TODO : Add UDT handling. */
-				if (is_tsql_money_datatype(param->paramtype))
+				if (param->paramtypmod != -1 &&
+					(is_tsql_money_datatype(param->paramtype) ||
+					is_tsql_smallmoney_datatype(param->paramtype)))
 				{
-					return ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
-				}
-				if (is_tsql_smallmoney_datatype(param->paramtype))
-				{
-					return ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+					return param->paramtypmod;
 				}
 				if (!is_numeric_datatype(param->paramtype))
 				{

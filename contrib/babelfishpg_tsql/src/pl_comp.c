@@ -48,6 +48,10 @@
 #include "multidb.h"
 #include "collation.h"
 
+#define TDS_MONEY_PRECISION 19
+#define TDS_SMALLMONEY_PRECISION 10
+#define TDS_FIXEDDECIMAL_SCALE 4
+
 /* ----------
  * Our own local and global variables
  * ----------
@@ -2368,12 +2372,30 @@ pltsql_build_variable(const char *refname, int lineno, PLtsql_type *dtype,
 			{
 				/* Ordinary scalar datatype */
 				PLtsql_var *var;
+				Oid typ_oid;
+				Oid	base_typeid = InvalidOid;
 
 				var = palloc0(sizeof(PLtsql_var));
 				var->dtype = PLTSQL_DTYPE_VAR;
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
 				var->datatype = dtype;
+
+				typ_oid = var->datatype->typoid;
+				base_typeid = get_immediate_base_type_of_UDT_internal(typ_oid);
+
+				if (OidIsValid(base_typeid))
+					typ_oid = base_typeid;
+
+				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(typ_oid))
+				{
+					var->datatype->atttypmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+				}
+				else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(typ_oid))
+				{
+					var->datatype->atttypmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+				}
+
 				/* other fields are left as 0, might be changed by caller */
 
 				/* preset to NULL */
