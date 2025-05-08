@@ -2187,11 +2187,11 @@ char
 *replace_special_chars_fts_impl(char *input_str) {
 	size_t			input_len = strlen(input_str);
 	char			*replacement = NULL;
-	char            *unique_hashes[4];
-	const char		*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
-	StringInfoData	output_str;
+	char            	*unique_hashes[5];
+	const char		*special_chars[5] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_", "\n"};
+	StringInfoData		output_str;
 	
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		unique_hashes[i] = construct_unique_index_name("specialChars", psprintf("cat%d", i + 1));
 	}
 	
@@ -2200,7 +2200,7 @@ char
 	for (size_t i = 0; i < input_len; i++) {
 		replacement = NULL;
 
-		for (int j = 0; j < 4; j++) {
+		for (int j = 0; j < 5; j++) {
 			if (strchr(special_chars[j], input_str[i]) != NULL) {
 				replacement = unique_hashes[j];
 				break;
@@ -2212,7 +2212,7 @@ char
 			size_t next_char_index = i + 1;
 
 			if (next_char_index < input_len) {
-				for (int k = 0; k < 4; k++) {
+				for (int k = 0; k < 5; k++) {
 					char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
 					while ((next_char_index < input_len && isspace((unsigned char)input_str[next_char_index])) || (next_char_index < input_len && is_special_char != NULL)) {
 						if (is_special_char != NULL) {
@@ -2263,7 +2263,7 @@ char
 	appendStringInfoChar(&output_str, '\0');
 
 	/* Free the allocated memory */
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		pfree(unique_hashes[i]);
 	}
 
