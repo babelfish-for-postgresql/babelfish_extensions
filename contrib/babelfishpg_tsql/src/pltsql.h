@@ -1803,7 +1803,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_reset_tds_connection_flag) ();
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
-	int32_t 	(*get_numeric_get_typmod) (Numeric num);
+	int32_t 	(*get_tds_numeric_get_typmod) (Numeric num);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
