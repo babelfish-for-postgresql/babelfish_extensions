@@ -5429,6 +5429,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
 		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->get_tvp_typename_typeschemaname = &get_tvp_typename_typeschemaname;
+		(*pltsql_protocol_plugin_ptr)->pltsql_resolve_numeric_typmod_from_exp = &resolve_numeric_typmod_from_exp;
 
 		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
 		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;
