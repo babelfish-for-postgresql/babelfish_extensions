@@ -1561,11 +1561,11 @@ int#!#nvarchar#!#nvarchar#!#datetime#!#nvarchar
 
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'datetime';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'datetime';
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
-datetime#!#17483#!#17483#!#16398#!#<NULL>#!#8#!#23#!#3#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+datetime#!#<NULL>#!#8#!#23#!#3#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 

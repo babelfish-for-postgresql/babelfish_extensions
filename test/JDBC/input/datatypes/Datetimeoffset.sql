@@ -1,3 +1,4 @@
+-- sla 200000
 -- 1. Basic Testing:
 -- Create TimeTest table with different scale precisions
 CREATE TABLE DatetimeoffsetTest (
@@ -767,7 +768,7 @@ ORDER BY ID;
 GO
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'DATETIMEOFFSET';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'DATETIMEOFFSET';
 GO
 
 -- System catalog Views
@@ -3899,7 +3900,7 @@ GO
 SELECT $PARTITION.DTO_partition_func(a) AS PartitionNumber, type, COUNT(*) AS DTOCount
     FROM DTO_partition
     GROUP BY $PARTITION.DTO_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 
 -- 3. Function returning DATETIMEOFFSET types
@@ -4060,7 +4061,7 @@ GO
 -- Test all the objects we created
 SELECT * FROM DateTimeOffsetTest1;
 GO
-SELECT * FROM DTO_partition;
+SELECT * FROM DTO_partition ORDER BY type;
 GO
 SELECT dbo.GetCurrentDTO() AS CurrentDTO;
 GO

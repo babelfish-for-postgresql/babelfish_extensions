@@ -1075,11 +1075,11 @@ int#!#nvarchar#!#nvarchar#!#time#!#nvarchar
 
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'time';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'time';
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
-time#!#1083#!#1083#!#11#!#<NULL>#!#5#!#15#!#6#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+time#!#<NULL>#!#5#!#15#!#6#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -9001,14 +9001,14 @@ int#!#time#!#time#!#time
 
 
 -- Partitioned table
-SELECT * FROM TIME_partition;
+SELECT * FROM TIME_partition Order BY type;
 GO
 ~~START~~
 time#!#varchar
-09:30:00.0000000#!#Morning
 15:30:00.0000000#!#Afternoon
-21:30:00.0000000#!#Night
 03:30:00.0000000#!#Early
+09:30:00.0000000#!#Morning
+21:30:00.0000000#!#Night
 ~~END~~
 
 

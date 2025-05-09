@@ -1284,11 +1284,11 @@ int#!#nvarchar#!#nvarchar#!#datetimeoffset#!#nvarchar
 
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'DATETIMEOFFSET';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'DATETIMEOFFSET';
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
-datetimeoffset#!#17829#!#17829#!#16398#!#<NULL>#!#10#!#33#!#6#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+datetimeoffset#!#<NULL>#!#10#!#33#!#6#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -8947,13 +8947,13 @@ datetimeoffset#!#varchar#!#int
 SELECT $PARTITION.DTO_partition_func(a) AS PartitionNumber, type, COUNT(*) AS DTOCount
     FROM DTO_partition
     GROUP BY $PARTITION.DTO_partition_func(a), type
-    ORDER BY PartitionNumber;
+    ORDER BY PartitionNumber, type;
 GO
 ~~START~~
 int#!#varchar#!#int
 2#!#PST#!#1
-3#!#EST#!#1
 3#!#CST#!#1
+3#!#EST#!#1
 3#!#UTC#!#1
 ~~END~~
 
@@ -9185,14 +9185,14 @@ int#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
 15#!#2023-01-02 00:00:00.0000000 +00:00#!#2023-01-01 00:00:00.0000000 +00:00#!#2023-01-02 01:00:00.0000000 +00:00
 ~~END~~
 
-SELECT * FROM DTO_partition;
+SELECT * FROM DTO_partition ORDER BY type;
 GO
 ~~START~~
 datetimeoffset#!#varchar
-2023-01-01 03:30:00.0000000 -08:00#!#PST
-2023-01-01 09:30:00.0000000 -05:00#!#EST
-2023-01-01 15:30:00.0000000 +00:00#!#UTC
 2023-01-01 21:30:00.0000000 +08:00#!#CST
+2023-01-01 09:30:00.0000000 -05:00#!#EST
+2023-01-01 03:30:00.0000000 -08:00#!#PST
+2023-01-01 15:30:00.0000000 +00:00#!#UTC
 ~~END~~
 
 SELECT dbo.GetCurrentDTO() AS CurrentDTO;

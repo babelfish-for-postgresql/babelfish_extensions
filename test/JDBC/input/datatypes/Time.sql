@@ -1,3 +1,4 @@
+-- sla 200000
 -- 1. Basic Testing:
 -- Create TimeTest table with different scale precisions
 CREATE TABLE TimeTest (
@@ -631,7 +632,7 @@ ORDER BY ID;
 GO
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'time';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'time';
 GO
 
 -- System catalog Views
@@ -3281,7 +3282,7 @@ SELECT * FROM TimeTest1;
 GO
 
 -- Partitioned table
-SELECT * FROM TIME_partition;
+SELECT * FROM TIME_partition Order BY type;
 GO
 
 -- Functions

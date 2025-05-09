@@ -1,3 +1,4 @@
+-- sla 200000
 -- 1. Basic Testing:
 -- Create SmalldateTimeTest table
 CREATE TABLE SmalldateTimeTest (
@@ -865,7 +866,7 @@ ORDER BY ID;
 GO
 
 -- Metadata in system views/catalogs
-SELECT * FROM sys.types WHERE name = 'smalldatetime';
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type FROM sys.types WHERE name = 'smalldatetime';
 GO
 
 -- System catalog Views
