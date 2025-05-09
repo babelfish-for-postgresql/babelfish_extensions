@@ -3674,7 +3674,7 @@ GRANT SELECT ON sys.sequences TO PUBLIC;
 CREATE OR REPLACE VIEW sys.dm_os_sys_info 
 AS SELECT 
   CAST(0 AS BIGINT) AS cpu_ticks,
-  CAST(ROUND(EXTRACT(EPOCH FROM NOW()) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM NOW()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
   CAST(0 AS INT) AS cpu_count,
   CAST(0 AS INT) AS hyperthread_ratio,
   CAST(0 AS BIGINT) AS physical_memory_kb,
@@ -3690,7 +3690,7 @@ AS SELECT
   CAST(0 AS INT) AS scheduler_count,
   CAST(0 AS INT) AS scheduler_total_count,
   CAST(0 AS INT) AS deadlock_monitor_serial_number,
-  CAST(ROUND(EXTRACT(EPOCH FROM pg_postmaster_start_time()) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM pg_postmaster_start_time()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
   CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
   CAST(0 AS INT) AS affinity_type,
   CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,
