@@ -111,7 +111,7 @@ select (select 1.234);
 go
 ~~START~~
 numeric
-1.23400000
+1.234
 ~~END~~
 
 

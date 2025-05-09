@@ -1301,9 +1301,8 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 			/*
 			 * For the result, we need to check if the precision is within
 			 * the limit. If not, we need to throw an error. We need to throw this 
-			 * error in execution stage as if we don't throw error at this stage it
-			 * will try to throw error after setting metadata that will result in
-			 * TDS protocol violation leading to server hang.
+			 * error in execution stage because if we don't throw error at this stage, it
+			 * will try to throw error after setting metadata which is not correct.
 			 */
 			result_numeric_val = DatumGetNumeric(result);
 			val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (result_numeric_val);

@@ -1259,8 +1259,8 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				else
 				{
 					/*
-					 * This function calculates the typmod for INT4
-					 * constants. It converts the INT4 value to NUMERIC and then
+					 * This function calculates the typmod for integer
+					 * constants. It converts the integer value to NUMERIC and then
 					 * determines the appropriate typmod. This process ensures correct 
 					 * numeric precision handling in Babelfish TSQL operations.
 					 */
@@ -1270,16 +1270,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						val = con->constvalue;
 						num = int64_to_numeric(val);
-						if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
-							return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
+						if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod)
+							return (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod(num);
 
 						if (found != NULL) *found = false;
 						return -1;
 					}
 
 					num = (Numeric) con->constvalue;
-					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod)
-						return (*pltsql_protocol_plugin_ptr)->get_numeric_get_typmod(num);
+					if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod)
+						return (*pltsql_protocol_plugin_ptr)->get_tds_numeric_get_typmod(num);
 					
 					if (found != NULL) *found = false;
 					return -1;
@@ -1378,9 +1378,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(var->vartype);
 					if (OidIsValid(immediate_base_type))
 					{
-						getBaseTypeAndTypmod(var->vartype, &var->vartypmod);
-						if (var->vartypmod != -1)
-							return var->vartypmod;
+						int32 typmod = -1;
+						getBaseTypeAndTypmod(var->vartype, &typmod);
+						if (typmod != -1)
+							return typmod;
 					}
 
 					/* handling for fixed length datatypes */
@@ -1542,9 +1543,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				}
 
 				/*
-				 * Mitigate precision overflow if integral precision <= 38
-				 * Otherwise it simply won't fit in 38 precision and let an
-				 * overflow error be thrown in PrepareRowDescription.
+				 * In multiplication and division operations, we
+				 * need precision - scale places to store the integral 
+				 * part of the result. The scale might be reduced using 
+				 * the following rules:
 				 */
 				if (precision > TDS_MAX_NUM_PRECISION)
 				{
