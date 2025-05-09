@@ -2157,16 +2157,12 @@ typedef struct IsNumericIOData
 {
 	/* For numeric type */
 	FmgrInfo	numeric_inputproc;
-	Oid		numeric_typiofunc;
 	Oid		numeric_typioparam;
-	int32		numeric_typmod;
 	
 	/* For money type */
 	FmgrInfo	money_inputproc;
 	Oid		money_typoid;
-	Oid		money_typiofunc;
 	Oid		money_typioparam;
-	int32		money_typmod;
 } IsNumericIOData;
 
 /*
@@ -2181,6 +2177,8 @@ Datum
 isnumeric(PG_FUNCTION_ARGS)
 {
 	Oid		argtypeid;
+	Oid		numeric_typiofunc;
+	Oid		money_typiofunc;
 	char		*value_str;
 	bool		result = false;
 	Datum		converted;
@@ -2230,17 +2228,17 @@ isnumeric(PG_FUNCTION_ARGS)
 		/* Setup for money type. */
 		my_extra->money_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("money");
 		getTypeInputInfo(my_extra->money_typoid,
-						&my_extra->money_typiofunc,
+						&money_typiofunc,
 						&my_extra->money_typioparam);
-		fmgr_info_cxt(my_extra->money_typiofunc,
+		fmgr_info_cxt(money_typiofunc,
 					  &my_extra->money_inputproc,
 					  fcinfo->flinfo->fn_mcxt);
 		
 		/* Setup for numeric type. */
 		getTypeInputInfo(NUMERICOID,
-					&my_extra->numeric_typiofunc,
+					&numeric_typiofunc,
 					&my_extra->numeric_typioparam);
-		fmgr_info_cxt(my_extra->numeric_typiofunc,
+		fmgr_info_cxt(numeric_typiofunc,
 					&my_extra->numeric_inputproc,
 					fcinfo->flinfo->fn_mcxt);
 	}
@@ -2262,7 +2260,7 @@ isnumeric(PG_FUNCTION_ARGS)
 	result = InputFunctionCallSafe(&my_extra->numeric_inputproc,
 								 value_str,
 								 my_extra->numeric_typioparam,
-								 my_extra->numeric_typmod,
+								 -1,
 								 (Node *) &numeric_escontext,
 								 &converted);
 
@@ -2272,7 +2270,7 @@ isnumeric(PG_FUNCTION_ARGS)
 		result = InputFunctionCallSafe(&my_extra->money_inputproc,
 									 value_str,
 									 my_extra->money_typioparam,
-									 my_extra->money_typmod,
+									 -1,
 									 (Node *) &money_escontext,
 									 &converted);
 	}
