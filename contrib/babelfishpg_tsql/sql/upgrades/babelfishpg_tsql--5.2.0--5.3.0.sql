@@ -204,10 +204,6 @@ GRANT SELECT ON sys.sql_logins TO PUBLIC;
  * final behaviour.
  */
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 CREATE OR REPLACE VIEW sys.dm_os_sys_info 
 AS SELECT 
   CAST(0 AS BIGINT) AS cpu_ticks,
@@ -248,6 +244,10 @@ AS SELECT
   CAST(0 AS INT) AS container_type,
   CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
 GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
