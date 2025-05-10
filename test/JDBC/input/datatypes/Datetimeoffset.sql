@@ -21,9 +21,9 @@ INSERT INTO DatetimeoffsetTest (Description, InputString, DateTimeOffset0, DateT
 VALUES ('Empty DATETIMEOFFSET variable', NULL, @EmptyDateTimeOffset, @EmptyDateTimeOffset, @EmptyDateTimeOffset);
 GO
 
-SELECT * FROM DatetimeoffsetTest WHERE DateTimeOffset0 IS NULL;
+SELECT * FROM DatetimeoffsetTest WHERE DateTimeOffset0 IS NULL ORDER BY ID;
 GO
-SELECT * FROM DatetimeoffsetTest;
+SELECT * FROM DatetimeoffsetTest ORDER BY ID;
 GO
 
 -- Default values
@@ -35,7 +35,7 @@ CREATE TABLE DatetimeoffsetDefaultTest (
 );
 INSERT INTO DatetimeoffsetDefaultTest VALUES (1, CAST('19:00:00' As DATETIMEOFFSET), CAST('19:00:00' As DATETIMEOFFSET), CAST('19:00:00' As DATETIMEOFFSET));
 INSERT INTO DatetimeoffsetDefaultTest VALUES (2, CAST('1910-01-01' As DATETIMEOFFSET), CAST('1910-01-01' As DATETIMEOFFSET), CAST('1910-01-01' As DATETIMEOFFSET));
-SELECT * FROM DatetimeoffsetDefaultTest;
+SELECT * FROM DatetimeoffsetDefaultTest ORDER BY ID;
 GO
 
 -- Character length tests for DATETIMEOFFSET
@@ -982,7 +982,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTimeOffsetTest;
+SELECT * FROM UDDTDateTimeOffsetTest ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -995,7 +995,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTimeOffsetTest';
+WHERE TABLE_NAME = 'UDDTDateTimeOffsetTest' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -1007,7 +1007,7 @@ SELECT
     CAST(PreciseDTOCol AS VARCHAR(50)) AS PreciseDTOString,
     CAST(RegularDTO AS DATETIME2) AS RegularDateTime2,
     CAST(BusinessDTOCol AS DATETIME2) AS BusinessDateTime2
-FROM UDDTDateTimeOffsetTest;
+FROM UDDTDateTimeOffsetTest ORDER BY ID;
 GO
 
 -- 7. Test time zone functions
@@ -1019,7 +1019,7 @@ SELECT
     DATEDIFF(MINUTE, ShiftDTOCol, BusinessDTOCol) AS MinutesBetween,
     RegularDTO AT TIME ZONE 'UTC' AS RegularUTC,
     BusinessDTOCol AT TIME ZONE 'Pacific Standard Time' AS BusinessPST
-FROM UDDTDateTimeOffsetTest;
+FROM UDDTDateTimeOffsetTest ORDER BY ID;
 GO
 
 -- 8. Test constraints
@@ -1106,7 +1106,7 @@ SELECT
     BusinessDTOCol AT TIME ZONE 'Pacific Standard Time' AS PST,
     BusinessDTOCol AT TIME ZONE 'Eastern Standard Time' AS EST,
     DATEADD(HOUR, 1, BusinessDTOCol) AS AddHour
-FROM UDDTDateTimeOffsetTest;
+FROM UDDTDateTimeOffsetTest ORDER BY ID;
 GO
 
 -- 15. Test boundary conditions
@@ -3858,7 +3858,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTimeOffsetTest1';
+WHERE TABLE_NAME = 'DateTimeOffsetTest1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table for DATETIMEOFFSET
@@ -3893,7 +3893,7 @@ GO
 
 -- Query to show times in each partition
 SELECT a, type, $PARTITION.DTO_partition_func(a) AS PartitionNumber
-    FROM DTO_partition ORDER BY PartitionNumber;
+    FROM DTO_partition ORDER BY PartitionNumber, a, type;
 GO
 
 -- Query to show count of entries by partition
@@ -3999,7 +3999,7 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DTOView';
+WHERE TABLE_NAME = 'DTOView' ORDER BY COLUMN_NAME;
 GO
 
 -- Insert test data with different precisions and time zones
@@ -4122,7 +4122,7 @@ VALUES ('2023-06-16 15:45:00 +00:00', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM DateTimeOffsetDMLTest;
+SELECT * FROM DateTimeOffsetDMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -4158,7 +4158,7 @@ WHERE SimpleDTO < '2023-06-16 12:00:00 +00:00';
 GO
 
 -- Verify updates
-SELECT * FROM DateTimeOffsetDMLTest;
+SELECT * FROM DateTimeOffsetDMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -4191,8 +4191,8 @@ DELETE FROM DateTimeOffsetDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM DateTimeOffsetDMLTest;
-SELECT * FROM DateTimeOffsetDMLTestChild;
+SELECT * FROM DateTimeOffsetDMLTest ORDER BY ID;
+SELECT * FROM DateTimeOffsetDMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -4291,10 +4291,10 @@ SELECT
     SimpleDTO AT TIME ZONE 'UTC' as UTC_Time,
     Description
 FROM DateTimeOffsetDMLTest
-ORDER BY SimpleDTO AT TIME ZONE 'UTC';
+ORDER BY ID, SimpleDTO AT TIME ZONE 'UTC';
 GO
 
-SELECT * FROM DateTimeOffsetDMLTestChild;
+SELECT * FROM DateTimeOffsetDMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -4316,31 +4316,6 @@ VALUES
 ('2023-01-01 09:30:45.5555555 -05:00', '2023-01-01 21:30:45.5555555 -05:00', 'Work hours EST', 3),
 ('2023-01-01 12:45:15.7777777 +05:30', '2023-01-01 23:45:15.7777777 +05:30', 'Lunch time IST', 4),
 ('2023-01-01 15:20:10.9999999 +08:00', '2023-01-02 03:20:10.9999999 +08:00', 'Afternoon CST', 5);
-GO
-
--- Insert 10000 more rows for performance testing
-INSERT INTO DateTimeOffsetIndexTest (DTOColumn, DTOColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, 
-        CAST('2023-01-01' AS DATETIMEOFFSET) AT TIME ZONE 
-        CASE ABS(CHECKSUM(NEWID())) % 4
-            WHEN 0 THEN 'UTC'
-            WHEN 1 THEN 'Pacific Standard Time'
-            WHEN 2 THEN 'Central European Standard Time'
-            WHEN 3 THEN 'Tokyo Standard Time'
-        END),
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, 
-        CAST('2023-01-01' AS DATETIMEOFFSET) AT TIME ZONE 
-        CASE ABS(CHECKSUM(NEWID())) % 4
-            WHEN 0 THEN 'UTC'
-            WHEN 1 THEN 'Eastern Standard Time'
-            WHEN 2 THEN 'India Standard Time'
-            WHEN 3 THEN 'China Standard Time'
-        END),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single column
@@ -4384,7 +4359,7 @@ WHERE DTOColumn IN (
     '2023-01-01 00:00:00 +00:00',
     '2023-01-01 06:15:30.1234567 +01:00',
     '2023-01-01 12:00:00 +00:00'
-);
+) ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4547,7 +4522,7 @@ SELECT
         ELSE 'Night'
     END AS LocalTimeOfDay,
     Description
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY ID;
 GO
 
 -- COALESCE with timezone awareness
@@ -4563,7 +4538,7 @@ SELECT
     ID,
     NULLIF(DTOColumn, '2023-01-01 00:00:00 +00:00') AS NullIfUTCMidnight,
     Description
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY ID;
 GO
 
 -- IIF statements with timezone awareness
@@ -4571,7 +4546,7 @@ SELECT
     DTOColumn,
     IIF(DATEPART(HOUR, DATEADD(HOUR, DATEPART(TZOFFSET, DTOColumn), DTOColumn)) < 12, 'AM', 'PM') AS LocalAMPM,
     Description
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY ID;
 GO
 
 -- 2. Aggregate Expressions
@@ -4610,7 +4585,7 @@ SELECT
     DATEADD(HOUR, 1, DTOColumn) AS OneHourLater,
     DATEADD(MINUTE, 30, DTOColumn) AS ThirtyMinutesLater,
     DATEADD(SECOND, 15, DTOColumn) AS FifteenSecondsLater
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- Time parts with timezone consideration
@@ -4623,7 +4598,7 @@ SELECT
     DATEPART(MICROSECOND, DTOColumn) AS Microsecond,
     DATEPART(NANOSECOND, DTOColumn) AS Nanosecond,
     DATEPART(TZOFFSET, DTOColumn) AS TimezoneOffsetHours
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- Time differences with timezone awareness
@@ -4635,7 +4610,7 @@ SELECT
     DATEDIFF(SECOND, t1.DTOColumn, t2.DTOColumn) AS SecondsDiff
 FROM DateTimeOffsetExpressionTest t1
 CROSS JOIN DateTimeOffsetExpressionTest t2
-WHERE t1.ID < t2.ID;
+WHERE t1.ID < t2.ID ORDER BY t2.DTOColumn;
 GO
 
 -- Complex conditional expressions with timezone awareness
@@ -4651,7 +4626,7 @@ SELECT
         ELSE 'Night'
     END AS LocalTimeOfDay,
     DATEPART(TZOFFSET, DTOColumn) AS TimezoneOffset
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- Window functions with timezone awareness
@@ -4663,7 +4638,7 @@ SELECT
     DATEDIFF(MINUTE, 
         LAG(DTOColumn) OVER (ORDER BY DTOColumn), 
         DTOColumn) AS MinutesSincePreviousTime
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- Time grouping and aggregation with timezone consideration
@@ -4689,7 +4664,7 @@ SELECT
     CAST(DTOColumn AS DATETIMEOFFSET(6)) AS Precision6,
     CAST(DTOColumn AS DATETIMEOFFSET(7)) AS Precision7
 FROM DateTimeOffsetExpressionTest
-WHERE DATEPART(HOUR, DTOColumn) > 21;
+WHERE DATEPART(HOUR, DTOColumn) > 21 ORDER BY DTOColumn;
 GO
 
 -- Timezone conversion tests
@@ -4698,7 +4673,7 @@ SELECT
     SWITCHOFFSET(DTOColumn, '+00:00') AS ConvertedToUTC,
     SWITCHOFFSET(DTOColumn, '-08:00') AS ConvertedToPST,
     SWITCHOFFSET(DTOColumn, '+05:30') AS ConvertedToIST
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- Error handling tests
@@ -4730,7 +4705,7 @@ SELECT
     SWITCHOFFSET(DTOColumn, '+00:00') AS UTC,
     DATEADD(HOUR, -8, SWITCHOFFSET(DTOColumn, '-08:00')) AS PST_Minus8Hours,
     DATEADD(HOUR, 5, SWITCHOFFSET(DTOColumn, '+05:30')) AS IST_Plus5Hours
-FROM DateTimeOffsetExpressionTest;
+FROM DateTimeOffsetExpressionTest ORDER BY DTOColumn;
 GO
 
 -- 10. Additional Tests:

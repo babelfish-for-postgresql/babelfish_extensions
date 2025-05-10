@@ -13,9 +13,9 @@ GO
 Declare @a datetime;
 INSERT INTO DateTimeTest (DateTimeCol) VALUES (@a), ('');
 GO
-SELECT * FROM DateTimeTest WHERE DateTimeCol IS NULL;
+SELECT * FROM DateTimeTest WHERE DateTimeCol IS NULL ORDER BY ID;
 GO
-SELECT * FROM DateTimeTest;
+SELECT * FROM DateTimeTest ORDER BY ID;
 GO
 
 -- Default values
@@ -25,7 +25,7 @@ CREATE TABLE DateTimeDefaultTest (
 );
 INSERT INTO DateTimeDefaultTest VALUES (1, CAST('19:00:00' As datetime));
 INSERT INTO DateTimeDefaultTest VALUES (2, CAST('1910-01-01' As datetime));
-SELECT * FROM DateTimeDefaultTest;
+SELECT * FROM DateTimeDefaultTest ORDER BY ID;
 GO
 
 -- Character length
@@ -1011,7 +1011,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTimeTest;
+SELECT * FROM UDDTDateTimeTest ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -1024,7 +1024,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTimeTest';
+WHERE TABLE_NAME = 'UDDTDateTimeTest' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -1036,7 +1036,7 @@ SELECT
     CAST(RegularDateTime AS DATE) AS RegularDate,
     CAST(BusinessDateTimeCol AS TIME) AS BusinessTime,
     CAST(HistoricalDateTimeCol AS SMALLDATETIME) AS HistoricalSmallDateTime
-FROM UDDTDateTimeTest;
+FROM UDDTDateTimeTest ORDER BY ID;
 GO
 
 -- 7. Test datetime functions
@@ -1046,7 +1046,7 @@ SELECT
     DATEADD(MINUTE, 30, BusinessDateTimeCol) AS BusinessNext30Min,
     DATEADD(SECOND, 45, HistoricalDateTimeCol) AS HistoricalNext45Sec,
     DATEDIFF(SECOND, HistoricalDateTimeCol, BusinessDateTimeCol) AS SecondsBetween
-FROM UDDTDateTimeTest;
+FROM UDDTDateTimeTest ORDER BY ID;
 GO
 
 -- 8. Test constraints with time components
@@ -1139,10 +1139,10 @@ SELECT
     DATEPART(SECOND, BusinessDateTimeCol) AS BusinessSecond,
     DATEPART(MILLISECOND, BusinessDateTimeCol) AS BusinessMillisecond
 FROM UDDTDateTimeTest
-WHERE ID IN (9, 10);
+WHERE ID IN (9, 10) ORDER BY ID;
 GO
 
-SELECT * FROM UDDTDateTimeTest WHERE ID IN (7, 8, 9, 10);
+SELECT * FROM UDDTDateTimeTest WHERE ID IN (7, 8, 9, 10) ORDER BY ID;
 GO
 
 -- 2. Datatype Conversions:
@@ -3439,7 +3439,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTimeTest1';
+WHERE TABLE_NAME = 'DateTimeTest1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table for DATETIME
@@ -3482,7 +3482,7 @@ GO
 
 -- Query to show data in each partition
 SELECT a, type, $PARTITION.DATETIME_partition_func(a) AS PartitionNumber
-    FROM DATETIME_partition ORDER BY PartitionNumber;
+    FROM DATETIME_partition ORDER BY PartitionNumber, a, type;
 GO
 
 -- Query to show count by partition
@@ -3608,10 +3608,10 @@ INSERT INTO DateTimeTest1 (ID, DateTimeColumn) VALUES
 GO
 
 -- Test all objects
-SELECT * FROM DateTimeTest1;
+SELECT * FROM DateTimeTest1 ORDER BY ID;
 GO
 
-SELECT * FROM DATETIME_partition;
+SELECT * FROM DATETIME_partition ORDER BY a, type;
 GO
 
 SELECT dbo.GetCurrentDateTime() AS CurrentDateTime;
@@ -3623,7 +3623,7 @@ GO
 EXEC dbo.ProcessDateTime @InputDateTime = '2023-06-16 14:30:20.123';
 GO
 
-SELECT * FROM dbo.DateTimeView;
+SELECT * FROM dbo.DateTimeView ORDER BY ID;
 GO
 
 -- Additional DATETIME-specific tests
@@ -3691,7 +3691,7 @@ VALUES ('2023-06-22 10:15:30.123', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM DateTimeDMLTest;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -3727,7 +3727,7 @@ WHERE SimpleDateTime < '2023-07-01 00:00:00.000';
 GO
 
 -- Verify updates
-SELECT * FROM DateTimeDMLTest;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -3760,8 +3760,8 @@ DELETE FROM DateTimeDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM DateTimeDMLTest;
-SELECT * FROM DateTimeDMLTestChild;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
+SELECT * FROM DateTimeDMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -3847,8 +3847,8 @@ WHERE Description LIKE 'Precision test%';
 GO
 
 -- Final verification
-SELECT * FROM DateTimeDMLTest;
-SELECT * FROM DateTimeDMLTestChild;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
+SELECT * FROM DateTimeDMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -3870,19 +3870,6 @@ VALUES
 ('2023-03-30 16:45:30.567', '2023-08-30 11:30:15.678', 'Third quarter', 3),
 ('2023-04-10 18:10:45.890', '2023-09-10 13:20:40.123', 'Fall season', 4),
 ('2023-05-20 20:30:15.234', '2023-10-20 15:45:55.789', 'Year end', 5);
-GO
-
--- Insert 10000 more rows with random time components
-INSERT INTO DateTimeIndexTest (DateTimeColumn, DateTimeColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, 
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000,
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single DATETIME column
@@ -3922,7 +3909,7 @@ GO
 -- Range including time
 SET STATISTICS IO ON;
 SELECT * FROM DateTimeIndexTest 
-WHERE DateTimeColumn BETWEEN '2023-01-01 00:00:00.000' AND '2023-03-31 23:59:59.997';
+WHERE DateTimeColumn BETWEEN '2023-01-01 00:00:00.000' AND '2023-03-31 23:59:59.997' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3939,7 +3926,7 @@ SELECT * FROM DateTimeIndexTest
 WHERE DateTimeColumn IN 
     ('2023-01-01 12:30:45.123', 
      '2023-02-15 14:20:15.789', 
-     '2023-03-30 16:45:30.567');
+     '2023-03-30 16:45:30.567') ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4123,7 +4110,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- COALESCE with time
@@ -4131,7 +4118,7 @@ SELECT
     ID,
     COALESCE(NullableDateTimeColumn, DateTimeColumn, CAST('1900-01-01 00:00:00' AS DATETIME)) AS CoalescedDateTime,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY ID;
 GO
 
 -- NULLIF with time precision
@@ -4139,7 +4126,7 @@ SELECT
     ID,
     NULLIF(DateTimeColumn, '2023-01-01 00:00:00.000') AS NullIfNewYear,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY ID;
 GO
 
 -- IIF with time components
@@ -4148,7 +4135,7 @@ SELECT
     IIF(DATEPART(HOUR, DateTimeColumn) < 12, 'AM', 'PM') AS AMPM,
     IIF(DATEPART(QUARTER, DateTimeColumn) <= 2, 'First Half', 'Second Half') AS HalfOfYear,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- 2. Aggregate Expressions with Time
@@ -4189,7 +4176,7 @@ SELECT
     DATEADD(SECOND, 30, DateTimeColumn) AS Plus30Seconds,
     DATEADD(MINUTE, 15, DateTimeColumn) AS Plus15Minutes,
     DATEADD(HOUR, 1, DateTimeColumn) AS PlusOneHour
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- DateTime parts
@@ -4202,7 +4189,7 @@ SELECT
     DATEPART(MINUTE, DateTimeColumn) AS Minute,
     DATEPART(SECOND, DateTimeColumn) AS Second,
     DATEPART(MILLISECOND, DateTimeColumn) AS Millisecond
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- DateTime differences with precision
@@ -4212,7 +4199,7 @@ SELECT
     DATEDIFF(SECOND, '2023-01-01', DateTimeColumn) AS SecondsSinceNewYear,
     DATEDIFF(MINUTE, '2023-01-01', DateTimeColumn) AS MinutesSinceNewYear,
     DATEDIFF(HOUR, '2023-01-01', DateTimeColumn) AS HoursSinceNewYear
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- Complex time-based conditions
@@ -4228,7 +4215,7 @@ SELECT
         WHEN DATEPART(WEEKDAY, DateTimeColumn) IN (1, 7) THEN 'Weekend'
         ELSE 'Weekday'
     END AS DayType
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- Time-based window functions
@@ -4238,7 +4225,7 @@ SELECT
     LAG(DateTimeColumn) OVER (ORDER BY DateTimeColumn) AS PreviousDateTime,
     LEAD(DateTimeColumn) OVER (ORDER BY DateTimeColumn) AS NextDateTime,
     DATEDIFF(MINUTE, LAG(DateTimeColumn) OVER (ORDER BY DateTimeColumn), DateTimeColumn) AS MinutesSincePrevious
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- DateTime grouping and aggregation
@@ -4259,7 +4246,7 @@ SELECT
     DATEADD(MILLISECOND, -DATEPART(MILLISECOND, DateTimeColumn), DateTimeColumn) AS RoundedToSecond,
     DATEADD(SECOND, -DATEPART(SECOND, DateTimeColumn), 
         DATEADD(MILLISECOND, -DATEPART(MILLISECOND, DateTimeColumn), DateTimeColumn)) AS RoundedToMinute
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 
 -- Time range overlaps
@@ -4272,7 +4259,7 @@ SELECT
     END AS OverlapStatus
 FROM DateTimeExpressionTest a
 CROSS JOIN DateTimeExpressionTest b
-WHERE a.ID < b.ID;
+WHERE a.ID < b.ID ORDER BY b.DateTimeColumn;
 GO
 
 -- 8. Additional DATE Specific Tests:

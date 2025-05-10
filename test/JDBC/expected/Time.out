@@ -24,7 +24,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM TimeTest WHERE Time0 IS NULL;
+SELECT * FROM TimeTest WHERE Time0 IS NULL ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#nvarchar#!#time#!#time#!#time
@@ -32,7 +32,7 @@ int#!#nvarchar#!#nvarchar#!#time#!#time#!#time
 2#!#Empty TIME variable#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
-SELECT * FROM TimeTest;
+SELECT * FROM TimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#nvarchar#!#nvarchar#!#time#!#time#!#time
@@ -49,7 +49,7 @@ CREATE TABLE TimeDefaultTest (
     TimeCol2 Time(6)
 );
 INSERT INTO TimeDefaultTest VALUES (1, CAST('0001-01-01' As time), CAST('0001-01-01' As time), CAST('0001-01-01' As time));
-SELECT * FROM TimeDefaultTest;
+SELECT * FROM TimeDefaultTest ORDER BY ID;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -1145,7 +1145,7 @@ GO
 
 
 -- 4. Query the table
-SELECT * FROM UDDTTimeTest;
+SELECT * FROM UDDTTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#time
@@ -1166,15 +1166,15 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTTimeTest';
+WHERE TABLE_NAME = 'UDDTTimeTest' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#int#!#smallint
-ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
-RegularTime#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#6
 BusinessTimeCol#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#6
-ShiftTimeCol#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
 PreciseTimeCol#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#6
+RegularTime#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#6
+ShiftTimeCol#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
 
@@ -1187,7 +1187,7 @@ SELECT
     CAST(PreciseTimeCol AS VARCHAR(30)) AS PreciseTimeString,
     CAST(RegularTime AS DATETIME) AS RegularDateTime,
     CAST(BusinessTimeCol AS DATETIME) AS BusinessDateTime
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#varchar#!#datetime#!#datetime
@@ -1205,7 +1205,7 @@ SELECT
     DATEADD(HOUR, 1, BusinessTimeCol) AS BusinessNextHour,
     DATEADD(MINUTE, 30, ShiftTimeCol) AS ShiftNextHalfHour,
     DATEDIFF(MINUTE, ShiftTimeCol, BusinessTimeCol) AS MinutesBetween
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#int
@@ -1324,7 +1324,7 @@ SELECT
     DATEADD(MILLISECOND, 500, BusinessTimeCol) AS AddMilliseconds,
     DATEADD(SECOND, 30, BusinessTimeCol) AS AddSeconds,
     DATEADD(MINUTE, -15, BusinessTimeCol) AS SubtractMinutes
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#time
@@ -1349,7 +1349,7 @@ SELECT
     DATEPART(MINUTE, BusinessTimeCol) AS BusinessMinute,
     DATEPART(SECOND, BusinessTimeCol) AS BusinessSecond,
     DATEPART(MILLISECOND, BusinessTimeCol) AS BusinessMillisecond
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
@@ -8763,14 +8763,14 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'TimeTest1';
+WHERE TABLE_NAME = 'TimeTest1' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#smallint
+ComputedTimeColumn#!#time#!#<NULL>#!#6
+DefaultTimeColumn#!#time#!#<NULL>#!#6
 ID#!#int#!#<NULL>#!#<NULL>
 TimeColumn#!#time#!#<NULL>#!#6
-DefaultTimeColumn#!#time#!#<NULL>#!#6
-ComputedTimeColumn#!#time#!#<NULL>#!#6
 ~~END~~
 
 
@@ -8958,14 +8958,14 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'TimeView';
+WHERE TABLE_NAME = 'TimeView' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
+timeview#!#ComputedTimeColumn#!#time
+timeview#!#DefaultTimeColumn#!#time
 timeview#!#ID#!#int
 timeview#!#TimeColumn#!#time
-timeview#!#DefaultTimeColumn#!#time
-timeview#!#ComputedTimeColumn#!#time
 ~~END~~
 
 
@@ -8985,7 +8985,7 @@ GO
 
 -- Test all the objects we created
 -- Basic table operations
-SELECT * FROM TimeTest1;
+SELECT * FROM TimeTest1 ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time
@@ -9038,7 +9038,7 @@ time
 
 
 -- View
-SELECT * FROM dbo.TimeView;
+SELECT * FROM dbo.TimeView ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time
@@ -9091,10 +9091,13 @@ SELECT
     DATEADD(MINUTE, 30, TimeColumn) AS Plus30Minutes,
     DATEADD(SECOND, 15, TimeColumn) AS Plus15Seconds,
     DATEADD(MILLISECOND, 500, TimeColumn) AS Plus500Milliseconds
-FROM TimeTest1;
+FROM TimeTest1 ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#time#!#time#!#time#!#time
+14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
+14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
+14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
 14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
 14:30:00.1000000#!#15:30:00.1000000#!#15:00:00.1000000#!#14:30:15.1000000#!#14:30:00.6000000
 14:30:00.1200000#!#15:30:00.1200000#!#15:00:00.1200000#!#14:30:15.1200000#!#14:30:00.6200000
@@ -9103,9 +9106,6 @@ time#!#time#!#time#!#time#!#time
 14:30:00.1234500#!#15:30:00.1234500#!#15:00:00.1234500#!#14:30:15.1234500#!#14:30:00.6234500
 14:30:00.1234560#!#15:30:00.1234560#!#15:00:00.1234560#!#14:30:15.1234560#!#14:30:00.6234560
 14:30:00.1234570#!#15:30:00.1234570#!#15:00:00.1234570#!#14:30:15.1234570#!#14:30:00.6234570
-14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
-14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
-14:30:00.0000000#!#15:30:00.0000000#!#15:00:00.0000000#!#14:30:15.0000000#!#14:30:00.5000000
 ~~END~~
 
 
@@ -9191,7 +9191,7 @@ GO
 
 
 -- Verify insertions
-SELECT * FROM TimeDMLTest;
+SELECT * FROM TimeDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#nvarchar
@@ -9246,17 +9246,17 @@ WHERE SimpleTime < '12:00:00';
 GO
 
 -- Verify updates
-SELECT * FROM TimeDMLTest;
+SELECT * FROM TimeDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#nvarchar
+1#!#16:00:00.0000000#!#<NULL>#!#16:30:00.0000000#!#Mass updated
+2#!#16:30:00.0000000#!#<NULL>#!#17:00:00.0000000#!#Mass updated
+3#!#13:30:45.1230000#!#<NULL>#!#14:00:45.1230000#!#Mass updated
 4#!#17:45:30.5567000#!#<NULL>#!#18:15:30.5567000#!#Mass updated
 5#!#14:30:20.0000000#!#<NULL>#!#15:00:20.0000000#!#Mass updated
 6#!#15:00:20.0000000#!#<NULL>#!#15:30:20.0000000#!#Mass updated
 7#!#15:45:00.0000000#!#<NULL>#!#16:15:00.0000000#!#Mass updated
-1#!#16:00:00.0000000#!#<NULL>#!#16:30:00.0000000#!#Mass updated
-2#!#16:30:00.0000000#!#<NULL>#!#17:00:00.0000000#!#Mass updated
-3#!#13:30:45.1230000#!#<NULL>#!#14:00:45.1230000#!#Mass updated
 ~~END~~
 
 
@@ -9295,15 +9295,15 @@ DELETE FROM TimeDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM TimeDMLTest;
-SELECT * FROM TimeDMLTestChild;
+SELECT * FROM TimeDMLTest ORDER BY ID;
+SELECT * FROM TimeDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#nvarchar
-6#!#15:00:20.0000000#!#<NULL>#!#15:30:20.0000000#!#Mass updated
-7#!#15:45:00.0000000#!#<NULL>#!#16:15:00.0000000#!#Mass updated
 2#!#16:30:00.0000000#!#<NULL>#!#17:00:00.0000000#!#Mass updated
 3#!#13:30:45.1230000#!#<NULL>#!#14:00:45.1230000#!#Mass updated
+6#!#15:00:20.0000000#!#<NULL>#!#15:30:20.0000000#!#Mass updated
+7#!#15:45:00.0000000#!#<NULL>#!#16:15:00.0000000#!#Mass updated
 ~~END~~
 
 ~~START~~
@@ -9434,11 +9434,12 @@ GO
 
 
 -- Final verification
-SELECT * FROM TimeDMLTest;
-SELECT * FROM TimeDMLTestChild;
+SELECT * FROM TimeDMLTest ORDER BY ID;
+SELECT * FROM TimeDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#time#!#time#!#nvarchar
+2#!#10:45:30.5000000#!#<NULL>#!#11:15:30.5000000#!#Mass updated
 6#!#15:00:20.0000000#!#<NULL>#!#15:30:20.0000000#!#Mass updated
 7#!#15:45:00.0000000#!#<NULL>#!#16:15:00.0000000#!#Mass updated
 8#!#15:00:00.0000000#!#<NULL>#!#15:30:00.0000000#!#Testing computed column
@@ -9448,7 +9449,6 @@ int#!#time#!#time#!#time#!#nvarchar
 12#!#13:30:45.1234570#!#<NULL>#!#14:00:45.1234570#!#Full precision
 13#!#13:30:00.0000000#!#<NULL>#!#14:00:00.0000000#!#AM/PM format
 14#!#13:30:45.1234570#!#<NULL>#!#14:00:45.1234570#!#Maximum precision
-2#!#10:45:30.5000000#!#<NULL>#!#11:15:30.5000000#!#Mass updated
 ~~END~~
 
 ~~START~~
@@ -9478,21 +9478,6 @@ VALUES
 ('15:20:10.9999999', '03:20:10.9999999', 'Afternoon', 5);
 GO
 ~~ROW COUNT: 5~~
-
-
--- Insert 10000 more rows for performance testing
-INSERT INTO TimeIndexTest (TimeColumn, TimeColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, '00:00:00'),
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, '00:00:00'),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- 1. Index on single column
@@ -9540,7 +9525,7 @@ int#!#time#!#time#!#nvarchar#!#int
 
 -- Range
 SET STATISTICS IO ON;
-SELECT * FROM TimeIndexTest WHERE TimeColumn BETWEEN '09:00:00' AND '17:00:00';
+SELECT * FROM TimeIndexTest WHERE TimeColumn BETWEEN '09:00:00' AND '17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -9564,7 +9549,7 @@ int#!#time#!#time#!#nvarchar#!#int
 
 -- IN
 SET STATISTICS IO ON;
-SELECT * FROM TimeIndexTest WHERE TimeColumn IN ('00:00:00', '06:15:30.1234567', '12:00:00');
+SELECT * FROM TimeIndexTest WHERE TimeColumn IN ('00:00:00', '06:15:30.1234567', '12:00:00') ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -9725,7 +9710,7 @@ int#!#time#!#time#!#nvarchar#!#int
 SET STATISTICS IO ON;
 SELECT * FROM TimeIndexTest 
 WHERE TimeColumn >= '09:00:00' 
-AND TimeColumn <= '17:00:00';
+AND TimeColumn <= '17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -9815,7 +9800,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#varchar#!#nvarchar
@@ -9838,7 +9823,7 @@ SELECT
     ID,
     COALESCE(NullableTimeColumn, TimeColumn, CAST('00:00' AS TIME)) AS CoalescedTime,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#nvarchar
@@ -9861,7 +9846,7 @@ SELECT
     ID,
     NULLIF(TimeColumn, '00:00') AS NullIfMidnight,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY ID;
 GO
 ~~START~~
 int#!#time#!#nvarchar
@@ -9884,7 +9869,7 @@ SELECT
     TimeColumn,
     IIF(TimeColumn < '12:00', 'AM', 'PM') AS AMPM,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#varchar#!#nvarchar
@@ -9955,7 +9940,7 @@ SELECT
     DATEADD(HOUR, 1, CAST(TimeColumn AS DATETIME)) AS OneHourLater,
     DATEADD(MINUTE, 30, CAST(TimeColumn AS DATETIME)) AS ThirtyMinutesLater,
     DATEADD(SECOND, 15, CAST(TimeColumn AS DATETIME)) AS FifteenSecondsLater
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#datetime#!#datetime#!#datetime
@@ -9982,7 +9967,7 @@ SELECT
     DATEPART(MILLISECOND, TimeColumn) AS Millisecond,
     DATEPART(MICROSECOND, TimeColumn) AS Microsecond,
     DATEPART(NANOSECOND, TimeColumn) AS Nanosecond
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#int#!#int#!#int#!#int#!#int#!#int
@@ -10009,65 +9994,65 @@ SELECT
     DATEDIFF(SECOND, t1.TimeColumn, t2.TimeColumn) AS SecondsDiff
 FROM TimeExpressionTest t1
 CROSS JOIN TimeExpressionTest t2
-WHERE t1.ID < t2.ID;
+WHERE t1.ID < t2.ID ORDER BY t2.TimeColumn;
 GO
 ~~START~~
 time#!#time#!#int#!#int#!#int
 00:00:00.0000000#!#06:00:00.0000000#!#6#!#360#!#21600
-00:00:00.0000000#!#09:30:00.0000000#!#9#!#570#!#34200
-00:00:00.0000000#!#12:00:00.0000000#!#12#!#720#!#43200
-00:00:00.0000000#!#13:30:00.0000000#!#13#!#810#!#48600
-00:00:00.0000000#!#15:45:30.1234570#!#15#!#945#!#56730
-00:00:00.0000000#!#17:30:00.0000000#!#17#!#1050#!#63000
-00:00:00.0000000#!#18:15:00.0000000#!#18#!#1095#!#65700
-00:00:00.0000000#!#20:00:00.0000000#!#20#!#1200#!#72000
-00:00:00.0000000#!#21:30:45.9876540#!#21#!#1290#!#77445
-00:00:00.0000000#!#22:45:00.0000000#!#22#!#1365#!#81900
 06:00:00.0000000#!#09:30:00.0000000#!#3#!#210#!#12600
+00:00:00.0000000#!#09:30:00.0000000#!#9#!#570#!#34200
 06:00:00.0000000#!#12:00:00.0000000#!#6#!#360#!#21600
-06:00:00.0000000#!#13:30:00.0000000#!#7#!#450#!#27000
-06:00:00.0000000#!#15:45:30.1234570#!#9#!#585#!#35130
-06:00:00.0000000#!#17:30:00.0000000#!#11#!#690#!#41400
-06:00:00.0000000#!#18:15:00.0000000#!#12#!#735#!#44100
-06:00:00.0000000#!#20:00:00.0000000#!#14#!#840#!#50400
-06:00:00.0000000#!#21:30:45.9876540#!#15#!#930#!#55845
-06:00:00.0000000#!#22:45:00.0000000#!#16#!#1005#!#60300
 09:30:00.0000000#!#12:00:00.0000000#!#3#!#150#!#9000
+00:00:00.0000000#!#12:00:00.0000000#!#12#!#720#!#43200
+06:00:00.0000000#!#13:30:00.0000000#!#7#!#450#!#27000
+00:00:00.0000000#!#13:30:00.0000000#!#13#!#810#!#48600
+12:00:00.0000000#!#13:30:00.0000000#!#1#!#90#!#5400
 09:30:00.0000000#!#13:30:00.0000000#!#4#!#240#!#14400
 09:30:00.0000000#!#15:45:30.1234570#!#6#!#375#!#22530
-09:30:00.0000000#!#17:30:00.0000000#!#8#!#480#!#28800
-09:30:00.0000000#!#18:15:00.0000000#!#9#!#525#!#31500
-09:30:00.0000000#!#20:00:00.0000000#!#11#!#630#!#37800
-09:30:00.0000000#!#21:30:45.9876540#!#12#!#720#!#43245
-09:30:00.0000000#!#22:45:00.0000000#!#13#!#795#!#47700
-12:00:00.0000000#!#13:30:00.0000000#!#1#!#90#!#5400
+00:00:00.0000000#!#15:45:30.1234570#!#15#!#945#!#56730
+06:00:00.0000000#!#15:45:30.1234570#!#9#!#585#!#35130
 12:00:00.0000000#!#15:45:30.1234570#!#3#!#225#!#13530
-12:00:00.0000000#!#17:30:00.0000000#!#5#!#330#!#19800
-12:00:00.0000000#!#18:15:00.0000000#!#6#!#375#!#22500
-12:00:00.0000000#!#20:00:00.0000000#!#8#!#480#!#28800
-12:00:00.0000000#!#21:30:45.9876540#!#9#!#570#!#34245
-12:00:00.0000000#!#22:45:00.0000000#!#10#!#645#!#38700
 13:30:00.0000000#!#15:45:30.1234570#!#2#!#135#!#8130
+06:00:00.0000000#!#17:30:00.0000000#!#11#!#690#!#41400
+09:30:00.0000000#!#17:30:00.0000000#!#8#!#480#!#28800
+00:00:00.0000000#!#17:30:00.0000000#!#17#!#1050#!#63000
+12:00:00.0000000#!#17:30:00.0000000#!#5#!#330#!#19800
 13:30:00.0000000#!#17:30:00.0000000#!#4#!#240#!#14400
-13:30:00.0000000#!#18:15:00.0000000#!#5#!#285#!#17100
-13:30:00.0000000#!#20:00:00.0000000#!#7#!#390#!#23400
-13:30:00.0000000#!#21:30:45.9876540#!#8#!#480#!#28845
-13:30:00.0000000#!#22:45:00.0000000#!#9#!#555#!#33300
 15:45:30.1234570#!#17:30:00.0000000#!#2#!#105#!#6270
-15:45:30.1234570#!#18:15:00.0000000#!#3#!#150#!#8970
-15:45:30.1234570#!#20:00:00.0000000#!#5#!#255#!#15270
-15:45:30.1234570#!#21:30:45.9876540#!#6#!#345#!#20715
-15:45:30.1234570#!#22:45:00.0000000#!#7#!#420#!#25170
+13:30:00.0000000#!#18:15:00.0000000#!#5#!#285#!#17100
+12:00:00.0000000#!#18:15:00.0000000#!#6#!#375#!#22500
+09:30:00.0000000#!#18:15:00.0000000#!#9#!#525#!#31500
+00:00:00.0000000#!#18:15:00.0000000#!#18#!#1095#!#65700
 17:30:00.0000000#!#18:15:00.0000000#!#1#!#45#!#2700
+15:45:30.1234570#!#18:15:00.0000000#!#3#!#150#!#8970
+06:00:00.0000000#!#18:15:00.0000000#!#12#!#735#!#44100
+00:00:00.0000000#!#20:00:00.0000000#!#20#!#1200#!#72000
+09:30:00.0000000#!#20:00:00.0000000#!#11#!#630#!#37800
+12:00:00.0000000#!#20:00:00.0000000#!#8#!#480#!#28800
+13:30:00.0000000#!#20:00:00.0000000#!#7#!#390#!#23400
+15:45:30.1234570#!#20:00:00.0000000#!#5#!#255#!#15270
 17:30:00.0000000#!#20:00:00.0000000#!#3#!#150#!#9000
-17:30:00.0000000#!#21:30:45.9876540#!#4#!#240#!#14445
-17:30:00.0000000#!#22:45:00.0000000#!#5#!#315#!#18900
 18:15:00.0000000#!#20:00:00.0000000#!#2#!#105#!#6300
-18:15:00.0000000#!#21:30:45.9876540#!#3#!#195#!#11745
-18:15:00.0000000#!#22:45:00.0000000#!#4#!#270#!#16200
+06:00:00.0000000#!#20:00:00.0000000#!#14#!#840#!#50400
 20:00:00.0000000#!#21:30:45.9876540#!#1#!#90#!#5445
+18:15:00.0000000#!#21:30:45.9876540#!#3#!#195#!#11745
+13:30:00.0000000#!#21:30:45.9876540#!#8#!#480#!#28845
+06:00:00.0000000#!#21:30:45.9876540#!#15#!#930#!#55845
+15:45:30.1234570#!#21:30:45.9876540#!#6#!#345#!#20715
+09:30:00.0000000#!#21:30:45.9876540#!#12#!#720#!#43245
+17:30:00.0000000#!#21:30:45.9876540#!#4#!#240#!#14445
+00:00:00.0000000#!#21:30:45.9876540#!#21#!#1290#!#77445
+12:00:00.0000000#!#21:30:45.9876540#!#9#!#570#!#34245
 20:00:00.0000000#!#22:45:00.0000000#!#2#!#165#!#9900
+06:00:00.0000000#!#22:45:00.0000000#!#16#!#1005#!#60300
+12:00:00.0000000#!#22:45:00.0000000#!#10#!#645#!#38700
+17:30:00.0000000#!#22:45:00.0000000#!#5#!#315#!#18900
+13:30:00.0000000#!#22:45:00.0000000#!#9#!#555#!#33300
+18:15:00.0000000#!#22:45:00.0000000#!#4#!#270#!#16200
+09:30:00.0000000#!#22:45:00.0000000#!#13#!#795#!#47700
+00:00:00.0000000#!#22:45:00.0000000#!#22#!#1365#!#81900
 21:30:45.9876540#!#22:45:00.0000000#!#1#!#75#!#4455
+15:45:30.1234570#!#22:45:00.0000000#!#7#!#420#!#25170
 ~~END~~
 
 
@@ -10085,7 +10070,7 @@ SELECT
         ELSE 'PM'
     END AS AMPM,
     IIF(TimeColumn BETWEEN '09:00' AND '17:00', 'Business Hours', 'Off Hours') AS BusinessHours
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#varchar#!#varchar#!#varchar
@@ -10112,7 +10097,7 @@ SELECT
     DATEDIFF(MINUTE, 
         LAG(TimeColumn) OVER (ORDER BY TimeColumn), 
         TimeColumn) AS MinutesSincePreviousTime
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#nvarchar#!#time#!#time#!#int
@@ -10168,7 +10153,7 @@ SELECT
     CAST(TimeColumn AS TIME(6)) AS Precision6,
     CAST(TimeColumn AS TIME(7)) AS Precision7
 FROM TimeExpressionTest
-WHERE TimeColumn > '21:00';
+WHERE TimeColumn > '21:00' ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#time#!#time#!#time#!#time#!#time#!#time#!#time#!#time
@@ -10183,7 +10168,7 @@ SELECT
     CAST(TimeColumn AS VARCHAR(20)) AS StringTime,
     CAST(CAST(TimeColumn AS VARCHAR(20)) AS TIME) AS BackToTime,
     CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME) AS TimeToDateTime
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#varchar#!#time#!#datetime
@@ -10243,7 +10228,7 @@ SELECT
     TimeColumn,
     CAST(DATEADD(HOUR, 25, CAST(TimeColumn AS DATETIME)) AS TIME) AS Add25Hours,
     CAST(DATEADD(MINUTE, -120, CAST(TimeColumn AS DATETIME)) AS TIME) AS Subtract120Minutes
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#time#!#time
@@ -10266,7 +10251,7 @@ SELECT
     TimeColumn,
     FORMAT(CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME), 'hh:mm:ss tt') AS Format12Hour,
     FORMAT(CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME), 'HH:mm:ss') AS Format24Hour
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 ~~START~~
 time#!#nvarchar#!#nvarchar

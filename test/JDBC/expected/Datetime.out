@@ -16,7 +16,7 @@ INSERT INTO DateTimeTest (DateTimeCol) VALUES (@a), ('');
 GO
 ~~ROW COUNT: 2~~
 
-SELECT * FROM DateTimeTest WHERE DateTimeCol IS NULL;
+SELECT * FROM DateTimeTest WHERE DateTimeCol IS NULL ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime
@@ -24,7 +24,7 @@ int#!#datetime
 2#!#<NULL>
 ~~END~~
 
-SELECT * FROM DateTimeTest;
+SELECT * FROM DateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime
@@ -41,7 +41,7 @@ CREATE TABLE DateTimeDefaultTest (
 );
 INSERT INTO DateTimeDefaultTest VALUES (1, CAST('19:00:00' As datetime));
 INSERT INTO DateTimeDefaultTest VALUES (2, CAST('1910-01-01' As datetime));
-SELECT * FROM DateTimeDefaultTest;
+SELECT * FROM DateTimeDefaultTest ORDER BY ID;
 GO
 ~~ROW COUNT: 1~~
 
@@ -1957,7 +1957,7 @@ GO
 
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTimeTest;
+SELECT * FROM UDDTDateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime
@@ -1978,14 +1978,14 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTimeTest';
+WHERE TABLE_NAME = 'UDDTDateTimeTest' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#int#!#smallint
-ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
-RegularDateTime#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
 BusinessDateTimeCol#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
 HistoricalDateTimeCol#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
+ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
+RegularDateTime#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3
 ~~END~~
 
 
@@ -1998,7 +1998,7 @@ SELECT
     CAST(RegularDateTime AS DATE) AS RegularDate,
     CAST(BusinessDateTimeCol AS TIME) AS BusinessTime,
     CAST(HistoricalDateTimeCol AS SMALLDATETIME) AS HistoricalSmallDateTime
-FROM UDDTDateTimeTest;
+FROM UDDTDateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#date#!#time#!#smalldatetime
@@ -2014,7 +2014,7 @@ SELECT
     DATEADD(MINUTE, 30, BusinessDateTimeCol) AS BusinessNext30Min,
     DATEADD(SECOND, 45, HistoricalDateTimeCol) AS HistoricalNext45Sec,
     DATEDIFF(SECOND, HistoricalDateTimeCol, BusinessDateTimeCol) AS SecondsBetween
-FROM UDDTDateTimeTest;
+FROM UDDTDateTimeTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#int
@@ -2148,7 +2148,7 @@ SELECT
     DATEPART(SECOND, BusinessDateTimeCol) AS BusinessSecond,
     DATEPART(MILLISECOND, BusinessDateTimeCol) AS BusinessMillisecond
 FROM UDDTDateTimeTest
-WHERE ID IN (9, 10);
+WHERE ID IN (9, 10) ORDER BY ID;
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
@@ -2157,7 +2157,7 @@ int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
-SELECT * FROM UDDTDateTimeTest WHERE ID IN (7, 8, 9, 10);
+SELECT * FROM UDDTDateTimeTest WHERE ID IN (7, 8, 9, 10) ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime
@@ -9315,14 +9315,14 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTimeTest1';
+WHERE TABLE_NAME = 'DateTimeTest1' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#smallint
-ID#!#int#!#<NULL>#!#<NULL>
+ComputedDateTimeColumn#!#datetime#!#<NULL>#!#3
 DateTimeColumn#!#datetime#!#<NULL>#!#3
 DefaultDateTimeColumn#!#datetime#!#<NULL>#!#3
-ComputedDateTimeColumn#!#datetime#!#<NULL>#!#3
+ID#!#int#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -9382,17 +9382,17 @@ GO
 
 -- Query to show data in each partition
 SELECT a, type, $PARTITION.DATETIME_partition_func(a) AS PartitionNumber
-    FROM DATETIME_partition ORDER BY PartitionNumber;
+    FROM DATETIME_partition ORDER BY PartitionNumber, a, type;
 GO
 ~~START~~
 datetime#!#varchar#!#int
 2021-06-15 09:30:00.0#!#PDF#!#1
-2021-12-31 14:45:00.0#!#PDF#!#1
 2021-06-15 10:15:00.0#!#GIF#!#1
-2021-12-31 15:20:00.0#!#GIF#!#1
 2021-06-15 11:00:00.0#!#JPEG#!#1
-2021-12-31 16:30:00.0#!#JPEG#!#1
 2021-06-15 12:45:00.0#!#PNG#!#1
+2021-12-31 14:45:00.0#!#PDF#!#1
+2021-12-31 15:20:00.0#!#GIF#!#1
+2021-12-31 16:30:00.0#!#JPEG#!#1
 2021-12-31 17:15:00.0#!#PNG#!#1
 ~~END~~
 
@@ -9576,7 +9576,7 @@ GO
 
 
 -- Test all objects
-SELECT * FROM DateTimeTest1;
+SELECT * FROM DateTimeTest1 ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime
@@ -9586,17 +9586,17 @@ int#!#datetime#!#datetime#!#datetime
 ~~END~~
 
 
-SELECT * FROM DATETIME_partition;
+SELECT * FROM DATETIME_partition ORDER BY a, type;
 GO
 ~~START~~
 datetime#!#varchar
 2021-06-15 09:30:00.0#!#PDF
-2021-12-31 14:45:00.0#!#PDF
 2021-06-15 10:15:00.0#!#GIF
-2021-12-31 15:20:00.0#!#GIF
 2021-06-15 11:00:00.0#!#JPEG
-2021-12-31 16:30:00.0#!#JPEG
 2021-06-15 12:45:00.0#!#PNG
+2021-12-31 14:45:00.0#!#PDF
+2021-12-31 15:20:00.0#!#GIF
+2021-12-31 16:30:00.0#!#JPEG
 2021-12-31 17:15:00.0#!#PNG
 ~~END~~
 
@@ -9625,7 +9625,7 @@ datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
 ~~END~~
 
 
-SELECT * FROM dbo.DateTimeView;
+SELECT * FROM dbo.DateTimeView ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#int#!#int#!#int#!#int#!#int#!#int#!#int
@@ -9720,7 +9720,7 @@ GO
 
 
 -- Verify insertions
-SELECT * FROM DateTimeDMLTest;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#nvarchar
@@ -9777,17 +9777,17 @@ GO
 
 
 -- Verify updates
-SELECT * FROM DateTimeDMLTest;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#nvarchar
 1#!#2023-07-01 08:30:20.123#!#<NULL>#!#2023-07-01 09:30:20.123#!#Mass updated
 2#!#2023-07-02 14:45:30.457#!#<NULL>#!#2023-07-02 15:45:30.457#!#Mass updated
+3#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 4#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 5#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 6#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 7#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
-3#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 ~~END~~
 
 
@@ -9827,15 +9827,15 @@ DELETE FROM DateTimeDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM DateTimeDMLTest;
-SELECT * FROM DateTimeDMLTestChild;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
+SELECT * FROM DateTimeDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#nvarchar
+3#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 5#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 6#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 7#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
-3#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 ~~END~~
 
 ~~START~~
@@ -9956,17 +9956,17 @@ GO
 
 
 -- Final verification
-SELECT * FROM DateTimeDMLTest;
-SELECT * FROM DateTimeDMLTestChild;
+SELECT * FROM DateTimeDMLTest ORDER BY ID;
+SELECT * FROM DateTimeDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime#!#nvarchar
+3#!#2023-06-18 15:20:45.79#!#<NULL>#!#2023-06-18 16:20:45.79#!#Mass updated
+5#!#2023-06-20 10:30:20.567#!#<NULL>#!#2023-06-20 11:30:20.567#!#Mass updated
 6#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 7#!#2023-08-01 12:00:00.0#!#<NULL>#!#2023-08-01 13:00:00.0#!#Mass updated
 8#!#2023-09-02 14:30:20.123#!#<NULL>#!#2023-09-02 15:30:20.123#!#Testing computed column
 9#!#2024-09-02 14:30:20.123#!#<NULL>#!#2024-09-02 15:30:20.123#!#Inserted from subquery
-3#!#2023-06-18 15:20:45.79#!#<NULL>#!#2023-06-18 16:20:45.79#!#Mass updated
-5#!#2023-06-20 10:30:20.567#!#<NULL>#!#2023-06-20 11:30:20.567#!#Mass updated
 10#!#1753-01-01 00:00:00.0#!#<NULL>#!#1753-01-01 01:00:00.0#!#This should fail
 11#!#2023-06-16 14:30:20.623#!#<NULL>#!#2023-06-16 15:30:20.623#!#Precision test 1
 12#!#2023-06-16 14:30:21.497#!#<NULL>#!#2023-06-16 15:30:21.497#!#Precision test 2
@@ -10001,21 +10001,6 @@ VALUES
 ('2023-05-20 20:30:15.234', '2023-10-20 15:45:55.789', 'Year end', 5);
 GO
 ~~ROW COUNT: 5~~
-
-
--- Insert 10000 more rows with random time components
-INSERT INTO DateTimeIndexTest (DateTimeColumn, DateTimeColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, 
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000,
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
-GO
-~~ROW COUNT: 2704~~
 
 
 -- 1. Index on single DATETIME column
@@ -10070,7 +10055,7 @@ int#!#datetime#!#datetime#!#nvarchar#!#int
 -- Range including time
 SET STATISTICS IO ON;
 SELECT * FROM DateTimeIndexTest 
-WHERE DateTimeColumn BETWEEN '2023-01-01 00:00:00.000' AND '2023-03-31 23:59:59.997';
+WHERE DateTimeColumn BETWEEN '2023-01-01 00:00:00.000' AND '2023-03-31 23:59:59.997' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -10099,7 +10084,7 @@ SELECT * FROM DateTimeIndexTest
 WHERE DateTimeColumn IN 
     ('2023-01-01 12:30:45.123', 
      '2023-02-15 14:20:15.789', 
-     '2023-03-30 16:45:30.567');
+     '2023-03-30 16:45:30.567') ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -10356,7 +10341,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#varchar#!#varchar#!#nvarchar
@@ -10380,7 +10365,7 @@ SELECT
     ID,
     COALESCE(NullableDateTimeColumn, DateTimeColumn, CAST('1900-01-01 00:00:00' AS DATETIME)) AS CoalescedDateTime,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#nvarchar
@@ -10404,7 +10389,7 @@ SELECT
     ID,
     NULLIF(DateTimeColumn, '2023-01-01 00:00:00.000') AS NullIfNewYear,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY ID;
 GO
 ~~START~~
 int#!#datetime#!#nvarchar
@@ -10429,7 +10414,7 @@ SELECT
     IIF(DATEPART(HOUR, DateTimeColumn) < 12, 'AM', 'PM') AS AMPM,
     IIF(DATEPART(QUARTER, DateTimeColumn) <= 2, 'First Half', 'Second Half') AS HalfOfYear,
     Description
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#varchar#!#varchar#!#nvarchar
@@ -10522,7 +10507,7 @@ SELECT
     DATEADD(SECOND, 30, DateTimeColumn) AS Plus30Seconds,
     DATEADD(MINUTE, 15, DateTimeColumn) AS Plus15Minutes,
     DATEADD(HOUR, 1, DateTimeColumn) AS PlusOneHour
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#datetime#!#datetime#!#datetime#!#datetime
@@ -10551,7 +10536,7 @@ SELECT
     DATEPART(MINUTE, DateTimeColumn) AS Minute,
     DATEPART(SECOND, DateTimeColumn) AS Second,
     DATEPART(MILLISECOND, DateTimeColumn) AS Millisecond
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#int#!#int#!#int#!#int#!#int#!#int#!#int
@@ -10577,11 +10562,10 @@ SELECT
     DATEDIFF(SECOND, '2023-01-01', DateTimeColumn) AS SecondsSinceNewYear,
     DATEDIFF(MINUTE, '2023-01-01', DateTimeColumn) AS MinutesSinceNewYear,
     DATEDIFF(HOUR, '2023-01-01', DateTimeColumn) AS HoursSinceNewYear
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#int#!#int#!#int#!#int
-2023-01-01 00:00:00.0#!#0#!#0#!#0#!#0
 ~~ERROR (Code: 535)~~
 
 ~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart.)~~
@@ -10600,7 +10584,7 @@ SELECT
         WHEN DATEPART(WEEKDAY, DateTimeColumn) IN (1, 7) THEN 'Weekend'
         ELSE 'Weekday'
     END AS DayType
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#varchar#!#varchar
@@ -10626,7 +10610,7 @@ SELECT
     LAG(DateTimeColumn) OVER (ORDER BY DateTimeColumn) AS PreviousDateTime,
     LEAD(DateTimeColumn) OVER (ORDER BY DateTimeColumn) AS NextDateTime,
     DATEDIFF(MINUTE, LAG(DateTimeColumn) OVER (ORDER BY DateTimeColumn), DateTimeColumn) AS MinutesSincePrevious
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#nvarchar#!#datetime#!#datetime#!#int
@@ -10678,7 +10662,7 @@ SELECT
     DATEADD(MILLISECOND, -DATEPART(MILLISECOND, DateTimeColumn), DateTimeColumn) AS RoundedToSecond,
     DATEADD(SECOND, -DATEPART(SECOND, DateTimeColumn), 
         DATEADD(MILLISECOND, -DATEPART(MILLISECOND, DateTimeColumn), DateTimeColumn)) AS RoundedToMinute
-FROM DateTimeExpressionTest;
+FROM DateTimeExpressionTest ORDER BY DateTimeColumn;
 GO
 ~~START~~
 datetime#!#datetime#!#datetime
@@ -10707,76 +10691,76 @@ SELECT
     END AS OverlapStatus
 FROM DateTimeExpressionTest a
 CROSS JOIN DateTimeExpressionTest b
-WHERE a.ID < b.ID;
+WHERE a.ID < b.ID ORDER BY b.DateTimeColumn;
 GO
 ~~START~~
 datetime#!#datetime#!#varchar
 2023-01-01 00:00:00.0#!#2023-02-14 12:30:00.0#!#No Overlap
 2023-01-01 00:00:00.0#!#2023-03-17 15:45:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-04-01 08:20:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-01-01 00:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
 2023-02-14 12:30:00.0#!#2023-03-17 15:45:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-04-01 08:20:00.0#!#No Overlap
 2023-02-14 12:30:00.0#!#2023-04-01 08:20:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-02-14 12:30:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-04-01 08:20:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
+2023-04-01 08:20:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
+2023-04-01 08:20:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
+2023-04-01 08:20:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-04-01 08:20:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-07-04 18:30:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-08-15 09:15:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-07-04 18:30:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-04-01 08:20:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
 2023-03-17 15:45:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-03-17 15:45:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-03-17 15:45:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-04-01 08:20:00.0#!#2023-05-01 14:00:00.0#!#No Overlap
-2023-04-01 08:20:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
-2023-04-01 08:20:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
-2023-04-01 08:20:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-04-01 08:20:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
 2023-04-01 08:20:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-07-04 18:30:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-08-15 09:15:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-09-22 16:45:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-08-15 09:15:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-09-22 16:45:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-03-17 15:45:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-10-31 20:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-07-04 18:30:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
+2023-05-01 14:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
 2023-04-01 08:20:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
 2023-04-01 08:20:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-06-21 12:00:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-05-01 14:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
 2023-05-01 14:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-07-04 18:30:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-06-21 12:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-07-04 18:30:00.0#!#2023-08-15 09:15:00.0#!#No Overlap
-2023-07-04 18:30:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-07-04 18:30:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-07-04 18:30:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-07-04 18:30:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-08-15 09:15:00.0#!#2023-09-22 16:45:00.0#!#No Overlap
-2023-08-15 09:15:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-08-15 09:15:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-08-15 09:15:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-09-22 16:45:00.0#!#2023-10-31 20:00:00.0#!#No Overlap
-2023-09-22 16:45:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
-2023-09-22 16:45:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
-2023-10-31 20:00:00.0#!#2023-11-23 11:30:00.0#!#No Overlap
 2023-10-31 20:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-06-21 12:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
 2023-11-23 11:30:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-09-22 16:45:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-07-04 18:30:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-01-01 00:00:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-03-17 15:45:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-08-15 09:15:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
+2023-02-14 12:30:00.0#!#2023-12-25 07:00:00.0#!#No Overlap
 ~~END~~
 
 

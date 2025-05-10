@@ -1718,7 +1718,7 @@ GO
 
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTest;
+SELECT * FROM UDDTDateTest ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date
@@ -1739,14 +1739,14 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTest';
+WHERE TABLE_NAME = 'UDDTDateTest' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#int#!#smallint
-ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
-RegularDate#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 BusinessDateCol#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 HistoricalDateCol#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+ID#!#int#!#<NULL>#!#<NULL>#!#10#!#0#!#<NULL>
+RegularDate#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
 
@@ -1759,7 +1759,7 @@ SELECT
     CAST(RegularDate AS DATETIME) AS RegularDateTime,
     CAST(BusinessDateCol AS DATETIME) AS BusinessDateTime,
     CAST(HistoricalDateCol AS DATETIME) AS HistoricalDateTime
-FROM UDDTDateTest;
+FROM UDDTDateTest ORDER BY ID;
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#datetime#!#datetime#!#datetime
@@ -1777,7 +1777,7 @@ SELECT
     DATEADD(DAY, 1, BusinessDateCol) AS BusinessNextDay,
     DATEADD(DAY, 1, HistoricalDateCol) AS HistoricalNextDay,
     DATEDIFF(YEAR, HistoricalDateCol, BusinessDateCol) AS YearsBetween
-FROM UDDTDateTest;
+FROM UDDTDateTest ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#int
@@ -8269,14 +8269,14 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTest1';
+WHERE TABLE_NAME = 'DateTest1' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#smallint
-ID#!#int#!#<NULL>#!#<NULL>
+ComputedDateColumn#!#date#!#<NULL>#!#0
 DateColumn#!#date#!#<NULL>#!#0
 DefaultDateColumn#!#date#!#<NULL>#!#0
-ComputedDateColumn#!#date#!#<NULL>#!#0
+ID#!#int#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -8339,16 +8339,16 @@ GO
 
 -- Query to show files in each partition
 SELECT a, type, $PARTITION.DATE_dt_partition_func(a) AS PartitionNumber
-    FROM DATE_dt_partition ORDER BY PartitionNumber;
+    FROM DATE_dt_partition ORDER BY PartitionNumber, type, a;
 GO
 ~~START~~
 date#!#varchar#!#int
-2021-06-15#!#PDF#!#1
-2021-12-31#!#PDF#!#1
 2021-06-15#!#GIF#!#1
 2021-12-31#!#GIF#!#1
 2021-06-15#!#JPEG#!#1
 2021-12-31#!#JPEG#!#1
+2021-06-15#!#PDF#!#1
+2021-12-31#!#PDF#!#1
 2021-06-15#!#PNG#!#1
 2021-12-31#!#PNG#!#1
 ~~END~~
@@ -8517,14 +8517,14 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateView';
+WHERE TABLE_NAME = 'DateView' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-dateview#!#ID#!#int
+dateview#!#ComputedDateColumn#!#date
 dateview#!#DateColumn#!#date
 dateview#!#DefaultDateColumn#!#date
-dateview#!#ComputedDateColumn#!#date
+dateview#!#ID#!#int
 ~~END~~
 
 
@@ -8535,12 +8535,12 @@ INSERT INTO DateTest1 (ID, DateColumn) VALUES
 (2, '2023-06-17'),
 (3, '2023-06-18');
 -- Test the objects we created
-SELECT * FROM DateTest1;
-SELECT * FROM DATE_dt_partition;
+SELECT * FROM DateTest1 ORDER BY ID;
+SELECT * FROM DATE_dt_partition ORDER BY a, type;
 SELECT dbo.GetCurrentDate() AS CurrentDate;
 SELECT dbo.AddDaysToDate('2023-06-16', 5) AS DateAfter5Days;
 EXEC dbo.ProcessDate @InputDate = '2023-06-16';
-SELECT * FROM dbo.DateView;
+SELECT * FROM dbo.DateView ORDER BY ID;
 GO
 ~~ROW COUNT: 3~~
 
@@ -8553,13 +8553,13 @@ int#!#date#!#date#!#date
 
 ~~START~~
 date#!#varchar
-2021-06-15#!#PDF
-2021-12-31#!#PDF
 2021-06-15#!#GIF
-2021-12-31#!#GIF
 2021-06-15#!#JPEG
-2021-12-31#!#JPEG
+2021-06-15#!#PDF
 2021-06-15#!#PNG
+2021-12-31#!#GIF
+2021-12-31#!#JPEG
+2021-12-31#!#PDF
 2021-12-31#!#PNG
 ~~END~~
 
@@ -8646,7 +8646,7 @@ GO
 
 
 -- Verify insertions
-SELECT * FROM DateDMLTest;
+SELECT * FROM DateDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#nvarchar
@@ -8703,7 +8703,7 @@ GO
 
 
 -- Verify updates
-SELECT * FROM DateDMLTest;
+SELECT * FROM DateDMLTest ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#nvarchar
@@ -8754,8 +8754,8 @@ GO
 
 
 -- Verify deletions
-SELECT * FROM DateDMLTest;
-SELECT * FROM DateDMLTestChild;
+SELECT * FROM DateDMLTest ORDER BY ID;
+SELECT * FROM DateDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#nvarchar
@@ -8863,16 +8863,16 @@ GO
 
 
 -- Final verification
-SELECT * FROM DateDMLTest;
-SELECT * FROM DateDMLTestChild;
+SELECT * FROM DateDMLTest ORDER BY ID;
+SELECT * FROM DateDMLTestChild ORDER BY ID;
 GO
 ~~START~~
 int#!#date#!#date#!#date#!#nvarchar
+5#!#2023-06-21#!#<NULL>#!#2023-06-22#!#Mass updated
 6#!#2023-08-01#!#<NULL>#!#2023-08-02#!#Mass updated
 7#!#2023-08-01#!#<NULL>#!#2023-08-02#!#Mass updated
 8#!#2023-09-02#!#<NULL>#!#2023-09-03#!#Testing computed column
 9#!#2024-09-02#!#<NULL>#!#2024-09-03#!#Inserted from subquery
-5#!#2023-06-21#!#<NULL>#!#2023-06-22#!#Mass updated
 10#!#1900-01-01#!#<NULL>#!#1900-01-02#!#This should fail
 ~~END~~
 
@@ -8903,19 +8903,6 @@ VALUES
 ('2023-05-20', '2023-10-20', 'Year end', 5);
 GO
 ~~ROW COUNT: 5~~
-
-
--- Insert 10000 more rows for performance testing
-INSERT INTO DateIndexTest (DateColumn, DateColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01'),
-    DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01'),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
-GO
-~~ROW COUNT: 2704~~
 
 
 -- 1. Index on single column
@@ -8963,7 +8950,7 @@ int#!#date#!#date#!#nvarchar#!#int
 
 -- Range
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE DateColumn BETWEEN '2023-01-01' AND '2023-03-31';
+SELECT * FROM DateIndexTest WHERE DateColumn BETWEEN '2023-01-01' AND '2023-03-31' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -8987,7 +8974,7 @@ int#!#date#!#date#!#nvarchar#!#int
 
 -- IN
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE DateColumn IN ('2023-01-01', '2023-02-15', '2023-03-30');
+SELECT * FROM DateIndexTest WHERE DateColumn IN ('2023-01-01', '2023-02-15', '2023-03-30')  ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -9098,7 +9085,7 @@ date#!#nvarchar#!#int
 -- 7. Index usage for date functions
 -- YEAR function
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE YEAR(DateColumn) = 2023;
+SELECT * FROM DateIndexTest WHERE YEAR(DateColumn) = 2023 ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 ~~START~~
@@ -9205,22 +9192,22 @@ SELECT
         ELSE 'Winter'
     END AS Season,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 ~~START~~
 date#!#varchar#!#nvarchar
-2023-01-01#!#Winter#!#New Year
-2023-02-14#!#Winter#!#Valentine's Day
-2023-03-17#!#Spring#!#St. Patrick's Day
 2023-04-01#!#Spring#!#April Fool's Day
-2023-05-01#!#Spring#!#May Day
-2023-06-21#!#Summer#!#Summer Solstice
-2023-07-04#!#Summer#!#Independence Day
 2023-08-15#!#Summer#!#August Holiday
 2023-09-22#!#Autumn#!#Autumn Equinox
-2023-10-31#!#Autumn#!#Halloween
-2023-11-23#!#Autumn#!#Thanksgiving
 2023-12-25#!#Winter#!#Christmas
+2023-10-31#!#Autumn#!#Halloween
+2023-07-04#!#Summer#!#Independence Day
+2023-05-01#!#Spring#!#May Day
+2023-01-01#!#Winter#!#New Year
+2023-03-17#!#Spring#!#St. Patrick's Day
+2023-06-21#!#Summer#!#Summer Solstice
+2023-11-23#!#Autumn#!#Thanksgiving
+2023-02-14#!#Winter#!#Valentine's Day
 ~~END~~
 
 
@@ -9229,22 +9216,22 @@ SELECT
     ID,
     COALESCE(NullableDateColumn, DateColumn, CAST('1900-01-01' AS DATE)) AS CoalescedDate,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 ~~START~~
 int#!#date#!#nvarchar
-1#!#2023-01-01#!#New Year
-2#!#2023-02-14#!#Valentine's Day
-3#!#2023-03-17#!#St. Patrick's Day
 4#!#2023-04-01#!#April Fool's Day
-5#!#2023-05-01#!#May Day
-6#!#2023-06-21#!#Summer Solstice
-7#!#2023-07-04#!#Independence Day
 8#!#2023-08-15#!#August Holiday
 9#!#2023-09-22#!#Autumn Equinox
-10#!#2023-10-31#!#Halloween
-11#!#2023-11-23#!#Thanksgiving
 12#!#2023-12-25#!#Christmas
+10#!#2023-10-31#!#Halloween
+7#!#2023-07-04#!#Independence Day
+5#!#2023-05-01#!#May Day
+1#!#2023-01-01#!#New Year
+3#!#2023-03-17#!#St. Patrick's Day
+6#!#2023-06-21#!#Summer Solstice
+11#!#2023-11-23#!#Thanksgiving
+2#!#2023-02-14#!#Valentine's Day
 ~~END~~
 
 
@@ -9253,22 +9240,22 @@ SELECT
     ID,
     NULLIF(DateColumn, '2023-01-01') AS NullIfNewYear,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 ~~START~~
 int#!#date#!#nvarchar
-1#!#<NULL>#!#New Year
-2#!#2023-02-14#!#Valentine's Day
-3#!#2023-03-17#!#St. Patrick's Day
 4#!#2023-04-01#!#April Fool's Day
-5#!#2023-05-01#!#May Day
-6#!#2023-06-21#!#Summer Solstice
-7#!#2023-07-04#!#Independence Day
 8#!#2023-08-15#!#August Holiday
 9#!#2023-09-22#!#Autumn Equinox
-10#!#2023-10-31#!#Halloween
-11#!#2023-11-23#!#Thanksgiving
 12#!#2023-12-25#!#Christmas
+10#!#2023-10-31#!#Halloween
+7#!#2023-07-04#!#Independence Day
+5#!#2023-05-01#!#May Day
+1#!#<NULL>#!#New Year
+3#!#2023-03-17#!#St. Patrick's Day
+6#!#2023-06-21#!#Summer Solstice
+11#!#2023-11-23#!#Thanksgiving
+2#!#2023-02-14#!#Valentine's Day
 ~~END~~
 
 
@@ -9277,22 +9264,22 @@ SELECT
     DateColumn,
     IIF(DATEPART(QUARTER, DateColumn) <= 2, 'First Half', 'Second Half') AS HalfOfYear,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 ~~START~~
 date#!#varchar#!#nvarchar
-2023-01-01#!#First Half#!#New Year
-2023-02-14#!#First Half#!#Valentine's Day
-2023-03-17#!#First Half#!#St. Patrick's Day
 2023-04-01#!#First Half#!#April Fool's Day
-2023-05-01#!#First Half#!#May Day
-2023-06-21#!#First Half#!#Summer Solstice
-2023-07-04#!#Second Half#!#Independence Day
 2023-08-15#!#Second Half#!#August Holiday
 2023-09-22#!#Second Half#!#Autumn Equinox
-2023-10-31#!#Second Half#!#Halloween
-2023-11-23#!#Second Half#!#Thanksgiving
 2023-12-25#!#Second Half#!#Christmas
+2023-10-31#!#Second Half#!#Halloween
+2023-07-04#!#Second Half#!#Independence Day
+2023-05-01#!#First Half#!#May Day
+2023-01-01#!#First Half#!#New Year
+2023-03-17#!#First Half#!#St. Patrick's Day
+2023-06-21#!#First Half#!#Summer Solstice
+2023-11-23#!#Second Half#!#Thanksgiving
+2023-02-14#!#First Half#!#Valentine's Day
 ~~END~~
 
 
@@ -9355,7 +9342,7 @@ SELECT
     DATEADD(DAY, 7, DateColumn) AS OneWeekLater,
     DATEADD(MONTH, 1, DateColumn) AS OneMonthLater,
     DATEADD(YEAR, 1, DateColumn) AS OneYearLater
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#date#!#date#!#date
@@ -9383,7 +9370,7 @@ SELECT
     DATEPART(QUARTER, DateColumn) AS Quarter,
     DATEPART(DAYOFYEAR, DateColumn) AS DayOfYear,
     DATENAME(WEEKDAY, DateColumn) AS DayOfWeek
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#int#!#int#!#int#!#int#!#int#!#text
@@ -9408,7 +9395,7 @@ SELECT
     DATEDIFF(DAY, '2023-01-01', DateColumn) AS DaysSinceNewYear,
     DATEDIFF(WEEK, '2023-01-01', DateColumn) AS WeeksSinceNewYear,
     DATEDIFF(MONTH, '2023-01-01', DateColumn) AS MonthsSinceNewYear
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#int#!#int#!#int
@@ -9441,7 +9428,7 @@ SELECT
         ELSE 'Weekday'
     END AS DayType,
     IIF(DateColumn < '2023-07-01', 'First Half', 'Second Half') AS YearHalf
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#varchar#!#varchar#!#varchar
@@ -9466,7 +9453,7 @@ SELECT
     EOMONTH(DateColumn) AS EndOfMonth,
     DATEADD(DAY, 1, EOMONTH(DATEADD(MONTH, -1, DateColumn))) AS FirstDayOfMonth,
     DATEADD(DAY, -DATEPART(DAY, DateColumn) + 1, DateColumn) AS FirstDayOfCurrentMonth
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#date#!#date#!#date
@@ -9492,7 +9479,7 @@ SELECT
     LAG(DateColumn) OVER (ORDER BY DateColumn) AS PreviousDate,
     LEAD(DateColumn) OVER (ORDER BY DateColumn) AS NextDate,
     DATEDIFF(DAY, LAG(DateColumn) OVER (ORDER BY DateColumn), DateColumn) AS DaysSincePreviousDate
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#nvarchar#!#date#!#date#!#int
@@ -9542,7 +9529,7 @@ SELECT
         ELSE 'Unknown'
     END AS Quarter,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 ~~START~~
 date#!#varchar#!#nvarchar

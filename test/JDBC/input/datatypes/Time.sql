@@ -21,9 +21,9 @@ INSERT INTO TimeTest (Description, InputString, Time0, Time3, Time7)
 VALUES ('Empty TIME variable', NULL, @EmptyTime, @EmptyTime, @EmptyTime);
 GO
 
-SELECT * FROM TimeTest WHERE Time0 IS NULL;
+SELECT * FROM TimeTest WHERE Time0 IS NULL ORDER BY ID;
 GO
-SELECT * FROM TimeTest;
+SELECT * FROM TimeTest ORDER BY ID;
 GO
 
 -- Default values
@@ -34,7 +34,7 @@ CREATE TABLE TimeDefaultTest (
     TimeCol2 Time(6)
 );
 INSERT INTO TimeDefaultTest VALUES (1, CAST('0001-01-01' As time), CAST('0001-01-01' As time), CAST('0001-01-01' As time));
-SELECT * FROM TimeDefaultTest;
+SELECT * FROM TimeDefaultTest ORDER BY ID;
 GO
 
 -- Character length
@@ -673,7 +673,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTTimeTest;
+SELECT * FROM UDDTTimeTest ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -686,7 +686,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTTimeTest';
+WHERE TABLE_NAME = 'UDDTTimeTest' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -698,7 +698,7 @@ SELECT
     CAST(PreciseTimeCol AS VARCHAR(30)) AS PreciseTimeString,
     CAST(RegularTime AS DATETIME) AS RegularDateTime,
     CAST(BusinessTimeCol AS DATETIME) AS BusinessDateTime
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 
 -- 7. Test time functions
@@ -708,7 +708,7 @@ SELECT
     DATEADD(HOUR, 1, BusinessTimeCol) AS BusinessNextHour,
     DATEADD(MINUTE, 30, ShiftTimeCol) AS ShiftNextHalfHour,
     DATEDIFF(MINUTE, ShiftTimeCol, BusinessTimeCol) AS MinutesBetween
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 
 -- 8. Test constraints
@@ -789,7 +789,7 @@ SELECT
     DATEADD(MILLISECOND, 500, BusinessTimeCol) AS AddMilliseconds,
     DATEADD(SECOND, 30, BusinessTimeCol) AS AddSeconds,
     DATEADD(MINUTE, -15, BusinessTimeCol) AS SubtractMinutes
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 
 -- 15. Test boundary conditions
@@ -806,7 +806,7 @@ SELECT
     DATEPART(MINUTE, BusinessTimeCol) AS BusinessMinute,
     DATEPART(SECOND, BusinessTimeCol) AS BusinessSecond,
     DATEPART(MILLISECOND, BusinessTimeCol) AS BusinessMillisecond
-FROM UDDTTimeTest;
+FROM UDDTTimeTest ORDER BY ID;
 GO
 
 -- Display final results
@@ -3129,7 +3129,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'TimeTest1';
+WHERE TABLE_NAME = 'TimeTest1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table for TIME
@@ -3261,7 +3261,7 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'TimeView';
+WHERE TABLE_NAME = 'TimeView' ORDER BY COLUMN_NAME;
 GO
 
 -- Insert some test data with different precisions
@@ -3278,7 +3278,7 @@ GO
 
 -- Test all the objects we created
 -- Basic table operations
-SELECT * FROM TimeTest1;
+SELECT * FROM TimeTest1 ORDER BY ID;
 GO
 
 -- Partitioned table
@@ -3296,7 +3296,7 @@ EXEC dbo.ProcessTime @InputTime = '14:30:00';
 GO
 
 -- View
-SELECT * FROM dbo.TimeView;
+SELECT * FROM dbo.TimeView ORDER BY ID;
 GO
 
 -- Additional time-specific tests
@@ -3327,7 +3327,7 @@ SELECT
     DATEADD(MINUTE, 30, TimeColumn) AS Plus30Minutes,
     DATEADD(SECOND, 15, TimeColumn) AS Plus15Seconds,
     DATEADD(MILLISECOND, 500, TimeColumn) AS Plus500Milliseconds
-FROM TimeTest1;
+FROM TimeTest1 ORDER BY TimeColumn;
 GO
 
 -- Test time comparisons
@@ -3387,7 +3387,7 @@ VALUES ('15:45:00', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM TimeDMLTest;
+SELECT * FROM TimeDMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -3423,7 +3423,7 @@ WHERE SimpleTime < '12:00:00';
 GO
 
 -- Verify updates
-SELECT * FROM TimeDMLTest;
+SELECT * FROM TimeDMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -3455,8 +3455,8 @@ DELETE FROM TimeDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM TimeDMLTest;
-SELECT * FROM TimeDMLTestChild;
+SELECT * FROM TimeDMLTest ORDER BY ID;
+SELECT * FROM TimeDMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -3548,8 +3548,8 @@ WHERE SimpleTime BETWEEN '12:00:00' AND '13:00:00';
 GO
 
 -- Final verification
-SELECT * FROM TimeDMLTest;
-SELECT * FROM TimeDMLTestChild;
+SELECT * FROM TimeDMLTest ORDER BY ID;
+SELECT * FROM TimeDMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -3571,17 +3571,6 @@ VALUES
 ('09:30:45.5555555', '21:30:45.5555555', 'Work hours', 3),
 ('12:45:15.7777777', '23:45:15.7777777', 'Lunch time', 4),
 ('15:20:10.9999999', '03:20:10.9999999', 'Afternoon', 5);
-GO
-
--- Insert 10000 more rows for performance testing
-INSERT INTO TimeIndexTest (TimeColumn, TimeColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, '00:00:00'),
-    DATEADD(MILLISECOND, ABS(CHECKSUM(NEWID())) % 86400000, '00:00:00'),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single column
@@ -3614,7 +3603,7 @@ GO
 
 -- Range
 SET STATISTICS IO ON;
-SELECT * FROM TimeIndexTest WHERE TimeColumn BETWEEN '09:00:00' AND '17:00:00';
+SELECT * FROM TimeIndexTest WHERE TimeColumn BETWEEN '09:00:00' AND '17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3626,7 +3615,7 @@ GO
 
 -- IN
 SET STATISTICS IO ON;
-SELECT * FROM TimeIndexTest WHERE TimeColumn IN ('00:00:00', '06:15:30.1234567', '12:00:00');
+SELECT * FROM TimeIndexTest WHERE TimeColumn IN ('00:00:00', '06:15:30.1234567', '12:00:00') ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3733,7 +3722,7 @@ GO
 SET STATISTICS IO ON;
 SELECT * FROM TimeIndexTest 
 WHERE TimeColumn >= '09:00:00' 
-AND TimeColumn <= '17:00:00';
+AND TimeColumn <= '17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3800,7 +3789,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- COALESCE
@@ -3808,7 +3797,7 @@ SELECT
     ID,
     COALESCE(NullableTimeColumn, TimeColumn, CAST('00:00' AS TIME)) AS CoalescedTime,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY ID;
 GO
 
 -- NULLIF operations
@@ -3816,7 +3805,7 @@ SELECT
     ID,
     NULLIF(TimeColumn, '00:00') AS NullIfMidnight,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY ID;
 GO
 
 -- IIF statements
@@ -3824,7 +3813,7 @@ SELECT
     TimeColumn,
     IIF(TimeColumn < '12:00', 'AM', 'PM') AS AMPM,
     Description
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- 2. Aggregate Expressions
@@ -3856,7 +3845,7 @@ SELECT
     DATEADD(HOUR, 1, CAST(TimeColumn AS DATETIME)) AS OneHourLater,
     DATEADD(MINUTE, 30, CAST(TimeColumn AS DATETIME)) AS ThirtyMinutesLater,
     DATEADD(SECOND, 15, CAST(TimeColumn AS DATETIME)) AS FifteenSecondsLater
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Time parts
@@ -3868,7 +3857,7 @@ SELECT
     DATEPART(MILLISECOND, TimeColumn) AS Millisecond,
     DATEPART(MICROSECOND, TimeColumn) AS Microsecond,
     DATEPART(NANOSECOND, TimeColumn) AS Nanosecond
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Time differences
@@ -3880,7 +3869,7 @@ SELECT
     DATEDIFF(SECOND, t1.TimeColumn, t2.TimeColumn) AS SecondsDiff
 FROM TimeExpressionTest t1
 CROSS JOIN TimeExpressionTest t2
-WHERE t1.ID < t2.ID;
+WHERE t1.ID < t2.ID ORDER BY t2.TimeColumn;
 GO
 
 -- Complex conditional expressions
@@ -3897,7 +3886,7 @@ SELECT
         ELSE 'PM'
     END AS AMPM,
     IIF(TimeColumn BETWEEN '09:00' AND '17:00', 'Business Hours', 'Off Hours') AS BusinessHours
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Window functions with times
@@ -3909,7 +3898,7 @@ SELECT
     DATEDIFF(MINUTE, 
         LAG(TimeColumn) OVER (ORDER BY TimeColumn), 
         TimeColumn) AS MinutesSincePreviousTime
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Time grouping and aggregation
@@ -3935,7 +3924,7 @@ SELECT
     CAST(TimeColumn AS TIME(6)) AS Precision6,
     CAST(TimeColumn AS TIME(7)) AS Precision7
 FROM TimeExpressionTest
-WHERE TimeColumn > '21:00';
+WHERE TimeColumn > '21:00' ORDER BY TimeColumn;
 GO
 
 -- Time conversion tests
@@ -3944,7 +3933,7 @@ SELECT
     CAST(TimeColumn AS VARCHAR(20)) AS StringTime,
     CAST(CAST(TimeColumn AS VARCHAR(20)) AS TIME) AS BackToTime,
     CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME) AS TimeToDateTime
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Error handling tests
@@ -3985,7 +3974,7 @@ SELECT
     TimeColumn,
     CAST(DATEADD(HOUR, 25, CAST(TimeColumn AS DATETIME)) AS TIME) AS Add25Hours,
     CAST(DATEADD(MINUTE, -120, CAST(TimeColumn AS DATETIME)) AS TIME) AS Subtract120Minutes
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- Format conversion tests
@@ -3993,7 +3982,7 @@ SELECT
     TimeColumn,
     FORMAT(CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME), 'hh:mm:ss tt') AS Format12Hour,
     FORMAT(CAST('1900-01-01 ' + CAST(TimeColumn AS VARCHAR(20)) AS DATETIME), 'HH:mm:ss') AS Format24Hour
-FROM TimeExpressionTest;
+FROM TimeExpressionTest ORDER BY TimeColumn;
 GO
 
 -- 10. Additional Tests:

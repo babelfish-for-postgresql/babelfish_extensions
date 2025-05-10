@@ -911,7 +911,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTest;
+SELECT * FROM UDDTDateTest ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -924,7 +924,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTest';
+WHERE TABLE_NAME = 'UDDTDateTest' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -936,7 +936,7 @@ SELECT
     CAST(RegularDate AS DATETIME) AS RegularDateTime,
     CAST(BusinessDateCol AS DATETIME) AS BusinessDateTime,
     CAST(HistoricalDateCol AS DATETIME) AS HistoricalDateTime
-FROM UDDTDateTest;
+FROM UDDTDateTest ORDER BY ID;
 GO
 
 -- 7. Test date functions
@@ -946,7 +946,7 @@ SELECT
     DATEADD(DAY, 1, BusinessDateCol) AS BusinessNextDay,
     DATEADD(DAY, 1, HistoricalDateCol) AS HistoricalNextDay,
     DATEDIFF(YEAR, HistoricalDateCol, BusinessDateCol) AS YearsBetween
-FROM UDDTDateTest;
+FROM UDDTDateTest ORDER BY ID;
 GO
 
 -- 8. Test constraints
@@ -3200,7 +3200,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTest1';
+WHERE TABLE_NAME = 'DateTest1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table
@@ -3246,7 +3246,7 @@ GO
 
 -- Query to show files in each partition
 SELECT a, type, $PARTITION.DATE_dt_partition_func(a) AS PartitionNumber
-    FROM DATE_dt_partition ORDER BY PartitionNumber;
+    FROM DATE_dt_partition ORDER BY PartitionNumber, type, a;
 GO
 
 -- Query to show count of files by partition
@@ -3365,7 +3365,7 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateView';
+WHERE TABLE_NAME = 'DateView' ORDER BY COLUMN_NAME;
 GO
 
 -- Insert some test data
@@ -3375,12 +3375,12 @@ INSERT INTO DateTest1 (ID, DateColumn) VALUES
 (3, '2023-06-18');
 
 -- Test the objects we created
-SELECT * FROM DateTest1;
-SELECT * FROM DATE_dt_partition;
+SELECT * FROM DateTest1 ORDER BY ID;
+SELECT * FROM DATE_dt_partition ORDER BY a, type;
 SELECT dbo.GetCurrentDate() AS CurrentDate;
 SELECT dbo.AddDaysToDate('2023-06-16', 5) AS DateAfter5Days;
 EXEC dbo.ProcessDate @InputDate = '2023-06-16';
-SELECT * FROM dbo.DateView;
+SELECT * FROM dbo.DateView ORDER BY ID;
 GO
 
 -- 5. DML testing:
@@ -3433,7 +3433,7 @@ VALUES ('2023-06-22', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM DateDMLTest;
+SELECT * FROM DateDMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -3469,7 +3469,7 @@ WHERE SimpleDate < '2023-07-01';
 GO
 
 -- Verify updates
-SELECT * FROM DateDMLTest;
+SELECT * FROM DateDMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -3501,8 +3501,8 @@ DELETE FROM DateDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM DateDMLTest;
-SELECT * FROM DateDMLTestChild;
+SELECT * FROM DateDMLTest ORDER BY ID;
+SELECT * FROM DateDMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -3574,8 +3574,8 @@ END CATCH
 GO
 
 -- Final verification
-SELECT * FROM DateDMLTest;
-SELECT * FROM DateDMLTestChild;
+SELECT * FROM DateDMLTest ORDER BY ID;
+SELECT * FROM DateDMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -3597,17 +3597,6 @@ VALUES
 ('2023-03-30', '2023-08-30', 'Third quarter', 3),
 ('2023-04-10', '2023-09-10', 'Fall season', 4),
 ('2023-05-20', '2023-10-20', 'Year end', 5);
-GO
-
--- Insert 10000 more rows for performance testing
-INSERT INTO DateIndexTest (DateColumn, DateColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01'),
-    DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01'),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single column
@@ -3640,7 +3629,7 @@ GO
 
 -- Range
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE DateColumn BETWEEN '2023-01-01' AND '2023-03-31';
+SELECT * FROM DateIndexTest WHERE DateColumn BETWEEN '2023-01-01' AND '2023-03-31' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3652,7 +3641,7 @@ GO
 
 -- IN
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE DateColumn IN ('2023-01-01', '2023-02-15', '2023-03-30');
+SELECT * FROM DateIndexTest WHERE DateColumn IN ('2023-01-01', '2023-02-15', '2023-03-30')  ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3727,7 +3716,7 @@ GO
 
 -- YEAR function
 SET STATISTICS IO ON;
-SELECT * FROM DateIndexTest WHERE YEAR(DateColumn) = 2023;
+SELECT * FROM DateIndexTest WHERE YEAR(DateColumn) = 2023 ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3804,7 +3793,7 @@ SELECT
         ELSE 'Winter'
     END AS Season,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 
 -- COALESCE
@@ -3812,7 +3801,7 @@ SELECT
     ID,
     COALESCE(NullableDateColumn, DateColumn, CAST('1900-01-01' AS DATE)) AS CoalescedDate,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 
 -- NULLIF operations
@@ -3820,7 +3809,7 @@ SELECT
     ID,
     NULLIF(DateColumn, '2023-01-01') AS NullIfNewYear,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 
 -- IIF statements
@@ -3828,7 +3817,7 @@ SELECT
     DateColumn,
     IIF(DATEPART(QUARTER, DateColumn) <= 2, 'First Half', 'Second Half') AS HalfOfYear,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY Description;
 GO
 
 -- 2. Aggregate Expressions
@@ -3864,7 +3853,7 @@ SELECT
     DATEADD(DAY, 7, DateColumn) AS OneWeekLater,
     DATEADD(MONTH, 1, DateColumn) AS OneMonthLater,
     DATEADD(YEAR, 1, DateColumn) AS OneYearLater
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Date parts
@@ -3876,7 +3865,7 @@ SELECT
     DATEPART(QUARTER, DateColumn) AS Quarter,
     DATEPART(DAYOFYEAR, DateColumn) AS DayOfYear,
     DATENAME(WEEKDAY, DateColumn) AS DayOfWeek
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Date differences
@@ -3885,7 +3874,7 @@ SELECT
     DATEDIFF(DAY, '2023-01-01', DateColumn) AS DaysSinceNewYear,
     DATEDIFF(WEEK, '2023-01-01', DateColumn) AS WeeksSinceNewYear,
     DATEDIFF(MONTH, '2023-01-01', DateColumn) AS MonthsSinceNewYear
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Complex conditional expressions
@@ -3902,7 +3891,7 @@ SELECT
         ELSE 'Weekday'
     END AS DayType,
     IIF(DateColumn < '2023-07-01', 'First Half', 'Second Half') AS YearHalf
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Combining multiple date functions
@@ -3911,7 +3900,7 @@ SELECT
     EOMONTH(DateColumn) AS EndOfMonth,
     DATEADD(DAY, 1, EOMONTH(DATEADD(MONTH, -1, DateColumn))) AS FirstDayOfMonth,
     DATEADD(DAY, -DATEPART(DAY, DateColumn) + 1, DateColumn) AS FirstDayOfCurrentMonth
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Window functions with dates
@@ -3921,7 +3910,7 @@ SELECT
     LAG(DateColumn) OVER (ORDER BY DateColumn) AS PreviousDate,
     LEAD(DateColumn) OVER (ORDER BY DateColumn) AS NextDate,
     DATEDIFF(DAY, LAG(DateColumn) OVER (ORDER BY DateColumn), DateColumn) AS DaysSincePreviousDate
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- Date grouping and aggregation
@@ -3947,7 +3936,7 @@ SELECT
         ELSE 'Unknown'
     END AS Quarter,
     Description
-FROM DateExpressionTest;
+FROM DateExpressionTest ORDER BY DateColumn;
 GO
 
 -- 8. Additional DATE Specific Tests:

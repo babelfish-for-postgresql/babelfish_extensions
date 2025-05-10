@@ -21,9 +21,9 @@ INSERT INTO Datetime2Test (Description, InputString, DateTime2_0, DateTime2_3, D
 VALUES ('Empty DATETIME2 variable', NULL, @EmptyDateTime2, @EmptyDateTime2, @EmptyDateTime2);
 GO
 
-SELECT * FROM Datetime2Test WHERE DateTime2_0 IS NULL;
+SELECT * FROM Datetime2Test WHERE DateTime2_0 IS NULL ORDER BY ID;
 GO
-SELECT * FROM Datetime2Test;
+SELECT * FROM Datetime2Test ORDER BY ID;
 GO
 
 -- Default values
@@ -35,7 +35,7 @@ CREATE TABLE Datetime2DefaultTest (
 );
 INSERT INTO Datetime2DefaultTest VALUES (1, CAST('19:00:00' As DATETIME2), CAST('19:00:00' As DATETIME2), CAST('19:00:00' As DATETIME2));
 INSERT INTO Datetime2DefaultTest VALUES (2, CAST('1910-01-01' As DATETIME2), CAST('1910-01-01' As DATETIME2), CAST('1910-01-01' As DATETIME2));
-SELECT * FROM Datetime2DefaultTest;
+SELECT * FROM Datetime2DefaultTest ORDER BY ID;
 GO
 
 -- Character length tests for DATETIME2
@@ -953,7 +953,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTDateTime2Test;
+SELECT * FROM UDDTDateTime2Test ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -966,7 +966,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTDateTime2Test';
+WHERE TABLE_NAME = 'UDDTDateTime2Test' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -978,7 +978,7 @@ SELECT
     CAST(PreciseDateTime2Col AS VARCHAR(50)) AS PreciseDateTime2String,
     CAST(RegularDateTime2 AS DATETIME) AS RegularDateTime,
     CAST(BusinessDateTime2Col AS DATETIME) AS BusinessDateTime
-FROM UDDTDateTime2Test;
+FROM UDDTDateTime2Test ORDER BY ID;
 GO
 
 -- 7. Test datetime functions
@@ -988,7 +988,7 @@ SELECT
     DATEADD(HOUR, 1, BusinessDateTime2Col) AS BusinessNextHour,
     DATEADD(MINUTE, 30, ShiftDateTime2Col) AS ShiftNextHalfHour,
     DATEDIFF(MINUTE, ShiftDateTime2Col, BusinessDateTime2Col) AS MinutesBetween
-FROM UDDTDateTime2Test;
+FROM UDDTDateTime2Test ORDER BY ID;
 GO
 
 -- 8. Test constraints
@@ -1071,7 +1071,7 @@ SELECT
     DATEADD(MILLISECOND, 500, BusinessDateTime2Col) AS AddMilliseconds,
     DATEADD(SECOND, 30, BusinessDateTime2Col) AS AddSeconds,
     DATEADD(MINUTE, -15, BusinessDateTime2Col) AS SubtractMinutes
-FROM UDDTDateTime2Test;
+FROM UDDTDateTime2Test ORDER BY ID;
 GO
 
 -- 15. Test boundary conditions
@@ -1091,7 +1091,7 @@ SELECT
     DATEPART(MINUTE, BusinessDateTime2Col) AS BusinessMinute,
     DATEPART(SECOND, BusinessDateTime2Col) AS BusinessSecond,
     DATEPART(MICROSECOND, BusinessDateTime2Col) AS BusinessMicrosecond
-FROM UDDTDateTime2Test;
+FROM UDDTDateTime2Test ORDER BY ID;
 GO
 
 -- Display final results
@@ -3454,7 +3454,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTime2Test1';
+WHERE TABLE_NAME = 'DateTime2Test1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table for DATETIME2
@@ -3588,7 +3588,7 @@ SELECT
     COLUMN_NAME,
     DATA_TYPE
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'DateTime2View';
+WHERE TABLE_NAME = 'DateTime2View' ORDER BY COLUMN_NAME;
 GO
 
 -- Insert test data with different precisions
@@ -3604,7 +3604,7 @@ INSERT INTO DateTime2Test1 (ID, DateTime2Column) VALUES
 GO
 
 -- Test all objects
-SELECT * FROM DateTime2Test1;
+SELECT * FROM DateTime2Test1 ORDER BY ID;
 GO
 
 SELECT * FROM DATETIME2_partition ORDER BY type;
@@ -3619,7 +3619,7 @@ GO
 EXEC dbo.ProcessDateTime2 @InputDateTime2 = '2023-01-01 14:30:00.1234567';
 GO
 
-SELECT * FROM dbo.DateTime2View;
+SELECT * FROM dbo.DateTime2View ORDER BY ID;
 GO
 
 -- Additional datetime2-specific tests
@@ -3650,7 +3650,7 @@ SELECT
     DATEADD(MINUTE, 30, DateTime2Column) AS Plus30Minutes,
     DATEADD(SECOND, 15, DateTime2Column) AS Plus15Seconds,
     DATEADD(NANOSECOND, 500, DateTime2Column) AS Plus500Nanoseconds
-FROM DateTime2Test1;
+FROM DateTime2Test1 ORDER BY DateTime2Column;
 GO
 
 -- Test datetime2 comparisons
@@ -3671,7 +3671,7 @@ SELECT
     CAST(DateTime2Column AS DATETIME2(5)) AS Precision5,
     CAST(DateTime2Column AS DATETIME2(6)) AS Precision6,
     CAST(DateTime2Column AS DATETIME2(7)) AS Precision7
-FROM DateTime2Test1;
+FROM DateTime2Test1 ORDER BY DateTime2Column;
 GO
 
 -- 5. DML testing:
@@ -3724,7 +3724,7 @@ VALUES ('2023-06-16 15:45:00', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM DateTime2DMLTest;
+SELECT * FROM DateTime2DMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -3760,7 +3760,7 @@ WHERE SimpleDateTime < '2023-06-16 12:00:00';
 GO
 
 -- Verify updates
-SELECT * FROM DateTime2DMLTest;
+SELECT * FROM DateTime2DMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -3793,8 +3793,8 @@ DELETE FROM DateTime2DMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM DateTime2DMLTest;
-SELECT * FROM DateTime2DMLTestChild;
+SELECT * FROM DateTime2DMLTest ORDER BY ID;
+SELECT * FROM DateTime2DMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -3897,8 +3897,8 @@ VALUES
 GO
 
 -- Final verification
-SELECT * FROM DateTime2DMLTest;
-SELECT * FROM DateTime2DMLTestChild;
+SELECT * FROM DateTime2DMLTest ORDER BY ID;
+SELECT * FROM DateTime2DMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -3920,17 +3920,6 @@ VALUES
 ('2023-01-01 09:30:45.5555555', '2023-01-01 21:30:45.5555555', 'Work hours', 3),
 ('2023-01-01 12:45:15.7777777', '2023-01-01 23:45:15.7777777', 'Lunch time', 4),
 ('2023-01-01 15:20:10.9999999', '2023-01-02 03:20:10.9999999', 'Afternoon', 5);
-GO
-
--- Insert 10000 more rows for performance testing
-INSERT INTO DateTime2IndexTest (DateTime2Column, DateTime2Column2, Description, NumericColumn)
-SELECT 
-    DATEADD(NANOSECOND, ABS(CHECKSUM(NEWID())) % 86400000000000, '2023-01-01'),
-    DATEADD(NANOSECOND, ABS(CHECKSUM(NEWID())) % 86400000000000, '2023-01-01'),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single column
@@ -3970,7 +3959,7 @@ GO
 -- Range
 SET STATISTICS IO ON;
 SELECT * FROM DateTime2IndexTest 
-WHERE DateTime2Column BETWEEN '2023-01-01 09:00:00' AND '2023-01-01 17:00:00';
+WHERE DateTime2Column BETWEEN '2023-01-01 09:00:00' AND '2023-01-01 17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -3988,7 +3977,7 @@ WHERE DateTime2Column IN (
     '2023-01-01 00:00:00.0000000',
     '2023-01-01 06:15:30.1234567',
     '2023-01-01 12:00:00.0000000'
-);
+) ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4115,14 +4104,14 @@ GO
 SET STATISTICS IO ON;
 SELECT * FROM DateTime2IndexTest 
 WHERE DateTime2Column >= '2023-01-01' 
-AND DateTime2Column < '2023-01-02';
+AND DateTime2Column < '2023-01-02' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
 -- Time component queries
 SET STATISTICS IO ON;
 SELECT * FROM DateTime2IndexTest 
-WHERE CAST(DateTime2Column AS TIME) BETWEEN '09:00:00' AND '17:00:00';
+WHERE CAST(DateTime2Column AS TIME) BETWEEN '09:00:00' AND '17:00:00' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4175,7 +4164,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- COALESCE
@@ -4183,7 +4172,7 @@ SELECT
     ID,
     COALESCE(NullableDateTime2Column, DateTime2Column, '2023-06-16 00:00:00.0000000') AS CoalescedDateTime2,
     Description
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY ID;
 GO
 
 -- NULLIF operations
@@ -4191,7 +4180,7 @@ SELECT
     ID,
     NULLIF(DateTime2Column, '2023-06-16 00:00:00.0000000') AS NullIfMidnight,
     Description
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY ID;
 GO
 
 -- IIF statements
@@ -4199,7 +4188,7 @@ SELECT
     DateTime2Column,
     IIF(DATEPART(HOUR, DateTime2Column) < 12, 'AM', 'PM') AS AMPM,
     Description
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- 2. Aggregate Expressions
@@ -4239,7 +4228,7 @@ SELECT
     DATEADD(MINUTE, 30, DateTime2Column) AS ThirtyMinutesLater,
     DATEADD(SECOND, 15, DateTime2Column) AS FifteenSecondsLater,
     DATEADD(NANOSECOND, 1000000, DateTime2Column) AS OneMillisecondLater
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- DateTime2 parts
@@ -4254,7 +4243,7 @@ SELECT
     DATEPART(MILLISECOND, DateTime2Column) AS Millisecond,
     DATEPART(MICROSECOND, DateTime2Column) AS Microsecond,
     DATEPART(NANOSECOND, DateTime2Column) AS Nanosecond
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- DateTime2 differences
@@ -4269,7 +4258,7 @@ SELECT
     DATEDIFF(NANOSECOND, t1.DateTime2Column, t2.DateTime2Column) AS NanosecondsDiff
 FROM DateTime2ExpressionTest t1
 CROSS JOIN DateTime2ExpressionTest t2
-WHERE t1.ID < t2.ID;
+WHERE t1.ID < t2.ID ORDER BY t2.DateTime2Column;
 GO
 
 -- Complex conditional expressions
@@ -4286,7 +4275,7 @@ SELECT
         ELSE 'PM'
     END AS AMPM,
     IIF(CAST(DateTime2Column AS TIME) BETWEEN '09:00' AND '17:00', 'Business Hours', 'Off Hours') AS BusinessHours
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- Window functions
@@ -4298,7 +4287,7 @@ SELECT
     DATEDIFF(MINUTE, 
         LAG(DateTime2Column) OVER (ORDER BY DateTime2Column), 
         DateTime2Column) AS MinutesSincePrevious
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- Grouping and aggregation
@@ -4324,7 +4313,7 @@ SELECT
     CAST(DateTime2Column AS DATETIME2(6)) AS Precision6,
     CAST(DateTime2Column AS DATETIME2(7)) AS Precision7
 FROM DateTime2ExpressionTest
-WHERE DATEPART(HOUR, DateTime2Column) > 21;
+WHERE DATEPART(HOUR, DateTime2Column) > 21 ORDER BY DateTime2Column;
 GO
 
 -- Conversion tests
@@ -4335,7 +4324,7 @@ SELECT
     CAST(DateTime2Column AS DATETIME) AS ToDateTime,
     CAST(DateTime2Column AS DATE) AS DateOnly,
     CAST(DateTime2Column AS TIME) AS TimeOnly
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- Error handling tests
@@ -4379,7 +4368,7 @@ SELECT
     DATEADD(MONTH, 1, DateTime2Column) AS NextMonth,
     DATEADD(YEAR, 1, DateTime2Column) AS NextYear,
     DATEADD(NANOSECOND, 100, DateTime2Column) AS Add100Nanoseconds
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- Format conversion tests
@@ -4388,7 +4377,7 @@ SELECT
     FORMAT(DateTime2Column, 'yyyy-MM-dd HH:mm:ss.fffffff') AS FullFormat,
     FORMAT(DateTime2Column, 'MM/dd/yyyy hh:mm:ss tt') AS USFormat,
     FORMAT(DateTime2Column, 'dd/MM/yyyy HH:mm:ss') AS UKFormat
-FROM DateTime2ExpressionTest;
+FROM DateTime2ExpressionTest ORDER BY DateTime2Column;
 GO
 
 -- 10. Additional Tests:

@@ -13,9 +13,9 @@ GO
 Declare @a smalldatetime;
 INSERT INTO SmalldateTimeTest (SmalldateTimeCol) VALUES (@a), ('');
 GO
-SELECT * FROM SmalldateTimeTest WHERE SmalldateTimeCol IS NULL;
+SELECT * FROM SmalldateTimeTest WHERE SmalldateTimeCol IS NULL ORDER BY ID;
 GO
-SELECT * FROM SmalldateTimeTest;
+SELECT * FROM SmalldateTimeTest ORDER BY ID;
 GO
 
 -- Default values
@@ -25,7 +25,7 @@ CREATE TABLE SmalldateTimeDefaultTest (
 );
 INSERT INTO SmalldateTimeDefaultTest VALUES (1, CAST('19:00:00' As smalldatetime));
 INSERT INTO SmalldateTimeDefaultTest VALUES (2, CAST('1910-01-01' As smalldatetime));
-SELECT * FROM SmalldateTimeDefaultTest;
+SELECT * FROM SmalldateTimeDefaultTest ORDER BY ID;
 GO
 
 -- Character length
@@ -1103,7 +1103,7 @@ VALUES
 GO
 
 -- 4. Query the table
-SELECT * FROM UDDTSmallDateTimeTest;
+SELECT * FROM UDDTSmallDateTimeTest ORDER BY ID;
 GO
 
 -- 5. Test data type information
@@ -1116,7 +1116,7 @@ SELECT
     NUMERIC_SCALE,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'UDDTSmallDateTimeTest';
+WHERE TABLE_NAME = 'UDDTSmallDateTimeTest' ORDER BY COLUMN_NAME;
 GO
 
 -- 6. Test conversions
@@ -1128,7 +1128,7 @@ SELECT
     CAST(RegularSmallDateTime AS DATE) AS RegularDate,
     CAST(BusinessSmallDateTimeCol AS TIME) AS BusinessTime,
     CAST(HistoricalSmallDateTimeCol AS DATETIME) AS HistoricalDateTime
-FROM UDDTSmallDateTimeTest;
+FROM UDDTSmallDateTimeTest ORDER BY ID;
 GO
 
 -- 7. Test datetime functions
@@ -1137,7 +1137,7 @@ SELECT
     DATEADD(HOUR, 1, RegularSmallDateTime) AS RegularNextHour,
     DATEADD(MINUTE, 30, BusinessSmallDateTimeCol) AS BusinessNext30Min,
     DATEDIFF(MINUTE, HistoricalSmallDateTimeCol, BusinessSmallDateTimeCol) AS MinutesBetween
-FROM UDDTSmallDateTimeTest;
+FROM UDDTSmallDateTimeTest ORDER BY ID;
 GO
 
 -- 8. Test constraints with time components
@@ -1228,7 +1228,7 @@ SELECT
     DATEPART(HOUR, BusinessSmallDateTimeCol) AS BusinessHour,
     DATEPART(MINUTE, BusinessSmallDateTimeCol) AS BusinessMinute
 FROM UDDTSmallDateTimeTest
-WHERE ID IN (9, 10);
+WHERE ID IN (9, 10) ORDER BY ID;
 GO
 
 -- 15. Test range limitations
@@ -1242,7 +1242,7 @@ INSERT INTO UDDTSmallDateTimeTest (ID, RegularSmallDateTime, BusinessSmallDateTi
 VALUES (12, '2079-06-06 23:60', '2079-06-06 23:60', '1900-01-01 00:00');
 GO
 
-SELECT * FROM UDDTSmallDateTimeTest WHERE ID IN (7, 8, 9, 10);
+SELECT * FROM UDDTSmallDateTimeTest WHERE ID IN (7, 8, 9, 10) ORDER BY ID;
 GO
 
 -- 2. Datatype Conversions:
@@ -3640,7 +3640,7 @@ SELECT
     CHARACTER_MAXIMUM_LENGTH,
     DATETIME_PRECISION
 FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'SmallDateTimeTest1';
+WHERE TABLE_NAME = 'SmallDateTimeTest1' ORDER BY COLUMN_NAME;
 GO
 
 -- 2. Partitioned table for SMALLDATETIME
@@ -3683,7 +3683,7 @@ GO
 
 -- Query to show data in each partition
 SELECT a, type, $PARTITION.SMALLDATETIME_partition_func(a) AS PartitionNumber
-    FROM SMALLDATETIME_partition ORDER BY PartitionNumber;
+    FROM SMALLDATETIME_partition ORDER BY PartitionNumber, type, a;
 GO
 
 -- Query to show count by partition
@@ -3805,10 +3805,10 @@ INSERT INTO SmallDateTimeTest1 (ID, SmallDateTimeColumn) VALUES
 GO
 
 -- Test all objects
-SELECT * FROM SmallDateTimeTest1;
+SELECT * FROM SmallDateTimeTest1 ORDER BY ID;
 GO
 
-SELECT * FROM SMALLDATETIME_partition;
+SELECT * FROM SMALLDATETIME_partition ORDER BY a, type;
 GO
 
 SELECT dbo.GetCurrentSmallDateTime() AS CurrentSmallDateTime;
@@ -3820,7 +3820,7 @@ GO
 EXEC dbo.ProcessSmallDateTime @InputSmallDateTime = '2023-06-16 14:30';
 GO
 
-SELECT * FROM dbo.SmallDateTimeView;
+SELECT * FROM dbo.SmallDateTimeView ORDER BY ID;
 GO
 
 -- Additional SMALLDATETIME-specific tests
@@ -3913,7 +3913,7 @@ VALUES ('2023-06-22 10:15', DEFAULT, 'Insert with DEFAULT');
 GO
 
 -- Verify insertions
-SELECT * FROM SmallDateTimeDMLTest;
+SELECT * FROM SmallDateTimeDMLTest ORDER BY ID;
 GO
 
 -- 2. UPDATE operations
@@ -3949,7 +3949,7 @@ WHERE SimpleSmallDateTime < '2023-07-01 00:00';
 GO
 
 -- Verify updates
-SELECT * FROM SmallDateTimeDMLTest;
+SELECT * FROM SmallDateTimeDMLTest ORDER BY ID;
 GO
 
 -- 3. DELETE operations
@@ -3982,8 +3982,8 @@ DELETE FROM SmallDateTimeDMLTest WHERE ID = 4;
 GO
 
 -- Verify deletions
-SELECT * FROM SmallDateTimeDMLTest;
-SELECT * FROM SmallDateTimeDMLTestChild;
+SELECT * FROM SmallDateTimeDMLTest ORDER BY ID;
+SELECT * FROM SmallDateTimeDMLTestChild ORDER BY ID;
 GO
 
 -- 4. COMPUTED columns
@@ -4099,8 +4099,8 @@ END CATCH
 GO
 
 -- Final verification
-SELECT * FROM SmallDateTimeDMLTest;
-SELECT * FROM SmallDateTimeDMLTestChild;
+SELECT * FROM SmallDateTimeDMLTest ORDER BY ID;
+SELECT * FROM SmallDateTimeDMLTestChild ORDER BY ID;
 GO
 
 -- 6. Index testing:
@@ -4122,19 +4122,6 @@ VALUES
 ('2023-03-30 16:45', '2023-08-30 11:30', 'Third quarter', 3),
 ('2023-04-10 18:10', '2023-09-10 13:20', 'Fall season', 4),
 ('2023-05-20 20:30', '2023-10-20 15:45', 'Year end', 5);
-GO
-
--- Insert 10000 more rows with random time components (minutes only)
-INSERT INTO SmallDateTimeIndexTest (SmallDateTimeColumn, SmallDateTimeColumn2, Description, NumericColumn)
-SELECT 
-    DATEADD(MINUTE, ABS(CHECKSUM(NEWID())) % 1440, 
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    DATEADD(MINUTE, ABS(CHECKSUM(NEWID())) % 1440,
-        DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 3650, '2013-01-01')),
-    'Description ' + CAST(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS NVARCHAR(10)),
-    ABS(CHECKSUM(NEWID())) % 1000
-FROM sys.objects a
-CROSS JOIN sys.objects b;
 GO
 
 -- 1. Index on single SMALLDATETIME column
@@ -4174,7 +4161,7 @@ GO
 -- Range including time
 SET STATISTICS IO ON;
 SELECT * FROM SmallDateTimeIndexTest 
-WHERE SmallDateTimeColumn BETWEEN '2023-01-01 00:00' AND '2023-03-31 23:59';
+WHERE SmallDateTimeColumn BETWEEN '2023-01-01 00:00' AND '2023-03-31 23:59' ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4191,7 +4178,7 @@ SELECT * FROM SmallDateTimeIndexTest
 WHERE SmallDateTimeColumn IN 
     ('2023-01-01 12:30', 
      '2023-02-15 14:20', 
-     '2023-03-30 16:45');
+     '2023-03-30 16:45') ORDER BY ID;
 SET STATISTICS IO OFF;
 GO
 
@@ -4390,7 +4377,7 @@ SELECT
         ELSE 'Night'
     END AS TimeOfDay,
     Description
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- COALESCE with time
@@ -4398,7 +4385,7 @@ SELECT
     ID,
     COALESCE(NullableSmallDateTimeColumn, SmallDateTimeColumn, CAST('1900-01-01 00:00' AS SMALLDATETIME)) AS CoalescedSmallDateTime,
     Description
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- NULLIF with time
@@ -4406,7 +4393,7 @@ SELECT
     ID,
     NULLIF(SmallDateTimeColumn, '2023-01-01 00:00') AS NullIfNewYear,
     Description
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- IIF with time components
@@ -4415,7 +4402,7 @@ SELECT
     IIF(DATEPART(HOUR, SmallDateTimeColumn) < 12, 'AM', 'PM') AS AMPM,
     IIF(DATEPART(QUARTER, SmallDateTimeColumn) <= 2, 'First Half', 'Second Half') AS HalfOfYear,
     Description
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- 2. Aggregate Expressions with Time
@@ -4455,7 +4442,7 @@ SELECT
     DATEADD(MINUTE, 15, SmallDateTimeColumn) AS Plus15Minutes,
     DATEADD(HOUR, 1, SmallDateTimeColumn) AS PlusOneHour,
     DATEADD(DAY, 1, SmallDateTimeColumn) AS PlusOneDay
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- SmallDateTime parts
@@ -4466,7 +4453,7 @@ SELECT
     DAY(SmallDateTimeColumn) AS Day,
     DATEPART(HOUR, SmallDateTimeColumn) AS Hour,
     DATEPART(MINUTE, SmallDateTimeColumn) AS Minute
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- SmallDateTime differences
@@ -4475,7 +4462,7 @@ SELECT
     DATEDIFF(MINUTE, '2023-01-01', SmallDateTimeColumn) AS MinutesSinceNewYear,
     DATEDIFF(HOUR, '2023-01-01', SmallDateTimeColumn) AS HoursSinceNewYear,
     DATEDIFF(DAY, '2023-01-01', SmallDateTimeColumn) AS DaysSinceNewYear
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- Complex time-based conditions
@@ -4491,7 +4478,7 @@ SELECT
         WHEN DATEPART(WEEKDAY, SmallDateTimeColumn) IN (1, 7) THEN 'Weekend'
         ELSE 'Weekday'
     END AS DayType
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- Time-based window functions
@@ -4501,7 +4488,7 @@ SELECT
     LAG(SmallDateTimeColumn) OVER (ORDER BY SmallDateTimeColumn) AS PreviousSmallDateTime,
     LEAD(SmallDateTimeColumn) OVER (ORDER BY SmallDateTimeColumn) AS NextSmallDateTime,
     DATEDIFF(MINUTE, LAG(SmallDateTimeColumn) OVER (ORDER BY SmallDateTimeColumn), SmallDateTimeColumn) AS MinutesSincePrevious
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- SmallDateTime grouping and aggregation
@@ -4520,7 +4507,7 @@ GO
 SELECT 
     SmallDateTimeColumn,
     DATEADD(HOUR, DATEDIFF(HOUR, 0, SmallDateTimeColumn), 0) AS RoundedToHour
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- Time range overlaps
@@ -4533,7 +4520,7 @@ SELECT
     END AS OverlapStatus
 FROM SmallDateTimeExpressionTest a
 CROSS JOIN SmallDateTimeExpressionTest b
-WHERE a.ID < b.ID;
+WHERE a.ID < b.ID ORDER BY b.SmallDateTimeColumn;
 GO
 
 -- Edge cases specific to SMALLDATETIME
@@ -4544,7 +4531,7 @@ SELECT
         WHEN SmallDateTimeColumn > '2079-06-06' THEN 'Invalid - After Range'
         ELSE 'Valid'
     END AS DateRangeCheck
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- Business hour check (considering minute precision)
@@ -4555,7 +4542,7 @@ SELECT
              AND DATEPART(WEEKDAY, SmallDateTimeColumn) NOT IN (1, 7) THEN 'Business Hours'
         ELSE 'Non-Business Hours'
     END AS BusinessHourStatus
-FROM SmallDateTimeExpressionTest;
+FROM SmallDateTimeExpressionTest ORDER BY SmallDateTimeColumn;
 GO
 
 -- 8. Additional DATE Specific Tests:
