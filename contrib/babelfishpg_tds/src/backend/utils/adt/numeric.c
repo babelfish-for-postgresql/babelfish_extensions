@@ -750,26 +750,17 @@ TdsSetVarFromStrWrapper(const char *str)
 }
 
 /*
+ * Fix Me: It is a duplicate function of tsql_numeric_get_typmod
  * Get Precision & Scale from Numeric Value
  */
 int32_t
-numeric_get_typmod(Numeric num)
+tds_numeric_get_typmod(Numeric num)
 {
 	int32_t		scale = NUMERIC_DSCALE(num);
 	int32_t		weight = NUMERIC_WEIGHT(num);
 	int32_t		precision;
 
-	/*
-	 * We can identify a zero by the fact that there are no digits at all. In
-	 * case of zero both precision and scale will be evaluated to zero, so we
-	 * will set (precision,scale) to T-SQL default (18,0).
-	 */
-	if (NUMERIC_NDIGITS(num) == 0)
-	{
-		precision = 18;
-		scale = 0;
-	}
-	else if (weight >= 0)
+	if (weight >= 0 && NUMERIC_NDIGITS(num) != 0)
 	{
 		static const int32 timescales[DEC_DIGITS] = {
 			1000,
@@ -790,9 +781,12 @@ numeric_get_typmod(Numeric num)
 			}
 		}
 	}
+	else if (NUMERIC_NDIGITS(num) == 0 && scale == 0)
+		/* NUMERIC_NDIGITS(num) == 0 && scale == 0 means number is 0 */
+		precision = 1;
 	else
 		/* weight < 0 means the integral part of the number is 0 */
-		precision = 1 + scale;
+		precision = scale;
 
 	return (((precision & 0xFFFF) << 16) | (scale & 0xFFFF)) + VARHDRSZ;
 }
