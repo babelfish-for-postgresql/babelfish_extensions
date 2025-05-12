@@ -611,4 +611,5 @@ test_constraint_like
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
+test_like_index
 babel_varbinary

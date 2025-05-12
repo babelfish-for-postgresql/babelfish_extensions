@@ -612,10 +612,11 @@ sys-login-property
 sys-fn-varbintohexsubstring-before-16_10-or-17_6
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
-test_constraint_like
+test_constraint_like-17-5-or-16-9
 unpivot
 forjson-escape
 round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
+test_like_index
 babel_varbinary
