@@ -1,0 +1,358 @@
+-- tsql
+-- VARCHAR
+-- CS_AS
+CREATE TABLE test_like_index_vu_prepare_v_csas(
+    test_like_index_vu_prepare_v_csas_col varchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_v_csas_col2 varchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_v_csas_col3 varchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_v_csas_col_no_idx varchar(max) collate latin1_general_cs_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_csas_idx ON test_like_index_vu_prepare_v_csas(test_like_index_vu_prepare_v_csas_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_csas_idx_composite ON test_like_index_vu_prepare_v_csas(test_like_index_vu_prepare_v_csas_col2, test_like_index_vu_prepare_v_csas_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_v_csas VALUES(CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AS
+CREATE TABLE test_like_index_vu_prepare_v_cias(
+    test_like_index_vu_prepare_v_cias_col varchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_v_cias_col2 varchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_v_cias_col3 varchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_v_cias_col_no_idx varchar(max) collate latin1_general_ci_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_cias_idx ON test_like_index_vu_prepare_v_cias(test_like_index_vu_prepare_v_cias_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_cias_idx_composite ON test_like_index_vu_prepare_v_cias(test_like_index_vu_prepare_v_cias_col2, test_like_index_vu_prepare_v_cias_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_v_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CS_AI
+CREATE TABLE test_like_index_vu_prepare_v_csai(
+    test_like_index_vu_prepare_v_csai_col varchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_v_csai_col2 varchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_v_csai_col3 varchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_v_csai_col_no_idx varchar(max) collate latin1_general_cs_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_v_csai_idx ON master_dbo.test_like_index_vu_prepare_v_csai(sys.remove_accents_internal(test_like_index_vu_prepare_v_csai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_csai_idx_composite ON master_dbo.test_like_index_vu_prepare_v_csai(sys.remove_accents_internal(test_like_index_vu_prepare_v_csai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_v_csai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_v_csai VALUES(CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AI
+CREATE TABLE test_like_index_vu_prepare_v_ciai(
+    test_like_index_vu_prepare_v_ciai_col varchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_v_ciai_col2 varchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_v_ciai_col3 varchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_v_ciai_col_no_idx varchar(max) collate latin1_general_ci_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_v_ciai_idx ON master_dbo.test_like_index_vu_prepare_v_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_v_ciai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_v_ciai_idx_composite ON master_dbo.test_like_index_vu_prepare_v_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_v_ciai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_v_ciai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_v_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CHAR
+-- CS_AS
+CREATE TABLE test_like_index_vu_prepare_c_csas(
+    test_like_index_vu_prepare_c_csas_col char(8000) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_c_csas_col2 char(8000) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_c_csas_col3 char(8000) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_c_csas_col_no_idx char(8000) collate latin1_general_cs_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_csas_idx ON test_like_index_vu_prepare_c_csas(test_like_index_vu_prepare_c_csas_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_csas_idx_composite ON test_like_index_vu_prepare_c_csas(test_like_index_vu_prepare_c_csas_col2, test_like_index_vu_prepare_c_csas_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_c_csas VALUES(CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AS
+CREATE TABLE test_like_index_vu_prepare_c_cias(
+    test_like_index_vu_prepare_c_cias_col char(8000) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_c_cias_col2 char(8000) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_c_cias_col3 char(8000) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_c_cias_col_no_idx char(8000) collate latin1_general_ci_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_cias_idx ON test_like_index_vu_prepare_c_cias(test_like_index_vu_prepare_c_cias_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_cias_idx_composite ON test_like_index_vu_prepare_c_cias(test_like_index_vu_prepare_c_cias_col2, test_like_index_vu_prepare_c_cias_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_c_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CS_AI
+CREATE TABLE test_like_index_vu_prepare_c_csai(
+    test_like_index_vu_prepare_c_csai_col char(8000) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_c_csai_col2 char(8000) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_c_csai_col3 char(8000) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_c_csai_col_no_idx char(8000) collate latin1_general_cs_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_c_csai_idx ON master_dbo.test_like_index_vu_prepare_c_csai(sys.remove_accents_internal(test_like_index_vu_prepare_c_csai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_csai_idx_composite ON master_dbo.test_like_index_vu_prepare_c_csai(sys.remove_accents_internal(test_like_index_vu_prepare_c_csai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_c_csai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_c_csai VALUES(CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AI
+CREATE TABLE test_like_index_vu_prepare_c_ciai(
+    test_like_index_vu_prepare_c_ciai_col char(8000) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_c_ciai_col2 char(8000) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_c_ciai_col3 char(8000) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_c_ciai_col_no_idx char(8000) collate latin1_general_ci_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_c_ciai_idx ON master_dbo.test_like_index_vu_prepare_c_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_c_ciai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_c_ciai_idx_composite ON master_dbo.test_like_index_vu_prepare_c_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_c_ciai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_c_ciai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_c_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- NVARCHAR
+-- CS_AS
+CREATE TABLE test_like_index_vu_prepare_nv_csas(
+    test_like_index_vu_prepare_nv_csas_col nvarchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_nv_csas_col2 nvarchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_nv_csas_col3 nvarchar(max) collate latin1_general_cs_as,
+    test_like_index_vu_prepare_nv_csas_col_no_idx nvarchar(max) collate latin1_general_cs_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_csas_idx ON test_like_index_vu_prepare_nv_csas(test_like_index_vu_prepare_nv_csas_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_csas_idx_composite ON test_like_index_vu_prepare_nv_csas(test_like_index_vu_prepare_nv_csas_col2, test_like_index_vu_prepare_nv_csas_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_nv_csas VALUES(CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AS
+CREATE TABLE test_like_index_vu_prepare_nv_cias(
+    test_like_index_vu_prepare_nv_cias_col nvarchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_nv_cias_col2 nvarchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_nv_cias_col3 nvarchar(max) collate latin1_general_ci_as,
+    test_like_index_vu_prepare_nv_cias_col_no_idx nvarchar(max) collate latin1_general_ci_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_cias_idx ON test_like_index_vu_prepare_nv_cias(test_like_index_vu_prepare_nv_cias_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_cias_idx_composite ON test_like_index_vu_prepare_nv_cias(test_like_index_vu_prepare_nv_cias_col2, test_like_index_vu_prepare_nv_cias_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_nv_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CS_AI
+CREATE TABLE test_like_index_vu_prepare_nv_csai(
+    test_like_index_vu_prepare_nv_csai_col nvarchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_nv_csai_col2 nvarchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_nv_csai_col3 nvarchar(max) collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_nv_csai_col_no_idx nvarchar(max) collate latin1_general_cs_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_nv_csai_idx ON master_dbo.test_like_index_vu_prepare_nv_csai(sys.remove_accents_internal(test_like_index_vu_prepare_nv_csai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_csai_idx_composite ON master_dbo.test_like_index_vu_prepare_nv_csai(sys.remove_accents_internal(test_like_index_vu_prepare_nv_csai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_nv_csai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_nv_csai VALUES(CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AI
+CREATE TABLE test_like_index_vu_prepare_nv_ciai(
+    test_like_index_vu_prepare_nv_ciai_col nvarchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_nv_ciai_col2 nvarchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_nv_ciai_col3 nvarchar(max) collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_nv_ciai_col_no_idx nvarchar(max) collate latin1_general_ci_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_nv_ciai_idx ON master_dbo.test_like_index_vu_prepare_nv_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_nv_ciai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_nv_ciai_idx_composite ON master_dbo.test_like_index_vu_prepare_nv_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_nv_ciai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_nv_ciai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_nv_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- TEXT Tables
+-- CS_AS
+CREATE TABLE test_like_index_vu_prepare_t_csas(
+    test_like_index_vu_prepare_t_csas_col TEXT collate latin1_general_cs_as,
+    test_like_index_vu_prepare_t_csas_col2 TEXT collate latin1_general_cs_as,
+    test_like_index_vu_prepare_t_csas_col3 TEXT collate latin1_general_cs_as,
+    test_like_index_vu_prepare_t_csas_col_no_idx TEXT collate latin1_general_cs_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_csas_idx ON test_like_index_vu_prepare_t_csas(test_like_index_vu_prepare_t_csas_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_csas_idx_composite ON test_like_index_vu_prepare_t_csas(test_like_index_vu_prepare_t_csas_col2, test_like_index_vu_prepare_t_csas_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_t_csas VALUES(CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)), CONCAT('cs', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AS
+CREATE TABLE test_like_index_vu_prepare_t_cias(
+    test_like_index_vu_prepare_t_cias_col TEXT collate latin1_general_ci_as,
+    test_like_index_vu_prepare_t_cias_col2 TEXT collate latin1_general_ci_as,
+    test_like_index_vu_prepare_t_cias_col3 TEXT collate latin1_general_ci_as,
+    test_like_index_vu_prepare_t_cias_col_no_idx TEXT collate latin1_general_ci_as
+);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_cias_idx ON test_like_index_vu_prepare_t_cias(test_like_index_vu_prepare_t_cias_col);
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_cias_idx_composite ON test_like_index_vu_prepare_t_cias(test_like_index_vu_prepare_t_cias_col2, test_like_index_vu_prepare_t_cias_col3);
+GO
+
+INSERT INTO test_like_index_vu_prepare_t_cias VALUES(CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)), CONCAT('ci', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CS_AI
+CREATE TABLE test_like_index_vu_prepare_t_csai(
+    test_like_index_vu_prepare_t_csai_col TEXT collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_t_csai_col2 TEXT collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_t_csai_col3 TEXT collate latin1_general_cs_ai,
+    test_like_index_vu_prepare_t_csai_col_no_idx TEXT collate latin1_general_cs_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_t_csai_idx ON master_dbo.test_like_index_vu_prepare_t_csai(sys.remove_accents_internal(test_like_index_vu_prepare_t_csai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_csai_idx_composite ON master_dbo.test_like_index_vu_prepare_t_csai(sys.remove_accents_internal(test_like_index_vu_prepare_t_csai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_t_csai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_t_csai VALUES(CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)), CONCAT('csai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+-- CI_AI
+CREATE TABLE test_like_index_vu_prepare_t_ciai(
+    test_like_index_vu_prepare_t_ciai_col TEXT collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_t_ciai_col2 TEXT collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_t_ciai_col3 TEXT collate latin1_general_ci_ai,
+    test_like_index_vu_prepare_t_ciai_col_no_idx TEXT collate latin1_general_ci_ai
+);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_t_ciai_idx ON master_dbo.test_like_index_vu_prepare_t_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_t_ciai_col));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_ciai_idx_composite ON master_dbo.test_like_index_vu_prepare_t_ciai(sys.remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2), sys.remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_t_ciai VALUES(CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)), CONCAT('ciai', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
+
+
+-- COMMON TABLE FOR JOIN
+CREATE TABLE test_like_index_vu_prepare_t_common(test_like_index_vu_prepare_t_common_col varchar(max));
+GO
+
+CREATE INDEX test_like_index_vu_prepare_t_common_idx_as ON test_like_index_vu_prepare_t_common(test_like_index_vu_prepare_t_common_col);
+GO
+
+-- psql
+CREATE INDEX test_like_index_vu_prepare_t_common_idx_ai ON master_dbo.test_like_index_vu_prepare_t_common(sys.remove_accents_internal(test_like_index_vu_prepare_t_common_col));
+GO
+
+-- tsql
+INSERT INTO test_like_index_vu_prepare_t_common VALUES(CONCAT('common', generate_series(1,1000)));
+GO
+~~ROW COUNT: 1000~~
+
