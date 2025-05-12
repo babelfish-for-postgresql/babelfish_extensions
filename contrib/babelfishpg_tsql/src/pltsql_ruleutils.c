@@ -2838,23 +2838,18 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	}
 	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
+	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
+
 	/*
-	 * Assign -1 as typmod which is equivalent to not printing the typmod for
-	 * smalldatetime
+	 * Setting with_typemod to false which is equivalent to not printing the typmod for
+	 * smalldatetime, money, smallmoney.
 	 */
-	if ((*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (type_oid))
-		typemod = -1;
-	/*
-	 * Assign -1 as typmod which is equivalent to not printing the typmod for
-	 * smallmoney/money
-	 */
-	if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(type_oid) ||
+	if ((*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (type_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_money_datatype)(type_oid) ||
 		(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type_oid))
 	{
-		typemod = -1;
+		with_typemod = false;
 	}
-
-	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 
 	nspname = get_namespace_name_or_temp(typeform->typnamespace);
 

@@ -445,7 +445,6 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 		char	   *schemaname;
 		char	   *typname;
 		bool		is_sys_schema = false;
-		// const char *base_typname;
 
 		/* deconstruct the name list */
 		DeconstructQualifiedName(typeName->names, &schemaname, &typname);
@@ -458,7 +457,6 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(ctype);
 				Oid datatype_oid = pg_type->typbasetype;
-				// base_typname = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql)(datatype_oid);
 				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(datatype_oid))
 				{
 					typname = "money";

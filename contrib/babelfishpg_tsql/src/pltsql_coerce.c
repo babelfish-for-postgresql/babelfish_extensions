@@ -2984,7 +2984,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 				type = getBaseTypeAndTypmod(type, &typmod);
 
 			/* Handling for money/smallmoney. */
-				if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
+			if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
 			{
 				typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
 			}

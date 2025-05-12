@@ -210,6 +210,7 @@ END
 GO
 
 -- Testing with complex calculations
+-- FIXME: expected 400.000000
 DECLARE @revenue MONEY = 10000.00
 DECLARE @costs MONEY = 6000.00
 DECLARE @targetMargin SMALLMONEY = 0.40

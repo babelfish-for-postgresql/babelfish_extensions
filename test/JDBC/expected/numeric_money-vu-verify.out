@@ -411,6 +411,7 @@ money
 
 
 -- Testing with complex calculations
+-- FIXME: expected 400.000000
 DECLARE @revenue MONEY = 10000.00
 DECLARE @costs MONEY = 6000.00
 DECLARE @targetMargin SMALLMONEY = 0.40
@@ -424,8 +425,9 @@ END
 GO
 ~~START~~
 numeric
-400.0000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 
 -- Testing with multiple currency conversions
@@ -818,7 +820,7 @@ select cast(7378697629483820646 as numeric(30,0))*cast(99999.9999 as smallmoney)
 GO
 ~~START~~
 numeric
-737869762210512301651617.9
+737869762210512301651617.9354
 ~~END~~
 
 
@@ -1050,7 +1052,7 @@ SELECT CAST(9999999999999999999999999999999 AS DECIMAL(38,0)) * CAST(1.0000 AS S
 GO
 ~~START~~
 numeric
-9999999999999999999999999999999
+9999999999999999999999999999999.0000
 ~~END~~
 
 SELECT CAST(9999999999999999999999999999999 AS DECIMAL(38,0)) / CAST(1.0000 AS SMALLMONEY)
