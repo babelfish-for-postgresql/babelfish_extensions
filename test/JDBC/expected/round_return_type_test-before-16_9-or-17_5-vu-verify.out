@@ -78,7 +78,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#numeric
-10000000.00#!#0#!#-10000000.00
+10000000.00#!#0E-8#!#-10000000.00
 ~~END~~
 
 
@@ -174,7 +174,7 @@ SELECT
 GO
 ~~START~~
 numeric#!#numeric#!#money#!#numeric
-0#!#0#!#0.0000#!#0
+0.00#!#0.00#!#0.0000#!#0.00
 ~~END~~
 
 
