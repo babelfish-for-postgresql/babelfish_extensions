@@ -1,3 +1,50 @@
+-- tsql
+-- creating logins because instance level dump/restore does not migrate logins
+-- create a login with user in master with securityadmin server role
+create login testloginwithsecurityadmin with password = '12345678'
+create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
+GO
+
+alter server role securityadmin add member testloginwithsecurityadmin
+GO
+
+-- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
+use sp_helplogins_db1
+GO
+create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
+GO
+
+use master
+GO
+
+-- create a login which does not have any users
+create login testloginwithoutusers with password = '12345678'
+GO
+
+-- create a login which is a member of securityadmin server role
+-- and has a user with db_securityadmin role in sp_helplogins_db1
+create login testloginwithsecurityadmin2 with password = '12345678'
+GO
+
+alter server role securityadmin add member testloginwithsecurityadmin2
+GO
+
+-- create a login and a user in sp_helplogins_db1
+create login testloginindb1 with password = '12345678'
+GO
+
+use sp_helplogins_db1
+GO
+
+create user userof_testloginindb1 for login testloginindb1
+GO
+
+create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
+GO
+
+alter role db_securityadmin add member userof_testloginwithsecurityadmin2
+GO
+
 -- psql
 
 
@@ -13,8 +60,8 @@
 -- since this is a server level proc, we need to filter out only results with objects which are created within the scope of this test
 -- in order to avoid interference with other tests
 -- hence adding filter conditions on logins, users and db_name
--- logins = ['jdbc_user', 'sp_helplogins_testlogin', 'testloginwithsecurityadmin3', 'testloginindb1', 'testloginwithsecurityadmin2', 'testloginwithoutusers', 'testloginwithsecurityadmin']
--- dbs = ['sp_helplogins_db2', 'sp_helplogins_db1', 'master', 'msdb', 'tempdb']
+-- logins = ['jdbc_user', 'sp_helplogins_testlogin', 'testloginindb1', 'testloginwithsecurityadmin2', 'testloginwithoutusers', 'testloginwithsecurityadmin']
+-- dbs = ['sp_helplogins_db1', 'master', 'msdb', 'tempdb']
 -- users = ['userof_sp_helplogins_testlogin', 'userof_testloginwithsecurityadmin_indb1', 'userof_testloginwithsecurityadmin', 'userof_testloginwithsecurityadmin2', 'userof_testloginindb1']
 create procedure sys.sp_helplogins_vu_test(IN "@loginname" sys.sysname DEFAULT NULL)
 language pltsql
