@@ -532,6 +532,9 @@ ignore#!#sys-fn-varbintohexsubstring-before-16_10-or-17_6-vu-cleanup
 ignore#!#test_constraint_like-16-6-vu-prepare
 ignore#!#test_constraint_like-16-6-vu-verify
 ignore#!#test_constraint_like-16-6-vu-cleanup
+ignore#!#test_constraint_like-17-5-or-16-9-vu-prepare
+ignore#!#test_constraint_like-17-5-or-16-9-vu-verify
+ignore#!#test_constraint_like-17-5-or-16-9-vu-cleanup
 
 ignore#!#money_aggregate-before-17_6-vu-prepare
 ignore#!#money_aggregate-before-17_6-vu-verify

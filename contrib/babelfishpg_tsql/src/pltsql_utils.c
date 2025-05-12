@@ -57,6 +57,7 @@ PG_FUNCTION_INFO_V1(split_identifier_internal);
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
 static Oid sysadmin_oid = InvalidOid;
+static Oid sys_nvarcharoid = InvalidOid;
 
 /*
  * Following the rule for locktag fields of advisory locks:
@@ -1926,6 +1927,24 @@ Oid get_sys_varcharoid(void)
 				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
 	}
 	return sys_varcharoid;
+}
+
+Oid get_sys_nvarcharoid(void)
+{
+	Oid sys_oid;
+	if (OidIsValid(sys_nvarcharoid))
+	{
+		return sys_nvarcharoid;
+	}
+	sys_oid = get_namespace_oid("sys", false);
+	sys_nvarcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(sys_oid));
+	if (!OidIsValid(sys_nvarcharoid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Oid corresponding to sys.nvarchar datatype could not be found.")));
+	}
+	return sys_nvarcharoid;
 }
 
 Oid get_sysadmin_oid(void)

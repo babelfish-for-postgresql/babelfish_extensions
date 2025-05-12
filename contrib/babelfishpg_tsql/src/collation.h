@@ -120,7 +120,7 @@ extern bool has_ilike_node_and_ci_as_coll(Node *expr);
 extern Node *pltsql_planner_node_transformer(PlannerInfo *root,
 											 Node *expr,
 											 int kind);
-extern Node *pltsql_predicate_transformer(Node *expr);
+extern Node *pltsql_predicate_transformer(Node *expr, bool is_constraint);
 
 void set_db_collation_internal(const char *db_name);
 bool supported_collation_for_db_and_like(int32_t code_page);

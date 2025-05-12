@@ -4823,7 +4823,7 @@ transform_like_in_add_constraint(Node *node)
 	}
 	PG_END_TRY();
 
-	return pltsql_predicate_transformer(node);
+	return pltsql_predicate_transformer(node, true);
 }
 
 /*

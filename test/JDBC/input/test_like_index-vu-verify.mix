@@ -1,0 +1,1506 @@
+-- parallel_query_expected
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+GO
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_common;
+GO
+
+-- VARCHAR
+-- CS_AS
+
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_csas;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csas_col 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csas_col 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csas_col_no_idx 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csas_col_no_idx 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col LIKE 'cs999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csas_col2 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col2 LIKE 'cs1' 
+AND test_like_index_vu_prepare_v_csas_col3 LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csas_col2 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col2 LIKE 'cs999%' 
+AND test_like_index_vu_prepare_v_csas_col3 LIKE 'cs999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csas_col 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_ci_as LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csas_col 
+FROM test_like_index_vu_prepare_v_csas 
+WHERE test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csas_col
+FROM test_like_index_vu_prepare_v_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_csas_col LIKE 'cs1';
+GO
+
+SELECT test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csas_col
+FROM test_like_index_vu_prepare_v_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_csas_col LIKE 'cs999%';
+GO
+
+SELECT test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_cias;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_cias_col 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_cias_col 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_cias_col_no_idx 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_cias_col_no_idx 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col LIKE 'ci999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_v_cias_col2 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col2 LIKE 'ci1' 
+AND test_like_index_vu_prepare_v_cias_col3 LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_cias_col2 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col2 LIKE 'ci999%' 
+AND test_like_index_vu_prepare_v_cias_col3 LIKE 'ci999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_v_cias_col 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_cs_as LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_cias_col 
+FROM test_like_index_vu_prepare_v_cias 
+WHERE test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_v_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_cias_col LIKE 'ci1';
+GO
+
+SELECT test_like_index_vu_prepare_v_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_cias_col LIKE 'ci999%';
+GO
+
+SELECT test_like_index_vu_prepare_v_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_csai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csai_col 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csai_col 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csai_col_no_idx 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csai_col_no_idx 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col LIKE 'csai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csai_col2 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col2 LIKE 'csai1' 
+AND test_like_index_vu_prepare_v_csai_col3 LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csai_col2 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col2 LIKE 'csai999%' 
+AND test_like_index_vu_prepare_v_csai_col3 LIKE 'csai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csai_col 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csai_col 
+FROM test_like_index_vu_prepare_v_csai 
+WHERE test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_v_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_csai_col LIKE 'csai1';
+GO
+
+SELECT test_like_index_vu_prepare_v_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_csai_col LIKE 'csai999%';
+GO
+
+SELECT test_like_index_vu_prepare_v_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_v_ciai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_ciai_col 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_ciai_col 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_v_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col LIKE 'ciai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_v_ciai_col2 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col2 LIKE 'ciai1' 
+AND test_like_index_vu_prepare_v_ciai_col3 LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_ciai_col2 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col2 LIKE 'ciai999%' 
+AND test_like_index_vu_prepare_v_ciai_col3 LIKE 'ciai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_v_ciai_col 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_ciai_col 
+FROM test_like_index_vu_prepare_v_ciai 
+WHERE test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_v_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1';
+GO
+
+SELECT test_like_index_vu_prepare_v_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_v_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_v_ciai_col LIKE 'ciai999%';
+GO
+
+SELECT test_like_index_vu_prepare_v_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_v_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- CHAR
+-- CS_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_csas;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csas_col 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csas_col 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csas_col_no_idx 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csas_col_no_idx 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col LIKE 'cs999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csas_col2 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col2 LIKE 'cs1' 
+AND test_like_index_vu_prepare_c_csas_col3 LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csas_col2 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col2 LIKE 'cs999%' 
+AND test_like_index_vu_prepare_c_csas_col3 LIKE 'cs999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csas_col 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_ci_as LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csas_col 
+FROM test_like_index_vu_prepare_c_csas 
+WHERE test_like_index_vu_prepare_c_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_csas_col LIKE 'cs1';
+GO
+
+SELECT test_like_index_vu_prepare_c_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_csas_col LIKE 'cs999%';
+GO
+
+SELECT test_like_index_vu_prepare_c_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_cias;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_cias_col 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_cias_col 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_cias_col_no_idx 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_cias_col_no_idx 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col LIKE 'ci999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_c_cias_col2 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col2 LIKE 'ci1' 
+AND test_like_index_vu_prepare_c_cias_col3 LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_cias_col2 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col2 LIKE 'ci999%' 
+AND test_like_index_vu_prepare_c_cias_col3 LIKE 'ci999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_c_cias_col 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_cs_as LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_cias_col 
+FROM test_like_index_vu_prepare_c_cias 
+WHERE test_like_index_vu_prepare_c_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_c_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_cias_col LIKE 'ci1';
+GO
+
+SELECT test_like_index_vu_prepare_c_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_cias_col LIKE 'ci999%';
+GO
+
+SELECT test_like_index_vu_prepare_c_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_csai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csai_col 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csai_col 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csai_col_no_idx 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csai_col_no_idx 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col LIKE 'csai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csai_col2 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col2 LIKE 'csai1' 
+AND test_like_index_vu_prepare_c_csai_col3 LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csai_col2 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col2 LIKE 'csai999%' 
+AND test_like_index_vu_prepare_c_csai_col3 LIKE 'csai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csai_col 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csai_col 
+FROM test_like_index_vu_prepare_c_csai 
+WHERE test_like_index_vu_prepare_c_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_c_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_csai_col LIKE 'csai1';
+GO
+
+SELECT test_like_index_vu_prepare_c_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_csai_col LIKE 'csai999%';
+GO
+
+SELECT test_like_index_vu_prepare_c_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_c_ciai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_ciai_col 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_ciai_col 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_c_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col LIKE 'ciai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_c_ciai_col2 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col2 LIKE 'ciai1' 
+AND test_like_index_vu_prepare_c_ciai_col3 LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_ciai_col2 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col2 LIKE 'ciai999%' 
+AND test_like_index_vu_prepare_c_ciai_col3 LIKE 'ciai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_c_ciai_col 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_ciai_col 
+FROM test_like_index_vu_prepare_c_ciai 
+WHERE test_like_index_vu_prepare_c_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_c_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1';
+GO
+
+SELECT test_like_index_vu_prepare_c_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_c_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_c_ciai_col LIKE 'ciai999%';
+GO
+
+SELECT test_like_index_vu_prepare_c_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_c_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- NVARCHAR
+-- CS_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_csas;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csas_col 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csas_col 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csas_col_no_idx 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csas_col_no_idx 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col LIKE 'cs999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csas_col2 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col2 LIKE 'cs1' 
+AND test_like_index_vu_prepare_nv_csas_col3 LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csas_col2 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col2 LIKE 'cs999%' 
+AND test_like_index_vu_prepare_nv_csas_col3 LIKE 'cs999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csas_col 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_ci_as LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csas_col 
+FROM test_like_index_vu_prepare_nv_csas 
+WHERE test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_csas_col LIKE 'cs1';
+GO
+
+SELECT test_like_index_vu_prepare_nv_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_csas_col LIKE 'cs999%';
+GO
+
+SELECT test_like_index_vu_prepare_nv_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_cias;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_cias_col 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_cias_col 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_cias_col_no_idx 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_cias_col_no_idx 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col LIKE 'ci999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_cias_col2 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col2 LIKE 'ci1' 
+AND test_like_index_vu_prepare_nv_cias_col3 LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_cias_col2 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col2 LIKE 'ci999%' 
+AND test_like_index_vu_prepare_nv_cias_col3 LIKE 'ci999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_cias_col 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_cs_as LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_cias_col 
+FROM test_like_index_vu_prepare_nv_cias 
+WHERE test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_cias_col LIKE 'ci1';
+GO
+
+SELECT test_like_index_vu_prepare_nv_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_cias_col LIKE 'ci999%';
+GO
+
+SELECT test_like_index_vu_prepare_nv_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_csai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csai_col 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csai_col 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csai_col_no_idx 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csai_col_no_idx 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col LIKE 'csai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csai_col2 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col2 LIKE 'csai1' 
+AND test_like_index_vu_prepare_nv_csai_col3 LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csai_col2 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col2 LIKE 'csai999%' 
+AND test_like_index_vu_prepare_nv_csai_col3 LIKE 'csai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csai_col 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csai_col 
+FROM test_like_index_vu_prepare_nv_csai 
+WHERE test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_csai_col LIKE 'csai1';
+GO
+
+SELECT test_like_index_vu_prepare_nv_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_csai_col LIKE 'csai999%';
+GO
+
+SELECT test_like_index_vu_prepare_nv_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_nv_ciai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_ciai_col 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_ciai_col 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_ciai_col2 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col2 LIKE 'ciai1' 
+AND test_like_index_vu_prepare_nv_ciai_col3 LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_ciai_col2 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col2 LIKE 'ciai999%' 
+AND test_like_index_vu_prepare_nv_ciai_col3 LIKE 'ciai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_ciai_col 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_ciai_col 
+FROM test_like_index_vu_prepare_nv_ciai 
+WHERE test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_nv_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1';
+GO
+
+SELECT test_like_index_vu_prepare_nv_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_nv_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai999%';
+GO
+
+SELECT test_like_index_vu_prepare_nv_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_nv_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- TEXT
+-- CS_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_csas;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csas_col 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csas_col 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csas_col_no_idx 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csas_col_no_idx 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col LIKE 'cs999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csas_col2 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs1' 
+AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csas_col2 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col2 LIKE 'cs999%' 
+AND test_like_index_vu_prepare_t_csas_col3 LIKE 'cs999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csas_col 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_ci_as LIKE 'cs1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csas_col 
+FROM test_like_index_vu_prepare_t_csas 
+WHERE test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_ci_as LIKE 'cs999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs1';
+GO
+
+SELECT test_like_index_vu_prepare_t_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs999%';
+GO
+
+SELECT test_like_index_vu_prepare_t_csas_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AS
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_cias;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_cias_col 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_cias_col 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_cias_col_no_idx 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_cias_col_no_idx 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col LIKE 'ci999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_t_cias_col2 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col2 LIKE 'ci1' 
+AND test_like_index_vu_prepare_t_cias_col3 LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_cias_col2 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col2 LIKE 'ci999%' 
+AND test_like_index_vu_prepare_t_cias_col3 LIKE 'ci999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_t_cias_col 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_cias_col 
+FROM test_like_index_vu_prepare_t_cias 
+WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_t_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_cias_col LIKE 'ci1';
+GO
+
+SELECT test_like_index_vu_prepare_t_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_cias_col LIKE 'ci999%';
+GO
+
+SELECT test_like_index_vu_prepare_t_cias_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_cias t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CS_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_csai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csai_col 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csai_col 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csai_col_no_idx 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csai_col_no_idx 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col LIKE 'csai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csai_col2 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col2 LIKE 'csai1' 
+AND test_like_index_vu_prepare_t_csai_col3 LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csai_col2 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col2 LIKE 'csai999%' 
+AND test_like_index_vu_prepare_t_csai_col3 LIKE 'csai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csai_col 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_ci_ai LIKE 'csai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csai_col 
+FROM test_like_index_vu_prepare_t_csai 
+WHERE test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_ci_ai LIKE 'csai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_t_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_csai_col LIKE 'csai1';
+GO
+
+SELECT test_like_index_vu_prepare_t_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_csai_col LIKE 'csai999%';
+GO
+
+SELECT test_like_index_vu_prepare_t_csai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_csai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- CI_AI
+-- psql
+ANALYZE master_dbo.test_like_index_vu_prepare_t_ciai;
+GO
+
+-- tsql
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_ciai_col 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_ciai_col 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai999%';
+GO
+
+-- Exact match
+SELECT test_like_index_vu_prepare_t_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_ciai_col_no_idx 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col LIKE 'ciai999%';
+GO
+
+-- Composite Index Scans
+-- Exact match
+SELECT test_like_index_vu_prepare_t_ciai_col2 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col2 LIKE 'ciai1' 
+AND test_like_index_vu_prepare_t_ciai_col3 LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_ciai_col2 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col2 LIKE 'ciai999%' 
+AND test_like_index_vu_prepare_t_ciai_col3 LIKE 'ciai999%';
+GO
+
+-- No Index Usage (collation override)
+-- Exact match
+SELECT test_like_index_vu_prepare_t_ciai_col 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_ciai_col 
+FROM test_like_index_vu_prepare_t_ciai 
+WHERE test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_cs_ai LIKE 'ciai999%';
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- JOIN
+-- Exact match
+SELECT test_like_index_vu_prepare_t_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1';
+GO
+
+SELECT test_like_index_vu_prepare_t_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1';
+GO
+
+-- Prefix match
+SELECT test_like_index_vu_prepare_t_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t1.test_like_index_vu_prepare_t_ciai_col LIKE 'ciai999%';
+GO
+
+SELECT test_like_index_vu_prepare_t_ciai_col, test_like_index_vu_prepare_t_common_col
+FROM test_like_index_vu_prepare_t_ciai t1 JOIN test_like_index_vu_prepare_t_common t2
+ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common999%';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
