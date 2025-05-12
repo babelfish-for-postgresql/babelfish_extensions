@@ -4482,6 +4482,21 @@ create_xml_handle_temp_table()
     current_xml_handle = XML_HANDLE_START;
 }
 
+/*
+ * insert_xml_handle_entry - Stores XML document data in the temporary handle table.
+ *
+ * This function inserts a new XML document and its optional namespace data into
+ * the XML handle temporary table. 
+ * The function temporarily elevates privileges to "sysadmin" to ensure it has
+ * the necessary permissions to insert data into the table. It also sets the SQL
+ * dialect to TSQL to ensure proper insertion semantics.
+ * 
+ * Returns:
+ *   The document_id (odd number) that can be used to reference this XML document
+ *
+ * Errors:
+ *   Throws error if the temporary table cannot be created or accessed
+ */
 int 
 insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length, int ns_data_length)
 {
@@ -4578,6 +4593,19 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     return document_id;
 }
 
+/*
+ * delete_xml_handle_entry - Removes an XML document from the xml handle temp table.
+ *
+ * This function deletes an XML document entry from the temporary handle table
+ * based on its document_id. It also releases the associated handle by removing
+ * it from the active_xml_handles bitmap set, making the handle available for
+ * reuse. This is typically called by sp_xml_removedocument to clean up XML
+ * documents when they are no longer needed.
+ *
+ * The function temporarily elevates privileges to "sysadmin" to ensure it has
+ * the necessary permissions to delete data from the table. It also sets the SQL
+ * dialect to TSQL to ensure proper deletion semantics.
+ */
 void 
 delete_xml_handle_entry(int document_id)
 {
