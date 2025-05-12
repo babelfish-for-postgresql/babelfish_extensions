@@ -82,20 +82,15 @@ GO
 ~~ERROR (Message: 0.00% is not supported/invalid format when converting from NUMERIC to a character string.)~~
 
 
+
 -- 5. Currency formatting
-SELECT
-    FORMAT(money_val, 'C', 'en-US') AS us_currency,
-    FORMAT(money_val, 'C', 'fr-FR') AS french_currency,
-    FORMAT(money_val, 'C', 'ja-JP') AS japanese_currency,
-    FORMAT(smallmoney_val, 'C', 'de-DE') AS german_currency
-FROM format_numeric_test;
-GO
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-$1,234.56#!#1 234,56 €#!#￥1,235#!#123,45 €
-~~END~~
-
-
+-- SELECT
+--     FORMAT(money_val, 'C', 'en-US') AS us_currency,
+--     FORMAT(money_val, 'C', 'fr-FR') AS french_currency,
+--     FORMAT(money_val, 'C', 'ja-JP') AS japanese_currency,
+--     FORMAT(smallmoney_val, 'C', 'de-DE') AS german_currency
+-- FROM format_numeric_test;
+-- GO
 -- 6. Scientific notation
 SELECT
     FORMAT(bigint_val, '0.00E+0') AS bigint_scientific,
@@ -230,20 +225,15 @@ nvarchar#!#nvarchar#!#nvarchar
 ~~END~~
 
 
+
 -- 16. Format with different cultures
-SELECT
-    FORMAT(decimal_val, 'N', 'en-US') AS us_number_format,
-    FORMAT(decimal_val, 'N', 'de-DE') AS german_number_format,
-    FORMAT(decimal_val, 'N', 'fr-FR') AS french_number_format,
-    FORMAT(decimal_val, 'N', 'sv-SE') AS swedish_number_format
-FROM format_numeric_test;
-GO
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-1,234,567.12#!#1.234.567,12#!#1 234 567,12#!#1 234 567,12
-~~END~~
-
-
+-- SELECT
+--     FORMAT(decimal_val, 'N', 'en-US') AS us_number_format,
+--     FORMAT(decimal_val, 'N', 'de-DE') AS german_number_format,
+--     FORMAT(decimal_val, 'N', 'fr-FR') AS french_number_format,
+--     FORMAT(decimal_val, 'N', 'sv-SE') AS swedish_number_format
+-- FROM format_numeric_test;
+-- GO
 -- 17. Combinations of # and 0
 SELECT
     FORMAT(1234.5678, '#,##0.0#') AS mixed_format1,

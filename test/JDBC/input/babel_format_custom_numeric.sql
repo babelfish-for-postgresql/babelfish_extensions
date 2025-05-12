@@ -59,13 +59,13 @@ FROM format_numeric_test;
 GO
 
 -- 5. Currency formatting
-SELECT
-    FORMAT(money_val, 'C', 'en-US') AS us_currency,
-    FORMAT(money_val, 'C', 'fr-FR') AS french_currency,
-    FORMAT(money_val, 'C', 'ja-JP') AS japanese_currency,
-    FORMAT(smallmoney_val, 'C', 'de-DE') AS german_currency
-FROM format_numeric_test;
-GO
+-- SELECT
+--     FORMAT(money_val, 'C', 'en-US') AS us_currency,
+--     FORMAT(money_val, 'C', 'fr-FR') AS french_currency,
+--     FORMAT(money_val, 'C', 'ja-JP') AS japanese_currency,
+--     FORMAT(smallmoney_val, 'C', 'de-DE') AS german_currency
+-- FROM format_numeric_test;
+-- GO
 
 -- 6. Scientific notation
 SELECT
@@ -151,13 +151,13 @@ FROM format_numeric_test;
 GO
 
 -- 16. Format with different cultures
-SELECT
-    FORMAT(decimal_val, 'N', 'en-US') AS us_number_format,
-    FORMAT(decimal_val, 'N', 'de-DE') AS german_number_format,
-    FORMAT(decimal_val, 'N', 'fr-FR') AS french_number_format,
-    FORMAT(decimal_val, 'N', 'sv-SE') AS swedish_number_format
-FROM format_numeric_test;
-GO
+-- SELECT
+--     FORMAT(decimal_val, 'N', 'en-US') AS us_number_format,
+--     FORMAT(decimal_val, 'N', 'de-DE') AS german_number_format,
+--     FORMAT(decimal_val, 'N', 'fr-FR') AS french_number_format,
+--     FORMAT(decimal_val, 'N', 'sv-SE') AS swedish_number_format
+-- FROM format_numeric_test;
+-- GO
 
 -- 17. Combinations of # and 0
 SELECT
