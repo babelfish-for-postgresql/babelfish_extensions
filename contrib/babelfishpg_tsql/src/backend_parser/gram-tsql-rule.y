@@ -1905,7 +1905,7 @@ joined_table:
 		;
 
 tsql_unpivot_clause:
-            '(' columnref FOR columnref IN_P '(' columnList ')' ')'
+            '(' columnref FOR columnref IN_P '(' target_list ')' ')'
                 {
 					$$ = (Node *)list_make3($2, $4, $7);
                 }

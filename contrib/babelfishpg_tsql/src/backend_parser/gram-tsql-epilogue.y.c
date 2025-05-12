@@ -2134,6 +2134,42 @@ get_unpivot_source_alias(Node *table_ref) {
 }
 
 /*
+ * Helper function to determine if UNPIVOT source table needs an alias generated
+ *
+ * source_cols: list of column references (ResTarget nodes) from UNPIVOT IN clause
+ *
+ * Returns: true if all column references are unqualified (need alias),
+ *          false if any column has alias or table/schema qualification
+ *
+ * Note: For unqualified columns (col1, col2), we generate a table alias to properly
+ * reference columns. For qualified columns (table.col1), we use references as-is.
+ * Function also validates that all source columns are valid ColumnRef nodes.
+ */
+static bool
+needs_unpivot_source_alias(List *source_cols)
+{
+    ListCell *lc;
+    
+    /* Check if all columns are unqualified */
+    foreach(lc, source_cols)
+    {
+        ResTarget *res;
+        ColumnRef *cref;
+
+        res = (ResTarget *) lfirst(lc);
+        Assert(IsA(res->val, ColumnRef));
+        cref = (ColumnRef *) res->val;
+
+        /* If any column is qualified, don't generate alias */
+        if (list_length(cref->fields) > 1)
+            return false;
+    }
+    
+    /* All columns are unqualified, need alias */
+    return true;
+}
+
+/*
  * Create an NVARCHAR constant with proper typmod
  *
  * str: input string to be cast as NVARCHAR
@@ -2200,6 +2236,7 @@ tsql_unpivot_transformation(List *components, int location)
 
     List *unpivot_info;
     List *source_cols;
+    List *col_names = NIL;
     List *values_list = NIL;
     List *value_pair;
     List *result_info;
@@ -2213,9 +2250,7 @@ tsql_unpivot_transformation(List *components, int location)
     SelectStmt *values_subquery;
     JoinExpr *n;
     RangeSubselect *rarg;
-    ListCell *lc;
-    ColumnRef *col_ref;
-    
+    ListCell *outer_lc, *inner_lc;    
     /* Extract components */
     Assert(components != NULL && list_length(components) == 3);
     table_ref = (Node *)linitial(components);
@@ -2242,26 +2277,45 @@ tsql_unpivot_transformation(List *components, int location)
     n->isNatural = false;
 
     /* Set up left side with alias if not present */
-    source_alias = get_unpivot_source_alias(table_ref);
+    source_alias = needs_unpivot_source_alias(source_cols) ? get_unpivot_source_alias(table_ref) : NULL;
 
     n->larg = table_ref;
     
     /* Build VALUES list from unpivot source columns */
-    foreach(lc, source_cols)
-    {	
-        /* 
-         * TODO [BABEL-5677]: Handle aliased unpivot source columns syntax
-         * Ex: `unpivot (a for b in (c_alias.q1, c_alias.q2))`
-         * solution: lfirst needs to be "llast" if aliases are used in values list
-         */
-        String *col_name = (String *)lfirst(lc);
+    foreach(outer_lc, source_cols)
+    {
+        ResTarget *res = (ResTarget *)lfirst(outer_lc);
+        ColumnRef *cref = (ColumnRef *)res->val;
+        char *col_name = strVal(llast(cref->fields));
 
-        /* Create ColumnRef with pair (source table alias, column name) */
-        col_ref = makeNode(ColumnRef);
-        col_ref->fields = list_make2(makeString(source_alias), col_name);
-        
-        /* Create pair (ColumnRef, column name) and append to VALUES list */
-        value_pair = list_make2(col_ref, make_nvarchar_const(strVal(col_name), location));
+        /* Check for duplicates in already processed columns */
+        foreach(inner_lc, col_names)
+        {
+            char *existing_name = strVal((String *)lfirst(inner_lc));
+            if (strcmp(col_name, existing_name) == 0)
+            {
+                ereport(ERROR,
+                       (errcode(ERRCODE_SYNTAX_ERROR),
+                        errmsg("The column \"%s\" is specified multiple times in the column list of the UNPIVOT operator",
+                               col_name)));
+            }
+        }
+
+        /* Append seen column names into a list for duplicate-check and unpivot-metadata */
+        col_names = lappend(col_names, makeString(col_name));
+
+        if (list_length(cref->fields) == 1 && source_alias)
+        {
+            /* Create new ColumnRef with source alias for unqualified columns */
+            ColumnRef *new_cref = makeNode(ColumnRef);
+            new_cref->fields = list_make2(makeString(source_alias), makeString(col_name));
+            value_pair = list_make2(new_cref, make_nvarchar_const(col_name, location));
+        }
+        else
+        {
+            /* Use original parsed ColumnRef as is */
+            value_pair = list_make2(cref, make_nvarchar_const(col_name, location));
+        }
         values_list = lappend(values_list, value_pair);
     }
     
@@ -2295,7 +2349,7 @@ tsql_unpivot_transformation(List *components, int location)
                              makeString(source_alias));
 
     /* Append the unpivot source columns and transformed node */
-    result_info = lappend(result_info, source_cols);
+    result_info = lappend(result_info, col_names);
     result_info = lappend(result_info, n);
 
     return (Node *) result_info;
