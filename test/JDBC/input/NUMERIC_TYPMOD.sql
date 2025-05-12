@@ -1398,3 +1398,29 @@ SELECT CAST(255 as tinyint)
 ORDER BY RESULT DESC 
 GO
 
+CREATE TYPE TestUDT FROM decimal(10,4); 
+GO
+
+CREATE TABLE TestTypes (
+    IntCol int,
+    FloatCol float,
+    SmallIntCol smallint,
+    NumericCol numeric(10,5),
+    UDTCol TestUDT
+);
+GO
+
+INSERT INTO TestTypes VALUES(100, 100.5, 10, 100.12345, 100.1234),(200, 200.5, 20, 200.12345, 200.1234); 
+GO
+
+SELECT UDTCol * cast(10.12 as decimal(4,2))  from TestTypes
+GO
+
+SELECT UDTCol * cast(10.123456789 as decimal(11, 9)) from TestTypes
+GO
+
+DROP TABLE TestTypes;
+GO
+
+DROP TYPE TestUDT;
+GO
