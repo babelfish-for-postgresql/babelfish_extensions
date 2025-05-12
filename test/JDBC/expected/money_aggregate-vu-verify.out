@@ -202,7 +202,6 @@ totalamount#!#money#!#8#!#19#!#4
 ~~END~~
 
 
--- TO FIX: BABEL-5689 will fix this
 EXEC get_column_info_p1 'ResultTableCurrency4'
 GO
 ~~START~~
@@ -210,6 +209,6 @@ varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
 avgamount#!#money#!#8#!#19#!#4
 maxamount#!#money#!#8#!#19#!#4
 minamount#!#money#!#8#!#19#!#4
-totalwithmarkup#!#numeric#!#17#!#38#!#2
+totalwithmarkup#!#numeric#!#17#!#38#!#5
 ~~END~~
 

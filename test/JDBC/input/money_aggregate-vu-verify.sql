@@ -83,6 +83,5 @@ GO
 EXEC get_column_info_p1 'ResultTableCurrency3'
 GO
 
--- TO FIX: BABEL-5689 will fix this
 EXEC get_column_info_p1 'ResultTableCurrency4'
 GO

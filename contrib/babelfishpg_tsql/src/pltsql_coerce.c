@@ -77,7 +77,6 @@ PG_FUNCTION_INFO_V1(get_immediate_base_type_of_UDT);
 static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, const char *context);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 static Oid select_common_type_for_coalesce_function(ParseState *pstate, List *exprs);
-static Oid get_immediate_base_type_of_UDT_internal(Oid typeid);
 static Oid LookupCastFuncName(Oid castsource, Oid casttarget);
 static bool is_numeric_cast(Oid func_oid);
 static bool is_tsql_fixeddecimal_numeric(Oid oid);
@@ -1055,7 +1054,7 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
  * Returns InvalidOid if given type is not an UDT
  */
 Oid
-get_immediate_base_type_of_UDT_internal(Oid type_oid)
+get_immediate_base_type_of_UDT_internal(Oid typeid)
 {
 	HeapTuple					tuple;
 	bool						isnull;
@@ -1064,7 +1063,7 @@ get_immediate_base_type_of_UDT_internal(Oid type_oid)
 	Oid							base_type;
 	LOCAL_FCINFO(fcinfo, 1);
 
-	if (!OidIsValid(type_oid))
+	if (!OidIsValid(typeid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("typeid is invalid!")));
@@ -1077,7 +1076,7 @@ get_immediate_base_type_of_UDT_internal(Oid type_oid)
 
 	/* if tsql_typename is NULL it implies that inputTypId corresponds to UDT */
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-	fcinfo->args[0].value = ObjectIdGetDatum(type_oid);
+	fcinfo->args[0].value = ObjectIdGetDatum(typeid);
 	fcinfo->args[0].isnull = false;
 	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
 
@@ -1086,7 +1085,7 @@ get_immediate_base_type_of_UDT_internal(Oid type_oid)
 		return InvalidOid;
 
 	/* Get immediate base type id of given type id */
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeid));
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
 
@@ -2990,10 +2989,10 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 
 			if (typmod == -1)
 				typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
-			
+
 			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
 				continue;
-			
+
 			scale = (typmod - VARHDRSZ) & 0xffff;
 			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 			integralDigitCount = Max(precision - scale, max_precision - max_scale);
