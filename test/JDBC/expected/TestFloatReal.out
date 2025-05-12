@@ -1742,7 +1742,8 @@ varchar
 Conversions TO other types FROM FLOAT/REAL
 ~~END~~
 
-SELECT * FROM FLOAT_CONVERSIONS_TO ORDER BY id;
+-- FIXME: id 39-46 have binary casting issue which always gives a different result.
+SELECT * FROM FLOAT_CONVERSIONS_TO WHERE id < 39 OR id > 46 ORDER BY id;
 GO
 ~~START~~
 int#!#varchar#!#float#!#real#!#sql_variant#!#bit#!#varchar
@@ -1784,14 +1785,6 @@ int#!#varchar#!#float#!#real#!#sql_variant#!#bit#!#varchar
 36#!#nvarchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
 37#!#nvarchar(max)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
 38#!#nvarchar(max)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
-39#!#binary(8)#!#123.456789#!#123.45679#!#[B@4d4960c8#!#1#!#<NULL>
-40#!#binary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@7808fb9#!#1#!#<NULL>
-41#!#varbinary(8)#!#123.456789#!#123.45679#!#[B@773bd77b#!#1#!#<NULL>
-42#!#varbinary(8)(from REAL)#!#123.456789#!#123.45679#!#[B@6b580b88#!#1#!#<NULL>
-43#!#varbinary(max)#!#123.456789#!#123.45679#!#[B@6d91790b#!#1#!#<NULL>
-44#!#varbinary(max)(from REAL)#!#123.456789#!#123.45679#!#[B@6e6fce47#!#1#!#<NULL>
-45#!#image#!#123.456789#!#123.45679#!#[B@47c64cfe#!#1#!#<NULL>
-46#!#image(from REAL)#!#123.456789#!#123.45679#!#[B@6ce90bc5#!#1#!#<NULL>
 47#!#sql_variant#!#123.456789#!#123.45679#!#123.456789#!#1#!#<NULL>
 48#!#sql_variant(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
 49#!#varchar(50)#!#1.79E308#!#3.4E38#!#1.79e+308#!#1#!#<NULL>
