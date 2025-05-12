@@ -114,7 +114,6 @@ extern Datum init_like_ilike_table(PG_FUNCTION_ARGS);
 extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
-extern Datum init_tsql_xml_handle_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
@@ -5312,7 +5311,6 @@ _PG_init(void)
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
 	init_tsql_cursor_hash_tab(fcinfo);
-	init_tsql_xml_handle_hash_tab(fcinfo);
 	RegisterXactCallback(pltsql_xact_cb, NULL);
 	RegisterSubXactCallback(pltsql_subxact_cb, NULL);
 	assign_object_access_hook_drop_relation();
