@@ -1,6 +1,5 @@
--- parallel_query_expected
--- Basic Functionality Tests for REAL and FLOAT
 
+-- Basic Functionality Tests for REAL and FLOAT
 -- Valid Range Tests
 CREATE TABLE float_real_range_test (
     id INT,
@@ -17,15 +16,25 @@ INSERT INTO float_real_range_test VALUES
     (4, -1.0, -1.0),                          -- Negative values
     (5, 1.0, 1.0);                            -- Positive values
 GO
+~~ROW COUNT: 5~~
+
 
 -- Test overflow conditions (should fail)
 INSERT INTO float_real_range_test VALUES 
     (6, CAST('3.5E+38' AS REAL), NULL);  -- Should fail for REAL
 GO
+~~ERROR (Code: 232)~~
+
+~~ERROR (Message: "3.5E+38" is out of range for type real)~~
+
 
 INSERT INTO float_real_range_test VALUES 
     (7, NULL, CAST('1.8E+308' AS FLOAT));  -- Should fail for FLOAT
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1.8E+308" is out of range for type double precision)~~
+
 
 -- Default Value Tests
 CREATE TABLE float_real_default_test (
@@ -37,9 +46,16 @@ GO
 
 INSERT INTO float_real_default_test (id) VALUES (1);
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM float_real_default_test ORDER BY id;
 GO
+~~START~~
+int#!#real#!#float
+1#!#0.0#!#1.23456789
+~~END~~
+
 
 -- NULL Tests
 CREATE TABLE float_real_null_test (
@@ -55,11 +71,17 @@ INSERT INTO float_real_null_test (id, real_col, float_col) VALUES
     (1, NULL, NULL),
     (2, 1.0, 1.0);
 GO
+~~ROW COUNT: 2~~
+
 
 -- Try to insert NULL into NOT NULL column (should fail)
 INSERT INTO float_real_null_test (id, real_not_null, float_not_null) VALUES
     (3, NULL, 1.0);
 GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "real_not_null" of relation "float_real_null_test" violates not-null constraint)~~
+
 
 -- Precision Tests
 CREATE TABLE float_real_precision_test (
@@ -74,6 +96,8 @@ INSERT INTO float_real_precision_test VALUES
     (2, 123456.789, 123456.789),
     (3, 0.00000123456789, 0.00000123456789);
 GO
+~~ROW COUNT: 3~~
+
 
 -- Compare stored vs input values
 SELECT 
@@ -90,6 +114,13 @@ SELECT
     END as float_precision_check
 FROM float_real_precision_test ORDER BY id;
 GO
+~~START~~
+int#!#real#!#float#!#varchar#!#varchar
+1#!#1.2345679#!#1.23456789#!#REAL Precision OK#!#FLOAT Precision Loss
+2#!#123456.79#!#123456.789#!#REAL Precision OK#!#FLOAT Precision Loss
+3#!#1.2345679E-6#!#1.23456789E-6#!#REAL Precision OK#!#FLOAT Precision Loss
+~~END~~
+
 
 -- Mathematical Operations Tests
 CREATE TABLE float_real_math_test (
@@ -102,6 +133,8 @@ GO
 INSERT INTO float_real_math_test VALUES
     (1, 1.5, 1.5);
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test basic arithmetic
 SELECT 
@@ -114,6 +147,11 @@ SELECT
     float_col / 3.0 as float_division
 FROM float_real_math_test ORDER BY id;
 GO
+~~START~~
+int#!#real#!#real#!#real#!#float#!#float#!#float
+1#!#3.0#!#3.0#!#0.5#!#3.0#!#3.0#!#0.5
+~~END~~
+
 
 -- Comparison Tests
 -- Create test table for REAL and FLOAT comparisons
@@ -156,9 +194,29 @@ INSERT INTO float_real_comparison_test VALUES
     (13, 0.9999999, 1.0000001, 0.9999999, 1.0000001),
     (14, 1.0000001, 0.9999999, 1.0000001, 0.9999999);
 GO
+~~ROW COUNT: 14~~
+
 
 SELECT * FROM float_real_comparison_test ORDER BY id
 GO
+~~START~~
+int#!#real#!#real#!#float#!#float
+1#!#1.0#!#1.0#!#1.0#!#1.0
+2#!#1.0#!#1.000001#!#1.0#!#1.000001
+3#!#1.5#!#2.5#!#1.5#!#2.5
+4#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456789
+5#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456788
+6#!#0.0#!#0.0#!#0.0#!#0.0
+7#!#0.0#!#0.0#!#0.0#!#0.0
+8#!#1.0E-38#!#1.1E-38#!#1.0E-308#!#1.1E-308
+9#!#1.0E-38#!#0.0#!#1.0E-308#!#0.0
+10#!#1.0E38#!#3.0E38#!#1.0E308#!#1.1E308
+11#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456789
+12#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456788
+13#!#0.9999999#!#1.0000001#!#0.9999999#!#1.0000001
+14#!#1.0000001#!#0.9999999#!#1.0000001#!#0.9999999
+~~END~~
+
 
 -- Comprehensive comparison tests
 SELECT 
@@ -190,6 +248,24 @@ SELECT
 FROM float_real_comparison_test
 ORDER BY id;
 GO
+~~START~~
+int#!#real#!#real#!#float#!#float#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#1.0#!#1.0#!#1.0#!#1.0#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+2#!#1.0#!#1.000001#!#1.0#!#1.000001#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+3#!#1.5#!#2.5#!#1.5#!#2.5#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+4#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456789#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+5#!#1.2345679#!#1.2345679#!#1.23456789#!#1.23456788#!#Equal#!#Not Equal#!#Equal#!#Not Equal#!#Not Less#!#Not Less#!#Not Greater#!#Greater#!#Less/Equal#!#Greater#!#Greater/Equal#!#Greater/Equal
+6#!#0.0#!#0.0#!#0.0#!#0.0#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+7#!#0.0#!#0.0#!#0.0#!#0.0#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+8#!#1.0E-38#!#1.1E-38#!#1.0E-308#!#1.1E-308#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+9#!#1.0E-38#!#0.0#!#1.0E-308#!#0.0#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Less#!#Not Less#!#Greater#!#Greater#!#Greater#!#Greater#!#Greater/Equal#!#Greater/Equal
+10#!#1.0E38#!#3.0E38#!#1.0E308#!#1.1E308#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+11#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456789#!#Equal#!#Equal#!#Equal#!#Equal#!#Not Less#!#Not Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Greater/Equal
+12#!#-1.2345679#!#-1.2345679#!#-1.23456789#!#-1.23456788#!#Equal#!#Not Equal#!#Equal#!#Not Equal#!#Not Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Greater/Equal#!#Less
+13#!#0.9999999#!#1.0000001#!#0.9999999#!#1.0000001#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Less#!#Less#!#Not Greater#!#Not Greater#!#Less/Equal#!#Less/Equal#!#Less#!#Less
+14#!#1.0000001#!#0.9999999#!#1.0000001#!#0.9999999#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Equal#!#Not Less#!#Not Less#!#Greater#!#Greater#!#Greater#!#Greater#!#Greater/Equal#!#Greater/Equal
+~~END~~
+
 
 -- Test DISTINCT behavior
 SELECT 'DISTINCT test for REAL' as test_type, COUNT(*) as total_count, COUNT(DISTINCT real_col1) as distinct_count
@@ -198,6 +274,12 @@ UNION ALL
 SELECT 'DISTINCT test for FLOAT', COUNT(*) as total_count, COUNT(DISTINCT float_col1) as distinct_count
 FROM float_real_comparison_test
 GO
+~~START~~
+varchar#!#int#!#int
+DISTINCT test for REAL#!#14#!#9
+DISTINCT test for FLOAT#!#14#!#9
+~~END~~
+
 
 -- Test GROUP BY behavior
 SELECT 'GROUP BY test for REAL' as test_type, real_col1 as num_val, COUNT(*) as count
@@ -209,6 +291,23 @@ FROM float_real_comparison_test
 GROUP BY float_col1
 ORDER BY test_type, num_val, count DESC
 GO
+~~START~~
+varchar#!#float#!#int
+GROUP BY test for FLOAT#!#-1.23456789#!#2
+GROUP BY test for FLOAT#!#0.0#!#2
+GROUP BY test for FLOAT#!#1.0E-308#!#2
+GROUP BY test for FLOAT#!#0.9999999#!#1
+GROUP BY test for FLOAT#!#1.0#!#2
+GROUP BY test for FLOAT#!#1.0000001#!#1
+GROUP BY test for FLOAT#!#1.23456789#!#2
+GROUP BY test for FLOAT#!#1.5#!#1
+GROUP BY test for FLOAT#!#1.0E308#!#1
+GROUP BY test for REAL#!#0.9999998807907104#!#1
+GROUP BY test for REAL#!#1.0#!#7
+GROUP BY test for REAL#!#1.2345678806304932#!#4
+GROUP BY test for REAL#!#9.999999680285692E37#!#2
+~~END~~
+
 
 -- Test ORDER BY behavior
 SELECT 'ORDER BY test for REAL' as test_type, id, real_col1 as num_val
@@ -218,6 +317,38 @@ SELECT 'ORDER BY test for FLOAT' as test_type, id, float_col1 as num_val
 FROM float_real_comparison_test
 ORDER BY num_val, id, test_type;
 GO
+~~START~~
+varchar#!#int#!#float
+ORDER BY test for FLOAT#!#11#!#-1.23456789
+ORDER BY test for FLOAT#!#12#!#-1.23456789
+ORDER BY test for REAL#!#11#!#-1.2345678806304932
+ORDER BY test for REAL#!#12#!#-1.2345678806304932
+ORDER BY test for FLOAT#!#6#!#0.0
+ORDER BY test for REAL#!#6#!#0.0
+ORDER BY test for FLOAT#!#7#!#0.0
+ORDER BY test for REAL#!#7#!#0.0
+ORDER BY test for FLOAT#!#8#!#1.0E-308
+ORDER BY test for FLOAT#!#9#!#1.0E-308
+ORDER BY test for REAL#!#8#!#9.999999350456404E-39
+ORDER BY test for REAL#!#9#!#9.999999350456404E-39
+ORDER BY test for REAL#!#13#!#0.9999998807907104
+ORDER BY test for FLOAT#!#13#!#0.9999999
+ORDER BY test for FLOAT#!#1#!#1.0
+ORDER BY test for REAL#!#1#!#1.0
+ORDER BY test for FLOAT#!#2#!#1.0
+ORDER BY test for REAL#!#2#!#1.0
+ORDER BY test for FLOAT#!#14#!#1.0000001
+ORDER BY test for REAL#!#14#!#1.0000001192092896
+ORDER BY test for REAL#!#4#!#1.2345678806304932
+ORDER BY test for REAL#!#5#!#1.2345678806304932
+ORDER BY test for FLOAT#!#4#!#1.23456789
+ORDER BY test for FLOAT#!#5#!#1.23456789
+ORDER BY test for FLOAT#!#3#!#1.5
+ORDER BY test for REAL#!#3#!#1.5
+ORDER BY test for REAL#!#10#!#9.999999680285692E37
+ORDER BY test for FLOAT#!#10#!#1.0E308
+~~END~~
+
 
 -- Special Values Tests
 CREATE TABLE float_real_special_test (
@@ -233,17 +364,38 @@ INSERT INTO float_real_special_test VALUES
     (2, CAST('1.0E-37' AS REAL), CAST('1.0E-307' AS FLOAT)), -- Small numbers
     (3, CAST('-1.0E+38' AS REAL), CAST('-1.0E+308' AS FLOAT)); -- Large negative numbers
 GO
+~~ROW COUNT: 3~~
+
 
 INSERT INTO float_real_special_test VALUES (4, CAST(1.0/0.0 AS REAL), CAST(1.0/0.0 AS FLOAT)); -- Infinity
 GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
 INSERT INTO float_real_special_test VALUES (5, CAST(-1.0/0.0 AS REAL), CAST(-1.0/0.0 AS FLOAT)); -- Negative Infinity
 GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
 INSERT INTO float_real_special_test VALUES (6, CAST(0.0/0.0 AS REAL), CAST(0.0/0.0 AS FLOAT)); -- NaN
 GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
 
 
 SELECT * FROM float_real_special_test;
 GO
+~~START~~
+int#!#real#!#float
+1#!#0.0#!#0.0
+2#!#1.0E-37#!#1.0E-307
+3#!#-1.0E38#!#-1.0E308
+~~END~~
+
 
 -- Verification Queries
 -- Check data types of columns
@@ -265,6 +417,35 @@ WHERE table_name IN
      'float_real_special_test')
 ORDER BY table_name, column_name;
 GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#tinyint#!#int
+float_real_comparison_test#!#float_col1#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_comparison_test#!#float_col2#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_comparison_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_comparison_test#!#real_col1#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_comparison_test#!#real_col2#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_default_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_default_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_default_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_math_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_math_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_math_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_null_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_null_test#!#float_not_null#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_null_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_null_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_null_test#!#real_not_null#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_precision_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_precision_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_precision_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_range_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_range_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_range_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+float_real_special_test#!#float_col#!#float#!#<NULL>#!#53#!#<NULL>
+float_real_special_test#!#id#!#int#!#<NULL>#!#10#!#0
+float_real_special_test#!#real_col#!#real#!#<NULL>#!#24#!#<NULL>
+~~END~~
+
 
 -- Clean up
 DROP TABLE float_real_range_test;
@@ -282,8 +463,8 @@ GO
 DROP TABLE float_real_special_test;
 GO
 
--- Precision and Scale Limits Tests for REAL and FLOAT
 
+-- Precision and Scale Limits Tests for REAL and FLOAT
 -- Combined Precision and Scale Tests for REAL and FLOAT
 CREATE TABLE float_real_limits_test (
     id INT,
@@ -317,6 +498,8 @@ INSERT INTO float_real_limits_test (id, test_case, real_col, float_col) VALUES
     (9, 'REAL max precision', 3.402823E+38, 1.79E+308),
     (10, 'REAL min precision', -3.402823E+38, -1.79E+308);
 GO
+~~ROW COUNT: 10~~
+
 
 -- Calculate precision and scale
 WITH number_analysis AS (
@@ -358,6 +541,8 @@ SET
 FROM float_real_limits_test t
 JOIN number_analysis na ON t.id = na.id;
 GO
+~~ROW COUNT: 10~~
+
 
 -- Display detailed results
 SELECT 
@@ -376,6 +561,20 @@ SELECT
 FROM float_real_limits_test
 ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#real#!#varchar#!#int#!#int#!#int#!#float#!#varchar#!#int#!#int#!#int
+1#!#Seven significant digits#!#1.234567#!#1.234567#!#7#!#6#!#1#!#1.234567#!#1.23457#!#6#!#5#!#1
+2#!#Mixed precision before/after decimal#!#123.4567#!#123.4567#!#7#!#4#!#3#!#123.4567#!#123.457#!#6#!#3#!#3
+3#!#Large number significant digits#!#1234567.8#!#1.2345678e+06#!#12#!#11#!#1#!#1234567.8#!#1.23457e+06#!#10#!#9#!#1
+4#!#Small number significant digits#!#1.234567E-4#!#0.0001234567#!#10#!#10#!#0#!#1.234567E-4#!#0.000123457#!#9#!#9#!#0
+5#!#No decimal digits#!#12345.0#!#12345#!#5#!#0#!#5#!#12345.0#!#12345#!#5#!#0#!#5
+6#!#Many decimal digits#!#1.2345679#!#1.2345679#!#8#!#7#!#1#!#1.23456789012345#!#1.23457#!#6#!#5#!#1
+7#!#Positive exponent#!#123000.0#!#123000#!#3#!#0#!#3#!#123000.0#!#123000#!#3#!#0#!#3
+8#!#Negative exponent#!#1.23E-5#!#1.23e-05#!#7#!#6#!#1#!#1.23E-5#!#1.23e-05#!#7#!#6#!#1
+9#!#REAL max precision#!#3.402823E38#!#3.402823e+38#!#11#!#10#!#1#!#1.79E308#!#1.79e+308#!#8#!#7#!#1
+10#!#REAL min precision#!#-3.402823E38#!#-3.402823e+38#!#11#!#10#!#1#!#-1.79E308#!#-1.79e+308#!#8#!#7#!#1
+~~END~~
+
 
 -- Test precision maintenance
 SELECT 
@@ -399,9 +598,19 @@ FROM float_real_limits_test
 WHERE id <= 5
 ORDER BY id;  -- Test only first few rows
 GO
+~~START~~
+int#!#varchar#!#real#!#real#!#varchar#!#float#!#float#!#varchar
+1#!#Seven significant digits#!#1.234567#!#1.2345672#!#Can distinguish 7th decimal#!#1.234567#!#1.234567000000001#!#Can distinguish 15th decimal
+2#!#Mixed precision before/after decimal#!#123.4567#!#123.4567#!#Cannot distinguish 7th decimal#!#123.4567#!#123.4567#!#Cannot distinguish 15th decimal
+3#!#Large number significant digits#!#1234567.8#!#1234567.8#!#Cannot distinguish 7th decimal#!#1234567.8#!#1234567.8#!#Cannot distinguish 15th decimal
+4#!#Small number significant digits#!#1.234567E-4#!#1.235567E-4#!#Can distinguish 7th decimal#!#1.234567E-4#!#1.23456700001E-4#!#Can distinguish 15th decimal
+5#!#No decimal digits#!#12345.0#!#12345.0#!#Cannot distinguish 7th decimal#!#12345.0#!#12345.0#!#Cannot distinguish 15th decimal
+~~END~~
+
 
 DROP TABLE float_real_limits_test;
 GO
+
 
 -- Type conversions
 -- Create test tables for conversion results
@@ -414,7 +623,6 @@ CREATE TABLE FLOAT_CONVERSIONS_FROM (
     conversion_succeeded BIT,
     error_message VARCHAR(1000)
 );
-
 CREATE TABLE FLOAT_CONVERSIONS_TO (
     id INT IDENTITY(1,1),
     target_type VARCHAR(50),
@@ -425,6 +633,7 @@ CREATE TABLE FLOAT_CONVERSIONS_TO (
     error_message VARCHAR(1000)
 );
 GO
+
 
 -- Helper procedure for conversions FROM other types
 CREATE PROCEDURE TestConversionFrom
@@ -450,7 +659,6 @@ BEGIN
                 1,
                 NULL
             )';
-
         EXEC sp_executesql @sql, 
             N'@type VARCHAR(50)', 
             @source_type;
@@ -475,6 +683,9 @@ BEGIN
     END CATCH
 END;
 GO
+
+
+
 
 -- Helper procedure for conversions TO other types
 CREATE PROCEDURE TestConversionTo
@@ -503,7 +714,6 @@ BEGIN
                 1,
                 NULL
             )';
-
         EXEC sp_executesql @sql, 
             N'@type VARCHAR(50), @float FLOAT, @real REAL', 
             @target_type, @source_float, @source_real;
@@ -526,7 +736,6 @@ BEGIN
             ERROR_MESSAGE()
         );
     END CATCH
-
     BEGIN TRY
         SET @sql = N'
             INSERT INTO FLOAT_CONVERSIONS_TO (
@@ -545,7 +754,6 @@ BEGIN
                 1,
                 NULL
             )';
-
         EXEC sp_executesql @sql, 
             N'@type VARCHAR(50), @float FLOAT, @real REAL', 
             @target_type, @source_float, @source_real;
@@ -571,571 +779,1027 @@ BEGIN
 END;
 GO
 
--- Test conversions FROM other types to FLOAT/REAL
 
+-- Test conversions FROM other types to FLOAT/REAL
 -- Exact Numerics
 -- bigint
 EXEC TestConversionFrom 'bigint', 'CAST(''9223372036854775807'' AS BIGINT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'bigint', 'CAST(''-9223372036854775808'' AS BIGINT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'bigint', 'CAST(''0'' AS BIGINT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- int
 EXEC TestConversionFrom 'int', 'CAST(''2147483647'' AS INT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'int', 'CAST(''-2147483648'' AS INT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'int', 'CAST(''0'' AS INT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- smallint
 EXEC TestConversionFrom 'smallint', 'CAST(''32767'' AS SMALLINT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smallint', 'CAST(''-32768'' AS SMALLINT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smallint', 'CAST(''0'' AS SMALLINT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- tinyint
 EXEC TestConversionFrom 'tinyint', 'CAST(''255'' AS TINYINT)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'tinyint', 'CAST(''0'' AS TINYINT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- bit
 EXEC TestConversionFrom 'bit', 'CAST(''1'' AS BIT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to double precision)~~
+
 EXEC TestConversionFrom 'bit', 'CAST(''0'' AS BIT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "bit" to double precision)~~
+
 
 -- decimal
 EXEC TestConversionFrom 'decimal', 'CAST(''123456789.123456789'' AS DECIMAL(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'decimal', 'CAST(''-123456789.123456789'' AS DECIMAL(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'decimal', 'CAST(''0'' AS DECIMAL(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- numeric
 EXEC TestConversionFrom 'numeric', 'CAST(''123456789.123456789'' AS NUMERIC(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'numeric', 'CAST(''-123456789.123456789'' AS NUMERIC(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'numeric', 'CAST(''0'' AS NUMERIC(18,9))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- money
 EXEC TestConversionFrom 'money', 'CAST(''922337203685477.5807'' AS MONEY)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'money', 'CAST(''-922337203685477.5808'' AS MONEY)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'money', 'CAST(''0'' AS MONEY)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- smallmoney
 EXEC TestConversionFrom 'smallmoney', 'CAST(''214748.3647'' AS SMALLMONEY)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smallmoney', 'CAST(''-214748.3648'' AS SMALLMONEY)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smallmoney', 'CAST(''0'' AS SMALLMONEY)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- Approximate Numerics
 -- float
 EXEC TestConversionFrom 'float', 'CAST(''1.79E+308'' AS FLOAT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
 EXEC TestConversionFrom 'float', 'CAST(''-1.79E+308'' AS FLOAT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
 EXEC TestConversionFrom 'float', 'CAST(''0'' AS FLOAT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- real
 EXEC TestConversionFrom 'real', 'CAST(''3.40E+38'' AS REAL)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'real', 'CAST(''-3.40E+38'' AS REAL)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'real', 'CAST(''0'' AS REAL)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- Date and Time
 -- datetime
 EXEC TestConversionFrom 'datetime', 'CAST(''2023-06-16 12:34:56.789'' AS DATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'datetime', 'CAST(''1753-01-01'' AS DATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'datetime', 'CAST(''9999-12-31'' AS DATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- smalldatetime
 EXEC TestConversionFrom 'smalldatetime', 'CAST(''2023-06-16 12:34:00'' AS SMALLDATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smalldatetime', 'CAST(''1900-01-01'' AS SMALLDATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'smalldatetime', 'CAST(''2079-06-06'' AS SMALLDATETIME)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- date
 EXEC TestConversionFrom 'date', 'CAST(''2023-06-16'' AS DATE)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
+
 EXEC TestConversionFrom 'date', 'CAST(''0001-01-01'' AS DATE)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
+
 EXEC TestConversionFrom 'date', 'CAST(''9999-12-31'' AS DATE)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision)~~
+
 
 -- time
 EXEC TestConversionFrom 'time', 'CAST(''12:34:56.7891234'' AS TIME)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
+
 EXEC TestConversionFrom 'time', 'CAST(''00:00:00'' AS TIME)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
+
 EXEC TestConversionFrom 'time', 'CAST(''23:59:59.9999999'' AS TIME)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision)~~
+
 
 -- datetime2
 EXEC TestConversionFrom 'datetime2', 'CAST(''2023-06-16 12:34:56.7891234'' AS DATETIME2)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
+
 EXEC TestConversionFrom 'datetime2', 'CAST(''0001-01-01 00:00:00'' AS DATETIME2)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
+
 EXEC TestConversionFrom 'datetime2', 'CAST(''9999-12-31 23:59:59.9999999'' AS DATETIME2)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime2 to double precision)~~
+
 
 -- datetimeoffset
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''2023-06-16 12:34:56.7891234 +00:00'' AS DATETIMEOFFSET)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
+
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''0001-01-01 00:00:00 +00:00'' AS DATETIMEOFFSET)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
+
 EXEC TestConversionFrom 'datetimeoffset', 'CAST(''9999-12-31 23:59:59.9999999 +14:00'' AS DATETIMEOFFSET)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetimeoffset to double precision)~~
+
 
 -- Character Strings
 -- char
 EXEC TestConversionFrom 'char', 'CAST(''123.456'' AS CHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'char', 'CAST(''-123.456'' AS CHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'char', 'CAST(''1.23E+10'' AS CHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- varchar
 EXEC TestConversionFrom 'varchar', 'CAST(''123.456'' AS VARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'varchar', 'CAST(''-123.456'' AS VARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'varchar', 'CAST(''1.23E+10'' AS VARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- text
 EXEC TestConversionFrom 'text', 'CAST(''123.456'' AS TEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
+
 EXEC TestConversionFrom 'text', 'CAST(''-123.456'' AS TEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
+
 EXEC TestConversionFrom 'text', 'CAST(''1.23E+10'' AS TEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type text)~~
+
 
 -- Unicode Character Strings
 -- nchar
 EXEC TestConversionFrom 'nchar', 'CAST(N''123.456'' AS NCHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'nchar', 'CAST(N''-123.456'' AS NCHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'nchar', 'CAST(N''1.23E+10'' AS NCHAR(10))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- nvarchar
 EXEC TestConversionFrom 'nvarchar', 'CAST(N''123.456'' AS NVARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'nvarchar', 'CAST(N''-123.456'' AS NVARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 EXEC TestConversionFrom 'nvarchar', 'CAST(N''1.23E+10'' AS NVARCHAR(20))';
 GO
+~~ROW COUNT: 1~~
+
 
 -- ntext
 EXEC TestConversionFrom 'ntext', 'CAST(N''123.456'' AS NTEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
+
 EXEC TestConversionFrom 'ntext', 'CAST(N''-123.456'' AS NTEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
+
 EXEC TestConversionFrom 'ntext', 'CAST(N''1.23E+10'' AS NTEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "source_value" is of type sql_variant but expression is of type ntext)~~
+
 
 -- Binary Strings
 -- binary
 EXEC TestConversionFrom 'binary', 'CAST(0x0123456789 AS BINARY(5))';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to double precision)~~
+
 
 -- varbinary
 EXEC TestConversionFrom 'varbinary', 'CAST(0x0123456789 AS VARBINARY(5))';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to double precision)~~
+
 
 -- image
 EXEC TestConversionFrom 'image', 'CAST(0x0123456789 AS IMAGE)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type image to double precision)~~
+
 
 -- Other Data Types
 -- uniqueidentifier
 EXEC TestConversionFrom 'uniqueidentifier', 'CAST(''A98E21B9-43F7-40CD-94E4-BF4A5C8C68B2'' AS UNIQUEIDENTIFIER)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type uniqueidentifier to double precision)~~
+
 
 -- sql_variant
 EXEC TestConversionFrom 'sql_variant', 'CAST(CAST(123.456 AS SQL_VARIANT) AS SQL_VARIANT)';
 GO
+~~ROW COUNT: 1~~
+
 
 -- xml
 EXEC TestConversionFrom 'xml', 'CAST(''<root>123.456</root>'' AS XML)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to double precision)~~
+
+
+
 
 -- Test conversions TO other types from FLOAT/REAL
-
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 -- Exact Numerics
 EXEC TestConversionTo 'bigint', 
     @test_float, @test_real,
     'CAST(@float AS BIGINT)',
     'CAST(@real AS BIGINT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'int',
     @test_float, @test_real,
     'CAST(@float AS INT)',
     'CAST(@real AS INT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'smallint',
     @test_float, @test_real,
     'CAST(@float AS SMALLINT)',
     'CAST(@real AS SMALLINT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'tinyint',
     @test_float, @test_real,
     'CAST(@float AS TINYINT)',
     'CAST(@real AS TINYINT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'bit',
     @test_float, @test_real,
     'CAST(@float AS BIT)',
     'CAST(@real AS BIT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'decimal',
     @test_float, @test_real,
     'CAST(@float AS DECIMAL(18,9))',
     'CAST(@real AS DECIMAL(18,9))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'numeric',
     @test_float, @test_real,
     'CAST(@float AS NUMERIC(18,9))',
     'CAST(@real AS NUMERIC(18,9))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'money',
     @test_float, @test_real,
     'CAST(@float AS MONEY)',
     'CAST(@real AS MONEY)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'smallmoney',
     @test_float, @test_real,
     'CAST(@float AS SMALLMONEY)',
     'CAST(@real AS SMALLMONEY)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 -- Approximate Numerics
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'float',
     @test_float, @test_real,
     'CAST(@float AS FLOAT)',
     'CAST(@real AS FLOAT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'real',
     @test_float, @test_real,
     'CAST(@float AS REAL)',
     'CAST(@real AS REAL)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 -- Date and Time
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'datetime',
     @test_float, @test_real,
     'CAST(@float AS DATETIME)',
     'CAST(@real AS DATETIME)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'smalldatetime',
     @test_float, @test_real,
     'CAST(@float AS SMALLDATETIME)',
     'CAST(@real AS SMALLDATETIME)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 -- Character Strings
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'char(50)',
     @test_float, @test_real,
     'CAST(@float AS CHAR(50))',
     'CAST(@real AS CHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(50)',
     @test_float, @test_real,
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(max)',
     @test_float, @test_real,
     'CAST(@float AS VARCHAR(MAX))',
     'CAST(@real AS VARCHAR(MAX))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'text',
     @test_float, @test_real,
     'CAST(@float AS TEXT)',
     'CAST(@real AS TEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type text)~~
+
+
 
 -- Unicode Character Strings
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'nchar(50)',
     @test_float, @test_real,
     'CAST(@float AS NCHAR(50))',
     'CAST(@real AS NCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'nvarchar(50)',
     @test_float, @test_real,
     'CAST(@float AS NVARCHAR(50))',
     'CAST(@real AS NVARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'nvarchar(max)',
     @test_float, @test_real,
     'CAST(@float AS NVARCHAR(MAX))',
     'CAST(@real AS NVARCHAR(MAX))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'ntext',
     @test_float, @test_real,
     'CAST(@float AS NTEXT)',
     'CAST(@real AS NTEXT)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type ntext)~~
+
+
 
 -- Binary Types
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'binary(8)',
     @test_float, @test_real,
     'CAST(@float AS BINARY(8))',
     'CAST(@real AS BINARY(8))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varbinary(8)',
     @test_float, @test_real,
     'CAST(@float AS VARBINARY(8))',
     'CAST(@real AS VARBINARY(8))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varbinary(max)',
     @test_float, @test_real,
     'CAST(@float AS VARBINARY(MAX))',
     'CAST(@real AS VARBINARY(MAX))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'image',
     @test_float, @test_real,
     'CAST(@float AS IMAGE)',
     'CAST(@real AS IMAGE)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 -- Date and Time Types (continued)
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'date',
     @test_float, @test_real,
     'CAST(@float AS DATE)',
     'CAST(@real AS DATE)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type double precision to date)~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'time',
     @test_float, @test_real,
     'CAST(@float AS TIME)',
     'CAST(@real AS TIME)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type double precision to time without time zone)~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'datetime2',
     @test_float, @test_real,
     'CAST(@float AS DATETIME2)',
     'CAST(@real AS DATETIME2)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type double precision to datetime2)~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'datetimeoffset',
     @test_float, @test_real,
     'CAST(@float AS DATETIMEOFFSET)',
     'CAST(@real AS DATETIMEOFFSET)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type double precision to datetimeoffset)~~
+
+
 
 -- Other Data Types
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'uniqueidentifier',
     @test_float, @test_real,
     'CAST(@float AS UNIQUEIDENTIFIER)',
     'CAST(@real AS UNIQUEIDENTIFIER)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type double precision to uniqueidentifier)~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'sql_variant',
     @test_float, @test_real,
     'CAST(@float AS SQL_VARIANT)',
     'CAST(@real AS SQL_VARIANT)';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'xml',
     @test_float, @test_real,
     'CAST(CAST(@float AS NVARCHAR(MAX)) AS XML)',
     'CAST(CAST(@real AS NVARCHAR(MAX)) AS XML)';
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "converted_value" is of type sql_variant but expression is of type xml)~~
+
+
+
 
 -- Additional Tests with Special Values
-
 -- Test Maximum/Minimum Values
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(50)',
     1.79E+308, 3.40E+38,
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(50)',
     -1.79E+308, -3.40E+38,
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 -- Test Small Values (Close to Zero)
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(50)',
     1.79E-308, 3.40E-38,
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 
 DECLARE @test_float FLOAT = 123.456789;
 DECLARE @test_real REAL = 123.456789;
-
 EXEC TestConversionTo 'varchar(50)',
     -1.79E-308, -3.40E-38,
     'CAST(@float AS VARCHAR(50))',
     'CAST(@real AS VARCHAR(50))';
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 -- Display Results
 SELECT 'Conversions FROM other types to FLOAT/REAL' AS Test;
 GO
+~~START~~
+varchar
+Conversions FROM other types to FLOAT/REAL
+~~END~~
+
 SELECT * FROM FLOAT_CONVERSIONS_FROM ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#sql_variant#!#float#!#real#!#bit#!#varchar
+1#!#bigint#!#9223372036854775807#!#9.223372036854776E18#!#9.223372E18#!#1#!#<NULL>
+2#!#bigint#!#-9223372036854775808#!#-9.223372036854776E18#!#-9.223372E18#!#1#!#<NULL>
+3#!#bigint#!#0#!#0.0#!#0.0#!#1#!#<NULL>
+4#!#int#!#2147483647#!#2.147483647E9#!#2.14748365E9#!#1#!#<NULL>
+5#!#int#!#-2147483648#!#-2.147483648E9#!#-2.14748365E9#!#1#!#<NULL>
+6#!#int#!#0#!#0.0#!#0.0#!#1#!#<NULL>
+7#!#smallint#!#32767#!#32767.0#!#32767.0#!#1#!#<NULL>
+8#!#smallint#!#-32768#!#-32768.0#!#-32768.0#!#1#!#<NULL>
+9#!#smallint#!#0#!#0.0#!#0.0#!#1#!#<NULL>
+10#!#tinyint#!#255#!#255.0#!#255.0#!#1#!#<NULL>
+11#!#tinyint#!#0#!#0.0#!#0.0#!#1#!#<NULL>
+12#!#decimal#!#123456789.123456789#!#1.2345678912345679E8#!#1.23456792E8#!#1#!#<NULL>
+13#!#decimal#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.23456792E8#!#1#!#<NULL>
+14#!#decimal#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
+15#!#numeric#!#123456789.123456789#!#1.2345678912345679E8#!#1.23456792E8#!#1#!#<NULL>
+16#!#numeric#!#-123456789.123456789#!#-1.2345678912345679E8#!#-1.23456792E8#!#1#!#<NULL>
+17#!#numeric#!#0E-9#!#0.0#!#0.0#!#1#!#<NULL>
+18#!#money#!#922337203685477.5807#!#9.223372036854776E14#!#9.2233718E14#!#1#!#<NULL>
+19#!#money#!#-922337203685477.5808#!#-9.223372036854776E14#!#-9.2233718E14#!#1#!#<NULL>
+20#!#money#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
+21#!#smallmoney#!#214748.3647#!#214748.3647#!#214748.36#!#1#!#<NULL>
+22#!#smallmoney#!#-214748.3648#!#-214748.3648#!#-214748.36#!#1#!#<NULL>
+23#!#smallmoney#!#0.0000#!#0.0#!#0.0#!#1#!#<NULL>
+24#!#float#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
+25#!#real#!#3.4E38#!#3.3999999521443642E38#!#3.4E38#!#1#!#<NULL>
+26#!#real#!#-3.4E38#!#-3.3999999521443642E38#!#-3.4E38#!#1#!#<NULL>
+27#!#real#!#0.0#!#0.0#!#0.0#!#1#!#<NULL>
+28#!#datetime#!#2023-06-16 12:34:56.79#!#45091.524268402776#!#45091.523#!#1#!#<NULL>
+29#!#datetime#!#1753-01-01 00:00:00.0#!#-53690.0#!#-53690.0#!#1#!#<NULL>
+30#!#datetime#!#9999-12-31 00:00:00.0#!#2958463.0#!#2958463.0#!#1#!#<NULL>
+31#!#smalldatetime#!#2023-06-16 12:34:00.0#!#45091.52361111111#!#45091.523#!#1#!#<NULL>
+32#!#smalldatetime#!#1900-01-01 00:00:00.0#!#0.0#!#0.0#!#1#!#<NULL>
+33#!#smalldatetime#!#2079-06-06 00:00:00.0#!#65535.0#!#65535.0#!#1#!#<NULL>
+34#!#char#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
+35#!#char#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
+36#!#char#!#1.23E+10  #!#1.23E10#!#1.23000003E10#!#1#!#<NULL>
+37#!#varchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
+38#!#varchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
+39#!#varchar#!#1.23E+10#!#1.23E10#!#1.23000003E10#!#1#!#<NULL>
+40#!#nchar#!#123.456   #!#123.456#!#123.456#!#1#!#<NULL>
+41#!#nchar#!#-123.456  #!#-123.456#!#-123.456#!#1#!#<NULL>
+42#!#nchar#!#1.23E+10  #!#1.23E10#!#1.23000003E10#!#1#!#<NULL>
+43#!#nvarchar#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
+44#!#nvarchar#!#-123.456#!#-123.456#!#-123.456#!#1#!#<NULL>
+45#!#nvarchar#!#1.23E+10#!#1.23E10#!#1.23000003E10#!#1#!#<NULL>
+46#!#sql_variant#!#123.456#!#123.456#!#123.456#!#1#!#<NULL>
+~~END~~
+
 
 SELECT 'Conversions TO other types FROM FLOAT/REAL' AS Test;
 GO
+~~START~~
+varchar
+Conversions TO other types FROM FLOAT/REAL
+~~END~~
+
 -- FIXME: id 39-46 have binary casting issue which always gives a different result.
 SELECT * FROM FLOAT_CONVERSIONS_TO WHERE id < 39 OR id > 46 ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#float#!#real#!#sql_variant#!#bit#!#varchar
+1#!#bigint#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+2#!#bigint(from REAL)#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+3#!#int#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+4#!#int(from REAL)#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+5#!#smallint#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+6#!#smallint(from REAL)#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+7#!#tinyint#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+8#!#tinyint(from REAL)#!#123.456789#!#123.45679#!#123#!#1#!#<NULL>
+9#!#bit#!#123.456789#!#123.45679#!#true#!#1#!#<NULL>
+10#!#bit(from REAL)#!#123.456789#!#123.45679#!#true#!#1#!#<NULL>
+11#!#decimal#!#123.456789#!#123.45679#!#123.456789000#!#1#!#<NULL>
+12#!#decimal(from REAL)#!#123.456789#!#123.45679#!#123.456787109#!#1#!#<NULL>
+13#!#numeric#!#123.456789#!#123.45679#!#123.456789000#!#1#!#<NULL>
+14#!#numeric(from REAL)#!#123.456789#!#123.45679#!#123.456787109#!#1#!#<NULL>
+15#!#money#!#123.456789#!#123.45679#!#123.4568#!#1#!#<NULL>
+16#!#money(from REAL)#!#123.456789#!#123.45679#!#123.4568#!#1#!#<NULL>
+17#!#smallmoney#!#123.456789#!#123.45679#!#123.4568#!#1#!#<NULL>
+18#!#smallmoney(from REAL)#!#123.456789#!#123.45679#!#123.4568#!#1#!#<NULL>
+19#!#float#!#123.456789#!#123.45679#!#123.456789#!#1#!#<NULL>
+20#!#float(from REAL)#!#123.456789#!#123.45679#!#123.456787109375#!#1#!#<NULL>
+21#!#real#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+22#!#real(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+23#!#datetime#!#123.456789#!#123.45679#!#1900-05-04 10:57:46.57#!#1#!#<NULL>
+24#!#datetime(from REAL)#!#123.456789#!#123.45679#!#1900-05-04 10:57:46.407#!#1#!#<NULL>
+25#!#smalldatetime#!#123.456789#!#123.45679#!#1900-05-04 10:58:00.0#!#1#!#<NULL>
+26#!#smalldatetime(from REAL)#!#123.456789#!#123.45679#!#1900-05-04 10:58:00.0#!#1#!#<NULL>
+27#!#char(50)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
+28#!#char(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679                                         #!#1#!#<NULL>
+29#!#varchar(50)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+30#!#varchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+31#!#varchar(max)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+32#!#varchar(max)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+33#!#nchar(50)#!#123.456789#!#123.45679#!#123.457                                           #!#1#!#<NULL>
+34#!#nchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679                                         #!#1#!#<NULL>
+35#!#nvarchar(50)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+36#!#nvarchar(50)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+37#!#nvarchar(max)#!#123.456789#!#123.45679#!#123.457#!#1#!#<NULL>
+38#!#nvarchar(max)(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+47#!#sql_variant#!#123.456789#!#123.45679#!#123.456789#!#1#!#<NULL>
+48#!#sql_variant(from REAL)#!#123.456789#!#123.45679#!#123.45679#!#1#!#<NULL>
+49#!#varchar(50)#!#1.79E308#!#3.4E38#!#1.79e+308#!#1#!#<NULL>
+50#!#varchar(50)(from REAL)#!#1.79E308#!#3.4E38#!#3.4e+38#!#1#!#<NULL>
+51#!#varchar(50)#!#-1.79E308#!#-3.4E38#!#-1.79e+308#!#1#!#<NULL>
+52#!#varchar(50)(from REAL)#!#-1.79E308#!#-3.4E38#!#-3.4e+38#!#1#!#<NULL>
+53#!#varchar(50)#!#1.79E-308#!#3.4E-38#!#1.79e-308#!#1#!#<NULL>
+54#!#varchar(50)(from REAL)#!#1.79E-308#!#3.4E-38#!#3.4e-38#!#1#!#<NULL>
+55#!#varchar(50)#!#-1.79E-308#!#-3.4E-38#!#-1.79e-308#!#1#!#<NULL>
+56#!#varchar(50)(from REAL)#!#-1.79E-308#!#-3.4E-38#!#-3.4e-38#!#1#!#<NULL>
+~~END~~
+
+
 
 -- Additional Analysis Queries
-
 -- Summary of Failed Conversions FROM other types
 SELECT source_type, 
        COUNT(*) as total_attempts,
@@ -1145,6 +1809,27 @@ FROM FLOAT_CONVERSIONS_FROM
 GROUP BY source_type
 ORDER BY source_type;
 GO
+~~START~~
+varchar#!#int#!#int#!#int
+bigint#!#3#!#3#!#0
+char#!#3#!#3#!#0
+datetime#!#3#!#3#!#0
+decimal#!#3#!#3#!#0
+float#!#1#!#1#!#0
+int#!#3#!#3#!#0
+money#!#3#!#3#!#0
+nchar#!#3#!#3#!#0
+numeric#!#3#!#3#!#0
+nvarchar#!#3#!#3#!#0
+real#!#3#!#3#!#0
+smalldatetime#!#3#!#3#!#0
+smallint#!#3#!#3#!#0
+smallmoney#!#3#!#3#!#0
+sql_variant#!#1#!#1#!#0
+tinyint#!#2#!#2#!#0
+varchar#!#3#!#3#!#0
+~~END~~
+
 
 -- Summary of Failed Conversions TO other types
 SELECT target_type, 
@@ -1155,6 +1840,58 @@ FROM FLOAT_CONVERSIONS_TO
 GROUP BY target_type
 ORDER BY target_type;
 GO
+~~START~~
+varchar#!#int#!#int#!#int
+bigint#!#1#!#1#!#0
+bigint(from REAL)#!#1#!#1#!#0
+binary(8)#!#1#!#1#!#0
+binary(8)(from REAL)#!#1#!#1#!#0
+bit#!#1#!#1#!#0
+bit(from REAL)#!#1#!#1#!#0
+char(50)#!#1#!#1#!#0
+char(50)(from REAL)#!#1#!#1#!#0
+datetime#!#1#!#1#!#0
+datetime(from REAL)#!#1#!#1#!#0
+decimal#!#1#!#1#!#0
+decimal(from REAL)#!#1#!#1#!#0
+float#!#1#!#1#!#0
+float(from REAL)#!#1#!#1#!#0
+image#!#1#!#1#!#0
+image(from REAL)#!#1#!#1#!#0
+int#!#1#!#1#!#0
+int(from REAL)#!#1#!#1#!#0
+money#!#1#!#1#!#0
+money(from REAL)#!#1#!#1#!#0
+nchar(50)#!#1#!#1#!#0
+nchar(50)(from REAL)#!#1#!#1#!#0
+numeric#!#1#!#1#!#0
+numeric(from REAL)#!#1#!#1#!#0
+nvarchar(50)#!#1#!#1#!#0
+nvarchar(50)(from REAL)#!#1#!#1#!#0
+nvarchar(max)#!#1#!#1#!#0
+nvarchar(max)(from REAL)#!#1#!#1#!#0
+real#!#1#!#1#!#0
+real(from REAL)#!#1#!#1#!#0
+smalldatetime#!#1#!#1#!#0
+smalldatetime(from REAL)#!#1#!#1#!#0
+smallint#!#1#!#1#!#0
+smallint(from REAL)#!#1#!#1#!#0
+smallmoney#!#1#!#1#!#0
+smallmoney(from REAL)#!#1#!#1#!#0
+sql_variant#!#1#!#1#!#0
+sql_variant(from REAL)#!#1#!#1#!#0
+tinyint#!#1#!#1#!#0
+tinyint(from REAL)#!#1#!#1#!#0
+varbinary(8)#!#1#!#1#!#0
+varbinary(8)(from REAL)#!#1#!#1#!#0
+varbinary(max)#!#1#!#1#!#0
+varbinary(max)(from REAL)#!#1#!#1#!#0
+varchar(50)#!#5#!#5#!#0
+varchar(50)(from REAL)#!#5#!#5#!#0
+varchar(max)#!#1#!#1#!#0
+varchar(max)(from REAL)#!#1#!#1#!#0
+~~END~~
+
 
 -- Cleanup
 DROP TABLE FLOAT_CONVERSIONS_FROM;
@@ -1166,8 +1903,8 @@ GO
 DROP PROCEDURE TestConversionTo;
 GO
 
--- Math Functions Testing
 
+-- Math Functions Testing
 CREATE TABLE FLOAT_REAL_FUNCTIONS_dt (
     id INT IDENTITY(1,1),
     function_name VARCHAR(50),
@@ -1188,9 +1925,23 @@ VALUES
     ('FLOOR', FLOOR(CAST(1.23 AS FLOAT)), FLOOR(CAST(1.23 AS REAL))),
     ('ROUND', ROUND(CAST(1.23 AS FLOAT), 1), ROUND(CAST(1.23 AS REAL), 1));
 GO
+~~ROW COUNT: 8~~
+
 
 SELECT * FROM FLOAT_REAL_FUNCTIONS_dt ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#float#!#real
+1#!#ABS#!#1.23#!#1.23
+2#!#POWER#!#8.0#!#8.0
+3#!#SQRT#!#4.0#!#4.0
+4#!#LOG#!#4.605170185988092#!#4.6051702
+5#!#EXP#!#7.38905609893065#!#7.389056
+6#!#CEILING#!#2.0#!#2.0
+7#!#FLOOR#!#1.0#!#1.0
+8#!#ROUND#!#1.2#!#1.2
+~~END~~
+
 
 DROP TABLE FLOAT_REAL_FUNCTIONS_dt;
 GO
@@ -1211,6 +1962,8 @@ VALUES
     (7.89, 7.89),
     (NULL, NULL);
 GO
+~~ROW COUNT: 4~~
+
 
 -- Test aggregate functions
 SELECT 
@@ -1226,12 +1979,17 @@ SELECT
     MAX(real_val) as real_max
 FROM FLOAT_REAL_AGGREGATE_dt;
 GO
+~~START~~
+int#!#int#!#float#!#real#!#float#!#float#!#float#!#real#!#float#!#real
+3#!#3#!#13.68#!#13.68#!#4.56#!#4.559999942779541#!#1.23#!#1.23#!#7.89#!#7.89
+~~END~~
+
 
 DROP TABLE FLOAT_REAL_AGGREGATE_dt;
 GO
 
--- Precision and Rounding Tests
 
+-- Precision and Rounding Tests
 CREATE TABLE FLOAT_REAL_dt_precision (
     id INT IDENTITY(1,1),
     original_float FLOAT,
@@ -1270,9 +2028,18 @@ VALUES
      CEILING(-1.23456789),
      FLOOR(-1.23456789));
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT * FROM FLOAT_REAL_dt_precision ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#float#!#float#!#float#!#float#!#float
+1#!#1.23456789#!#1.0#!#1.23#!#1.2346#!#1.23456789#!#2.0#!#1.0
+2#!#3.141592653589793#!#3.0#!#3.14#!#3.1416#!#3.14159265#!#4.0#!#3.0
+3#!#-1.23456789#!#-1.0#!#-1.23#!#-1.2346#!#-1.23456789#!#-1.0#!#-2.0
+~~END~~
+
 
 DROP TABLE FLOAT_REAL_dt_precision;
 GO
@@ -1301,10 +2068,17 @@ VALUES
     (1.23E+10, 1.23E+10),
     (1.23E-10, 1.23E-10);
 GO
+~~ROW COUNT: 8~~
+
 
 -- Test queries
 SELECT 'COMPUTED columns test results' AS Test;
 GO
+~~START~~
+varchar
+COMPUTED columns test results
+~~END~~
+
 
 -- Check base and computed values
 SELECT id,
@@ -1317,6 +2091,18 @@ SELECT id,
 FROM FLOAT_REAL_COMPUTED_TEST
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#float#!#real#!#real#!#float
+1#!#1.23#!#3.075#!#2.6219536506409415#!#1.23#!#3.075#!#2.62195370616071
+2#!#4.56#!#11.399999999999999#!#22.92901565040626#!#4.56#!#11.4#!#22.92901511515771
+3#!#-7.89#!#-19.724999999999998#!#65.06101438103762#!#-7.89#!#-19.725#!#65.06101225041415
+4#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0
+5#!#100.123#!#250.3075#!#10034.621277110038#!#100.123#!#250.3075#!#10034.621497161763
+6#!#-50.456#!#-126.14000000000001#!#2552.9111746979465#!#-50.456#!#-126.14#!#2552.9113041309433
+7#!#1.23E10#!#3.075E10#!#1.512900000000001E20#!#1.23000003E10#!#3.07500012E10#!#1.5129000629760016E20
+8#!#1.23E-10#!#3.0749999999999997E-10#!#1.1090536506409432E-5#!#1.23E-10#!#3.075E-10#!#1.109053646469979E-5
+~~END~~
+
 
 -- Test arithmetic operations on computed columns
 SELECT id,
@@ -1329,6 +2115,18 @@ SELECT id,
 FROM FLOAT_REAL_COMPUTED_TEST
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#float#!#float#!#float#!#float
+1#!#5.696953650640942#!#5.696953753844426#!#8.062507475720896#!#8.062507771468677#!#1.1727896102390332#!#1.1727896035915888
+2#!#34.32901565040626#!#34.329014733687984#!#261.3907784146313#!#261.3907635660728#!#0.49718662910843325#!#0.49718662407763264
+3#!#45.33601438103763#!#45.336011868944425#!#-1283.3285086659669#!#-1283.3284914582257#!#-0.30317695147631996#!#-0.3031769672680456
+4#!#0.0#!#0.0#!#0.0#!#0.0#!#<NULL>#!#<NULL>
+5#!#10284.928777110039#!#10284.92899227895#!#2511740.965320221#!#2511740.9714036426#!#0.024944389338437328#!#0.024944388304828997
+6#!#2426.7711746979467#!#2426.771304741295#!#-322024.215576399#!#-322024.2303449038#!#-0.04941025808111971#!#-0.0494102553369314
+7#!#1.512900000307501E20#!#1.5129000632835018E20#!#4.652167500000003E30#!#4.652167867937292E30#!#2.0325203252032507E-10#!#2.0325203167426778E-10
+8#!#1.1090844006409432E-5#!#1.1090843964697477E-5#!#3.4103399757209E-15#!#3.4103399372437556E-15#!#2.7726341266023502E-5#!#2.77263411617494E-5
+~~END~~
+
 
 -- Test PERSISTED computed columns
 CREATE TABLE FLOAT_REAL_PERSISTED_COMPUTED_TEST (
@@ -1347,10 +2145,17 @@ INSERT INTO FLOAT_REAL_PERSISTED_COMPUTED_TEST (float_val, real_val)
 SELECT float_val, real_val
 FROM FLOAT_REAL_COMPUTED_TEST ORDER BY id;
 GO
+~~ROW COUNT: 8~~
+
 
 -- Compare non-persisted vs persisted results
 SELECT 'Comparison of PERSISTED vs non-PERSISTED computed columns' AS Test;
 GO
+~~START~~
+varchar
+Comparison of PERSISTED vs non-PERSISTED computed columns
+~~END~~
+
 
 SELECT 
     t1.id,
@@ -1364,6 +2169,18 @@ FROM FLOAT_REAL_COMPUTED_TEST t1
 JOIN FLOAT_REAL_PERSISTED_COMPUTED_TEST t2 ON t1.id = t2.id
 ORDER BY t1.id;
 GO
+~~START~~
+int#!#float#!#float#!#varchar#!#real#!#real#!#varchar
+1#!#3.075#!#3.075#!#Equal#!#3.075#!#3.075#!#Equal
+2#!#11.399999999999999#!#11.399999999999999#!#Equal#!#11.4#!#11.4#!#Equal
+3#!#-19.724999999999998#!#-19.724999999999998#!#Equal#!#-19.725#!#-19.725#!#Equal
+4#!#0.0#!#0.0#!#Equal#!#0.0#!#0.0#!#Equal
+5#!#250.3075#!#250.3075#!#Equal#!#250.3075#!#250.3075#!#Equal
+6#!#-126.14000000000001#!#-126.14000000000001#!#Equal#!#-126.14#!#-126.14#!#Equal
+7#!#3.075E10#!#3.075E10#!#Equal#!#3.07500012E10#!#3.07500012E10#!#Equal
+8#!#3.0749999999999997E-10#!#3.0749999999999997E-10#!#Equal#!#3.075E-10#!#3.075E-10#!#Equal
+~~END~~
+
 
 -- Test mathematical functions in computed columns
 CREATE TABLE FLOAT_REAL_MATH_COMPUTED_TEST (
@@ -1384,10 +2201,17 @@ INSERT INTO FLOAT_REAL_MATH_COMPUTED_TEST (float_val, real_val)
 SELECT float_val, real_val
 FROM FLOAT_REAL_COMPUTED_TEST ORDER BY id;
 GO
+~~ROW COUNT: 8~~
+
 
 -- Test mathematical computed columns
 SELECT 'Mathematical function computed columns test results' AS Test;
 GO
+~~START~~
+varchar
+Mathematical function computed columns test results
+~~END~~
+
 
 SELECT 
     id,
@@ -1402,6 +2226,18 @@ SELECT
 FROM FLOAT_REAL_MATH_COMPUTED_TEST
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#float#!#float#!#real#!#float#!#float#!#float
+1#!#1.23#!#0.9424888019316975#!#0.2070141693843261#!#1.23#!#1.23#!#0.9424888083067761#!#0.2070141848912284#!#1.23
+2#!#4.56#!#-0.9884112519391305#!#1.5173226235262947#!#4.56#!#4.56#!#-0.9884112432530713#!#1.517322610977948#!#4.56
+3#!#-7.89#!#-0.999351408778317#!#2.065596134857783#!#-7.89#!#-7.89#!#-0.999351413586239#!#2.0655961179358053#!#-7.89
+4#!#0.0#!#0.0#!#<NULL>#!#0.0#!#0.0#!#0.0#!#<NULL>#!#0.0
+5#!#100.123#!#-0.39674208489268614#!#4.606399430157809#!#100.12#!#100.123#!#-0.3967410764242939#!#4.606399441130642#!#100.12
+6#!#-50.456#!#-0.18936709864988174#!#3.92110166936135#!#-50.46#!#-50.456#!#-0.1893683571966948#!#3.9211016947644395#!#-50.46
+7#!#1.23E10#!#0.18931047042655302#!#23.232865099324783#!#1.23E10#!#1.23000003E10#!#-0.9886724430069095#!#23.23286512013779#!#1.2300000256E10
+8#!#1.23E-10#!#1.23E-10#!#-22.81883676055613#!#0.0#!#1.23E-10#!#1.2299999907483539E-10#!#-22.818836768077798#!#0.0
+~~END~~
+
 
 -- Test indexing on computed columns
 CREATE INDEX IX_FLOAT_REAL_PERSISTED_COMPUTED_TEST_float_computed 
@@ -1415,6 +2251,11 @@ GO
 -- Test querying with indexes
 SELECT set_config('enable_seqscan', 'off', false)
 GO
+~~START~~
+text
+off
+~~END~~
+
 
 set babelfish_showplan_all on
 GO
@@ -1423,33 +2264,94 @@ SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST
 WHERE float_computed BETWEEN 0 AND 100
 ORDER BY float_computed;
 GO
+~~START~~
+text
+Query Text: SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE float_computed BETWEEN 0 AND 100
+ORDER BY float_computed
+Gather  (cost=0.13..8.15 rows=1 width=44)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using ix_float_real_persisted_compute8e6cbdf23db5caf9b93940ea925f91e1 on float_real_persisted_computed_test  (cost=0.13..8.15 rows=1 width=44)
+        Index Cond: ((float_computed >= '0'::double precision) AND (float_computed <= '100'::double precision))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.708 ms
+~~END~~
+
 
 SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
 WHERE real_computed BETWEEN 0 AND 100
 ORDER BY real_computed;
 GO
+~~START~~
+text
+Query Text: SELECT * FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST 
+WHERE real_computed BETWEEN 0 AND 100
+ORDER BY real_computed
+Gather  (cost=0.13..8.15 rows=1 width=44)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using ix_float_real_persisted_computec641e3f7c05d1a11aa08963a094a5671 on float_real_persisted_computed_test  (cost=0.13..8.15 rows=1 width=44)
+        Index Cond: ((real_computed >= '0'::real) AND (real_computed <= '100'::real))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.269 ms
+~~END~~
+
 
 set babelfish_showplan_all OFF
 GO
 
 SELECT set_config('enable_seqscan', 'on', false)
 GO
+~~START~~
+text
+on
+~~END~~
+
 
 -- Test computed columns in predicates
 SELECT 'Using computed columns in WHERE clause' AS Test;
 GO
+~~START~~
+varchar
+Using computed columns in WHERE clause
+~~END~~
+
 
 SELECT *
 FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST
 WHERE float_computed > real_computed
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#real#!#float#!#real#!#float#!#float
+2#!#4.56#!#4.56#!#11.399999999999999#!#11.4#!#22.92901565040626#!#22.92901511515771
+3#!#-7.89#!#-7.89#!#-19.724999999999998#!#-19.725#!#65.06101438103762#!#65.06101225041415
+5#!#100.123#!#100.123#!#250.3075#!#250.3075#!#10034.621277110038#!#10034.621497161763
+8#!#1.23E-10#!#1.23E-10#!#3.0749999999999997E-10#!#3.075E-10#!#1.1090536506409432E-5#!#1.109053646469979E-5
+~~END~~
+
 
 SELECT *
 FROM FLOAT_REAL_PERSISTED_COMPUTED_TEST
 WHERE float_computed_complex < 1000
 ORDER BY float_computed_complex;
 GO
+~~START~~
+int#!#float#!#real#!#float#!#real#!#float#!#float
+4#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0
+8#!#1.23E-10#!#1.23E-10#!#3.0749999999999997E-10#!#3.075E-10#!#1.1090536506409432E-5#!#1.109053646469979E-5
+1#!#1.23#!#1.23#!#3.075#!#3.075#!#2.6219536506409415#!#2.62195370616071
+2#!#4.56#!#4.56#!#11.399999999999999#!#11.4#!#22.92901565040626#!#22.92901511515771
+3#!#-7.89#!#-7.89#!#-19.724999999999998#!#-19.725#!#65.06101438103762#!#65.06101225041415
+~~END~~
+
 
 -- Cleanup
 DROP TABLE FLOAT_REAL_COMPUTED_TEST;
@@ -1488,6 +2390,8 @@ VALUES
     (1.23E+5, 1.23E+3, 35.8, 10.2),
     (1.23E-3, 1.23E-3, -20.5, 0.5);
 GO
+~~ROW COUNT: 5~~
+
 
 -- Test arithmetic operations with UDTs
 SELECT 
@@ -1499,6 +2403,15 @@ SELECT
 FROM float_real_udt_test
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#real#!#real
+1#!#246.9#!#0.25677999999999995#!#295.65#!#0.45599997
+2#!#1.98#!#1.0#!#291.44998#!#0.6
+3#!#19999.98#!#1.0E-6#!#267.94998#!#0.905
+4#!#246000.0#!#1.23#!#308.94998#!#0.102
+5#!#0.00246#!#1.2299999999999999E-6#!#252.65#!#0.005
+~~END~~
+
 
 -- Test UDTs in functions
 CREATE FUNCTION calculate_total_price(
@@ -1532,6 +2445,15 @@ SELECT
 FROM float_real_udt_test
 ORDER BY id;
 GO
+~~START~~
+int#!#float#!#float#!#real#!#real
+1#!#123.45#!#370.35#!#22.5#!#72.5
+2#!#0.99#!#2.9699999999999998#!#18.3#!#64.94
+3#!#9999.99#!#29999.97#!#-5.2#!#22.64
+4#!#123000.0#!#369000.0#!#35.8#!#96.439995
+5#!#0.00123#!#0.0036899999999999997#!#-20.5#!#-4.8999977
+~~END~~
+
 
 -- Test UDTs with constraints
 CREATE TABLE float_real_udt_constraints (
@@ -1551,6 +2473,8 @@ GO
 INSERT INTO float_real_udt_constraints (product_price, length_mm, room_temp, humidity_pct)
 VALUES (123.45, 256.78, 22.5, 45.6);
 GO
+~~ROW COUNT: 1~~
+
 
 -- Should fail - negative price
 BEGIN TRY
@@ -1561,6 +2485,11 @@ BEGIN CATCH
     SELECT 'Negative price not allowed: ' + ERROR_MESSAGE() as error_message;
 END CATCH;
 GO
+~~START~~
+nvarchar
+Negative price not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_price"
+~~END~~
+
 
 -- Should fail - zero length
 BEGIN TRY
@@ -1571,6 +2500,11 @@ BEGIN CATCH
     SELECT 'Zero length not allowed: ' + ERROR_MESSAGE() as error_message;
 END CATCH;
 GO
+~~START~~
+nvarchar
+Zero length not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_length"
+~~END~~
+
 
 -- Should fail - humidity > 100
 BEGIN TRY
@@ -1581,6 +2515,11 @@ BEGIN CATCH
     SELECT 'Humidity > 100 not allowed: ' + ERROR_MESSAGE() as error_message;
 END CATCH;
 GO
+~~START~~
+nvarchar
+Humidity > 100 not allowed: new row for relation "float_real_udt_constraints" violates check constraint "chk_humidity"
+~~END~~
+
 
 -- Test UDTs in stored procedures
 CREATE PROCEDURE update_price_and_length
@@ -1599,10 +2538,17 @@ GO
 -- Execute procedure
 EXEC update_price_and_length @id = 1, @new_price = 999.99, @new_length = 500.0;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Verify update
 SELECT * FROM float_real_udt_test WHERE id = 1;
 GO
+~~START~~
+int#!#float#!#float#!#real#!#real
+1#!#999.99#!#500.0#!#22.5#!#45.6
+~~END~~
+
 
 -- Test UDTs in indexes
 CREATE INDEX IX_float_real_udt_test_price ON float_real_udt_test(product_price);
@@ -1612,6 +2558,11 @@ GO
 -- Test index usage
 SELECT set_config('enable_seqscan', 'off', false)
 GO
+~~START~~
+text
+off
+~~END~~
+
 
 set babelfish_showplan_all on
 GO
@@ -1621,18 +2572,59 @@ FROM float_real_udt_test
 WHERE product_price > 100
 ORDER BY product_price;
 GO
+~~START~~
+text
+Query Text: SELECT *
+FROM float_real_udt_test
+WHERE product_price > 100
+ORDER BY product_price
+Gather  (cost=0.13..8.17 rows=2 width=28)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using ix_float_real_udt_test_pricefloa59d5b0879b52fe8b6e091c0861e349a on float_real_udt_test  (cost=0.13..8.17 rows=2 width=28)
+        Index Cond: ((product_price)::double precision > '100'::double precision)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.242 ms
+~~END~~
+
 
 SELECT *
 FROM float_real_udt_test
 WHERE room_temp BETWEEN 20 AND 30
 ORDER BY room_temp;
 GO
+~~START~~
+text
+Query Text: SELECT *
+FROM float_real_udt_test
+WHERE room_temp BETWEEN 20 AND 30
+ORDER BY room_temp
+Gather  (cost=0.13..8.15 rows=1 width=28)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using ix_float_real_udt_test_tempfloa54f9975c8d72ec6b136d117aa4e38fcf on float_real_udt_test  (cost=0.13..8.15 rows=1 width=28)
+        Index Cond: (((room_temp)::real >= '20'::real) AND ((room_temp)::real <= '30'::real))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.279 ms
+~~END~~
+
 
 set babelfish_showplan_all OFF
 GO
 
 SELECT set_config('enable_seqscan', 'on', false)
 GO
+~~START~~
+text
+on
+~~END~~
+
 
 -- Cleanup
 DROP FUNCTION calculate_total_price;
@@ -1672,9 +2664,11 @@ INSERT INTO float_real_base_test (float_val, real_val, description) VALUES
     (0.0, 0.0, 'Zero'),
     (PI(), PI(), 'PI value');
 GO
+~~ROW COUNT: 6~~
+
+
 
 -- Functions
-
 -- Scalar function returning FLOAT
 CREATE FUNCTION float_real_calculate_power(
     @base FLOAT,
@@ -1717,12 +2711,26 @@ SELECT dbo.float_real_calculate_power(float_val, 2) as float_squared,
        dbo.float_real_calculate_average(real_val, real_val * 2) as real_avg
 FROM float_real_base_test ORDER BY id;
 GO
+~~START~~
+float#!#real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
 
 SELECT * FROM dbo.float_real_get_range(0, 10);
 GO
+~~START~~
+int#!#float#!#real#!#varchar
+1#!#1.23456789#!#1.2345679#!#Regular number
+4#!#1.23E-38#!#1.23E-38#!#Small number
+5#!#0.0#!#0.0#!#Zero
+6#!#3.141592653589793#!#3.1415927#!#PI value
+~~END~~
+
+
 
 -- Stored Procedures
-
 -- Procedure to insert data
 CREATE PROCEDURE float_real_insert_data
     @float_val FLOAT,
@@ -1757,14 +2765,26 @@ GO
 -- Test procedures
 EXEC float_real_insert_data 123.456, 123.456, 'Inserted via procedure';
 GO
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+7
+~~END~~
+
 
 DECLARE @stat_result FLOAT;
 EXEC float_real_calculate_stats 'AVG', @stat_result OUTPUT;
 SELECT @stat_result as average_value;
 GO
+~~START~~
+float
+1.7571428571428572E37
+~~END~~
+
+
 
 -- Views
-
 -- Simple view
 CREATE VIEW float_real_simple_view
 AS
@@ -1789,12 +2809,34 @@ GO
 -- Test views
 SELECT * FROM float_real_simple_view ORDER BY id;
 GO
+~~START~~
+int#!#float#!#real#!#varchar
+1#!#1.23456789#!#1.2345679#!#Regular number
+2#!#-987.654321#!#-987.6543#!#Negative number
+3#!#1.23E38#!#1.23E38#!#Large number
+4#!#1.23E-38#!#1.23E-38#!#Small number
+5#!#0.0#!#0.0#!#Zero
+6#!#3.141592653589793#!#3.1415927#!#PI value
+7#!#123.456#!#123.456#!#Inserted via procedure
+~~END~~
+
 
 SELECT * FROM float_real_calculated_view ORDER BY id;
 GO
+~~START~~
+int#!#float#!#real#!#float#!#float#!#float#!#varchar
+1#!#1.23456789#!#1.2345679#!#1.5241578634517596#!#1.5241578750190519#!#1.1111111018392774#!#Regular number
+2#!#-987.654321#!#-987.6543#!#975461.0339628105#!#975461.057789971#!#31.426967669105462#!#Negative number
+3#!#1.23E38#!#1.23E38#!#1.512899947888318E76#!#1.5129E76#!#1.1090536315403231E19#!#Large number
+4#!#1.23E-38#!#1.23E-38#!#1.5128999465440742E-76#!#1.5129E-76#!#1.1090536310476143E-19#!#Small number
+5#!#0.0#!#0.0#!#0.0#!#0.0#!#0.0#!#Zero
+6#!#3.141592653589793#!#3.1415927#!#9.869604675736122#!#9.869604401089358#!#1.7724538755670267#!#PI value
+7#!#123.456#!#123.456#!#15241.384094238281#!#15241.383936#!#11.111075613177073#!#Inserted via procedure
+~~END~~
+
+
 
 -- Triggers
-
 -- Audit table for triggers
 CREATE TABLE float_real_audit (
     audit_id INT IDENTITY(1,1),
@@ -1886,20 +2928,41 @@ GO
 INSERT INTO float_real_base_test (float_val, real_val, description)
 VALUES (777.888, 777.888, 'Testing After Insert trigger');
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 UPDATE float_real_base_test
 SET float_val = float_val * 1.1,
     real_val = real_val * 1.1
 WHERE id = (SELECT MAX(id) FROM float_real_base_test);
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 INSERT INTO float_real_simple_view (float_val, real_val, description)
 VALUES (999.999, 999.999, 'Testing Instead Of trigger');
 GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 -- View audit results
 SELECT * FROM float_real_audit ORDER BY audit_id;
 GO
+~~START~~
+int#!#varchar#!#datetime#!#float#!#float#!#real#!#real#!#varchar
+1#!#INSERT#!#<NULL>#!#<NULL>#!#777.888#!#<NULL>#!#777.888#!#jdbc_user
+2#!#UPDATE#!#<NULL>#!#777.888#!#855.6768000000001#!#777.888#!#855.6768#!#jdbc_user
+3#!#INSERT#!#<NULL>#!#<NULL>#!#1999.998#!#<NULL>#!#1999.998#!#jdbc_user
+~~END~~
+
 
 -- Cleanup
 DROP TRIGGER float_real_after_insert;
@@ -1984,6 +3047,8 @@ INSERT INTO float_real_constraint_test (
     1.0, 2.0, 1.0, 2.0         -- min-max values
 );
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test DEFAULT constraints
 INSERT INTO float_real_constraint_test (
@@ -2003,9 +3068,11 @@ INSERT INTO float_real_constraint_test (
     1.0, 2.0, 1.0, 2.0         -- min-max values
 );
 GO
+~~ROW COUNT: 1~~
+
+
 
 -- Test constraint violations
-
 -- Test NOT NULL constraint
 BEGIN TRY
     INSERT INTO float_real_constraint_test (real_not_null) VALUES (1.0);
@@ -2015,6 +3082,11 @@ BEGIN CATCH
            'SUCCESS: NOT NULL constraint worked for float_not_null - ' + ERROR_MESSAGE() AS result;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+NOT NULL constraint test#!#SUCCESS: NOT NULL constraint worked for float_not_null - null value in column "float_not_null" of relation "float_real_constraint_test" violates not-null constraint
+~~END~~
+
 
 -- Test positive value constraint
 BEGIN TRY
@@ -2039,6 +3111,11 @@ BEGIN CATCH
            'SUCCESS: Positive value constraint worked - ' + ERROR_MESSAGE() AS result;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Positive value constraint test#!#SUCCESS: Positive value constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_positive_check"
+~~END~~
+
 
 -- Test range constraint
 BEGIN TRY
@@ -2063,6 +3140,11 @@ BEGIN CATCH
            'SUCCESS: Range constraint worked - ' + ERROR_MESSAGE() AS result;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Range constraint test#!#SUCCESS: Range constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_range_check"
+~~END~~
+
 
 -- Test precision constraint
 BEGIN TRY
@@ -2087,6 +3169,11 @@ BEGIN CATCH
            'SUCCESS: Precision constraint worked - ' + ERROR_MESSAGE() AS result;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Precision constraint test#!#SUCCESS: Precision constraint worked - new row for relation "float_real_constraint_test" violates check constraint "float_real_constraint_test_float_precision_check"
+~~END~~
+
 
 -- Test min-max constraint
 BEGIN TRY
@@ -2111,10 +3198,21 @@ BEGIN CATCH
            'SUCCESS: Min-max constraint worked - ' + ERROR_MESSAGE() AS result;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Min-max constraint test#!#SUCCESS: Min-max constraint worked - new row for relation "float_real_constraint_test" violates check constraint "chk_float_range_valid"
+~~END~~
+
 
 -- Query successful insertions
 SELECT 'Successful insertions' AS test_name, * FROM float_real_constraint_test ORDER BY id;
 GO
+~~START~~
+varchar#!#int#!#float#!#float#!#real#!#real#!#float#!#float#!#real#!#real#!#float#!#real#!#float#!#real#!#float#!#real#!#float#!#float#!#real#!#real
+Successful insertions#!#1#!#1.0#!#1.23#!#1.0#!#4.56#!#1.23#!#50.0#!#1.23#!#50.0#!#1.23#!#1.23#!#4.0#!#4.0#!#500.0#!#500.0#!#1.0#!#2.0#!#1.0#!#2.0
+Successful insertions#!#2#!#1.0#!#1.23#!#1.0#!#4.56#!#1.23#!#50.0#!#1.23#!#50.0#!#1.23#!#1.23#!#4.0#!#4.0#!#500.0#!#500.0#!#1.0#!#2.0#!#1.0#!#2.0
+~~END~~
+
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_constraint_test;
@@ -2130,6 +3228,8 @@ DECLARE @float_real_table_var TABLE (
 );
 GO
 
+
+
 -- Test INSERT into table variable
 DECLARE @float_real_table_var TABLE (
     id INT IDENTITY(1,1),
@@ -2138,7 +3238,6 @@ DECLARE @float_real_table_var TABLE (
     calc_float AS (float_val * 2),
     calc_real AS (real_val * 2)
 );
-
 INSERT INTO @float_real_table_var (float_val, real_val)
 VALUES 
     (1.23456789, 1.23456789),
@@ -2146,10 +3245,22 @@ VALUES
     (-3.45678912, -3.45678912),
     (4.56789123E+10, 4.56789123E+10),
     (5.67891234E-10, 5.67891234E-10);
-
 SELECT 'Table Variable - Basic Data' AS test_case, *
 FROM @float_real_table_var;
 GO
+~~ROW COUNT: 5~~
+
+~~START~~
+varchar#!#int#!#float#!#real#!#float#!#real
+Table Variable - Basic Data#!#1#!#1.23456789#!#1.2345679#!#2.46913578#!#2.4691358
+Table Variable - Basic Data#!#2#!#2.34567891#!#2.3456788#!#4.69135782#!#4.6913576
+Table Variable - Basic Data#!#3#!#-3.45678912#!#-3.456789#!#-6.91357824#!#-6.913578
+Table Variable - Basic Data#!#4#!#4.56789123E10#!#4.5678911E10#!#9.13578246E10#!#9.1357823E10
+Table Variable - Basic Data#!#5#!#5.67891234E-10#!#5.6789123E-10#!#1.135782468E-9#!#1.1357825E-9
+~~END~~
+
+
+
 
 -- Test table variable with constraints
 DECLARE @float_real_constrained_var TABLE (
@@ -2160,16 +3271,34 @@ DECLARE @float_real_constrained_var TABLE (
     real_positive REAL CHECK (real_positive > 0),
     PRIMARY KEY (id)
 );
-
 INSERT INTO @float_real_constrained_var (float_val, real_val, float_positive, real_positive)
 VALUES (1.0, 1.0, 2.0, 2.0);
-
 SELECT 'Table Variable - With Constraints' AS test_case, *
 FROM @float_real_constrained_var;
 GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int#!#float#!#real#!#float#!#real
+Table Variable - With Constraints#!#1#!#1.0#!#1.0#!#2.0#!#2.0
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Temporary Tables Tests
-
 -- Local temp table (#)
 CREATE TABLE #float_real_temp (
     id INT IDENTITY(1,1),
@@ -2178,7 +3307,6 @@ CREATE TABLE #float_real_temp (
     calc_float AS (float_val * 2),
     calc_real AS (real_val * 2)
 );
-
 INSERT INTO #float_real_temp (float_val, real_val)
 VALUES 
     (1.23456789, 1.23456789),
@@ -2186,10 +3314,8 @@ VALUES
     (-3.45678912, -3.45678912),
     (4.56789123E+10, 4.56789123E+10),
     (5.67891234E-10, 5.67891234E-10);
-
 SELECT 'Local Temp Table - Basic Data' AS test_case, *
 FROM #float_real_temp ORDER BY id;
-
 -- Test temp table with constraints
 CREATE TABLE #float_real_constrained_temp (
     id INT IDENTITY(1,1),
@@ -2199,56 +3325,77 @@ CREATE TABLE #float_real_constrained_temp (
     real_positive REAL CHECK (real_positive > 0),
     PRIMARY KEY (id)
 );
-
 INSERT INTO #float_real_constrained_temp (float_val, real_val, float_positive, real_positive)
 VALUES (1.0, 1.0, 2.0, 2.0);
-
 SELECT 'Temp Table - With Constraints' AS test_case, *
 FROM #float_real_constrained_temp ORDER BY id;
-
 -- Test indexes on temp table
 CREATE TABLE #float_real_indexed_temp (
     id INT IDENTITY(1,1),
     float_val FLOAT,
     real_val REAL
 );
-
 CREATE INDEX IX_float_val ON #float_real_indexed_temp(float_val);
 CREATE INDEX IX_real_val ON #float_real_indexed_temp(real_val);
-
 INSERT INTO #float_real_indexed_temp (float_val, real_val)
 VALUES 
     (1.23456789, 1.23456789),
     (2.34567891, 2.34567891),
     (-3.45678912, -3.45678912);
-
 -- Test joins between table variables and temp tables
 DECLARE @float_real_join_var TABLE (
     id INT,
     float_val FLOAT
 );
-
 CREATE TABLE #float_real_join_temp (
     id INT,
     real_val REAL
 );
-
 INSERT INTO @float_real_join_var VALUES (1, 1.23), (2, 2.34), (3, 3.45);
 INSERT INTO #float_real_join_temp VALUES (1, 1.23), (2, 2.34), (3, 3.45);
-
 SELECT 'Join Test' AS test_case,
        v.id,
        v.float_val,
        t.real_val
 FROM @float_real_join_var v
 JOIN #float_real_join_temp t ON v.id = t.id ORDER BY v.id;
-
 -- Cleanup temp tables (table variables are automatically cleaned up)
 DROP TABLE IF EXISTS #float_real_temp;
 DROP TABLE IF EXISTS #float_real_constrained_temp;
 DROP TABLE IF EXISTS #float_real_indexed_temp;
 DROP TABLE IF EXISTS #float_real_join_temp;
 GO
+~~ROW COUNT: 5~~
+
+~~START~~
+varchar#!#int#!#float#!#real#!#float#!#real
+Local Temp Table - Basic Data#!#1#!#1.23456789#!#1.2345679#!#2.46913578#!#2.4691358
+Local Temp Table - Basic Data#!#2#!#2.34567891#!#2.3456788#!#4.69135782#!#4.6913576
+Local Temp Table - Basic Data#!#3#!#-3.45678912#!#-3.456789#!#-6.91357824#!#-6.913578
+Local Temp Table - Basic Data#!#4#!#4.56789123E10#!#4.5678911E10#!#9.13578246E10#!#9.1357823E10
+Local Temp Table - Basic Data#!#5#!#5.67891234E-10#!#5.6789123E-10#!#1.135782468E-9#!#1.1357825E-9
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int#!#float#!#real#!#float#!#real
+Temp Table - With Constraints#!#1#!#1.0#!#1.0#!#2.0#!#2.0
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Join Test#!#1#!#1.23#!#1.23
+Join Test#!#2#!#2.34#!#2.34
+Join Test#!#3#!#3.45#!#3.45
+~~END~~
+
 
 -- Create table types for parameters
 CREATE TYPE float_real_table_type AS TABLE (
@@ -2312,6 +3459,7 @@ BEGIN
 END;
 GO
 
+
 -- Test the procedures and functions
 DECLARE @test_table float_real_table_type;
 INSERT INTO @test_table (id, float_val, real_val)
@@ -2319,32 +3467,79 @@ VALUES
     (1, 1.23456789, 1.23456789),
     (2, 2.34567891, 2.34567891),
     (3, -3.45678912, -3.45678912);
-
 -- Test single table parameter
 EXEC process_float_real_table @test_table;
 GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Input table parameter values#!#1#!#1.23456789#!#1.2345679
+Input table parameter values#!#2#!#2.34567891#!#2.3456788
+Input table parameter values#!#3#!#-3.45678912#!#-3.456789
+~~END~~
+
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Processed table parameter values#!#1#!#2.46913578#!#2.4691358
+Processed table parameter values#!#2#!#4.69135782#!#4.6913576
+Processed table parameter values#!#3#!#-6.91357824#!#-6.913578
+~~END~~
+
 
 -- Test table-valued function
 SELECT 'Table-valued function results' AS test_case, *
 FROM dbo.get_float_real_table() ORDER BY id;
 GO
+~~START~~
+varchar#!#int#!#float#!#real#!#float#!#real
+Table-valued function results#!#1#!#1.23456789#!#1.2345679#!#2.46913578#!#2.4691358
+Table-valued function results#!#2#!#2.34567891#!#2.3456788#!#4.69135782#!#4.6913576
+Table-valued function results#!#3#!#-3.45678912#!#-3.456789#!#-6.91357824#!#-6.913578
+~~END~~
+
+
+
+
 
 -- Test multiple table parameters
 DECLARE @table1 float_real_table_type;
 DECLARE @table2 float_real_table_type;
-
 INSERT INTO @table1 (id, float_val, real_val)
 VALUES 
     (1, 1.23456789, 1.23456789),
     (2, 2.34567891, 2.34567891);
-
 INSERT INTO @table2 (id, float_val, real_val)
 VALUES 
     (2, 3.45678912, 3.45678912),
     (3, 4.56789123, 4.56789123);
-
 EXEC merge_float_real_tables @table1, @table2;
 GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Values from first table#!#1#!#1.23456789#!#1.2345679
+Values from first table#!#2#!#2.34567891#!#2.3456788
+~~END~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Values from second table#!#2#!#3.45678912#!#3.456789
+Values from second table#!#3#!#4.56789123#!#4.567891
+~~END~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Merged values#!#1#!#1.23456789#!#1.2345679
+Merged values#!#2#!#2.34567891#!#2.3456788
+Merged values#!#3#!#4.56789123#!#4.567891
+~~END~~
+
 
 -- Test table variable as output parameter in procedure
 CREATE PROCEDURE get_processed_float_real_data
@@ -2361,19 +3556,32 @@ BEGIN
 END;
 GO
 
+
+
 -- Test procedure with output parameter
 DECLARE @test_table float_real_table_type;
 DECLARE @msg VARCHAR(100);
-
 INSERT INTO @test_table (id, float_val, real_val)
 VALUES 
     (1, 1.23456789, 1.23456789),
     (2, 2.34567891, 2.34567891),
     (3, -3.45678912, -3.45678912);
-
 EXEC get_processed_float_real_data 0.0, @test_table, @msg OUTPUT;
 SELECT 'Output message' AS test_case, @msg AS message;
 GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#int#!#float#!#real
+Filtered values#!#1#!#1.23456789#!#1.2345679
+Filtered values#!#2#!#2.34567891#!#2.3456788
+~~END~~
+
+~~START~~
+varchar#!#varchar
+Output message#!#Processing completed
+~~END~~
+
 
 -- Cleanup
 DROP PROCEDURE IF EXISTS process_float_real_table;
@@ -2410,6 +3618,11 @@ CREATE TABLE float_real_partitioned_test (
 ) ON float_real_range_partition_scheme(float_val);
 GO
 
+
+
+
+
+
 -- Insert test data covering all partitions
 INSERT INTO float_real_partitioned_test (float_val, real_val, description)
 VALUES 
@@ -2417,32 +3630,29 @@ VALUES
     (-5000.0, -5000.0, 'Very negative - P1'),
     (-2000.0, -2000.0, 'Very negative - P1'),
     (-1500.0, -1500.0, 'Very negative - P1'),
-
     -- Partition 2: -1000.0 < x <= -1.0
     (-750.0, -750.0, 'Medium negative - P2'),
     (-500.0, -500.0, 'Medium negative - P2'),
     (-2.5, -2.5, 'Medium negative - P2'),
-
     -- Partition 3: -1.0 < x <= 0.0
     (-0.75, -0.75, 'Small negative - P3'),
     (-0.5, -0.5, 'Small negative - P3'),
     (-0.25, -0.25, 'Small negative - P3'),
-
     -- Partition 4: 0.0 < x <= 1.0
     (0.25, 0.25, 'Small positive - P4'),
     (0.5, 0.5, 'Small positive - P4'),
     (0.75, 0.75, 'Small positive - P4'),
-
     -- Partition 5: 1.0 < x <= 1000.0
     (2.5, 2.5, 'Medium positive - P5'),
     (500.0, 500.0, 'Medium positive - P5'),
     (750.0, 750.0, 'Medium positive - P5'),
-
     -- Partition 6: x > 1000.0
     (1500.0, 1500.0, 'Very positive - P6'),
     (2000.0, 2000.0, 'Very positive - P6'),
     (5000.0, 5000.0, 'Very positive - P6');
 GO
+~~ROW COUNT: 18~~
+
 
 -- Test scientific notation values
 INSERT INTO float_real_partitioned_test (float_val, real_val, description)
@@ -2452,6 +3662,8 @@ VALUES
     (1.23E-4, 1.23E-4, 'Scientific notation small positive'),
     (1.23E+4, 1.23E+4, 'Scientific notation large positive');
 GO
+~~ROW COUNT: 4~~
+
 
 -- Query to show data in each partition
 SELECT 
@@ -2475,12 +3687,25 @@ WHERE p.partition_number = $PARTITION.float_real_range_partition_func(t.float_va
 GROUP BY p.partition_number, p.rows
 ORDER BY p.partition_number;
 GO
+~~START~~
+int#!#bigint#!#varchar#!#float#!#float#!#int
+1#!#0#!#x <= -1000.0#!#-12300.0#!#-1500.0#!#4
+2#!#0#!#-1000.0 < x <= -1.0#!#-750.0#!#-2.5#!#3
+3#!#0#!#-1.0 < x <= 0.0#!#-0.75#!#-1.23E-4#!#4
+4#!#0#!#0.0 < x <= 1.0#!#1.23E-4#!#0.75#!#4
+5#!#0#!#1.0 < x <= 1000.0#!#2.5#!#750.0#!#3
+6#!#0#!#x > 1000.0#!#1500.0#!#12300.0#!#4
+~~END~~
+
 
 -- Create partitioned index
 CREATE NONCLUSTERED INDEX IX_float_real_partitioned_test_float_val 
 ON float_real_partitioned_test(float_val)
 ON float_real_range_partition_scheme(float_val);
 GO
+
+
+
 
 -- Create another partitioned table with computed columns
 -- babelfish crash while creating
@@ -2492,13 +3717,11 @@ GO
 --     description VARCHAR(100)
 -- ) ON float_real_range_partition_scheme(float_val);
 -- GO
-
 -- -- Insert test data
 -- INSERT INTO float_real_partitioned_computed_test (float_val, real_val, description)
 -- SELECT float_val, real_val, description
 -- FROM float_real_partitioned_test;
 -- GO
-
 -- -- Query to compare partition distribution
 -- SELECT 
 --     'Base table' as table_name,
@@ -2521,13 +3744,13 @@ GO
 -- GROUP BY p.partition_number
 -- ORDER BY table_name, partition_number;
 -- GO
-
 -- Cleanup
 DROP TABLE IF EXISTS float_real_partitioned_test;
 -- DROP TABLE IF EXISTS float_real_partitioned_computed_test;
 DROP PARTITION SCHEME float_real_range_partition_scheme;
 DROP PARTITION FUNCTION float_real_range_partition_func;
 GO
+
 
 -- foreign key testing
 -- Create parent tables with primary keys
@@ -2538,7 +3761,6 @@ CREATE TABLE float_real_master_products (
     CONSTRAINT chk_price_positive CHECK (list_price > 0),
     CONSTRAINT chk_weight_positive CHECK (weight_kg > 0)
 );
-
 CREATE TABLE float_real_master_rates (
     rate_id INT PRIMARY KEY,
     exchange_rate FLOAT NOT NULL,
@@ -2547,6 +3769,7 @@ CREATE TABLE float_real_master_rates (
     CONSTRAINT chk_tax_valid CHECK (tax_rate BETWEEN 0 AND 1)
 );
 GO
+
 
 -- Create child tables with foreign keys
 CREATE TABLE float_real_order_details (
@@ -2558,7 +3781,6 @@ CREATE TABLE float_real_order_details (
     CONSTRAINT fk_product FOREIGN KEY (product_id) 
         REFERENCES float_real_master_products(product_id)
 );
-
 CREATE TABLE float_real_price_history (
     product_id INT,
     rate_id INT,
@@ -2577,12 +3799,16 @@ INSERT INTO float_real_master_products (product_id, list_price, weight_kg) VALUE
     (2, 200.75, 1.2),
     (3, 1500.25, 3.7);
 GO
+~~ROW COUNT: 3~~
+
 
 INSERT INTO float_real_master_rates (rate_id, exchange_rate, tax_rate) VALUES
     (1, 1.0, 0.1),    -- USD, 10% tax
     (2, 0.85, 0.2),   -- EUR, 20% tax
     (3, 1.25, 0.15);  -- GBP, 15% tax
 GO
+~~ROW COUNT: 3~~
+
 
 -- Test successful foreign key inserts
 INSERT INTO float_real_order_details (order_id, product_id, quantity, unit_price, weight_kg) VALUES
@@ -2590,12 +3816,16 @@ INSERT INTO float_real_order_details (order_id, product_id, quantity, unit_price
     (1, 2, 1, 200.75, 1.2),
     (2, 3, 1, 1500.25, 3.7);
 GO
+~~ROW COUNT: 3~~
+
 
 INSERT INTO float_real_price_history (product_id, rate_id, calculated_price, effective_date) VALUES
     (1, 1, 100.50 * 1.0 * 1.1, '2023-01-01'),
     (1, 2, 100.50 * 0.85 * 1.2, '2023-01-01'),
     (2, 3, 200.75 * 1.25 * 1.15, '2023-01-01');
 GO
+~~ROW COUNT: 3~~
+
 
 -- Test foreign key violations
 -- Test 1: Insert with non-existent product_id
@@ -2608,6 +3838,11 @@ BEGIN CATCH
            ERROR_MESSAGE() AS error_message;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Test 1 - Non-existent product_id#!#insert or update on table "float_real_order_details" violates foreign key constraint "fk_product"
+~~END~~
+
 
 -- Test 2: Insert with non-existent rate_id
 BEGIN TRY
@@ -2619,6 +3854,11 @@ BEGIN CATCH
            ERROR_MESSAGE() AS error_message;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Test 2 - Non-existent rate_id#!#insert or update on table "float_real_price_history" violates foreign key constraint "fk_rate"
+~~END~~
+
 
 -- Test 3: Delete from parent table with existing references
 BEGIN TRY
@@ -2629,6 +3869,11 @@ BEGIN CATCH
            ERROR_MESSAGE() AS error_message;
 END CATCH;
 GO
+~~START~~
+varchar#!#nvarchar
+Test 3 - Delete referenced product#!#update or delete on table "float_real_master_products" violates foreign key constraint "fk_product" on table "float_real_order_details"
+~~END~~
+
 
 -- Test cascading updates (adding CASCADE option)
 CREATE TABLE float_real_order_details_cascade (
@@ -2650,20 +3895,34 @@ SELECT order_id, product_id, quantity, unit_price, weight_kg
 FROM float_real_order_details
 WHERE product_id = 3;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Update parent table to test cascade
 UPDATE float_real_master_products
 SET product_id = 300
 WHERE product_id = 3;
 GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: update or delete on table "float_real_master_products" violates foreign key constraint "fk_product" on table "float_real_order_details")~~
+
+
 
 -- Verify cascade update
 SELECT 'After cascade update - Parent table' AS test_case, *
 FROM float_real_master_products WHERE product_id = 300;
-
 SELECT 'After cascade update - Child table' AS test_case, *
 FROM float_real_order_details_cascade WHERE product_id = 300;
 GO
+~~START~~
+varchar#!#int#!#float#!#real
+~~END~~
+
+~~START~~
+varchar#!#int#!#int#!#int#!#float#!#real
+~~END~~
+
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_price_history;
@@ -2698,9 +3957,27 @@ VALUES
     ('Degrees to Radians', 180.0, NULL, RADIANS(180.0)),
     ('Radians to Degrees', PI(), NULL, DEGREES(PI()));
 GO
+~~ROW COUNT: 12~~
+
 
 SELECT * FROM FLOAT_dt_complex ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#float#!#float#!#float
+1#!#Sine Wave#!#1.0#!#<NULL>#!#0.8414709848078965
+2#!#Cosine Wave#!#1.0#!#<NULL>#!#0.5403023058681398
+3#!#Tangent#!#1.0#!#<NULL>#!#1.5574077246549023
+4#!#Logarithm Base 10#!#100.0#!#<NULL>#!#2.0
+5#!#Natural Logarithm#!#2.718281828459045#!#<NULL>#!#1.0000000000000018
+6#!#Power#!#2.0#!#3.0#!#8.0
+7#!#Square Root#!#16.0#!#<NULL>#!#4.0
+8#!#Absolute Value#!#-123.456#!#<NULL>#!#123.456
+9#!#PI Calculation#!#3.141592653589793#!#<NULL>#!#3.141592653589793
+10#!#Exponential#!#1.0#!#<NULL>#!#2.718281828459045
+11#!#Degrees to Radians#!#180.0#!#<NULL>#!#3.141592653589794
+12#!#Radians to Degrees#!#3.141592653589793#!#<NULL>#!#180.0
+~~END~~
+
 
 DROP TABLE IF EXISTS FLOAT_dt_complex;
 GO
@@ -2711,6 +3988,9 @@ CREATE TABLE FLOAT_dt_errors (
     error_message VARCHAR(MAX)
 );
 GO
+
+
+
 
 -- Test various error scenarios
 CREATE PROCEDURE TestFloatErrors
@@ -2726,7 +4006,6 @@ BEGIN
         INSERT INTO FLOAT_dt_errors (error_description, error_message)
         VALUES ('Division by zero', ERROR_MESSAGE());
     END CATCH
-
     -- Overflow
     BEGIN TRY
         DECLARE @overflow FLOAT = POWER(10.0, 308) * 2;
@@ -2737,7 +4016,6 @@ BEGIN
         INSERT INTO FLOAT_dt_errors (error_description, error_message)
         VALUES ('Overflow', ERROR_MESSAGE());
     END CATCH
-
     -- Invalid conversion
     BEGIN TRY
         DECLARE @invalid FLOAT = CAST('not a number' AS FLOAT);
@@ -2748,7 +4026,6 @@ BEGIN
         INSERT INTO FLOAT_dt_errors (error_description, error_message)
         VALUES ('Invalid conversion', ERROR_MESSAGE());
     END CATCH
-
     -- Square root of negative number
     BEGIN TRY
         DECLARE @sqrt_neg FLOAT = SQRT(-1.0);
@@ -2764,12 +4041,23 @@ GO
 
 EXEC TestFloatErrors;
 GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0" is out of range for type double precision)~~
+
+
 
 SELECT * FROM FLOAT_dt_errors ORDER BY id;
-
 DROP PROCEDURE TestFloatErrors;
 DROP TABLE FLOAT_dt_errors;
 GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Division by zero#!#division by zero
+~~END~~
+
 
 -- biteise operations
 -- Create test table for bitwise operations on FLOAT/REAL binary representations
@@ -2802,6 +4090,8 @@ VALUES
      CAST(1082130432 AS INT), --  CAST(CAST(CAST(4.0 AS REAL) AS BINARY(4)) AS INT),
      'Value 4.0');
 GO
+~~ROW COUNT: 3~~
+
 
 -- Test bitwise AND
 SELECT 
@@ -2814,6 +4104,16 @@ CROSS JOIN float_real_bitwise_test b
 WHERE a.id <= b.id
 ORDER BY a.id;
 GO
+~~START~~
+varchar#!#bigint#!#int
+Value 1.0 AND Value 1.0#!#144396667515305984#!#1065353216
+Value 1.0 AND Value 2.0#!#144396667347533824#!#0
+Value 1.0 AND Value 4.0#!#144396667481751552#!#8388608
+Value 2.0 AND Value 2.0#!#144396667683078144#!#1073741824
+Value 2.0 AND Value 4.0#!#144396667347533824#!#1073741824
+Value 4.0 AND Value 4.0#!#144396668018622464#!#1082130432
+~~END~~
+
 
 -- Test bitwise OR
 SELECT 
@@ -2826,6 +4126,16 @@ CROSS JOIN float_real_bitwise_test b
 WHERE a.id <= b.id
 ORDER BY a.id;
 GO
+~~START~~
+varchar#!#bigint#!#int
+Value 1.0 OR Value 1.0#!#144396667515305984#!#1065353216
+Value 1.0 OR Value 2.0#!#144396667850850304#!#2139095040
+Value 1.0 OR Value 4.0#!#144396668052176896#!#2139095040
+Value 2.0 OR Value 2.0#!#144396667683078144#!#1073741824
+Value 2.0 OR Value 4.0#!#144396668354166784#!#1082130432
+Value 4.0 OR Value 4.0#!#144396668018622464#!#1082130432
+~~END~~
+
 
 -- Test bitwise XOR
 SELECT 
@@ -2838,6 +4148,16 @@ CROSS JOIN float_real_bitwise_test b
 WHERE a.id <= b.id
 ORDER BY a.id;
 GO
+~~START~~
+varchar#!#bigint#!#int
+Value 1.0 XOR Value 1.0#!#0#!#0
+Value 1.0 XOR Value 2.0#!#503316480#!#2139095040
+Value 1.0 XOR Value 4.0#!#570425344#!#2130706432
+Value 2.0 XOR Value 2.0#!#0#!#0
+Value 2.0 XOR Value 4.0#!#1006632960#!#8388608
+Value 4.0 XOR Value 4.0#!#0#!#0
+~~END~~
+
 
 -- Test bitwise NOT
 SELECT 
@@ -2848,6 +4168,13 @@ SELECT
 FROM float_real_bitwise_test
 ORDER BY id;
 GO
+~~START~~
+varchar#!#bigint#!#int
+Value 1.0 NOT#!#-144396667515305985#!#-1065353217
+Value 2.0 NOT#!#-144396667683078145#!#-1073741825
+Value 4.0 NOT#!#-144396668018622465#!#-1082130433
+~~END~~
+
 
 -- Test setting/clearing specific bits
 SELECT 
@@ -2862,6 +4189,13 @@ SELECT
 FROM float_real_bitwise_test
 ORDER BY id;
 GO
+~~START~~
+varchar#!#bigint#!#int#!#bigint#!#int
+Value 1.0#!#-9078975369339469824#!#-1082130432#!#144396667515305984#!#1065353216
+Value 2.0#!#-9078975369171697664#!#-1073741824#!#144396667683078144#!#1073741824
+Value 4.0#!#-9078975368836153344#!#-1065353216#!#144396668018622464#!#1082130432
+~~END~~
+
 
 -- Test masking specific portions (sign, exponent, mantissa)
 SELECT 
@@ -2878,6 +4212,13 @@ SELECT
 FROM float_real_bitwise_test
 ORDER BY id;
 GO
+~~START~~
+varchar#!#bigint#!#bigint#!#bigint#!#int#!#int#!#int
+Value 1.0#!#0#!#144115188075855872#!#281479439450112#!#0#!#1065353216#!#0
+Value 2.0#!#0#!#144115188075855872#!#281479607222272#!#0#!#1073741824#!#0
+Value 4.0#!#0#!#144115188075855872#!#281479942766592#!#0#!#1082130432#!#0
+~~END~~
+
 
 -- Show binary string representations
 SELECT 
@@ -2889,6 +4230,13 @@ SELECT
 FROM float_real_bitwise_test
 ORDER BY id;
 GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+Value 1.0#!#020100010A000000#!#3F800000#!#1#!#1
+Value 2.0#!#0201000114000000#!#40000000#!#2#!#2
+Value 4.0#!#0201000128000000#!#40800000#!#4#!#4
+~~END~~
+
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_bitwise_test;
@@ -2923,6 +4271,11 @@ INSERT INTO float_real_case_test (
     (0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
     (1000000, 1000000, 1000000.123456, 1000000.123456, 1000000.123456, 1000000.123456, 32767, 255, 10000.1234, 10000.1234);
 GO
+~~ROW COUNT: 4~~
+
+
+
+
 
 -- Test CASE statements with type mixing
 WITH TypeMixingCTE AS (
@@ -2935,7 +4288,6 @@ WITH TypeMixingCTE AS (
             WHEN decimal_val THEN 'Equal to DECIMAL'
             ELSE 'Not Equal'
         END AS simple_case_result,
-
         -- Searched CASE with mixed type comparisons
         CASE 
             WHEN float_val > int_val THEN float_val
@@ -2943,13 +4295,11 @@ WITH TypeMixingCTE AS (
             WHEN numeric_val > bigint_val THEN numeric_val
             ELSE smallint_val
         END AS mixed_comparison_result,
-
         -- CASE with arithmetic operations
         CASE 
             WHEN float_val = 0 THEN 0
             ELSE (decimal_val + float_val) / real_val
         END AS arithmetic_case_result,
-
         -- CASE with multiple type conversions
         CASE
             WHEN float_val > 0 THEN float_val + decimal_val + int_val
@@ -3044,6 +4394,14 @@ CROSS APPLY (
 ) ag
 ORDER BY t.id;
 GO
+~~START~~
+int#!#float#!#real#!#varchar#!#float#!#float#!#float#!#varchar#!#float#!#float#!#real#!#float#!#varchar#!#numeric#!#numeric#!#float#!#varchar#!#float
+1#!#100.123456#!#100.12346#!#Not Equal#!#100.123456#!#1.9999999428244946#!#300.246912#!#Medium#!#200.2469148623047#!#10024.706441383936#!#1.0#!#10034.712612422965#!#Positive#!#333366.748970#!#333366.749486#!#1000100.2484588623#!#In decimal range#!#10025.706441383936
+2#!#-100.123456#!#-100.12346#!#Not Equal#!#-100.0#!#1.9999999428244946#!#-300.2469177246094#!#Negative or Zero#!#-200.2469148623047#!#10024.706441383936#!#1.0#!#10034.712612422965#!#Negative#!#-100.123456#!#-100.123459#!#-100.123456#!#In decimal range#!#10025.706441383936
+3#!#0.0#!#0.0#!#Equal to FLOAT#!#0.0#!#0.0#!#0.0#!#Negative or Zero#!#0.0#!#0.0#!#<NULL>#!#0.0#!#Positive#!#333366.748970#!#333366.749486#!#1000100.2484588623#!#In decimal range#!#<NULL>
+4#!#1000000.123456#!#1000000.1#!#Not Equal#!#1000000.123456#!#1.9999999969120004#!#3000000.246912#!#Large#!#2000000.248456#!#1.0000002469120153E12#!#1.0#!#1.0000002479120154E12#!#Positive#!#333366.748970#!#333366.749486#!#1000100.2484588623#!#In decimal range#!#1.0000002469130153E12
+~~END~~
+
 
 -- Test type precedence with NULL values
 WITH NullTestCTE AS (
@@ -3067,6 +4425,14 @@ WITH NullTestCTE AS (
 )
 SELECT * FROM NullTestCTE ORDER BY id;
 GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric#!#float
+1#!#Unknown#!#Unknown#!#100.12345600#!#100.123456
+2#!#Unknown#!#Unknown#!#-100.12345600#!#-100.123456
+3#!#Unknown#!#Unknown#!#0E-8#!#<NULL>
+4#!#Unknown#!#Unknown#!#1000000.12345600#!#1000000.123456
+~~END~~
+
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_case_test;
@@ -3095,6 +4461,13 @@ INSERT INTO float_real_case_test VALUES
     (-100, -100, -100.123456, -100.123456, -100.123456, -100.123456, -100, 0, -100.1234, -100.1234),
     (1000000, 1000000, 1000000.123456, 1000000.123456, 1000000.123456, 1000000.123456, 32767, 255, 10000.1234, 10000.1234);
 GO
+~~ROW COUNT: 3~~
+
+
+
+
+
+
 
 -- Test simple CASE with different datatypes in WHEN conditions
 SELECT id,
@@ -3142,7 +4515,6 @@ SELECT id,
         WHEN real_val - money_val > 0 THEN 'difference > 0'
         ELSE 'no arithmetic match'
     END AS case_test5,
-
     -- Test CASE with mixed types in result expressions
     CASE int_val
         WHEN 0 THEN float_val        -- Returns float
@@ -3151,7 +4523,6 @@ SELECT id,
         WHEN 1000000 THEN money_val  -- Returns money
         ELSE decimal_val             -- Returns decimal
     END AS case_test6,
-
     -- Test CASE with type precedence in conditions
     CASE
         WHEN float_val BETWEEN numeric_val AND decimal_val THEN float_val    -- Float result
@@ -3159,7 +4530,6 @@ SELECT id,
         WHEN decimal_val BETWEEN money_val AND smallmoney_val THEN numeric_val -- Numeric result
         ELSE 0
     END AS case_test7,
-
     -- Test CASE with NULL handling and type mixing
     CASE
         WHEN float_val IS NULL THEN numeric_val
@@ -3168,7 +4538,6 @@ SELECT id,
         WHEN decimal_val IS NULL THEN real_val
         ELSE float_val
     END AS case_test8,
-
     -- Test CASE with constants of different types
     CASE
         WHEN float_val > 100.0E0 THEN 1           -- Float constant
@@ -3177,7 +4546,6 @@ SELECT id,
         WHEN decimal_val >= 100.123456 THEN 4.0   -- Decimal constant
         ELSE 0
     END AS case_test9,
-
     -- Test CASE with implicit conversions
     CASE CAST(float_val AS VARCHAR(20))
         WHEN '100.123456' THEN numeric_val    -- Numeric result
@@ -3187,9 +4555,15 @@ SELECT id,
     END AS case_test10
 FROM float_real_case_test;
 GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#float#!#float#!#float#!#numeric#!#float
+1#!#float match#!#no float match#!#no real match#!#real >= smallmoney#!#sum > 200#!#100.123456#!#100.123456#!#100.123456#!#1.0#!#100.123456
+2#!#float match#!#no float match#!#no real match#!#int <= bigint#!#no arithmetic match#!#-100.12345886230469#!#-100.123456#!#-100.123456#!#2.0#!#-100.123456
+3#!#float match#!#no float match#!#no real match#!#real >= smallmoney#!#sum > 200#!#10000.1234#!#1000000.123456#!#1000000.123456#!#1.0#!#1000000.123456
+~~END~~
+
 
 -- Cleanup
 DROP TABLE IF EXISTS float_real_case_test;
 GO
 
--- set costs off
