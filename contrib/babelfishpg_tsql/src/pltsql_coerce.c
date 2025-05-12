@@ -1225,6 +1225,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
+				if (param->paramtypmod != -1 &&
+					((*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) ||
+					(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype)))
+				{
+					return param->paramtypmod;
+				}
 				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */
