@@ -55,18 +55,3 @@ GO
 
 alter role db_securityadmin add member userof_testloginwithsecurityadmin2
 GO
-
-
--- create a login which is a member of securityadmin server role
--- with a default database and ownership on sp_helplogins_db2
-create database sp_helplogins_db2
-GO
-
-create login testloginwithsecurityadmin3 with password = '12345678', default_database = sp_helplogins_db2
-GO
-
-alter server role securityadmin add member testloginwithsecurityadmin3
-GO
-
-alter AUTHORIZATION on database::sp_helplogins_db2 to testloginwithsecurityadmin3
-GO

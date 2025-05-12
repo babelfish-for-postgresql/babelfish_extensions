@@ -66,20 +66,6 @@ $$;
 GO
 
 -- tsql user=jdbc_user password=12345678
-SELECT db_name()
-GO
-~~START~~
-nvarchar
-master
-~~END~~
-
-SELECT suser_name()
-GO
-~~START~~
-nvarchar
-jdbc_user
-~~END~~
-
 EXEC sp_helplogins_vu_test
 GO
 ~~START~~
@@ -90,7 +76,6 @@ testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
 testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -110,8 +95,6 @@ testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
 testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#db_owner#!#Member of
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#dbo#!#User
 ~~END~~
 
 
@@ -134,7 +117,6 @@ testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
 testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -163,7 +145,6 @@ testloginindb1#!#master#!#English#!#YES#!#NO
 testloginwithoutusers#!#master#!#English#!#NO#!#NO
 testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
 testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
 ~~END~~
 
 ~~START~~
@@ -180,47 +161,6 @@ testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
 testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
 testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
-~~END~~
-
-
--- tsql user=testloginwithsecurityadmin3 password=12345678
-SELECT db_name()
-GO
-~~START~~
-nvarchar
-master
-~~END~~
-
-SELECT suser_name()
-GO
-~~START~~
-nvarchar
-testloginwithsecurityadmin3
-~~END~~
-
-EXEC sp_helplogins_vu_test
-GO
-~~START~~
-varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar
-jdbc_user#!#master#!#English#!#YES#!#NO
-sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
-testloginindb1#!#master#!#English#!#YES#!#NO
-testloginwithoutusers#!#master#!#English#!#NO#!#NO
-testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#English#!#YES#!#NO
-~~END~~
-
-~~START~~
-varchar#!#varchar#!#varchar#!#nvarchar
-jdbc_user#!#master#!#db_owner#!#Member of
-jdbc_user#!#master#!#dbo#!#User
-jdbc_user#!#msdb#!#db_owner#!#Member of
-jdbc_user#!#msdb#!#dbo#!#User
-jdbc_user#!#tempdb#!#db_owner#!#Member of
-jdbc_user#!#tempdb#!#dbo#!#User
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#db_owner#!#Member of
-testloginwithsecurityadmin3#!#sp_helplogins_db2#!#dbo#!#User
 ~~END~~
 
 

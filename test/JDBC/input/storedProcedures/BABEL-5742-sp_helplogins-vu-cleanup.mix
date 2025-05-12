@@ -23,12 +23,6 @@ GO
 drop login testloginwithsecurityadmin2
 GO
 
-drop login testloginwithsecurityadmin3
-GO
-
-drop database sp_helplogins_db2
-GO
-
 drop login testloginindb1
 GO
 

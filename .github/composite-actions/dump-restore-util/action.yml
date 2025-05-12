@@ -104,7 +104,8 @@ runs:
 
           # Get the list of all the Babelfish logins in a file
           query="SELECT orig_loginname, default_database_name, default_language_name, type, \
-                pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member \
+                pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member, \
+                pg_has_role(rolname, 'securityadmin', 'member') AS is_securityadmin_member \
                 FROM sys.babelfish_authid_login_ext \
                 WHERE rolname NOT IN ('jdbc_user', 'sysadmin', 'bbf_role_admin', 'test@ABC');"
           ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
@@ -229,13 +230,14 @@ runs:
           done < <(tail -n +3 ~/upgrade/domains_file.txt | head -n -2)
 
           # Loop through the list of all the Babelfish logins and create them one by one.
-          while IFS='|' read -r name db lang type sa; do
+          while IFS='|' read -r name db lang type sa seca; do
             # Remove leading and trailing spaces
             orig_loginname="$(echo "${name}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             def_db="$(echo "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             def_lang="$(echo "${lang}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             login_type="$(echo "${type}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             is_sysadmin_member="$(echo "${sa}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            is_securityadmin_member="$(echo "${seca}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             if [[ $login_type == 'U' ]];then
               sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "CREATE LOGIN [$orig_loginname] FROM WINDOWS WITH default_database = [$def_db], default_language = [$def_lang];"
             else
@@ -243,6 +245,9 @@ runs:
             fi
             if [[ $is_sysadmin_member == 't' ]];then
               sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "ALTER ROLE sysadmin ADD MEMBER [$orig_loginname];"
+            fi
+            if [[ $is_securityadmin_member == 't' ]];then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "ALTER ROLE securityadmin ADD MEMBER [$orig_loginname];"
             fi
           done < <(tail -n +3 ~/upgrade/logins_file.txt | head -n -2)
           
