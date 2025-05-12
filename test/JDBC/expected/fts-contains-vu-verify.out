@@ -552,16 +552,44 @@ int#!#text
 -- Prefix Term not supported
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Prefix term is not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+209#!# I have Googled my question several times and all answers are confusing and mixed : some say everything stays on a FB page until you clean it off and others say Facebook deletes status updates and photos monthly 
+211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
+215#!#Just to be sure , we reached out to Facebook to confirm this is indeed the policy for the above use case 
+216#!# The company confirmed that as long as you have not deleted the content yourself -- or in the case of a message between two people , both people have not deleted it -- the content should stay online indefinitely @ @ @ @ @ @ @ @ @ @ to keep in mind about this policy 
+236#!#I often see Facebook users confusing these two things 
+239#!#<p> NEW YORK -- An associate of a notorious Russian arms dealer was arrested in Australia and charged with conspiring to buy planes so that weapons could be transported to the world 's bloodiest conflicts , a U
+246#!#His arrest was first confirmed by the Australian Fairfax Media news organization , which reported Thursday that he was arrested in Melbourne after applying for a post in the government Protective Service Office , a law enforcement agency 
+251#!#Victoria state police spokeswoman Jessica Rosewarne confirmed Chichakli was caught after applying for the government post 
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+258#!#Merchant of Death Bout is a former @ @ @ @ @ @ @ @ @ @ his 1990s-era notoriety for running a fleet of aging Soviet-era cargo planes to conflict-ridden hotspots in Africa 
+262#!#Prosecutors say the arms have helped fuel conflicts and support regimes in Afghanistan , Angola , The Democratic Republic of the Congo , Liberia , Rwanda , Sierra Leone and Sudan 
+316#!#Shakira only confirmed their relationship last year by posting a picture of them both together on Twitter and Facebook with a caption reading , ' ' I present to you my sunshine 
+622#!# If not , the RCAF will be strained to the breaking point , which will cascade throughout the organization as it confronts other significant investment demands on its equipment and personnel 
+713#!#Mary Leakey cemented her status as a giant of archeology in 1959 with one confident cry : " I 've found him -- I 've found our man ! "
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"conf      *"', 20
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Prefix term is not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+209#!# I have Googled my question several times and all answers are confusing and mixed : some say everything stays on a FB page until you clean it off and others say Facebook deletes status updates and photos monthly 
+211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
+215#!#Just to be sure , we reached out to Facebook to confirm this is indeed the policy for the above use case 
+216#!# The company confirmed that as long as you have not deleted the content yourself -- or in the case of a message between two people , both people have not deleted it -- the content should stay online indefinitely @ @ @ @ @ @ @ @ @ @ to keep in mind about this policy 
+236#!#I often see Facebook users confusing these two things 
+239#!#<p> NEW YORK -- An associate of a notorious Russian arms dealer was arrested in Australia and charged with conspiring to buy planes so that weapons could be transported to the world 's bloodiest conflicts , a U
+246#!#His arrest was first confirmed by the Australian Fairfax Media news organization , which reported Thursday that he was arrested in Melbourne after applying for a post in the government Protective Service Office , a law enforcement agency 
+251#!#Victoria state police spokeswoman Jessica Rosewarne confirmed Chichakli was caught after applying for the government post 
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+258#!#Merchant of Death Bout is a former @ @ @ @ @ @ @ @ @ @ his 1990s-era notoriety for running a fleet of aging Soviet-era cargo planes to conflict-ridden hotspots in Africa 
+262#!#Prosecutors say the arms have helped fuel conflicts and support regimes in Afghanistan , Angola , The Democratic Republic of the Congo , Liberia , Rwanda , Sierra Leone and Sudan 
+316#!#Shakira only confirmed their relationship last year by posting a picture of them both together on Twitter and Facebook with a caption reading , ' ' I present to you my sunshine 
+622#!# If not , the RCAF will be strained to the breaking point , which will cascade throughout the organization as it confronts other significant investment demands on its equipment and personnel 
+713#!#Mary Leakey cemented her status as a giant of archeology in 1959 with one confident cry : " I 've found him -- I 've found our man ! "
+~~END~~
 
 
 -- Generation Term not supported
