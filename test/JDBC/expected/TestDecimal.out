@@ -572,14 +572,15 @@ int#!#numeric
 ~~END~~
 
 SELECT count(*), sum(amount) * 100 FROM overflow_test;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+int#!#numeric
+2#!#1100000.00
+~~END~~
 
 SELECT count(*), sum(amount) / 100 FROM overflow_test;
 ~~START~~
 int#!#numeric
-2#!#110.00
+2#!#110.000000
 ~~END~~
 
 SELECT count(*), sum(amount) % 100 FROM overflow_test;
@@ -603,7 +604,7 @@ int#!#numeric
 SELECT count(*), avg(amount) * 100 FROM overflow_test;
 ~~START~~
 int#!#numeric
-2#!#550000.00
+2#!#550000.000000
 ~~END~~
 
 SELECT count(*), avg(amount) / 100 FROM overflow_test;
@@ -735,6 +736,8 @@ numeric
 ~~END~~
 
 SELECT amount * 100 FROM overflow_test where id = 1;
+~~START~~
+numeric
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
@@ -742,8 +745,9 @@ SELECT amount * 100 FROM overflow_test where id = 1;
 SELECT amount / 100 FROM overflow_test where id = 1;
 ~~START~~
 numeric
-5555555555555555555555555555555555.55
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
 
 SELECT amount % 100 FROM overflow_test where id = 1;
 ~~START~~
@@ -819,15 +823,16 @@ numeric
 select in4 * in5 from testdecimal_tab;
 ~~START~~
 numeric
-80367.256
+80367.25565
 ~~END~~
 
 
 #resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
 select in3 * in4 from testdecimal_tab;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+1047.555
+~~END~~
 
 
 drop table testdecimal_tab;
