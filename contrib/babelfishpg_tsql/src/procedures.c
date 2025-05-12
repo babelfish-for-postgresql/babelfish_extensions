@@ -4499,7 +4499,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     if (!OidIsValid(xml_handle_temp_table_relid))
     {
     	/* Table doesn't exist, create it */
-    	pltsql_create_xml_handle_temp_table();
+    	create_xml_handle_temp_table();
     	
     	if (!OidIsValid(xml_handle_temp_table_relid))
     		ereport(ERROR,
@@ -4719,7 +4719,7 @@ reset_cached_xml_handle(void)
         }
     
     /* Create a new table */
-    pltsql_create_xml_handle_temp_table();
+    create_xml_handle_temp_table();
      
 }
 
@@ -4786,7 +4786,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     }
     
     /* Insert the entries into temporary table and return the document_id */
-    document_id = pltsql_insert_xml_handle_entry(xml_data, ns_data, xml_data_length, ns_data_length);
+    document_id = insert_xml_handle_entry(xml_data, ns_data, xml_data_length, ns_data_length);
      
     /* Return back the handle */
     tupdesc = CreateTemplateTupleDesc(1);
@@ -4821,7 +4821,7 @@ sp_xml_removedocument(PG_FUNCTION_ARGS)
     doc_handle = PG_GETARG_INT32(0);
 
     /* Remove the entry from the temporary table */
-    pltsql_delete_xml_handle_entry(doc_handle);
+    delete_xml_handle_entry(doc_handle);
 
     PG_RETURN_VOID();
 }
