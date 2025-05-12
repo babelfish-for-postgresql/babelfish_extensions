@@ -697,12 +697,16 @@ BEGIN
 			v_format := '9D99999EEEE';
 			v_result := to_char(v_sign::NUMERIC * ceiling(v_floatval), v_format);
 			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
+		ELSIF (v_floatval < 0.0001 AND v_floatval != 0) THEN	
+			v_format := '9D99999EEEE';
+			v_result := to_char(v_sign::NUMERIC * v_floatval, v_format);
+			v_result := to_char(substring(v_result, 1, 8)::NUMERIC, 'FM9D99999')::NUMERIC::TEXT || substring(v_result, 9);
 		ELSE
-            IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
-                v_decimal_digits := 6 - v_integral_digits;
-            ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
-                v_decimal_digits := 6;
-            END IF;
+			IF (6 - v_integral_digits < v_decimal_digits) AND (trunc(abs(v_floatval)) != 0) THEN
+				v_decimal_digits := 6 - v_integral_digits;
+			ELSIF (6 - v_integral_digits < v_decimal_digits) THEN
+				v_decimal_digits := 6;
+			END IF;
 			v_format := (pow(10, v_integral_digits)-10)::TEXT || 'D';
 			IF (v_decimal_digits > 0) THEN
 				v_format := v_format || (pow(10, v_decimal_digits)-1)::TEXT;
@@ -973,7 +977,11 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.credentials TO PUBLIC;
 
-CREATE VIEW sys.sql_logins AS
+ALTER VIEW IF EXISTS sys.sql_logins RENAME TO sql_logins_deprecated_in_5_2_0;
+
+DROP VIEW IF EXISTS sql_logins_deprecated_in_5_2_0;
+
+CREATE OR REPLACE VIEW sys.sql_logins AS
 SELECT
     CAST(NULL as sys.sysname) AS name,
     CAST(NULL as INT) AS principal_id,
@@ -993,6 +1001,7 @@ SELECT
     CAST(NULL as sys.varbinary(256)) AS password_hash
 WHERE FALSE;
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
 /* Shows the list of objects where the object owner is not same as schema owner */
 /* Covers tables, views, functions, procedures, sequences, types */
 CREATE OR REPLACE FUNCTION sys.get_schema_object_ownership()
@@ -1160,6 +1169,179 @@ CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$
 RETURNS sys.NVARCHAR_JSON
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+create or replace view sys.objects as
+select
+      CAST(t.name as sys.sysname) as name 
+    , CAST(t.object_id as int) as object_id
+    , CAST(t.principal_id as int) as principal_id
+    , CAST(t.schema_id as int) as schema_id
+    , CAST(t.parent_object_id as int) as parent_object_id
+    , CAST('U' as char(2)) as type
+    , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+    , CAST(t.create_date as sys.datetime) as create_date
+    , CAST(t.modify_date as sys.datetime) as modify_date
+    , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(t.is_published as sys.bit) as is_published
+    , CAST(t.is_schema_published as sys.bit) as is_schema_published
+from  sys.tables t
+union all
+select
+      CAST(v.name as sys.sysname) as name
+    , CAST(v.object_id as int) as object_id
+    , CAST(v.principal_id as int) as principal_id
+    , CAST(v.schema_id as int) as schema_id
+    , CAST(v.parent_object_id as int) as parent_object_id
+    , CAST('V' as char(2)) as type
+    , CAST('VIEW' as sys.nvarchar(60)) as type_desc
+    , CAST(v.create_date as sys.datetime) as create_date
+    , CAST(v.modify_date as sys.datetime) as modify_date
+    , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(v.is_published as sys.bit) as is_published
+    , CAST(v.is_schema_published as sys.bit) as is_schema_published
+from  sys.views v
+union all
+select
+      CAST(f.name as sys.sysname) as name
+    , CAST(f.object_id as int) as object_id
+    , CAST(f.principal_id as int) as principal_id
+    , CAST(f.schema_id as int) as schema_id
+    , CAST(f.parent_object_id as int) as parent_object_id
+    , CAST('F' as char(2)) as type
+    , CAST('FOREIGN_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(f.create_date as sys.datetime) as create_date
+    , CAST(f.modify_date as sys.datetime) as modify_date
+    , CAST(f.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(f.is_published as sys.bit) as is_published
+    , CAST(f.is_schema_published as sys.bit) as is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      CAST(p.name as sys.sysname) as name
+    , CAST(p.object_id as int) as object_id
+    , CAST(p.principal_id as int) as principal_id
+    , CAST(p.schema_id as int) as schema_id
+    , CAST(p.parent_object_id as int) as parent_object_id
+    , CAST(p.type as char(2)) as type
+    , CAST(
+        CASE p.type
+        WHEN 'PK' THEN 'PRIMARY_KEY_CONSTRAINT'
+        WHEN 'UQ' THEN 'UNIQUE_CONSTRAINT'
+        END
+      as sys.nvarchar(60)) as type_desc
+    , CAST(p.create_date as sys.datetime) as create_date
+    , CAST(p.modify_date as sys.datetime) as modify_date
+    , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(p.is_published as sys.bit) as is_published
+    , CAST(p.is_schema_published as sys.bit) as is_schema_published
+from sys.key_constraints p
+union all
+select
+      CAST(pr.name as sys.sysname) as name
+    , CAST(pr.object_id as int) as object_id
+    , CAST(pr.principal_id as int) as principal_id
+    , CAST(pr.schema_id as int) as schema_id
+    , CAST(pr.parent_object_id as int) as parent_object_id
+    , CAST(pr.type as char(2)) as type
+    , CAST(pr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(pr.create_date as sys.datetime) as create_date
+    , CAST(pr.modify_date as sys.datetime) as modify_date
+    , CAST(pr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(pr.is_published as sys.bit) as is_published
+    , CAST(pr.is_schema_published as sys.bit) as is_schema_published
+ from sys.procedures pr
+union all
+select
+      CAST(tr.name as sys.sysname) as name
+    , CAST(tr.object_id as int) as object_id
+    , CAST(NULL as int) as principal_id
+    , CAST(p.relnamespace as int) as schema_id
+    , CAST(tr.parent_id as int) as parent_object_id
+    , CAST(tr.type as char(2)) as type
+    , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(tr.create_date as sys.datetime) as create_date
+    , CAST(tr.modify_date as sys.datetime) as modify_date
+    , CAST(tr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(0 as sys.bit) as is_published
+    , CAST(0 as sys.bit) as is_schema_published
+  from sys.triggers tr
+  inner join pg_class p on p.oid = tr.parent_id
+union all 
+select
+    CAST(def.name as sys.sysname) as name
+  , CAST(def.object_id as int) as object_id
+  , CAST(def.principal_id as int) as principal_id
+  , CAST(def.schema_id as int) as schema_id
+  , CAST(def.parent_object_id as int) as parent_object_id
+  , CAST(def.type as char(2)) as type
+  , CAST(def.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(def.create_date as sys.datetime) as create_date
+  , CAST(def.modified_date as sys.datetime) as modify_date
+  , CAST(def.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(def.is_published as sys.bit) as is_published
+  , CAST(def.is_schema_published as sys.bit) as is_schema_published
+  from sys.default_constraints def
+union all
+select
+    CAST(chk.name as sys.sysname) as name
+  , CAST(chk.object_id as int) as object_id
+  , CAST(chk.principal_id as int) as principal_id
+  , CAST(chk.schema_id as int) as schema_id
+  , CAST(chk.parent_object_id as int) as parent_object_id
+  , CAST(chk.type as char(2)) as type
+  , CAST(chk.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(chk.create_date as sys.datetime) as create_date
+  , CAST(chk.modify_date as sys.datetime) as modify_date
+  , CAST(chk.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(chk.is_published as sys.bit) as is_published
+  , CAST(chk.is_schema_published as sys.bit) as is_schema_published
+  from sys.check_constraints chk
+union all
+select
+    CAST(p.relname as sys.sysname) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+union all
+select
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
+  , CAST(tt.type_table_object_id as int) as object_id
+  , CAST(tt.principal_id as int) as principal_id
+  , CAST(tt.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('TT' as char(2)) as type
+  , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
+  , CAST((select PG_CATALOG.string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select PG_CATALOG.string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
+  , CAST(1 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
+GRANT SELECT ON sys.objects TO PUBLIC;
+
 DO $$
 DECLARE
     exception_message text;
@@ -1174,6 +1356,218 @@ END;
 $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bbf_babelfish_conv_helper_to_datetime_with_arg_anyelement_deprecated_5_2_0');
+
+DO $$
+DECLARE
+    old_function_exists boolean;
+    exception_message text;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_try_conv_to_varbinary'
+        AND p.pronargs = 2  -- old version with 2 parameters
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        ALTER FUNCTION sys.babelfish_try_conv_to_varbinary(
+            IN arg anyelement,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_try_conv_to_varbinary_deprecated_in_5_2_0;
+        CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varbinary(
+            IN typmod INTEGER,
+            IN arg anyelement,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+            ELSE
+                IF typmod = -1 THEN
+                    RETURN CAST(arg as sys.varbinary);
+                ELSE
+                    EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                    RETURN result;
+                END IF;
+            END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    RETURN NULL;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_varbinary_deprecated_in_5_2_0');
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_conv_helper_to_varbinary'
+        AND p.pronargs = 3  -- old version with 3 parameters
+        AND p.proargtypes[0] = 'sys.varchar'::regtype::oid
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg sys.VARCHAR,
+            IN try BOOL,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0;
+
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN typmod INTEGER,
+            IN arg sys.VARCHAR,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        BEGIN
+            IF try THEN
+                RETURN sys.babelfish_try_conv_string_to_varbinary(arg, p_style);
+            ELSE
+                RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_varchar_deprecated_in_5_2_0');
+    END IF;
+
+    SELECT EXISTS (
+        SELECT 1 
+        FROM pg_proc p 
+        JOIN pg_namespace n ON p.pronamespace = n.oid 
+        WHERE n.nspname = 'sys' 
+        AND p.proname = 'babelfish_conv_helper_to_varbinary'
+        AND p.pronargs = 3  -- old version with 3 parameters
+        AND p.proargtypes[0] = 'anyelement'::regtype::oid
+    ) INTO old_function_exists;
+
+    IF old_function_exists THEN
+        -- Recreate definition with updated dependant function syntax.
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF try THEN
+                --  Hardcoding this as the internal function could have been dropped)
+                RETURN sys.babelfish_try_conv_to_varbinary(-1 , arg, p_style);
+            ELSE
+                IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+                ELSE
+                    RETURN CAST(arg as sys.varbinary);
+                END IF;
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+
+        ALTER FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC
+        ) RENAME TO babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0;
+
+        CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varbinary(
+            IN typmod INTEGER,
+            IN arg anyelement,
+            IN try BOOL,
+            IN p_style NUMERIC DEFAULT 0
+        )
+        RETURNS sys.varbinary
+        AS
+        $BODY$
+        DECLARE result sys.varbinary;
+        BEGIN
+            IF try THEN
+                RETURN sys.babelfish_try_conv_to_varbinary(typmod, arg, p_style);
+            ELSE
+                IF pg_typeof(arg) IN ('text'::regtype, 'sys.ntext'::regtype, 'sys.nvarchar'::regtype, 'sys.bpchar'::regtype, 'sys.nchar'::regtype) THEN
+                    RETURN sys.babelfish_conv_string_to_varbinary(arg, p_style);
+                ELSE
+                    IF typmod = -1 THEN
+                        RETURN CAST(arg as sys.varbinary);
+                    ELSE
+                        EXECUTE format('SELECT CAST($1 as sys.varbinary(%s))', typmod) INTO result USING arg;
+                        RETURN result;
+                    END IF;
+                END IF;
+            END IF;
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        IMMUTABLE;
+
+        CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_varbinary_anyel_deprecated_in_5_2_0');
+    END IF;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+        exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CREATE OR REPLACE VIEW sys.dm_os_sys_info 
+AS SELECT 
+  CAST(0 AS BIGINT) AS cpu_ticks,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM NOW()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS ms_ticks, 
+  CAST(0 AS INT) AS cpu_count,
+  CAST(0 AS INT) AS hyperthread_ratio,
+  CAST(0 AS BIGINT) AS physical_memory_kb,
+  CAST(0 AS BIGINT) AS virtual_memory_kb,
+  CAST(0 AS BIGINT) AS committed_kb,
+  CAST(0 AS BIGINT) AS committed_target_kb,
+  CAST(0 AS BIGINT) AS visible_target_kb,
+  CAST(0 AS INT) AS stack_size_in_bytes,
+  CAST(0 AS BIGINT) AS os_quantum,
+  CAST(0 AS INT) AS os_error_mode,
+  CAST(0 AS INT) AS os_priority_class,
+  CAST(0 AS INT) AS max_workers_count,
+  CAST(0 AS INT) AS scheduler_count,
+  CAST(0 AS INT) AS scheduler_total_count,
+  CAST(0 AS INT) AS deadlock_monitor_serial_number,
+  CAST(ROUND(CAST(EXTRACT(EPOCH FROM pg_postmaster_start_time()) AS NUMERIC(38,0)) * 1000.0, 0) AS BIGINT) AS sqlserver_start_time_ms_ticks, 
+  CAST(pg_postmaster_start_time() AS sys.DATETIME) AS sqlserver_start_time,
+  CAST(0 AS INT) AS affinity_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS affinity_type_desc,
+  CAST(0 AS BIGINT) AS process_kernel_time_ms,
+  CAST(0 AS BIGINT) AS process_user_time_ms,
+  CAST(0 AS INT) AS time_source,
+  CAST(NULL AS sys.NVARCHAR(60)) AS time_source_desc,
+  CAST(0 AS INT) AS virtual_machine_type,
+  CAST('NONE' AS sys.NVARCHAR(60)) AS virtual_machine_type_desc,
+  CAST(0 AS INT) AS softnuma_configuration,
+  CAST('OFF' AS sys.NVARCHAR(60)) AS softnuma_configuration_desc,
+  CAST(NULL AS sys.NVARCHAR(3072)) AS process_physical_affinity,
+  CAST(0 AS INT) AS sql_memory_model,
+  CAST(NULL AS sys.NVARCHAR(60)) AS sql_memory_model_desc,
+  CAST(0 AS INT) AS socket_count,
+  CAST(0 AS INT) AS cores_per_socket,
+  CAST(0 AS INT) AS numa_node_count,
+  CAST(0 AS INT) AS container_type,
+  CAST(NULL AS sys.NVARCHAR(60)) AS container_type_desc;
+GRANT SELECT ON sys.dm_os_sys_info TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

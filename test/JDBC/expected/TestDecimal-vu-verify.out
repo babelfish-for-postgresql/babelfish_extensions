@@ -255,13 +255,14 @@ numeric
 select in4 * in5 from testdecimal_vu_prepare_tab2;
 ~~START~~
 numeric
-80367.256
+80367.25565
 ~~END~~
 
 
 #resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
 select in3 * in4 from testdecimal_vu_prepare_tab2;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+~~START~~
+numeric
+1047.555
+~~END~~
 

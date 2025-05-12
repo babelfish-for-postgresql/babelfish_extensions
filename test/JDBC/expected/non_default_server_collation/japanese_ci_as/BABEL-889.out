@@ -86,7 +86,7 @@ select cast(cast(cast('3.1415926' as float) as sql_variant) as varchar);
 go
 ~~START~~
 varchar
-3.141593
+3.14159
 ~~END~~
 
 -- real

@@ -832,22 +832,89 @@ UNPIVOT (
 ) AS [Sales@Analysis];
 GO
 
--- KNOWN ISSUES
+    -- Test UNPIVOT with non-Latin characters in column name
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [q1_売上],
+        [q2_売上]
+    )
+) AS [Global_分析];
+GO
 
-    -- BABEL-5676 - Test UNPIVOT with Unicode characters
-    -- Commented due to conflicting results in collation/non-collation pr tests
--- SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
--- FROM [Global_データ_Sales]
--- UNPIVOT (
---     [Amount_金額] FOR [Quarter_四半期] IN (
---         [Q1_売上],
---         [Q2_売上]
---     )
--- ) AS [Global_分析];
--- GO
-
-    -- BABEL-5677 - Support more variations of UNPIVOT Syntax
+-- Aliased column names in unpivot source list
+    -- valid syntax
 SELECT customer_id, turnover, quarter FROM customer_turnover c 
 UNPIVOT (turnover FOR quarter IN (c.q1, c.q2, c.q3, c.q4)) AS unpvt;
 GO
 
+SELECT product_id, product_name, sales_amount, quarter 
+FROM sales.quarterly_data 
+UNPIVOT ( sales_amount FOR quarter IN 
+                 (quarterly_data.q1_sales, q2_sales, q4_sales, q3_sales)) AS unpvt;
+GO
+
+SELECT product_id, product_name, sales_amount, quarter 
+FROM sales.quarterly_data 
+UNPIVOT ( sales_amount FOR quarter IN 
+                 (sales.quarterly_data.q1_sales, q2_sales, q3_sales, q4_sales)) AS unpvt;
+GO
+
+SELECT product_id, product_name, sales_amount, quarter 
+FROM sales.quarterly_data c_ALIAS 
+UNPIVOT ( sales_amount FOR quarter IN 
+                  (c_ALIAS.q1_sales, q2_sales, q4_sales, q3_sales)) AS unpvt;
+GO
+
+
+SELECT amount, quarter
+FROM (sales_data s JOIN revenue_data r ON s.product_id = r.id)
+UNPIVOT ( amount FOR quarter IN (s.q1_sales, r.q2_sales)) AS unpvt;
+GO
+
+
+        -- invalid syntax
+SELECT product_id, product_name, sales_amount, quarter 
+FROM sales.quarterly_data c_ALIAS 
+UNPIVOT ( sales_amount FOR quarter IN 
+                  (sales.quarterly_data.q1_sales, q2_sales, q4_sales, q3_sales)) AS unpvt;
+GO
+
+SELECT amount, quarter
+FROM (sales_data s JOIN revenue_data r ON s.product_id = r.id)
+UNPIVOT ( amount FOR quarter IN (s.q1_sales, r.q1_sales)) AS unpvt;
+GO
+
+SELECT * FROM customer_turnover UNPIVOT (
+    amount FOR quarter IN (CAST(q1 AS DECIMAL(10,2)))) AS unpvt;
+GO
+
+SELECT * FROM customer_turnover UNPIVOT (
+    amount FOR quarter IN (q2 AS [Q2 Sales])) AS unpvt;
+GO
+
+SELECT * FROM customer_turnover UNPIVOT (
+    amount FOR quarter IN (MAX(q3))) AS unpvt;
+GO
+
+SELECT * FROM customer_turnover UNPIVOT (
+    amount FOR quarter IN (CONVERT(numeric(10,2), q4))) AS unpvt;
+GO
+
+-- KNOWN ISSUES
+    -- BABEL-5677 - Support more variations of UNPIVOT Syntax
+        -- Extra columns in result set when `SELECT alias.*`
+SELECT unpvt.* FROM customer_turnover c 
+UNPIVOT (turnover FOR quarter IN (q1, q2, q3, q4)) AS unpvt;
+GO
+        -- Uppercase column names in unpivot source list
+SELECT [ID_番号], [Amount_金額], [Quarter_四半期]
+FROM [Global_データ_Sales]
+UNPIVOT (
+    [Amount_金額] FOR [Quarter_四半期] IN (
+        [Q1_売上],
+        [Q2_売上]
+    )
+) AS [Global_分析];
+GO

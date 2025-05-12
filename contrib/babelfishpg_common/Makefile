@@ -47,6 +47,8 @@ OBJS += src/encoding/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
+OBJS += src/geo.o 
+OBJS += src/geo_parser.o
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
@@ -64,7 +66,8 @@ GENERATED_UPGRADES = \
     sql/$(EXTENSION)--4.3.0--4.4.0.sql \
     sql/$(EXTENSION)--4.4.0--5.0.0.sql \
     sql/$(EXTENSION)--5.0.0--5.1.0.sql \
-    sql/$(EXTENSION)--5.1.0--5.2.0.sql
+    sql/$(EXTENSION)--5.1.0--5.2.0.sql \
+    sql/$(EXTENSION)--5.2.0--5.3.0.sql
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -87,6 +90,11 @@ test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
+
+src/geo_parser.o: src/geo_scan.c src/geo_data.h
+src/geo.o: src/geo_scan.c src/geo_parser.c src/geo_data.h
+distprep: src/geo_scan.c src/geo_parser.c
+
 include $(PGXS)
 
 ifeq ($(GE91),yes)
@@ -138,6 +146,9 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 
     sql/$(EXTENSION)--5.1.0--5.2.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=5.1.0 -D CUR_VERSION=5.2.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--5.2.0--5.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=5.2.0 -D CUR_VERSION=5.3.0 $< | sed 's/^# /-- /g' > $@
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
@@ -172,6 +183,9 @@ else
 
     sql/$(EXTENSION)--5.1.0--5.2.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=5.1.0 -D CUR_VERSION=5.2.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--5.2.0--5.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=5.2.0 -D CUR_VERSION=5.3.0 $< | sed 's/^# /-- /g' > $@
 
 endif
 

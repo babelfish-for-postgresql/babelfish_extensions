@@ -183,16 +183,18 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jones'
-Gather  (cost=11.40..24.02 rows=3 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..24.02 rows=1 width=32)
-        Filter: ((c1)::text = 'jones'::text)
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.17..11.28 rows=3 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.17..11.28 rows=3 width=32)
+        Recheck Cond: (c1 = 'jones'::"varchar")
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.17 rows=3 width=0)
+              Index Cond: (c1 = 'jones'::"varchar")
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.278 ms
+Babelfish T-SQL Batch Parsing Time: 6.545 ms
 ~~END~~
 
 
@@ -201,16 +203,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= 'Jon'::text) AND ((c1)::text < 'Jon?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
+        Filter: ((c1)::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.205 ms
 ~~END~~
 
 
@@ -219,16 +224,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jone_'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= 'jone'::text) AND ((c1)::text < 'jone?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
+        Filter: ((c1)::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -246,7 +254,7 @@ Gather  (cost=11.40..24.02 rows=5 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -264,7 +272,7 @@ Gather  (cost=11.41..24.03 rows=26 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
 ~~END~~
 
 
@@ -274,16 +282,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ab%'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= 'ab'::text) AND ((c1)::text < 'ab?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
+        Filter: ((c1)::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äb%';
@@ -291,16 +302,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'äb%'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* 'äb%'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= 'äb'::text) AND ((c1)::text < 'äb?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
+        Filter: ((c1)::text ~~* 'äb%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
@@ -308,16 +322,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* 'ä??_'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= 'ä??'::text) AND ((c1)::text < 'ä???'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
+        Filter: ((c1)::text ~~* 'ä??_'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.146 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 
@@ -330,13 +347,13 @@ Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
 Gather  (cost=11.56..24.18 rows=647 width=32)
   Workers Planned: 3
   ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.18 rows=209 width=32)
-        Filter: ((c1)::text <> 'jones'::text)
+        Filter: (c1 <> 'jones'::"varchar")
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.103 ms
+Babelfish T-SQL Batch Parsing Time: 0.976 ms
 ~~END~~
 
 
@@ -348,13 +365,13 @@ Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
 Gather  (cost=11.56..25.23 rows=648 width=32)
   Workers Planned: 3
   ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..25.23 rows=209 width=32)
-        Filter: (((c1)::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as) OR ((c1)::text < 'jone'::text) OR ((c1)::text >= 'jone?'::text))
+        Filter: (((c1)::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'jone'::"varchar") OR (c1 >= 'jone?'::"varchar"))
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -366,7 +383,7 @@ Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
 Gather  (cost=11.55..25.22 rows=592 width=32)
   Workers Planned: 3
   ->  Parallel Bitmap Heap Scan on testing4  (cost=11.55..25.22 rows=191 width=32)
-        Filter: (((c1)::text !~~* 'ä%'::text COLLATE bbf_unicode_cp1_cs_as) OR ((c1)::text < 'ä'::text) OR ((c1)::text >= 'ä?'::text))
+        Filter: (((c1)::text !~~* 'ä%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'ä'::"varchar") OR (c1 >= 'ä?'::"varchar"))
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -383,16 +400,19 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* '\%ones'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= '\'::text) AND ((c1)::text < '\?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+        Filter: ((c1)::text ~~* '\%ones'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -401,11 +421,14 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
-Gather  (cost=11.40..25.07 rows=1 width=32)
-  Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.40..25.07 rows=1 width=32)
-        Filter: (((c1)::text ~~* '\_ones'::text COLLATE bbf_unicode_cp1_cs_as) AND ((c1)::text >= '\'::text) AND ((c1)::text < '\?'::text))
-        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
+Gather  (cost=4.18..11.30 rows=1 width=32)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
+        Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+        Filter: ((c1)::text ~~* '\_ones'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
+              Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
 ~~END~~
 
 ~~START~~
@@ -536,16 +559,16 @@ GO
 ~~START~~
 text
 Query Text: select * from testing5 where c1 LIKE 'jo%'
-Gather  (cost=10000000000.00..10000000027.00 rows=7 width=32)
+Gather  (cost=10000000000.00..10000000033.80 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
-        Filter: ((c1)::text ~~ 'jo%'::text COLLATE "default")
+  ->  Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
+        Filter: (((c1)::text ~~ 'jo%'::text COLLATE bbf_unicode_cp1_cs_as) AND (c1 >= 'jo'::"varchar" COLLATE bbf_unicode_cp1_cs_as) AND (c1 < 'jo?'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.186 ms
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -584,12 +607,12 @@ Gather  (cost=10000000000.00..10000000027.00 rows=7 width=32)
   Workers Planned: 1
   Single Copy: true
   ->  Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
-        Filter: ((c1)::text ~~ ''::text COLLATE "default")
+        Filter: (c1 = ''::"varchar" COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.183 ms
+Babelfish T-SQL Batch Parsing Time: 0.126 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -616,7 +639,7 @@ Gather  (cost=0.00..0.00 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.151 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -646,7 +669,7 @@ Gather  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.153 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -675,7 +698,7 @@ Gather  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;

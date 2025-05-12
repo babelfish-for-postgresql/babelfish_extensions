@@ -87,6 +87,7 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "bbf_parallel_query.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -323,6 +324,8 @@ static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
+ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
+ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -565,6 +568,14 @@ InstallExtendedHooks(void)
 	prev_validateCachedPlanSearchPath_hook = validateCachedPlanSearchPath_hook;
 	validateCachedPlanSearchPath_hook = pltsql_validateCachedPlanSearchPath;
 	is_bbf_tds_connection_hook = is_bbf_tds_connection;
+
+	prev_ParallelQueryMain_hook = ParallelQueryMain_hook;
+	ParallelQueryMain_hook = bbf_ParallelQueryMain;
+
+	prev_ExecInitParallelPlan_hook = ExecInitParallelPlan_hook;
+	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
+
+	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
 }
 
 void
@@ -648,6 +659,9 @@ UninstallExtendedHooks(void)
 	pltsql_get_object_identity_event_trigger_hook = NULL;
 	pltsql_allow_storing_init_privs_hook = NULL;
 	is_bbf_tds_connection_hook = NULL;
+	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
+	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
+	ExecCheckOneRelPerms_hook = NULL;
 }
 
 /*****************************************
@@ -1252,8 +1266,6 @@ contains_truncation_functions_checker(Oid func_id, void *context)
 static Datum
 adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, Oid result_type, int32 result_typmod)
 {
-	int32       scale;
-
 	if (sql_dialect != SQL_DIALECT_TSQL || result_isnull)
 		return result;
 
@@ -1267,16 +1279,42 @@ adjust_numeric_result(Plan *plan, Node *expr, Datum result, bool result_isnull, 
 
 		if (result_typmod != -1)
 		{
-			scale = (result_typmod - VARHDRSZ) & 0xffff; 
+			int32		scale,
+					precision,
+					val_scale = 0,
+					val_precision = 0,
+					val_typmod = -1,
+					target_precision = 0;
+			Numeric		result_numeric_val;
 
+			scale = (result_typmod - VARHDRSZ) & 0xffff; 
+			precision = ((result_typmod - VARHDRSZ) >> 16) & 0xffff;
 			/*
 			 * For Numeric Division and Numeric Average, 
 			 * we need to do a truncation and for rest we need to do rounding
 			 */
 			if (check_functions_in_node(expr, contains_truncation_functions_checker, NULL))
-				return DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
+				result = DirectFunctionCall2(numeric_trunc, result, Int32GetDatum(scale));
 			else
-				return DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
+				result = DirectFunctionCall2(numeric_round, result, Int32GetDatum(scale));
+			
+			/*
+			 * For the result, we need to check if the precision is within
+			 * the limit. If not, we need to throw an error. We need to throw this 
+			 * error in execution stage because if we don't throw error at this stage, it
+			 * will try to throw error after setting metadata which is not correct.
+			 */
+			result_numeric_val = DatumGetNumeric(result);
+			val_typmod = (*common_utility_plugin_ptr->tsql_numeric_get_typmod) (result_numeric_val);
+
+			val_scale = (val_typmod - VARHDRSZ) & 0xffff;
+			val_precision = ((val_typmod - VARHDRSZ) >> 16) & 0xffff;
+			
+			target_precision = val_precision + (scale - val_scale);
+			if (target_precision > TDS_NUMERIC_MAX_PRECISION ||
+				target_precision > precision)
+				ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+								errmsg("Arithmetic overflow error for data type numeric.")));
 		}
 	}
 
@@ -4803,7 +4841,7 @@ transform_like_in_add_constraint(Node *node)
 	}
 	PG_END_TRY();
 
-	return pltsql_predicate_transformer(node);
+	return pltsql_predicate_transformer(node, true);
 }
 
 /*
@@ -6373,12 +6411,9 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 		 * use get_numeric_typmod_from_exp function to get the typmod
  		 * from the expression node, when the expression type is numeric.
 		 */ 
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp)
-		{
-			result_typmod = (*pltsql_protocol_plugin_ptr)->get_numeric_typmod_from_exp(plan, expr, &found_typmod);
-			if (!found_typmod)
-				return -1;
-		}
+		result_typmod = resolve_numeric_typmod_from_exp(plan, expr, &found_typmod);
+		if (!plan && !found_typmod)
+			return -1;
 	}
 	return result_typmod;
 }
