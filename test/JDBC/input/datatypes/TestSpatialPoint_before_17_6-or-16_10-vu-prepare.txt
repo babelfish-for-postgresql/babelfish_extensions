@@ -4,89 +4,51 @@ CREATE TABLE SPATIALPOINTGEOM_dt (location geometry)
 
 #Positive Test for STGeomFromText with SRID 4326
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) )
-~~ROW COUNT: 1~~
-
 
 #Positive Test for STGeomFromText with SRID 0
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) )
-~~ROW COUNT: 1~~
-
 
 #Negative Test for STGeomFromText when SRID is not provided
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)') )
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: function geometry__stgeomfromtext has no parameters and arguments were supplied.)~~
-
 
 #Negative Test for STGeomFromText when SRID >= 10^6
 #SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
-
 
 #Negative Test for STGeomFromText with SRID < 0
 #SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', -1) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
-
 
 #Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
-
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
-
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText(null, 4326) )
-~~ROW COUNT: 1~~
-
 
 #Negative Test for STGeomFromText when Incorrect cast is provided
 #INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 
 #Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) )
-~~ROW COUNT: 1~~
-
 
 
 #Positive Test for Point with SRID 4326
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) )
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE YourTable ( ID INT PRIMARY KEY, PointColumn geometry ); 
 
 INSERT INTO YourTable (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326));
-~~ROW COUNT: 2~~
-
 
 CREATE TABLE GeomTab ( ID INT PRIMARY KEY, PointColumn geometry );
 
 INSERT INTO GeomTab (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(3.0, 6.0, 4326));
-~~ROW COUNT: 2~~
-
 
 CREATE FUNCTION dbo.GetXCoordinate(@point geometry) RETURNS float AS BEGIN RETURN @point.STX; END; 
 
@@ -95,11 +57,7 @@ CREATE PROCEDURE GetDistanceByXCoordinate @xCoordinate FLOAT AS BEGIN DECLARE @p
 CREATE TABLE TableA (ID INT PRIMARY KEY, PointA geometry); 
 CREATE TABLE TableB (ID INT PRIMARY KEY, PointB geometry);
 INSERT INTO TableA (ID, PointA) VALUES (1, geometry::Point(1.0, 2.0, 4326)); 
-~~ROW COUNT: 1~~
-
 INSERT INTO TableB (ID, PointB) VALUES (1, geometry::Point(3.0, 4.0, 4326));
-~~ROW COUNT: 1~~
-
 
 CREATE PROCEDURE GetPointsByXCoordinate @XCoordinate FLOAT AS BEGIN SELECT * FROM YourTable WHERE PointColumn.STX = @XCoordinate ORDER BY PointColumn.STX; END;
 
@@ -107,8 +65,6 @@ CREATE PROCEDURE GetPointsByXCoordinate1 @XCoordinate FLOAT AS BEGIN DECLARE @Sq
 
 CREATE TABLE YourTable1 ( ID INT PRIMARY KEY, STX geometry ); 
 INSERT INTO YourTable1 (ID, STX) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(5.0, 6.0, 4326));
-~~ROW COUNT: 2~~
-
 
 CREATE FUNCTION GetGeometry() RETURNS geometry AS BEGIN RETURN geometry::Point(1.0, 2.0, 4326); END;
 
@@ -118,8 +74,6 @@ CREATE TRIGGER trg_LogXCoordinateChange ON YourTable AFTER UPDATE AS BEGIN INSER
 
 CREATE TABLE YourTable2 ( ID INT PRIMARY KEY, PointColumn1 geometry, PointColumn2 geometry ); 
 INSERT INTO YourTable2 (ID, PointColumn1, PointColumn2) VALUES (1, geometry::Point(3.0, 4.0, 4326), geometry::Point(4.0, 5.0, 4326));
-~~ROW COUNT: 1~~
-
 
 CREATE FUNCTION dbo.CalculateDistance(@point1 geometry,@point2 geometry) RETURNS numeric(20, 6) AS BEGIN RETURN CAST(@point1.STDistance(@point2) AS numeric(20, 6)); END;
 
@@ -130,88 +84,34 @@ CREATE TABLE DistanceChangeLog (PointID INT,OldDistance FLOAT,NewDistance FLOAT,
 CREATE TRIGGER trg_LogDistanceChange ON YourTable AFTER UPDATE AS BEGIN DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); INSERT INTO DistanceChangeLog (PointID, OldDistance, NewDistance, ChangeDate) SELECT i.ID, CAST(d.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)), CAST(i.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)), GETDATE() FROM inserted i JOIN deleted d ON i.ID = d.ID WHERE CAST(i.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)) <> CAST(d.PointColumn.STDistance(@referencePoint) AS numeric(20, 6)) ORDER BY i.ID; END;
 
 #Tests for Geometry type Prepared Statements
-prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(?) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
-~~ROW COUNT: 1~~
-
+prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(-120.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(-720.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 #Negative Test for STGeomFromText when SRID >= 10^6
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geometry.)~~
-
 #Negative Test for STGeomFromText with SRID < 0
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geometry.)~~
-
 #Negative Test for STGeomFromText when SRID is NULL
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geometry.)~~
-
 #Negative Test for STGeomFromText when a coordinate is missing
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geometry.)~~
-
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
-
 
 create table geominTable (a geometry);
 Insert into geominTable values('POINT(1 2)');
-~~ROW COUNT: 1~~
-
 Insert into geominTable values('POINT(1 2 3)');
-~~ROW COUNT: 1~~
-
 Insert into geominTable values('POINT(1 2 3 4)');
-~~ROW COUNT: 1~~
-
 Insert into geominTable values('LINESTRING(1 2,3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: LINESTRING is not supported)~~
-
 Insert into geominTable values('POINT(1000 2000)');
-~~ROW COUNT: 1~~
-
 Insert into geominTable values('POINT(123 34)');
-~~ROW COUNT: 1~~
-
 
 create procedure geominTest @a geometry as select @a.STX as Xcoord, @a.STY as Ycoord ORDER BY @a.STX;
 
@@ -242,214 +142,96 @@ CREATE TYPE geom FROM geometry NOT NULL ;
 CREATE TABLE TypeTable(ID INT PRIMARY KEY, Shape geom)
 
 INSERT INTO TypeTable(ID, Shape) VALUES(1, geometry::Point(1, 2, 4326));
-~~ROW COUNT: 1~~
-
 
 #Testing Implicit CASTs to and from Geometry data type for supported Explicit CASTs
 #UnSupported CASTs to and from Geometry data type
 CREATE TABLE GeomToVarbinary(p varbinary)
 INSERT INTO GeomToVarbinary(p) VALUES(geometry::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type varbinary but expression is of type geometry)~~
-
 CREATE TABLE GeomTochar(p char)
 INSERT INTO GeomTochar(p) VALUES(geometry::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type bpchar but expression is of type geometry)~~
-
 CREATE TABLE GeomToVarchar(p varchar)
 INSERT INTO GeomToVarchar(p) VALUES(geometry::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type "varchar" but expression is of type geometry)~~
-
 #Supported CASTs to and from Geometry data type
 CREATE TABLE TypeToGeom(p geometry)
 INSERT INTO TypeToGeom(p) VALUES(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)));
-~~ROW COUNT: 1~~
-
 INSERT INTO TypeToGeom(p) VALUES(CAST ('POINT(1 2)' AS char));
-~~ROW COUNT: 1~~
-
 INSERT INTO TypeToGeom(p) VALUES(CAST ('POINT(1 2)' AS varchar));
-~~ROW COUNT: 1~~
-
 
 #Geography Test Cases
 
 #Positive Test for STGeomFromText with SRID 4326
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) )
-~~ROW COUNT: 1~~
-
 
 #Negative Test for STGeomFromText for Geography with SRID 0
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Invalid SRID)~~
-
 
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900)', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 #Negative Test for STGeomFromText when SRID is not provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)') )
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: function geography__stgeomfromtext has no parameters and arguments were supplied.)~~
-
 
 #Negative Test for STGeomFromText when cast is not provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.65100 -22.34900)', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function stgeomfromtext(unknown, integer) does not exist)~~
-
 
 #Negative Test for STGeomFromText when incorrect cast is provided
 #INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 
 #Negative Test for STGeomFromText when SRID >= 10^6
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Invalid SRID)~~
-
 
 #Negative Test for STGeomFromText with SRID < 0
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Invalid SRID)~~
-
 
 #Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
-
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error)~~
-
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText(null, 4326) )
-~~ROW COUNT: 1~~
-
 
 #Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) )
-~~ROW COUNT: 1~~
-
 
 #Negative Test for STPointFromText for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 122.34900)', 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 #Positive Test for Point with SRID 4326
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(47.65100, -22.34900, 4326) )
-~~ROW COUNT: 1~~
-
 
 #Negative Test for Point for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(147.65100, -22.34900, 4326) )
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 #Tests for Geography type Prepared Statements
-prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(?) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
-~~ROW COUNT: 1~~
-
+prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234):4326
-~~ROW COUNT: 1~~
-
 #Negative Test for STGeomFromText for Geography with SRID 0
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test for STGeomFromText when SRID >= 10^6
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):1000000000
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test for STGeomFromText with SRID < 0
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):-1
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test for STGeomFromText with SRID is NULL
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test for STGeomFromText when a coordinate is missing
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Error converting data type varbinary to geography.)~~
-
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ROW COUNT: 1~~
-
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unsupported geometry type)~~
-
 
 CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -461,32 +243,14 @@ CREATE VIEW GeogView AS SELECT location.Long, location.Lat AS Coordinates FROM S
 
 CREATE TABLE test_table (geog geography)
 INSERT INTO test_table(geog) VALUES(geography::Point(1, 2, 4326));
-~~ROW COUNT: 1~~
-
 
 create table geoginTable (a geography);
 Insert into geoginTable values('POINT(1 2)');
-~~ROW COUNT: 1~~
-
 Insert into geoginTable values('POINT(1 2 3)');
-~~ROW COUNT: 1~~
-
 Insert into geoginTable values('POINT(1 2 3 4)');
-~~ROW COUNT: 1~~
-
 Insert into geoginTable values('LINESTRING(1 2,3 4)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: LINESTRING is not supported)~~
-
 Insert into geoginTable values('POINT(1000 2000)');
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 Insert into geoginTable values('POINT(123 34)');
-~~ROW COUNT: 1~~
-
 
 CREATE VIEW SubqueryView AS SELECT (select geog from test_table ORDER BY geog.Lat).Lat AS Latitude ORDER BY Latitude;
 
@@ -508,8 +272,6 @@ CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS
 
 CREATE TABLE SpatialData(ID INT PRIMARY KEY, SpatialLocation GEOGRAPHY);
 INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 4326)), (2, geography::Point(3, 4, 4326)), (3, geography::Point(5, 6, 4326)), (4, geography::Point(7, 8, 4326)), (5, geography::Point(9, 10, 4326));
-~~ROW COUNT: 5~~
-
 
 create function testspatial_tvf(@x int) returns table as return select location from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -517,72 +279,34 @@ create function testspatial_tvf(@x int) returns table as return select location 
 #UnSupported CASTs to and from Geography data type
 CREATE TABLE GeogToVarbinary(p varbinary)
 INSERT INTO GeogToVarbinary(p) VALUES(geography::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type varbinary but expression is of type geography)~~
-
 CREATE TABLE GeogTochar(p char)
 INSERT INTO GeogTochar(p) VALUES(geography::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type bpchar but expression is of type geography)~~
-
 CREATE TABLE GeogToVarchar(p varchar)
 INSERT INTO GeogToVarchar(p) VALUES(geography::Point(1, 2, 4326));
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "p" is of type "varchar" but expression is of type geography)~~
-
 #Supported CASTs to and from Geography data type
 CREATE TABLE TypeToGeog(p geography)
 INSERT INTO TypeToGeog(p) VALUES(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)));
-~~ROW COUNT: 1~~
-
 INSERT INTO TypeToGeog(p) VALUES(CAST ('POINT(1 2)' AS char));
-~~ROW COUNT: 1~~
-
 INSERT INTO TypeToGeog(p) VALUES(CAST ('POINT(1 2)' AS varchar));
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE SPATIALPOINT_dt (PrimaryKey int, GeomColumn geometry, GeogColumn geography)
 
 INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn) VALUES ( 1, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeogColumn) VALUES ( 2, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
-~~ROW COUNT: 1~~
-
 
 INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn, GeogColumn) VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE geomTabWithoutSrid (PrimaryKey int, GeomColumn geometry, ByteaColumn bytea)
 INSERT INTO geomTabWithoutSrid VALUES ( 1, geometry::STGeomFromText('Point(47.65100 -22.34900)', 0), CAST (0x00000000010C17D9CEF753D34740D34D6210585936C0 AS bytea) )
-~~ROW COUNT: 1~~
-
 INSERT INTO geomTabWithoutSrid VALUES ( 2, geometry::STGeomFromText('Point(48.65100 -22.34900)', 4326), CAST (0xE6100000010C17D9CEF753534840D34D6210585936C0 AS bytea) )
-~~ROW COUNT: 1~~
-
 INSERT INTO geomTabWithoutSrid VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 0), CAST (0x00000000010C000000000000F03F0000000000000040 AS bytea) )
-~~ROW COUNT: 1~~
-
 INSERT INTO geomTabWithoutSrid VALUES ( 4, geometry::STGeomFromText('Point(2.0 2.0)', 4326), CAST (0xE6100000010C00000000000000400000000000000040 AS bytea) )
-~~ROW COUNT: 1~~
-
 
 #Tests for Spatial type Prepared Statements
-prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn) values(?, ?) #!#int|-|PrimaryKey|-|4#!#GEOMETRY|-|GeomColumn|-|Point(47.65100 -22.34900):4326
-~~ROW COUNT: 1~~
-
-prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeogColumn) values(?, ?) #!#int|-|PrimaryKey|-|5#!#GEOGRAPHY|-|GeogColumn|-|Point(47.65100 -22.34900):4326
-~~ROW COUNT: 1~~
-
-prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn, GeogColumn) values(?, ?, ?) #!#int|-|PrimaryKey|-|6#!#GEOMETRY|-|GeomColumn|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|GeogColumn|-|Point(1.0 2.0):4326
-~~ROW COUNT: 1~~
-
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn) values(@PrimaryKey, @GeomColumn) #!#int|-|PrimaryKey|-|4#!#GEOMETRY|-|GeomColumn|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeogColumn) values(@PrimaryKey, @GeogColumn) #!#int|-|PrimaryKey|-|5#!#GEOGRAPHY|-|GeogColumn|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn, GeogColumn) values(@PrimaryKey, @GeomColumn, @GeogColumn) #!#int|-|PrimaryKey|-|6#!#GEOMETRY|-|GeomColumn|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|GeogColumn|-|Point(1.0 2.0):4326
 
 create procedure geometry_proc_1 @a geometry, @b varchar(max) as select @a as a, @b as b ORDER by a;
 create procedure geography_proc_1 @a geography, @b varchar(max) as select @a as a, @b as b ORDER by a;
@@ -593,9 +317,5 @@ create schema geom_schema;
 CREATE FUNCTION geom_schema.STDistance(@point geometry) RETURNS nvarchar(max) AS BEGIN RETURN @point.STAsText(); END;
 create table geometry_test(geom_schema geometry)
 Insert INTO geometry_test VALUES(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
-~~ROW COUNT: 1~~
-
 create table STX(STX geometry)
 Insert INTO STX VALUES(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
-~~ROW COUNT: 1~~
-
