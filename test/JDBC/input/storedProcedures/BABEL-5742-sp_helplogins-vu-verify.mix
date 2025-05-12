@@ -65,8 +65,11 @@ end;
 $$;
 GO
 
-
 -- tsql user=jdbc_user password=12345678
+SELECT db_name()
+GO
+SELECT suser_name()
+GO
 EXEC sp_helplogins_vu_test
 GO
 
@@ -83,6 +86,10 @@ EXEC sp_helplogins_vu_test
 GO
 
 -- tsql user=testloginwithsecurityadmin3 password=12345678
+SELECT db_name()
+GO
+SELECT suser_name()
+GO
 EXEC sp_helplogins_vu_test
 GO
 
