@@ -185,6 +185,19 @@ INSERT INTO sales_data VALUES
     (3, NULL, 350, 'Central', 'East');
 GO
 
+CREATE TABLE revenue_data (
+    id INT,
+    q1_sales INT,
+    q2_sales INT
+);
+GO
+
+INSERT INTO revenue_data VALUES
+    (1, 100, 150),
+    (2, 200, 250),
+    (3, NULL, 350);
+GO
+
 CREATE TABLE product_sales (
     product_id INT,
     product_desc VARCHAR(25),
