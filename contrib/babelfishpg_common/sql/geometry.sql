@@ -70,41 +70,12 @@ CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
 
 CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
-	AS $$
-	DECLARE
-		srid integer;
-		Geomtype text;
-		geom sys.GEOMETRY; 
-		Zmflag smallint;
-	BEGIN
-		srid := $2;
-		IF srid >= 0 AND srid <= 999999 THEN
-			-- Call the underlying function after preprocessing
-			geom = (SELECT sys.stgeomfromtext_helper($1, $2));
-			Geomtype = (SELECT sys.ST_GeometryType(geom));
-			Zmflag = (SELECT sys.ST_Zmflag(geom));
-			IF Geomtype = 'ST_Point' THEN
-				-- if the point instance has z flag only then Zmflag = 1
-				-- if the point instance has m flag only then Zmflag = 2
-				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
-					RETURN geom;
-				END IF;
-			ELSE
-				RAISE EXCEPTION '% is not supported', Geomtype;
-			END IF;
-		ELSE
-			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
-		END IF;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
-
+	AS 'babelfishpg_common', 'get_geometry_from_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
 	RETURNS TEXT
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common', 'st_as_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
@@ -117,7 +88,7 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 	RETURNS sys.bpchar
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common','geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
@@ -130,7 +101,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 	RETURNS sys.varchar
-	AS '$libdir/postgis-3','LWGEOM_asText'
+	AS 'babelfishpg_common','geometry_astext'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
@@ -142,77 +113,14 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
-    RETURNS sys.GEOMETRY
-    AS $$
-    DECLARE
-        len integer;
-        varBin bytea;
-		geomType bytea;
-		srid integer;
-		byte_position integer := 6;
-		coord_NaN bytea := E'\\x000000000000f87f';
-		input_coord bytea;
-		isNaN integer = 0;
-        newVarBin bytea;
-    BEGIN
-        varBin := $1;
-        len := LENGTH(varBin);
-        IF len >= 22 THEN
-			-- We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type)
-			-- Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geometry Type)
-			srid := (get_byte(varBin, 3) << 24) | (get_byte(varBin, 2) << 16) | (get_byte(varBin, 1) << 8) | get_byte(varBin, 0);
-			WHILE byte_position < len LOOP
-				-- Get the coordinate to check if it is NaN
-				input_coord := substring(varBin from byte_position + 1 for 8);
-				IF encode(input_coord, 'hex') = encode(coord_NaN, 'hex') THEN
-					isNaN := 1;
-				END IF;
-				byte_position := byte_position + 8;
-			END LOOP;
-			geomType := substring(varBin from 5 for 2);
-            varBin := substring(varBin from 1 for 4) || substring(varBin from 7);
-			IF srid >= 0 AND srid <= 999999 AND isNaN = 0 THEN
-				IF encode(geomType, 'hex') = encode(E'\\x010c', 'hex') THEN
-					newVarBin := E'\\x0101000020' || varBin;
-				ELSE
-					RAISE EXCEPTION 'Unsupported geometry type';
-				END IF;
-			ELSE
-				RAISE EXCEPTION 'Error converting data type varbinary to geometry.';
-			END IF;
-            -- Call the underlying function after preprocessing
-            RETURN (SELECT sys.GEOMETRY_helper(newVarBin)); 
-        ELSE
-            RAISE EXCEPTION 'Invalid Geometry';
-        END IF;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common','geometry_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
 
 CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
-    RETURNS bytea
-    AS $$
-    DECLARE
-        byte bytea;
-        srid_flag text;
-    BEGIN
-        byte := (SELECT sys.bytea_helper($1));
-        -- Checking the Geometry type currently we support only POINT type -> type = 1
-        IF encode(substring(byte from 2 for 3), 'hex') = encode(E'\\x010000', 'hex') THEN
-            srid_flag := encode(substring(byte from 5 for 1), 'hex');
-            -- Check if the given geometry has SRID flag
-            IF srid_flag = encode(E'\\x20', 'hex') THEN
-                byte := substring(byte from 6);
-                byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
-            ELSEIF srid_flag = encode(E'\\x00', 'hex') AND LENGTH(byte) = 21 THEN
-                -- Signifies SRID = 0, pass the driver expected wkb manually
-                byte := substring(byte from 6); -- contains only wkb point coords
-                -- prepend 4 byte SRID (00000000) + 2 bytes (type -> 010C for point)
-                byte := E'\\x00000000010c' || substring(byte from 1);
-            END IF;
-        END IF;
-        RETURN byte;
-    END;
-    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
     RETURNS sys.GEOMETRY
@@ -292,38 +200,23 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_asBinary'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	AS 'babelfishpg_common', 'st_as_binary_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
-		srid integer;
 		Geomtype text;
 		geom sys.GEOMETRY;
-		Zmflag smallint;
 	BEGIN
-		srid := $2;
-		IF srid >= 0 AND srid <= 999999 THEN
-			-- Call the underlying function after preprocessing
-			geom = (SELECT sys.stgeomfromtext_helper($1, $2));
-			Geomtype = (SELECT sys.ST_GeometryType(geom));
-			Zmflag = (SELECT sys.ST_Zmflag(geom));
-			IF Geomtype = 'ST_Point' THEN
-				-- if the point instance has z flag only then Zmflag = 1
-				-- if the point instance has m flag only then Zmflag = 2
-				-- if the point instance has both z and m flags then Zmflag = 3
-				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-					RAISE EXCEPTION 'Unsupported flags';
-				ELSE
-					RETURN geom;
-				END IF;
-			ELSE
-				RAISE EXCEPTION '% is not supported', Geomtype;
-			END IF;
+		geom = (SELECT sys.geomfromtext_helper($1, $2));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+
+		IF Geomtype = 'ST_Point' THEN
+				RETURN geom;
 		ELSE
-			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -415,7 +308,7 @@ CREATE OPERATOR sys.<> (
     COMMUTATOR = <>
 );
 
---STDimension
+-- STDimension
 -- Retrieves spatial dimension
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
         RETURNS integer
@@ -429,7 +322,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STDisjoint
+-- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
@@ -443,7 +336,7 @@ CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---STIntersects
+-- STIntersects
 -- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
@@ -458,7 +351,7 @@ CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMET
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE; 
 
---STIsClosed
+-- STIsClosed
 -- Checks if geometry is closed
 CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
         RETURNS sys.BIT
@@ -472,13 +365,25 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
                 IF geom_type = 'ST_Point' THEN
                         RETURN 0;
                 END IF; 
-
+       
                 RETURN sys.STIsClosed_helper(geom);
         END;
         $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance. 2D only.
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS $$
+	BEGIN
+		IF STSrid(geom1) != STSrid(geom2) THEN
+			RETURN NULL;
+		ELSE
+			Return sys.STDistance_helper($1,$2);
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
 	AS '$libdir/postgis-3', 'ST_Distance'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -493,14 +398,14 @@ CREATE OR REPLACE FUNCTION sys.sty(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_y_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
---STIsEmpty
+-- STIsEmpty
 -- Checks if geometry is empty
 CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','LWGEOM_isempty'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---STIsValid
+-- STIsValid
 -- Checks if geometry is valid 
 CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
         RETURNS sys.BIT
@@ -537,51 +442,19 @@ CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','LWGEOM_isclosed'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-	
-CREATE OR REPLACE FUNCTION sys.stgeomfromtext_helper(text, integer)
-	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','LWGEOM_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GeomPoint_helper(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
 
-CREATE OR REPLACE FUNCTION sys.GEOMETRY_helper(bytea)
-	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','LWGEOM_from_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
-	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_to_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
 	RETURNS sys.GEOMETRY
-	AS $$
-	DECLARE
-		Geomtype text;
-		geom sys.GEOMETRY; 
-		Zmflag smallint;
-	BEGIN
-		-- Call the underlying function after preprocessing
-		geom = (SELECT sys.stgeomfromtext_helper($1, 0));
-		Geomtype = (SELECT sys.ST_GeometryType(geom));
-		Zmflag = (SELECT sys.ST_Zmflag(geom));
-		IF Geomtype = 'ST_Point' THEN
-			-- if the point instance has z flag only then Zmflag = 1
-			-- if the point instance has m flag only then Zmflag = 2
-			-- if the point instance has both z and m flags then Zmflag = 3
-			IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
-				RAISE EXCEPTION 'Unsupported flags';
-			ELSE
-				RETURN geom;
-			END IF;
-		ELSE
-			RAISE EXCEPTION '% is not supported', Geomtype;
-		END IF;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	AS 'babelfishpg_common', 'charTogeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.geomfromtext_helper(text, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'get_geometry_from_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	

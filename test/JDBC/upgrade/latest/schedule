@@ -433,6 +433,7 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
+Test-pointZM
 TestReal
 TestRowVersion
 TestSmallDatetime
