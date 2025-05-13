@@ -4320,7 +4320,8 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 int 
 get_next_xml_handle()
 {
-    int        old_handle = current_xml_handle;
+    int           old_handle = current_xml_handle;
+    MemoryContext oldContext = NULL;
 	
     while (true)
     {
@@ -4342,7 +4343,14 @@ get_next_xml_handle()
             break;
     }
     
-    bms_add_member(active_xml_handles, current_xml_handle);
+     /* 
+     * Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
+     * This prevents the bitmap set from being freed when the current memory context
+     * is reset, which would cause the handles to be lost and potentially reused.
+     */
+    oldContext = MemoryContextSwitchTo(TopMemoryContext);
+    active_xml_handles = bms_add_member(active_xml_handles, current_xml_handle);
+    MemoryContextSwitchTo(oldContext);
 
     return current_xml_handle;
 }
@@ -4436,9 +4444,10 @@ create_xml_handle_temp_table()
 {
     CreateStmt   *stmt = makeNode(CreateStmt);
     RangeVar     *relation = makeRangeVar(NULL,"#xml_handle_temp_table", -1);
-    const char   *prev_current_user;
+    Oid 	  save_userid;
+    int 	  save_sec_context;
     int           saved_dialect = sql_dialect;
-    ObjectAddress  address;
+    ObjectAddress address;
     
     /* This makes it temporary table */
     relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4456,28 +4465,22 @@ create_xml_handle_temp_table()
     stmt->options = NIL;
     stmt->accessMethod = NULL;
     
-    /* Set current user to session user for necessary permissions */
-    prev_current_user = GetUserNameFromId(GetUserId(), false);
-    bbf_set_current_user("sysadmin");
+    GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
     PG_TRY();
     {
+	/* Set current user to bbf_role_admin for create permissions.*/
         sql_dialect = SQL_DIALECT_TSQL;
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
         address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
         xml_handle_temp_table_relid = address.objectId;
     }
-    PG_CATCH();
+    PG_FINALLY();
     {
-    	/* Restore previous state. */
-    	bbf_set_current_user(prev_current_user);
+    	SetUserIdAndSecContext(save_userid, save_sec_context);
     	sql_dialect = saved_dialect;
-    	PG_RE_THROW();
     }
     PG_END_TRY();
-
-    /* Set current user back to previous user */
-    bbf_set_current_user(prev_current_user);
-    sql_dialect = saved_dialect;
 	
     current_xml_handle = XML_HANDLE_START;
 }
@@ -4506,8 +4509,9 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     bool                  is_namespace_null = true;
     Relation              relation;
     Datum                 values[7];
-    const char           *prev_current_user;
-    int			  saved_dialect = sql_dialect;
+    Oid 		  save_userid;
+    int 		  save_sec_context;
+    int                   saved_dialect = sql_dialect;
     HeapTuple             tuple;
     bool                  nulls[7] = {false, true, false, true, true, false, true};
 	
@@ -4564,28 +4568,22 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     
     tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
-    /* Set current user to session user for insert permissions */
-    prev_current_user = GetUserNameFromId(GetUserId(), false);
-    bbf_set_current_user("sysadmin");
+    GetUserIdAndSecContext(&save_userid, &save_sec_context);
     
     PG_TRY();
     {
+	/* Set current user to bbf_role_admin for insert permissions */
         sql_dialect = SQL_DIALECT_TSQL;
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
     	CatalogTupleInsert(relation, tuple);
     }
-    PG_CATCH();
+    PG_FINALLY();
     {
-    	/* Restore previous state. */
-    	bbf_set_current_user(prev_current_user);
+    	SetUserIdAndSecContext(save_userid, save_sec_context);
     	sql_dialect = saved_dialect;
-    	PG_RE_THROW();
     }
     PG_END_TRY();
-    
-    /* Set current user back to previous user */
-    bbf_set_current_user(prev_current_user);
-    sql_dialect = saved_dialect;
-    
+        
     heap_freetuple(tuple);
     
     relation_close(relation, NoLock);
@@ -4615,9 +4613,11 @@ delete_xml_handle_entry(int document_id)
     HeapTuple             tuple;
     bool                  found = false;
     int                   curr_handle = (document_id + 1) / 2;
-    const char           *prev_current_user;
-    int			  saved_dialect = sql_dialect;
-
+    int 		  save_sec_context;
+    Oid 		  save_userid;
+    int                   saved_dialect = sql_dialect;
+    MemoryContext         oldContext = NULL;
+    
     /* Check if the temporary table exists, create it if not */
     if (!OidIsValid(xml_handle_temp_table_relid))
     {
@@ -4648,29 +4648,26 @@ delete_xml_handle_entry(int document_id)
     /* Find and delete the tuple */
     if (HeapTupleIsValid(tuple))
     {
-	/* Set current user to session user for delete permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
          
 	PG_TRY();
 	{
+	   /* Set current user to bbf_role_admin for delete permissions */
 	   sql_dialect = SQL_DIALECT_TSQL;
+	   SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 	   CatalogTupleDelete(relation, &tuple->t_self);
 	}
-        PG_CATCH();
+	PG_FINALLY();
 	{
-	   /* Restore previous state. */
-	   bbf_set_current_user(prev_current_user);
-	   sql_dialect = saved_dialect;
-	   PG_RE_THROW();
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		sql_dialect = saved_dialect;
 	}
 	PG_END_TRY();
      
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
-	sql_dialect = saved_dialect;
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	active_xml_handles = bms_del_member(active_xml_handles, curr_handle);
+	MemoryContextSwitchTo(oldContext);
 
-	bms_del_member(active_xml_handles, curr_handle);
         found = true;
     }
     
@@ -4694,11 +4691,6 @@ delete_xml_handle_entry(int document_id)
 void
 reset_cached_xml_handle(void)
 {
-	const char     *prev_current_user;
-	ObjectAddress   object;
-	int             saved_dialect = sql_dialect;
-	Oid             temp_relid = InvalidOid;
-
 	/* Reset active handles bitmap */
 	bms_free(active_xml_handles);
 	active_xml_handles = NULL;
@@ -4706,48 +4698,11 @@ reset_cached_xml_handle(void)
 	/* Reset xml handles */
 	current_xml_handle = XML_HANDLE_INVALID; 
 
-        /* If the temporary table exists, drop it */
-        if (OidIsValid(xml_handle_temp_table_relid))
-        {
-	    temp_relid =  xml_handle_temp_table_relid;
-            
-	    /* Invalidate the OID before dropping the table */
-            xml_handle_temp_table_relid = InvalidOid;
-
-            /* Set current user to session user for drop permissions */
-            prev_current_user = GetUserNameFromId(GetUserId(), false);
-            bbf_set_current_user("sysadmin");
-            
-            PG_TRY();
-            {
-                sql_dialect = SQL_DIALECT_TSQL;
-                
-                /* Drop the table using ObjectAddress */
-                object.classId = RelationRelationId;
-                object.objectId = temp_relid;
-                object.objectSubId = 0;
-                
-                performDeletion(&object, DROP_RESTRICT, 0);
-                
-                /* Reset the table OID since it's now invalid */
-                xml_handle_temp_table_relid = InvalidOid;
-            }
-            PG_CATCH();
-            {
-                /* Restore previous state. */
-                bbf_set_current_user(prev_current_user);
-                sql_dialect = saved_dialect;
-                FlushErrorState();
-            }
-            PG_END_TRY();
-            
-            /* Set current user back to previous user */
-            bbf_set_current_user(prev_current_user);
-            sql_dialect = saved_dialect;
-        }
+       /* Invalidate the Oid */
+	xml_handle_temp_table_relid = InvalidOid;
     
-    /* Create a new table */
-    create_xml_handle_temp_table();
+       /* Create a new table */
+       create_xml_handle_temp_table();
      
 }
 
