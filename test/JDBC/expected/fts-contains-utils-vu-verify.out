@@ -2,7 +2,7 @@ SELECT * FROM fts_rewrite_prepare_v1;
 GO
 ~~START~~
 text
-one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three')
+(one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three'))
 ~~END~~
 
 
@@ -10,7 +10,7 @@ EXEC fts_rewrite_prepare_p1;
 GO
 ~~START~~
 text
-one | ('one')
+(one)
 ~~END~~
 
 
@@ -18,7 +18,7 @@ SELECT fts_rewrite_prepare_f1();
 GO
 ~~START~~
 varchar
-one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two')
+(one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two'))
 ~~END~~
 
 
@@ -97,7 +97,7 @@ select sys.babelfish_fts_rewrite('"one   @ two    ^ three"');
 go
 ~~START~~
 text
-one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three')
+(one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three'))
 ~~END~~
 
 
@@ -105,7 +105,7 @@ select sys.babelfish_fts_rewrite('"one @ two"');
 go
 ~~START~~
 text
-one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two')
+(one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two'))
 ~~END~~
 
 
@@ -121,47 +121,47 @@ select sys.babelfish_fts_rewrite('"much of the"');
 go
 ~~START~~
 text
-one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+(one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one'))
 ~~END~~
 
 ~~START~~
 text
-one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+(one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e '))
 ~~END~~
 
 ~~START~~
 text
-one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+(one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e '))
 ~~END~~
 
 ~~START~~
 text
-one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+(one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one'))
 ~~END~~
 
 ~~START~~
 text
-one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+(one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e '))
 ~~END~~
 
 ~~START~~
 text
-one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+(one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e '))
 ~~END~~
 
 ~~START~~
 text
-one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+(one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one'))
 ~~END~~
 
 ~~START~~
 text
-one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+(one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one'))
 ~~END~~
 
 ~~START~~
 text
-much<->of<->the | ('much specialCharscat1e09616b53f5138735a7d0a79e78e804e of specialCharscat1e09616b53f5138735a7d0a79e78e804e the')
+(much<->of<->the | ('much specialCharscat1e09616b53f5138735a7d0a79e78e804e of specialCharscat1e09616b53f5138735a7d0a79e78e804e the'))
 ~~END~~
 
 

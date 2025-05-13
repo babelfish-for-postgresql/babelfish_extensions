@@ -181,7 +181,7 @@ EXEC fts_contains_vu_prepare_p1 '   "  daily news            " '
 COMMIT TRANSACTION;
 GO
 
--- Prefix Term not supported
+-- Prefix Term support
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
 GO
 
@@ -192,11 +192,64 @@ GO
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
 
--- Boolean operators not supported
+-- Boolean operators support
 EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
 GO
 
 EXEC fts_contains_vu_prepare_p1 'test AND love';
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol AND "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol AND (Rats or ("hear*" | "loud noises"))'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'wine AND NOT resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'beer and wine'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR treatment*)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film OR game*)) AND (Rockstar OR video)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '(farm* AND credit) AND ("loan board" OR FCC)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '(diversity AND leadership) AND ("visible minorit*" OR women)'
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain and stress')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal and Croissants')
+GO
+
+SELECT * FROM fts_contains_v1
+GO
+
+WITH fts_contains_vu_cte1 AS (
+    SELECT *
+    FROM fts_contains_vu_t
+    WHERE CONTAINS(txt, 'resveratrol or (grape and wine)')
+)
+SELECT * FROM fts_contains_vu_cte1
+GO
+
+WITH fts_contains_vu_cte2 AS (
+    SELECT *
+    FROM fts_contains_vu_t
+)
+SELECT *
+FROM fts_contains_vu_cte2
+WHERE CONTAINS(txt, 'resveratrol or (grape and wine)')
 GO
 
 -- Special Character cases
@@ -590,6 +643,65 @@ GO
 SELECT * FROM fts_contains_multicol_t WHERE contains((txt1, txt2), '')
 GO
 
+DROP FULLTEXT INDEX ON fts_contains_multicol_t
+GO
+
+CREATE FULLTEXT INDEX ON fts_contains_multicol_t(
+        txt1, 
+        txt2,
+        txt3,
+        txt4) KEY INDEX uid
+GO
+
+--Boolean operators support for multiple columns
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'genome AND DNA');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), 'Renaissance OR "Ancient Egyptian*"');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '("Artificial Intelligence" OR AI) AND (technology OR computing)');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(art OR artist*) AND NOT Picasso');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(quantum OR physics) AND (computing OR calculation*) AND NOT genome');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '(blockchain OR "cloud computing") AND technology AND NOT (genome OR DNA)');
+GO
+
+SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
+        txt1, 
+        txt2,
+        txt3,
+        txt4), '("Starry Night" OR symphony) AND (Mozart OR "van Gogh") AND NOT Shakespeare');
+GO
 
 -- Test cases for the relation new_schema_fts.multicol_tb
 
@@ -666,7 +778,6 @@ SELECT * FROM new_schema_fts.multicol_tb WHERE contains((
         NULL, 
         chr), 'Order_789')
 GO
-
 
 -- Test cases for content_table
 CREATE UNIQUE INDEX ucid ON content_table(id)

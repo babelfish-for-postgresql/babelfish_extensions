@@ -14,10 +14,13 @@ GO
 DROP FULLTEXT INDEX ON fts_contains_vu_t;
 GO
 
-DROP TABLE fts_contains_vu_t;
+DROP VIEW fts_contains_pgconfig_v1
 GO
 
-DROP VIEW fts_contains_pgconfig_v1
+DROP VIEW fts_contains_v1
+GO
+
+DROP TABLE IF EXISTS fts_contains_vu_t
 GO
 
 drop fulltext index on test_special_char_t;

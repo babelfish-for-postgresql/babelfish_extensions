@@ -21,23 +21,28 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"AND"           { yylval = "AND"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return AND_TOKEN; }
-"AND NOT"       { yylval = "AND NOT"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return AND_NOT_TOKEN; }
-"OR"            { yylval = "OR"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return OR_TOKEN; }
-"NOT"			{ yylval = "NOT"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return NOT_TOKEN; }
+"AND"           { yylval = "AND"; return AND_TOKEN; }
+"and"           { yylval = "AND"; return AND_TOKEN; }
+"&"           	{ yylval = "AND"; return AND_TOKEN; }
+"AND NOT"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
+"and not"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
+"&!"       	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
+"OR"            { yylval = "OR"; return OR_TOKEN; }
+"or"            { yylval = "OR"; return OR_TOKEN; }
+"|"            	{ yylval = "OR"; return OR_TOKEN; }
+"NOT"		{ yylval = "NOT"; yyerror(NULL, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
 "INFLECTIONAL"  { yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
 "THESAURUS"     { yylval = "THESAURUS"; return THESAURUS_TOKEN; }
-"FORMSOF"       { yylval = "FORMSOF"; return FORMSOF_TOKEN; }
+"FORMSOF"       { yylval = "FORMSOF"; yyerror(NULL, "Generation term is not currently supported in Babelfish"); return FORMSOF_TOKEN; }
 "("             { yylval = "("; return O_PAREN_TOKEN; }
 ")"             { yylval = ")"; return C_PAREN_TOKEN; }
 ","             { yylval = ","; return COMMA_TOKEN; }
 [ \t\r\n]+      { yylval = " "; return WS_TOKEN; }
 
 
-FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\)			    { yylval = yytext; yyerror(NULL, "Generation term is not currently supported in Babelfish"); return GENERATION_TERM_TOKEN; }  /* Handle FORMSOF generation term */
 \"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  /* Handle prefix terms */
 \"[^"]*\"                																						    { yylval = yytext; return TEXT_TOKEN; }  /* Handle double-quoted phrases */
-[a-zA-Z0-9~`!@#$%^&*()+_\-={[}\]\|\\:;"'<,>.?/]+ 																	{ if (strncasecmp(yytext, "FORMSOF(", strlen("FORMSOF(")) == 0) { yyerror(NULL, "Generation term is not currently supported in Babelfish"); } yylval = yytext; return WORD_TOKEN; }  /* Handle individual words */
+[a-zA-Z0-9~`!@#$%^&*+_\-={[}\]|\\:;"'<,>.?/]+																	{ if (strncasecmp(yytext, "FORMSOF(", strlen("FORMSOF(")) == 0) { yyerror(NULL, "Generation term is not currently supported in Babelfish"); } yylval = yytext; return WORD_TOKEN; }  /* Handle individual words */
 
 .               																									{ return yytext[0]; }  /* Other characters are returned as-is */
 
