@@ -437,6 +437,8 @@ HALFVEC_L1_OPS:                                  H A L F V E C UNDERLINE L '1' U
 HALFVEC_L2_OPS:                                  H A L F V E C UNDERLINE L '2' UNDERLINE O P S;
 HASH:                                            H A S H;
 HASHED:                                          H A S H E D;
+HASM:                                            'HasM';
+HASZ:                                            'HasZ';
 HAVING:                                          H A V I N G;
 HEALTHCHECKTIMEOUT:                              H E A L T H C H E C K T I M E O U T;
 HEALTH_CHECK_TIMEOUT:                            H E A L T H  UNDERLINE  C H E C K  UNDERLINE  T I M E O U T;
@@ -545,6 +547,7 @@ LONG_DOUBLE_QUOTE:                               ["] LONG ["] {pltsql_quoted_ide
 LONG_SQBRACKET:                                  '[' LONG ']';
 LOOP:                                            L O O P;
 LOW:                                             L O W;
+M:                                               [Mm];
 MANUAL:                                          M A N U A L;
 MARK:                                            M A R K;
 MASK:                                            M A S K;
@@ -1140,6 +1143,7 @@ YEAR:                                            Y E A R;
 YEARS:                                           Y E A R S;
 YMAX:                                            Y M A X;
 YMIN:                                            Y M I N;
+Z:                                               [Zz];
 ZONE:                                            Z O N E;
 
 //Build-ins:
@@ -1252,7 +1256,7 @@ fragment I: ('I'|'i');
 fragment J: ('J'|'j');
 fragment K: ('K'|'k');
 fragment L: ('L'|'l');
-fragment M: ('M'|'m');
+// fragment M: ('M'|'m');  // redundant, since already defined as token above
 fragment N: ('N'|'n');
 fragment O: ('O'|'o');
 fragment P: ('P'|'p');
@@ -1265,7 +1269,7 @@ fragment V: ('V'|'v');
 fragment W: ('W'|'w');
 fragment X: ('X'|'x');
 fragment Y: ('Y'|'y');
-fragment Z: ('Z'|'z');
+// fragment Z: ('Z'|'z');  // redundant, since already defined as token above
 
 fragment CURRENCY_SYMBOL
     : '$'       // Dollar

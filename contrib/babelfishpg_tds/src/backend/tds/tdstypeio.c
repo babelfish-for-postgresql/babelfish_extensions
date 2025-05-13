@@ -1495,10 +1495,14 @@ TdsTypeUIDToDatum(StringInfo buf)
 Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
-	bytea	   *result;
-	int32	   geomType = 0;
-	int		   nbytes,
-			   npoints;
+	bytea	   	*result;
+	int32	   	geomType = 0;
+	int		   	nbytes,
+			   	pointSize,
+			   	npoints;
+	uint8_t 	lastByte = buf->data[buf->len - 1],
+				geometryType = buf->data[buf->cursor + 4],
+    			subType = buf->data[buf->cursor + 5];
 	StringInfo  destBuf = makeStringInfo();
 
 	/*
@@ -1511,33 +1515,74 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	 * 4th byte is always 0
 	 */
 	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
-	
-	npoints = (buf->len - buf->cursor - 6)/16;
+
+	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
+    if (geometryType == 1)
+    {
+        
+        switch(subType)
+        {
+            case 12:  // XY point
+				geomType = (int32)POINTTYPE;
+				pointSize = 16;
+                break;
+                
+            case 13:  // XYZ point
+				geomType = (int32)POINTTYPE;
+                destBuf->data[3] = 0x01;
+                pointSize = 24;
+                break;
+                
+            case 14:  // XYM point
+				geomType = (int32)POINTTYPE;
+                destBuf->data[3] = 0x02;
+                pointSize = 24;
+                break;
+                
+            case 15:  // XYZM point
+				geomType = (int32)POINTTYPE;
+                destBuf->data[3] = 0x03;
+                pointSize = 32;
+                break;
+                
+            case 4:   // Empty Geometry
+				npoints = 0;
+				pointSize = 21;
+
+                if (lastByte == 1)
+					geomType = (int32)POINTTYPE;
+				break;
+                
+            default:
+                ereport(ERROR,
+                        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                         errmsg("Unsupported geometry type")));
+        }
+    }
+    else
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Unsupported geometry type")));
+    }
+
+    if (subType != 4)
+		npoints = (buf->len - buf->cursor - 6)/pointSize;
+
 	nbytes = buf->len - buf->cursor + 6;
 	result = (bytea *) palloc0(nbytes + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 
-	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
-	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12)
-	{
-		geomType = (int32) POINTTYPE;
+	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for the geometry */
+	enlargeStringInfo(destBuf, sizeof(uint32_t));
+	memcpy(destBuf->data + destBuf->len, (char *) &geomType, sizeof(uint32_t));
+	destBuf->len += sizeof(uint32_t);
+	destBuf->data[destBuf->len] = '\0';
 
-		enlargeStringInfo(destBuf, sizeof(uint32_t));
-		memcpy(destBuf->data + destBuf->len, (char *) &geomType, sizeof(uint32_t));
-		destBuf->len += sizeof(uint32_t);
-		destBuf->data[destBuf->len] = '\0';
-
-		enlargeStringInfo(destBuf, sizeof(uint32_t));
-		memcpy(destBuf->data + destBuf->len, (char *) &npoints, sizeof(uint32_t));
-		destBuf->len += sizeof(uint32_t);
-		destBuf->data[destBuf->len] = '\0';
-	}
-	else
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Unsupported geometry type")));
-	}
+	enlargeStringInfo(destBuf, sizeof(uint32_t));
+	memcpy(destBuf->data + destBuf->len, (char *) &npoints, sizeof(uint32_t));
+	destBuf->len += sizeof(uint32_t);
+	destBuf->data[destBuf->len] = '\0';
 
 	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
 	appendBinaryStringInfo(destBuf, buf->data + buf->cursor + 6, buf->len - 6);
@@ -1547,7 +1592,6 @@ TdsTypeSpatialToDatum(StringInfo buf)
 
 	PG_RETURN_BYTEA_P(result);
 }
-
 StringInfo
 TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken token)
 {

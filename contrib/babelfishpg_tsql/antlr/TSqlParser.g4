@@ -3924,6 +3924,10 @@ geospatial_col
     | LONG
     | LONG_SQBRACKET
     | LONG_DOUBLE_QUOTE
+    | HASM
+    | HASZ
+    | M
+    | Z
     ;
 
 geospatial_func_no_arg
@@ -4593,6 +4597,8 @@ keyword
     | GUID
     | HADR
     | HASH
+    | HASM
+    | HASZ
     | HASHED
     | HEALTHCHECKTIMEOUT
     | HEALTH_CHECK_TIMEOUT
@@ -4684,6 +4690,7 @@ keyword
     | LONG_SQBRACKET
     | LOOP
     | LOW
+    | M
     | MANUAL
     | MARK
     | MASK
@@ -5173,6 +5180,7 @@ keyword
     | YEARS
     | YMAX
     | YMIN    
+    | Z   
     | ZONE
     //Built-ins:
     | VARCHAR

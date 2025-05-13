@@ -43,14 +43,14 @@ INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Po
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
@@ -337,14 +337,14 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('P
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow

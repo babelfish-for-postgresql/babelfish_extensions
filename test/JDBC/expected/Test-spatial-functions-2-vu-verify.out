@@ -1020,7 +1020,7 @@ go
 bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 DECLARE @point1 geography, @point2 varchar(50), @point3 int;
@@ -1033,7 +1033,7 @@ go
 bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- Null test for Geospatial functions

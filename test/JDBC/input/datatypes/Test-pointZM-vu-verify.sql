@@ -1,4 +1,33 @@
+-- This file tests support for POINT with ZM flags
+-- It also includes test for HasM , HasZ, Z , M functions
+
+-- HasM, HasZ, Z, M tests
+SELECT location.HasM from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+
+SELECT location.HasM from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+
+SELECT location.M from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+
+SELECT location.M from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+
+SELECT location.Z from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+
+SELECT location.Z from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+
 -- STGeomFromText tests with different SRIDs
+
 SELECT geography::STGeomFromText('POINT(45 90)', 4326);
 GO
 

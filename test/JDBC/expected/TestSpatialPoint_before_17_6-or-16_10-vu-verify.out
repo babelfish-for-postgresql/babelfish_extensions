@@ -227,7 +227,7 @@ Go
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT location.Lat from SPATIALPOINTGEOM_dt ORDER BY location.STX;
@@ -2553,7 +2553,7 @@ Go
 float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT location.STY from SPATIALPOINTGEOG_dt ORDER BY location.Lat;

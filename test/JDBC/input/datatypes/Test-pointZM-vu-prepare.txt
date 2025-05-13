@@ -1,3 +1,6 @@
+# This file tests support for POINT with ZM flags
+# It also includes test for HasM , HasZ, Z , M functions
+
 # Geometry Test Cases
 
 CREATE TABLE GEOSPATIALPOINTGEOM_dt (location geometry)
@@ -497,3 +500,21 @@ INSERT INTO GeographyToBytea (ID, geo_point) VALUES (6, geography::STGeomFromTex
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (7, geography::STGeomFromText('POINT(1 2 3 4 )', 4326));
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (8, geography::STGeomFromText('POINT EMPTY', 4326));
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (9, geography::STGeomFromText( NULL , 4326));
+
+# Views  for HasM , HasZ, Z , M functions
+
+CREATE VIEW GeometryHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+ 
+CREATE VIEW GeometryHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryM AS SELECT location.M FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyM AS SELECT location.M FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;

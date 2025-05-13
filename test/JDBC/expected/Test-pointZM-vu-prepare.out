@@ -1,3 +1,6 @@
+# This file tests support for POINT with ZM flags
+# It also includes test for HasM , HasZ, Z , M functions
+
 # Geometry Test Cases
 
 CREATE TABLE GEOSPATIALPOINTGEOM_dt (location geometry)
@@ -84,14 +87,14 @@ INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText(
 INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when cast is not provided
@@ -649,14 +652,14 @@ INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geometry::STGeomFromText
 INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 
@@ -1081,3 +1084,21 @@ INSERT INTO GeographyToBytea (ID, geo_point) VALUES (8, geography::STGeomFromTex
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (9, geography::STGeomFromText( NULL , 4326));
 ~~ROW COUNT: 1~~
 
+
+# Views  for HasM , HasZ, Z , M functions
+
+CREATE VIEW GeometryHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+ 
+CREATE VIEW GeometryHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryM AS SELECT location.M FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyM AS SELECT location.M FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;

@@ -1,3 +1,200 @@
+
+-- This file tests support for POINT with ZM flags
+-- It also includes test for HasM , HasZ, Z , M functions
+-- HasM, HasZ, Z, M tests
+SELECT location.HasM from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+~~START~~
+bit
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+~~END~~
+
+
+SELECT location.HasM from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+~~START~~
+bit
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+~~END~~
+
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+~~START~~
+bit
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+~~END~~
+
+
+SELECT location.HasZ from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+~~START~~
+bit
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+~~END~~
+
+
+SELECT location.M from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+54.563
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+54.563
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT location.M from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+54.563
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+32.546
+54.563
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT location.Z from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+32.546
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+32.546
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT location.Z from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+go
+~~START~~
+float
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+32.546
+<NULL>
+<NULL>
+<NULL>
+32.546
+32.546
+<NULL>
+32.546
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+
 -- STGeomFromText tests with different SRIDs
 SELECT geography::STGeomFromText('POINT(45 90)', 4326);
 GO
@@ -558,42 +755,42 @@ SELECT geometry::STGeomFromText('POINT(1)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geometry::STGeomFromText('POINT(1 2 3 4 5)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geometry::STGeomFromText('POINT(1,2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1 2 3 4 5)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('POINT(1,2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- TODO: This test will be updated later to match T-SQL output
@@ -1063,14 +1260,14 @@ SELECT geometry::STGeomFromText('BABEL(0 0)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 SELECT geography::STGeomFromText('BABEL(0 0)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 
