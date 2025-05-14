@@ -1226,11 +1226,21 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
+				Oid immediate_base_type = InvalidOid;
 				if (param->paramtypmod != -1 &&
 					((*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) ||
 					(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype)))
 				{
 					return param->paramtypmod;
+				}
+				/* UDT handling in T_Param */
+				immediate_base_type = get_immediate_base_type_of_UDT_internal(param->paramtype);
+				if (OidIsValid(immediate_base_type))
+				{
+					int32 typmod = -1;
+					getBaseTypeAndTypmod(param->paramtype, &typmod);
+					if (typmod != -1)
+						return typmod;
 				}
 				if (!is_numeric_datatype(param->paramtype))
 				{

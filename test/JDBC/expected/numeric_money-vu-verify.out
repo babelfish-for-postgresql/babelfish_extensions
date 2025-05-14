@@ -2105,3 +2105,104 @@ smalldatetime
 ~~END~~
 
 
+-- UDT with declare
+declare @var1 MoneyType = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+go
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 MoneyType = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 MoneyType = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+801.9000
+~~END~~
+
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+802.3500
+~~END~~
+
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+numeric
+801.9000
+~~END~~
+
+
+declare @var1 MoneyType = 678.90;
+declare @var2 MoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 SmallMoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+declare @var1 MoneyType = 678.90;
+declare @var2 SmallMoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+~~START~~
+money
+802.3500
+~~END~~
+
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+declare @var2 SmallMoneyType = 123.45;
+select @inputString + @var2
+GO
+~~START~~
+smalldatetime
+1956-04-14 23:31:00.0
+~~END~~
+
+

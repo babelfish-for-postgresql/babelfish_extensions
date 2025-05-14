@@ -1078,3 +1078,54 @@ declare @var2 smallmoney = 123.45;
 select @inputString + @var2
 GO
 
+-- UDT with declare
+declare @var1 MoneyType = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+go
+
+declare @var1 MoneyType = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 MoneyType = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 numeric(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 decimal(5,2) = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 decimal = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 MoneyType = 678.90;
+declare @var2 MoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 SmallMoneyType = 678.90;
+declare @var2 SmallMoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+
+declare @var1 MoneyType = 678.90;
+declare @var2 SmallMoneyType = 123.45;
+select @var1 + @var2 as result;
+GO
+
+DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
+declare @var2 SmallMoneyType = 123.45;
+select @inputString + @var2
+GO
+
