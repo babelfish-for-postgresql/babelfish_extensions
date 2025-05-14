@@ -12,6 +12,7 @@
 #include "utils/datetime.h"
 #include "libpq/pqformat.h"
 #include "utils/timestamp.h"
+#include "utils/formatting.h"
 
 #include "fmgr.h"
 #include "miscadmin.h"
@@ -3142,7 +3143,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	 * Ensure the database name input argument is lower-case, as all Babel
 	 * table names are lower-case
 	 */
-	char        *lowercase_db_name = lowerstr(db_name);
+	char        *lowercase_db_name = str_tolower(db_name, strlen(db_name), DEFAULT_COLLATION_OID);
 
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
 	int         i;

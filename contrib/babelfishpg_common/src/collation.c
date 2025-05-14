@@ -15,6 +15,8 @@
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
+#include "utils/guc.h"
+#include "utils/formatting.h"
 
 #include "collation.h"
 #include "encoding/encoding.h"
@@ -1274,6 +1276,7 @@ collation_is_CI(Oid colloid)
 	bool		collisdeterministic;
 	Datum		datum;
 	bool		isnull;
+	char*		lowercollcollate;
 
 	if (InvalidOid == colloid)
 		return false;
@@ -1301,18 +1304,20 @@ collation_is_CI(Oid colloid)
 	if (isnull)
 		return false;
 
+	lowercollcollate = str_tolower(collcollate, strlen(collcollate), colloid);
 	/*
 	 * colStrength secondary, or level2, corresponds to a CI_AS collation,
 	 * colStrength primary, or level1, corresponds to a CI_AI collation,
 	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
-	if ((strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) != NULL || strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) != NULL) &&
-		strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")) == NULL)    /* without a colCaseLevel - not CS_AI */
+	if ((strstr(lowercollcollate, str_tolower("colStrength=secondary", strlen("colStrength=secondary"), colloid)) != NULL 
+			|| strstr(lowercollcollate, str_tolower("colStrength=primary", strlen("colStrength=primary"), colloid)) != NULL)
+			&&	strstr(lowercollcollate, str_tolower("colCaseLevel=yes", strlen("colCaseLevel=yes"), colloid)) == NULL)    /* without a colCaseLevel - not CS_AI */
 			return true;
 	 
 	/* Starting from PG16, locale string is canonicalized to a language tag. */
-	if ((strstr(lowerstr(collcollate), "level2") != NULL || strstr(lowerstr(collcollate), "level1") != NULL)  &&    /* CI_AS OR CI_AI */
-		strstr(lowerstr(collcollate), "kc-true") == NULL)
+	if ((strstr(lowercollcollate, "level2") != NULL || strstr(lowercollcollate, "level1") != NULL)  &&    /* CI_AS OR CI_AI */
+		strstr(lowercollcollate, "kc-true") == NULL)
 		return true;
 
 	return false;
@@ -1378,6 +1383,7 @@ is_collated_ai_internal(PG_FUNCTION_ARGS)
 	bool		collisdeterministic;
 	Datum		datum;
 	bool		isnull;
+	char*		lowercollcollate;
 
 	if (!OidIsValid(colloid) || GetDatabaseEncoding() != PG_UTF8)
 		PG_RETURN_BOOL(false);
@@ -1405,8 +1411,10 @@ is_collated_ai_internal(PG_FUNCTION_ARGS)
 	collcollate = TextDatumGetCString(datum);
 	ReleaseSysCache(tp);
 
-	if (strstr(lowerstr(collcollate), lowerstr("colStrength=primary")) ||
-		0 != strstr(lowerstr(collcollate), "level1"))    /* AI */
+	lowercollcollate = str_tolower(collcollate, strlen(collcollate), colloid);
+
+	if (strstr(lowercollcollate, str_tolower("colStrength=primary", strlen("colStrength=primary"), colloid)) ||
+		0 != strstr(lowercollcollate, "level1"))    /* AI */
 	{
 		pfree(collcollate);
 		PG_RETURN_BOOL(true);

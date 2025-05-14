@@ -7,6 +7,7 @@
 #include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
 #include "miscadmin.h"
+#include "utils/formatting.h"
 
 #include "pltsql.h"
 #include "linked_servers.h"
@@ -443,7 +444,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 int
 tdsTypeStrToTypeId(char *datatype)
 {
-	datatype = lowerstr(datatype);
+	datatype = str_tolower(datatype, strlen(datatype), DEFAULT_COLLATION_OID);
 
 	if (strcmp(datatype, "image") == 0)
 		return TSQL_IMAGE;
@@ -1344,7 +1345,7 @@ Datum
 sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 {
 #ifdef ENABLE_TDS_LIB
-	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
+	char *servername = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(0)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(0))), DEFAULT_COLLATION_OID);
 
 	LinkedServerProcess lsproc = NULL;
 

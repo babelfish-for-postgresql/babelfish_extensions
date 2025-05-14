@@ -303,7 +303,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 	SetRemoteDestReceiverParams(receiver, portal);
 
 	/* fetch the result and return the result-set */
-	PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+	PortalRun(portal, FETCH_ALL, true, receiver, receiver, NULL);
 
 	receiver->rDestroy(receiver);
 
@@ -2132,7 +2132,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 		 * Ensure the database name input argument is lower-case, as all Babel
 		 * role names are lower-case
 		 */
-		lowercase_rolname = lowerstr(rolname);
+		lowercase_rolname = str_tolower(rolname, strlen(rolname), DEFAULT_COLLATION_OID);
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
@@ -2244,7 +2244,7 @@ gen_sp_addrole_subcmds(const char *user)
 	if (!IsA(rolestmt, CreateRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
 
-	rolestmt->role = pstrdup(lowerstr(user));
+	rolestmt->role = pstrdup(str_tolower(user, strlen(user), DEFAULT_COLLATION_OID));
 	rewrite_object_refs(stmt);
 
 	/*
@@ -2290,7 +2290,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 		 * Ensure the database name input argument is lower-case, as all Babel
 		 * role names are lower-case
 		 */
-		lowercase_rolname = lowerstr(rolname);
+		lowercase_rolname = str_tolower(rolname, strlen(rolname), DEFAULT_COLLATION_OID);
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
@@ -2431,8 +2431,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 		 * Ensure the database name input argument is lower-case, as all Babel
 		 * role names, user names are lower-case
 		 */
-		lowercase_rolname = lowerstr(rolname);
-		lowercase_membername = lowerstr(membername);
+		lowercase_rolname = str_tolower(rolname, strlen(rolname), DEFAULT_COLLATION_OID);
+		lowercase_membername = str_tolower(membername, strlen(membername), DEFAULT_COLLATION_OID);
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
@@ -2607,8 +2607,8 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 		 * Ensure the database name input argument is lower-case, as all Babel
 		 * role names, user names are lower-case
 		 */
-		lowercase_rolname = lowerstr(rolname);
-		lowercase_membername = lowerstr(membername);
+		lowercase_rolname = str_tolower(rolname, strlen(rolname), DEFAULT_COLLATION_OID);
+		lowercase_membername = str_tolower(membername, strlen(membername), DEFAULT_COLLATION_OID);
 
 		/* Remove trailing whitespaces in rolename and membername */
 		len = strlen(lowercase_rolname);
@@ -2898,9 +2898,9 @@ clean_up_bbf_server_option(char *servername)
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
-	char	   *linked_server = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
-	char	   *srv_product = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
-	char	   *provider = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	char	   *linked_server = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_TEXT_P(0)), strlen(text_to_cstring(PG_GETARG_TEXT_P(0))), DEFAULT_COLLATION_OID);
+	char	   *srv_product = PG_ARGISNULL(1) ? NULL : str_tolower(text_to_cstring(PG_GETARG_TEXT_P(1)), strlen(text_to_cstring(PG_GETARG_TEXT_P(1))), DEFAULT_COLLATION_OID);
+	char	   *provider = PG_ARGISNULL(2) ? NULL : str_tolower(text_to_cstring(PG_GETARG_TEXT_P(2)), strlen(text_to_cstring(PG_GETARG_TEXT_P(2))), DEFAULT_COLLATION_OID);
 	char	   *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char	   *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char	   *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
@@ -3025,8 +3025,8 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char	   *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
-	char	   *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char	   *servername = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(0)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(0))), DEFAULT_COLLATION_OID);
+	char	   *useself = PG_ARGISNULL(1) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(1)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(1))), DEFAULT_COLLATION_OID);
 	char	   *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char	   *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char	   *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
@@ -3140,7 +3140,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char	   *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
+	char	   *servername = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(0)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(0))), DEFAULT_COLLATION_OID);
 	char	   *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
 	Oid 		save_userid;
 	int 		save_sec_context;
@@ -3232,8 +3232,8 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
-	char	   *linked_srv = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
-	char	   *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
+	char	   *linked_srv = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(0)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(0))), DEFAULT_COLLATION_OID);
+	char	   *droplogins = PG_ARGISNULL(1) ? NULL : str_tolower(text_to_cstring(PG_GETARG_BPCHAR_PP(1)), strlen(text_to_cstring(PG_GETARG_BPCHAR_PP(1))), DEFAULT_COLLATION_OID);
 
 	StringInfoData query;
 
@@ -3295,9 +3295,9 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_serveroption_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
-	char *optionname = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
-	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
+	char *servername = PG_ARGISNULL(0) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(0)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(0))), DEFAULT_COLLATION_OID);
+	char *optionname = PG_ARGISNULL(1) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(1)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(1))), DEFAULT_COLLATION_OID);
+	char *optionvalue = PG_ARGISNULL(2) ? NULL : str_tolower(text_to_cstring(PG_GETARG_VARCHAR_PP(2)), strlen(text_to_cstring(PG_GETARG_VARCHAR_PP(2))), DEFAULT_COLLATION_OID);
 	char *newoptionvalue = optionvalue;
 
 	if(!pltsql_enable_linked_servers)
@@ -3572,7 +3572,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			SetRemoteDestReceiverParams(receiver, portal);
 
 			/* fetch the result and return the result-set */
-			PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+			PortalRun(portal, FETCH_ALL, true, receiver, receiver, NULL);
 
 			receiver->rDestroy(receiver);
 			SPI_cursor_close(portal);
@@ -3945,9 +3945,9 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 		if (var_schema_name && old_name)
 		{
 			char *schema_name = get_physical_schema_name(db_name,
-														 lowerstr(var_schema_name));
-			char *major_name = lowerstr(old_name);
-			char *new_major_name = lowerstr(new_name);
+														 str_tolower(var_schema_name, strlen(var_schema_name), DEFAULT_COLLATION_OID));
+			char *major_name = str_tolower(old_name, strlen(old_name), DEFAULT_COLLATION_OID);
+			char *new_major_name = str_tolower(new_name, strlen(new_name), DEFAULT_COLLATION_OID);
 
 			/* schema_name doesn't need to truncate again. */
 			truncate_tsql_identifier(major_name);
@@ -4013,10 +4013,10 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 		if (var_schema_name && var_major_name && old_name)
 		{
 			char *schema_name = get_physical_schema_name(db_name,
-														 lowerstr(var_schema_name));
-			char *major_name = lowerstr(var_major_name);
-			char *minor_name = lowerstr(old_name);
-			char *new_minor_name = lowerstr(new_name);
+														 str_tolower(var_schema_name, strlen(var_schema_name), DEFAULT_COLLATION_OID));
+			char *major_name = str_tolower(var_major_name, strlen(var_major_name), DEFAULT_COLLATION_OID);
+			char *minor_name = str_tolower(old_name, strlen(old_name), DEFAULT_COLLATION_OID);
+			char *new_minor_name = str_tolower(new_name, strlen(new_name), DEFAULT_COLLATION_OID);
 
 			/* schema_name doesn't need to truncate again. */
 			truncate_tsql_identifier(major_name);
@@ -4113,7 +4113,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		char *newobjname = downcase_truncate_identifier(newname, strlen(newname), false);
 
 		renamestmt->renameType = objtype;
-		renamestmt->relation->schemaname = lowerstr(schemaname);
+		renamestmt->relation->schemaname = str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID);
 
 		if (objtype == OBJECT_INDEX)
 		{
@@ -4126,9 +4126,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		}
 		else
 		{
-			renamestmt->subname = lowerstr(objname);
-			renamestmt->newname = lowerstr(newobjname);
-			renamestmt->relation->relname = lowerstr(objname);
+			renamestmt->subname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
+			renamestmt->newname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
+			renamestmt->relation->relname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
 		}
 
 		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
@@ -4144,8 +4144,8 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			if (!IsA(altertablestmt, AlterTableStmt))
 				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
-			altertablestmt->relation->schemaname = lowerstr(schemaname);
-			altertablestmt->relation->relname = lowerstr(newobjname);
+			altertablestmt->relation->schemaname = str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID);
+			altertablestmt->relation->relname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
 			/* get data of the first node */
 			lc = list_head(altertablestmt->cmds);
 			cmd = (AlterTableCmd *) lfirst(lc);
@@ -4157,19 +4157,20 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
 
 		renamestmt->renameType = objtype;
-		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
+											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
 		orig_proc_funcname = pstrdup(newname);
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
+		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
 	}
 	else if ((objtype == OBJECT_TRIGGER))
 	{
 		ObjectWithArgs *objwargs;
 		renamestmt->renameType = objtype;
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
+		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
 		rewrite_object_refs(stmt);
 
 		// extra query nodes for ALTER FUNCTION
@@ -4179,16 +4180,18 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
 		objwargs = (ObjectWithArgs *) renamestmt->object;
 		renamestmt->renameType = OBJECT_FUNCTION;
-		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
+		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
+											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
+		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
 	}
 	else if (objtype == OBJECT_TYPE)
 	{
 		renamestmt->renameType = objtype;
-		renamestmt->object = (Node *)list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->object = (Node *)list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
+													makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
+		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
 	}
 	else
 	{
@@ -4199,10 +4202,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		renamestmt->relationType = OBJECT_TABLE;
-		renamestmt->subname = pstrdup(lowerstr(objname));
-		renamestmt->newname = pstrdup(lowerstr(newname));
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
+		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
 		rewrite_object_refs(stmt);
 
 		/* extra query nodes for modifying attoption column */
@@ -4211,14 +4214,14 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		if (!IsA(altertablestmt, AlterTableStmt))
 			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
-		altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		altertablestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		altertablestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
+		altertablestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
 		altertablestmt->objtype = OBJECT_TABLE;
 		/* get data of the first node */
 		lc = list_head(altertablestmt->cmds);
 		cmd = (AlterTableCmd *) lfirst(lc);
 		cmd->subtype = AT_SetOptions;
-		cmd->name = pstrdup(lowerstr(newname));
+		cmd->name = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
 		cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(newname)), -1)); //column->location));
 	}
 	/* name mapping */
@@ -4286,7 +4289,7 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 		SetRemoteDestReceiverParams(receiver, portal);
 
 		/* fetch the result and return the result-set */
-		PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+		PortalRun(portal, FETCH_ALL, true, receiver, receiver, NULL);
 
 		receiver->rDestroy(receiver);
 

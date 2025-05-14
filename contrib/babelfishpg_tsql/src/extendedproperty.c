@@ -316,37 +316,37 @@ sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 	if (orig_name)
 	{
 		remove_trailing_spaces(orig_name);
-		name = lowerstr(orig_name);
+		name = str_tolower(orig_name, strlen(orig_name), DEFAULT_COLLATION_OID);
 	}
 	if (level0type)
 	{
 		remove_trailing_spaces(level0type);
-		level0type = lowerstr(level0type);
+		level0type = str_tolower(level0type, strlen(level0type), DEFAULT_COLLATION_OID);
 	}
 	if (level0name)
 	{
 		remove_trailing_spaces(level0name);
-		level0name = lowerstr(level0name);
+		level0name = str_tolower(level0name, strlen(level0name), DEFAULT_COLLATION_OID);
 	}
 	if (level1type)
 	{
 		remove_trailing_spaces(level1type);
-		level1type = lowerstr(level1type);
+		level1type = str_tolower(level1type, strlen(level1type), DEFAULT_COLLATION_OID);
 	}
 	if (level1name)
 	{
 		remove_trailing_spaces(level1name);
-		level1name = lowerstr(level1name);
+		level1name = str_tolower(level1name, strlen(level1name), DEFAULT_COLLATION_OID);
 	}
 	if (level2type)
 	{
 		remove_trailing_spaces(level2type);
-		level2type = lowerstr(level2type);
+		level2type = str_tolower(level2type, strlen(level2type), DEFAULT_COLLATION_OID);
 	}
 	if (level2name)
 	{
 		remove_trailing_spaces(level2name);
-		level2name = lowerstr(level2name);
+		level2name = str_tolower(level2name, strlen(level2name), DEFAULT_COLLATION_OID);
 	}
 
 	switch (proc)
@@ -745,37 +745,37 @@ fn_listextendedproperty(PG_FUNCTION_ARGS)
 	if (name)
 	{
 		remove_trailing_spaces(name);
-		name = lowerstr(name);
+		name = str_tolower(name, strlen(name), DEFAULT_COLLATION_OID);
 	}
 	if (level0type)
 	{
 		remove_trailing_spaces(level0type);
-		level0type = lowerstr(level0type);
+		level0type = str_tolower(level0type, strlen(level0type), DEFAULT_COLLATION_OID);
 	}
 	if (level0name)
 	{
 		remove_trailing_spaces(level0name);
-		level0name = lowerstr(level0name);
+		level0name = str_tolower(level0name, strlen(level0name), DEFAULT_COLLATION_OID);
 	}
 	if (level1type)
 	{
 		remove_trailing_spaces(level1type);
-		level1type = lowerstr(level1type);
+		level1type = str_tolower(level1type, strlen(level1type), DEFAULT_COLLATION_OID);
 	}
 	if (level1name)
 	{
 		remove_trailing_spaces(level1name);
-		level1name = lowerstr(level1name);
+		level1name = str_tolower(level1name, strlen(level1name), DEFAULT_COLLATION_OID);
 	}
 	if (level2type)
 	{
 		remove_trailing_spaces(level2type);
-		level2type = lowerstr(level2type);
+		level2type = str_tolower(level2type, strlen(level2type), DEFAULT_COLLATION_OID);
 	}
 	if (level2name)
 	{
 		remove_trailing_spaces(level2name);
-		level2name = lowerstr(level2name);
+		level2name = str_tolower(level2name, strlen(level2name), DEFAULT_COLLATION_OID);
 	}
 
 	/* check to see if caller supports us returning a tuplestore */

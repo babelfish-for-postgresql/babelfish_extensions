@@ -872,7 +872,7 @@ ColQualList: /* extend it allow to consume nullable (tsql_ColConstraint) */
 			ColQualList tsql_ColConstraint { $$ = (($2 != NULL) ? lappend($1, $2) : $1); }
 		;
 ConstraintElem:
-			UNIQUE opt_unique_null_treatment tsql_cluster '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			UNIQUE opt_unique_null_treatment tsql_cluster '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
@@ -880,16 +880,17 @@ ConstraintElem:
 					n->location = @1;
 					n->nulls_not_distinct = !$2;
 					n->keys = $5;
-					n->including = $7;
-					n->options = $8;
+					n->without_overlaps = $6;
+					n->including = $8;
+					n->options = $9;
 					n->indexname = NULL;
-					n->indexspace = $9;
-					processCASbits($10, @10, "UNIQUE",
+					n->indexspace = $10;
+					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE opt_unique_null_treatment tsql_cluster '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment tsql_cluster '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
@@ -897,16 +898,17 @@ ConstraintElem:
 					n->location = @1;
 					n->nulls_not_distinct = !$2;
 					n->keys = $5;
-					n->including = $7;
-					n->options = $8;
+					n->without_overlaps = $6;
+					n->including = $8;
+					n->options = $9;
 					n->indexname = NULL;
-					n->indexspace = $9;
-					processCASbits($10, @10, "UNIQUE",
+					n->indexspace = $10;
+					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE opt_unique_null_treatment '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
@@ -914,16 +916,17 @@ ConstraintElem:
 					n->location = @1;
 					n->nulls_not_distinct = !$2;
 					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->without_overlaps = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "UNIQUE",
+					n->indexspace = $9;
+					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE opt_unique_null_treatment '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
@@ -931,11 +934,12 @@ ConstraintElem:
 					n->location = @1;
 					n->nulls_not_distinct = !$2;
 					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->without_overlaps = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "UNIQUE",
+					n->indexspace = $9;
+					processCASbits($10, @10, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -956,66 +960,70 @@ ConstraintElem:
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY tsql_cluster '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			| PRIMARY KEY tsql_cluster '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = $5;
-					n->including = $7;
-					n->options = $8;
+					n->without_overlaps = $6;
+					n->including = $8;
+					n->options = $9;
 					n->indexname = NULL;
-					n->indexspace = $9;
-					processCASbits($10, @10, "PRIMARY KEY",
+					n->indexspace = $10;
+					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY tsql_cluster '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| PRIMARY KEY tsql_cluster '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = $5;
-					n->including = $7;
-					n->options = $8;
+					n->without_overlaps = $6;
+					n->including = $8;
+					n->options = $9;
 					n->indexname = NULL;
-					n->indexspace = $9;
-					processCASbits($10, @10, "PRIMARY KEY",
+					n->indexspace = $10;
+					processCASbits($11, @11, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| PRIMARY KEY '(' columnListWithOptAscDesc opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->without_overlaps = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "PRIMARY KEY",
+					n->indexspace = $9;
+					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			| PRIMARY KEY '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
 					n->location = @1;
 					n->keys = $4;
-					n->including = $6;
-					n->options = $7;
+					n->without_overlaps = $5;
+					n->including = $7;
+					n->options = $8;
 					n->indexname = NULL;
-					n->indexspace = $8;
-					processCASbits($9, @9, "PRIMARY KEY",
+					n->indexspace = $9;
+					processCASbits($10, @10, "PRIMARY KEY",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -2489,15 +2497,15 @@ tsql_output_simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4);
+					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
 				}
 			| tsql_output_simple_select INTERSECT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4);
+					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
 				}
 			| tsql_output_simple_select EXCEPT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4);
+					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4, @1);
 				}
 			
 		;

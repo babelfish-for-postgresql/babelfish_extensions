@@ -222,7 +222,7 @@ static void handle_grantstmt_for_dbsecadmin(ObjectType objType, Oid objId, Oid o
  * 			Executor Hooks
  *****************************************/
 static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
-static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
+static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
@@ -1207,7 +1207,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 }
 
 static void
-pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once)
+pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count)
 {
 	if (pltsql_explain_only)
 	{
@@ -1244,9 +1244,9 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		count = pltsql_rowcount;
 
 	if (prev_ExecutorRun)
-		prev_ExecutorRun(queryDesc, direction, count, execute_once);
+		prev_ExecutorRun(queryDesc, direction, count);
 	else
-		standard_ExecutorRun(queryDesc, direction, count, execute_once);
+		standard_ExecutorRun(queryDesc, direction, count);
 }
 
 static void

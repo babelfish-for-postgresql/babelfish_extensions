@@ -1767,7 +1767,7 @@ varchareq(PG_FUNCTION_ARGS)
 	len1 = varcharTruelen(arg1);
 	len2 = varcharTruelen(arg2);
 
-	if (lc_collate_is_c(collid) ||
+	if (pg_newlocale_from_collation(collid)->collate_is_c ||
 		collid == DEFAULT_COLLATION_OID ||
 		pg_newlocale_from_collation(collid)->deterministic)
 	{
@@ -1807,7 +1807,7 @@ varcharne(PG_FUNCTION_ARGS)
 	len1 = varcharTruelen(arg1);
 	len2 = varcharTruelen(arg2);
 
-	if (lc_collate_is_c(collid) ||
+	if (pg_newlocale_from_collation(collid)->collate_is_c ||
 		collid == DEFAULT_COLLATION_OID ||
 		pg_newlocale_from_collation(collid)->deterministic)
 	{
@@ -1960,7 +1960,7 @@ hashvarchar(PG_FUNCTION_ARGS)
 	keydata = VARDATA_ANY(key);
 	keylen = varcharTruelen(key);
 
-	if (!lc_collate_is_c(collid) && collid != DEFAULT_COLLATION_OID)
+	if (!pg_newlocale_from_collation(collid)->collate_is_c && collid != DEFAULT_COLLATION_OID)
 		mylocale = pg_newlocale_from_collation(collid);
 
 	if (!mylocale || mylocale->deterministic)

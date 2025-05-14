@@ -21,7 +21,7 @@
 
 Datum		tsql_jsonb_in(text *json_text);
 Datum		tsql_jsonb_path_query_first(Datum jsonb_datum, Datum jsonpath_datum);
-JsonParseErrorType tsql_parse_json(text *json_text, JsonLexContext *lex, JsonSemAction *sem);
+JsonParseErrorType tsql_parse_json(text *json_text, JsonLexContext *lex, const JsonSemAction *sem);
 static Datum tsql_openjson_with_internal(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(tsql_isjson);
@@ -56,7 +56,7 @@ tsql_isjson(PG_FUNCTION_ARGS)
  * to handle edge case where input expression is bare scalar
  */
 JsonParseErrorType
-tsql_parse_json(text *json_text, JsonLexContext *lex, JsonSemAction *sem)
+tsql_parse_json(text *json_text, JsonLexContext *lex, const JsonSemAction *sem)
 {
 	JsonParseErrorType result_first_token;
 	JsonLexContext lex_first_token;

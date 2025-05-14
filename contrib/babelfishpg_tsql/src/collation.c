@@ -747,6 +747,7 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 	char *result;
 	UErrorCode status = U_ZERO_ERROR;
 	text *res_str;
+	size_t 	required_size;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -831,12 +832,15 @@ Datum remove_accents_internal(PG_FUNCTION_ARGS)
 					errmsg("Error normalising the input string: %s", u_errorName(status))));
 	}
 
-	len_result = icu_from_uchar(&result, utf16_res, len_uinput);
+	/* Get required size of result */
+	required_size = icu_from_uchar(NULL, 0, utf16_res, len_uinput);
+	result = palloc(required_size + 1);
+
+	len_result = icu_from_uchar(result, required_size + 1, utf16_res, len_uinput);
 	pfree(utf16_res);
 
 	// Return result as NVARCHAR
 	res_str = cstring_to_text_with_len(result, len_result);
-	pfree(result);
 	PG_RETURN_VARCHAR_P(res_str);
 #else
 	ereport(ERROR,
@@ -1630,12 +1634,12 @@ pltsql_strpos_non_determinstic(text *src_text, text *substr_text, Oid collid, in
 
 	check_collation_set(collid);
 
-	if (!lc_collate_is_c(collid))
+	if (!pg_newlocale_from_collation(collid)->collate_is_c)
 		mylocale = pg_newlocale_from_collation(collid);
 	else
 		return false;
 
-	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+	if (!mylocale->deterministic && mylocale->provider == 'i')
 	{
 #ifdef USE_ICU
 		int32_t src_len_utf8 = VARSIZE_ANY_EXHDR(src_text);
@@ -1741,12 +1745,12 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 
 	check_collation_set(collid);
 
-	if (!lc_collate_is_c(collid))
+	if (!pg_newlocale_from_collation(collid)->collate_is_c)
 		mylocale = pg_newlocale_from_collation(collid);
 	else
 		return false;
 
-	if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+	if (!mylocale->deterministic && mylocale->provider == 'i')
 	{
 #ifdef USE_ICU
 		const char *src_text_currptr = VARDATA_ANY(src_text);
@@ -1968,10 +1972,10 @@ icu_find_matched_length(char *src_text, int src_len, char *substr_text, int subs
 {
     pg_locale_t mylocale = 0;
 
-    if (!lc_collate_is_c(collid))
+    if (!pg_newlocale_from_collation(collid)->collate_is_c)
         mylocale = pg_newlocale_from_collation(collid);
 
-    if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+    if (!mylocale->deterministic && mylocale->provider == 'i')
     {
 #ifdef USE_ICU
 		int32_t src_len_utf8 = src_len;
@@ -2244,11 +2248,11 @@ patindex_ai_collations(PG_FUNCTION_ARGS)
 				 errmsg("patindex is not supported with non babelfish non deterministic collations")));
 	}
 
-	if (!lc_collate_is_c(cid))
+	if (!pg_newlocale_from_collation(cid)->collate_is_c)
 	{
 		mylocale = pg_newlocale_from_collation(cid);
 		
-		if (!pg_locale_deterministic(mylocale) && mylocale->provider == 'i')
+		if (!mylocale->deterministic && mylocale->provider == 'i')
 			result = patindex_ai_match_text(mylocale, input_str, pattern, cid, is_CS_AI);
 	}
 

@@ -752,7 +752,6 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	if (PortalRun(portal,
 				  FETCH_ALL,
 				  true,			/* always top level */
-				  true,
 				  receiver,
 				  receiver,
 				  &qc))
@@ -799,7 +798,6 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 
 	success = PortalRun(portal,
 						FETCH_ALL,
-						true,
 						true,
 						receiver,
 						receiver,
@@ -3833,7 +3831,6 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 
 	success = PortalRun(portal,
 						FETCH_ALL,
-						true,
 						true,
 						receiver,
 						receiver,
