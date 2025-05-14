@@ -1010,9 +1010,16 @@ GO
 DECLARE @total1 MoneyType; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
 GO
 
--- not working
 -- money -> MoneyType
 DECLARE @total1 money; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- varchar -> varcharudt
+DECLARE @total1 varchar; EXEC babel_5512_p4_varchar @basePrice = 'abc',@quantity = 'def', @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+
+-- decimal -> decimaludt
+DECLARE @total1 decimal; EXEC babel_5512_p4_dec @basePrice = 100.00, @quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
 GO
 
 -- money -> MoneyType (all other args also MoneyType)

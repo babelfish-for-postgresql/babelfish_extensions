@@ -1967,21 +1967,40 @@ money
 ~~END~~
 
 
--- not working
 -- money -> MoneyType
 DECLARE @total1 money; EXEC babel_5512_p4 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+money
+102.0000
+~~END~~
 
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+
+-- varchar -> varcharudt
+DECLARE @total1 varchar; EXEC babel_5512_p4_varchar @basePrice = 'abc',@quantity = 'def', @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+
+-- decimal -> decimaludt
+DECLARE @total1 decimal; EXEC babel_5512_p4_dec @basePrice = 100.00, @quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
+GO
+~~START~~
+numeric
+102
+~~END~~
 
 
 -- money -> MoneyType (all other args also MoneyType)
 DECLARE @total1 money; EXEC babel_5512_p5 @basePrice = 100.00,@quantity = 2, @totalPrice = @total1 OUTPUT SELECT @total1 AS BasicTotalPrice
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure parameter "@totalprice" is an output parameter but corresponding argument is not writable)~~
+~~START~~
+money
+102.0000
+~~END~~
 
 
 

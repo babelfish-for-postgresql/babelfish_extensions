@@ -449,25 +449,6 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 		/* deconstruct the name list */
 		DeconstructQualifiedName(typeName->names, &schemaname, &typname);
 
-		/* Checking for UDT for money and smallmoney. */
-		if ((*common_utility_plugin_ptr->get_tsql_datatype_oid)(typname) == InvalidOid)
-		{
-			HeapTuple ctype = LookupTypeName(NULL, typeName, NULL, true);
-			if (HeapTupleIsValid(ctype))
-			{
-				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(ctype);
-				Oid datatype_oid = pg_type->typbasetype;
-				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(datatype_oid))
-				{
-					typname = "money";
-				}
-				else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(datatype_oid))
-				{
-					typname = "smallmoney";
-				}
-				ReleaseSysCache(ctype);
-			}
-		}
 
 		if (schemaname)
 			is_sys_schema = strcmp("sys", schemaname) == 0;

@@ -105,3 +105,17 @@ GO
 
 CREATE PROCEDURE babel_5512_p5 @basePrice MoneyType, @quantity MoneyType, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
 GO
+
+CREATE TYPE varcharudt FROM varchar
+GO
+
+-- varchar
+CREATE PROCEDURE babel_5512_p4_varchar @basePrice varchar, @quantity varchar, @totalPrice varcharudt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO
+
+create type decimaludt FROM decimal
+GO
+
+-- decimal
+CREATE PROCEDURE babel_5512_p4_dec @basePrice decimal, @quantity decimal, @totalPrice decimaludt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+GO

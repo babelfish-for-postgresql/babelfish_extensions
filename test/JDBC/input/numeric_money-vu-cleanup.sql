@@ -18,8 +18,15 @@ DROP PROCEDURE IF EXISTS babel_5512_p4;
 DROP PROCEDURE IF EXISTS babel_5512_p5;
 GO
 
+Drop procedure babel_5512_p4_varchar;
+GO
+drop procedure babel_5512_p4_dec;
+GO
+
 -- Drop User-Defined Types
 DROP TYPE IF EXISTS SmallMoneyType;
 DROP TYPE IF EXISTS MoneyType;
+Drop TYPE varcharudt;
+Drop type decimaludt;
 GO
 
