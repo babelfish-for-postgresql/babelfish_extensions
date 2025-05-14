@@ -1,0 +1,145 @@
+DROP TABLE  geometryAsVarbinary
+
+DROP TABLE  GeographyAsVarbinary
+
+DROP TABLE  geometryAsVarchar
+
+DROP TABLE  GeographyAsVarchar
+
+DROP TABLE  geometryAsChar
+
+DROP TABLE  GeographyAsChar
+
+DROP TABLE  CharAsVarbinaryGeom
+
+DROP TABLE  CharAsVarbinary
+
+DROP TABLE  VarcharAsVarbinaryGeom
+
+DROP TABLE  VarcharAsVarbinary
+
+DROP TABLE  VarbinaryAsgeometry
+
+DROP TABLE  VarbinaryAsGeography
+
+DROP TABLE  CharAsgeometry
+
+DROP TABLE  CharAsGeography
+
+DROP TABLE  VarcharAsgeometry
+
+DROP TABLE  VarcharAsGeography
+
+DROP TABLE  ByteaTogeometry
+
+DROP TABLE  ByteaToGeography
+
+DROP TABLE  geometryToBytea
+
+DROP TABLE  GeographyToBytea
+
+DROP TABLE  GeoVarcharAsgeometry
+
+DROP TABLE  GeoVarcharAsGeography
+
+
+DROP VIEW  DimOfGeometry
+
+DROP VIEW  DimOfGeography
+
+DROP VIEW  AreaOfGeometry
+
+DROP VIEW  AreaOfGeography
+
+DROP VIEW  TextFromGeometry
+
+DROP VIEW  TextFromGeography
+
+DROP VIEW  BinaryFromGeometry
+
+DROP VIEW  BinaryFromGeography
+
+DROP VIEW  CoordsFromGeometry
+
+DROP VIEW  CoordsFromGeography
+
+DROP VIEW  SridFromGeometry
+
+DROP VIEW  SridFromGeography
+
+DROP VIEW  EmptyGeometry
+
+DROP VIEW  EmptyGeography
+
+DROP VIEW  ValidGeometry
+
+DROP VIEW  ValidGeography
+
+DROP VIEW  ClosedGeometry
+
+DROP VIEW  ClosedGeography
+
+DROP VIEW  DisjointTempGeom
+
+DROP VIEW  DisjointTempGeog
+
+DROP VIEW  DisjointTempGeomsr
+
+DROP VIEW  DisjointTempGeogsr
+
+DROP VIEW  DistanceTempGeom
+
+DROP VIEW  DistanceTempGeog
+
+DROP VIEW  DistanceTempGeomsr
+
+DROP VIEW  DistanceTempGeogsr
+
+DROP VIEW  IntersectsTempGeom
+
+DROP VIEW  IntersectsTempGeog
+
+DROP VIEW  IntersectsTempGeomsr
+
+DROP VIEW  IntersectsTempGeogsr
+
+DROP VIEW  EqualsTempGeom
+
+DROP VIEW  EqualsTempGeog
+
+DROP VIEW  EqualsTempGeomsr
+
+DROP VIEW  EqualsTempGeogsr
+
+DROP VIEW  ContainTempGeom
+
+DROP VIEW  ContainsTempGeog
+
+DROP VIEW  ContainTempGeomsr
+
+DROP VIEW  ContainsTempGeogsr
+
+DROP VIEW  equals_opgeom
+
+DROP VIEW  equal_opgeog
+
+DROP VIEW  equals_opgeomsr
+
+DROP VIEW  equal_opgeogsr
+
+DROP VIEW  notequal_opgeom
+
+DROP VIEW  notequal_opgeog
+
+DROP VIEW  notequal_opgeomsr
+
+DROP VIEW  notequal_opgeogsr
+
+
+DROP TABLE  GEOSPATIALPOINTGEOGR_sr
+
+DROP TABLE  GEOSPATIALPOINTGEOM_sr
+
+DROP TABLE  GEOSPATIALPOINTGEOGR_dt
+
+DROP TABLE  GEOSPATIALPOINTGEOM_dt
