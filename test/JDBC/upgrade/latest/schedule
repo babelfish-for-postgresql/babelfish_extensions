@@ -433,6 +433,7 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
+Test-pointZM
 TestReal
 TestRowVersion
 TestSmallDatetime
@@ -617,3 +618,4 @@ round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
+test_like_index
