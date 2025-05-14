@@ -143,7 +143,13 @@ jobs:
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
-          sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+      
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 60
+        with:
+          limit-access-to-actor: true
 
       - name: Run JDBC Tests
         id: jdbc
