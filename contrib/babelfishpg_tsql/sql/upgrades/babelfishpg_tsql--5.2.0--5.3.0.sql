@@ -382,14 +382,8 @@ SET probin = (
 							END
 						WHEN p2.prokind = 'f' AND p2.prorettype IS NOT NULL THEN
 							CASE
-								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.money' OR
-									-- Handling UDT.
-									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.prorettype AND
-										typbasetype::regtype::text = 'sys.money')) THEN '1245192'
-								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.smallmoney' OR
-									-- Handling UDT.
-									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.prorettype AND
-										typbasetype::regtype::text = 'sys.smallmoney')) THEN '655368'
+								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.money') THEN '1245192'
+								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.smallmoney') THEN '655368'
 								ELSE typmod
 							END
 						ELSE typmod
