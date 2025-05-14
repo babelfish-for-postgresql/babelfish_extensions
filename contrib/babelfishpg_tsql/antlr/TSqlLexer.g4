@@ -438,7 +438,11 @@ HALFVEC_L2_OPS:                                  H A L F V E C UNDERLINE L '2' U
 HASH:                                            H A S H;
 HASHED:                                          H A S H E D;
 HASM:                                            'HasM';
+HASM_DOUBLE_QUOTE:                               ["] HASM ["] {pltsql_quoted_identifier == true}?;
+HASM_SQBRACKET:                                  '[' HASM ']';
 HASZ:                                            'HasZ';
+HASZ_DOUBLE_QUOTE:                               ["] HASZ ["] {pltsql_quoted_identifier == true}?;
+HASZ_SQBRACKET:                                  '[' HASZ ']';
 HAVING:                                          H A V I N G;
 HEALTHCHECKTIMEOUT:                              H E A L T H C H E C K T I M E O U T;
 HEALTH_CHECK_TIMEOUT:                            H E A L T H  UNDERLINE  C H E C K  UNDERLINE  T I M E O U T;
@@ -548,6 +552,8 @@ LONG_SQBRACKET:                                  '[' LONG ']';
 LOOP:                                            L O O P;
 LOW:                                             L O W;
 M:                                               [Mm];
+M_DOUBLE_QUOTE:                                  ["] M ["] {pltsql_quoted_identifier == true}?;
+M_SQBRACKET:                                     '[' M ']';
 MANUAL:                                          M A N U A L;
 MARK:                                            M A R K;
 MASK:                                            M A S K;
@@ -1144,6 +1150,8 @@ YEARS:                                           Y E A R S;
 YMAX:                                            Y M A X;
 YMIN:                                            Y M I N;
 Z:                                               [Zz];
+Z_DOUBLE_QUOTE:                                  ["] Z ["] {pltsql_quoted_identifier == true}?;
+Z_SQBRACKET:                                     '[' Z ']';
 ZONE:                                            Z O N E;
 
 //Build-ins:

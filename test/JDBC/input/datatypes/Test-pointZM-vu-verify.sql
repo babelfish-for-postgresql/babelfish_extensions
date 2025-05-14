@@ -2,28 +2,28 @@
 -- It also includes test for HasM , HasZ, Z , M functions
 
 -- HasM, HasZ, Z, M tests
-SELECT location.HasM from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+SELECT location.HasM from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
 go
 
-SELECT location.HasM from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+SELECT location.HasM from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 go
 
-SELECT location.HasZ from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+SELECT location.HasZ from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
 go
 
-SELECT location.HasZ from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+SELECT location.HasZ from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 go
 
-SELECT location.M from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+SELECT location.M from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
 go
 
-SELECT location.M from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+SELECT location.M from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 go
 
-SELECT location.Z from  GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+SELECT location.Z from  GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
 go
 
-SELECT location.Z from  GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+SELECT location.Z from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 go
 
 -- STGeomFromText tests with different SRIDs

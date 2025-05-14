@@ -81,6 +81,40 @@
 #define GEOMETRY_INDICATOR      1       /* Indicator for geometry type */
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
 
+#define POINT_XY    0x010C  /* XY point geometry type (type 1, subtype 12) */
+#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1, subtype 13) */
+#define POINT_XYM   0x010E  /* XYM point geometry type (type 1, subtype 14) */
+#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1, subtype 15) */
+#define POINT_EMPTY 0x0104  /* Empty point geometry type (type 1, subtype 4) */
+
+#define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
+#define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
+#define DIM_FLAG_ZM          0x03 /* ZM dimension flag in SRID 4th byte */
+
+#define POINT_SIZE_XY        16   /* Size of XY point in bytes */
+#define POINT_SIZE_XYZ       24   /* Size of XYZ point in bytes */
+#define POINT_SIZE_XYM       24   /* Size of XYM point in bytes */
+#define POINT_SIZE_XYZM      32   /* Size of XYZM point in bytes */
+
+#define SRID_SIZE            4    /* Size of SRID in bytes */
+#define GEOM_TYPE_OFFSET     4    /* Offset to geometry type in buffer */
+#define COORD_DATA_OFFSET    6    /* Offset to coordinate data in buffer */
+
+#define POINT_EMPTY_FLAG           1    /* Last byte value indicating empty geometry */
+
+/* Global array representing NaN coordinate value */
+static const uint8 NAN_COORD[8] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f
+};
+
+/* Constant array representing empty coordinate data */
+static const uint8 
+EMPTY_COORD[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff
+};
+
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
 	pgTypeOid = (finfo->ttmbasetypeid != InvalidOid) ? \
@@ -1495,81 +1529,97 @@ TdsTypeUIDToDatum(StringInfo buf)
 Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
-	bytea	   	*result;
-	int32	   	geomType = 0;
-	int		   	nbytes,
-			   	pointSize,
-			   	npoints;
-	uint8_t 	lastByte = buf->data[buf->len - 1],
-				geometryType = buf->data[buf->cursor + 4],
-    			subType = buf->data[buf->cursor + 5];
-	StringInfo  destBuf = makeStringInfo();
+	bytea   *result;         /* Result bytea to be returned */
+	int32   geomType = 0;    /* PostGIS geometry type */
+	int     nbytes,          /* Total bytes needed for result */
+	        pointSize = 0,   /* Size of each point in bytes */
+	        npoints = 0;     /* Number of points in geometry */
+	bool    isempty = false; /* Flag indicating if geometry is empty */
+	uint8_t lastByte = buf->data[buf->len - 1]; /* Last byte in buffer, used for empty detection */
+	uint16_t geomTypeId;     /* Combined geometry type identifier */
+	StringInfo  destBuf = makeStringInfo(); /* Destination buffer for building result */
 
 	/*
-	 * Here the incoming buf format is -> 4 Byte SRID + 2 Byte Geometry Type + (16 Bytes)*npoints
-	 * But Driver expects -> 4 Byte SRID + 4 Byte Type + 4 Byte npoints + (16 Bytes)*npoints
+	 * Input buffer format: 4 bytes SRID + 2 bytes Geometry Type + coordinate data
+	 * But Driver expects: 4 bytes SRID + 4 bytes Type + 4 bytes point count + coordinate data
 	 */
+
 	/* We are copying first 4 Byte SRID from buf */
-	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, 4);
-	/* Swapping first 3 bytes of SRID as the driver expects SRID to be in little endian order
+	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, SRID_SIZE);
+	/* 
+	 * Swapping first 3 bytes of SRID as the driver expects SRID to be in little endian order
 	 * 4th byte is always 0
 	 */
 	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 
-	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
-    if (geometryType == 1)
-    {
-        
-        switch(subType)
-        {
-            case 12:  // XY point
+	/* 
+	 * Extract the combined geometry type identifier (2 bytes)
+	 * This combines the geometry type (1st byte) and (2nd byte)
+	 */
+	geomTypeId = (buf->data[buf->cursor + GEOM_TYPE_OFFSET] << 8) | 
+	                buf->data[buf->cursor + GEOM_TYPE_OFFSET + 1];
+
+	/* Process based on combined geometry type identifier */
+	switch (geomTypeId)
+	{
+		case POINT_XY:  /* XY point (0x010C) */ 
+			geomType = (int32)POINTTYPE;
+			pointSize = POINT_SIZE_XY;  /* 16 bytes for XY point */
+			break;
+			
+		case POINT_XYZ:  /* XYZ point (0x010D) */ 
+			geomType = (int32)POINTTYPE;
+			destBuf->data[3] = DIM_FLAG_Z;  /* Set Z dimension flag in SRID 4th byte */
+			pointSize = POINT_SIZE_XYZ;     /* 24 bytes for XYZ point */
+			break;
+			
+		case POINT_XYM:  /* XYM point (0x010E) */ 
+			geomType = (int32)POINTTYPE;
+			destBuf->data[3] = DIM_FLAG_M;  /* Set M dimension flag in SRID 4th byte */
+			pointSize = POINT_SIZE_XYM;     /* 24 bytes for XYM point */
+			break;
+			
+		case POINT_XYZM:  /* XYZM point (0x010F) */ 
+			geomType = (int32)POINTTYPE;
+			destBuf->data[3] = DIM_FLAG_ZM;  /* Set ZM dimension flag in SRID 4th byte */
+			pointSize = POINT_SIZE_XYZM;     /* 32 bytes for XYZM point */
+			break;
+			
+		case POINT_EMPTY:  /* Empty point (0x0104) */ 
+			/* 
+			 * Check if the geometry has EMPTY_COORD required for an empty geometry
+			 * and if the last byte is the empty flag (1)
+			 */
+			if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0 && 
+				lastByte == POINT_EMPTY_FLAG)
+			{
 				geomType = (int32)POINTTYPE;
-				pointSize = 16;
-                break;
-                
-            case 13:  // XYZ point
-				geomType = (int32)POINTTYPE;
-                destBuf->data[3] = 0x01;
-                pointSize = 24;
-                break;
-                
-            case 14:  // XYM point
-				geomType = (int32)POINTTYPE;
-                destBuf->data[3] = 0x02;
-                pointSize = 24;
-                break;
-                
-            case 15:  // XYZM point
-				geomType = (int32)POINTTYPE;
-                destBuf->data[3] = 0x03;
-                pointSize = 32;
-                break;
-                
-            case 4:   // Empty Geometry
 				npoints = 0;
-				pointSize = 21;
+				isempty = true;
+			}
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("Unsupported geometry type")));
+			}
+			break;
+			
+		default:
+			/* Unsupported geometry type */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported geometry type")));
+	}
 
-                if (lastByte == 1)
-					geomType = (int32)POINTTYPE;
-				break;
-                
-            default:
-                ereport(ERROR,
-                        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                         errmsg("Unsupported geometry type")));
-        }
-    }
-    else
-    {
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Unsupported geometry type")));
-    }
+	/* Calculate number of points if not empty geometry */
+    if (!isempty)
+		npoints = (buf->len - buf->cursor - COORD_DATA_OFFSET)/pointSize;
 
-    if (subType != 4)
-		npoints = (buf->len - buf->cursor - 6)/pointSize;
+	/*  Calculate total bytes needed */
+	nbytes = buf->len - buf->cursor + COORD_DATA_OFFSET;
 
-	nbytes = buf->len - buf->cursor + 6;
+	/* Allocate memory for result */
 	result = (bytea *) palloc0(nbytes + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 
@@ -1584,11 +1634,21 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	destBuf->len += sizeof(uint32_t);
 	destBuf->data[destBuf->len] = '\0';
 
-	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
-	appendBinaryStringInfo(destBuf, buf->data + buf->cursor + 6, buf->len - 6);
+	if (isempty)
+	{
+		/* Copy NAN_COORD twice for empty geometry */
+		appendBinaryStringInfo(destBuf, (char *)NAN_COORD, sizeof(NAN_COORD));
+		appendBinaryStringInfo(destBuf, (char *)NAN_COORD, sizeof(NAN_COORD));
+	}
+	else
+	{
+		/* We are copying the remaining bytes (nbytes)*npoints from buf */
+		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - COORD_DATA_OFFSET);
+	}
+
 
 	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
-	buf->cursor += nbytes - 6;
+	buf->cursor += nbytes - COORD_DATA_OFFSET;
 
 	PG_RETURN_BYTEA_P(result);
 }

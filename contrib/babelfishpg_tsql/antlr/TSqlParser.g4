@@ -3925,9 +3925,17 @@ geospatial_col
     | LONG_SQBRACKET
     | LONG_DOUBLE_QUOTE
     | HASM
+    | HASM_DOUBLE_QUOTE
+    | HASM_SQBRACKET
     | HASZ
+    | HASZ_DOUBLE_QUOTE
+    | HASZ_SQBRACKET
     | M
+    | M_DOUBLE_QUOTE
+    | M_SQBRACKET
     | Z
+    | Z_DOUBLE_QUOTE
+    | Z_SQBRACKET
     ;
 
 geospatial_func_no_arg
@@ -4598,7 +4606,11 @@ keyword
     | HADR
     | HASH
     | HASM
+    | HASM_DOUBLE_QUOTE
+    | HASM_SQBRACKET
     | HASZ
+    | HASZ_DOUBLE_QUOTE
+    | HASZ_SQBRACKET
     | HASHED
     | HEALTHCHECKTIMEOUT
     | HEALTH_CHECK_TIMEOUT
@@ -4691,6 +4703,8 @@ keyword
     | LOOP
     | LOW
     | M
+    | M_SQBRACKET
+    | M_DOUBLE_QUOTE
     | MANUAL
     | MARK
     | MASK
@@ -5180,7 +5194,9 @@ keyword
     | YEARS
     | YMAX
     | YMIN    
-    | Z   
+    | Z
+    | Z_SQBRACKET
+    | Z_DOUBLE_QUOTE  
     | ZONE
     //Built-ins:
     | VARCHAR
