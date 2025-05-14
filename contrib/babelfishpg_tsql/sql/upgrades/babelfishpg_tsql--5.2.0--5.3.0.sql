@@ -376,14 +376,8 @@ SET probin = (
 					CASE
 						WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proargtypes[typ_index-1] IS NOT NULL) THEN
 							CASE
-								WHEN typmod = '-1' AND (p2.proargtypes[typ_index-1]::regtype::text = 'sys.money' OR
-									-- Handling UDT.
-									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.proargtypes[typ_index-1] AND
-										typbasetype::regtype::text = 'sys.money')) THEN '1245192'
-								WHEN typmod = '-1' and (p2.proargtypes[typ_index-1]::regtype::text = 'sys.smallmoney' OR
-									-- Handling UDT.
-									EXISTS (SELECT 1 FROM pg_type WHERE oid = p2.proargtypes[typ_index-1] AND
-										typbasetype::regtype::text = 'sys.smallmoney')) THEN '655368'
+								WHEN typmod = '-1' AND (p2.proargtypes[typ_index-1]::regtype::text = 'sys.money') THEN '1245192'
+								WHEN typmod = '-1' and (p2.proargtypes[typ_index-1]::regtype::text = 'sys.smallmoney') THEN '655368'
 								ELSE typmod
 							END
 						WHEN p2.prokind = 'f' AND p2.prorettype IS NOT NULL THEN
@@ -417,15 +411,9 @@ WHERE p1.oid = p2.oid
 UPDATE pg_attribute a
 SET atttypmod =
 	CASE
-		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.money' OR
-			-- Handling UDT.
-			EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = a.atttypid AND
-				t.typbasetype::regtype::text = 'sys.money'))
+		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.money')
 		THEN 1245192
-		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.smallmoney' OR
-			-- Handling UDT.
-			EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = a.atttypid AND
-				t.typbasetype::regtype::text = 'sys.smallmoney'))
+		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.smallmoney')
 		THEN 655368
 		ELSE atttypmod
 	END
@@ -435,15 +423,7 @@ INNER JOIN sys.babelfish_namespace_ext sch
 WHERE a.attrelid = c.oid
 	AND a.atttypmod = -1
 	AND NOT a.attisdropped
-	AND (
-		a.atttypid::regtype::text IN ('sys.money', 'sys.smallmoney')
-		OR EXISTS (
-			SELECT 1
-			FROM pg_type t
-			WHERE t.oid = a.atttypid
-			AND t.typbasetype::regtype::text IN ('sys.money', 'sys.smallmoney')
-		)
-	);
+	AND (a.atttypid::regtype::text IN ('sys.money', 'sys.smallmoney'));
 
 
 -- Please add your SQLs here
