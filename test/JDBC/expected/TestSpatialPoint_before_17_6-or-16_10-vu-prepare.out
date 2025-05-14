@@ -43,14 +43,14 @@ INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Po
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: parse error - invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: parse error - invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
@@ -183,7 +183,9 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported geometry type)~~
 
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
@@ -196,15 +198,19 @@ Insert into geominTable values('POINT(1 2)');
 ~~ROW COUNT: 1~~
 
 Insert into geominTable values('POINT(1 2 3)');
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
 
 Insert into geominTable values('POINT(1 2 3 4)');
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
 
 Insert into geominTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: LINESTRING is not supported)~~
+~~ERROR (Message: ST_LineString is not supported)~~
 
 Insert into geominTable values('POINT(1000 2000)');
 ~~ROW COUNT: 1~~
@@ -292,7 +298,7 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('P
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid SRID)~~
+~~ERROR (Message: Inavalid SRID)~~
 
 
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
@@ -323,28 +329,28 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.651
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid SRID)~~
+~~ERROR (Message: Inavalid SRID)~~
 
 
 #Negative Test for STGeomFromText with SRID < 0
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid SRID)~~
+~~ERROR (Message: Inavalid SRID)~~
 
 
 #Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: parse error - invalid geometry)~~
 
 
 #Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: parse error - invalid geometry)~~
 
 
 #Test for STGeomFromText when null Point is Given -> Returns NBCRow
@@ -443,7 +449,9 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported geometry type)~~
 
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
@@ -469,15 +477,19 @@ Insert into geoginTable values('POINT(1 2)');
 ~~ROW COUNT: 1~~
 
 Insert into geoginTable values('POINT(1 2 3)');
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
 
 Insert into geoginTable values('POINT(1 2 3 4)');
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
 
 Insert into geoginTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: LINESTRING is not supported)~~
+~~ERROR (Message: ST_LineString is not supported)~~
 
 Insert into geoginTable values('POINT(1000 2000)');
 ~~ERROR (Code: 33557097)~~
