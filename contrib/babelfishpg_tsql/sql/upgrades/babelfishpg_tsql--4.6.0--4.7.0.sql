@@ -170,6 +170,16 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
