@@ -284,7 +284,7 @@ select isnumeric(' ')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 select isnumeric('1 .1234')
@@ -308,3 +308,151 @@ int
 0
 ~~END~~
 
+
+-- Create the table
+CREATE TABLE babel_isnumeric_test (
+    id int IDENTITY(1,1),
+    val varchar(100)
+);
+GO
+
+-- Insert decimal numbers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(RAND() as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert integers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(CAST((RAND() * 1000000) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert money format
+INSERT INTO babel_isnumeric_test (val)
+SELECT '$' + CAST(CAST((RAND() * 1000) as decimal(10,2)) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert alphanumeric
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'abc' + CAST(CAST((RAND() * 100) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert scientific notation
+INSERT INTO babel_isnumeric_test (val)
+SELECT '1E' + CAST(CAST((RAND() * 10) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+-- Insert plain text
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'not a number'
+FROM generate_series(1, 1000);
+GO
+~~ROW COUNT: 1000~~
+
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+SELECT count(*)
+FROM babel_isnumeric_test
+WHERE isnumeric(val) = 1
+GO
+~~START~~
+int
+4000
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT count(*)
+FROM babel_isnumeric_test
+WHERE isnumeric(val) = 1
+Aggregate (actual rows=1 loops=1)
+  ->  Seq Scan on babel_isnumeric_test (actual rows=4000 loops=1)
+        Filter: (isnumeric(val) = 1)
+        Rows Removed by Filter: 2000
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+DROP TABLE babel_isnumeric_test
+GO

@@ -429,7 +429,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
-TestSpatialPoint
+TestSpatialPoint_before_17_6-or-16_10
 Test-spatial-functions
 Test-sp_addrole
 Test-sp_addrolemember

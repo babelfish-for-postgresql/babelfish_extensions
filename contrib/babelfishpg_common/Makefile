@@ -47,6 +47,8 @@ OBJS += src/encoding/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.o
 OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
+OBJS += src/geo.o 
+OBJS += src/geo_parser.o
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
@@ -88,6 +90,11 @@ test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
+
+src/geo_parser.o: src/geo_scan.c src/geo_data.h
+src/geo.o: src/geo_scan.c src/geo_parser.c src/geo_data.h
+distprep: src/geo_scan.c src/geo_parser.c
+
 include $(PGXS)
 
 ifeq ($(GE91),yes)

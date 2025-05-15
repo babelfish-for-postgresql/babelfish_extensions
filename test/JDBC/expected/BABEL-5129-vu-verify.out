@@ -115,7 +115,7 @@ SELECT ISNUMERIC(@v), LEN(@v), DATALENGTH(@v)
 GO
 ~~START~~
 int#!#int#!#int
-0#!#0#!#0
+1#!#0#!#0
 ~~END~~
 
 
@@ -126,7 +126,7 @@ SELECT ISNUMERIC(@nv), LEN(@nv), DATALENGTH(@nv)
 GO
 ~~START~~
 int#!#int#!#int
-0#!#0#!#0
+1#!#0#!#0
 ~~END~~
 
 
