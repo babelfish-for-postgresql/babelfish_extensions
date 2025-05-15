@@ -106,18 +106,18 @@ GO
 CREATE PROCEDURE babel_5512_p5 @basePrice MoneyType, @quantity MoneyType, @totalPrice MoneyType OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
 GO
 
-CREATE TYPE varcharudt FROM varchar
+CREATE TYPE babel_5512_varcharudt FROM varchar
 GO
 
 -- varchar
-CREATE PROCEDURE babel_5512_p4_varchar @basePrice varchar, @quantity varchar, @totalPrice varcharudt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+CREATE PROCEDURE babel_5512_p4_varchar @basePrice varchar, @quantity varchar, @totalPrice babel_5512_varcharudt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
 GO
 
-create type decimaludt FROM decimal
+create type babel_5512_decimaludt FROM decimal
 GO
 
 -- decimal
-CREATE PROCEDURE babel_5512_p4_dec @basePrice decimal, @quantity decimal, @totalPrice decimaludt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
+CREATE PROCEDURE babel_5512_p4_dec @basePrice decimal, @quantity decimal, @totalPrice babel_5512_decimaludt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
 GO
 
 -- scale/precision in case of aggregate

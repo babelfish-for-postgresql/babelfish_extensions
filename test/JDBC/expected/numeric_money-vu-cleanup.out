@@ -30,7 +30,7 @@ GO
 -- Drop User-Defined Types
 DROP TYPE IF EXISTS SmallMoneyType;
 DROP TYPE IF EXISTS MoneyType;
-Drop TYPE varcharudt;
-Drop type decimaludt;
+Drop TYPE babel_5512_varcharudt;
+Drop type babel_5512_decimaludt;
 GO
 
