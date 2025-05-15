@@ -85,7 +85,7 @@
 #define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1, subtype 13) */
 #define POINT_XYM   0x010E  /* XYM point geometry type (type 1, subtype 14) */
 #define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1, subtype 15) */
-#define POINT_EMPTY 0x0104  /* Empty point geometry type (type 1, subtype 4) */
+#define EMPTY_OR_LINE_GEOM 0x0104  /* Empty geometry type (type 1, subtype 4) or LINESTRING type */
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -1585,13 +1585,13 @@ TdsTypeSpatialToDatum(StringInfo buf)
 			pointSize = POINT_SIZE_XYZM;     /* 32 bytes for XYZM point */
 			break;
 			
-		case POINT_EMPTY:  /* Empty point (0x0104) */ 
+		case EMPTY_OR_LINE_GEOM:  /* Empty geometry (0x0104) or LINESTRING type*/ 
 			/* 
 			 * Check if the geometry has EMPTY_COORD required for an empty geometry
-			 * and if the last byte is the empty flag (1)
+			 * and if the last byte is the point empty flag (1)
 			 */
-			if (memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0 && 
-				lastByte == POINT_EMPTY_FLAG)
+			if ((memcmp(buf->data + buf->cursor + COORD_DATA_OFFSET, EMPTY_COORD, sizeof(EMPTY_COORD)) == 0) && 
+				(lastByte == POINT_EMPTY_FLAG))
 			{
 				geomType = (int32)POINTTYPE;
 				npoints = 0;
@@ -1642,7 +1642,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	}
 	else
 	{
-		/* We are copying the remaining bytes (nbytes)*npoints from buf */
+		/* We are copying the remaining bytes (pointsize)*npoints from buf */
 		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - COORD_DATA_OFFSET);
 	}
 

@@ -440,8 +440,8 @@ CREATE OR REPLACE FUNCTION sys.HasZ(geog sys.GEOGRAPHY)
 		Zmflag smallint;
 	BEGIN
 		Zmflag = (SELECT sys.ST_Zmflag(geog));
-		-- If Zmflag = 1, then the geography has Z values
-		-- If Zmflag = 2, then the geography has M values
+		-- If Zmflag = 1, then the geography has M values
+		-- If Zmflag = 2, then the geography has Z values
 		-- If Zmflag = 3, then the geography has Z and M values
 		IF Zmflag = 2 OR Zmflag = 3 THEN
 			RETURN 1;
@@ -461,8 +461,8 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 		Zmflag smallint;
 	BEGIN
 		Zmflag = (SELECT sys.ST_Zmflag(geog));
-		-- If Zmflag = 1, then the geography has Z values
-		-- If Zmflag = 2, then the geography has M values
+		-- If Zmflag = 1, then the geography has M values
+		-- If Zmflag = 2, then the geography has Z values
 		-- If Zmflag = 3, then the geography has Z and M values
 		IF Zmflag = 1 OR Zmflag = 3 THEN
 			RETURN 1;

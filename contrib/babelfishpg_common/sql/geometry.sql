@@ -422,8 +422,8 @@ CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
 		Zmflag smallint;
 	BEGIN
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
-		-- If Zmflag = 1, then the geometry has Z values
-		-- If Zmflag = 2, then the geometry has M values
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
 		-- If Zmflag = 3, then the geometry has Z and M values
 		IF Zmflag = 2 OR Zmflag = 3 THEN
 			RETURN 1;
@@ -443,8 +443,8 @@ CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
 		Zmflag smallint;
 	BEGIN
 		Zmflag = (SELECT sys.ST_Zmflag(geom));
-		-- If Zmflag = 1, then the geometry has Z values
-		-- If Zmflag = 2, then the geometry has M values
+		-- If Zmflag = 1, then the geometry has M values
+		-- If Zmflag = 2, then the geometry has Z values
 		-- If Zmflag = 3, then the geometry has Z and M values
 		IF Zmflag = 1 OR Zmflag = 3 THEN
 			RETURN 1;

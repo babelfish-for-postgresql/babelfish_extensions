@@ -11,6 +11,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 NULL 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point EMPTY:4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|CIRCULARSTRING(1 1, 2 0, -1 1):4326
 #next nine lines are not allowed
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 #prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
@@ -33,6 +34,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 NULL 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point EMPTY:4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|CIRCULARSTRING(1 1, 2 0, -1 1):4326
 #next eleven lines are not allowed
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 #prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
@@ -66,23 +68,19 @@ INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point EMPTY'
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
-INSERT INTO POINTGEOM_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326))
-INSERT INTO POINTGEOM_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 NULL NULL)', 4326))
+INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326))
+INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 NULL NULL)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0)', 4326))
-INSERT INTO POINTGEOM_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0 NULL)', 4326))
+INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0 NULL)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 NULL 4.0)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900 3.0 4.0)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point EMPTY', 4326))
 
-SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
-SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
+SELECT location, location.STX, location.STY, location.Z, location.M FROM POINTGEOM_dt;
+SELECT location, location.Lat, location.Long, location.Z, location.M FROM POINTGEOG_dt;
 SELECT * FROM  POINT_dt;
 select geometry::Point(10,500,4326);
 select geography::Point(10,500,4326);
-
-# Test Z and M coordinate access
-SELECT location, location.STX, location.STY, location.Z, location.M FROM POINTGEOM_dt;
-SELECT location, location.Lat, location.Long, location.Z, location.M FROM POINTGEOG_dt;
 
 SELECT location.STAsText() FROM POINTGEOM_dt;
 SELECT location.STAsText() FROM POINTGEOG_dt;
