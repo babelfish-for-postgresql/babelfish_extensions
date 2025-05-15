@@ -32,6 +32,7 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
 #include "utils/acl.h"
