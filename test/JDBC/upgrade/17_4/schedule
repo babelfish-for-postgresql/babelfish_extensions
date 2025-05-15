@@ -607,3 +607,6 @@ alter-view
 object_ownership-before-16_8-or-17_4
 test_conv_int_to_varbinary_binary_before_17_5_or_16_9
 test_like_index
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper

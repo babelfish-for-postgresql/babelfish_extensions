@@ -622,3 +622,6 @@ round_return_type_test
 alter-view
 test_conv_int_to_varbinary_binary
 babel_varbinary
+babel_test_numeric_int2_oper
+babel_test_numeric_int4_oper
+babel_test_numeric_int8_oper
