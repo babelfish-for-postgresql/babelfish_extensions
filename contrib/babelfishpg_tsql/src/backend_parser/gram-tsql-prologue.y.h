@@ -58,6 +58,7 @@ static Node * buildTsqlMultiLineTvfNode(int create_loc, bool replace, List *func
 static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
 static Node *tsql_unpivot_transformation(List *components, int location);
 static Node *make_nvarchar_const(const char *str, int location);
+static bool needs_unpivot_source_alias(List *source_cols);
 static char *generate_unpivot_source_table_alias(const char *base);
 static char *get_unpivot_source_alias(Node *table_ref);
 
