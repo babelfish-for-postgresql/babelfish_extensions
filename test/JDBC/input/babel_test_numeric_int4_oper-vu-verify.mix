@@ -1,0 +1,498 @@
+-- psql
+analyse master_dbo.babel_test_numeric_int4_vu_prepare;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+exec babel_test_numeric_int4_p0;
+GO
+exec babel_test_numeric_int4_p00;
+GO
+exec babel_test_numeric_int4_p1;
+GO
+exec babel_test_numeric_int4_p2;
+GO
+exec babel_test_numeric_int4_p3;
+GO
+exec babel_test_numeric_int4_p4;
+GO
+exec babel_test_numeric_int4_p5;
+GO
+exec babel_test_numeric_int4_p6;
+GO
+exec babel_test_numeric_int4_p7;
+GO
+exec babel_test_numeric_int4_p8;
+GO
+exec babel_test_numeric_int4_p9;
+GO
+exec babel_test_numeric_int4_p10;
+GO
+exec babel_test_numeric_int4_p11;
+GO
+exec babel_test_numeric_int4_p12;
+GO
+exec babel_test_numeric_int4_p13;
+GO
+exec babel_test_numeric_int4_p14;
+GO
+exec babel_test_numeric_int4_p15;
+GO
+exec babel_test_numeric_int4_p16;
+GO
+exec babel_test_numeric_int4_p17;
+GO
+exec babel_test_numeric_int4_p18;
+GO
+exec babel_test_numeric_int4_p19;
+GO
+exec babel_test_numeric_int4_p20;
+GO
+exec babel_test_numeric_int4_p21;
+GO
+exec babel_test_numeric_int4_p22;
+GO
+exec babel_test_numeric_int4_p23;
+GO
+exec babel_test_numeric_int4_p24;
+GO
+exec babel_test_numeric_int4_p25;
+GO
+exec babel_test_numeric_int4_p26;
+GO
+exec babel_test_numeric_int4_p27;
+GO
+exec babel_test_numeric_int4_p28;
+GO
+exec babel_test_numeric_int4_p29;
+GO
+exec babel_test_numeric_int4_p30;
+GO
+exec babel_test_numeric_int4_p31;
+GO
+exec babel_test_numeric_int4_p32;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+exec babel_test_numeric_int4_p0;
+GO
+exec babel_test_numeric_int4_p00;
+GO
+exec babel_test_numeric_int4_p1;
+GO
+exec babel_test_numeric_int4_p2;
+GO
+exec babel_test_numeric_int4_p3;
+GO
+exec babel_test_numeric_int4_p4;
+GO
+exec babel_test_numeric_int4_p5;
+GO
+exec babel_test_numeric_int4_p6;
+GO
+exec babel_test_numeric_int4_p7;
+GO
+exec babel_test_numeric_int4_p8;
+GO
+exec babel_test_numeric_int4_p9;
+GO
+exec babel_test_numeric_int4_p10;
+GO
+exec babel_test_numeric_int4_p11;
+GO
+exec babel_test_numeric_int4_p12;
+GO
+exec babel_test_numeric_int4_p13;
+GO
+exec babel_test_numeric_int4_p14;
+GO
+exec babel_test_numeric_int4_p15;
+GO
+exec babel_test_numeric_int4_p16;
+GO
+exec babel_test_numeric_int4_p17;
+GO
+exec babel_test_numeric_int4_p18;
+GO
+exec babel_test_numeric_int4_p19;
+GO
+exec babel_test_numeric_int4_p20;
+GO
+exec babel_test_numeric_int4_p21;
+GO
+exec babel_test_numeric_int4_p22;
+GO
+exec babel_test_numeric_int4_p23;
+GO
+exec babel_test_numeric_int4_p24;
+GO
+exec babel_test_numeric_int4_p25;
+GO
+exec babel_test_numeric_int4_p26;
+GO
+exec babel_test_numeric_int4_p27;
+GO
+exec babel_test_numeric_int4_p28;
+GO
+exec babel_test_numeric_int4_p29;
+GO
+exec babel_test_numeric_int4_p30;
+GO
+exec babel_test_numeric_int4_p31;
+GO
+exec babel_test_numeric_int4_p32;
+GO
+
+drop procedure babel_test_numeric_int4_p0;
+drop procedure babel_test_numeric_int4_p00;
+drop procedure babel_test_numeric_int4_p1;
+drop procedure babel_test_numeric_int4_p2;
+drop procedure babel_test_numeric_int4_p3;
+drop procedure babel_test_numeric_int4_p4;
+drop procedure babel_test_numeric_int4_p5;
+drop procedure babel_test_numeric_int4_p6;
+drop procedure babel_test_numeric_int4_p7;
+drop procedure babel_test_numeric_int4_p8;
+drop procedure babel_test_numeric_int4_p9;
+drop procedure babel_test_numeric_int4_p10;
+drop procedure babel_test_numeric_int4_p11;
+drop procedure babel_test_numeric_int4_p12;
+drop procedure babel_test_numeric_int4_p13;
+drop procedure babel_test_numeric_int4_p14;
+drop procedure babel_test_numeric_int4_p15;
+drop procedure babel_test_numeric_int4_p16;
+drop procedure babel_test_numeric_int4_p17;
+drop procedure babel_test_numeric_int4_p18;
+drop procedure babel_test_numeric_int4_p19;
+drop procedure babel_test_numeric_int4_p20;
+drop procedure babel_test_numeric_int4_p21;
+drop procedure babel_test_numeric_int4_p22;
+drop procedure babel_test_numeric_int4_p23;
+drop procedure babel_test_numeric_int4_p24;
+drop procedure babel_test_numeric_int4_p25;
+drop procedure babel_test_numeric_int4_p26;
+drop procedure babel_test_numeric_int4_p27;
+drop procedure babel_test_numeric_int4_p28;
+drop procedure babel_test_numeric_int4_p29;
+drop procedure babel_test_numeric_int4_p30;
+drop procedure babel_test_numeric_int4_p31;
+drop procedure babel_test_numeric_int4_p32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from babel_test_numeric_int4_v0;
+GO
+select * from babel_test_numeric_int4_v00;
+GO
+select * from babel_test_numeric_int4_v1;
+GO
+select * from babel_test_numeric_int4_v2;
+GO
+select * from babel_test_numeric_int4_v3;
+GO
+select * from babel_test_numeric_int4_v4;
+GO
+select * from babel_test_numeric_int4_v5;
+GO
+select * from babel_test_numeric_int4_v6;
+GO
+select * from babel_test_numeric_int4_v7;
+GO
+select * from babel_test_numeric_int4_v8;
+GO
+select * from babel_test_numeric_int4_v9;
+GO
+select * from babel_test_numeric_int4_v10;
+GO
+select * from babel_test_numeric_int4_v11;
+GO
+select * from babel_test_numeric_int4_v12;
+GO
+select * from babel_test_numeric_int4_v13;
+GO
+select * from babel_test_numeric_int4_v14;
+GO
+select * from babel_test_numeric_int4_v15;
+GO
+select * from babel_test_numeric_int4_v16;
+GO
+select * from babel_test_numeric_int4_v17;
+GO
+select * from babel_test_numeric_int4_v18;
+GO
+select * from babel_test_numeric_int4_v19;
+GO
+select * from babel_test_numeric_int4_v20;
+GO
+select * from babel_test_numeric_int4_v21;
+GO
+select * from babel_test_numeric_int4_v22;
+GO
+select * from babel_test_numeric_int4_v23;
+GO
+select * from babel_test_numeric_int4_v24;
+GO
+select * from babel_test_numeric_int4_v25;
+GO
+select * from babel_test_numeric_int4_v26;
+GO
+select * from babel_test_numeric_int4_v27;
+GO
+select * from babel_test_numeric_int4_v28;
+GO
+select * from babel_test_numeric_int4_v29;
+GO
+select * from babel_test_numeric_int4_v30;
+GO
+select * from babel_test_numeric_int4_v31;
+GO
+select * from babel_test_numeric_int4_v32;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select * from babel_test_numeric_int4_v0;
+GO
+select * from babel_test_numeric_int4_v00;
+GO
+select * from babel_test_numeric_int4_v1;
+GO
+select * from babel_test_numeric_int4_v2;
+GO
+select * from babel_test_numeric_int4_v3;
+GO
+select * from babel_test_numeric_int4_v4;
+GO
+select * from babel_test_numeric_int4_v5;
+GO
+select * from babel_test_numeric_int4_v6;
+GO
+select * from babel_test_numeric_int4_v7;
+GO
+select * from babel_test_numeric_int4_v8;
+GO
+select * from babel_test_numeric_int4_v9;
+GO
+select * from babel_test_numeric_int4_v10;
+GO
+select * from babel_test_numeric_int4_v11;
+GO
+select * from babel_test_numeric_int4_v12;
+GO
+select * from babel_test_numeric_int4_v13;
+GO
+select * from babel_test_numeric_int4_v14;
+GO
+select * from babel_test_numeric_int4_v15;
+GO
+select * from babel_test_numeric_int4_v16;
+GO
+select * from babel_test_numeric_int4_v17;
+GO
+select * from babel_test_numeric_int4_v18;
+GO
+select * from babel_test_numeric_int4_v19;
+GO
+select * from babel_test_numeric_int4_v20;
+GO
+select * from babel_test_numeric_int4_v21;
+GO
+select * from babel_test_numeric_int4_v22;
+GO
+select * from babel_test_numeric_int4_v23;
+GO
+select * from babel_test_numeric_int4_v24;
+GO
+select * from babel_test_numeric_int4_v25;
+GO
+select * from babel_test_numeric_int4_v26;
+GO
+select * from babel_test_numeric_int4_v27;
+GO
+select * from babel_test_numeric_int4_v28;
+GO
+select * from babel_test_numeric_int4_v29;
+GO
+select * from babel_test_numeric_int4_v30;
+GO
+select * from babel_test_numeric_int4_v31;
+GO
+select * from babel_test_numeric_int4_v32;
+GO
+
+drop view babel_test_numeric_int4_v0;
+drop view babel_test_numeric_int4_v00;
+drop view babel_test_numeric_int4_v1;
+drop view babel_test_numeric_int4_v2;
+drop view babel_test_numeric_int4_v3;
+drop view babel_test_numeric_int4_v4;
+drop view babel_test_numeric_int4_v5;
+drop view babel_test_numeric_int4_v6;
+drop view babel_test_numeric_int4_v7;
+drop view babel_test_numeric_int4_v8;
+drop view babel_test_numeric_int4_v9;
+drop view babel_test_numeric_int4_v10;
+drop view babel_test_numeric_int4_v11;
+drop view babel_test_numeric_int4_v12;
+drop view babel_test_numeric_int4_v13;
+drop view babel_test_numeric_int4_v14;
+drop view babel_test_numeric_int4_v15;
+drop view babel_test_numeric_int4_v16;
+drop view babel_test_numeric_int4_v17;
+drop view babel_test_numeric_int4_v18;
+drop view babel_test_numeric_int4_v19;
+drop view babel_test_numeric_int4_v20;
+drop view babel_test_numeric_int4_v21;
+drop view babel_test_numeric_int4_v22;
+drop view babel_test_numeric_int4_v23;
+drop view babel_test_numeric_int4_v24;
+drop view babel_test_numeric_int4_v25;
+drop view babel_test_numeric_int4_v26;
+drop view babel_test_numeric_int4_v27;
+drop view babel_test_numeric_int4_v28;
+drop view babel_test_numeric_int4_v29;
+drop view babel_test_numeric_int4_v30;
+drop view babel_test_numeric_int4_v31;
+drop view babel_test_numeric_int4_v32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select babel_test_numeric_int4_f0();
+GO
+select babel_test_numeric_int4_f00();
+GO
+select babel_test_numeric_int4_f1();
+GO
+select babel_test_numeric_int4_f2();
+GO
+select babel_test_numeric_int4_f3();
+GO
+select babel_test_numeric_int4_f4();
+GO
+select babel_test_numeric_int4_f5();
+GO
+select babel_test_numeric_int4_f6();
+GO
+select babel_test_numeric_int4_f7();
+GO
+select babel_test_numeric_int4_f8();
+GO
+select babel_test_numeric_int4_f9();
+GO
+select babel_test_numeric_int4_f10();
+GO
+select babel_test_numeric_int4_f11();
+GO
+select babel_test_numeric_int4_f12();
+GO
+select babel_test_numeric_int4_f13();
+GO
+select babel_test_numeric_int4_f14();
+GO
+select babel_test_numeric_int4_f15();
+GO
+select babel_test_numeric_int4_f16();
+GO
+select babel_test_numeric_int4_f17();
+GO
+select babel_test_numeric_int4_f18();
+GO
+select babel_test_numeric_int4_f19();
+GO
+select babel_test_numeric_int4_f20();
+GO
+select babel_test_numeric_int4_f21();
+GO
+select babel_test_numeric_int4_f22();
+GO
+select babel_test_numeric_int4_f23();
+GO
+select babel_test_numeric_int4_f24();
+GO
+select babel_test_numeric_int4_f25();
+GO
+select babel_test_numeric_int4_f26();
+GO
+select babel_test_numeric_int4_f27();
+GO
+select babel_test_numeric_int4_f28();
+GO
+select babel_test_numeric_int4_f29();
+GO
+select babel_test_numeric_int4_f30();
+GO
+select babel_test_numeric_int4_f31();
+GO
+select babel_test_numeric_int4_f32();
+GO
+
+drop function babel_test_numeric_int4_f0;
+drop function babel_test_numeric_int4_f00;
+drop function babel_test_numeric_int4_f1;
+drop function babel_test_numeric_int4_f2;
+drop function babel_test_numeric_int4_f3;
+drop function babel_test_numeric_int4_f4;
+drop function babel_test_numeric_int4_f5;
+drop function babel_test_numeric_int4_f6;
+drop function babel_test_numeric_int4_f7;
+drop function babel_test_numeric_int4_f8;
+drop function babel_test_numeric_int4_f9;
+drop function babel_test_numeric_int4_f10;
+drop function babel_test_numeric_int4_f11;
+drop function babel_test_numeric_int4_f12;
+drop function babel_test_numeric_int4_f13;
+drop function babel_test_numeric_int4_f14;
+drop function babel_test_numeric_int4_f15;
+drop function babel_test_numeric_int4_f16;
+drop function babel_test_numeric_int4_f17;
+drop function babel_test_numeric_int4_f18;
+drop function babel_test_numeric_int4_f19;
+drop function babel_test_numeric_int4_f20;
+drop function babel_test_numeric_int4_f21;
+drop function babel_test_numeric_int4_f22;
+drop function babel_test_numeric_int4_f23;
+drop function babel_test_numeric_int4_f24;
+drop function babel_test_numeric_int4_f25;
+drop function babel_test_numeric_int4_f26;
+drop function babel_test_numeric_int4_f27;
+drop function babel_test_numeric_int4_f28;
+drop function babel_test_numeric_int4_f29;
+drop function babel_test_numeric_int4_f30;
+drop function babel_test_numeric_int4_f31;
+drop function babel_test_numeric_int4_f32;
+GO
+
+drop table babel_test_numeric_int4_vu_prepare;
+GO

@@ -1,0 +1,469 @@
+create table babel_test_numeric_int8_vu_prepare(a numeric(18,2));
+GO
+
+-- insert data
+INSERT INTO babel_test_numeric_int8_vu_prepare (a) SELECT cast(generate_series(1, 100000) as numeric(18,2));
+GO
+~~ROW COUNT: 100000~~
+
+
+INSERT INTO babel_test_numeric_int8_vu_prepare VALUES (NULL), (-9223372036854775808.00), (9223372036854775807.00);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+CREATE INDEX babel_test_numeric_int8_vu_prepare_idx on babel_test_numeric_int8_vu_prepare(a);
+GO
+
+-- procedures dependency on all the numeric,int8 or int8, numeric operators
+create procedure babel_test_numeric_int8_p0 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a = cast(1 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p00 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(1 as bigint) = a;
+GO
+
+create procedure babel_test_numeric_int8_p1 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a IS NULL;
+GO
+
+-- seq scan
+create procedure babel_test_numeric_int8_p2 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p3 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) <> a;
+GO
+
+-- index scan on < and >
+create procedure babel_test_numeric_int8_p4 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p5 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) > a;
+GO
+
+create procedure babel_test_numeric_int8_p6 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p7 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(-9223372036854775808 as bigint) > a;
+GO
+
+create procedure babel_test_numeric_int8_p8 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p9 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) >= a;
+GO
+
+create procedure babel_test_numeric_int8_p10 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p11 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) < a;
+GO
+
+create procedure babel_test_numeric_int8_p12 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p13 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) <= a;
+GO
+
+create procedure babel_test_numeric_int8_p14 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint);
+go
+
+create procedure babel_test_numeric_int8_p15 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(9223372036854775807 as bigint) < a;
+go
+
+-- seq scan on < and >
+create procedure babel_test_numeric_int8_p16 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p17 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a;
+GO
+
+-- index scan for BETWEEN
+create procedure babel_test_numeric_int8_p18 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint);
+GO
+
+-- seq scan for BETWEEN
+create procedure babel_test_numeric_int8_p19 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(9223372036854775807 as bigint);
+GO
+
+-- mix of numeric op int8 and numeric op numeric
+create procedure babel_test_numeric_int8_p20 as
+select count(*) from babel_test_numeric_int8_vu_prepare where (a between cast(5 as bigint) and cast(99995 as bigint)) and a = cast(10 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p21 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint) and a < cast(7 as bigint);
+Go
+
+create procedure babel_test_numeric_int8_p22 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a and cast(7 as bigint) > a;
+Go
+
+
+-- shouldn't be any regression on numeric op numeric operators
+-- seq scan
+create procedure babel_test_numeric_int8_p23 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint);
+GO
+
+-- index scan on < and >
+create procedure babel_test_numeric_int8_p24 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p25 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p26 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p27 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p28 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint);
+GO
+
+create procedure babel_test_numeric_int8_p29 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint);
+go
+
+-- seq scan on < and >
+create procedure babel_test_numeric_int8_p30 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint);
+GO
+
+-- index scan for BETWEEN
+create procedure babel_test_numeric_int8_p31 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint);
+GO
+
+-- seq scan for BETWEEN
+create procedure babel_test_numeric_int8_p32 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(99995 as bigint);
+GO
+
+
+-- view body dependency on all the numeric,int8 or int8, numeric operators
+create view babel_test_numeric_int8_v0 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a = cast(1 as bigint);
+GO
+
+create view babel_test_numeric_int8_v00 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(1 as bigint) = a;
+GO
+
+create view babel_test_numeric_int8_v1 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a IS NULL;
+GO
+
+-- seq scan
+create view babel_test_numeric_int8_v2 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v3 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) <> a;
+GO
+
+-- index scan on < and >
+create view babel_test_numeric_int8_v4 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v5 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) > a;
+GO
+
+create view babel_test_numeric_int8_v6 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint);
+GO
+
+create view babel_test_numeric_int8_v7 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(-9223372036854775808 as bigint) > a;
+GO
+
+create view babel_test_numeric_int8_v8 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v9 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) >= a;
+GO
+
+create view babel_test_numeric_int8_v10 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint);
+GO
+
+create view babel_test_numeric_int8_v11 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) < a;
+GO
+
+create view babel_test_numeric_int8_v12 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint);
+GO
+
+create view babel_test_numeric_int8_v13 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) <= a;
+GO
+
+create view babel_test_numeric_int8_v14 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint);
+go
+
+create view babel_test_numeric_int8_v15 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(9223372036854775807 as bigint) < a;
+go
+
+-- seq scan on < and >
+create view babel_test_numeric_int8_v16 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v17 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a;
+GO
+
+-- index scan for BETWEEN
+create view babel_test_numeric_int8_v18 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint);
+GO
+
+-- seq scan for BETWEEN
+create view babel_test_numeric_int8_v19 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(9223372036854775807 as bigint);
+GO
+
+-- mix of numeric op int8 and numeric op numeric
+create view babel_test_numeric_int8_v20 as
+select count(*) from babel_test_numeric_int8_vu_prepare where (a between cast(5 as bigint) and cast(99995 as bigint)) and a = cast(10 as bigint);
+GO
+
+create view babel_test_numeric_int8_v21 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint) and a < cast(7 as bigint);
+Go
+
+create view babel_test_numeric_int8_v22 as
+select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a and cast(7 as bigint) > a;
+Go
+
+
+-- shouldn't be any regression on numeric op numeric operators
+-- seq scan
+create view babel_test_numeric_int8_v23 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint);
+GO
+
+-- index scan on < and >
+create view babel_test_numeric_int8_v24 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v25 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint);
+GO
+
+create view babel_test_numeric_int8_v26 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint);
+GO
+
+create view babel_test_numeric_int8_v27 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint);
+GO
+
+create view babel_test_numeric_int8_v28 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint);
+GO
+
+create view babel_test_numeric_int8_v29 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint);
+go
+
+-- seq scan on < and >
+create view babel_test_numeric_int8_v30 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint);
+GO
+
+-- index scan for BETWEEN
+create view babel_test_numeric_int8_v31 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint);
+GO
+
+-- seq scan for BETWEEN
+create view babel_test_numeric_int8_v32 as
+select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(99995 as bigint);
+GO
+
+-- functions dependency on all the numeric,int8 or int8, numeric operators
+create function babel_test_numeric_int8_f0() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a = cast(1 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f00() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(1 as bigint) = a) end;
+GO
+
+create function babel_test_numeric_int8_f1() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a IS NULL) end;
+GO
+
+-- seq scan
+create function babel_test_numeric_int8_f2() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f3() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) <> a) end;
+GO
+
+-- index scan on < and >
+create function babel_test_numeric_int8_f4() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f5() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) > a) end;
+GO
+
+create function babel_test_numeric_int8_f6() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f7() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(-9223372036854775808 as bigint) > a) end;
+GO
+
+create function babel_test_numeric_int8_f8() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f9() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) >= a) end;
+GO
+
+create function babel_test_numeric_int8_f10() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f11() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) < a) end;
+GO
+
+create function babel_test_numeric_int8_f12() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f13() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(99995 as bigint) <= a) end;
+GO
+
+create function babel_test_numeric_int8_f14() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f15() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(9223372036854775807 as bigint) < a) end;
+GO
+
+-- seq scan on < and >
+create function babel_test_numeric_int8_f16() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f17() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a) end;
+GO
+
+-- index scan for BETWEEN
+create function babel_test_numeric_int8_f18() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint)) end;
+GO
+
+-- seq scan for BETWEEN
+create function babel_test_numeric_int8_f19() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(9223372036854775807 as bigint)) end;
+GO
+
+-- mix of numeric op int8 and numeric op numeric
+create function babel_test_numeric_int8_f20() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where (a between cast(5 as bigint) and cast(99995 as bigint)) and a = cast(10 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f21() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint) and a < cast(7 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f22() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where cast(5 as bigint) < a and cast(7 as bigint) > a) end;
+GO
+
+
+-- shouldn't be any regression on numeric op numeric operators
+-- seq scan
+create function babel_test_numeric_int8_f23() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a <> cast(5 as bigint)) end;
+GO
+
+-- index scan on < and >
+create function babel_test_numeric_int8_f24() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f25() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a < cast(-9223372036854775808 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f26() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a <= cast(5 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f27() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(99995 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f28() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a >= cast(99995 as bigint)) end;
+GO
+
+create function babel_test_numeric_int8_f29() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(9223372036854775807 as bigint)) end;
+GO
+
+-- seq scan on < and >
+create function babel_test_numeric_int8_f30() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a > cast(5 as bigint)) end;
+GO
+
+-- index scan for BETWEEN
+create function babel_test_numeric_int8_f31() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(10 as bigint)) end;
+GO
+
+-- seq scan for BETWEEN
+create function babel_test_numeric_int8_f32() returns int as
+begin return (select count(*) from babel_test_numeric_int8_vu_prepare where a between cast(5 as bigint) and cast(99995 as bigint)) end;
+GO
