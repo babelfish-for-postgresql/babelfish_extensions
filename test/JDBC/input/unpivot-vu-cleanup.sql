@@ -15,6 +15,8 @@ DROP TABLE product_info;
 GO
 DROP TABLE sales_data;
 GO
+DROP TABLE revenue_data;
+GO
 DROP TABLE product_sales;
 GO
 DROP TABLE product_performance;

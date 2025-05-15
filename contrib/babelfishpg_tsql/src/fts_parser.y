@@ -23,6 +23,7 @@ static char     *scanbuf;
 static int      scanbuflen;
 
 static char     *translate_simple_term(const char* s);
+static char     *translate_prefix_term(const char* s);
 static char     *trim(char *s, bool insideQuotes);
 static void     replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes);
 
@@ -76,7 +77,16 @@ simple_term:
 
 prefix_term:
     PREFIX_TERM_TOKEN {
-        fts_yyerror(NULL, "Prefix term is not currently supported in Babelfish");
+        *result = translate_prefix_term($1);
+    }
+    | WS_TOKEN PREFIX_TERM_TOKEN {
+        *result = translate_prefix_term($2);
+    }
+    | PREFIX_TERM_TOKEN WS_TOKEN {
+        *result = translate_prefix_term($1);
+    }
+    | WS_TOKEN PREFIX_TERM_TOKEN WS_TOKEN {
+        *result = translate_prefix_term($2);
     }
     ;
 
@@ -193,6 +203,138 @@ static char
     pfree(trimmedInputStr);
 
     return output.data;
+}
+
+/* Helper function that takes in a prefix word or phrase and returns the same prefix word/phrase in Postgres format
+ * Example: '"word*"' is rewritten into 'word:*'; '"word1 word2 word3*"' is rewritten into 'word1:*<->word2:*<->word3:*'
+ * Case 1: '"word*"' = 'word:*'
+ * Case 2: '"word1 word2 word3*"' = 'word1:*<->word2:*<->word3:*'
+ * Case 3: '  "word*"' = 'word:*' || '"word*" ' = 'word:*' || ' "word*" ' = 'word:*'
+ * Case 4: '" word1 word2*"' = 'word1:*<->word2:*'
+ * Case 5: '"word1* word2*"' = 'word1:*<->word2:*'
+ * Case 6: '"word1 word2* "' && '" word1 word2* "' are treated as simple terms over SQL server
+ * Trivial Case: spaces before and after double quotes, Example - '   "word1 word2" ' = 'word1<->word2'
+ */
+static char
+*translate_prefix_term(const char* inputStr) {
+    char                  *output;
+    StringInfoData        outputStr;
+    static const char     *specialChars = "~!&|@#$%^+=\\;:<>?.\\/`'_";
+    char                  *leftPtr;
+    char                  *rightPtr;
+
+
+    /* Check for empty input - this should not be possible based on lexer rules, but check just in case */
+    if (!inputStr || !*inputStr) {
+        ereport(ERROR,
+          (errcode(ERRCODE_INTERNAL_ERROR),
+           errmsg("Null or empty full-text predicate.")));
+    }
+
+    initStringInfo(&outputStr);
+    output = pstrdup(inputStr);
+
+    /*
+     * removing spaces between the leading single quote (') and leading delimiter (") and
+     * trailing single quote (') and trailing delimiter (")
+     * '   "word1 word2*"  ' = '"word1 word2*"'
+     */
+    trim(output, false);
+
+
+    /* 
+     * removing leading spaces, for the phrase enclosed in double quotes
+     * '"   word1*"' = '"word1*"'
+     * this will not handle the trailing spaces as,
+     * the search string with trailing spaces are identified as simple terms by the lexer
+     * '"word1*  "' is a simple term
+     */
+    trim(output, true);
+
+    leftPtr = output;
+    rightPtr = output + (strlen(output) - 1);
+        
+    /*
+     * trim the extra spaces, asterisks, tab characters or a newline character 
+     * at the end of the search string
+     */
+    while (leftPtr <= rightPtr && (*rightPtr == ' ' || *rightPtr == '*' || *rightPtr == '\t' || *rightPtr == '\n')) {
+        rightPtr--;
+    }
+    
+    /*
+     * rewriting search string in format word1:*<->word2:* 
+     */
+    while (leftPtr <= rightPtr) {
+        if (strchr(specialChars, *leftPtr) != NULL) {
+            pfree(output);
+            resetStringInfo(&outputStr);
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                 errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
+        }
+        /* 
+         * removing multiple spaces, tabs and * from the search string 
+         * If a space is encountered, we remove all the next occurances of * and spaces and tabs
+         * before end of the input or if next word is encountered
+         * Case 1: '"word1   * * ** *"' = 'word1:*'
+         * Case 2: '"word1   * * ** * word2*"' = 'word1:*<->word2:*'
+         * Case 3: '"word1* *' + CHAR(9) + '** *"' = 'word1:*'
+         * Case 4: '"word1* * *  ' + CHAR(9) + '* ' + CHAR(9) + ' *** * word2*"' = 'word1:*<->word2:*'
+         */
+        if (*leftPtr == ' ' || *leftPtr == '*' || *leftPtr == '\t') {
+            while (leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t')) {
+                leftPtr++;
+            }
+
+            /*
+             * to handle the case when a newline character is encountered
+             * while removing extra space, asterisk and tab character
+             * '"word1' + CHAR(9) + ' ' + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
+             */
+            if (*(leftPtr + 1) == '\n') {
+                leftPtr++;
+                continue;
+            }
+            /*
+             * space, tab and asterisk only between the keywords is translated
+             */
+            if (outputStr.len > 0) {
+                appendStringInfoString(&outputStr, ":*<->");
+            }
+        } else if (*leftPtr == '\n') {
+            if (outputStr.len > 0) {
+                /*
+                 * if a newline is encountered, remove all the next occurances of spaces, asterisks, tabs and newline
+                 * till the next keyword
+                 * as multiple newline characters are reduced to a single newline character
+                 * '"word1' + CHAR(10) + ' * ** * ' + CHAR(9) + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
+                 */
+                while (leftPtr < rightPtr && (*(leftPtr + 1) == ' ' || *(leftPtr + 1) == '*' || *(leftPtr + 1) == '\t' || *(leftPtr + 1) == '\n')) {
+                    leftPtr++;
+                }
+                /*
+                 * the trailing newline characters are removed in the beginning
+                 * but added this safety check
+                 */
+                if (leftPtr != rightPtr) {
+                    char *newlineHash = replace_special_chars_fts_impl("\n");
+                    trim(newlineHash, false);
+                    appendStringInfoString(&outputStr, ":*<->");
+                    appendStringInfoString(&outputStr, newlineHash);
+                    appendStringInfoString(&outputStr, ":*<->");
+                    pfree(newlineHash);
+                }
+            }
+        } else {
+            appendStringInfoChar(&outputStr, *leftPtr);
+        }
+        leftPtr++;
+    }
+    appendStringInfoString(&outputStr, ":*");
+
+    pfree(output);
+    return outputStr.data;
 }
 
 /* Helper function to generate two strings on the basis of the input string

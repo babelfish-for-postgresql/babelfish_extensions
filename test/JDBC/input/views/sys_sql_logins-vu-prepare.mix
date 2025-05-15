@@ -14,10 +14,7 @@ CREATE VIEW sys_sql_logins_vu_prepare_view AS
         sq.type_desc, 
         sq.is_policy_checked, 
         sq.is_expiration_checked, 
-        CASE 
-            WHEN sq.password_hash IS NULL THEN 'NULL' 
-            ELSE 'PASSWORD_HASH'
-        END
+        sq.password_hash
     FROM sys.sql_logins AS sq
     WHERE sq.name like 'sys_sql_logins_vu_login%' OR sq.name IN ('jdbc_user','public','sysadmin','securityadmin','dbcreator','bbf_role_admin')
     ORDER BY sq.name;
