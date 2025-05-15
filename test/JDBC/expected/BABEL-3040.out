@@ -1,0 +1,227 @@
+-- psql user=jdbc_user password=12345678
+-- setup
+drop user if exists psql_user;
+GO
+
+create user psql_user with password '12345678' createdb;
+GO
+
+-- psql user=jdbc_user password=12345678
+-- Verify sys catalog can be altered wiht super user
+drop table sys.babelfish_sysdatabases;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_sysdatabases" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_sysdatabases set name = name;
+GO
+~~ROW COUNT: 3~~
+
+
+-- psql user=jdbc_user password=12345678
+drop table sys.babelfish_authid_login_ext;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_authid_login_ext" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_authid_login_ext set is_disabled = is_disabled;
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql user=jdbc_user password=12345678
+drop table sys.babelfish_authid_user_ext;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_authid_user_ext" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_authid_user_ext set database_name = database_name;
+GO
+~~ROW COUNT: 24~~
+
+
+-- psql user=jdbc_user password=12345678
+drop table sys.babelfish_configurations;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_configurations" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_configurations set value = value;
+GO
+~~ROW COUNT: 7~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_db_seq set last_value = last_value;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot change sequence "babelfish_db_seq"
+    Server SQLState: 42809)~~
+
+
+-- psql user=jdbc_user password=12345678
+drop table sys.babelfish_helpcollation
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_helpcollation" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_helpcollation set name = name;
+GO
+~~ROW COUNT: 141~~
+
+
+-- psql user=jdbc_user password=12345678
+drop table sys.babelfish_namespace_ext
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied: "babelfish_namespace_ext" is a system catalog
+    Server SQLState: 42501)~~
+
+
+-- psql user=jdbc_user password=12345678
+update sys.babelfish_namespace_ext set orig_name = orig_name;
+GO
+~~ROW COUNT: 6~~
+
+
+
+-- psql user=psql_user password=12345678
+-- Verify sys catalogs cannot be altered with non super user
+drop table sys.babelfish_sysdatabases;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of table babelfish_sysdatabases
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_sysdatabases set name = name;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_sysdatabases
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+drop table sys.babelfish_authid_login_ext set;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: syntax error at or near "set"
+  Position: 43
+    Server SQLState: 42601)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_authid_login_ext set is_disabled = is_disabled;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_authid_login_ext
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+drop table sys.babelfish_authid_user_ext;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of table babelfish_authid_user_ext
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_authid_user_ext set database_name = database_name;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_authid_user_ext
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+drop table sys.babelfish_configurations;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of table babelfish_configurations
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_configurations set value = value;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_configurations
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_db_seq set last_value = last_value;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for sequence babelfish_db_seq
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+drop table sys.babelfish_helpcollation
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of table babelfish_helpcollation
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_helpcollation set name = name;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_helpcollation
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+drop table sys.babelfish_namespace_ext
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must be owner of table babelfish_namespace_ext
+    Server SQLState: 42501)~~
+
+
+-- psql user=psql_user password=12345678
+update sys.babelfish_namespace_ext set orig_name = orig_name;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table babelfish_namespace_ext
+    Server SQLState: 42501)~~
+
