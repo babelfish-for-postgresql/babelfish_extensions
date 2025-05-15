@@ -114,7 +114,7 @@ static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
 const  int           XML_HANDLE_START = 0;
 const  int           XML_HANDLE_INVALID = INT_MAX / 2;
-static int           current_xml_handle ;
+static int           current_xml_handle;
 Bitmapset           *active_xml_handles = NULL;
 static int           xml_handle_temp_table_relid = InvalidOid;
 int                  get_next_xml_handle(void);
@@ -4318,11 +4318,11 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
  * Errors: Throws error when all possible handles are in use
  */
 int 
-get_next_xml_handle()
+get_next_xml_handle(void)
 {
     int           old_handle = current_xml_handle;
     MemoryContext oldContext = NULL;
-	
+    
     while (true)
     {
         ++current_xml_handle;
@@ -4331,19 +4331,19 @@ get_next_xml_handle()
         {
             current_xml_handle = XML_HANDLE_START + 1;
         }
-            
+        
         if (unlikely(current_xml_handle == old_handle))
         {
             ereport(ERROR,
-                (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-                 errmsg("Out of XML Handles")));
+                   (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+                    errmsg("Out of XML Handles")));
         }
-            
+        
         if (!bms_is_member(current_xml_handle, active_xml_handles))
             break;
     }
     
-     /* 
+    /*
      * Switch to TopMemoryContext to ensure the bitmap set persists across transactions.
      * This prevents the bitmap set from being freed when the current memory context
      * is reset, which would cause the handles to be lost and potentially reused.
@@ -4351,7 +4351,7 @@ get_next_xml_handle()
     oldContext = MemoryContextSwitchTo(TopMemoryContext);
     active_xml_handles = bms_add_member(active_xml_handles, current_xml_handle);
     MemoryContextSwitchTo(oldContext);
-
+    
     return current_xml_handle;
 }
 
@@ -4439,51 +4439,52 @@ create_xml_handle_columns(void)
  * to TSQL to ensure proper table creation semantics.
  */
 
-void 
-create_xml_handle_temp_table()  
-{
-    CreateStmt   *stmt = makeNode(CreateStmt);
-    RangeVar     *relation = makeRangeVar(NULL,"#xml_handle_temp_table", -1);
-    Oid 	  save_userid;
-    int 	  save_sec_context;
-    int           saved_dialect = sql_dialect;
-    ObjectAddress address;
-    
-    /* This makes it temporary table */
-    relation->relpersistence = RELPERSISTENCE_TEMP;
-    
-    /* Set up the CreateStmt */
-    stmt->relation = relation;
-    stmt->tableElts = create_xml_handle_columns();
-    stmt->constraints = NIL;
-    stmt->inhRelations = NIL;  
-    stmt->partspec = NULL;
-    stmt->ofTypename = NULL; 
-    stmt->oncommit = ONCOMMIT_PRESERVE_ROWS; 
-    stmt->tablespacename = NULL;
-    stmt->if_not_exists = false;  
-    stmt->options = NIL;
-    stmt->accessMethod = NULL;
-    
-    GetUserIdAndSecContext(&save_userid, &save_sec_context);
-
-    PG_TRY();
-    {
-	/* Set current user to bbf_role_admin for create permissions.*/
-        sql_dialect = SQL_DIALECT_TSQL;
-	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-        address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
-        xml_handle_temp_table_relid = address.objectId;
-    }
-    PG_FINALLY();
-    {
-    	SetUserIdAndSecContext(save_userid, save_sec_context);
-    	sql_dialect = saved_dialect;
-    }
-    PG_END_TRY();
-	
-    current_xml_handle = XML_HANDLE_START;
-}
+ void 
+ create_xml_handle_temp_table()  
+ {
+     CreateStmt   *stmt = makeNode(CreateStmt);
+     RangeVar     *relation = makeRangeVar(NULL,"#xml_handle_temp_table", -1);
+     Oid          save_userid;
+     int          save_sec_context;
+     int          saved_dialect = sql_dialect;
+     ObjectAddress address;
+     
+     /* This makes it temporary table */
+     relation->relpersistence = RELPERSISTENCE_TEMP;
+     
+     /* Set up the CreateStmt */
+     stmt->relation = relation;
+     stmt->tableElts = create_xml_handle_columns();
+     stmt->constraints = NIL;
+     stmt->inhRelations = NIL;  
+     stmt->partspec = NULL;
+     stmt->ofTypename = NULL; 
+     stmt->oncommit = ONCOMMIT_PRESERVE_ROWS; 
+     stmt->tablespacename = NULL;
+     stmt->if_not_exists = false;  
+     stmt->options = NIL;
+     stmt->accessMethod = NULL;
+     
+     GetUserIdAndSecContext(&save_userid, &save_sec_context);
+ 
+     PG_TRY();
+     {
+	 /* Set current user to bbf_role_admin for create permissions.*/
+	 sql_dialect = SQL_DIALECT_TSQL;
+	 SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+	 address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
+	 xml_handle_temp_table_relid = address.objectId;
+     }
+     PG_FINALLY();
+     {
+	 SetUserIdAndSecContext(save_userid, save_sec_context);
+	 sql_dialect = saved_dialect;
+     }
+     PG_END_TRY();
+     
+     current_xml_handle = XML_HANDLE_START;
+ }
+ 
 
 /*
  * insert_xml_handle_entry - Stores XML document data in the temporary handle table.
@@ -4509,21 +4510,21 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     bool                  is_namespace_null = true;
     Relation              relation;
     Datum                 values[7];
-    Oid 		  save_userid;
-    int 		  save_sec_context;
+    Oid                   save_userid;
+    int                   save_sec_context;
     int                   saved_dialect = sql_dialect;
     HeapTuple             tuple;
     bool                  nulls[7] = {false, true, false, true, true, false, true};
-	
+    
     if (!OidIsValid(xml_handle_temp_table_relid))
     {
-    	/* Table doesn't exist, create it */
-    	create_xml_handle_temp_table();
-    	
-    	if (!OidIsValid(xml_handle_temp_table_relid))
-    		ereport(ERROR,
-    			(errcode(ERRCODE_UNDEFINED_TABLE),
-    			 errmsg("Failed to create XML handle temporary table")));
+        /* Table doesn't exist, create it */
+        create_xml_handle_temp_table();
+        
+        if (!OidIsValid(xml_handle_temp_table_relid))
+            ereport(ERROR,
+                   (errcode(ERRCODE_UNDEFINED_TABLE),
+                    errmsg("Failed to create XML handle temporary table")));
     }
     
     /* get the next handle */
@@ -4539,7 +4540,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
         is_namespace_null = false;
         nulls[1] = false;
         nulls[3] = false;
-	nulls[4] = false;
+        nulls[4] = false;
         nulls[6] = false;
     }
     
@@ -4572,15 +4573,15 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     
     PG_TRY();
     {
-	/* Set current user to bbf_role_admin for insert permissions */
+        /* Set current user to bbf_role_admin for insert permissions */
         sql_dialect = SQL_DIALECT_TSQL;
-	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-    	CatalogTupleInsert(relation, tuple);
+        SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+        CatalogTupleInsert(relation, tuple);
     }
     PG_FINALLY();
     {
-    	SetUserIdAndSecContext(save_userid, save_sec_context);
-    	sql_dialect = saved_dialect;
+        SetUserIdAndSecContext(save_userid, save_sec_context);
+        sql_dialect = saved_dialect;
     }
     PG_END_TRY();
         
@@ -4613,8 +4614,8 @@ delete_xml_handle_entry(int document_id)
     HeapTuple             tuple;
     bool                  found = false;
     int                   curr_handle = (document_id + 1) / 2;
-    int 		  save_sec_context;
-    Oid 		  save_userid;
+    int                   save_sec_context;
+    Oid                   save_userid;
     int                   saved_dialect = sql_dialect;
     MemoryContext         oldContext = NULL;
     
@@ -4648,26 +4649,26 @@ delete_xml_handle_entry(int document_id)
     /* Find and delete the tuple */
     if (HeapTupleIsValid(tuple))
     {
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+        GetUserIdAndSecContext(&save_userid, &save_sec_context);
          
-	PG_TRY();
-	{
-	   /* Set current user to bbf_role_admin for delete permissions */
-	   sql_dialect = SQL_DIALECT_TSQL;
-	   SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-	   CatalogTupleDelete(relation, &tuple->t_self);
-	}
-	PG_FINALLY();
-	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-		sql_dialect = saved_dialect;
-	}
-	PG_END_TRY();
-     
-	oldContext = MemoryContextSwitchTo(TopMemoryContext);
-	active_xml_handles = bms_del_member(active_xml_handles, curr_handle);
-	MemoryContextSwitchTo(oldContext);
-
+        PG_TRY();
+        {
+            /* Set current user to bbf_role_admin for delete permissions */
+            sql_dialect = SQL_DIALECT_TSQL;
+            SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+            CatalogTupleDelete(relation, &tuple->t_self);
+        }
+        PG_FINALLY();
+        {
+            SetUserIdAndSecContext(save_userid, save_sec_context);
+            sql_dialect = saved_dialect;
+        }
+        PG_END_TRY();
+        
+        oldContext = MemoryContextSwitchTo(TopMemoryContext);
+        active_xml_handles = bms_del_member(active_xml_handles, curr_handle);
+        MemoryContextSwitchTo(oldContext);
+        
         found = true;
     }
     
@@ -4691,19 +4692,18 @@ delete_xml_handle_entry(int document_id)
 void
 reset_cached_xml_handle(void)
 {
-	/* Reset active handles bitmap */
-	bms_free(active_xml_handles);
-	active_xml_handles = NULL;
+    /* Reset active handles bitmap */
+    bms_free(active_xml_handles);
+    active_xml_handles = NULL;
 
-	/* Reset xml handles */
-	current_xml_handle = XML_HANDLE_INVALID; 
+    /* Reset xml handles */
+    current_xml_handle = XML_HANDLE_INVALID; 
 
-       /* Invalidate the Oid */
-	xml_handle_temp_table_relid = InvalidOid;
+    /* Invalidate the Oid */
+    xml_handle_temp_table_relid = InvalidOid;
     
-       /* Create a new table */
-       create_xml_handle_temp_table();
-     
+    /* Create a new table */
+    create_xml_handle_temp_table();
 }
 
 Datum
@@ -4736,8 +4736,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     
         if (is_xml_text_well_formed)
         {
-            xml_data = DatumGetXmlP(DirectFunctionCall1(xml_in, CStringGetDatum(xml_text))); 
-            xml_data_length = strlen(xml_text);
+            xml_data = (xmltype *) cstring_to_text(xml_text);
         }
         else
         {
@@ -4758,7 +4757,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
     
         if (is_xpath_namespaces_well_formed)
         {
-            ns_data = DatumGetXmlP(DirectFunctionCall1(xml_in, CStringGetDatum(xpath_namespaces)));
+            ns_data = (xmltype *) cstring_to_text(xpath_namespaces);
         }
         else
         {
