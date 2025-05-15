@@ -127,3 +127,14 @@ GO
 -- decimal
 CREATE PROCEDURE babel_5512_p4_dec @basePrice decimal, @quantity decimal, @totalPrice decimaludt OUTPUT AS BEGIN SET @totalPrice = @basePrice + @quantity END
 GO
+
+-- scale/precision in case of aggregate
+CREATE PROCEDURE babel_5512_get_column_info_p1 @table_name text AS BEGIN SELECT c.[name] AS column_name, t.[name] AS [type_name], c.[max_length], c.[precision],c.[scale] FROM sys.columns c INNER JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE object_id = object_id(@table_name) ORDER BY c.[name];
+END
+GO
+
+CREATE TABLE babel_5512_t5 ( ID INT IDENTITY(1,1), Amount Int, a_tiny tinyint, b_smallint smallint, c_big bigint, d_fl float, e_real real, f_mon money, g_smallmoney smallmoney);
+GO
+
+SELECT SUM(Amount) * 1.1 AS TotalWithMarkup, sum(a_tiny) * 1.1 as mul1, sum(b_smallint) * 1.1 as mul2, sum(c_big) * 1.1 as mul3, sum(d_fl) * 1.1 as mul4, sum(e_real) * 1.1 as mul5, sum(f_mon) * 1.1 as mul6, sum(g_smallmoney) * 1.1 as mul7 INTO babel_5512_t6 FROM babel_5512_t5;
+GO

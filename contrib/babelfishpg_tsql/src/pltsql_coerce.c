@@ -1801,6 +1801,25 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					precision = tds_default_numeric_precision;
 				}
 
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					((strncmp(aggFuncName, "sum", 3) == 0) ||
+					(strncmp(aggFuncName, "avg", 3) == 0)))
+				{
+					/* Handling for fixed length datatype. */
+					if (typmod != -1 && ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype)))
+					{
+						return ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+					}
+					else if (aggref->aggtype == INT4OID)
+					{
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+					else if (aggref->aggtype == INT8OID)
+					{
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					}
+				}
+
 				/*
 				 * [BABEL-3074] NUMERIC overflow causes TDS error for
 				 * aggregate function sum(); resultant precision should be
@@ -1808,7 +1827,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 */
 				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
-					precision = tds_default_numeric_precision;
+					{
+						precision = tds_default_numeric_precision;
+					}
+
 
 				/*
 				 * For aggregate function avg(); resultant precision should be
@@ -1818,6 +1840,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "avg", 3) == 0))
 				{
+					if (typmod != -1 &&
+						((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype)||
+						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype)))
+					{
+						return typmod;
+					}
 					precision = tds_default_numeric_precision;
 					scale = Max(scale, 6);
 				}

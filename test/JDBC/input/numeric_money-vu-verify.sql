@@ -1129,3 +1129,6 @@ declare @var2 SmallMoneyType = 123.45;
 select @inputString + @var2
 GO
 
+-- scale/precion with aggregate
+EXEC babel_5512_get_column_info_p1 'babel_5512_t6'
+GO

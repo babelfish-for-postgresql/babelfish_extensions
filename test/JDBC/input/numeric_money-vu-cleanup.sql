@@ -3,6 +3,8 @@ DROP TABLE IF EXISTS babel_5512_t1;
 DROP TABLE IF EXISTS babel_5512_t2;
 DROP TABLE IF EXISTS babel_5512_t3;
 DROP TABLE IF EXISTS babel_5512_t4;
+DROP TABLE babel_5512_t5;
+DROP TABLE babel_5512_t6;
 GO
 
 -- Drop Functions
@@ -21,6 +23,8 @@ GO
 Drop procedure babel_5512_p4_varchar;
 GO
 drop procedure babel_5512_p4_dec;
+GO
+DROP procedure babel_5512_get_column_info_p1;
 GO
 
 -- Drop User-Defined Types

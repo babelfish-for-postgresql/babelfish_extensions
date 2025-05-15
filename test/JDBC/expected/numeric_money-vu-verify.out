@@ -2206,3 +2206,18 @@ smalldatetime
 ~~END~~
 
 
+-- scale/precion with aggregate
+EXEC babel_5512_get_column_info_p1 'babel_5512_t6'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
+mul1#!#numeric#!#9#!#13#!#1
+mul2#!#numeric#!#9#!#13#!#1
+mul3#!#numeric#!#13#!#22#!#1
+mul4#!#float#!#8#!#53#!#0
+mul5#!#real#!#4#!#24#!#0
+mul6#!#numeric#!#13#!#22#!#5
+mul7#!#numeric#!#13#!#22#!#5
+totalwithmarkup#!#numeric#!#9#!#13#!#1
+~~END~~
+
