@@ -1749,8 +1749,16 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 
 				if (aggref->aggstar)
 				{
-					if (found != NULL) *found = false;
-					typmod = -1;
+					/* handling for COUNT(*) and COUNT_BIG(*) */
+					if (aggref->aggtype == INT4OID)
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (aggref->aggtype == INT8OID)
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else
+					{
+						if (found != NULL) *found = false;
+						typmod = -1;
+					}	
 				}
 				else
 				{
