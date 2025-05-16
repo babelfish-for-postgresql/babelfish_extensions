@@ -34,7 +34,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1,2), (2,1);
 ROLLBACK
     SELECT * FROM @tv1
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 CREATE PROCEDURE rcv_tv3 AS
@@ -58,7 +58,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1,2), (2,1);
 COMMIT TRANSACTION
     SELECT * FROM @tv1
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 CREATE PROCEDURE rcv_tv3 AS
@@ -123,7 +123,7 @@ GO
 DECLARE @tvp2 tabvar_type_function_error
 INSERT INTO @tvp2 values (2)
 EXEC tabvar_select @tvp2
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 DROP FUNCTION f_batch_tran_abort
@@ -292,7 +292,7 @@ INSERT INTO @tv1 VALUES(1, 1, 'First')
 INSERT INTO @tv1 VALUES(2, 2, 'Second')
 UPDATE @tv1 SET a = 1 WHERE a = 2               -- Duplicate Key
 SELECT * FROM @tv1                              -- Should show the two original records
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 -------------------------------------------------------------------------------

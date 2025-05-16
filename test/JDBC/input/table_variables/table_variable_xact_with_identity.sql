@@ -48,7 +48,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1), (2);
 ROLLBACK
     SELECT * FROM @tv1
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 CREATE PROCEDURE rcv_tv3 AS
@@ -72,7 +72,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1), (2);
 COMMIT TRANSACTION
     SELECT * FROM @tv1
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 CREATE PROCEDURE rcv_tv3 AS
@@ -137,7 +137,7 @@ GO
 DECLARE @tvp2 tabvar_type_function_error
 INSERT INTO @tvp2 values (2)
 EXEC tabvar_select @tvp2
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 DROP FUNCTION f_batch_tran_abort

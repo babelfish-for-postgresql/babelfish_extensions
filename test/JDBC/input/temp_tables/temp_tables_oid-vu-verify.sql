@@ -15,35 +15,35 @@ create table temp_tables_oid_perm_tab_3(a int)
 go
 
 -- Should be empty here
-select relname from sys.babelfish_get_enr_list()
+select relname from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 -- 1 entry expected, just the table. 
 CREATE TABLE #temp_tables_oid_t1(a int, b int)
 GO
 
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 -- 2 entries expected, the table and the index.
 CREATE INDEX temp_tables_oid_idx1 on #temp_tables_oid_t1(a)
 GO
 
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 -- 3 entries expected, the table and 2 index
 CREATE INDEX #temp_tables_oid_idx2 on #temp_tables_oid_t1(b)
 GO
 
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 drop table #temp_tables_oid_t1
 GO
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 -- identity and primary key should be in ENR as well
@@ -51,7 +51,7 @@ GO
 create table #temp_tables_oid_t1(a int identity primary key, b int)
 go
 
-select relname from sys.babelfish_get_enr_list()
+select relname from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 go
 
 -- general constraint checks
@@ -82,28 +82,28 @@ create index #temp_table_index_t4 on #temp_tables_oid_t4(a)
 go
 
 -- 2 entries expected - one for table, one for index
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 drop table #temp_tables_oid_t4
 go
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 create table #temp_tables_oid_t5(a varchar(2000))
 GO
 
 -- 3 entries expected - one for table, one for toast, one for toast index. 
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 drop table #temp_tables_oid_t5
 go
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list()
+select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
 GO
 
 -- At the end of all the temp table creation, let's ensure that the permanent OID count did not increase

@@ -25,7 +25,7 @@ go
 CREATE PROCEDURE enr_list_inner_proc
 as
     CREATE TABLE #tab_nest_level_0(a int)
-    SELECT relname FROM sys.babelfish_get_enr_list();
+    SELECT relname FROM sys.babelfish_get_enr_list() WHERE relname != '#xml_handle_temp_table';
 go
 
 -- Ensure to check before and after table is created.

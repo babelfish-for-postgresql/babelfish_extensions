@@ -59,7 +59,7 @@ SELECT * FROM @tv1;                                           -- one row inserte
 SELECT * FROM @table2;                                        -- should only show one row with c2=20
 SELECT * FROM @tv3;                                           -- one row inserted after rollback
 
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 DROP FUNCTION table_var_func1
@@ -108,7 +108,7 @@ SELECT * FROM @tv1;                                           -- one row inserte
 SELECT * FROM @table2;                                        -- should show 3 rows
 SELECT * FROM @tv3;                                           -- one row inserted after rollback
 
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 DROP FUNCTION table_var_func1
@@ -133,7 +133,7 @@ END CATCH;
 INSERT INTO @tv VALUES(1, 10), (2, 20), (3, 30)
 UPDATE @tv SET c1 = 1 WHERE c1 = 3 -- duplicate key
 SELECT * FROM @tv                  -- 3 records
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 -------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ ROLLBACK TRANSACTION
 INSERT INTO @tvf VALUES(1, 'Duplicate Key')  -- Table Variable and its Primary Key should still be valid
 SELECT * FROM @tvf
 
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 SELECT * FROM @tvf                           -- Table Variable not valid anymore
@@ -216,7 +216,7 @@ ROLLBACK TRANSACTION
 INSERT INTO @tvf VALUES(1, 'Duplicate Key', 2)  -- Table Variable and its Primary Key should still be valid
 SELECT * FROM @tvf
 
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 SELECT * FROM @tvf                           -- Table Variable not valid anymore
@@ -263,7 +263,7 @@ BEGIN TRANSACTION
     ROLLBACK TRANSACTION S1;
 INSERT INTO @table_variable_in_trigger VALUES('', 'rollback') -- insert second row
 INSERT INTO TableUpdatedByTrigger(fullname, xact_status) SELECT fullname, valtype FROM @table_variable_in_trigger;
-INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view
+INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view WHERE relname != '#xml_handle_temp_table'
 COMMIT TRANSACTION
 GO
 
@@ -276,7 +276,7 @@ BEGIN TRANSACTION
         INSERT INTO @table_variable_in_trigger SELECT fullname,'commit' FROM INSERTED -- insert first row
     ROLLBACK TRANSACTION S1;
     INSERT INTO @table_variable_in_trigger VALUES('<No Name>','rollback') -- insert second row
-INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view
+INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view WHERE relname != '#xml_handle_temp_table'
 COMMIT TRANSACTION
 GO
 
@@ -285,7 +285,7 @@ AS
     DECLARE @tv TABLE(first VARCHAR(255), last VARCHAR(255))
     INSERT INTO @tv VALUES(@firstname, @lastname)
     INSERT INTO MainTable(firstname, lastname) SELECT first, last FROM @tv
-    INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view
+    INSERT INTO TableVariableTracker SELECT @@NESTLEVEL, relname FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 EXEC InsertIntoMainTable @firstname=N'John', @lastname=N'Doe'
@@ -363,7 +363,7 @@ SELECT * FROM @tv1;                                           -- one row inserte
 SELECT * FROM @table2;                                        -- should only show one row with c2=20
 SELECT * FROM @tv3;                                           -- one row inserted after rollback
 
-SELECT * FROM enr_view
+SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
 GO
 
 -------------------------------------------------------------------------------
