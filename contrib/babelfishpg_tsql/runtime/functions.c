@@ -32,6 +32,7 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
 #include "utils/acl.h"
@@ -196,6 +197,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
+PG_FUNCTION_INFO_V1(isnumeric);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2148,6 +2150,137 @@ search_partition(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(result);
 }
+
+/*
+ * Structure to cache metadata needed in isnumeric().
+ */
+typedef struct IsNumericIOData
+{
+	/* For numeric type */
+	FmgrInfo	numeric_inputproc;
+	Oid		numeric_typioparam;
+	
+	/* For money type */
+	FmgrInfo	money_inputproc;
+	Oid		money_typoid;
+	Oid		money_typioparam;
+} IsNumericIOData;
+
+/*
+ * isnumeric()
+ *	Returns 1 if the input value is numeric or can be 
+ *	converted to a numeric value, and 0 otherwise.
+
+ *	It directly returns 1 for known numeric types (including TSQL types).
+ *	For other types, attempts conversion to numeric and money.
+ */
+Datum
+isnumeric(PG_FUNCTION_ARGS)
+{
+	Oid		argtypeid;
+	Oid		numeric_typiofunc;
+	Oid		money_typiofunc;
+	char		*value_str;
+	bool		result = false;
+	Datum		converted;
+	ErrorSaveContext numeric_escontext = {T_ErrorSaveContext};
+	ErrorSaveContext money_escontext = {T_ErrorSaveContext};
+	IsNumericIOData *my_extra;
+
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_INT32(0);
+
+	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+
+	/* Sanity check. */
+	if (!OidIsValid(argtypeid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
+
+	/* Fast path for known numeric types. */
+	if (argtypeid != TEXTOID)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(argtypeid) ||
+			(*common_utility_plugin_ptr->is_tsql_money_datatype)(argtypeid) ||
+			(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(argtypeid) ||
+			(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(argtypeid) ||
+			(*common_utility_plugin_ptr->is_tsql_fixeddecimal_datatype)(argtypeid) ||
+			(argtypeid == FLOAT4OID) || (argtypeid == FLOAT8OID) || 
+			(argtypeid == NUMERICOID) || (argtypeid == INT2OID) || 
+			(argtypeid == INT4OID) || (argtypeid == INT8OID))
+			PG_RETURN_INT32(1);
+	}
+
+	/* Get or initialize the cached data. */
+	my_extra = (IsNumericIOData *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+								sizeof(IsNumericIOData));
+		my_extra = (IsNumericIOData *) fcinfo->flinfo->fn_extra;
+		my_extra->money_typoid = InvalidOid;
+	}
+
+	/* Initialize the cached information for the first time. */
+	if (my_extra->money_typoid == InvalidOid)
+	{
+		/* Setup for money type. */
+		my_extra->money_typoid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("money");
+		getTypeInputInfo(my_extra->money_typoid,
+						&money_typiofunc,
+						&my_extra->money_typioparam);
+		fmgr_info_cxt(money_typiofunc,
+					  &my_extra->money_inputproc,
+					  fcinfo->flinfo->fn_mcxt);
+		
+		/* Setup for numeric type. */
+		getTypeInputInfo(NUMERICOID,
+					&numeric_typiofunc,
+					&my_extra->numeric_typioparam);
+		fmgr_info_cxt(numeric_typiofunc,
+					&my_extra->numeric_inputproc,
+					fcinfo->flinfo->fn_mcxt);
+	}
+
+	/* Get the string representation from input datum. */
+	if (argtypeid == TEXTOID)
+	{
+		value_str = text_to_cstring(PG_GETARG_TEXT_P(0));
+	}
+	else
+	{
+		Oid typoutput;
+		bool typisvarlena;
+		getTypeOutputInfo(argtypeid, &typoutput, &typisvarlena);
+		value_str = OidOutputFunctionCall(typoutput, PG_GETARG_DATUM(0));
+	}
+
+	/* Try to perform the conversion to numeric. */
+	result = InputFunctionCallSafe(&my_extra->numeric_inputproc,
+								 value_str,
+								 my_extra->numeric_typioparam,
+								 -1,
+								 (Node *) &numeric_escontext,
+								 &converted);
+
+	/* If conversion to numeric fails, try to perform the conversion to money. */
+	if (!result)
+	{
+		result = InputFunctionCallSafe(&my_extra->money_inputproc,
+									 value_str,
+									 my_extra->money_typioparam,
+									 -1,
+									 (Node *) &money_escontext,
+									 &converted);
+	}
+
+	pfree(value_str);
+	PG_RETURN_INT32(result ? 1 : 0);
+}
+
+
 
 /*
  * object_id
