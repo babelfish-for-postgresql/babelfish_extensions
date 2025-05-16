@@ -575,10 +575,11 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(*)
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
-1.00
+3.00
 ~~END~~
 
 
@@ -586,10 +587,11 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(*)
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
-1.00
+3.00
 ~~END~~
 
 
@@ -597,13 +599,14 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(*)
     ELSE 2.00
 END * 1.00
+FROM t1
 UNION
 SELECT 2.00
 GO
 ~~START~~
 numeric
-1.0000
 2.0000
+3.0000
 ~~END~~
 
 
@@ -611,13 +614,14 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(*)
     ELSE 2.00
 END * 1.00
+FROM t1
 UNION
 SELECT 2.00
 GO
 ~~START~~
 numeric
-1.0000
 2.0000
+3.0000
 ~~END~~
 
 
@@ -625,10 +629,11 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(*) * 1.00
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
-1.00
+3.00
 ~~END~~
 
 
@@ -636,10 +641,59 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(*) * 1.00
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
-1.00
+3.00
+~~END~~
+
+
+SELECT COUNT(*) * 1.00 FROM t1
+GO
+~~START~~
+numeric
+3.00
+~~END~~
+
+
+SELECT COUNT(*) / 1.00 FROM t1
+GO
+~~START~~
+numeric
+3.000000
+~~END~~
+
+
+SELECT COUNT_BIG(*) * 1.00 FROM t1
+GO
+~~START~~
+numeric
+3.00
+~~END~~
+
+
+SELECT COUNT_BIG(*) / 1 FROM t1
+GO
+~~START~~
+bigint
+3
+~~END~~
+
+
+SELECT COUNT(*) FROM t1
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT_BIG(*) FROM t1
+GO
+~~START~~
+bigint
+3
 ~~END~~
 
 
@@ -714,6 +768,7 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(NULL)
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
@@ -725,6 +780,7 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(NULL)
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
@@ -736,6 +792,7 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(NULL)
     ELSE 2.00
 END * 1.00
+FROM t1
 UNION
 SELECT 2.00
 GO
@@ -750,6 +807,7 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(NULL)
     ELSE 2.00
 END * 1.00
+FROM t1
 UNION
 SELECT 2.00
 GO
@@ -764,6 +822,7 @@ SELECT CASE 1
     WHEN 1 THEN COUNT(NULL) * 1.00
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
@@ -775,10 +834,59 @@ SELECT CASE 1
     WHEN 1 THEN COUNT_BIG(NULL) * 1.00
     ELSE 2.00
 END
+FROM t1
 GO
 ~~START~~
 numeric
 0.000000
+~~END~~
+
+
+SELECT COUNT(NULL) * 1.00 FROM t1
+GO
+~~START~~
+numeric
+0.000000
+~~END~~
+
+
+SELECT COUNT(NULL) / 1.00 FROM t1
+GO
+~~START~~
+numeric
+0.000000
+~~END~~
+
+
+SELECT COUNT_BIG(NULL) * 1.00 FROM t1
+GO
+~~START~~
+numeric
+0.000000
+~~END~~
+
+
+SELECT COUNT_BIG(NULL) / 1 FROM t1
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+SELECT COUNT(NULL) FROM t1
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT_BIG(NULL) FROM t1
+GO
+~~START~~
+bigint
+0
 ~~END~~
 
 
