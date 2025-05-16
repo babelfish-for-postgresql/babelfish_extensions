@@ -63,6 +63,13 @@ $$
     end;
 $$;
 
+-- Please add your SQLs here
+/*
+ * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
+ * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
+ * final behaviour.
+ */
+
 DO $$
 DECLARE
     exception_message text;
@@ -191,12 +198,15 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
--- Please add your SQLs here
-/*
- * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
- * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
- * final behaviour.
- */
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
