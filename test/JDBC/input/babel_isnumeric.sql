@@ -1,3 +1,4 @@
+-- parallel_query_expected
 --
 -- Tests for ISNUMERIC function
 --
@@ -145,4 +146,74 @@ GO
 select isnumeric('+1 .1234')
 GO
 select isnumeric('$1 .1234')
+GO
+
+-- Create the table
+CREATE TABLE babel_isnumeric_test (
+    id int IDENTITY(1,1),
+    val varchar(100)
+);
+GO
+
+-- Insert decimal numbers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(RAND() as varchar(100))
+FROM generate_series(1, 1000);
+GO
+
+-- Insert integers
+INSERT INTO babel_isnumeric_test (val)
+SELECT CAST(CAST((RAND() * 1000000) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+
+-- Insert money format
+INSERT INTO babel_isnumeric_test (val)
+SELECT '$' + CAST(CAST((RAND() * 1000) as decimal(10,2)) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+
+-- Insert alphanumeric
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'abc' + CAST(CAST((RAND() * 100) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+
+-- Insert scientific notation
+INSERT INTO babel_isnumeric_test (val)
+SELECT '1E' + CAST(CAST((RAND() * 10) as int) as varchar(100))
+FROM generate_series(1, 1000);
+GO
+
+-- Insert plain text
+INSERT INTO babel_isnumeric_test (val)
+SELECT 'not a number'
+FROM generate_series(1, 1000);
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.memory', 'off', false)
+GO
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+SELECT count(*)
+FROM babel_isnumeric_test
+WHERE isnumeric(val) = 1
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'on', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'on', false)
+SELECT set_config('babelfishpg_tsql.memory', 'on', false)
+GO
+
+DROP TABLE babel_isnumeric_test
 GO
