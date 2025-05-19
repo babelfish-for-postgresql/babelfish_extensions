@@ -229,8 +229,8 @@ typedef struct FixedDecimalAggState
 
 static char *pg_int64tostr(char *str, int64 value);
 static char *pg_int64tostr_zeropad(char *str, int64 value, int64 padding);
-static void apply_typmod(int64 value, int32 typmod, int precision, int scale);
-static int64 scanfixeddecimal(const char *str, int *precision, int *scale);
+static bool apply_typmod(int64 value, int32 typmod, int precision, int scale, FunctionCallInfo *fcinfo);
+static int64 scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *fcinfo);
 static FixedDecimalAggState *makeFixedDecimalAggState(FunctionCallInfo fcinfo);
 static void fixeddecimal_accum(FixedDecimalAggState *state, int64 newval);
 static int64 int8fixeddecimal_internal(int64 arg, const char *typename);
@@ -445,7 +445,7 @@ fixeddecimal2str(int64 val, char *buffer,
  * scanfixeddecimal --- try to parse a string into a fixeddecimal.
  */
 static int64
-scanfixeddecimal(const char *str, int *precision, int *scale)
+scanfixeddecimal(const char *str, int *precision, int *scale, FunctionCallInfo *fcinfo)
 {
 	const char *ptr = str;
 	int64		integralpart = 0;
@@ -454,6 +454,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 	int			vprecision = 0;
 	int			vscale = 0;
 	bool		has_seen_sign = false;
+	Node		*escontext = (*fcinfo)->context;
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be broken
@@ -500,7 +501,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		 */
 		if ((*ptr >= 'a' && *ptr <= 'z') || (*ptr >= 'A' && *ptr <= 'Z'))
 		{
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("invalid characters found: cannot cast value \"%s\" to money",
 							str)));
@@ -520,7 +521,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 	{
 		if (has_seen_sign)
 		{
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("invalid characters found: cannot cast value \"%s\" to money",
 							str)));
@@ -539,7 +540,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 			vprecision++;
 			if ((tmp / 10) != integralpart) /* underflow? */
 			{
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("value \"%s\" is out of range for type fixeddecimal",
 								str)));
@@ -559,7 +560,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		{
 			if (has_seen_sign)
 			{
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("invalid characters found: cannot cast value \"%s\" to money",
 								str)));
@@ -583,7 +584,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 			vprecision++;
 			if ((tmp / 10) != integralpart) /* overflow? */
 			{
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("value \"%s\" is out of range for type fixeddecimal",
 								str)));
@@ -628,7 +629,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		ptr++;
 
 	if (*ptr != '\0')
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value \"%s\" is out of range for type fixeddecimal", str)));
 
@@ -644,13 +645,13 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		int64		multiplier = FIXEDDECIMAL_MULTIPLIER;
 
 		if (__builtin_mul_overflow(integralpart, multiplier, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
 
 		if (__builtin_sub_overflow(value, fractionalpart, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
@@ -661,7 +662,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		if (value != 0 && (!SAMESIGN(value, integralpart) ||
 						   !SAMESIGN(value - fractionalpart, value) ||
 						   !SAMESIGN(value - fractionalpart, value)))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
@@ -676,13 +677,13 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 		if (__builtin_mul_overflow(integralpart, FIXEDDECIMAL_MULTIPLIER, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
 
 		if (__builtin_add_overflow(value, fractionalpart, &value))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
@@ -692,7 +693,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		if (value != 0 && (!SAMESIGN(value, integralpart) ||
 						   !SAMESIGN(value - fractionalpart, value) ||
 						   !SAMESIGN(value + fractionalpart, value)))
-			ereport(ERROR,
+			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("value \"%s\" is out of range for type fixeddecimal",
 							str)));
@@ -713,23 +714,24 @@ fixeddecimalin(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	int			precision;
 	int			scale;
-	int64		result = scanfixeddecimal(str, &precision, &scale);
+	int64		result = scanfixeddecimal(str, &precision, &scale, &fcinfo);
 
-	apply_typmod(result, typmod, precision, scale);
+	apply_typmod(result, typmod, precision, scale, &fcinfo);
 
 	PG_RETURN_INT64(result);
 }
 
-static void
-apply_typmod(int64 value, int32 typmod, int precision, int scale)
+static bool
+apply_typmod(int64 value, int32 typmod, int precision, int scale, FunctionCallInfo *fcinfo)
 {
 	int			precisionlimit;
 	int			scalelimit;
 	int			maxdigits;
+	Node			*escontext = (*fcinfo)->context;
 
 	/* Do nothing if we have a default typmod (-1) */
 	if (typmod < (int32) (VARHDRSZ))
-		return;
+		return true;
 
 	typmod -= VARHDRSZ;
 	precisionlimit = (typmod >> 16) & 0xffff;
@@ -739,13 +741,13 @@ apply_typmod(int64 value, int32 typmod, int precision, int scale)
 	if (scale > scalelimit)
 
 		if (scale != FIXEDDECIMAL_SCALE)
-			ereport(ERROR,
+			ereturn(escontext, false,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("FIXEDDECIMAL scale must be %d",
 							FIXEDDECIMAL_SCALE)));
 
 	if (precision > maxdigits)
-		ereport(ERROR,
+		ereturn(escontext, false,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("FIXEDDECIMAL field overflow"),
 				 errdetail("A field with precision %d, scale %d must round to an absolute value less than %s%d.",
@@ -754,7 +756,7 @@ apply_typmod(int64 value, int32 typmod, int precision, int scale)
 						   maxdigits ? "10^" : "",
 						   maxdigits ? maxdigits : 1
 						   )));
-
+	return true;
 }
 
 Datum
@@ -3136,7 +3138,7 @@ char_to_fixeddecimal(PG_FUNCTION_ARGS)
 	char	   *str = TextDatumGetCString(PG_GETARG_DATUM(0));
 	int			precision;
 	int			scale;
-	int64		result = scanfixeddecimal(str, &precision, &scale);
+	int64		result = scanfixeddecimal(str, &precision, &scale, &fcinfo);
 
 	PG_RETURN_INT64(result);
 }
