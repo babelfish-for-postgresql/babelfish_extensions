@@ -477,14 +477,14 @@ CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.Z(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_z_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
   
 -- M
 -- Returns the M coordinate value (measure) for a point geography instance
 CREATE OR REPLACE FUNCTION sys.M(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
-	LANGUAGE 'c' IMMUTABLE STRICT;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)

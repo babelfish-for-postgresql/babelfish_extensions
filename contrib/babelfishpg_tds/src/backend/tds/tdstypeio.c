@@ -1610,6 +1610,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported geometry type")));
+			break;
 	}
 
 	/* Calculate number of points if not empty geometry */

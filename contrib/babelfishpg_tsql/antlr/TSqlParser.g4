@@ -4605,13 +4605,13 @@ keyword
     | GUID
     | HADR
     | HASH
+    | HASHED
     | HASM
     | HASM_DOUBLE_QUOTE
     | HASM_SQBRACKET
     | HASZ
     | HASZ_DOUBLE_QUOTE
     | HASZ_SQBRACKET
-    | HASHED
     | HEALTHCHECKTIMEOUT
     | HEALTH_CHECK_TIMEOUT
     | HELP
@@ -4703,8 +4703,8 @@ keyword
     | LOOP
     | LOW
     | M
-    | M_SQBRACKET
     | M_DOUBLE_QUOTE
+    | M_SQBRACKET
     | MANUAL
     | MARK
     | MASK
@@ -5195,8 +5195,8 @@ keyword
     | YMAX
     | YMIN    
     | Z
-    | Z_SQBRACKET
-    | Z_DOUBLE_QUOTE  
+    | Z_DOUBLE_QUOTE 
+    | Z_SQBRACKET 
     | ZONE
     //Built-ins:
     | VARCHAR
