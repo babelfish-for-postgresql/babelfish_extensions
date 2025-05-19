@@ -11,8 +11,12 @@ GO
 GO
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 GO
 GO
@@ -23,8 +27,12 @@ GO
 GO
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 GO
 
@@ -44,8 +52,12 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
@@ -75,8 +87,12 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('()[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
@@ -100,8 +116,12 @@ GO
 GO
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 GO
 GO
@@ -112,8 +132,12 @@ GO
 GO
 
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 GO
 
@@ -132,8 +156,12 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
@@ -163,8 +191,12 @@ GO
 create procedure error_mapping.ErrorHandling1 as
 begin
 DECLARE @xml XML
-SET @xml = CONVERT(XML, '<root></root>')
-SELECT @xml.value('(*:)[1]', 'VARCHAR')
+SET @xml = CONVERT(XML, '<Root>  
+                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
+                                <row id="2"><name>Bhagat</name></row>  
+                                <row id="3" />  
+                            </Root>')
+SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
 
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end

@@ -6,130 +6,133 @@ sql_variant
 ~~END~~
 
 
--- Check if an XML element exists
+-- XML element values
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
-DECLARE @result1 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END;
-SELECT @result1
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Child1 element exists
+Value1
 ~~END~~
 
 
--- Check if an XML attribute exists
+-- XML attribute values
 DECLARE @xml XML = '<Root Attr1="Value1"><Child1>Value2</Child1></Root>';
-DECLARE @result2 VARCHAR(50) = CASE WHEN @xml.exist('/Root/@Attr1') = 1 THEN 'The Attr1 attribute exists' ELSE 'The Attr1 attribute does not exist' END;
-SELECT @result2
+SELECT @xml.value('(/Root/@Attr1)[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Attr1 attribute exists
+Value1
 ~~END~~
 
 
--- Check if an XML element or attribute exists, with a specific value
+-- XML element or attribute values, with a specific value
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
-DECLARE @result3 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Child2[text()="Value2"]') = 1 THEN 'The Child2 element with value "Value2" exists' ELSE 'The Child2 element with value "Value2" does not exist' END;
-SELECT @result3
+SELECT @xml.value('(/Root/Child2[text()="Value2"])[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Child2 element with value "Value2" exists
+Value2
 ~~END~~
 
 
--- Check if an XML element or attribute exists, with a specific value and path
+-- XML element or attribute values, with a specific value and path
 DECLARE @xml XML = '<Root><ParentNode><Child1>Value1</Child1></ParentNode><ParentNode><Child1>Value2</Child1></ParentNode></Root>';
-DECLARE @result4 VARCHAR(100) = CASE WHEN @xml.exist('/Root/ParentNode/Child1[text()="Value2"]') = 1 THEN 'The Child1 element with value "Value2" under ParentNode exists' ELSE 'The Child1 element with value "Value2" under ParentNode does not exist' END;
-SELECT @result4
+SELECT @xml.value('(/Root/ParentNode/Child1[text()="Value2"])[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Child1 element with value "Value2" under ParentNode exists
+Value2
 ~~END~~
 
 
--- Check if an XML element or attribute exists based on a condition
+-- XML element or attribute values based on a condition
 DECLARE @xml XML = '<Root><Child1 Attr1="Value1">Value2</Child1><Child2 Attr1="Value3">Value4</Child2></Root>';
-DECLARE @result6 VARCHAR(80) = CASE WHEN @xml.exist('/Root/Child1[@Attr1="Value1"]') = 1 THEN 'The Child1 element with Attr1="Value1" exists' ELSE 'The Child1 element with Attr1="Value1" does not exist' END;
-SELECT @result6
+SELECT @xml.value('(/Root/Child1[@Attr1="Value1"])[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Child1 element with Attr1="Value1" exists
+Value2
 ~~END~~
 
 
--- Check if multiple XML elements or attributes exist
+-- Check if multiple XML elements or attributes value
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2><Child3>Value3</Child3></Root>';
-DECLARE @result7 VARCHAR(50) = CASE WHEN @xml.exist('/Root/Child1') = 1 AND @xml.exist('/Root/Child2') = 1 AND @xml.exist('/Root/Child3') = 1 THEN 'All Child elements exist' ELSE 'One or more Child elements are missing' END;
-SELECT @result7
+SELECT @xml.value('(/Root/Child1)[1]', 'varchar(100)') as child1, @xml.value('(/Root/Child2)[1]', 'varchar(100)') as child2, @xml.value('(/Root/Child3)[1]', 'varchar(100)') as child3
 GO
 ~~START~~
-varchar
-All Child elements exist
+varchar#!#varchar#!#varchar
+Value1#!#Value2#!#Value3
 ~~END~~
 
 
--- Check if an XML element exists using a variable in the XPath expression
+-- pattern matches multiple childs
+DECLARE @xml XML = '<Root><Child>Value1</Child><Child>Value2</Child><Child>Value3</Child></Root>';
+SELECT @xml.value('/Root/Child', 'varchar(100)') as child
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML Value result is not a single value.)~~
+
+
+-- XML element values using a variable in the XPath expression
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
 DECLARE @element VARCHAR(20) = 'Child1';
-DECLARE @result8 VARCHAR(50) = CASE WHEN @xml.exist(CONCAT('/Root/', @element)) = 1 THEN 'The ' + @element + ' element exists' ELSE 'The ' + @element + ' element does not exist' END;
-SELECT @result8
+SELECT @xml.value(CONCAT('(/Root/', @element, ')[1]'), 'varchar(100)')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
--- Check if an XML element exists within a nested XML structure
+-- XML element values within a nested XML structure
 DECLARE @xml XML = '<Root><Parent1><Child1>Value1</Child1></Parent1><Parent2><Child2>Value2</Child2></Parent2></Root>';
-DECLARE @result9 VARCHAR(70) = CASE WHEN @xml.exist('/Root/Parent1/Child1') = 1 THEN 'The Child1 element exists under Parent1' ELSE 'The Child1 element does not exist under Parent1' END;
-SELECT @result9
+SELECT @xml.value('(/Root/Parent1/Child1)[1]', 'varchar(100)')
 GO
 ~~START~~
 varchar
-The Child1 element exists under Parent1
+Value1
 ~~END~~
 
 
 -- Test with a valid XML document
 DECLARE @xml XML = '<root><child>Hello</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello
 ~~END~~
 
 
 -- Test with nested XML elements
 DECLARE @xml XML = '<root><parent><child1>Test1</child1><child2>Test2</child2></parent></root>';
-SELECT @xml.exist('(//child1)[1]'), @xml.exist('(//child2)[1]');
+SELECT @xml.value('(//child1)[1]', 'varchar(100)'), @xml.value('(//child2)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit#!#bit
-1#!#1
+varchar#!#varchar
+Test1#!#Test2
 ~~END~~
 
 
 -- Test with an empty XML document
 DECLARE @xml XML = '<root></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-0
+varchar
+<NULL>
 ~~END~~
 
 
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
@@ -137,143 +140,143 @@ bit
 
 -- Test with an XML document containing CDATA sections
 DECLARE @xml XML = '<root><child><![CDATA[<data>Hello World</data>]]></child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+<data>Hello World</data>
 ~~END~~
 
 
 -- Test with a large XML document
 DECLARE @xml XML = '<root>' + REPLICATE('<item>Data</item>', 10000) + '</root>';
-SELECT @xml.exist('(/root/item)[1]');
+SELECT @xml.value('(/root/item)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Data
 ~~END~~
 
 
 -- Test with NULL input
 DECLARE @xml XML = NULL;
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 <NULL>
 ~~END~~
 
 
 -- Test with different data types for the second argument
 DECLARE @xml XML = '<root><child>123</child></root>';
-SELECT @xml.exist('(//child)[1]'), @xml.exist('(//child)[1]'), @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)'), @xml.value('(//child)[1]', 'int'), @xml.value('(//child)[1]', 'varbinary');
 GO
 ~~START~~
-bit#!#bit#!#bit
-1#!#1#!#1
+varchar#!#int#!#varbinary
+123#!#123#!#310032003300
 ~~END~~
 
 
 -- Test with mixed content XML
 DECLARE @xml XML = '<root>This is <bold>mixed</bold> content</root>';
-SELECT @xml.exist('(/root)[1]');
+SELECT @xml.value('(/root)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+This is mixed content
 ~~END~~
 
 
 -- Test with XML comments
 DECLARE @xml XML = '<root><!--This is a comment--><child>Hello</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello
 ~~END~~
 
 
 -- Test with XML entities
 DECLARE @xml XML = '<root><child>Hello &amp; World</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello & World
 ~~END~~
 
 
 -- Test with XML attributes
 DECLARE @xml XML = '<root><child name="test">Hello</child></root>';
-SELECT @xml.exist('(//child/@name)[1]');
+SELECT @xml.value('(//child/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+test
 ~~END~~
 
 
 -- Test with XML fragments
 DECLARE @xml XML = '<child1>Test1</child1><child2>Test2</child2>';
-SELECT @xml.exist('(//child1)[1]'), @xml.exist('(//child2)[1]');
+SELECT @xml.value('(//child1)[1]', 'varchar(100)'), @xml.value('(//child2)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit#!#bit
+varchar#!#varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
 
 
 -- Test with Unicode characters
-DECLARE @xml XML = '<root><child>Hello 世界</child></root>';
-SELECT @xml.exist('(//child)[1]');
+DECLARE @xml XML = N'<root><child>Hello 世界</child></root>';
+SELECT @xml.value('(//child)[1]', 'nvarchar(100)');
 GO
 ~~START~~
-bit
-1
+nvarchar
+Hello 世界
 ~~END~~
 
 
 -- Test with different XML encodings
 DECLARE @xml XML = N'<?xml version="1.0" encoding="UTF-8"?><root><child>Héllò</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'nvarchar(100)');
 GO
 ~~START~~
-bit
-1
+nvarchar
+Héllò
 ~~END~~
 
 
 -- Test with XML elements containing line breaks
 DECLARE @xml XML = '<root><child>Hello
 World</child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello<newline>World
 ~~END~~
 
 
 -- Test with XML elements containing leading/trailing whitespace
 DECLARE @xml XML = '<root><child>  Hello  </child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+  Hello  
 ~~END~~
 
 
 -- Test with XML elements containing XML namespaces within CDATA sections
 DECLARE @xml XML = '<root><child><![CDATA[<ns:data xmlns:ns="http://example.com">Hello</ns:data>]]></child></root>';
-SELECT @xml.exist('(//child)[1]');
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+<ns:data xmlns:ns="http://example.com">Hello</ns:data>
 ~~END~~
 
 
@@ -283,11 +286,11 @@ DECLARE @xml XML = '<?xml version="1.0"?>
 <!ENTITY internal "Hello World">
 ]>
 <root>&internal;</root>';
-SELECT @xml.exist('(/root)[1]');
+SELECT @xml.value('(/root)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello World
 ~~END~~
 
 
@@ -297,18 +300,18 @@ DECLARE @xml XML = '<?xml version="1.0"?>
 <!ENTITY attr "value">
 ]>
 <root attr="&attr;"></root>';
-SELECT @xml.exist('(/root/@attr)[1]');
+SELECT @xml.value('(/root/@attr)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+value
 ~~END~~
 
 
 -- Test with XML documents containing namespaces in CDATA sections and attributes
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 WITH XMLNAMESPACES('http://example.com' as ns)
-SELECT @xml.exist('(//ns:data)[1]'), @xml.exist('(//child)[1]'), @xml.exist('(//child/@ns:attr)[1]');
+SELECT @xml.value('(//ns:data)[1]', 'varchar(100)'), @xml.value('(//child)[1]', 'varchar(100)'), @xml.value('(//child/@ns:attr)[1]', 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -316,29 +319,29 @@ GO
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
-SELECT @xml.exist('(//ns:data)[1]')
+SELECT @xml.value('(//ns:data)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not create XPath object)~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
-SELECT @xml.exist('(//child)[1]')
+SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello<ns:text>World</ns:text>
 ~~END~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
-SELECT @xml.exist('(//child/@ns:attr)[1]');
+SELECT @xml.value('(//child/@ns:attr)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not create XPath object)~~
@@ -346,10 +349,10 @@ bit
 
 -- Test with XML documents containing invalid characters
 DECLARE @xml XML = '<root>Hello&#0;World</root>';
-SELECT @xml.exist('(/root)[1]');
+SELECT @xml.value('(/root)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: could not parse XML document)~~
@@ -363,467 +366,475 @@ DECLARE @xml XML = '<?xml version="1.0" encoding="UTF-8"?>
     <!-- Digital Signature details -->
   </Signature>
 </root>';
-SELECT @xml.exist('(/root/child)[1]');
+SELECT @xml.value('(/root/child)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+Hello World
 ~~END~~
 
 
 -- Test with xpath functions
 DECLARE @x XML = '<root></root>';
-SELECT @x.exist('true()')
+SELECT @x.value('true()', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+true
 ~~END~~
 
 
 DECLARE @x XML = '<root></root>';
-SELECT @x.exist('false()')
+SELECT @x.value('false()', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+false
 ~~END~~
 
 
 -- Tests with random spaces in between
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml  .  exist  ('/artists/artist/@name'  )
+SELECT @xml  .  value  ('(/artists/artist/@name)[1]'  , 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+SELECT XmlColumn   . value    ('(/artists/artist/@name)[1]'  , 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT babel_5222_xml_exist_t1 .   XmlColumn   . exist    ('/artists/artist/@name'  ) FROM babel_5222_xml_exist_t1
+SELECT babel_5223_xml_value_t1 .   XmlColumn   . value    ('(/artists/artist/@name)[1]'  , 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
 -- Tests with different case
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.EXIST('/artists/artist/@name')
+SELECT @xml.VALUE('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "@xml" does not exist)~~
+~~START~~
+varchar
+John Doe
+~~END~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.Exist('/artists/artist/@name')
+SELECT @xml.Value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "@xml" does not exist)~~
+~~START~~
+varchar
+John Doe
+~~END~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.ExIsT('/artists/artist/@name')
+SELECT @xml.VaLuE('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "@xml" does not exist)~~
+~~START~~
+varchar
+John Doe
+~~END~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.eXiSt('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "@xml" does not exist)~~
+~~START~~
+varchar
+John Doe
+~~END~~
 
 
 -- Acceptable argument types
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
 -- Unacceptable argument types
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist(cast('/artists/artist/@name' as VARCHAR(100)))
+SELECT @xml.value(cast('(/artists/artist/@name)[1]' as VARCHAR(100)), 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist(cast('/artists/artist/@name' as text))
+SELECT @xml.value(cast('(/artists/artist/@name)[1]' as text), 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist(@xml)
+SELECT @xml.value(@xml, 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
 DECLARE @xml VARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on varchar.)~~
 
 
 DECLARE @xml NVARCHAR(100) = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on nvarchar.)~~
 
 
 DECLARE @xml INT = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on int.)~~
 
 
 DECLARE @xml BIGINT = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on bigint.)~~
 
 
 DECLARE @xml FLOAT = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @xml DECIMAL = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on decimal.)~~
 
 
 DECLARE @xml NUMERIC = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on numeric.)~~
 
 
 DECLARE @xml BIT = 1
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on bit.)~~
 
 
-SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_text
+SELECT XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_text
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on text.)~~
 
 
 -- UDT on type VARCHAR
-SELECT VarUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+SELECT VarUDTColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_udt
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on varchar.)~~
 
 
 -- UDT on type IMAGE
-SELECT ImageUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+SELECT ImageUDTColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_udt
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on image.)~~
 
 
 -- UDT on type XML
-SELECT XmlUDTColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_udt
+SELECT XmlUDTColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_udt
 GO
 ~~START~~
-bit
-0
+varchar
+<NULL>
 ~~END~~
 
 
 -- NULL values
 DECLARE @xml XML = NULL
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 <NULL>
 ~~END~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist(NULL)
+SELECT @xml.value(NULL, 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
 DECLARE @xml XML = NULL
-SELECT @xml.exist(NULL)
+SELECT @xml.value(NULL, 'varchar(100)');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The argument 1 of the XML data type method "exist" must be a string literal.)~~
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
 
 
 -- column as input argument
-SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+SELECT XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+SELECT babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT dbo.babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+SELECT dbo.babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
 
 
-SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END AS Result
-FROM babel_5222_xml_exist_t2;
+SELECT Id, XmlColumn.value('(/Root/Child1)[1]', 'varchar(100)') AS Result
+FROM babel_5223_xml_value_t2;
 GO
 ~~START~~
 int#!#varchar
-1#!#The Child1 element exists
-2#!#The Child1 element does not exist
-3#!#The Child1 element exists
+1#!#Value1
+2#!#<NULL>
+3#!#Value1
 ~~END~~
 
 
-SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child2') = 1 THEN 'The Child2 element exists' ELSE 'The Child2 element does not exist' END AS Result
-FROM babel_5222_xml_exist_t2 ORDER BY Id;
+SELECT Id, XmlColumn.value('(/Root/Child2)[1]', 'varchar(100)') AS Result
+FROM babel_5223_xml_value_t2 ORDER BY Id;
 GO
 ~~START~~
 int#!#varchar
-1#!#The Child2 element does not exist
-2#!#The Child2 element exists
-3#!#The Child2 element exists
+1#!#<NULL>
+2#!#Value2
+3#!#Value2
 ~~END~~
 
 
--- Exist function called on SUBQUERY
+-- value function called on SUBQUERY
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT (SELECT @xml).exist('/artists/artist/@name')
+SELECT (SELECT @xml).value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
--- Exist function called on LOCAL_ID
+-- value function called on LOCAL_ID
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
--- Exist function called on LR_BR expr RR_BR
-SELECT (CAST('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>' as XML)).exist('/artists/artist/@name')
+-- value function called on LR_BR expr RR_BR
+SELECT (CAST('<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>' as XML)).value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
--- Exist function called on function_call
-SELECT babel_5222_xml_exist_func1().exist('/artists/artist/@name')
+-- value function called on function_call
+SELECT babel_5223_xml_value_func1().value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT dbo.babel_5222_xml_exist_func1().exist('/artists/artist/@name')
+SELECT dbo.babel_5223_xml_value_func1().value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
--- Exist function called on spatial function -- this will throw error, only to test nested rewrites
+-- value function called on spatial function -- this will throw error, only to test nested rewrites
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name').STArea()
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STArea()
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function starea is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: function starea("varchar") is not unique)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @xml.exist('/artists/artist/@name').STDistance(@point)
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STDistance(@point)
 GO
-~~ERROR (Code: 206)~~
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stdistance is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: syntax error)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name').STX
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STX
 GO
+~~START~~
+float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column notation .stx applied to type "bit", which is not a composite type)~~
+~~ERROR (Message: syntax error)~~
 
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
-SELECT @point1.STDistance(@point2).exist('/artists/artist/@name');
+SELECT @point1.STDistance(@point2).value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STArea().exist('/artists/artist/@name');
+SELECT @point.STArea().value('(/artists/artist/@name)[1]', 'varchar(100)');
 go
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STX.exist('/artists/artist/@name');
+SELECT @point.STX.value('(/artists/artist/@name)[1]', 'varchar(100)');
 go
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name').exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').value('(/artists/artist/@name)[1]', 'varchar(100)').value('(/artists/artist/@name)[1]', 'varchar(100)').value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on bit.)~~
+~~ERROR (Message: Cannot call methods on varchar.)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @xml.exist('/artists/artist/@name').STDistance(@point).exist('/artists/artist/@name').STArea()
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STDistance(@point).value('(/artists/artist/@name)[1]', 'varchar(100)').STArea()
 GO
-~~ERROR (Code: 206)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The function stdistance is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+~~ERROR (Message: function starea("varchar") is not unique)~~
 
 
 -- different number of arguments than required (Error will be thrown in this scenario)
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist()
+SELECT @xml.value()
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The exist function requires 1 argument(s).)~~
+~~ERROR (Message: The value function requires 2 argument(s).)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name', 1)
+SELECT @xml.value('(/artists/artist/@name)[1]', 1)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The exist function requires 1 argument(s).)~~
+~~ERROR (Message: The argument 2 of the XML data type method "value" must be a string literal.)~~
 
 
--- EVENTDATA().exist -- eventdata() is currently not supported
-SELECT EVENTDATA().exist('/EVENT_INSTANCE/EventType')
+-- EVENTDATA().value -- eventdata() is currently not supported
+SELECT EVENTDATA().value('/EVENT_INSTANCE/EventType')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function eventdata() does not exist)~~
+~~ERROR (Message: The value function requires 2 argument(s).)~~
 
 
--- Exist function called on XML Query
+-- value function called on XML Query
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.query('/artists/artist').exist('/artist/@name')
+SELECT @xml.query('/artists/artist').value('/artist/@name', 'varchar(100)')
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -831,145 +842,141 @@ GO
 
 
 -- Dependent objects
-SELECT * FROM babel_5222_xml_exist_dep_view
+SELECT * FROM babel_5223_xml_value_dep_view
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-EXEC babel_5222_xml_exist_dep_proc
+EXEC babel_5223_xml_value_dep_proc
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT babel_5222_xml_exist_dep_func()
+SELECT babel_5223_xml_value_dep_func()
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-SELECT * FROM babel_5222_xml_exist_itvf_func()
+SELECT * FROM babel_5223_xml_value_itvf_func()
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol VALUES (1, '<artist name="Rohit Bhagat" />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_compcol VALUES (2, '<artist />')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol" does not exist)~~
-
-
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol ORDER BY id
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_5222_xml_exist_compcol" does not exist)~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist name="Rohit Bhagat" />')
+INSERT INTO babel_5223_xml_value_compcol VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_constraint VALUES ('<artist />')
+INSERT INTO babel_5223_xml_value_compcol VALUES (2, '<artist />')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol ORDER BY id
+GO
+~~START~~
+xml#!#varchar
+<artist name="Rohit Bhagat" />#!#Rohit Bhagat
+<artist />#!#<NULL>
+~~END~~
+
+
+INSERT INTO babel_5223_xml_value_constraint VALUES ('<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint" violates check constraint "chknameexist")~~
+~~ERROR (Message: new row for relation "babel_5223_xml_value_constraint" violates check constraint "chknamevalue")~~
+
+
+INSERT INTO babel_5223_xml_value_constraint VALUES ('<artist />')
+GO
+~~ROW COUNT: 1~~
 
 
 -- Testing computed columns and constraints with quoted_identifier as ON
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
+-- Testing computed columns created on wrapper function of xml value when quoted_identifier was ON
+INSERT INTO babel_5223_xml_value_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
+INSERT INTO babel_5223_xml_value_compcol1 VALUES (2, '<artist />')
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
+SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol1 ORDER BY id
 GO
 ~~START~~
-xml#!#bit
-<artist name="Rohit Bhagat" />#!#1
-<artist />#!#0
+xml#!#varchar
+<artist name="Rohit Bhagat" />#!#Rohit Bhagat
+<artist />#!#<NULL>
 ~~END~~
 
 
--- Testing constraint created on wrapper function of xml exist
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
-GO
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
+-- Testing constraint created on wrapper function of xml value
+INSERT INTO babel_5223_xml_value_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint1" violates check constraint "chknameexist1")~~
+~~ERROR (Message: new row for relation "babel_5223_xml_value_constraint1" violates check constraint "chknamevalue1")~~
 
 
--- Testing view created on xml exist when quoted_identifier was OFF
-SELECT * FROM babel_5222_xml_exist_dep_view2
+INSERT INTO babel_5223_xml_value_constraint1 VALUES ('<artist />')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Testing view created on xml value when quoted_identifier was OFF
+SELECT * FROM babel_5223_xml_value_dep_view2
 GO
 ~~START~~
-bit
-1
+varchar
+John Doe
 ~~END~~
 
 
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
+-- Testing computed columns created on wrapper function of xml value when quoted_identifier was OFF
+INSERT INTO babel_5223_xml_value_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
+INSERT INTO babel_5223_xml_value_compcol2 VALUES (2, '<artist />')
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
+SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol2 ORDER BY id
 GO
 ~~START~~
-xml#!#bit
-<artist name="Rohit Bhagat" />#!#1
-<artist />#!#0
+xml#!#varchar
+<artist name="Rohit Bhagat" />#!#Rohit Bhagat
+<artist />#!#<NULL>
 ~~END~~
 
 
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
+-- Testing constraint created on wrapper function of xml value when quoted_identifier was OFF
+INSERT INTO babel_5223_xml_value_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
+INSERT INTO babel_5223_xml_value_constraint2 VALUES ('<artist />')
 GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint2" violates check constraint "chknameexist2")~~
+~~ROW COUNT: 1~~
 
 
 SET QUOTED_IDENTIFIER OFF
@@ -984,89 +991,89 @@ sql_variant
 
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
+-- Testing computed columns created on wrapper function of xml value when quoted_identifier was ON
+INSERT INTO babel_5223_xml_value_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
+INSERT INTO babel_5223_xml_value_compcol1 VALUES (2, '<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
+SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol1 ORDER BY id
 GO
 ~~START~~
-xml#!#bit
-<artist name="Rohit Bhagat" />#!#1
-<artist />#!#0
+xml#!#varchar
+<artist name="Rohit Bhagat" />#!#Rohit Bhagat
+<artist />#!#<NULL>
 ~~END~~
 
 
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
+-- Testing constraint created on wrapper function of xml value when quoted_identifier was OFF
+INSERT INTO babel_5223_xml_value_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
+INSERT INTO babel_5223_xml_value_constraint1 VALUES ('<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
--- Testing view created on xml exist when quoted_identifier was OFF
-SELECT * FROM babel_5222_xml_exist_dep_view2
+-- Testing view created on xml value when quoted_identifier was OFF
+SELECT * FROM babel_5223_xml_value_dep_view2
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
--- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
+-- Testing computed columns created on wrapper function of xml value when quoted_identifier was OFF
+INSERT INTO babel_5223_xml_value_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
+INSERT INTO babel_5223_xml_value_compcol2 VALUES (2, '<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
+SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol2 ORDER BY id
 GO
 ~~START~~
-xml#!#bit
-<artist name="Rohit Bhagat" />#!#1
-<artist />#!#0
+xml#!#varchar
+<artist name="Rohit Bhagat" />#!#Rohit Bhagat
+<artist />#!#<NULL>
 ~~END~~
 
 
--- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
+-- Testing constraint created on wrapper function of xml value when quoted_identifier was OFF
+INSERT INTO babel_5223_xml_value_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
+INSERT INTO babel_5223_xml_value_constraint2 VALUES ('<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -1084,7 +1091,7 @@ sql_variant
 ~~END~~
 
 
-SELECT student FROM babel_5222_xml_exist_school_details ORDER BY id
+SELECT student FROM babel_5223_xml_value_school_details ORDER BY id
 GO
 ~~START~~
 xml
@@ -1096,7 +1103,7 @@ xml
 ~~END~~
 
 
-INSERT INTO babel_5222_xml_exist_school_details VALUES (6, '<student classid="2" rollid="3" studentname="StudentF" />')
+INSERT INTO babel_5223_xml_value_school_details VALUES (6, '<student classid="2" rollid="3" studentname="StudentF" />')
 GO
 ~~START~~
 int#!#xml
@@ -1105,72 +1112,43 @@ int#!#xml
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_school_details VALUES (7, '<student rollid="4" studentname="StudentG" />')
+INSERT INTO babel_5223_xml_value_school_details VALUES (7, '<student classid="2"  rollid="4" studentname="Rohit" />')
 GO
 ~~START~~
 int#!#xml
-7#!#<student rollid="4" studentname="StudentG" />
+7#!#<student classid="2"  rollid="4" studentname="Rohit" />
 ~~END~~
 
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_school_details VALUES (8, '<student classid="2" studentname="StudentH" />')
+INSERT INTO babel_5223_xml_value_school_details VALUES (8, '<student classid="1"  rollid="4" studentname="NotAStudent" />')
 GO
 ~~START~~
 int#!#xml
-7#!#<student rollid="4" studentname="StudentG" />
-8#!#<student classid="2" studentname="StudentH" />
+7#!#<student classid="2"  rollid="4" studentname="Rohit" />
+8#!#<student classid="1"  rollid="4" studentname="NotAStudent" />
 ~~END~~
 
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_5222_xml_exist_school_details VALUES (9, '<student classid="2" rollid="4" />')
-GO
-~~START~~
-int#!#xml
-7#!#<student rollid="4" studentname="StudentG" />
-8#!#<student classid="2" studentname="StudentH" />
-9#!#<student classid="2" rollid="4" />
-~~END~~
-
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_5222_xml_exist_school_details VALUES (10, '<student classid="2" />')
-GO
-~~START~~
-int#!#xml
-7#!#<student rollid="4" studentname="StudentG" />
-8#!#<student classid="2" studentname="StudentH" />
-9#!#<student classid="2" rollid="4" />
-10#!#<student classid="2" />
-~~END~~
-
-~~ROW COUNT: 1~~
-
-
-UPDATE babel_5222_xml_exist_school_details
+UPDATE babel_5223_xml_value_school_details
 SET student=CAST('<student classid="1" rollid="4" studentname="StudentG" />' as XML)
 WHERE id=7
 GO
 ~~START~~
 int#!#xml
-8#!#<student classid="2" studentname="StudentH" />
-9#!#<student classid="2" rollid="4" />
-10#!#<student classid="2" />
+8#!#<student classid="1"  rollid="4" studentname="NotAStudent" />
 ~~END~~
 
 ~~ROW COUNT: 1~~
 
 
-DELETE FROM babel_5222_xml_exist_school_details WHERE id=10
+DELETE FROM babel_5223_xml_value_school_details WHERE id=8
 GO
 ~~START~~
 int#!#xml
-8#!#<student classid="2" studentname="StudentH" />
-9#!#<student classid="2" rollid="4" />
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -1189,28 +1167,28 @@ sql_variant
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.exist('/artists/artist/@name')
+SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)')
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-SELECT XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+SELECT XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
 
 
-SELECT babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM babel_5222_xml_exist_t1
+SELECT babel_5223_xml_value_t1.XmlColumn.value('(/artists/artist/@name)[1]', 'varchar(100)') FROM babel_5223_xml_value_t1
 GO
 ~~START~~
-bit
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
@@ -1227,12 +1205,12 @@ sql_variant
 ~~END~~
 
 
--- Currently, we only support XPATH 1.0 as input for XML exist function. 
+-- Currently, we only support XPATH 1.0 as input for XML value function. 
 -- Hence following queries will throw error
 DECLARE @x XML;  
 DECLARE @f BIT;  
 SET @x = '<root Somedate = "2002-01-01Z"/>';  
-SET @f = @x.exist('/root[(@Somedate cast as xs:date?) eq xs:date("2002-01-01Z")]');  
+SET @f = @x.value('/root[(@Somedate cast as xs:date?) eq xs:date("2002-01-01Z")]', 'varchar(100)');
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -1243,7 +1221,7 @@ GO
 DECLARE @x XML;  
 DECLARE @f BIT;  
 SET @x = '<Somedate>2002-01-01Z</Somedate>';  
-SET @f = @x.exist('/Somedate[(text()[1] cast as xs:date ?) = xs:date("2002-01-01Z") ]')  
+SET @f = @x.value('/Somedate[(text()[1] cast as xs:date ?) = xs:date("2002-01-01Z") ]', 'varchar(100)');
 SELECT @f;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -1252,38 +1230,10 @@ GO
 
 
 DECLARE @xml XML = '<root><child>Hello</child></root>';
-SELECT @xml.exist('(//*:child)[1]');
-GO
-~~START~~
-bit
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid XPath expression)~~
-
-
-DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.value('(/artists/artist/@name)[1]','varchar(20)')
-GO
-~~START~~
-varchar
-John Doe
-~~END~~
-
-
--- Unsupported XML functions QUERY(), MODIFY()
-DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.query('/artists/artist')
+SELECT @xml.value('(//*:child)[1]');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: The value function requires 2 argument(s).)~~
 
-
-DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
-SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
-SELECT @xml;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
