@@ -5975,6 +5975,14 @@ default_collation_for_builtin_type(Type typ, bool handle_pg_type)
 		 */
 		oid = CLUSTER_COLLATION_OID();
 	}
+	else if (sql_dialect == SQL_DIALECT_PG && pltsql_psql_logical_babelfish_db_name)
+	{
+		/* 
+		 * Check whether the type is collatable or not
+		 * If yes, return server level collation or return InvalidOid
+		 */
+		return OidIsValid(typtup->typcollation) ? CLUSTER_COLLATION_OID() : InvalidOid;
+	}
 	else
 	{
 		oid = typtup->typcollation;

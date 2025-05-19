@@ -1243,12 +1243,23 @@ get_database_or_server_collation_oid_internal(bool missingOk)
 Oid
 BABELFISH_CLUSTER_COLLATION_OID()
 {
+	const char* logical_babelfish_db_name;
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		Oid db_coll = get_database_or_server_collation_oid_internal(false);	/* set and cache
 													 * database or server_collation_oid */
 		return db_coll;
 	}
+	
+	/* 
+	 * If DMS, we can return the server level collation
+	 * We assume that psql_logical_babelfish_db_name is a valid TSQL database name
+	 * Caller is reponsible to supply valid psql_logical_babelfish_db_name
+	 */
+	logical_babelfish_db_name = GetConfigOption("psql_logical_babelfish_db_name", true, true);
+	if (logical_babelfish_db_name)
+		return get_database_or_server_collation_oid_internal(false);
+
 	return DEFAULT_COLLATION_OID;
 }
 
