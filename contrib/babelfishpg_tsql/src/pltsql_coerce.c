@@ -1762,7 +1762,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					{
 						if (found != NULL) *found = false;
 						typmod = -1;
-					}	
+					}
 				}
 				else
 				{
