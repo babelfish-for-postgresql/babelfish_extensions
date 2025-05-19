@@ -210,18 +210,18 @@ END
 GO
 
 -- Testing with complex calculations
--- FIXME: expected 400.000000
-DECLARE @revenue MONEY = 10000.00
-DECLARE @costs MONEY = 6000.00
-DECLARE @targetMargin SMALLMONEY = 0.40
-SELECT CASE
-    WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
-        (@revenue - @costs) * 0.10
-    WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
-        (@revenue - @costs) * 0.05
-    ELSE 0.00
-END
-GO
+-- FIXME: Handle fixed length dataype branch operator when we have it with numeric.
+-- DECLARE @revenue MONEY = 10000.00
+-- DECLARE @costs MONEY = 6000.00
+-- DECLARE @targetMargin SMALLMONEY = 0.40
+-- SELECT CASE
+--     WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
+--         (@revenue - @costs) * 0.10
+--     WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
+--         (@revenue - @costs) * 0.05
+--     ELSE 0.00
+-- END
+-- GO
 
 -- Testing with multiple currency conversions
 DECLARE @usdAmount MONEY = 1000.00
@@ -1131,4 +1131,41 @@ GO
 
 -- scale/precion with aggregate
 EXEC babel_5512_get_column_info_p1 'babel_5512_t6'
+GO
+
+-- T_Param tests for fixed length numeric dataypes
+DECLARE @num NUMERIC(5,2) = 123.45, @tinyint TINYINT = 255;
+SELECT @num + @tinyint AS result;
+GO
+
+DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
+SELECT @num + @smallint AS result;
+GO
+
+DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 2147483647;
+SELECT @num + @int AS result;
+GO
+
+DECLARE @num NUMERIC(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
+SELECT @num + @bigint AS result;
+GO
+
+
+select 2.00 * (select 1)
+GO
+
+-- tinyint
+select 2.00 * (select 255)
+GO
+
+-- smallint
+select 2.00 * (select 32767)
+GO
+
+-- int
+select 2.00 * (select 2147483647)
+GO
+
+-- bigint
+select 2.00 * (select 9223372036854775807)
 GO

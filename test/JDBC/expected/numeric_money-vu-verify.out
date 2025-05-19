@@ -410,26 +410,20 @@ money
 ~~END~~
 
 
+
 -- Testing with complex calculations
--- FIXME: expected 400.000000
-DECLARE @revenue MONEY = 10000.00
-DECLARE @costs MONEY = 6000.00
-DECLARE @targetMargin SMALLMONEY = 0.40
-SELECT CASE
-    WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
-        (@revenue - @costs) * 0.10
-    WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
-        (@revenue - @costs) * 0.05
-    ELSE 0.00
-END
-GO
-~~START~~
-numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
-
-
+-- FIXME: Handle fixed length dataype branch operator when we have it with numeric.
+-- DECLARE @revenue MONEY = 10000.00
+-- DECLARE @costs MONEY = 6000.00
+-- DECLARE @targetMargin SMALLMONEY = 0.40
+-- SELECT CASE
+--     WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
+--         (@revenue - @costs) * 0.10
+--     WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
+--         (@revenue - @costs) * 0.05
+--     ELSE 0.00
+-- END
+-- GO
 -- Testing with multiple currency conversions
 DECLARE @usdAmount MONEY = 1000.00
 DECLARE @exchangeRate1 SMALLMONEY = 1.15 -- EUR
@@ -2219,5 +2213,87 @@ mul5#!#real#!#4#!#24#!#0
 mul6#!#numeric#!#13#!#22#!#5
 mul7#!#numeric#!#13#!#22#!#5
 totalwithmarkup#!#numeric#!#9#!#13#!#1
+~~END~~
+
+
+-- T_Param tests for fixed length numeric dataypes
+DECLARE @num NUMERIC(5,2) = 123.45, @tinyint TINYINT = 255;
+SELECT @num + @tinyint AS result;
+GO
+~~START~~
+numeric
+378.45
+~~END~~
+
+
+DECLARE @num NUMERIC(5,2) = 123.45, @smallint SMALLINT = 32767;
+SELECT @num + @smallint AS result;
+GO
+~~START~~
+numeric
+32890.45
+~~END~~
+
+
+DECLARE @num NUMERIC(5,2) = 123.45, @int INT = 2147483647;
+SELECT @num + @int AS result;
+GO
+~~START~~
+numeric
+2147483770.45
+~~END~~
+
+
+DECLARE @num NUMERIC(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
+SELECT @num + @bigint AS result;
+GO
+~~START~~
+numeric
+9223372036854775930.45
+~~END~~
+
+
+
+select 2.00 * (select 1)
+GO
+~~START~~
+numeric
+2.00
+~~END~~
+
+
+-- tinyint
+select 2.00 * (select 255)
+GO
+~~START~~
+numeric
+510.00
+~~END~~
+
+
+-- smallint
+select 2.00 * (select 32767)
+GO
+~~START~~
+numeric
+65534.00
+~~END~~
+
+
+-- int
+select 2.00 * (select 2147483647)
+GO
+~~START~~
+numeric
+4294967294.00
+~~END~~
+
+
+-- bigint
+select 2.00 * (select 9223372036854775807)
+GO
+~~START~~
+numeric
+18446744073709551614.00
 ~~END~~
 

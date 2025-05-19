@@ -1226,22 +1226,36 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-				Oid immediate_base_type = InvalidOid;
 				if (param->paramtypmod != -1 &&
 					((*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) ||
 					(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype)))
 				{
 					return param->paramtypmod;
 				}
-				/* UDT handling in T_Param */
-				immediate_base_type = get_immediate_base_type_of_UDT_internal(param->paramtype);
-				if (OidIsValid(immediate_base_type))
+
+				if (param->paramtypmod == -1)
 				{
-					int32 typmod = -1;
-					getBaseTypeAndTypmod(param->paramtype, &typmod);
-					if (typmod != -1)
-						return typmod;
+					/* UDT handling in T_Param */
+					Oid immediate_base_type = get_immediate_base_type_of_UDT_internal(param->paramtype);
+					if (OidIsValid(immediate_base_type))
+					{
+						int32 typmod = -1;
+						getBaseTypeAndTypmod(param->paramtype, &typmod);
+						if (typmod != -1)
+							return typmod;
+					}
+
+					/* handling for fixed length datatypes */
+					if (param->paramtype == INT4OID)
+						return ((INT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (param->paramtype == INT8OID)
+						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+					else if (param->paramtype == INT2OID)
+						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
+
+					if (found != NULL) *found = false;
 				}
+
 				if (!is_numeric_datatype(param->paramtype))
 				{
 					/* typmod is undefined */
