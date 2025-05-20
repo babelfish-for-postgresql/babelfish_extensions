@@ -59,7 +59,7 @@ t1
 ~~ERROR (Message: relation "#t1" does not exist)~~
 
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 ~~START~~
 text
@@ -74,9 +74,9 @@ BEGIN TRANSACTION T1
         insert into #t4 values ('six')
         SELECT * FROM #t3
         SELECT * FROM #t4
-        SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+        SELECT * FROM enr_view;
     ROLLBACK TRANSACTION S2
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+    SELECT * FROM enr_view;
 COMMIT
 GO
 ~~ROW COUNT: 1~~
@@ -123,7 +123,7 @@ COMMIT
 GO
 
 -- Should be just #t1. 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 ~~START~~
 text
@@ -149,7 +149,7 @@ ROLLBACK
 GO
 
 -- Should be empty. 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 ~~START~~
 text
@@ -197,7 +197,7 @@ BEGIN TRANSACTION T1
         ROLLBACK TRANSACTION T3
         SELECT * FROM #t1
     ROLLBACK TRANSACTION T2
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+    select * from enr_view
     DROP TABLE #t1
 GO
 ~~ROW COUNT: 1~~
@@ -235,7 +235,7 @@ BEGIN TRAN
 COMMIT
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -268,7 +268,7 @@ BEGIN TRAN
 COMMIT
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -331,7 +331,7 @@ BEGIN TRAN
 ROLLBACK
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -357,7 +357,7 @@ BEGIN TRAN
     ROLLBACK
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -422,7 +422,7 @@ int#!#varchar#!#int#!#int
 DROP INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -563,7 +563,7 @@ int#!#varchar#!#int#!#int
 DROP TABLE #temp_table_rollback_t5
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -598,7 +598,7 @@ int#!#int
 ~~END~~
 
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -617,7 +617,7 @@ DROP TABLE #t1
 DROP TABLE #t3
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -668,7 +668,7 @@ int
 ~~ERROR (Message: relation "#t2_proc1" does not exist)~~
 
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -678,7 +678,7 @@ text
 -- Implicit rollback to top level transaction
 BEGIN TRANSACTION
     CREATE TABLE #outer_tab1(a int)
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+    SELECT * FROM enr_view
     exec implicit_rollback_in_proc
 COMMIT
 GO
@@ -721,7 +721,7 @@ GO
 ~~ERROR (Message: relation "#outer_tab1" does not exist)~~
 
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -793,7 +793,7 @@ GO
 ~~ERROR (Message: relation "#t3" does not exist)~~
 
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text

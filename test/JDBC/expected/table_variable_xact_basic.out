@@ -39,7 +39,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1,2), (2,1);
 ROLLBACK
     SELECT * FROM @tv1
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 2~~
 
@@ -83,7 +83,7 @@ BEGIN TRANSACTION
     INSERT @tv1 VALUES (1,2), (2,1);
 COMMIT TRANSACTION
     SELECT * FROM @tv1
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 2~~
 
@@ -175,7 +175,7 @@ smallmoney
 DECLARE @tvp2 tabvar_type_function_error
 INSERT INTO @tvp2 values (2)
 EXEC tabvar_select @tvp2
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 
@@ -521,7 +521,7 @@ INSERT INTO @tv1 VALUES(1, 1, 'First')
 INSERT INTO @tv1 VALUES(2, 2, 'Second')
 UPDATE @tv1 SET a = 1 WHERE a = 2               -- Duplicate Key
 SELECT * FROM @tv1                              -- Should show the two original records
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 

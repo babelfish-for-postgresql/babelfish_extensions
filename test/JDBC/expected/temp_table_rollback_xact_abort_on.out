@@ -103,7 +103,7 @@ GO
 -------------------------------
 BEGIN TRAN
 CREATE TABLE #temp_table_rollback_t1(a int identity primary key, b int)
-select * from enr_view where relname != '#xml_handle_temp_table'
+select * from enr_view
 ROLLBACK
 GO
 ~~START~~
@@ -115,7 +115,7 @@ text
 
 
 -- Should be empty
-select * from enr_view where relname != '#xml_handle_temp_table'
+select * from enr_view
 GO
 ~~START~~
 text
@@ -214,7 +214,7 @@ ROLLBACK
 go
 
 -- Should still exist
-select * from enr_view where relname != '#xml_handle_temp_table'
+select * from enr_view
 GO
 ~~START~~
 text
@@ -286,7 +286,7 @@ ROLLBACK
 GO
 
 -- Tables are still visible and usable
-select * from enr_view where relname != '#xml_handle_temp_table'
+select * from enr_view
 GO
 ~~START~~
 text
@@ -338,7 +338,7 @@ BEGIN TRAN
     ROLLBACK
 GO
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 go
 ~~START~~
 text
@@ -484,7 +484,7 @@ DROP TABLE #temp_table_rollback_t2
 COMMIT
 GO
 
-select * from enr_view where relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 ~~START~~
 text
@@ -643,7 +643,7 @@ int#!#varchar#!#int#!#int
 ~~END~~
 
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -779,7 +779,7 @@ int#!#varchar#!#int#!#int
 DROP TABLE #temp_table_rollback_t5
 GO
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -900,7 +900,7 @@ int
 
 BEGIN TRANSACTION
     CREATE TABLE #outer_tab1(a int)
-    select * from enr_view where relname != '#xml_handle_temp_table'
+    SELECT * FROM enr_view
     exec implicit_rollback_in_proc
     select * from #outer_tab1
 ROLLBACK
@@ -1032,7 +1032,7 @@ GO
 
 -- Everything should be rolled back due to error
 -- Nothing from the proc should be here either
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -1050,7 +1050,7 @@ BEGIN TRAN
 ROLLBACK
 GO
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -1079,7 +1079,7 @@ SELECT * FROM perm_table
 -- Correctly rolled back
 SELECT * FROM #temp_table
 SELECT * FROM #temp_table_nonenr
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 
@@ -1133,7 +1133,7 @@ text
 ~~END~~
 
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 DROP TABLE #temp_table
 DROP TABLE #temp_table_nonenr
 DROP TABLE perm_table
@@ -1152,11 +1152,11 @@ GO
 
 BEGIN TRAN
     DECLARE @tv TABLE(a int)
-    select * from enr_view where relname != '#xml_handle_temp_table'
+    SELECT * FROM enr_view
     DROP TABLE #temp_table
     DROP TABLE perm_table
     DROP TABLE #temp_table_nonenr
-    select * from enr_view where relname != '#xml_handle_temp_table'
+    SELECT * FROM enr_view
 ROLLBACK
 GO
 ~~START~~
@@ -1171,7 +1171,7 @@ text
 ~~END~~
 
 
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~START~~
 text
@@ -1342,7 +1342,7 @@ CREATE TABLE #t1(a int)
 CREATE TABLE #t2(a int)
 INSERT INTO #t1 VALUES (1)
 ROLLBACK
-select * from enr_view where relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 ~~ROW COUNT: 1~~
 

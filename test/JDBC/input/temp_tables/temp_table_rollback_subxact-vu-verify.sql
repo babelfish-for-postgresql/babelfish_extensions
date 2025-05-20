@@ -21,7 +21,7 @@ ROLLBACK TRANSACTION T1
 SELECT * FROM #t1
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 
 BEGIN TRANSACTION T1
@@ -32,9 +32,9 @@ BEGIN TRANSACTION T1
         insert into #t4 values ('six')
         SELECT * FROM #t3
         SELECT * FROM #t4
-        SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+        SELECT * FROM enr_view;
     ROLLBACK TRANSACTION S2
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+    SELECT * FROM enr_view;
 COMMIT
 GO
 
@@ -53,7 +53,7 @@ COMMIT
 GO
 
 -- Should be just #t1. 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 
 DROP TABLE #t1
@@ -74,7 +74,7 @@ ROLLBACK
 GO
 
 -- Should be empty. 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table';
+SELECT * FROM enr_view;
 GO
 
 CREATE TABLE #t1(a int)
@@ -114,7 +114,7 @@ BEGIN TRANSACTION T1
         ROLLBACK TRANSACTION T3
         SELECT * FROM #t1
     ROLLBACK TRANSACTION T2
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+    select * from enr_view
     DROP TABLE #t1
 GO
 
@@ -130,7 +130,7 @@ BEGIN TRAN
 COMMIT
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 DROP TABLE #t1_exists
@@ -157,7 +157,7 @@ BEGIN TRAN
 COMMIT
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 SELECT * FROM #t1
@@ -195,7 +195,7 @@ BEGIN TRAN
 ROLLBACK
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 -- Multiple savepoint rollback entire transaction to beginning
@@ -217,7 +217,7 @@ BEGIN TRAN
     ROLLBACK
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 ----------------------------------------------------------
@@ -260,7 +260,7 @@ GO
 DROP INDEX #temp_table_rollback_t5_idx1 ON #temp_table_rollback_t5
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 -- DROP INDEX
@@ -357,7 +357,7 @@ GO
 DROP TABLE #temp_table_rollback_t5
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 -- Nested index creation
@@ -384,14 +384,14 @@ BEGIN TRAN
     COMMIT
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 DROP TABLE #t1
 DROP TABLE #t3
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 ----------------------------------------------------------
@@ -401,13 +401,13 @@ GO
 exec test_nested_rollback_in_proc
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 -- Implicit rollback to top level transaction
 BEGIN TRANSACTION
     CREATE TABLE #outer_tab1(a int)
-    SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+    SELECT * FROM enr_view
     exec implicit_rollback_in_proc
 COMMIT
 GO
@@ -416,7 +416,7 @@ GO
 select * from #outer_tab1
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 
 ----------------------------------------------------------
@@ -460,6 +460,6 @@ GO
 SELECT * FROM #t3
 GO
 
-SELECT * FROM enr_view WHERE relname != '#xml_handle_temp_table'
+SELECT * FROM enr_view
 GO
 

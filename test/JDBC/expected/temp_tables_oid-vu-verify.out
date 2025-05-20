@@ -20,7 +20,7 @@ create table temp_tables_oid_perm_tab_3(a int)
 go
 
 -- Should be empty here
-select relname from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select relname from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 text
@@ -31,7 +31,7 @@ text
 CREATE TABLE #temp_tables_oid_t1(a int, b int)
 GO
 
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -43,7 +43,7 @@ int
 CREATE INDEX temp_tables_oid_idx1 on #temp_tables_oid_t1(a)
 GO
 
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -55,7 +55,7 @@ int
 CREATE INDEX #temp_tables_oid_idx2 on #temp_tables_oid_t1(b)
 GO
 
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -67,7 +67,7 @@ drop table #temp_tables_oid_t1
 GO
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -80,7 +80,7 @@ int
 create table #temp_tables_oid_t1(a int identity primary key, b int)
 go
 
-select relname from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select relname from sys.babelfish_get_enr_list()
 go
 ~~START~~
 text
@@ -118,7 +118,7 @@ create index #temp_table_index_t4 on #temp_tables_oid_t4(a)
 go
 
 -- 2 entries expected - one for table, one for index
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -130,7 +130,7 @@ drop table #temp_tables_oid_t4
 go
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -142,7 +142,7 @@ create table #temp_tables_oid_t5(a varchar(2000))
 GO
 
 -- 3 entries expected - one for table, one for toast, one for toast index. 
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int
@@ -154,7 +154,7 @@ drop table #temp_tables_oid_t5
 go
 
 -- 0 entries expected
-select count(*) from sys.babelfish_get_enr_list() where relname != '#xml_handle_temp_table'
+select count(*) from sys.babelfish_get_enr_list()
 GO
 ~~START~~
 int

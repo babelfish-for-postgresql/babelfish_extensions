@@ -10,8 +10,5 @@ go
 drop procedure p3168_4
 go
 
-DROP TABLE IF EXISTS #t 
-GO
-
 drop type typ3168
 go
