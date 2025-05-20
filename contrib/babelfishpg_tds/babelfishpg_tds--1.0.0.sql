@@ -8,7 +8,7 @@ RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C VOLATILE STRICT;
 
-CREATE FUNCTION sys.inject_fault( 
+CREATE FUNCTION sys.inject_fault(
   faultname text,
   num_occurrences int4,
   tamper_byte int4)

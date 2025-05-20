@@ -3765,21 +3765,25 @@ BEGIN
 		RETURN 0;
   END
 
-	SELECT DISTINCT
-		CASE 
-			WHEN Ext.orig_username = 'dbo' THEN Base3.oid
-			WHEN Ext.orig_username = 'guest' THEN 0
-			ELSE Base2.oid
-		END AS oid INTO #all_database_users
-	FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
-	ON Base.rolname = Ext.rolname
-	LEFT OUTER JOIN pg_catalog.pg_roles Base2
-	ON Ext.login_name = Base2.rolname
-	LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
-	ON Ext.database_name COLLATE database_default = Db.name
-	LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
-	ON Db.owner = Base3.rolname
-	WHERE Ext.type != 'R' AND Ext.orig_username IS NOT NULL;
+	WITH all_database_users(oid)
+	AS
+	(
+		SELECT DISTINCT
+			CASE 
+				WHEN Ext.orig_username = 'dbo' THEN Base3.oid
+				WHEN Ext.orig_username = 'guest' THEN 0
+				ELSE Base2.oid
+			END AS oid
+		FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		LEFT OUTER JOIN pg_catalog.pg_roles Base2
+		ON Ext.login_name = Base2.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Db
+		ON Ext.database_name COLLATE database_default = Db.name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3
+		ON Db.owner = Base3.rolname
+		WHERE Ext.type != 'R' AND Ext.orig_username IS NOT NULL
+	)
 
 	SELECT
     CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
@@ -3793,7 +3797,7 @@ BEGIN
     'NO' AS ARemote -- Currently we do not support linking local logins to remote logins
   FROM pg_catalog.pg_roles AS Base 
   INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
-  LEFT JOIN #all_database_users Dp ON Dp.oid = Base.oid -- In order to find out if a login has any users associated with it
+  LEFT JOIN all_database_users Dp ON Dp.oid = Base.oid -- In order to find out if a login has any users associated with it
   WHERE LExt.type NOT IN ('R', 'Z');
 
 	RETURN 0;
@@ -3812,20 +3816,24 @@ BEGIN
 		RETURN 0;
   END
 
-	SELECT
-		UExt2.database_name as database_name,
-		UExt1.orig_username as role_name,
-		UExt2.login_name as member_login INTO #db_role_mapping
-	FROM pg_catalog.pg_auth_members AS Authmbr
-	INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-	INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-	INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
-	INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
-	WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin');
-
 	SET @current_username = sys.suser_name();
 
-  SELECT
+	WITH db_role_mapping(database_name, role_name, member_login)
+	AS
+	(
+		SELECT
+			UExt2.database_name as database_name,
+			UExt1.orig_username as role_name,
+			UExt2.login_name as member_login
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+		WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin')
+	)
+
+	SELECT
     CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
 		CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
@@ -3837,7 +3845,7 @@ BEGIN
 		has_dbaccess(UExt.database_name) = 1 AND
 		(
       is_srvrolemember('sysadmin') = 1 OR 
-		  EXISTS (SELECT 1 from #db_role_mapping WHERE database_name = UExt.database_name AND member_login = @current_username) OR
+		  EXISTS (SELECT 1 from db_role_mapping WHERE database_name = UExt.database_name AND member_login = @current_username) OR
 		  UExt.login_name = LOWER(@current_username) OR
 		  ISNULL(UExt.login_name, '') = ''
     )
