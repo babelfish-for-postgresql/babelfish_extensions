@@ -4318,7 +4318,7 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
  * Errors: Throws error when all possible handles are in use
  */
 int 
-get_next_xml_handle(void)
+get_next_xml_handle()
 {
     int           old_handle = current_xml_handle;
     MemoryContext oldContext = NULL;
@@ -4619,7 +4619,15 @@ delete_xml_handle_entry(int document_id)
     int                   saved_dialect = sql_dialect;
     MemoryContext         oldContext = NULL;
     
-    /* Check if the temporary table exists, create it if not */
+	/* Check if the handle is still active */
+    if (!bms_is_member(curr_handle, active_xml_handles))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("Could not find prepared statement with handle %d", document_id)));
+    }
+
+    /* Check if the temporary table exists */
     if (!OidIsValid(xml_handle_temp_table_relid))
     {
         /* Table doesn't exist, so the handle definitely doesn't exist */
@@ -4673,7 +4681,7 @@ delete_xml_handle_entry(int document_id)
     }
     
     table_endscan(scan);
-    relation_close(relation, AccessShareLock);
+    relation_close(relation, NoLock);
     
     /* If we didn't find the handle or couldn't delete it, throw an error */
     if (!found)
@@ -4690,7 +4698,7 @@ delete_xml_handle_entry(int document_id)
  *        This function should be called when a connection is reset or terminated.
  */
 void
-reset_cached_xml_handle(void)
+reset_cached_xml_handle()
 {
     /* Reset active handles bitmap */
     bms_free(active_xml_handles);
@@ -4701,9 +4709,6 @@ reset_cached_xml_handle(void)
 
     /* Invalidate the Oid */
     xml_handle_temp_table_relid = InvalidOid;
-    
-    /* Create a new table */
-    create_xml_handle_temp_table();
 }
 
 Datum
