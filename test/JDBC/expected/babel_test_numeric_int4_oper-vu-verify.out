@@ -1,0 +1,1971 @@
+-- psql
+analyse master_dbo.babel_test_numeric_int4_vu_prepare;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+exec babel_test_numeric_int4_p0;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p0
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a = cast(1 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 164.880 ms
+~~END~~
+
+exec babel_test_numeric_int4_p00;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p00
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(1 as int) = a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 10.567 ms
+~~END~~
+
+exec babel_test_numeric_int4_p1;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p1
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a IS NULL
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.529 ms
+~~END~~
+
+exec babel_test_numeric_int4_p2;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p2
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a <> cast(5 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (a <> 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.759 ms
+~~END~~
+
+exec babel_test_numeric_int4_p3;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p3
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(5 as int) <> a
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (5 <> a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.891 ms
+~~END~~
+
+exec babel_test_numeric_int4_p4;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p4
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a < cast(5 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.326 ms
+~~END~~
+
+exec babel_test_numeric_int4_p5;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p5
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(5 as int) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.268 ms
+~~END~~
+
+exec babel_test_numeric_int4_p6;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p6
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a < cast(-2147483648 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 14.606 ms
+~~END~~
+
+exec babel_test_numeric_int4_p7;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p7
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(-2147483648 as int) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 3.069 ms
+~~END~~
+
+exec babel_test_numeric_int4_p8;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p8
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a <= cast(5 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.870 ms
+~~END~~
+
+exec babel_test_numeric_int4_p9;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p9
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(5 as int) >= a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.854 ms
+~~END~~
+
+exec babel_test_numeric_int4_p10;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p10
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(99995 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.158 ms
+~~END~~
+
+exec babel_test_numeric_int4_p11;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p11
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(99995 as int) < a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 4.296 ms
+~~END~~
+
+exec babel_test_numeric_int4_p12;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p12
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a >= cast(99995 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+exec babel_test_numeric_int4_p13;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p13
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(99995 as int) <= a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+exec babel_test_numeric_int4_p14;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p14
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(2147483647 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
+~~END~~
+
+exec babel_test_numeric_int4_p15;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p15
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(2147483647 as int) < a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+exec babel_test_numeric_int4_p16;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p16
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(5 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
+~~END~~
+
+exec babel_test_numeric_int4_p17;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p17
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(5 as int) < a
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (5 < a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
+~~END~~
+
+exec babel_test_numeric_int4_p18;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p18
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a between cast(5 as int) and cast(10 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.936 ms
+~~END~~
+
+exec babel_test_numeric_int4_p19;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p19
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a between cast(5 as int) and cast(2147483647 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: ((a >= 5) AND (a <= 2147483647))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
+~~END~~
+
+exec babel_test_numeric_int4_p20;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p20
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where (a between cast(5 as int) and cast(99995 as int)) and a = cast(10 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: ((a >= 5) AND (a <= 99995) AND (a = 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 14.062 ms
+~~END~~
+
+exec babel_test_numeric_int4_p21;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p21
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(5 as int) and a < cast(7 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: ((a > 5) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.223 ms
+~~END~~
+
+exec babel_test_numeric_int4_p22;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p22
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where cast(5 as int) < a and cast(7 as int) > a
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: ((a > 5) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.289 ms
+~~END~~
+
+exec babel_test_numeric_int4_p23;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p23
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a <> cast(5 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (a <> 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
+~~END~~
+
+exec babel_test_numeric_int4_p24;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p24
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a < cast(5 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+exec babel_test_numeric_int4_p25;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p25
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a < cast(-2147483648 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.146 ms
+~~END~~
+
+exec babel_test_numeric_int4_p26;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p26
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a <= cast(5 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+exec babel_test_numeric_int4_p27;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p27
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(99995 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+exec babel_test_numeric_int4_p28;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p28
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a >= cast(99995 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
+~~END~~
+
+exec babel_test_numeric_int4_p29;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p29
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(2147483647 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
+~~END~~
+
+exec babel_test_numeric_int4_p30;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p30
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a > cast(5 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
+~~END~~
+
+exec babel_test_numeric_int4_p31;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p31
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a between cast(5 as int) and cast(10 as int)
+  ->  Aggregate
+        ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+              Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
+~~END~~
+
+exec babel_test_numeric_int4_p32;
+GO
+~~START~~
+text
+Query Text: EXEC babel_test_numeric_int4_p32
+  Query Text: select count(*) from babel_test_numeric_int4_vu_prepare where a between cast(5 as int) and cast(99995 as int)
+  ->  Aggregate
+        ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+              Filter: ((a >= 5) AND (a <= 99995))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+exec babel_test_numeric_int4_p0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p00;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p2;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_int4_p3;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_int4_p4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_int4_p5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_int4_p6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p7;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_int4_p13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_int4_p14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p15;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p16;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_int4_p17;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_int4_p18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p19;
+GO
+~~START~~
+int
+99997
+~~END~~
+
+exec babel_test_numeric_int4_p20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec babel_test_numeric_int4_p23;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+exec babel_test_numeric_int4_p24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec babel_test_numeric_int4_p25;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec babel_test_numeric_int4_p29;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec babel_test_numeric_int4_p30;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+exec babel_test_numeric_int4_p31;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec babel_test_numeric_int4_p32;
+GO
+~~START~~
+int
+99991
+~~END~~
+
+
+drop procedure babel_test_numeric_int4_p0;
+drop procedure babel_test_numeric_int4_p00;
+drop procedure babel_test_numeric_int4_p1;
+drop procedure babel_test_numeric_int4_p2;
+drop procedure babel_test_numeric_int4_p3;
+drop procedure babel_test_numeric_int4_p4;
+drop procedure babel_test_numeric_int4_p5;
+drop procedure babel_test_numeric_int4_p6;
+drop procedure babel_test_numeric_int4_p7;
+drop procedure babel_test_numeric_int4_p8;
+drop procedure babel_test_numeric_int4_p9;
+drop procedure babel_test_numeric_int4_p10;
+drop procedure babel_test_numeric_int4_p11;
+drop procedure babel_test_numeric_int4_p12;
+drop procedure babel_test_numeric_int4_p13;
+drop procedure babel_test_numeric_int4_p14;
+drop procedure babel_test_numeric_int4_p15;
+drop procedure babel_test_numeric_int4_p16;
+drop procedure babel_test_numeric_int4_p17;
+drop procedure babel_test_numeric_int4_p18;
+drop procedure babel_test_numeric_int4_p19;
+drop procedure babel_test_numeric_int4_p20;
+drop procedure babel_test_numeric_int4_p21;
+drop procedure babel_test_numeric_int4_p22;
+drop procedure babel_test_numeric_int4_p23;
+drop procedure babel_test_numeric_int4_p24;
+drop procedure babel_test_numeric_int4_p25;
+drop procedure babel_test_numeric_int4_p26;
+drop procedure babel_test_numeric_int4_p27;
+drop procedure babel_test_numeric_int4_p28;
+drop procedure babel_test_numeric_int4_p29;
+drop procedure babel_test_numeric_int4_p30;
+drop procedure babel_test_numeric_int4_p31;
+drop procedure babel_test_numeric_int4_p32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from babel_test_numeric_int4_v0;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v0
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.635 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v00;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v00
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a = 1)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.081 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v1;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v1
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a IS NULL)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.077 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v2;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v2
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (a <> 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v3;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v3
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (5 <> a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v4;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v4
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v5;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v5
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v6;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v6
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v7;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v7
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v8;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v8
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v9;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v9
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v10;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v10
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v11;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v11
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v12;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v12
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v13;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v13
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v14;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v14
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v15;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v15
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v16;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v16
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v17;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v17
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (5 < a)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v18;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v18
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v19;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v19
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: ((a >= 5) AND (a <= 2147483647))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v20;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v20
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: ((a >= 5) AND (a <= 99995) AND (a = 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v21;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v21
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: ((a > 5) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v22;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v22
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: ((a > 5) AND (a < 7))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v23;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v23
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (a <> 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v24;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v24
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v25;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v25
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v26;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v26
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a <= 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v27;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v27
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v28;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v28
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a >= 99995)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v29;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v29
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: (a > 2147483647)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v30;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v30
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: (a > 5)
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v31;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v31
+Aggregate
+  ->  Index Only Scan using babel_test_numeric_int4_vu_prep8a3751fdda5fb765df2f8e30b4f6828e on babel_test_numeric_int4_vu_prepare
+        Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+select * from babel_test_numeric_int4_v32;
+GO
+~~START~~
+text
+Query Text: select * from babel_test_numeric_int4_v32
+Aggregate
+  ->  Seq Scan on babel_test_numeric_int4_vu_prepare
+        Filter: ((a >= 5) AND (a <= 99995))
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.074 ms
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select * from babel_test_numeric_int4_v0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v00;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v2;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_int4_v3;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_int4_v4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_int4_v5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_int4_v6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v7;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_int4_v13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_int4_v14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v15;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v16;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_int4_v17;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_int4_v18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v19;
+GO
+~~START~~
+int
+99997
+~~END~~
+
+select * from babel_test_numeric_int4_v20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_test_numeric_int4_v23;
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select * from babel_test_numeric_int4_v24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+select * from babel_test_numeric_int4_v25;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+select * from babel_test_numeric_int4_v29;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select * from babel_test_numeric_int4_v30;
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select * from babel_test_numeric_int4_v31;
+GO
+~~START~~
+int
+6
+~~END~~
+
+select * from babel_test_numeric_int4_v32;
+GO
+~~START~~
+int
+99991
+~~END~~
+
+
+drop view babel_test_numeric_int4_v0;
+drop view babel_test_numeric_int4_v00;
+drop view babel_test_numeric_int4_v1;
+drop view babel_test_numeric_int4_v2;
+drop view babel_test_numeric_int4_v3;
+drop view babel_test_numeric_int4_v4;
+drop view babel_test_numeric_int4_v5;
+drop view babel_test_numeric_int4_v6;
+drop view babel_test_numeric_int4_v7;
+drop view babel_test_numeric_int4_v8;
+drop view babel_test_numeric_int4_v9;
+drop view babel_test_numeric_int4_v10;
+drop view babel_test_numeric_int4_v11;
+drop view babel_test_numeric_int4_v12;
+drop view babel_test_numeric_int4_v13;
+drop view babel_test_numeric_int4_v14;
+drop view babel_test_numeric_int4_v15;
+drop view babel_test_numeric_int4_v16;
+drop view babel_test_numeric_int4_v17;
+drop view babel_test_numeric_int4_v18;
+drop view babel_test_numeric_int4_v19;
+drop view babel_test_numeric_int4_v20;
+drop view babel_test_numeric_int4_v21;
+drop view babel_test_numeric_int4_v22;
+drop view babel_test_numeric_int4_v23;
+drop view babel_test_numeric_int4_v24;
+drop view babel_test_numeric_int4_v25;
+drop view babel_test_numeric_int4_v26;
+drop view babel_test_numeric_int4_v27;
+drop view babel_test_numeric_int4_v28;
+drop view babel_test_numeric_int4_v29;
+drop view babel_test_numeric_int4_v30;
+drop view babel_test_numeric_int4_v31;
+drop view babel_test_numeric_int4_v32;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+select babel_test_numeric_int4_f0();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f00();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f1();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f2();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_int4_f3();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_int4_f4();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_int4_f5();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_int4_f6();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f7();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f8();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f9();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f10();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f11();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f12();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_int4_f13();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_int4_f14();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f15();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f16();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_int4_f17();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_int4_f18();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f19();
+GO
+~~START~~
+int
+99997
+~~END~~
+
+select babel_test_numeric_int4_f20();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f21();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f22();
+GO
+~~START~~
+int
+1
+~~END~~
+
+select babel_test_numeric_int4_f23();
+GO
+~~START~~
+int
+100001
+~~END~~
+
+select babel_test_numeric_int4_f24();
+GO
+~~START~~
+int
+5
+~~END~~
+
+select babel_test_numeric_int4_f25();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f26();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f27();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f28();
+GO
+~~START~~
+int
+7
+~~END~~
+
+select babel_test_numeric_int4_f29();
+GO
+~~START~~
+int
+0
+~~END~~
+
+select babel_test_numeric_int4_f30();
+GO
+~~START~~
+int
+99996
+~~END~~
+
+select babel_test_numeric_int4_f31();
+GO
+~~START~~
+int
+6
+~~END~~
+
+select babel_test_numeric_int4_f32();
+GO
+~~START~~
+int
+99991
+~~END~~
+
+
+drop function babel_test_numeric_int4_f0;
+drop function babel_test_numeric_int4_f00;
+drop function babel_test_numeric_int4_f1;
+drop function babel_test_numeric_int4_f2;
+drop function babel_test_numeric_int4_f3;
+drop function babel_test_numeric_int4_f4;
+drop function babel_test_numeric_int4_f5;
+drop function babel_test_numeric_int4_f6;
+drop function babel_test_numeric_int4_f7;
+drop function babel_test_numeric_int4_f8;
+drop function babel_test_numeric_int4_f9;
+drop function babel_test_numeric_int4_f10;
+drop function babel_test_numeric_int4_f11;
+drop function babel_test_numeric_int4_f12;
+drop function babel_test_numeric_int4_f13;
+drop function babel_test_numeric_int4_f14;
+drop function babel_test_numeric_int4_f15;
+drop function babel_test_numeric_int4_f16;
+drop function babel_test_numeric_int4_f17;
+drop function babel_test_numeric_int4_f18;
+drop function babel_test_numeric_int4_f19;
+drop function babel_test_numeric_int4_f20;
+drop function babel_test_numeric_int4_f21;
+drop function babel_test_numeric_int4_f22;
+drop function babel_test_numeric_int4_f23;
+drop function babel_test_numeric_int4_f24;
+drop function babel_test_numeric_int4_f25;
+drop function babel_test_numeric_int4_f26;
+drop function babel_test_numeric_int4_f27;
+drop function babel_test_numeric_int4_f28;
+drop function babel_test_numeric_int4_f29;
+drop function babel_test_numeric_int4_f30;
+drop function babel_test_numeric_int4_f31;
+drop function babel_test_numeric_int4_f32;
+GO
+
+drop table babel_test_numeric_int4_vu_prepare;
+GO
