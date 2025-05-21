@@ -30,6 +30,10 @@ GO
 
 DROP TABLE babel_5223_xml_value_compcol
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_5223_xml_value_compcol" does not exist)~~
+
 
 DROP TABLE babel_5223_xml_value_constraint
 GO
