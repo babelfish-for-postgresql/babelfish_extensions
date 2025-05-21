@@ -339,7 +339,7 @@ static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = (Node *) lsecond(op->args);
+	Node	   *rightop = copyObject(lsecond(op->args));
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
@@ -884,15 +884,7 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 					if (con->constisnull)
 						return new_node;
 
-					#ifdef USE_ICU
-						if (U_ICU_VERSION_MAJOR_NUM == pltsql_remove_accent_map_icu_major_version && U_ICU_VERSION_MINOR_NUM == pltsql_remove_accent_map_icu_min_version)
-						{
-							con->constvalue = DirectFunctionCall1(remove_accents_internal_using_cache, con->constvalue);
-							con->constcollid = InvalidOid;
-							return (Node *) con;
-						}
-					#endif
-					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+					con->constvalue = OidFunctionCall1(remove_accents_internal_oid, con->constvalue);
 					con->constcollid = InvalidOid;
 					return (Node *) con;
 				}
@@ -949,15 +941,8 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 						constnode = (Const *) new_node;
 						if (constnode->constisnull)
 							return new_node;
-						#ifdef USE_ICU
-							if (U_ICU_VERSION_MAJOR_NUM == pltsql_remove_accent_map_icu_major_version && U_ICU_VERSION_MINOR_NUM == pltsql_remove_accent_map_icu_min_version)
-							{
-								constnode->constvalue = DirectFunctionCall1(remove_accents_internal_using_cache, constnode->constvalue);
-								constnode->constcollid = InvalidOid;
-								return (Node *) constnode;
-							}
-						#endif
-						constnode->constvalue = DirectFunctionCall1(remove_accents_internal, constnode->constvalue);
+
+						constnode->constvalue = OidFunctionCall1(remove_accents_internal_oid, constnode->constvalue);
 						constnode->constcollid = InvalidOid;
 						return (Node *) constnode;
 					}
