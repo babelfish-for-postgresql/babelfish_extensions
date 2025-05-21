@@ -252,7 +252,7 @@ BEGIN
     END IF; 
 END
 $BODY$
-LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
