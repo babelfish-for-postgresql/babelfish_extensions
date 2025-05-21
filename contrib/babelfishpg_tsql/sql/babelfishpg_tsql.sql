@@ -3762,7 +3762,7 @@ BEGIN
 	IF is_srvrolemember('securityadmin') = 0 
     BEGIN
         RAISERROR('User does not have permission to perform this action.', 16, 1);
-            RETURN 0;
+        RETURN 0;
     END
 
 	WITH all_database_users(oid)
@@ -3812,10 +3812,10 @@ DECLARE @is_sysadmin BIT
 BEGIN
 
 	IF is_srvrolemember('securityadmin') = 0 
-  BEGIN
-    RAISERROR('User does not have permission to perform this action.', 16, 1);
+    BEGIN
+        RAISERROR('User does not have permission to perform this action.', 16, 1);
 		RETURN 0;
-  END
+    END
 
 	SET @current_username = LOWER(sys.suser_name());
 	SET @is_sysadmin = is_srvrolemember('sysadmin');
@@ -3835,36 +3835,36 @@ BEGIN
 	)
 
 	SELECT
-    CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
+        CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
 		CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		'User' AS UserOrAlias 
-  FROM sys.babelfish_authid_user_ext UExt
-  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name COLLATE database_default
-  WHERE UExt.type != 'R' AND  
-		UExt.orig_username != 'guest' AND 
-		has_dbaccess(UExt.database_name) = 1 AND
-		(
-			@is_sysadmin = 1 OR
+    FROM sys.babelfish_authid_user_ext UExt
+    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name COLLATE database_default
+    WHERE UExt.type != 'R' AND  
+		  UExt.orig_username != 'guest' AND 
+		  has_dbaccess(UExt.database_name) = 1 AND
+        (
+            @is_sysadmin = 1 OR
 			UExt.login_name = @current_username OR
 			ISNULL(UExt.login_name, '') = '' OR
 			EXISTS (SELECT 1 from db_role_mapping WHERE database_name = UExt.database_name AND member_login = @current_username)
-    )
-  UNION
-  SELECT
+        )
+    UNION
+    SELECT
 		CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-    CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
-    CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
-    'Member of' AS UserOrAlias 
-  FROM pg_catalog.pg_auth_members AS Authmbr
-  INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-  INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
-  INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-  LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name COLLATE database_default
-  WHERE has_dbaccess(UExt2.database_name) = 1 AND
+        CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
+        CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
+        'Member of' AS UserOrAlias 
+    FROM pg_catalog.pg_auth_members AS Authmbr
+    INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+    INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+    INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
+    INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
+    LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name COLLATE database_default
+    WHERE has_dbaccess(UExt2.database_name) = 1 AND
 		(
-			@is_sysadmin = 1 OR
+		    @is_sysadmin = 1 OR
 			UExt2.login_name = @current_username OR
 			ISNULL(UExt2.login_name, '') = ''
 		)
@@ -3879,10 +3879,10 @@ DECLARE @input_loginname sys.sysname;
 BEGIN
 
 	IF is_srvrolemember('securityadmin') = 0 
-  BEGIN
-    RAISERROR('User does not have permission to perform this action.', 16, 1);
+    BEGIN
+        RAISERROR('User does not have permission to perform this action.', 16, 1);
 		RETURN 0;
-  END
+    END
 
 	IF @loginname IS NULL
 	BEGIN
