@@ -1400,10 +1400,10 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			if (IsInParallelMode())
 			{
 				/*
-				 * If this subxact has started any unfinished parallel operation, clean up
+				 * If this xact has started any unfinished parallel operation, clean up
 				 * its workers and exit parallel mode.  Don't warn about leaked resources.
 				 */
-				AtEOSubXact_Parallel(false, GetCurrentSubTransactionId());
+				AtEOXact_Parallel(false);
 				ExitParallelMode();
 			}
 			/* Cleanup SPI connections if they exist. */
