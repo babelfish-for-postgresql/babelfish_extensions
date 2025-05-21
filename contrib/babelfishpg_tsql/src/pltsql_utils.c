@@ -40,11 +40,6 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-
-#define TDS_MONEY_PRECISION 19
-#define TDS_SMALLMONEY_PRECISION 10
-#define TDS_FIXEDDECIMAL_SCALE 4
-
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
@@ -501,9 +496,9 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 				else if (strcmp(typname, "decimal") == 0)
 					*typmod = 1179652;	/* decimal(18,0) */
 				else if (strcmp(typname, "money") == 0)
-					*typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+					*typmod = TSQL_MONEY_TYPMOD;
 				else if (strcmp(typname, "smallmoney") == 0)
-					*typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+					*typmod = TSQL_SMALLMONEY_TYPMOD;
 			}
 			/* for sys.varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
 			else if (*typmod == TSQLMaxTypmod)

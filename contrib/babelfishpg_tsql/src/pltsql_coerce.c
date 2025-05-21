@@ -53,9 +53,6 @@
 #define BPCHAR_MAX_TYPMOD 8000
 
 #define TDS_MAX_NUM_PRECISION 38
-#define TDS_MONEY_PRECISION 19
-#define TDS_SMALLMONEY_PRECISION 10
-#define TDS_FIXEDDECIMAL_SCALE 4
 
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
@@ -1822,7 +1819,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					/* Handling for fixed length datatype. */
 					if (typmod != -1 && ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype)))
 					{
-						return ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+						return TSQL_MONEY_TYPMOD;
 					}
 					else if (aggref->aggtype == INT4OID)
 					{
@@ -3039,21 +3036,24 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			/* Handling for money/smallmoney. */
 			if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_money_datatype)(type))
 			{
-				typmod = ((TDS_MONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+				precision = MONEY_PRECISION;
+				scale = FIXEDDECIMAL_SCALE;
 			}
 			else if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
 			{
-				typmod = ((TDS_SMALLMONEY_PRECISION << 16) | TDS_FIXEDDECIMAL_SCALE) + VARHDRSZ;
+            	precision = SMALLMONEY_PRECISION;
+				scale = FIXEDDECIMAL_SCALE;
 			}
+			else
+			{
+				if (typmod == -1)
+					typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
+				if (typmod == -1 || !is_tsql_exact_numeric_type(type))
+					continue;
 
-			if (typmod == -1)
-				typmod = resolve_numeric_typmod_from_exp(NULL, expr, NULL);
-
-			if (typmod == -1 || !is_tsql_exact_numeric_type(type))
-				continue;
-
-			scale = (typmod - VARHDRSZ) & 0xffff;
-			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+				scale = (typmod - VARHDRSZ) & 0xffff;
+				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+			}
 			integralDigitCount = Max(precision - scale, max_precision - max_scale);
 			max_scale = Max(max_scale, scale);
 			max_precision = integralDigitCount + max_scale;
