@@ -601,6 +601,7 @@ GO
 
 
 -- Boolean operators support
+-- AND operator
 EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
 GO
 ~~START~~
@@ -624,6 +625,162 @@ int#!#text
 ~~END~~
 
 
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and "red grapes"'
+GO
+~~START~~
+int#!#text
+985#!#<p> It 's thought that the chemical resveratrol , found in red grapes and red wine , is the reason why 
+986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol aNd "red grapes"'
+GO
+~~START~~
+int#!#text
+985#!#<p> It 's thought that the chemical resveratrol , found in red grapes and red wine , is the reason why 
+986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'beer anD wine'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+~~END~~
+
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain & stress')
+GO
+~~START~~
+int#!#text
+381#!#The lonelier breast cancer survivors , in addition to increased inflammation , experienced more pain , @ @ @ @ @ @ @ @ @ @ , which tends to be triggered by stress , can also be used a measure of immune response 
+~~END~~
+
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal And "Croissant*"')
+GO
+~~START~~
+int#!#text
+92#!#You ca n't talk about croissants in New York City without mentioning master pastry chef Laurent Dupal and his Spring St
+94#!# Since his quaint cafe opened in 1992 , Dupal has consistently made some of the flakiest , butteriest , airiest croissants ( $2 ) in the five boroughs 
+95#!# Dupal credits fresh ingredients , a controlled setting and years of experience for the excellent taste of his croissants , hundreds of which are sold a day in the patisserie 
+96#!# In fact , Dupal compares baking croissants with raising a child 
+~~END~~
+
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'French And "Croissant*" & tart')
+GO
+~~START~~
+int#!#text
+72#!#<h> A sublime croissant at French Tart in Grant City , Staten Island 
+~~END~~
+
+
+
+-- OR operator
+EXEC fts_contains_vu_prepare_p1 'wine OR beer'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+985#!#<p> It 's thought that the chemical resveratrol , found in red grapes and red wine , is the reason why 
+986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | "treatment*"'
+GO
+~~START~~
+int#!#text
+684#!# According to Wendy Norman , a clinical professor at the University of British Columbia , " almost everyone " in those cases " has some different anomaly 
+893#!#It is the treatment of depression through Botox , though , that is as new as a baby 's skin 
+905#!#In 2003 , he started a clinical trial to test his hypothesis that Botox inhibition of @ @ @ @ @ @ @ @ @ @ scientific theories from the 19th century , including Charles Darwin 's The Expression of the Emotions in Manand Animals , in which the celebrated scientist wrote : " The free expression by outward signs of an emotion intensifies it 
+910#!# The study investigated whether patients who suffered from clinical depression and had not responded to antidepressant medications could be helped with Botox injections in their frown lines 
+911#!#Participants in the treatment group were given a single dose of Botox ( five injections ) between and just above their eyebrows 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'pastry or "croissant*"'
+GO
+~~START~~
+int#!#text
+72#!#<h> A sublime croissant at French Tart in Grant City , Staten Island 
+76#!# Baked fresh every morning by Chavenet himself , the croissants are a work of art 
+78#!# According to Chavenet , the secret to making a great croissant is in quality ingredients , especially the butter , and the folding of the dough , which Chavenet demonstrates on a napkin 
+79#!# While the plain croissant is outstanding , the almond croissant is truly world-class 
+82#!# Eat dessert @ @ @ @ @ @ @ @ @ @ Colson Patisserie , in Park Slope , uses two types of flour in its croissants 
+83#!#In 1986 , pastry chef Hubert Colson first opened his famed pastry shop in Mons , Belgium 
+84#!# Barely 20 years later , Yonatan Israel , a French filmmaker searching for structure and opportunity in life , opened his own shop as a tribute to his favorite pastry chef 
+86#!# What a gift for pastry lovers in Brooklyn ! Colson 's croissants ( $2
+89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
+90#!# Sweet but not candied , these croissants taste like a big puff of flaky butter , which is just what every New Yorker needs to start off their day 
+92#!#You ca n't talk about croissants in New York City without mentioning master pastry chef Laurent Dupal and his Spring St
+94#!# Since his quaint cafe opened in 1992 , Dupal has consistently made some of the flakiest , butteriest , airiest croissants ( $2 ) in the five boroughs 
+95#!# Dupal credits fresh ingredients , a controlled setting and years of experience for the excellent taste of his croissants , hundreds of which are sold a day in the patisserie 
+96#!# In fact , Dupal compares baking croissants with raising a child 
+99#!# A pack of six frozen croissants costs $7 and can be baked at home 
+101#!#The croissant at Chock Full o ' Nuts Cafe ( 1611 Avenue M , Brooklyn ) is very buttery inside and outside @ @ @ @ @ @ @ @ @ @ good with a side of butter/jelly along with a cup of regular or flavored coffee or chai latte or tea 
+105#!# in Whitestone , makes the perfect croissant 
+111#!#The best croissant in the city can be found at City Bakery ( 3 W
+114#!# The pretzel croissant , as it 's called , combines the rich buttery body of a typical croissant with the salty crispness of a pretzel
+116#!#The croissants at The Standard hotel are the tastiest in the city 
+117#!# The secret is in the sourdough they add to it ! Also , buttery and flaky as all @ @ @ @ @ @ @ @ @ @ the upper West Side has the best croissant I 've had in NYC 
+119#!# It 's the best croissant I 've had outside of Paris 
+~~END~~
+
+
+
+-- AND NOT operator
+EXEC fts_contains_vu_prepare_p1 'wine AND NoT resveratrol'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+~~END~~
+
+
+declare @a varchar(100)
+set @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+~~END~~
+
+
+declare @a varchar(100)
+set @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+267#!#The indictment accuses Chichakli and Bout of violating sanctions by arranging to buy two Boeing aircraft from U
+460#!#The USA has pretty restrictive laws on flying uninhabited aircraft 
+462#!#In Australia , if the aircraft is : Away from residential areas , Below 400 feet above the ground ( yep I know that is fairly low ) Within eyesight of the operator Under 150 kg weight ( but getting clearance from the MAAA for over 50kg is a bit hard )
+591#!# Only four Twin Otter aircraft are permanently deployed to the North , at Yellowknife , with Joint Task Force North Headquarters 
+596#!# In addition , the Aurora surveillance and reconnaissance aircraft undertake regular Arctic patrols 
+605#!#To meet this demand , the existing FOLs likely will become permanent bases for forward deployed surveillance and reconnaissance and SAR aircraft 
+616#!# Building and staffing permanent bases will be expensive , although some costs may be offset by other government departments and agencies in response to increased civilian @ @ @ @ @ @ @ @ @ @ no need to acquire a dedicated Arctic aircraft : The current and planned inventory of multi-role aircraft will be able to meet this requirement 
+618#!# However , aircraft and personnel deployed to the North on a permanent basis will impact the ability of the RCAF to meet its other demands 
+~~END~~
+
+
+
+-- complex boolean expressions
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress')
+GO
+~~START~~
+int#!#text
+379#!# In both studies , participants completed stress tests , provided blood samples and had their social lives evaluated using the UCLA Loneliness Scale 
+381#!#The lonelier breast cancer survivors , in addition to increased inflammation , experienced more pain , @ @ @ @ @ @ @ @ @ @ , which tends to be triggered by stress , can also be used a measure of immune response 
+383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
+~~END~~
+
+
 EXEC fts_contains_vu_prepare_p1 'Resveratrol AND (Rats or ("hear*" | "loud noises"))'
 GO
 ~~START~~
@@ -638,30 +795,21 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Syntax error in the full-text search condition)~~
-
-
-EXEC fts_contains_vu_prepare_p1 'wine AND NOT resveratrol'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol anD (Rats oR ("hear*" | "loud noises"))'
 GO
 ~~START~~
 int#!#text
-184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+988#!#In a study conducted at the Henry Ford Hospital in Detroit , healthy rats were less likely to suffer noise-induced hearing loss when given resveratrol before being exposed to loud noise for a long period of time 
+992#!#Study leader Dr Michael Seidman said : ' Our latest study focuses on resveratrol and its effect on the body 's response to injury - something that is believed to be the cause of many health problems including Alzheimer 's disease , cancer , ageing and hearing loss 
+993#!#Resveratrol appeared to reduce the damage to hearing from loud noises
+994#!#' Resveratrol is a very powerful chemical that seems to protect against the body @ @ @ @ @ @ @ @ @ @ cognition brain function and hearing loss 
+997#!#The study found that resveratrol reduced noise-induced hearing loss in rats exposed to potentially deafening sounds 
+998#!#Dr Seidman said : ' We 've shown that by giving animals resveratrol , we can reduce the amount of hearing and cognitive decline 
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 'beer and wine'
-GO
-~~START~~
-int#!#text
-184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR treatment*)'
+EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR "treatment*")'
 GO
 ~~START~~
 int#!#text
@@ -670,7 +818,7 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film OR game*)) AND (Rockstar OR video)'
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or game*)) & (Rockstar | video)'
 GO
 ~~START~~
 int#!#text
@@ -688,33 +836,6 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '(diversity AND leadership) AND ("visible minorit*" OR women)'
-GO
-~~START~~
-int#!#text
-925#!#<p> Women and visible minorities are underrepresented in senior leadership positions across Montreal , according to a report published by Ryerson University 's Diversity Institute and the Desautels Faculty of Management at McGill 
-~~END~~
-
-
-SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain and stress')
-GO
-~~START~~
-int#!#text
-381#!#The lonelier breast cancer survivors , in addition to increased inflammation , experienced more pain , @ @ @ @ @ @ @ @ @ @ , which tends to be triggered by stress , can also be used a measure of immune response 
-~~END~~
-
-
-SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal and Croissants')
-GO
-~~START~~
-int#!#text
-92#!#You ca n't talk about croissants in New York City without mentioning master pastry chef Laurent Dupal and his Spring St
-94#!# Since his quaint cafe opened in 1992 , Dupal has consistently made some of the flakiest , butteriest , airiest croissants ( $2 ) in the five boroughs 
-95#!# Dupal credits fresh ingredients , a controlled setting and years of experience for the excellent taste of his croissants , hundreds of which are sold a day in the patisserie 
-96#!# In fact , Dupal compares baking croissants with raising a child 
-~~END~~
-
-
 SELECT * FROM fts_contains_v1
 GO
 ~~START~~
@@ -729,6 +850,91 @@ int#!#text
 ~~END~~
 
 
+
+-- Not operator
+EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'not "loud noises"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'not "hospital*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+
+-- negative test cases
+-- consecutive occurences of same boolean operators
+EXEC fts_contains_vu_prepare_p1 '(diversity && leadership) AND ANd ("visible minorit*" OR | women)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" OR or "treatment*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | | "treatment*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | or "treatment*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+-- invalid combinations of boolean operators
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and Or "red grapes"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol oR Not "red grapes"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol OR   & "red grapes"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+
+-- Common Table Expression
 WITH fts_contains_vu_cte1 AS (
     SELECT *
     FROM fts_contains_vu_t
@@ -3796,7 +4002,7 @@ int#!#text#!#text#!#text#!#text
 
 
 SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
-        txt1, 
+        txt1,
         txt2,
         txt3,
         txt4), 'Renaissance OR "Ancient Egyptian*"');

@@ -3,6 +3,9 @@
 
 /* LCOV_EXCL_START */
 
+/* Function prototypes */
+void yyerror_with_code(int error_code, const char *message);
+
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
@@ -11,6 +14,7 @@ static YY_BUFFER_STATE scanbufhandle;
 %}
 
 %option never-interactive
+%option case-insensitive
 %option nodefault
 %option noinput
 %option nounput
@@ -21,23 +25,20 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"AND"           { yylval = "AND"; return AND_TOKEN; }
-"and"           { yylval = "AND"; return AND_TOKEN; }
-"&"           	{ yylval = "AND"; return AND_TOKEN; }
-"AND NOT"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"and not"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"&!"       	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"OR"            { yylval = "OR"; return OR_TOKEN; }
-"or"            { yylval = "OR"; return OR_TOKEN; }
-"|"            	{ yylval = "OR"; return OR_TOKEN; }
-"NOT"		{ yylval = "NOT"; yyerror(NULL, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
-"INFLECTIONAL"  { yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
-"THESAURUS"     { yylval = "THESAURUS"; return THESAURUS_TOKEN; }
-"FORMSOF"       { yylval = "FORMSOF"; yyerror(NULL, "Generation term is not currently supported in Babelfish"); return FORMSOF_TOKEN; }
-"("             { yylval = "("; return O_PAREN_TOKEN; }
-")"             { yylval = ")"; return C_PAREN_TOKEN; }
-","             { yylval = ","; return COMMA_TOKEN; }
-[ \t\r\n]+      { yylval = " "; return WS_TOKEN; }
+"AND"        		{ yylval = "AND"; return AND_TOKEN; }
+"&"           		{ yylval = "AND"; return AND_TOKEN; }
+AND[ \s\t\r\n]+NOT  	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
+"&!"       		{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
+"OR"           		{ yylval = "OR"; return OR_TOKEN; }
+"|"            		{ yylval = "OR"; return OR_TOKEN; }
+"NOT"			{ yylval = "NOT"; yyerror(NULL, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
+"INFLECTIONAL"  	{ yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
+"THESAURUS"     	{ yylval = "THESAURUS"; return THESAURUS_TOKEN; }
+"FORMSOF"       	{ yylval = "FORMSOF"; yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish"); return FORMSOF_TOKEN; }
+"("             	{ yylval = "("; return O_PAREN_TOKEN; }
+")"             	{ yylval = ")"; return C_PAREN_TOKEN; }
+","             	{ yylval = ","; return COMMA_TOKEN; }
+[ \t\r\n]+      	{ yylval = " "; return WS_TOKEN; }
 
 
 \"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  /* Handle prefix terms */
@@ -50,9 +51,17 @@ static YY_BUFFER_STATE scanbufhandle;
 
 /* LCOV_EXCL_STOP */
 
+/* Base error function */
 void yyerror(char **result, const char *message) {
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("%s", message)));
+}
+
+/* Extended error function that accepts custom error codes */
+void yyerror_with_code(int error_code, const char *message) {
+	ereport(ERROR,
+			(errcode(error_code),
 			 errmsg("%s", message)));
 }
 

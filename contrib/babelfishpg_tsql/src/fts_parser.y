@@ -30,7 +30,7 @@ static void     replaceMultipleSpacesAndSpecialChars(char* input, char **str1, c
 
 %}
 
-%token WORD_TOKEN WS_TOKEN TEXT_TOKEN PREFIX_TERM_TOKEN GENERATION_TERM_TOKEN AND_TOKEN NOT_TOKEN AND_NOT_TOKEN OR_TOKEN O_PAREN_TOKEN C_PAREN_TOKEN INFLECTIONAL_TOKEN THESAURUS_TOKEN FORMSOF_TOKEN COMMA_TOKEN SPECIAL_CHAR_TOKEN NON_ENGLISH_TOKEN
+%token WORD_TOKEN WS_TOKEN TEXT_TOKEN PREFIX_TERM_TOKEN GENERATION_TERM_TOKEN AND_TOKEN NOT_TOKEN AND_NOT_TOKEN OR_TOKEN INFLECTIONAL_TOKEN THESAURUS_TOKEN FORMSOF_TOKEN O_PAREN_TOKEN C_PAREN_TOKEN COMMA_TOKEN SPECIAL_CHAR_TOKEN NON_ENGLISH_TOKEN
 %left OR_TOKEN
 %left AND_TOKEN
 %left AND_NOT_TOKEN
@@ -50,38 +50,43 @@ contains_search_condition:
     }
     ;
 
-
 multiple_term:
-    search_term {
-        $$ = $1;
+    search_term opt_node {
+        if($2 != NULL) 
+        {
+            $$ = mergeTokens($1, $2, NULL);
+        }
+        else
+        {
+            $$ = $1;
+        }
     }
-    | enclosed_term {
-        $$ = $1;
-    }
-    | search_term bool_operator multiple_term {
-        $$ = mergeTokens($1, $2, $3);
-    }
-    | enclosed_term bool_operator multiple_term {
-        $$ = mergeTokens($1, $2, $3);
+    | enclosed_term opt_node {
+        if($2 != NULL) 
+        {
+            $$ = mergeTokens($1, $2, NULL);
+        }
+        else
+        {
+            $$ = $1;
+        }
     }
     ;
 
+opt_node:
+    bool_operator multiple_term {
+        $$ = mergeTokens($1, $2, NULL);
+    }
+    | /*EMPTY*/ {
+        $$ = NULL;
+    }
+    ;
 
 enclosed_term:
-    O_PAREN_TOKEN multiple_term C_PAREN_TOKEN {
-        $$ = mergeTokens($1, $2, $3);
-    }
-    | WS_TOKEN O_PAREN_TOKEN multiple_term C_PAREN_TOKEN {
-        $$ = mergeTokens($2, $3, $4);
-    }
-    | O_PAREN_TOKEN multiple_term C_PAREN_TOKEN WS_TOKEN {
-        $$ = mergeTokens($1, $2, $3);
-    }
-    | WS_TOKEN O_PAREN_TOKEN multiple_term C_PAREN_TOKEN WS_TOKEN {
+    white_space O_PAREN_TOKEN multiple_term C_PAREN_TOKEN white_space {
         $$ = mergeTokens($2, $3, $4);
     }
     ;
-
 
 bool_operator:
     AND_TOKEN {
@@ -100,19 +105,9 @@ search_term:
     | simple_term
     | prefix_term
     ;
-    
 
 simple_term:
-    keyword {
-        $$ = $1;
-    }
-    | WS_TOKEN keyword {
-        $$ = $2;
-    }
-    | keyword WS_TOKEN {
-        $$ = $1;
-    }
-    | WS_TOKEN keyword WS_TOKEN {
+    white_space keyword white_space {
         $$ = $2;
     }
     ;
@@ -126,18 +121,8 @@ keyword:
     }
     ;
 
-
 prefix_term:
-    PREFIX_TERM_TOKEN {
-        $$ = translate_prefix_term($1);
-    }
-    | WS_TOKEN PREFIX_TERM_TOKEN {
-        $$ = translate_prefix_term($2);
-    }
-    | PREFIX_TERM_TOKEN WS_TOKEN {
-        $$ = translate_prefix_term($1);
-    }
-    | WS_TOKEN PREFIX_TERM_TOKEN WS_TOKEN {
+    white_space PREFIX_TERM_TOKEN white_space {
         $$ = translate_prefix_term($2);
     }
     ;
@@ -166,6 +151,11 @@ simple_term_list:
     }
     ;
 
+white_space:
+    WS_TOKEN
+    | /* EMPTY */
+    ;
+
 %%
 
 /*
@@ -179,11 +169,12 @@ static char
 
     appendStringInfoString(&bufStr, inputStr1);
     appendStringInfoString(&bufStr, inputStr2);
-    appendStringInfoString(&bufStr, inputStr3);
+    if(inputStr3 != NULL) {
+        appendStringInfoString(&bufStr, inputStr3);
+    }
 
     return bufStr.data;
 }
-
 
 /* Helper function that takes in a word or phrase and returns the same word/phrase in Postgres format
  * Example: 'word' is rewritten into 'word'; '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
@@ -229,8 +220,8 @@ static char
     }
     
     /*
-     * if the input string has only one character and
-     * if it is a special character, we return an empty string
+     * If the input string has only one character and
+     * if it is a special character, we return an empty string.
      */
     if (!strlen(trimmedInputStr) || (hasSpecialChars && strlen(trimmedInputStr) == 1)) {
         pfree(trimmedInputStr);
@@ -248,8 +239,8 @@ static char
     initStringInfo(&output);
 
     /*
-     * all the simple term search strings will be translated with
-     * a paranthesis around them as along with boolean expression 
+     * All the simple term search strings will be translated with
+     * Paranthesis around them as along with boolean expression 
      * they can give wrong output, so the translation for every 
      * simple term needs to be contained, like
      * '"one two"' = '(one<->two | ('one UniqueHash two'))'
@@ -281,7 +272,7 @@ static char
         }
     }
 
-    /* check for empty strings i.e. ""*/
+    /* Check for empty strings i.e. ""*/
     if (output.len > 0) {
         if (isEnclosedInQuotes || hasSpecialChars) {
                 appendStringInfo(&output, " | ('%s')", replace_special_chars_fts_impl(rightStr));
@@ -328,7 +319,7 @@ static char
     output = pstrdup(inputStr);
 
     /*
-     * removing spaces between the leading single quote (') and leading delimiter (") and
+     * Removing spaces between the leading single quote (') and leading delimiter (") and
      * trailing single quote (') and trailing delimiter (")
      * '   "word1 word2*"  ' = '"word1 word2*"'
      */
@@ -336,11 +327,11 @@ static char
 
 
     /* 
-     * removing leading spaces, for the phrase enclosed in double quotes
+     * Removing leading spaces, for the phrase enclosed in double quotes
      * '"   word1*"' = '"word1*"'
      * this will not handle the trailing spaces as,
      * the search string with trailing spaces are identified as simple terms by the lexer
-     * '"word1*  "' is a simple term
+     * '"word1*  "' is a simple term.
      */
     trim(output, true);
 
@@ -348,15 +339,15 @@ static char
     rightPtr = output + (strlen(output) - 1);
         
     /*
-     * trim the extra spaces, asterisks, tab characters or a newline character 
-     * at the end of the search string
+     * Trim the extra spaces, asterisks, tab characters or a newline character 
+     * at the end of the search string.
      */
     while (leftPtr <= rightPtr && (*rightPtr == ' ' || *rightPtr == '*' || *rightPtr == '\t' || *rightPtr == '\n')) {
         rightPtr--;
     }
     
     /*
-     * rewriting search string in format word1:*<->word2:* 
+     * Rewriting search string in format word1:*<->word2:* 
      */
     while (leftPtr <= rightPtr) {
         if (strchr(specialChars, *leftPtr) != NULL) {
@@ -367,7 +358,7 @@ static char
                  errmsg("Special characters in the prefix term search condition are not currently supported in Babelfish")));
         }
         /* 
-         * removing multiple spaces, tabs and * from the search string 
+         * Removing multiple spaces, tabs and * from the search string 
          * If a space is encountered, we remove all the next occurances of * and spaces and tabs
          * before end of the input or if next word is encountered
          * Case 1: '"word1   * * ** *"' = 'word1:*'
@@ -381,7 +372,7 @@ static char
             }
 
             /*
-             * to handle the case when a newline character is encountered
+             * To handle the case when a newline character is encountered
              * while removing extra space, asterisk and tab character
              * '"word1' + CHAR(9) + ' ' + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
              */
@@ -390,7 +381,7 @@ static char
                 continue;
             }
             /*
-             * space, tab and asterisk only between the keywords is translated
+             * Space, tab and asterisk only between the keywords is translated.
              */
             if (outputStr.len > 0) {
                 appendStringInfoString(&outputStr, ":*<->");
@@ -398,7 +389,7 @@ static char
         } else if (*leftPtr == '\n') {
             if (outputStr.len > 0) {
                 /*
-                 * if a newline is encountered, remove all the next occurances of spaces, asterisks, tabs and newline
+                 * If a newline is encountered, remove all the next occurances of spaces, asterisks, tabs and newline
                  * till the next keyword
                  * as multiple newline characters are reduced to a single newline character
                  * '"word1' + CHAR(10) + ' * ** * ' + CHAR(9) + CHAR(10) + 'word2*"' = 'word1:*<->uniqueHash:*<->word2:*'
@@ -407,7 +398,7 @@ static char
                     leftPtr++;
                 }
                 /*
-                 * the trailing newline characters are removed in the beginning
+                 * The trailing newline characters are removed in the beginning
                  * but added this safety check
                  */
                 if (leftPtr != rightPtr) {
@@ -511,7 +502,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
 
         if (charInBoolOperators != NULL) {
             ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                (errcode(ERRCODE_SYNTAX_ERROR),
                  errmsg("Syntax error in the full-text search condition")));
         }
 

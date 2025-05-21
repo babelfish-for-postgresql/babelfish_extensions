@@ -193,6 +193,7 @@ EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
 
 -- Boolean operators support
+-- AND operator
 EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
 GO
 
@@ -202,39 +203,114 @@ GO
 EXEC fts_contains_vu_prepare_p1 'Resveratrol AND "red grapes"'
 GO
 
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol aNd "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'beer anD wine'
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain & stress')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal And "Croissant*"')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'French And "Croissant*" & tart')
+GO
+
+
+-- OR operator
+EXEC fts_contains_vu_prepare_p1 'wine OR beer'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'pastry or "croissant*"'
+GO
+
+
+-- AND NOT operator
+EXEC fts_contains_vu_prepare_p1 'wine AND NoT resveratrol'
+GO
+
+declare @a varchar(100)
+set @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+declare @a varchar(100)
+set @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+
+-- complex boolean expressions
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress')
+GO
+
 EXEC fts_contains_vu_prepare_p1 'Resveratrol AND (Rats or ("hear*" | "loud noises"))'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol anD (Rats oR ("hear*" | "loud noises"))'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'wine AND NOT resveratrol'
+EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR "treatment*")'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'beer and wine'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR treatment*)'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film OR game*)) AND (Rockstar OR video)'
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or game*)) & (Rockstar | video)'
 GO
 
 EXEC fts_contains_vu_prepare_p1 '(farm* AND credit) AND ("loan board" OR FCC)'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '(diversity AND leadership) AND ("visible minorit*" OR women)'
-GO
-
-SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain and stress')
-GO
-
-SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'Dupal and Croissants')
-GO
-
 SELECT * FROM fts_contains_v1
 GO
 
+
+-- Not operator
+EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'not "loud noises"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'not "hospital*"'
+GO
+
+
+-- negative test cases
+-- consecutive occurences of same boolean operators
+EXEC fts_contains_vu_prepare_p1 '(diversity && leadership) AND ANd ("visible minorit*" OR | women)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" OR or "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | | "treatment*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"clinical" | or "treatment*"'
+GO
+
+-- invalid combinations of boolean operators
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and Or "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol oR Not "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol OR   & "red grapes"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
+GO
+
+
+-- Common Table Expression
 WITH fts_contains_vu_cte1 AS (
     SELECT *
     FROM fts_contains_vu_t
@@ -662,7 +738,7 @@ SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
 GO
 
 SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
-        txt1, 
+        txt1,
         txt2,
         txt3,
         txt4), 'Renaissance OR "Ancient Egyptian*"');
