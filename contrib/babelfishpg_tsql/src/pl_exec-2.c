@@ -744,7 +744,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	if (estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, stmt->query);
 
-	exec_run_select(estate, stmt->query, 0, &portal);
+	exec_run_select(estate, stmt->query, &portal);
 
 	receiver = CreateDestReceiver(DestRemote);
 	SetRemoteDestReceiverParams(receiver, portal);
@@ -3227,7 +3227,7 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 		exec_init_tuple_store(estate);
 
 	Assert(query != NULL);
-	exec_run_select(estate, query, 0, &portal);
+	exec_run_select(estate, query, &portal);
 
 	/* Use eval_mcontext for tuple conversion work */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
