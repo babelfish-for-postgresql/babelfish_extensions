@@ -191,7 +191,7 @@ Bitmap Heap Scan on testing4  (cost=4.17..11.28 rows=3 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.932 ms
+Babelfish T-SQL Batch Parsing Time: 0.170 ms
 ~~END~~
 
 
@@ -209,7 +209,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
 ~~END~~
 
 
@@ -227,7 +227,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.150 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -243,7 +243,7 @@ Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=5 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.133 ms
+Babelfish T-SQL Batch Parsing Time: 0.162 ms
 ~~END~~
 
 
@@ -259,7 +259,7 @@ Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
+Babelfish T-SQL Batch Parsing Time: 0.195 ms
 ~~END~~
 
 
@@ -295,7 +295,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.135 ms
+Babelfish T-SQL Batch Parsing Time: 0.142 ms
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
@@ -312,7 +312,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.145 ms
 ~~END~~
 
 
@@ -329,7 +329,7 @@ Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=647 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.047 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
@@ -345,7 +345,7 @@ Bitmap Heap Scan on testing4  (cost=11.56..32.94 rows=648 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.132 ms
+Babelfish T-SQL Batch Parsing Time: 0.196 ms
 ~~END~~
 
 
@@ -361,7 +361,7 @@ Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.143 ms
 ~~END~~
 
 
@@ -381,7 +381,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.142 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 
@@ -399,7 +399,7 @@ Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.133 ms
 ~~END~~
 
 
@@ -529,7 +529,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -570,7 +570,7 @@ Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.135 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -594,7 +594,7 @@ Result  (cost=0.00..0.00 rows=0 width=0)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -616,12 +616,12 @@ GO
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
-  Filter: (((c1)::text ~~* 'jo%'::text COLLATE french_cs_as) AND ((c1)::text >= 'jo'::text COLLATE french_ci_as) AND ((c1)::text < 'jo?'::text COLLATE french_ci_as))
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE french_cs_as) AND (c1 >= 'jo'::"varchar" COLLATE french_ci_as) AND (c1 < 'jo?'::"varchar" COLLATE french_ci_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Babelfish T-SQL Batch Parsing Time: 0.140 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -642,12 +642,12 @@ GO
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
 Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
-  Filter: (((c1)::text ~~* 'jo%'::text COLLATE chinese_prc_cs_as) AND ((c1)::text >= 'jo'::text) AND ((c1)::text < 'jo?'::text))
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE chinese_prc_cs_as) AND (c1 >= 'jo'::"varchar") AND (c1 < 'jo?'::"varchar"))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 SET babelfish_showplan_all OFF;
