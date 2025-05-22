@@ -625,3 +625,4 @@ babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
+Test_cast_binary_bytea
