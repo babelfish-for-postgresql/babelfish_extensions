@@ -382,49 +382,49 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- To handle the typmod values for procedure and function for smallmoney/money.
-UPDATE pg_proc p1
+UPDATE pg_proc p
 SET probin = (
 	SELECT jsonb_set(
-		p1.probin::jsonb,
+		p.probin::jsonb,
 		'{typmod_array}',
 		to_jsonb(
 			(
 				SELECT jsonb_agg(
 					CASE
-						WHEN p2.prokind = 'p' OR (p2.prokind = 'f' AND p2.proargtypes[typ_index-1] IS NOT NULL) THEN
+						WHEN p.prokind = 'p' OR (p.prokind = 'f' AND p.proargtypes[typ_index-1] IS NOT NULL) THEN
 							CASE
-								WHEN typmod = '-1' AND (p2.proargtypes[typ_index-1]::regtype::text = 'sys.money') THEN '1245192'
-								WHEN typmod = '-1' and (p2.proargtypes[typ_index-1]::regtype::text = 'sys.smallmoney') THEN '655368'
+								WHEN typmod = '-1' AND (p.proargtypes[typ_index-1] = 'sys.money'::regtype::oid) THEN '1245192'
+								WHEN typmod = '-1' and (p.proargtypes[typ_index-1] = 'sys.smallmoney'::regtype::oid) THEN '655368'
 								ELSE typmod
 							END
-						WHEN p2.prokind = 'f' AND p2.prorettype IS NOT NULL THEN
+						WHEN p.prokind = 'f' AND p.prorettype IS NOT NULL THEN
 							CASE
-								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.money') THEN '1245192'
-								WHEN typmod = '-1' AND (p2.prorettype::regtype::text = 'sys.smallmoney') THEN '655368'
+								WHEN typmod = '-1' AND (p.prorettype = 'sys.money'::regtype::oid) THEN '1245192'
+								WHEN typmod = '-1' AND (p.prorettype = 'sys.smallmoney'::regtype::oid) THEN '655368'
 								ELSE typmod
 							END
 						ELSE typmod
 					END
 				)
-				FROM jsonb_array_elements_text(p1.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(typmod,typ_index)
+				FROM jsonb_array_elements_text(p.probin::jsonb->'typmod_array') WITH ORDINALITY AS elem(typmod,typ_index)
 			)
 		)
 	)
 )
-FROM pg_proc p2
-INNER JOIN sys.babelfish_namespace_ext sch ON sch.nspname = p2.pronamespace::regnamespace::name
-INNER JOIN pg_language l ON p2.prolang = l.oid AND l.lanname = 'pltsql'
-WHERE p1.oid = p2.oid
-	AND ((p2.prokind = 'p' AND p2.proargtypes <> '') OR (p2.prokind = 'f' AND p2.proallargtypes IS NULL));
+FROM sys.babelfish_namespace_ext sch, pg_language l
+WHERE sch.nspname = p.pronamespace::regnamespace::name
+	AND p.prolang = l.oid
+	AND l.lanname = 'pltsql'
+	AND ((p.prokind = 'p' AND p.proargtypes <> '') OR (p.prokind = 'f' AND p.proallargtypes IS NULL));
 
 
 -- To handle the typmod values for tables and views for smallmoney/money.
 UPDATE pg_attribute a
 SET atttypmod =
 	CASE
-		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.money')
+		WHEN atttypmod = '-1' AND (a.atttypid = 'sys.money'::regtype::oid)
 		THEN 1245192
-		WHEN atttypmod = '-1' AND (a.atttypid::regtype::text = 'sys.smallmoney')
+		WHEN atttypmod = '-1' AND (a.atttypid = 'sys.smallmoney'::regtype::oid)
 		THEN 655368
 		ELSE atttypmod
 	END
@@ -434,7 +434,9 @@ INNER JOIN sys.babelfish_namespace_ext sch
 WHERE a.attrelid = c.oid
 	AND a.atttypmod = -1
 	AND NOT a.attisdropped
-	AND (a.atttypid::regtype::text IN ('sys.money', 'sys.smallmoney'));
+	AND (a.atttypid = 'sys.money'::regtype::oid OR
+		a.atttypid = 'sys.smallmoney'::regtype::oid)
+	AND c.relkind IN ('r', 'i', 'v', 'p', 'I');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

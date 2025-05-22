@@ -6415,6 +6415,14 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 		if (!plan && !found_typmod)
 			return -1;
 	}
+	else if ((*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(expr_type))
+	{
+		result_typmod = TSQL_SMALLMONEY_TYPMOD;
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(expr_type))
+	{
+		result_typmod = TSQL_MONEY_TYPMOD;
+	}
 	return result_typmod;
 }
 
