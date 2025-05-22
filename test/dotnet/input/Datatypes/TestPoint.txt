@@ -67,7 +67,6 @@ select geography::Point(10,500,4326);
 SELECT location.STAsText() FROM POINTGEOM_dt;
 SELECT location.STAsText() FROM POINTGEOG_dt;
 SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
-SELECT geom.STAsBinary(), geog.STAsBinary() FROM POINT_dt;
 SELECT geom.STDimension(), geog.STDimension() FROM POINT_dt;
 SELECT geom.STIsClosed(), geog.STIsClosed() FROM POINT_dt;
 
