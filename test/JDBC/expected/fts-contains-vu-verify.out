@@ -648,6 +648,7 @@ GO
 ~~START~~
 int#!#text
 184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
 ~~END~~
 
 
@@ -678,6 +679,16 @@ int#!#text
 ~~END~~
 
 
+DECLARE @a VARCHAR(100)
+SET @a = 'beer'+ char(10) +'And' + char(10) + ' wine'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+~~END~~
+
 
 -- OR operator
 EXEC fts_contains_vu_prepare_p1 'wine OR beer'
@@ -687,6 +698,9 @@ int#!#text
 184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
 985#!#<p> It 's thought that the chemical resveratrol , found in red grapes and red wine , is the reason why 
 986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
 ~~END~~
 
 
@@ -699,6 +713,8 @@ int#!#text
 905#!#In 2003 , he started a clinical trial to test his hypothesis that Botox inhibition of @ @ @ @ @ @ @ @ @ @ scientific theories from the 19th century , including Charles Darwin 's The Expression of the Emotions in Manand Animals , in which the celebrated scientist wrote : " The free expression by outward signs of an emotion intensifies it 
 910#!# The study investigated whether patients who suffered from clinical depression and had not responded to antidepressant medications could be helped with Botox injections in their frown lines 
 911#!#Participants in the treatment group were given a single dose of Botox ( five injections ) between and just above their eyebrows 
+1002#!#clinical <newline>trials and<newline>	treatments
+1010#!#hospital 	doctor<newline>treatments
 ~~END~~
 
 
@@ -728,6 +744,24 @@ int#!#text
 116#!#The croissants at The Standard hotel are the tastiest in the city 
 117#!# The secret is in the sourdough they add to it ! Also , buttery and flaky as all @ @ @ @ @ @ @ @ @ @ the upper West Side has the best croissant I 've had in NYC 
 119#!# It 's the best croissant I 've had outside of Paris 
+1003#!#French	tarts and croissants
+1005#!#chocolate pastry	and<newline>eclair
+~~END~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = '"french' + char(10) + 'tarts"' + char(9) + ' or ' + char(10) + 'pastry'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+83#!#In 1986 , pastry chef Hubert Colson first opened his famed pastry shop in Mons , Belgium 
+84#!# Barely 20 years later , Yonatan Israel , a French filmmaker searching for structure and opportunity in life , opened his own shop as a tribute to his favorite pastry chef 
+86#!# What a gift for pastry lovers in Brooklyn ! Colson 's croissants ( $2
+89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
+92#!#You ca n't talk about croissants in New York City without mentioning master pastry chef Laurent Dupal and his Spring St
+1003#!#French	tarts and croissants
+1005#!#chocolate pastry	and<newline>eclair
 ~~END~~
 
 
@@ -738,21 +772,38 @@ GO
 ~~START~~
 int#!#text
 184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
 ~~END~~
 
 
-declare @a varchar(100)
-set @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_contains_vu_prepare_p1 'wine AND            NoT resveratrol'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
+~~END~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 ~~START~~
 int#!#text
 184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
 ~~END~~
 
 
-declare @a varchar(100)
-set @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 ~~START~~
@@ -767,6 +818,33 @@ int#!#text
 616#!# Building and staffing permanent bases will be expensive , although some costs may be offset by other government departments and agencies in response to increased civilian @ @ @ @ @ @ @ @ @ @ no need to acquire a dedicated Arctic aircraft : The current and planned inventory of multi-role aircraft will be able to meet this requirement 
 618#!# However , aircraft and personnel deployed to the North on a permanent basis will impact the ability of the RCAF to meet its other demands 
 ~~END~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+267#!#The indictment accuses Chichakli and Bout of violating sanctions by arranging to buy two Boeing aircraft from U
+460#!#The USA has pretty restrictive laws on flying uninhabited aircraft 
+462#!#In Australia , if the aircraft is : Away from residential areas , Below 400 feet above the ground ( yep I know that is fairly low ) Within eyesight of the operator Under 150 kg weight ( but getting clearance from the MAAA for over 50kg is a bit hard )
+591#!# Only four Twin Otter aircraft are permanently deployed to the North , at Yellowknife , with Joint Task Force North Headquarters 
+596#!# In addition , the Aurora surveillance and reconnaissance aircraft undertake regular Arctic patrols 
+605#!#To meet this demand , the existing FOLs likely will become permanent bases for forward deployed surveillance and reconnaissance and SAR aircraft 
+616#!# Building and staffing permanent bases will be expensive , although some costs may be offset by other government departments and agencies in response to increased civilian @ @ @ @ @ @ @ @ @ @ no need to acquire a dedicated Arctic aircraft : The current and planned inventory of multi-role aircraft will be able to meet this requirement 
+618#!# However , aircraft and personnel deployed to the North on a permanent basis will impact the ability of the RCAF to meet its other demands 
+~~END~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''' at line 2 and character position 96)~~
 
 
 
@@ -792,6 +870,7 @@ int#!#text
 994#!#' Resveratrol is a very powerful chemical that seems to protect against the body @ @ @ @ @ @ @ @ @ @ cognition brain function and hearing loss 
 997#!#The study found that resveratrol reduced noise-induced hearing loss in rats exposed to potentially deafening sounds 
 998#!#Dr Seidman said : ' We 've shown that by giving animals resveratrol , we can reduce the amount of hearing and cognitive decline 
+1004#!#resveratrol 	drugs<newline>cause	loud	noises
 ~~END~~
 
 
@@ -806,6 +885,7 @@ int#!#text
 994#!#' Resveratrol is a very powerful chemical that seems to protect against the body @ @ @ @ @ @ @ @ @ @ cognition brain function and hearing loss 
 997#!#The study found that resveratrol reduced noise-induced hearing loss in rats exposed to potentially deafening sounds 
 998#!#Dr Seidman said : ' We 've shown that by giving animals resveratrol , we can reduce the amount of hearing and cognitive decline 
+1004#!#resveratrol 	drugs<newline>cause	loud	noises
 ~~END~~
 
 
@@ -818,7 +898,7 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or game*)) & (Rockstar | video)'
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or "gam*")) & (Rockstar | video)'
 GO
 ~~START~~
 int#!#text
@@ -826,13 +906,30 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '(farm* AND credit) AND ("loan board" OR FCC)'
+EXEC fts_contains_vu_prepare_p1 '(farm AND credit) AND ("loan board" OR FCC)'
 GO
 ~~START~~
 int#!#text
 542#!# Here , farm economics and politics led to the 1920s ' Canadian Farm Loan Board , created to offer mortgages to respond to a perceived lack of credit for Western farmers 
 549#!# These steps -- the shift from for-profit to subsidized farm credit , and the expansion to areas where there was no clear market failure -- signaled departure from FCC 's original credit-gap mandate 
 552#!#FCC 's share of farm debt stands against that of all chartered banks , which hold 36% , and all credit unions , which hold another 16% 
+~~END~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(9) + 'AND (Rats or ("hear*" | "loud' + char(9) + 'noises"))'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+986#!#Resveratrol , a chemical found in red grapes and red wine , may protect against hearing loss
+988#!#In a study conducted at the Henry Ford Hospital in Detroit , healthy rats were less likely to suffer noise-induced hearing loss when given resveratrol before being exposed to loud noise for a long period of time 
+992#!#Study leader Dr Michael Seidman said : ' Our latest study focuses on resveratrol and its effect on the body 's response to injury - something that is believed to be the cause of many health problems including Alzheimer 's disease , cancer , ageing and hearing loss 
+993#!#Resveratrol appeared to reduce the damage to hearing from loud noises
+994#!#' Resveratrol is a very powerful chemical that seems to protect against the body @ @ @ @ @ @ @ @ @ @ cognition brain function and hearing loss 
+997#!#The study found that resveratrol reduced noise-induced hearing loss in rats exposed to potentially deafening sounds 
+998#!#Dr Seidman said : ' We 've shown that by giving animals resveratrol , we can reduce the amount of hearing and cognitive decline 
+1004#!#resveratrol 	drugs<newline>cause	loud	noises
 ~~END~~
 
 
@@ -859,14 +956,39 @@ GO
 ~~ERROR (Message: Syntax error in the full-text search condition)~~
 
 
-EXEC fts_contains_vu_prepare_p1 'not "loud noises"'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol & wine noT "loud noise*"'
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Syntax error in the full-text search condition)~~
 
 
-EXEC fts_contains_vu_prepare_p1 'not "hospital*"'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol or wine ! "loud noise*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '! "hospital*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'not' + char(10) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = '"treatment*"' + char(9) + 'not' + char(9) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -912,21 +1034,25 @@ GO
 ~~ERROR (Message: syntax error)~~
 
 
-EXEC fts_contains_vu_prepare_p1 'Resveratrol oR Not "red grapes"'
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Syntax error in the full-text search condition)~~
-
-
-EXEC fts_contains_vu_prepare_p1 'Resveratrol OR   & "red grapes"'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error)~~
 
 
-EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol oR' + char(10) + 'Not "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error in the full-text search condition)~~
+
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(10) + 'OR' + char(9)+ '& "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -952,6 +1078,8 @@ int#!#text
 994#!#' Resveratrol is a very powerful chemical that seems to protect against the body @ @ @ @ @ @ @ @ @ @ cognition brain function and hearing loss 
 997#!#The study found that resveratrol reduced noise-induced hearing loss in rats exposed to potentially deafening sounds 
 998#!#Dr Seidman said : ' We 've shown that by giving animals resveratrol , we can reduce the amount of hearing and cognitive decline 
+1004#!#resveratrol 	drugs<newline>cause	loud	noises
+1008#!#grape 	wine<newline>drinkers
 ~~END~~
 
 
@@ -4643,7 +4771,7 @@ SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
         txt1, 
         txt2,
         txt3,
-        txt4), '(art OR artist*) AND NOT Picasso');
+        txt4), '(art OR "artist*") AND NOT Picasso');
 GO
 ~~START~~
 int#!#text#!#text#!#text#!#text
@@ -4846,7 +4974,7 @@ SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
         txt1, 
         txt2,
         txt3,
-        txt4), '(quantum OR physics) AND (computing OR calculation*) AND NOT genome');
+        txt4), '(quantum OR physics) AND (computing OR "calculation*") AND NOT genome');
 GO
 ~~START~~
 int#!#text#!#text#!#text#!#text

@@ -3,9 +3,6 @@
 
 /* LCOV_EXCL_START */
 
-/* Function prototypes */
-void yyerror_with_code(int error_code, const char *message);
-
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
@@ -31,7 +28,8 @@ AND[ \s\t\r\n]+NOT  	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
 "&!"       		{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
 "OR"           		{ yylval = "OR"; return OR_TOKEN; }
 "|"            		{ yylval = "OR"; return OR_TOKEN; }
-"NOT"			{ yylval = "NOT"; yyerror(NULL, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
+"NOT"			{ yylval = "NOT"; yyerror_with_code(ERRCODE_SYNTAX_ERROR, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
+"!"			{ yylval = "NOT"; yyerror_with_code(ERRCODE_SYNTAX_ERROR, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
 "INFLECTIONAL"  	{ yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
 "THESAURUS"     	{ yylval = "THESAURUS"; return THESAURUS_TOKEN; }
 "FORMSOF"       	{ yylval = "FORMSOF"; yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish"); return FORMSOF_TOKEN; }

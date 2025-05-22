@@ -221,6 +221,10 @@ GO
 SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'French And "Croissant*" & tart')
 GO
 
+DECLARE @a VARCHAR(100)
+SET @a = 'beer'+ char(10) +'And' + char(10) + ' wine'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
 
 -- OR operator
 EXEC fts_contains_vu_prepare_p1 'wine OR beer'
@@ -232,18 +236,36 @@ GO
 EXEC fts_contains_vu_prepare_p1 'pastry or "croissant*"'
 GO
 
+DECLARE @a VARCHAR(100)
+SET @a = '"french' + char(10) + 'tarts"' + char(9) + ' or ' + char(10) + 'pastry'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
 
 -- AND NOT operator
 EXEC fts_contains_vu_prepare_p1 'wine AND NoT resveratrol'
 GO
 
-declare @a varchar(100)
-set @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
+EXEC fts_contains_vu_prepare_p1 'wine AND            NoT resveratrol'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'wine And'+ char(9) + char(10) + ' nOt resveratrol'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 
-declare @a varchar(100)
-set @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(10) + char(10) + ' NoT "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + "helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 
@@ -261,10 +283,15 @@ GO
 EXEC fts_contains_vu_prepare_p1 '(depression AND Botox) AND ("clinical" OR "treatment*")'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or game*)) & (Rockstar | video)'
+EXEC fts_contains_vu_prepare_p1 '("The Warriors" AND (film or "gam*")) & (Rockstar | video)'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '(farm* AND credit) AND ("loan board" OR FCC)'
+EXEC fts_contains_vu_prepare_p1 '(farm AND credit) AND ("loan board" OR FCC)'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(9) + 'AND (Rats or ("hear*" | "loud' + char(9) + 'noises"))'
+EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 SELECT * FROM fts_contains_v1
@@ -275,10 +302,23 @@ GO
 EXEC fts_contains_vu_prepare_p1 'NOT Resveratrol'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'not "loud noises"'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol & wine noT "loud noise*"'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'not "hospital*"'
+EXEC fts_contains_vu_prepare_p1 'Resveratrol or wine ! "loud noise*"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '! "hospital*"'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'not' + char(10) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = '"treatment*"' + char(9) + 'not' + char(9) + '"hospital*"'
+EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 
@@ -300,13 +340,17 @@ GO
 EXEC fts_contains_vu_prepare_p1 'Resveratrol and Or "red grapes"'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'Resveratrol oR Not "red grapes"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 'Resveratrol OR   & "red grapes"'
-GO
-
 EXEC fts_contains_vu_prepare_p1 'Resveratrol and  not And "red grapes"'
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol oR' + char(10) + 'Not "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
+SET @a = 'Resveratrol' + char(10) + 'OR' + char(9)+ '& "red grapes"'
+EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 
@@ -755,14 +799,14 @@ SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
         txt1, 
         txt2,
         txt3,
-        txt4), '(art OR artist*) AND NOT Picasso');
+        txt4), '(art OR "artist*") AND NOT Picasso');
 GO
 
 SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((
         txt1, 
         txt2,
         txt3,
-        txt4), '(quantum OR physics) AND (computing OR calculation*) AND NOT genome');
+        txt4), '(quantum OR physics) AND (computing OR "calculation*") AND NOT genome');
 GO
 
 SELECT * FROM fts_contains_multicol_t WHERE CONTAINS((

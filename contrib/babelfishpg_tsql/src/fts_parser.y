@@ -129,16 +129,16 @@ prefix_term:
 
 generation_term:
     FORMSOF_TOKEN O_PAREN_TOKEN generation_type COMMA_TOKEN simple_term_list C_PAREN_TOKEN {
-        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
+        yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish");
     }
     ;
 
 generation_type:
     INFLECTIONAL_TOKEN {
-        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
+        yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish");
     }
     | THESAURUS_TOKEN {
-        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
+        yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish");
     }
     ;
 
