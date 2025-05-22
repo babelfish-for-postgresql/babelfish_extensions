@@ -81,11 +81,11 @@
 #define GEOMETRY_INDICATOR      1       /* Indicator for geometry type */
 #define EMPTY_INDICATOR         4       /* Indicator for empty geometry when npoints = 0 */
 
-#define POINT_XY    0x010C  /* XY point geometry type (type 1, subtype 12) */
-#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1, subtype 13) */
-#define POINT_XYM   0x010E  /* XYM point geometry type (type 1, subtype 14) */
-#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1, subtype 15) */
-#define EMPTY_OR_LINE_GEOM 0x0104  /* Empty geometry type (type 1, subtype 4) or LINESTRING type */
+#define POINT_XY    0x010C  /* XY point geometry type (type 1 -> driver version constant, subtype 12 -> TSQL's flag) */
+#define POINT_XYZ   0x010D  /* XYZ point geometry type (type 1 -> driver version constant, subtype 13 -> TSQL's flag) */
+#define POINT_XYM   0x010E  /* XYM point geometry type (type 1 -> driver version constant, subtype 14 -> TSQL's flag) */
+#define POINT_XYZM  0x010F  /* XYZM point geometry type (type 1 -> driver version constant, subtype 15 -> TSQL's flag) */
+#define EMPTY_GEOM  0x0104  /* Empty geometry type (type 1 -> driver version constant, subtype 4 -> TSQL's flag) */
 
 #define DIM_FLAG_Z           0x01 /* Z dimension flag in SRID 4th byte */
 #define DIM_FLAG_M           0x02 /* M dimension flag in SRID 4th byte */
@@ -100,12 +100,7 @@
 #define GEOM_TYPE_OFFSET     4    /* Offset to geometry type in buffer */
 #define COORD_DATA_OFFSET    6    /* Offset to coordinate data in buffer */
 
-#define POINT_EMPTY_FLAG           1    /* Last byte value indicating empty geometry */
-
-/* Global array representing NaN coordinate value */
-static const uint8 NAN_COORD[8] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f
-};
+#define POINT_EMPTY_FLAG     1    /* Last byte value indicating empty point geometry */
 
 /* Constant array representing empty coordinate data */
 static const uint8 
@@ -1541,7 +1536,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 
 	/*
 	 * Input buffer format: 4 bytes SRID + 2 bytes Geometry Type + coordinate data
-	 * But Driver expects: 4 bytes SRID + 4 bytes Type + 4 bytes point count + coordinate data
+	 * But Driver expects: 3 bytes SRID + 1 byte flags + 4 bytes Type + 4 bytes point count + coordinate data
 	 */
 
 	/* We are copying first 4 Byte SRID from buf */
@@ -1585,7 +1580,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 			pointSize = POINT_SIZE_XYZM;     /* 32 bytes for XYZM point */
 			break;
 			
-		case EMPTY_OR_LINE_GEOM:  /* Empty geometry (0x0104) or LINESTRING type*/ 
+		case EMPTY_GEOM:  /* Empty geometry (0x0104) */ 
 			/* 
 			 * Check if the geometry has EMPTY_COORD required for an empty geometry
 			 * and if the last byte is the point empty flag (1)
@@ -1635,24 +1630,18 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	destBuf->len += sizeof(uint32_t);
 	destBuf->data[destBuf->len] = '\0';
 
-	if (isempty)
-	{
-		/* Copy NAN_COORD twice for empty geometry */
-		appendBinaryStringInfo(destBuf, (char *)NAN_COORD, sizeof(NAN_COORD));
-		appendBinaryStringInfo(destBuf, (char *)NAN_COORD, sizeof(NAN_COORD));
-	}
-	else
+	if (!isempty)
 	{
 		/* We are copying the remaining bytes (pointsize)*npoints from buf */
-		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - COORD_DATA_OFFSET);
+		appendBinaryStringInfo(destBuf, buf->data + buf->cursor + COORD_DATA_OFFSET, buf->len - buf->cursor - COORD_DATA_OFFSET);
 	}
-
 
 	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
 	buf->cursor += nbytes - COORD_DATA_OFFSET;
 
 	PG_RETURN_BYTEA_P(result);
 }
+
 StringInfo
 TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken token)
 {

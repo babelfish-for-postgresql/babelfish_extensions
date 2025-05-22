@@ -141,7 +141,7 @@ namespace BabelfishDotnetFramework
 								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
 								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "geometry";
 								sqlCmd.Parameters[param[1].Trim()].Value = sqlServerBytes;
-								sqlCmd.Parameters[param[1].Trim()].Size = -1;
+								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
 							}
 								break;
 							case "geography":
@@ -161,14 +161,17 @@ namespace BabelfishDotnetFramework
 								geometry.SRID = srid;
 
 								// Convert to SQL Server format
-								var sqlGeometryWriter = new SqlServerBytesWriter();
+								var sqlGeometryWriter = new SqlServerBytesWriter
+								{
+									IsGeography = true
+								};
 								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
 
 								// Set up the parameter
 								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
 								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "geography";  // Note: lowercase "geography"
 								sqlCmd.Parameters[param[1].Trim()].Value = sqlServerBytes;
-								sqlCmd.Parameters[param[1].Trim()].Size = -1;
+								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
 							}
 								break;
 							default:
@@ -314,7 +317,7 @@ namespace BabelfishDotnetFramework
 								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
 								((SqlParameter)parameter).UdtTypeName = "geometry";
 								parameter.Value = sqlServerBytes;
-								parameter.Size = -1;
+								parameter.Size = 65535;
 							}
 								break;
 							case "geography":
@@ -334,14 +337,17 @@ namespace BabelfishDotnetFramework
 								geometry.SRID = srid;
 
 								// Convert to SQL Server format
-								var sqlGeometryWriter = new SqlServerBytesWriter();
+								var sqlGeometryWriter = new SqlServerBytesWriter
+								{
+									IsGeography = true
+								};
 								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
 
 								// Set up the parameter
 								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
 								((SqlParameter)parameter).UdtTypeName = "geography";  // Note: lowercase "geography"
 								parameter.Value = sqlServerBytes;
-								parameter.Size = -1;
+								parameter.Size = 65535;
 							}
 								break;
 							default:
