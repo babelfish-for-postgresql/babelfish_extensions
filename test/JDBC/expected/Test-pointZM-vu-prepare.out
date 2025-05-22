@@ -1,0 +1,1083 @@
+# Geometry Test Cases
+
+CREATE TABLE GEOSPATIALPOINTGEOM_dt (location geometry)
+
+# Positive Test for STGeomFromText with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+# Positive Test for STPointFromText with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+# Positive Test for Point with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) );
+~~ROW COUNT: 1~~
+
+
+# Negative Test when SRID is not valid
+# SRID should be between 0 to 999999
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)') );
+~~ERROR (Code: 8146)~~
+
+~~ERROR (Message: function geometry__stgeomfromtext has no parameters and arguments were supplied.)~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 1000000000 ) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', -1) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+# Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+# Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+# Negative Test for STGeomFromText when cast is not provided
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function stgeomfromtext(unknown, integer) does not exist)~~
+
+
+#  Negative Test for STGeomFromText when Incorrect cast is provided
+INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "location" is of type geometry but expression is of type geography)~~
+
+
+
+CREATE TABLE GEOSPATIALPOINTGEOM_sr (location geometry)
+INSERT INTO GEOSPATIALPOINTGEOM_sr (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4300) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_sr (location) VALUES ( geometry::STGeomFromText('POINT EMPTY', 4300) );
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW DimOfGeometry AS SELECT location.STDimension() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW AreaOfGeometry AS SELECT location.STArea() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW TextFromGeometry AS SELECT location.STAsText() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW BinaryFromGeometry AS SELECT location.STAsBinary() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW CoordsFromGeometry AS SELECT location.STX, location.STY FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW SridFromGeometry AS SELECT location.STSrid FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW EmptyGeometry AS SELECT location.STIsEmpty() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW ValidGeometry AS SELECT location.STIsValid() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW ClosedGeometry AS SELECT location.STIsClosed() FROM GEOSPATIALPOINTGEOM_dt ORDER BY location.STX;
+
+CREATE VIEW DisjointTempGeom AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW DistanceTempGeom AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW IntersectsTempGeom AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW EqualsTempGeom AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW ContainTempGeom AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 ORDER BY p1.location.STX;
+
+CREATE VIEW equals_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
+
+CREATE VIEW notequal_opgeom AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
+
+
+CREATE VIEW DisjointTempGeomsr AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 ORDER BY p1.location.STX;
+
+CREATE VIEW DistanceTempGeomsr AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 ORDER BY p1.location.STX;
+
+CREATE VIEW IntersectsTempGeomsr AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 ORDER BY p1.location.STX;
+
+CREATE VIEW EqualsTempGeomsr AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 ORDER BY p1.location.STX;
+
+CREATE VIEW ContainTempGeomsr AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 ORDER BY p1.location.STX;
+
+CREATE VIEW equals_opgeomsr AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 WHERE p1.location = p2.location ORDER BY p1.location.STX;
+
+CREATE VIEW notequal_opgeomsr AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_sr p2 WHERE p1.location <> p2.location ORDER BY p1.location.STX;
+
+
+CREATE TABLE geometryAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinary (geometryData) VALUES (CAST(geometry::STGeomFromText(NULL, 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE geometryAsVarchar ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARCHAR(100) );
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarchar (geometryData) VALUES (CAST(geometry::STGeomFromText(NULL, 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE geometryAsChar ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData CHAR(100) );
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsChar (geometryData) VALUES (CAST(geometry::STGeomFromText(NULL, 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE CharAsVarbinaryGeom ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3 NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL 3)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3 4)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT EMPTY' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST( NULL AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarcharAsVarbinaryGeom ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(100) );
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3 NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 NULL 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT(1 2 3 4)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST('POINT EMPTY' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinaryGeom (geometryData) VALUES (CAST(geometry::STGeomFromText(CAST( NULL AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarbinaryAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText( NULL,4326) AS VARBINARY(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE CharAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL NULL)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3 NULL)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 NULL 3)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT(1 2 3 4)' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST('POINT EMPTY' AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsgeometry (geometryData) VALUES (CAST( NULL AS geometry));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarcharAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 NULL)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 NULL NULL)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 3)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 3 NULL)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 NULL 3)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT(1 2 3 4)' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsgeometry (geometryData) VALUES (CAST(CAST( NULL AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeoVarcharAsgeometry ( ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry );
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsgeometry (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText( NULL,4326) AS VARCHAR(100)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE ByteaTogeometry (ID INT PRIMARY KEY, bytea_point bytea );
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (1, 0xE6100000010C000000000000F03F0000000000000040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (2, 0xE6100000010D000000000000F03F00000000000000400000000000000840);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (3, 0xE6100000010E000000000000F03F00000000000000400000000000000840);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (4, 0xE6100000010F000000000000F03F000000000000004000000000000008400000000000001040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (5, 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF01);
+~~ROW COUNT: 1~~
+
+
+# Positive Test case for NaN coords : NaN coordinates are ignored and dimension resets according to available non-NaN coordinates
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (6, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (7, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (8, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (9, 0xE6100000010D000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (10, 0xE6100000010D000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (11, 0xE6100000010E000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (12, 0xE6100000010E000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (13, 0xE6100000010F000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (14, 0xE6100000010F000000000000F03F0000000000000040000000000000F87F0000000000001040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (15, 0xE6100000010F000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+
+# Positive Test case for extra bytes : Any byte(s) after the required bytes doesn't affect the result 
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (16, 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF0101030effee33);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (17, 0xE6100000010C000000000000F03F0000000000000040eeff0c3040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (18, 0xE6100000010D000000000000F03F00000000000000400000000000000840cc040e0a);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (19, 0xE6100000010E000000000000F03F00000000000000400000000000000840bbcc03050709);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaTogeometry ( ID, bytea_point) VALUES (20, 0xE6100000010F000000000000F03F000000000000004000000000000008400000000000001040cc040cdd40);
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE geometryToBytea (ID INT PRIMARY KEY, geo_point geometry );
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (1, geometry::STGeomFromText('POINT(1 2 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (2, geometry::STGeomFromText('POINT(1 2 NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (3, geometry::STGeomFromText('POINT(1 2 NULL NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (4, geometry::STGeomFromText('POINT(1 2 3 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (5, geometry::STGeomFromText('POINT(1 2 3 NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (6, geometry::STGeomFromText('POINT(1 2 NULL 3 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (7, geometry::STGeomFromText('POINT(1 2 3 4 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (8, geometry::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryToBytea (ID, geo_point) VALUES (9, geometry::STGeomFromText( NULL , 4326));
+~~ROW COUNT: 1~~
+
+
+
+# Geography Test Cases
+
+CREATE TABLE GEOSPATIALPOINTGEOGR_dt (location geography)
+
+# Positive Test for STGeomFromText with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+# Positive Test for STPointFromText with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+# Positive Test for Point with SRID 4326
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::Point(47.65100, -22.34900, 4326) );
+~~ROW COUNT: 1~~
+
+
+# Negative Test when SRID is not valid
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)') );
+~~ERROR (Code: 8146)~~
+
+~~ERROR (Message: function geography__stgeomfromtext has no parameters and arguments were supplied.)~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 0) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid SRID)~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 3452) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid SRID)~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 1000) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid SRID)~~
+
+
+# Negative Test for STGeomFromText for Geography when Lat > 90 or < -90
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 92.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+# Negative Test for STGeomFromText when cast is not provided
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function stgeomfromtext(unknown, integer) does not exist)~~
+
+
+# Negative Test for STGeomFromText when incorrect cast is provided
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "location" is of type geography but expression is of type geometry)~~
+
+
+# Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+# Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) );
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error)~~
+
+
+
+CREATE TABLE GEOSPATIALPOINTGEOGR_sr (location geography)
+INSERT INTO GEOSPATIALPOINTGEOGR_sr (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4120) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGR_sr (location) VALUES ( geography::STGeomFromText('POINT EMPTY', 4120) );
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW DimOfGeography AS SELECT location.STDimension() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW AreaOfGeography AS SELECT location.STArea() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW TextFromGeography AS SELECT location.STAsText() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW BinaryFromGeography AS SELECT location.STAsBinary() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW CoordsFromGeography AS SELECT location.Lat, location.Long FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW SridFromGeography AS SELECT location.STSrid FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW EmptyGeography AS SELECT location.STIsEmpty() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW ValidGeography AS SELECT location.STIsValid() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW ClosedGeography AS SELECT location.STIsClosed() FROM GEOSPATIALPOINTGEOGR_dt ORDER BY location.Lat;
+
+CREATE VIEW DisjointTempGeog AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW DistanceTempGeog AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW IntersectsTempGeog AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW EqualsTempGeog AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW ContainsTempGeog AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW equal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location = p2.location ORDER BY p1.location.Lat;
+
+CREATE VIEW notequal_opgeog AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_dt p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
+
+
+CREATE VIEW DisjointTempGeogsr AS SELECT p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW DistanceTempGeogsr AS SELECT p1.location.STDistance(p2.location) AS distance FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW IntersectsTempGeogsr AS SELECT p1.location.STIntersects(p2.location) AS interesecting FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW EqualsTempGeogsr AS SELECT p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW ContainsTempGeogsr AS SELECT p1.location.STContains(p2.location) AS contain FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 ORDER BY p1.location.Lat;
+
+CREATE VIEW equal_opgeogsr AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 WHERE p1.location = p2.location ORDER BY p1.location.Lat;
+
+CREATE VIEW notequal_opgeogsr AS SELECT p1.location AS point FROM GEOSPATIALPOINTGEOGR_dt p1 CROSS JOIN GEOSPATIALPOINTGEOGR_sr p2 WHERE p1.location <> p2.location ORDER BY p1.location.Lat;
+
+CREATE TABLE GeographyAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(NULL, 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeographyAsVarchar ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARCHAR(100) );
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsVarchar (GeographyData) VALUES (CAST(geography::STGeomFromText(NULL, 4326) AS VARCHAR(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeographyAsChar ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData CHAR(100) );
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyAsChar (GeographyData) VALUES (CAST(geography::STGeomFromText(NULL, 4326) AS CHAR(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE CharAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3 NULL)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL 3)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3 4)' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT EMPTY' AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST( NULL AS CHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarcharAsVarbinary ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData VARBINARY(100) );
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3 NULL)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 NULL 3)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT(1 2 3 4)' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST('POINT EMPTY' AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsVarbinary (GeographyData) VALUES (CAST(geography::STGeomFromText(CAST( NULL AS VARCHAR(20)), 4326) AS VARBINARY(100)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarbinaryAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText( NULL,4326) AS VARBINARY(100)) AS geography));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE CharAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL NULL)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3 NULL)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 NULL 3)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT(1 2 3 4)' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST('POINT EMPTY' AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO CharAsGeography (GeographyData) VALUES (CAST( NULL AS geography));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarcharAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 NULL)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 NULL NULL)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 3)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 3 NULL)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 NULL 3)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT(1 2 3 4)' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarcharAsGeography (GeographyData) VALUES (CAST(CAST( NULL AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeoVarcharAsGeography ( ID INT IDENTITY(1,1) PRIMARY KEY, GeographyData geography );
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 NULL)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 NULL 3)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT(1 2 3 4)', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText('POINT EMPTY', 4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarcharAsGeography (GeographyData) VALUES (CAST(CAST(geography::STGeomFromText( NULL,4326) AS VARCHAR(100)) AS geography));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE ByteaToGeography (ID INT PRIMARY KEY, bytea_point bytea );
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (1, 0xE6100000010C000000000000F03F0000000000000040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (2, 0xE6100000010D000000000000F03F00000000000000400000000000000840);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (3, 0xE6100000010E000000000000F03F00000000000000400000000000000840);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (4, 0xE6100000010F000000000000F03F000000000000004000000000000008400000000000001040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (5, 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF01);
+~~ROW COUNT: 1~~
+
+
+# Positive Test case for NaN coords : NaN coordinates are ignored and dimension resets according to available non-NaN coordinates
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (6, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (7, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (8, 0xE6100000010C000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (9, 0xE6100000010D000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (10, 0xE6100000010D000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (11, 0xE6100000010E000000000000F03F0000000000000040000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (12, 0xE6100000010E000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (13, 0xE6100000010F000000000000F03F00000000000000400000000000000840000000000000F87F);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (14, 0xE6100000010F000000000000F03F0000000000000040000000000000F87F0000000000001040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (15, 0xE6100000010F000000000000F03F0000000000000040000000000000F87F000000000000F87F);
+~~ROW COUNT: 1~~
+
+
+# Positive Test case for extra bytes : Any byte(s) after the required bytes doesn't affect the result 
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (16, 0xE61000000104000000000000000001000000FFFFFFFFFFFFFFFF0101030effee33);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (17, 0xE6100000010C000000000000F03F0000000000000040eeff0c3040);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (18, 0xE6100000010D000000000000F03F00000000000000400000000000000840cc040e0a);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (19, 0xE6100000010E000000000000F03F00000000000000400000000000000840bbcc03050709);
+~~ROW COUNT: 1~~
+
+INSERT INTO ByteaToGeography ( ID, bytea_point) VALUES (20, 0xE6100000010F000000000000F03F000000000000004000000000000008400000000000001040cc040cdd40);
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeographyToBytea (ID INT PRIMARY KEY, geo_point geography );
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (1, geography::STGeomFromText('POINT(1 2 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (2, geography::STGeomFromText('POINT(1 2 NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (3, geography::STGeomFromText('POINT(1 2 NULL NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (4, geography::STGeomFromText('POINT(1 2 3 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (5, geography::STGeomFromText('POINT(1 2 3 NULL)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (6, geography::STGeomFromText('POINT(1 2 NULL 3 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (7, geography::STGeomFromText('POINT(1 2 3 4 )', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (8, geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeographyToBytea (ID, geo_point) VALUES (9, geography::STGeomFromText( NULL , 4326));
+~~ROW COUNT: 1~~
+

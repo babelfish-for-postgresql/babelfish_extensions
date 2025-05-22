@@ -193,56 +193,73 @@ SslWrite(BIO * h, const char *buf, int size)
 static int
 SslHandShakeWrite(BIO * h, const char *buf, int size)
 {
-	StringInfoData str;
+	StringInfoData	str;
 	char		tmp[2];
 	uint16_t	tsize;
-	int			res = 0;
+	int		res = 0;
+	int		total_written = 0;
+	int		packet_id = 0;
 
-	/* Nothing to write */
-	if (size < 0)
+	/*
+	 * No data to write — uncommon during TLS handshake as records carry data.
+	 * In BIO-based writes (e.g. BIO_write_all), size <= 0 will raise an error.
+	 * Return early to avoid sending an empty or invalid TDS packet.
+	 */
+	if (size <= 0)
 		return size;
 
-	initStringInfo(&str);
-	appendStringInfoChar(&str, TDS_PRELOGIN);
-	appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
-	tsize = pg_hton16(size + TDS_PACKET_HEADER_SIZE);
-	memcpy(&tmp, (char *) &tsize, 2);
-
-	appendStringInfoChar(&str, tmp[0]);
-	appendStringInfoChar(&str, tmp[1]);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-	appendStringInfoChar(&str, 0x00);
-
-	appendBinaryStringInfo(&str, buf, size);
-	buf = str.data;
-	size += TDS_PACKET_HEADER_SIZE;
-
-	/* Write the complete data */
-	while (res < size)
+	/* Process data in chunks of TDS_DEFAULT_INIT_PACKET_SIZE */
+	while (size > 0)
 	{
-		int			tmp_res = 0;
+		int chunk_size = (size > (TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE)) ?
+							(TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE) :
+							size;
 
-		if ((tmp_res = SslWrite(h, &buf[res], size - res)) <= 0)
-			return tmp_res;
-		res += tmp_res;
+		initStringInfo(&str);
+		appendStringInfoChar(&str, TDS_PRELOGIN);
+
+		/* Set EOM flag only for the last packet */
+		if (size <= (TDS_DEFAULT_INIT_PACKET_SIZE - TDS_PACKET_HEADER_SIZE))
+			appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
+		else
+			appendStringInfoChar(&str, 0x00);  // Not end of message
+
+		tsize = pg_hton16(chunk_size + TDS_PACKET_HEADER_SIZE);
+		memcpy(&tmp, (char *) &tsize, 2);
+
+		appendStringInfoChar(&str, tmp[0]);
+		appendStringInfoChar(&str, tmp[1]);
+		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, 0x00);
+		appendStringInfoChar(&str, packet_id++);
+		appendStringInfoChar(&str, 0x00);
+
+		appendBinaryStringInfo(&str, buf + total_written, chunk_size);
+
+		/* Write the current chunk */
+		res = 0;
+		while (res < (chunk_size + TDS_PACKET_HEADER_SIZE))
+		{
+			int tmp_res = SslWrite(h, str.data + res, (chunk_size + TDS_PACKET_HEADER_SIZE - res));
+			if (tmp_res <= 0)
+				return tmp_res;
+			res += tmp_res;
+		}
+
+		/*
+		 * Below assertion should not be failed in ideal case. If it gets failed
+		 * then it means that we wrote TDS HEADER and buf on the wire without any
+		 * error above but number of bytes written is still less than
+		 * TDS_PACKET_HEADER_SIZE which is unexpected in any case.
+		 */
+		Assert(res >= TDS_PACKET_HEADER_SIZE);
+
+		total_written += chunk_size;
+		size -= chunk_size;
+		pfree(str.data);
 	}
 
-	/*
-	 * Below assertion should not be failed in ideal case. If it gets failed
-	 * then it means that we wrote TDS HEADER and buf on the wire without any
-	 * error above but number of bytes written is still less than
-	 * TDS_PACKET_HEADER_SIZE which is unexpected in any case.
-	 */
-	Assert(res >= TDS_PACKET_HEADER_SIZE);
-
-	/*
-	 * We are returning (res - TDS_PACKET_HEADER_SIZE) here because we are
-	 * asked to write "size" number of bytes and callee does not know anything
-	 * about TDS packet header.
-	 */
-	return (res - TDS_PACKET_HEADER_SIZE);
+	return total_written;
 }
 
 /*

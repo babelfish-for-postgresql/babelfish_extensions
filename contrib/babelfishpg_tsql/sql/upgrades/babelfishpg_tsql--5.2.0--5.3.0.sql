@@ -63,6 +63,13 @@ $$
     end;
 $$;
 
+-- Please add your SQLs here
+/*
+ * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
+ * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
+ * final behaviour.
+ */
+
 DO $$
 DECLARE
     exception_message text;
@@ -181,15 +188,9 @@ SELECT
     END
   AS sys.BIT) AS is_policy_checked,
   CAST(0 AS sys.BIT) AS is_expiration_checked,
-  CAST(
-    CASE
-      WHEN (sys.suser_name() = (SELECT super_user FROM super_user) OR pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')) THEN Auth.rolpassword
-      ELSE NULL
-    END
-  AS sys.varbinary(256)) AS password_hash 
+  CAST(NULL AS sys.varbinary(256)) AS password_hash 
 FROM pg_catalog.pg_roles AS Base 
 INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
-LEFT JOIN pg_authid Auth ON Auth.rolname = Base.rolname 
 WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
   OR Ext.orig_loginname = sys.suser_name()
@@ -197,12 +198,15 @@ WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
   AND Ext.type = 'S';
 GRANT SELECT ON sys.sql_logins TO PUBLIC;
 
--- Please add your SQLs here
-/*
- * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
- * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
- * final behaviour.
- */
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'isnumeric'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
