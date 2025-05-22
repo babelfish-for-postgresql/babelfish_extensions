@@ -1449,6 +1449,19 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	Portal		portal;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
+	PLtsql_stmt_execsql *parse_result;
+	PLtsql_function *function;
+	char *stmt_copy = strdup(stmt);
+
+	/*
+	 * Parse the function's text
+	 */
+	{
+		function = pltsql_compile_inline(stmt_copy, NULL);
+		
+		parse_result = (PLtsql_stmt_execsql *) lsecond(function->action->body);
+		stmt = parse_result->sqlstmt->query;
+	}
 
 	/*
 	 * Connect to SPI manager. should be handled in the same way with
