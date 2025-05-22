@@ -1451,16 +1451,18 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	MemoryContext savedPortalCxt;
 	PLtsql_stmt_execsql *parse_result;
 	PLtsql_function *function;
-	char *stmt_copy = strdup(stmt);
+	char *stmt_copy;
 
 	/*
 	 * Parse the function's text
 	 */
+	if (stmt != NULL)
 	{
+		stmt_copy = strdup(stmt);
 		function = pltsql_compile_inline(stmt_copy, NULL);
-		
 		parse_result = (PLtsql_stmt_execsql *) lsecond(function->action->body);
 		stmt = parse_result->sqlstmt->query;
+		free(stmt_copy);
 	}
 
 	/*
