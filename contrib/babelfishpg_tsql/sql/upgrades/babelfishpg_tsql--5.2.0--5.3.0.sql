@@ -438,6 +438,24 @@ WHERE a.attrelid = c.oid
 		a.atttypid = 'sys.smallmoney'::regtype::oid)
 	AND c.relkind IN ('r', 'i', 'v', 'p', 'I');
 
+-- To handle the typmod value of UDT created over money/smallmoney.
+-- This would be required in cases where we create a new table using this earlier UDT or directly using this UDT.
+UPDATE pg_type t
+SET typtypmod =
+	CASE
+		WHEN t.typtypmod = '-1' AND t.typtype = 'd' AND
+			sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.money'::regtype::oid)
+		THEN 1245192
+		WHEN t.typtypmod = '-1' AND t.typtype = 'd' AND
+			sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.smallmoney'::regtype::oid)
+		THEN 655368
+		ELSE t.typtypmod
+	END
+FROM sys.babelfish_namespace_ext sch
+WHERE sch.nspname = t.typnamespace::regnamespace::name
+	AND t.typtypmod = -1
+	AND t.typtype = 'd';
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
