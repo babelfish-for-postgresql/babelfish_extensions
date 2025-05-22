@@ -1,0 +1,3 @@
+-- create a dummy db
+create database sp_helplogins_db1
+GO

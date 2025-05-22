@@ -1,0 +1,39 @@
+-- tsql user=jdbc_user password=12345678 database=master
+drop user if exists userof_sp_helplogins_testlogin 
+GO
+
+drop login sp_helplogins_testlogin
+GO
+
+drop user if exists userof_testloginwithsecurityadmin
+GO
+
+drop user if exists userof_testloginwithsecurityadmin_indb1
+GO
+
+drop login testloginwithsecurityadmin
+GO
+
+drop database sp_helplogins_db1
+GO
+
+drop user if exists userof_testloginwithsecurityadmin2
+GO
+
+drop login testloginwithsecurityadmin2
+GO
+
+drop login testloginindb1
+GO
+
+drop user if exists userof_testloginindb1
+GO
+
+drop login testloginwithoutusers
+GO
+
+drop user if exists u_testloginwithotherdefdb
+GO
+
+drop login testloginwithotherdefdb
+GO

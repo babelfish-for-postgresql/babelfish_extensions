@@ -1,0 +1,276 @@
+-- tsql
+
+-- creating logins because instance level dump/restore does not migrate logins
+-- create a login with user in master with securityadmin server role
+-- create login with user in master with db_securityadmin role
+create login sp_helplogins_testlogin with password = '12345678'
+create user userof_sp_helplogins_testlogin for login sp_helplogins_testlogin
+GO
+
+alter role db_securityadmin add member userof_sp_helplogins_testlogin
+GO
+
+
+create login testloginwithsecurityadmin with password = '12345678'
+create user userof_testloginwithsecurityadmin for login testloginwithsecurityadmin
+GO
+
+alter server role securityadmin add member testloginwithsecurityadmin
+GO
+
+-- create another user for login testloginwithsecurityadmin in sp_helplogins_db1
+use sp_helplogins_db1
+GO
+create user userof_testloginwithsecurityadmin_indb1 for login testloginwithsecurityadmin
+GO
+
+use master
+GO
+
+-- create a login which does not have any users
+create login testloginwithoutusers with password = '12345678'
+GO
+
+-- create a login which is a member of securityadmin server role
+-- and has a user with db_securityadmin role in sp_helplogins_db1
+create login testloginwithsecurityadmin2 with password = '12345678'
+GO
+
+alter server role securityadmin add member testloginwithsecurityadmin2
+GO
+
+-- create a login and a user in sp_helplogins_db1
+create login testloginindb1 with password = '12345678'
+GO
+
+use sp_helplogins_db1
+GO
+
+create user userof_testloginindb1 for login testloginindb1
+GO
+
+create user userof_testloginwithsecurityadmin2 for login testloginwithsecurityadmin2
+GO
+
+alter role db_securityadmin add member userof_testloginwithsecurityadmin2
+GO
+
+create login testloginwithotherdefdb with password = '12345678', default_database = sp_helplogins_db1
+GO
+
+create user u_testloginwithotherdefdb for login testloginwithotherdefdb
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
+testloginindb1#!#master#!#English#!#YES#!#NO
+testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+sp_helplogins_testlogin#!#master#!#db_securityadmin#!#Member of
+sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User
+testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
+testloginwithotherdefdb#!#sp_helplogins_db1#!#u_testloginwithotherdefdb#!#User
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- tsql user=sp_helplogins_testlogin password=12345678
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+-- tsql user=testloginwithsecurityadmin password=12345678
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
+testloginindb1#!#master#!#English#!#YES#!#NO
+testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+~~END~~
+
+
+-- tsql user=testloginwithsecurityadmin2 password=12345678
+-- ignore_columns 2
+EXEC sp_helplogins
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#English#!#YES#!#NO
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
+testloginindb1#!#master#!#English#!#YES#!#NO
+testloginwithotherdefdb#!#sp_helplogins_db1#!#English#!#YES#!#NO
+testloginwithoutusers#!#master#!#English#!#NO#!#NO
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+testloginindb1#!#sp_helplogins_db1#!#userof_testloginindb1#!#User
+testloginwithotherdefdb#!#sp_helplogins_db1#!#u_testloginwithotherdefdb#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- ignore_columns 2
+EXEC sp_helplogins 'jdbc_user'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+jdbc_user#!#master#!#db_owner#!#Member of
+jdbc_user#!#master#!#dbo#!#User
+jdbc_user#!#msdb#!#db_owner#!#Member of
+jdbc_user#!#msdb#!#dbo#!#User
+jdbc_user#!#sp_helplogins_db1#!#db_owner#!#Member of
+jdbc_user#!#sp_helplogins_db1#!#dbo#!#User
+jdbc_user#!#tempdb#!#db_owner#!#Member of
+jdbc_user#!#tempdb#!#dbo#!#User
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins 'sp_helplogins_testlogin'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+sp_helplogins_testlogin#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+sp_helplogins_testlogin#!#master#!#db_securityadmin#!#Member of
+sp_helplogins_testlogin#!#master#!#userof_sp_helplogins_testlogin#!#User
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins 'testloginwithsecurityadmin'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin#!#master#!#userof_testloginwithsecurityadmin#!#User
+testloginwithsecurityadmin#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin_indb1#!#User
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins 'testloginwithsecurityadmin2'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins 'testloginwithsecurityadmin2  '
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#master#!#English#!#YES#!#NO
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#db_securityadmin#!#Member of
+testloginwithsecurityadmin2#!#sp_helplogins_db1#!#userof_testloginwithsecurityadmin2#!#User
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins ' testloginwithsecurityadmin2 '
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+-- ignore_columns 2
+EXEC sp_helplogins ' '
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
