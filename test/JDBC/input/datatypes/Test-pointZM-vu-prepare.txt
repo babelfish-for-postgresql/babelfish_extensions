@@ -646,3 +646,8 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):<N
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+
+CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);
+
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point EMPTY:4326
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4326

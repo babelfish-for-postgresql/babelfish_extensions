@@ -26,6 +26,18 @@ go
 SELECT location.Z from  GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
 go
 
+SELECT geom.STAsText(), geog.STAsText() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STDimension(), geog.STDimension() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM GEOSPATIALPOINTEMPTYdt;
+go
+
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100 3.0 4.0)', 4326);
 SELECT HasM(@point);

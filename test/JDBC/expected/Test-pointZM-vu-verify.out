@@ -290,6 +290,42 @@ float
 ~~END~~
 
 
+SELECT geom.STAsText(), geog.STAsText() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+text#!#text
+POINT EMPTY#!#<NULL>
+<NULL>#!#POINT EMPTY
+~~END~~
+
+
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+varbinary#!#varbinary
+010400000000000000#!#<NULL>
+<NULL>#!#010400000000000000
+~~END~~
+
+
+SELECT geom.STDimension(), geog.STDimension() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+int#!#int
+-1#!#<NULL>
+<NULL>#!#-1
+~~END~~
+
+
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM GEOSPATIALPOINTEMPTYdt;
+go
+~~START~~
+bit#!#bit
+0#!#<NULL>
+<NULL>#!#0
+~~END~~
+
+
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100 3.0 4.0)', 4326);
 SELECT HasM(@point);

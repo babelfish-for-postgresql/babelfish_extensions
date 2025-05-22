@@ -1446,3 +1446,12 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 ~~ERROR (Message: Unsupported geometry type)~~
 
+
+CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);
+
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geom) values(?) #!#GEOMETRY|-|geom|-|Point EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geog) values(?) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4326
+~~ROW COUNT: 1~~
+
