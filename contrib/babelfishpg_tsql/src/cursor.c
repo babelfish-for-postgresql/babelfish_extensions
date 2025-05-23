@@ -1454,9 +1454,11 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	char *stmt_copy;
 
 	/*
-	 * Parse the function's text
+	 * We need to parse the TSQL statements using antlr parser before passing it to SPI_prepare_cursor. 
+	 * Antlr parser will converts TSQL query into PSQL syntax and properly handles idenfier delimiters,
+	 * allowing PostgreSQL reserved words to be used as column aliases.
 	 */
-	if (stmt != NULL)
+	if (stmt != NULL && sql_dialect == SQL_DIALECT_TSQL)
 	{
 		stmt_copy = strdup(stmt);
 		function = pltsql_compile_inline(stmt_copy, NULL);
