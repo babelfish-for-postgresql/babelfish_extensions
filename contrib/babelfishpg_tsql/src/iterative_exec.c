@@ -1397,6 +1397,15 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		/* In case of RO functions we want the caller to handle errors. */
 		if (ro_func)
 		{
+			if (IsInParallelMode())
+			{
+				/*
+				 * If this xact has started any unfinished parallel operation, clean up
+				 * its workers and exit parallel mode.  Don't warn about leaked resources.
+				 */
+				AtEOXact_Parallel(false);
+				ExitParallelMode();
+			}
 			/* Cleanup SPI connections if they exist. */
 			AtEOXact_SPI(false);
 			PG_RE_THROW();
