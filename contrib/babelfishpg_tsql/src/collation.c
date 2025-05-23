@@ -339,7 +339,7 @@ static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = (Node *) lsecond(op->args);
+	Node	   *rightop = copyObject(lsecond(op->args));
 	Oid			ltypeId = exprType(leftop);
 	Oid			rtypeId = exprType(rightop);
 	char	   *op_str;
@@ -386,6 +386,20 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		op->opfuncid = like_entry.ilike_opfuncid;
 	}
 	
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+
+	/* Remove CollateExpr as the op->inputcollid has already been set */
+	if (IsA(rightop, CollateExpr))
+	{
+		lsecond(op->args) = rightop = (Node*)((CollateExpr*) rightop)->arg;
+	}
+
+	if (IsA(leftop, CollateExpr))
+	{
+		linitial(op->args) = leftop = (Node*)((CollateExpr*) leftop)->arg;
+	}
+
 	/* 
 	 * This is needed to process CI_AI for Const nodes
 	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
@@ -401,7 +415,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 			rightop = (Node *) lsecond(op->args);
 		}
 	}
-	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
 	/* 
 	 * no constant prefix found in pattern, or pattern is not constant 
@@ -871,7 +884,9 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 					con = (Const *) new_node;
 					if (con->constisnull)
 						return new_node;
-					con->constvalue = DirectFunctionCall1(remove_accents_internal, con->constvalue);
+
+					con->constvalue = OidFunctionCall1(remove_accents_internal_oid, con->constvalue);
+					con->constcollid = InvalidOid;
 					return (Node *) con;
 				}
 				else
@@ -888,7 +903,6 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 		case T_CaseExpr:
 		case T_RelabelType:
 		case T_CoerceViaIO:
-		case T_CollateExpr:
 			{
 				new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
 													TEXTOID, -1,
@@ -902,6 +916,60 @@ convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid)
 								errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
 				}
 				newFuncExpr->args = list_make1(new_node);
+				break;
+			}
+		case T_CollateExpr:
+			{
+				CollateExpr *collateexpr = (CollateExpr*) node;
+				if (IsA(collateexpr->arg, Const))
+				{
+					Const *constnode = (Const*) (collateexpr->arg);
+					constnode->constcollid = collateexpr->collOid;
+					new_node = coerce_to_target_type(NULL, (Node *) constnode, exprType((Node *)constnode),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+					if (unlikely(new_node == NULL))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+					}
+
+					if (IsA(new_node, Const))
+					{
+						constnode = (Const *) new_node;
+						if (constnode->constisnull)
+							return new_node;
+
+						constnode->constvalue = OidFunctionCall1(remove_accents_internal_oid, constnode->constvalue);
+						constnode->constcollid = InvalidOid;
+						return (Node *) constnode;
+					}
+					else
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Could not convert Const node to desired node type")));
+					}
+				}
+				else
+				{
+					new_node = coerce_to_target_type(NULL, (Node *) node, exprType(node),
+													TEXTOID, -1,
+													COERCION_EXPLICIT,
+													COERCE_EXPLICIT_CAST,
+													exprLocation(node));
+					if (unlikely(new_node == NULL))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Could not type cast the input argument of LIKE operator to desired data type")));
+					}
+					newFuncExpr->args = list_make1(new_node);
+					break;
+				}
 				break;
 			}
 		case T_SubLink:
@@ -1112,9 +1180,14 @@ pltsql_predicate_transformer(Node *expr, bool is_constraint)
 			}
 			else if (IsA(qual, OpExpr))
 			{
-				qual = transform_likenode(qual, is_constraint);
-				new_predicates = lappend(new_predicates,
-										 expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
+				Node *ret = transform_likenode(qual, is_constraint);
+				if (qual == ret)
+					/* If it's not a like Opexpr, then walk through args */
+					new_predicates = lappend(new_predicates,
+						expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
+				else 
+					/* Singleton predicate */
+					new_predicates = lappend(new_predicates, ret);
 			}
 			else
 				new_predicates = lappend(new_predicates, qual);
