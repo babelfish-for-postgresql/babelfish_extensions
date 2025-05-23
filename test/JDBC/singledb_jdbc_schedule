@@ -3,9 +3,9 @@
 # 2. To ignore any test file, add an entry like ignore#!#<test_file_name>
 
 # because these inherently execute with more than one db
-ignore#!#BABEL-5742-sp_helplogins-vu-prepare
-ignore#!#BABEL-5742-sp_helplogins-vu-verify
-ignore#!#BABEL-5742-sp_helplogins-vu-cleanup
+ignore#!#z_sp_helplogins-vu-prepare
+ignore#!#z_sp_helplogins-vu-verify
+ignore#!#z_sp_helplogins-vu-cleanup
 
 ignore#!#test_db_collation-vu-prepare
 ignore#!#test_db_collation-vu-verify
