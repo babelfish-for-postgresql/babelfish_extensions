@@ -1620,15 +1620,8 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 
 	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for the geometry */
-	enlargeStringInfo(destBuf, sizeof(uint32_t));
-	memcpy(destBuf->data + destBuf->len, (char *) &geomType, sizeof(uint32_t));
-	destBuf->len += sizeof(uint32_t);
-	destBuf->data[destBuf->len] = '\0';
-
-	enlargeStringInfo(destBuf, sizeof(uint32_t));
-	memcpy(destBuf->data + destBuf->len, (char *) &npoints, sizeof(uint32_t));
-	destBuf->len += sizeof(uint32_t);
-	destBuf->data[destBuf->len] = '\0';
+	appendBinaryStringInfo(destBuf, (char *) &geomType, sizeof(uint32_t));
+	appendBinaryStringInfo(destBuf, (char *) &npoints, sizeof(uint32_t));
 
 	if (!isempty)
 	{
