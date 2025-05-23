@@ -134,7 +134,7 @@ GO
 SELECT location.STAsBinary() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOM_dt ORDER BY location.STX;
+SELECT CAST(location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) As numeric(20, 6)) from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
 SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt] ORDER BY location.STX;
