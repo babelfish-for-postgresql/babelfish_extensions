@@ -3780,15 +3780,15 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.orig_loginname THEN 'YES'
-                WHEN Db.owner = LExt.orig_loginname THEN 'YES'
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.orig_loginname COLLATE database_default THEN 'YES'
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN 'YES'
                 ELSE 'NO'
             END AS AUser,
             CAST('NO' AS VARCHAR(8)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
-        LEFT JOIN sys.babelfish_sysdatabases AS Db ON LExt.default_database_name COLLATE database_default = Db.name
+        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
         WHERE LExt.type NOT IN ('R', 'Z')
         
         SELECT
@@ -3797,7 +3797,7 @@ BEGIN
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
             'User' AS UserOrAlias 
         FROM sys.babelfish_authid_user_ext UExt
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name COLLATE database_default
+        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name 
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
@@ -3812,7 +3812,9 @@ BEGIN
                     INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
                     INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
-                    WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin') AND UExt2.database_name = UExt.database_name AND UExt2.login_name = @current_username
+                    WHERE UExt1.orig_username IN ('db_securityadmin', 'db_accessadmin') 
+                    AND UExt2.database_name = UExt.database_name 
+                    AND UExt2.login_name = @current_username
                 )
             )
         UNION
@@ -3826,7 +3828,7 @@ BEGIN
         INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
         INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
         INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name COLLATE database_default
+        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
             (
@@ -3846,15 +3848,15 @@ BEGIN
             CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
             CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
             CASE 
-                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.orig_loginname THEN 'YES'
-                WHEN Db.owner = LExt.orig_loginname THEN 'YES'
+                WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.orig_loginname COLLATE database_default THEN 'YES'
+                WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN 'YES'
                 ELSE 'NO'
             END AS AUser,
             CAST('NO' AS VARCHAR(8)) AS ARemote -- Currently we do not support linking local logins to remote logins
         FROM pg_catalog.pg_roles AS Base 
         INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
-        LEFT JOIN sys.babelfish_sysdatabases AS Db ON LExt.default_database_name COLLATE database_default = Db.name
+        LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
         WHERE LExt.type NOT IN ('R', 'Z') AND LExt.orig_loginname = @input_loginname
         
         SELECT
@@ -3863,7 +3865,7 @@ BEGIN
             CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
             'User' AS UserOrAlias 
         FROM sys.babelfish_authid_user_ext UExt
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt.database_name COLLATE database_default
+        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
         WHERE UExt.type != 'R' AND  
             UExt.orig_username != 'guest' AND 
             has_dbaccess(UExt.database_name) = 1 AND
@@ -3879,10 +3881,10 @@ BEGIN
         INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
         INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
         INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name = UExt1.database_name COLLATE database_default
+        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name
         WHERE 
             has_dbaccess(UExt2.database_name) = 1 AND
-            COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) = @input_loginname        
+            COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) = @input_loginname
     END;
 
     RETURN 0;
