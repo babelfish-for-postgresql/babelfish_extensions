@@ -778,7 +778,29 @@ int#!#text
 ~~END~~
 
 
+EXEC fts_contains_vu_prepare_p1 'wine &! resveratrol'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
+~~END~~
+
+
 EXEC fts_contains_vu_prepare_p1 'wine AND            NoT resveratrol'
+GO
+~~START~~
+int#!#text
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+1001#!#beer 	drinkers<newline>wine
+1008#!#grape 	wine<newline>drinkers
+1009#!#red 	<newline>grapes<newline>wine
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'wine    &        !   resveratrol'
 GO
 ~~START~~
 int#!#text
@@ -821,6 +843,24 @@ int#!#text
 
 
 DECLARE @a VARCHAR(100)
+SET @a = 'aircraft & '+ char(10) + char(10) + ' ! "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+~~START~~
+int#!#text
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+267#!#The indictment accuses Chichakli and Bout of violating sanctions by arranging to buy two Boeing aircraft from U
+460#!#The USA has pretty restrictive laws on flying uninhabited aircraft 
+462#!#In Australia , if the aircraft is : Away from residential areas , Below 400 feet above the ground ( yep I know that is fairly low ) Within eyesight of the operator Under 150 kg weight ( but getting clearance from the MAAA for over 50kg is a bit hard )
+591#!# Only four Twin Otter aircraft are permanently deployed to the North , at Yellowknife , with Joint Task Force North Headquarters 
+596#!# In addition , the Aurora surveillance and reconnaissance aircraft undertake regular Arctic patrols 
+605#!#To meet this demand , the existing FOLs likely will become permanent bases for forward deployed surveillance and reconnaissance and SAR aircraft 
+616#!# Building and staffing permanent bases will be expensive , although some costs may be offset by other government departments and agencies in response to increased civilian @ @ @ @ @ @ @ @ @ @ no need to acquire a dedicated Arctic aircraft : The current and planned inventory of multi-role aircraft will be able to meet this requirement 
+618#!# However , aircraft and personnel deployed to the North on a permanent basis will impact the ability of the RCAF to meet its other demands 
+~~END~~
+
+
+DECLARE @a VARCHAR(100)
 SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
@@ -839,12 +879,21 @@ int#!#text
 
 
 DECLARE @a VARCHAR(100)
-SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + "helicopter*"'
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + '"helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near ''' at line 2 and character position 96)~~
+~~START~~
+int#!#text
+254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
+267#!#The indictment accuses Chichakli and Bout of violating sanctions by arranging to buy two Boeing aircraft from U
+460#!#The USA has pretty restrictive laws on flying uninhabited aircraft 
+462#!#In Australia , if the aircraft is : Away from residential areas , Below 400 feet above the ground ( yep I know that is fairly low ) Within eyesight of the operator Under 150 kg weight ( but getting clearance from the MAAA for over 50kg is a bit hard )
+591#!# Only four Twin Otter aircraft are permanently deployed to the North , at Yellowknife , with Joint Task Force North Headquarters 
+596#!# In addition , the Aurora surveillance and reconnaissance aircraft undertake regular Arctic patrols 
+605#!#To meet this demand , the existing FOLs likely will become permanent bases for forward deployed surveillance and reconnaissance and SAR aircraft 
+616#!# Building and staffing permanent bases will be expensive , although some costs may be offset by other government departments and agencies in response to increased civilian @ @ @ @ @ @ @ @ @ @ no need to acquire a dedicated Arctic aircraft : The current and planned inventory of multi-role aircraft will be able to meet this requirement 
+618#!# However , aircraft and personnel deployed to the North on a permanent basis will impact the ability of the RCAF to meet its other demands 
+~~END~~
 
 
 
@@ -856,6 +905,14 @@ int#!#text
 379#!# In both studies , participants completed stress tests , provided blood samples and had their social lives evaluated using the UCLA Loneliness Scale 
 381#!#The lonelier breast cancer survivors , in addition to increased inflammation , experienced more pain , @ @ @ @ @ @ @ @ @ @ , which tends to be triggered by stress , can also be used a measure of immune response 
 383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
+~~END~~
+
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress and not "lone*"')
+GO
+~~START~~
+int#!#text
+381#!#The lonelier breast cancer survivors , in addition to increased inflammation , experienced more pain , @ @ @ @ @ @ @ @ @ @ , which tends to be triggered by stress , can also be used a measure of immune response 
 ~~END~~
 
 

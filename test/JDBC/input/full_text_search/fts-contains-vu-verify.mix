@@ -246,7 +246,13 @@ GO
 EXEC fts_contains_vu_prepare_p1 'wine AND NoT resveratrol'
 GO
 
+EXEC fts_contains_vu_prepare_p1 'wine &! resveratrol'
+GO
+
 EXEC fts_contains_vu_prepare_p1 'wine AND            NoT resveratrol'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'wine    &        !   resveratrol'
 GO
 
 DECLARE @a VARCHAR(100)
@@ -260,18 +266,26 @@ EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 DECLARE @a VARCHAR(100)
+SET @a = 'aircraft & '+ char(10) + char(10) + ' ! "helicopter*"'
+EXEC fts_contains_vu_prepare_p1 @a
+GO
+
+DECLARE @a VARCHAR(100)
 SET @a = 'aircraft anD '+ char(9) + 'Not' + char(9) + '"helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 DECLARE @a VARCHAR(100)
-SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + "helicopter*"'
+SET @a = 'aircraft' + char(9) + 'anD ' + char(10) + char(10) + ' NoT' + char(10) + '"helicopter*"'
 EXEC fts_contains_vu_prepare_p1 @a
 GO
 
 
 -- complex boolean expressions
 SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress')
+GO
+
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'cancer and pain or stress and not "lone*"')
 GO
 
 EXEC fts_contains_vu_prepare_p1 'Resveratrol AND (Rats or ("hear*" | "loud noises"))'

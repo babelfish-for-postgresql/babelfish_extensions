@@ -25,7 +25,7 @@ static YY_BUFFER_STATE scanbufhandle;
 "AND"        		{ yylval = "AND"; return AND_TOKEN; }
 "&"           		{ yylval = "AND"; return AND_TOKEN; }
 AND[ \s\t\r\n]+NOT  	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"&!"       		{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
+&[ \s\t\r\n]*!          { yylval = "AND NOT"; return AND_NOT_TOKEN; }
 "OR"           		{ yylval = "OR"; return OR_TOKEN; }
 "|"            		{ yylval = "OR"; return OR_TOKEN; }
 "NOT"			{ yylval = "NOT"; yyerror_with_code(ERRCODE_SYNTAX_ERROR, "Syntax error in the full-text search condition"); return NOT_TOKEN; }
