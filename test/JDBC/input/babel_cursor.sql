@@ -1835,6 +1835,38 @@ GO
 EXEC babel_943_proc
 GO
 
+-- BABEL-5743
+CREATE TABLE babel_5743_table (yr INT, mth INT, qtr INT);
+INSERT INTO babel_5743_table VALUES (2023, 12, 4);
+GO
+
+CREATE PROCEDURE babel_5743_proc
+AS
+BEGIN
+    DECLARE @y INT, @m INT, @q INT;
+    
+    DECLARE babel_5743_cursor CURSOR FOR
+    SELECT yr year, mth month, qtr quarter FROM babel_5743_table;
+
+    OPEN babel_5743_cursor;
+    
+    FETCH NEXT FROM babel_5743_cursor INTO @y, @m, @q;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SELECT @y year, @m month, @q quarter;
+               
+        FETCH NEXT FROM babel_5743_cursor INTO @y, @m, @q;
+    END
+
+    CLOSE babel_5743_cursor;
+    DEALLOCATE babel_5743_cursor;
+END;
+GO
+
+EXEC babel_5743_proc;
+GO
+
 DROP PROCEDURE babel_cursor_proc;
 DROP PROCEDURE babel_cursor_double_precision_proc;
 DROP PROCEDURE babel_cursor_varchar_proc;
@@ -1895,4 +1927,6 @@ DROP PROCEDURE babel_833_proc;
 DROP TABLE babel_833_table;
 drop PROCEDURE babel_881_proc;
 DROP PROCEDURE babel_943_proc;
+DROP PROCEDURE babel_5743_proc;
+DROP TABLE babel_5743_table;
 GO
