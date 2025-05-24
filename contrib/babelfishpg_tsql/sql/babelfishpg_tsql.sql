@@ -3790,50 +3790,7 @@ BEGIN
         LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
         LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.name COLLATE database_default = LExt.default_database_name
         WHERE LExt.type NOT IN ('R', 'Z')
-
-
-
-
-
-
-        -- trying to find out failures in GA where tests are not able to get msdb for a specific testcase
-
-        select database_name, orig_username, user_can_connect from sys.babelfish_authid_user_ext;
-
-
-        SELECT
-            CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-            CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
-            CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
-            'User' AS UserOrAlias,
-            has_dbaccess(UExt.database_name)
-        FROM sys.babelfish_authid_user_ext UExt
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name 
-        WHERE UExt.type != 'R' AND  
-            UExt.orig_username != 'guest' 
-
-
-        SELECT
-            CAST(COALESCE(NULLIF(UExt2.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
-            CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
-            CAST(UExt1.orig_username AS SYS.SYSNAME) AS UserName,
-            'Member of' AS UserOrAlias,
-            has_dbaccess(UExt2.database_name),
-            UExt2.login_name
-        FROM pg_catalog.pg_auth_members AS Authmbr
-        INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
-        INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
-        INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
-        INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
-        LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name;
-
-
-
-
-
-
-
-        
+    
         SELECT
             CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,

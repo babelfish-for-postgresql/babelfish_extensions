@@ -213,3 +213,10 @@ int
 1
 ~~END~~
 
+
+-- tsql
+use msdb
+go
+
+grant connect to guest
+go
