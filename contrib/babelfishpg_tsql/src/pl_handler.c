@@ -117,6 +117,7 @@ extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
+static bool pltsql_needs_fmgr_hook(Oid funcoid);
 static void get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 static void get_func_language_oids(Oid *lang_handler, Oid *lang_validator);
 extern bool pltsql_suppress_string_truncation_error();
@@ -292,6 +293,7 @@ planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
+static needs_fmgr_hook_type prev_needs_fmgr_hook = NULL;
 
 static void
 set_procid(Oid oid)
@@ -5467,6 +5469,9 @@ _PG_init(void)
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
+	prev_needs_fmgr_hook = needs_fmgr_hook;
+	needs_fmgr_hook = pltsql_needs_fmgr_hook;
+
 	inited = true;
 }
 
@@ -5493,6 +5498,7 @@ _PG_fini(void)
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
 	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
+	needs_fmgr_hook = prev_needs_fmgr_hook;
 
 	UninstallExtendedHooks();
 }
@@ -6522,6 +6528,12 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	PG_RETURN_VOID();
+}
+
+static bool
+pltsql_needs_fmgr_hook(Oid funcoid)
+{
+	return true;
 }
 
 /*
