@@ -144,10 +144,3 @@ go
 
 select has_dbaccess('grant_connect_db1');
 go
-
--- tsql
-use msdb
-go
-
-grant connect to guest
-go
