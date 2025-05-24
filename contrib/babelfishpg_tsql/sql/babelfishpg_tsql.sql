@@ -3797,6 +3797,10 @@ BEGIN
 
 
         -- trying to find out failures in GA where tests are not able to get msdb for a specific testcase
+
+        select database_name, orig_username, user_can_connect from sys.babelfish_authid_user_ext;
+
+
         SELECT
             CAST(COALESCE(NULLIF(UExt.login_name, ''), Db.owner) AS sys.SYSNAME) AS LoginName,
             CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
