@@ -378,7 +378,7 @@ static Datum exec_eval_expr(PLtsql_execstate *estate,
 							Oid *rettype,
 							int32 *rettypmod);
 static int	exec_run_select(PLtsql_execstate *estate,
-							PLtsql_expr *expr, long maxtuples, Portal *portalP);
+							PLtsql_expr *expr, Portal *portalP);
 static int	exec_for_query(PLtsql_execstate *estate, PLtsql_stmt_forq *stmt,
 						   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLtsql_execstate *estate,
@@ -2358,7 +2358,7 @@ exec_stmt_perform(PLtsql_execstate *estate, PLtsql_stmt_perform *stmt)
 {
 	PLtsql_expr *expr = stmt->expr;
 
-	(void) exec_run_select(estate, expr, 0, NULL);
+	(void) exec_run_select(estate, expr, NULL);
 	exec_set_found(estate, (estate->eval_processed != 0));
 	exec_eval_cleanup(estate);
 
@@ -3038,7 +3038,7 @@ exec_stmt_fors(PLtsql_execstate *estate, PLtsql_stmt_fors *stmt)
 	/*
 	 * Open the implicit cursor for the statement using exec_run_select
 	 */
-	exec_run_select(estate, stmt->query, 0, &portal);
+	exec_run_select(estate, stmt->query, &portal);
 
 	/*
 	 * Execute the loop
@@ -3847,7 +3847,7 @@ exec_stmt_return_query(PLtsql_execstate *estate,
 	if (stmt->query != NULL)
 	{
 		/* static query */
-		exec_run_select(estate, stmt->query, 0, &portal);
+		exec_run_select(estate, stmt->query, &portal);
 	}
 	else
 	{
@@ -6324,7 +6324,7 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 		append_explain_info(NULL, strinfo->data);
 
 		increment_explain_indent();
-		rc = exec_run_select(estate, expr, 0, NULL);
+		rc = exec_run_select(estate, expr, NULL);
 		decrement_explain_indent();
 
 		if (rc != SPI_OK_SELECT)
@@ -7261,7 +7261,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 	/*
 	 * Else do it the hard way via exec_run_select
 	 */
-	rc = exec_run_select(estate, expr, 2, NULL);
+	rc = exec_run_select(estate, expr, NULL);
 	if (rc != SPI_OK_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -7318,7 +7318,7 @@ exec_eval_expr(PLtsql_execstate *estate,
  */
 static int
 exec_run_select(PLtsql_execstate *estate,
-				PLtsql_expr *expr, long maxtuples, Portal *portalP)
+				PLtsql_expr *expr, Portal *portalP)
 {
 	ParamListInfo paramLI;
 	int			rc;
@@ -7373,7 +7373,7 @@ exec_run_select(PLtsql_execstate *estate,
 	 * Execute the query
 	 */
 	rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-										 estate->readonly_func, maxtuples);
+										 estate->readonly_func, 0);
 	if (rc != SPI_OK_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
