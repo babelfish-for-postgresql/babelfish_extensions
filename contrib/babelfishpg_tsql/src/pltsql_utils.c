@@ -40,6 +40,8 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
+
+
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
@@ -443,8 +445,6 @@ pltsql_check_or_set_default_typmod_helper(TypeName *typeName, int32 *typmod, boo
 
 		/* deconstruct the name list */
 		DeconstructQualifiedName(typeName->names, &schemaname, &typname);
-
-
 		if (schemaname)
 			is_sys_schema = strcmp("sys", schemaname) == 0;
 		else

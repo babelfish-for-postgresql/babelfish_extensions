@@ -31,34 +31,9 @@ numeric
 ~~END~~
 
 
-
 --------------------
 -- procedure/function
 --------------------
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_p1' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_5512_upgrade_p1(INOUT "@statement" money)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["1245192"], "original_probin": ""}', $procedure$BEGIN SET @Statement = '123' END;$procedure$<newline>
-~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_f7' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE FUNCTION master_dbo.babel_5512_upgrade_f7("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline> STABLE<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "1245192", "-1", "100"], "original_probin": ""}', $function$BEGIN RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10)); END;$function$<newline>
-~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_f8' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE FUNCTION master_dbo.babel_5512_upgrade_f8("@a" integer, "@c" babel_5512_upgrade_type2, "@d" double precision DEFAULT 1.2)<newline> RETURNS babel_5512_upgrade_type1<newline> LANGUAGE pltsql<newline> STABLE<newline>AS '{"version_num": "1", "typmod_array": ["-1", "-1", "-1", "-1"], "original_probin": ""}', $function$BEGIN RETURN @a + @c + @d END;$function$<newline>
-~~END~~
-
-
 -- Functions
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f1';
 GO

@@ -17,16 +17,6 @@ GO
 --------------------
 -- procedure/function
 --------------------
-
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_p1' as regproc));
-GO
-
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_f7' as regproc));
-GO
-
-SELECT pg_get_functiondef(cast('babel_5512_upgrade_f8' as regproc));
-GO
-
 -- Functions
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_5512_upgrade_f1';
 GO

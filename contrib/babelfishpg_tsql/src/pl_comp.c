@@ -48,7 +48,6 @@
 #include "multidb.h"
 #include "collation.h"
 
-
 /* ----------
  * Our own local and global variables
  * ----------
@@ -2375,7 +2374,6 @@ pltsql_build_variable(const char *refname, int lineno, PLtsql_type *dtype,
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
 				var->datatype = dtype;
-
 
 				if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(var->datatype->typoid))
 				{

@@ -1838,9 +1838,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				 */
 				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
-					{
-						precision = tds_default_numeric_precision;
-					}
+					precision = tds_default_numeric_precision;
 
 
 				/*
