@@ -2212,6 +2212,8 @@ mul4#!#float#!#8#!#53#!#0
 mul5#!#real#!#4#!#24#!#0
 mul6#!#numeric#!#13#!#22#!#5
 mul7#!#numeric#!#13#!#22#!#5
+mul8moneyudt#!#numeric#!#13#!#22#!#5
+mul8udtsmallmoney#!#numeric#!#13#!#22#!#5
 totalwithmarkup#!#numeric#!#9#!#13#!#1
 ~~END~~
 

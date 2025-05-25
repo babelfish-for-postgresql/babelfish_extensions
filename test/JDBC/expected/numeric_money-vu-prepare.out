@@ -133,8 +133,8 @@ CREATE PROCEDURE babel_5512_get_column_info_p1 @table_name text AS BEGIN SELECT 
 END
 GO
 
-CREATE TABLE babel_5512_t5 ( ID INT IDENTITY(1,1), Amount Int, a_tiny tinyint, b_smallint smallint, c_big bigint, d_fl float, e_real real, f_mon money, g_smallmoney smallmoney);
+CREATE TABLE babel_5512_t5 ( ID INT IDENTITY(1,1), Amount Int, a_tiny tinyint, b_smallint smallint, c_big bigint, d_fl float, e_real real, f_mon money, g_smallmoney smallmoney, h_smallmoneyUDT SmallMoneyType, i_moneyudt MoneyType);
 GO
 
-SELECT SUM(Amount) * 1.1 AS TotalWithMarkup, sum(a_tiny) * 1.1 as mul1, sum(b_smallint) * 1.1 as mul2, sum(c_big) * 1.1 as mul3, sum(d_fl) * 1.1 as mul4, sum(e_real) * 1.1 as mul5, sum(f_mon) * 1.1 as mul6, sum(g_smallmoney) * 1.1 as mul7 INTO babel_5512_t6 FROM babel_5512_t5;
+SELECT SUM(Amount) * 1.1 AS TotalWithMarkup, sum(a_tiny) * 1.1 as mul1, sum(b_smallint) * 1.1 as mul2, sum(c_big) * 1.1 as mul3, sum(d_fl) * 1.1 as mul4, sum(e_real) * 1.1 as mul5, sum(f_mon) * 1.1 as mul6, sum(g_smallmoney) * 1.1 as mul7 , sum(h_smallmoneyUDT) * 1.1 as mul8udtsmallmoney, sum(i_moneyudt) * 1.1 as mul8moneyudt INTO babel_5512_t6 FROM babel_5512_t5;
 GO
