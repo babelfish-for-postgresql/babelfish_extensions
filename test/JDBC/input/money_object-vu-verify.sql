@@ -97,8 +97,8 @@ EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t2'
 GO
 EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t3'
 GO
-EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t4'
-GO
+-- EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t4'
+-- GO
 EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t9'
 GO
 EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t10'

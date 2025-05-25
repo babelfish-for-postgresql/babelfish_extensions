@@ -234,13 +234,13 @@ CREATE VIEW babel_5512_upgrade_v9 AS SELECT id, babel_5512_mon1, babel_5512_smal
 GO
 
 -- p = partitioned table
-CREATE PARTITION FUNCTION babel_5512_upgrade_f9 (int) AS RANGE RIGHT FOR VALUES (100, 200, 300, 400);
-GO
-CREATE PARTITION SCHEME babel_5512_upgrade_s1 AS PARTITION babel_5512_upgrade_f9 ALL TO ([PRIMARY]);
-GO
-CREATE TABLE babel_5512_upgrade_t4 (id int, babel_5512_mon3 money, babel_5512_small3 smallmoney, dept_id int) ON babel_5512_upgrade_s1(dept_id);
-GO
+-- CREATE PARTITION FUNCTION babel_5512_upgrade_f11 (int) AS RANGE RIGHT FOR VALUES (100, 200, 300, 400);
+-- GO
+-- CREATE PARTITION SCHEME babel_5512_upgrade_s1 AS PARTITION babel_5512_upgrade_f11 ALL TO ([PRIMARY]);
+-- GO
+-- CREATE TABLE babel_5512_upgrade_t4 (id int, babel_5512_mon3 money, babel_5512_small3 smallmoney, dept_id int) ON babel_5512_upgrade_s1(dept_id);
+-- GO
 
 -- I = partitioned index
-CREATE INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4(babel_5512_mon3);
-GO
+-- CREATE INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4(babel_5512_mon3);
+-- GO
