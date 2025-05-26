@@ -8,6 +8,7 @@ DROP VIEW babel_5512_upgrade_v6;
 DROP VIEW babel_5512_upgrade_v7;
 DROP VIEW babel_5512_upgrade_v8;
 DROP VIEW babel_5512_upgrade_v9;
+DROP VIEW babel_5512_upgrade_v10;
 GO
 
 -- Drop Indexes

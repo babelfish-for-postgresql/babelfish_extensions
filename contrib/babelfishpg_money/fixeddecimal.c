@@ -36,6 +36,12 @@
 #define FIXEDDECIMAL_MULTIPLIER 10000LL
 
 /*
+ * This ensures that we round up the result in case the 5th decimal place >= 5
+ * in case of fixeddecimal multiplication.
+ */
+#define FIXEDDECIMAL_ROUNDUP 5000
+
+/*
  * Number of decimal places to store.
  * This number should be the number of decimal digits that it takes to
  * represent FIXEDDECIMAL_MULTIPLIER - 1
@@ -1737,7 +1743,7 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	 */
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
 	/* Round off the result to FIXEDDECIMAL_SCALE. */
-	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= 5000)
+	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= FIXEDDECIMAL_ROUNDUP)
 	result++;
 
 

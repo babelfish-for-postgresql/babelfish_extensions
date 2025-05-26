@@ -193,6 +193,13 @@ GO
 create table babel_5512_upgrade_t1 (a10 decimal,a11 money, a12 smallmoney)
 go
 
+insert into babel_5512_upgrade_t1 values (1.0, -922337203685477.5808, -214748.3648)
+GO
+insert into babel_5512_upgrade_t1 values (2.0, 922337203685477.5807, 214748.3647)
+GO
+insert into babel_5512_upgrade_t1 values (3.0, 1234.234563, 123.234567)
+GO
+
 -- UDT column
 create table babel_5512_upgrade_t2 ( a15 decimal,a16 babel_5512_upgrade_type1,a17 babel_5512_upgrade_type2)
 go
@@ -223,6 +230,10 @@ go
 create view babel_5512_upgrade_v8 as select 2 * a17 as babel_5512_result5 from babel_5512_upgrade_t2
 GO
 
+-- round vs truncation.
+create view babel_5512_upgrade_v9 as select cast(2.5 as smallmoney) * cast(2.4999 as smallmoney) as babel_5512_result6
+GO
+
 -- r = ordinary table
 CREATE TABLE babel_5512_upgrade_t3 (id int, babel_5512_mon1 money, babel_5512_small1 smallmoney);
 GO
@@ -230,7 +241,7 @@ GO
 CREATE INDEX babel_5512_upgrade_idx1 ON babel_5512_upgrade_t3(babel_5512_mon1);
 GO
 -- v = view using table column
-CREATE VIEW babel_5512_upgrade_v9 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
+CREATE VIEW babel_5512_upgrade_v10 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
 GO
 
 -- p = partitioned table

@@ -301,10 +301,23 @@ c#!#smallmoney#!#4#!#10#!#4
 ~~END~~
 
 
+select * from babel_5512_upgrade_t1
+GO
+~~START~~
+numeric#!#money#!#smallmoney
+1#!#-922337203685477.5808#!#-214748.3648
+2#!#922337203685477.5807#!#214748.3647
+3#!#1234.2346#!#123.2346
+~~END~~
+
+
 select coalesce(a10, a11) from babel_5512_upgrade_t1
 GO
 ~~START~~
 numeric
+1.0000
+2.0000
+3.0000
 ~~END~~
 
 
@@ -364,6 +377,13 @@ money
 1357.8000
 ~~END~~
 
+SELECT * FROM babel_5512_upgrade_v9;
+GO
+~~START~~
+smallmoney
+6.2498
+~~END~~
+
 
 -- for r,i,v,p,I
 SELECT c.relkind as object_type, a.attname as column_name, a.atttypid::regtype::text as data_type, a.atttypmod as type_modifier 
@@ -371,7 +391,7 @@ FROM pg_class c
 JOIN pg_attribute a ON c.oid = a.attrelid 
 WHERE a.atttypid::regtype::text IN ('money', 'smallmoney') 
 AND a.attname IN ('babel_5512_mon3','babel_5512_mon1','babel_5512_small3','babel_5512_result1',
-            'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_small1') 
+            'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_result6','babel_5512_small1') 
 AND c.relkind IN ('r', 'i', 'v', 'p', 'I') 
 ORDER BY c.relkind, c.relname, a.attname;
 GO
@@ -381,11 +401,12 @@ i#!#babel_5512_mon1#!#money#!#1245192
 r#!#babel_5512_mon1#!#money#!#1245192
 r#!#babel_5512_small1#!#smallmoney#!#655368
 v#!#babel_5512_result1#!#smallmoney#!#655368
+v#!#babel_5512_mon1#!#money#!#1245192
+v#!#babel_5512_small1#!#smallmoney#!#655368
 v#!#babel_5512_result2#!#smallmoney#!#655368
 v#!#babel_5512_result3#!#smallmoney#!#655368
 v#!#babel_5512_result4#!#money#!#1245192
 v#!#babel_5512_result5#!#money#!#1245192
-v#!#babel_5512_mon1#!#money#!#1245192
-v#!#babel_5512_small1#!#smallmoney#!#655368
+v#!#babel_5512_result6#!#smallmoney#!#655368
 ~~END~~
 

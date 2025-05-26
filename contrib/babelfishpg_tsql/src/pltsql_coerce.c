@@ -1223,12 +1223,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 		case T_Param:
 			{
 				Param *param = (Param *) expr;
-				if (param->paramtypmod != -1 &&
-					((*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) ||
-					(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype)))
-				{
-					return param->paramtypmod;
-				}
 
 				if (param->paramtypmod == -1)
 				{
@@ -1249,11 +1243,11 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						return ((BIGINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
 					else if (param->paramtype == INT2OID)
 						return ((SMALLINT_PRECISION_RADIX << 16) | 0) + VARHDRSZ;
-
-					if (found != NULL) *found = false;
 				}
 
-				if (!is_numeric_datatype(param->paramtype))
+				if (!is_numeric_datatype(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_money_datatype)(param->paramtype) &&
+					!(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(param->paramtype))
 				{
 					/* typmod is undefined */
 					if (found != NULL) *found = false;
@@ -1817,7 +1811,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					(strncmp(aggFuncName, "avg", 3) == 0)))
 				{
 					/* Handling for fixed length datatype. */
-					if (typmod != -1 && ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype)))
+
+					/*
+					 * Money and smallmoney will have aggtype type as money
+					 * tinyint, smallint, int will have aggtype type as int
+					 * bigint will have aggtype type as bigint.
+					 */
+					if ((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype))
 					{
 						return TSQL_MONEY_TYPMOD;
 					}
@@ -1849,12 +1849,6 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "avg", 3) == 0))
 				{
-					if (typmod != -1 &&
-						((*common_utility_plugin_ptr->is_tsql_money_datatype)(aggref->aggtype)||
-						(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(aggref->aggtype)))
-					{
-						return typmod;
-					}
 					precision = tds_default_numeric_precision;
 					scale = Max(scale, 6);
 				}
@@ -3039,7 +3033,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 			}
 			else if (typmod == -1 && (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(type))
 			{
-            	precision = SMALLMONEY_PRECISION;
+				precision = SMALLMONEY_PRECISION;
 				scale = FIXEDDECIMAL_SCALE;
 			}
 			else

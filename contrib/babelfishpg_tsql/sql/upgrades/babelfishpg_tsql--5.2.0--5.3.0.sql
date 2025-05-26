@@ -443,11 +443,9 @@ WHERE a.attrelid = c.oid
 UPDATE pg_type t
 SET typtypmod =
 	CASE
-		WHEN t.typtypmod = '-1' AND t.typtype = 'd' AND
-			sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.money'::regtype::oid)
+		WHEN sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.money'::regtype::oid)
 		THEN 1245192
-		WHEN t.typtypmod = '-1' AND t.typtype = 'd' AND
-			sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.smallmoney'::regtype::oid)
+		WHEN sys.bbf_get_immediate_base_type_of_UDT(t.oid) = (SELECT 'sys.smallmoney'::regtype::oid)
 		THEN 655368
 		ELSE t.typtypmod
 	END

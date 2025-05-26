@@ -100,6 +100,9 @@ GO
 EXEC babel_5512_get_column_info_p10 '@tablevar_babel_5512_upgrade_mstvf2'
 GO
 
+select * from babel_5512_upgrade_t1
+GO
+
 select coalesce(a10, a11) from babel_5512_upgrade_t1
 GO
 
@@ -124,6 +127,8 @@ SELECT * FROM babel_5512_upgrade_v7;
 GO
 SELECT * FROM babel_5512_upgrade_v8;
 GO
+SELECT * FROM babel_5512_upgrade_v9;
+GO
 
 -- for r,i,v,p,I
 SELECT c.relkind as object_type, a.attname as column_name, a.atttypid::regtype::text as data_type, a.atttypmod as type_modifier 
@@ -131,7 +136,7 @@ FROM pg_class c
 JOIN pg_attribute a ON c.oid = a.attrelid 
 WHERE a.atttypid::regtype::text IN ('money', 'smallmoney') 
 AND a.attname IN ('babel_5512_mon3','babel_5512_mon1','babel_5512_small3','babel_5512_result1',
-            'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_small1') 
+            'babel_5512_result2','babel_5512_result3','babel_5512_result4','babel_5512_result5','babel_5512_result6','babel_5512_small1') 
 AND c.relkind IN ('r', 'i', 'v', 'p', 'I') 
 ORDER BY c.relkind, c.relname, a.attname;
 GO
