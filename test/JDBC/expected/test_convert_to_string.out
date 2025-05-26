@@ -6105,7 +6105,7 @@ END CATCH;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: parse error - invalid geometry)~~
+~~ERROR (Message: syntax error)~~
 
 
 -- Invalid Geography
