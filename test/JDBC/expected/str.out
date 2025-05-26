@@ -447,7 +447,8 @@ BEGIN
     UNION ALL
     SELECT
         '20,6',
-        STR(@Number, 20, 6);
+        STR(@Number, 20, 6)
+    ORDER BY Format;
 END;
 GO
 
@@ -482,10 +483,10 @@ int#!#varchar
 
 ~~START~~
 varchar#!#varchar
-Default#!#       123
 10,2#!#    123.46
 15,4#!#       123.4568
 20,6#!#          123.456789
+Default#!#       123
 ~~END~~
 
 

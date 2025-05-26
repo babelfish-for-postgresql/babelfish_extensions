@@ -346,7 +346,8 @@ BEGIN
     UNION ALL
     SELECT
         '20,6',
-        STR(@Number, 20, 6);
+        STR(@Number, 20, 6)
+    ORDER BY Format;
 END;
 GO
 
