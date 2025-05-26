@@ -1463,7 +1463,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 		stmt_copy = strdup(stmt);
 		function = pltsql_compile_inline(stmt_copy, NULL);
 		parse_result = (PLtsql_stmt_execsql *) lsecond(function->action->body);
-		stmt = parse_result->sqlstmt->query;
+		stmt = strdup(parse_result->sqlstmt->query);
 		pltsql_free_function_memory(function);
 		free(stmt_copy);
 	}
