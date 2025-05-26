@@ -791,16 +791,20 @@ fixeddecimaltypmodin(PG_FUNCTION_ARGS)
 	}
 	else if (n == 1)
 	{
-		int val_scale = (tl[0] - VARHDRSZ) & 0xffff;
 		int val_precision = ((tl[0] - VARHDRSZ) >> 16) & 0xffff;
-		if (val_scale < FIXEDDECIMAL_SCALE || (val_precision - val_scale) > FIXEDDECIMAL_MAX_PRECISION)
+		int val_scale = (tl[0] - VARHDRSZ) & 0xffff;
+		if (val_precision < FIXEDDECIMAL_SCALE || val_precision > FIXEDDECIMAL_MAX_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("FIXEDDECIMAL precision %d must be between %d and %d",
 							tl[0], FIXEDDECIMAL_SCALE, FIXEDDECIMAL_MAX_PRECISION)));
+		if (val_scale != FIXEDDECIMAL_SCALE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("FIXEDDECIMAL scale must be %d",
+							FIXEDDECIMAL_SCALE)));
 
-		/* scale defaults to FIXEDDECIMAL_SCALE */
-		typmod = ((val_precision << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ;
+		typmod = ((val_precision << 16) | val_scale) + VARHDRSZ;
 	}
 	else
 	{
