@@ -112,12 +112,12 @@ bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 static bool is_supported_case_sp_describe_undeclared_parameters = true;
 
-const  int           XML_HANDLE_START = 0;
-const  int           XML_HANDLE_INVALID = INT_MAX / 2;
-static int           current_xml_handle;
-Bitmapset           *active_xml_handles = NULL;
+const  int           XML_HANDLE_COUNTER_START = 0;
+const  int           XML_HANDLE_COUNTER_INVALID = INT_MAX / 2;
+static int           current_xml_handle_counter;
+Bitmapset           *active_xml_handles_counter = NULL;
 static int           xml_handle_temp_table_relid = InvalidOid;
-int                  get_next_xml_handle(void);
+int                  get_next_xml_handle_counter(void);
 void                 create_xml_handle_temp_table(void);
 void                 delete_xml_handle_entry(int  handle);
 int                  insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
@@ -4306,40 +4306,40 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
 }
 
 /*
- * get_next_xml_handle - Allocates unique XML handles using circular allocation strategy.
+ * get_next_xml_handle_counter - Allocates unique XML handle counters using circular allocation strategy.
  * 
  * This function manages XML document handles by tracking them in a bitmap set.
- * It increments the current handle and checks if it's already in use. If all
- * handles are exhausted (a full cycle is completed), it throws an error.
- * When a handle is no longer needed, it should be removed from the bitmap
+ * It increments the current handle counter and checks if it's already in use. If all
+ * handle counters are exhausted (a full cycle is completed), it throws an error.
+ * When a handle counter is no longer needed, it should be removed from the bitmap
  * using a corresponding release function.
  *
- * Returns: Next available XML handle (integer)
- * Errors: Throws error when all possible handles are in use
+ * Returns: Next available XML handle counter(integer)
+ * Errors: Throws error when all possible handle counters are in use
  */
 int 
-get_next_xml_handle()
+get_next_xml_handle_counter()
 {
-    int           old_handle = current_xml_handle;
+    int           old_handle_counter = current_xml_handle_counter;
     MemoryContext oldContext = NULL;
     
     while (true)
     {
-        ++current_xml_handle;
+        ++current_xml_handle_counter;
         
-        if (current_xml_handle == XML_HANDLE_INVALID)
+        if (current_xml_handle_counter == XML_HANDLE_COUNTER_INVALID)
         {
-            current_xml_handle = XML_HANDLE_START + 1;
+            current_xml_handle_counter = XML_HANDLE_COUNTER_START + 1;
         }
         
-        if (unlikely(current_xml_handle == old_handle))
+        if (unlikely(current_xml_handle_counter == old_handle_counter))
         {
             ereport(ERROR,
                    (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
                     errmsg("Out of XML Handles")));
         }
         
-        if (!bms_is_member(current_xml_handle, active_xml_handles))
+        if (!bms_is_member(current_xml_handle_counter, active_xml_handles_counter))
             break;
     }
     
@@ -4349,10 +4349,10 @@ get_next_xml_handle()
      * is reset, which would cause the handles to be lost and potentially reused.
      */
     oldContext = MemoryContextSwitchTo(TopMemoryContext);
-    active_xml_handles = bms_add_member(active_xml_handles, current_xml_handle);
+    active_xml_handles_counter = bms_add_member(active_xml_handles_counter, current_xml_handle_counter);
     MemoryContextSwitchTo(oldContext);
     
-    return current_xml_handle;
+    return current_xml_handle_counter;
 }
 
 /* Define column definitions for #xml_handle_temp_table
@@ -4434,7 +4434,7 @@ create_xml_handle_columns(void)
  * namespace information for use with the sp_xml_preparedocument and sp_xml_removedocument
  * procedures. 
  * 
- * The function temporarily elevates privileges to "sysadmin" to ensure it has
+ * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
  * the necessary permissions to create the table. It also sets the SQL dialect
  * to TSQL to ensure proper table creation semantics.
  */
@@ -4448,6 +4448,7 @@ create_xml_handle_columns(void)
      int          save_sec_context;
      int          saved_dialect = sql_dialect;
      ObjectAddress address;
+     MemoryContext oldContext;
      
      /* This makes it temporary table */
      relation->relpersistence = RELPERSISTENCE_TEMP;
@@ -4469,20 +4470,25 @@ create_xml_handle_columns(void)
  
      PG_TRY();
      {
-	 /* Set current user to bbf_role_admin for create permissions.*/
-	 sql_dialect = SQL_DIALECT_TSQL;
-	 SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-	 address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
-	 xml_handle_temp_table_relid = address.objectId;
+		/* Set current user to bbf_role_admin for create permissions.*/
+		sql_dialect = SQL_DIALECT_TSQL;
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		address = DefineRelation(stmt, RELKIND_RELATION, InvalidOid, NULL, NULL);
+
+		/* Store the OID in TopMemoryContext to persist across transactions */
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		xml_handle_temp_table_relid = address.objectId;
+		MemoryContextSwitchTo(oldContext);
+
      }
      PG_FINALLY();
      {
-	 SetUserIdAndSecContext(save_userid, save_sec_context);
-	 sql_dialect = saved_dialect;
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		sql_dialect = saved_dialect;
      }
      PG_END_TRY();
      
-     current_xml_handle = XML_HANDLE_START;
+     current_xml_handle_counter = XML_HANDLE_COUNTER_START;
  }
  
 
@@ -4491,7 +4497,7 @@ create_xml_handle_columns(void)
  *
  * This function inserts a new XML document and its optional namespace data into
  * the XML handle temporary table. 
- * The function temporarily elevates privileges to "sysadmin" to ensure it has
+ * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
  * the necessary permissions to insert data into the table. It also sets the SQL
  * dialect to TSQL to ensure proper insertion semantics.
  * 
@@ -4504,7 +4510,7 @@ create_xml_handle_columns(void)
 int 
 insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length, int ns_data_length)
 {
-    int                   handle;
+    int                   handle_counter;
     int                   document_id;
     int                   namespace_id = 0;
     bool                  is_namespace_null = true;
@@ -4515,28 +4521,37 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     int                   saved_dialect = sql_dialect;
     HeapTuple             tuple;
     bool                  nulls[7] = {false, true, false, true, true, false, true};
-    
-    if (!OidIsValid(xml_handle_temp_table_relid))
+    bool                  table_exists = false;
+
+   if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
+   {
+      relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
+      table_exists = true;
+   }
+
+    if (!table_exists)
     {
-        /* Table doesn't exist, create it */
+        /* Table doesn't exist or was dropped, create it */
         create_xml_handle_temp_table();
         
         if (!OidIsValid(xml_handle_temp_table_relid))
             ereport(ERROR,
                    (errcode(ERRCODE_UNDEFINED_TABLE),
                     errmsg("Failed to create XML handle temporary table")));
+                    
+        relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
     }
     
     /* get the next handle */
-    handle = get_next_xml_handle();
+    handle_counter = get_next_xml_handle_counter();
 
     /* document_id is always odd and unique */
-    document_id = 2 * handle - 1;
+    document_id = 2 * handle_counter - 1;
     
     if (ns_data_length > 0)
     {
         /* namespace_id is always even and unique if namespace is present */
-        namespace_id = 2 * handle;
+        namespace_id = 2 * handle_counter;
         is_namespace_null = false;
         nulls[1] = false;
         nulls[3] = false;
@@ -4601,7 +4616,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
  * reuse. This is typically called by sp_xml_removedocument to clean up XML
  * documents when they are no longer needed.
  *
- * The function temporarily elevates privileges to "sysadmin" to ensure it has
+ * The function temporarily elevates privileges to "bbf_role_admin" to ensure it has
  * the necessary permissions to delete data from the table. It also sets the SQL
  * dialect to TSQL to ensure proper deletion semantics.
  */
@@ -4613,22 +4628,28 @@ delete_xml_handle_entry(int document_id)
     TableScanDesc         scan;
     HeapTuple             tuple;
     bool                  found = false;
-    int                   curr_handle = (document_id + 1) / 2;
+    int                   curr_handle_counter = (document_id + 1) / 2;
     int                   save_sec_context;
     Oid                   save_userid;
     int                   saved_dialect = sql_dialect;
     MemoryContext         oldContext = NULL;
+    bool                  table_exists = false;
     
-	/* Check if the handle is still active */
-    if (!bms_is_member(curr_handle, active_xml_handles))
+    /* Check if the handle is still active */
+    if (!bms_is_member(curr_handle_counter, active_xml_handles_counter))
     {
         ereport(ERROR,
                 (errcode(ERRCODE_UNDEFINED_OBJECT),
                  errmsg("Could not find prepared statement with handle %d", document_id)));
     }
+    
+    if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
+    {
+    	relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
+    	table_exists = true;
+    }
 
-    /* Check if the temporary table exists */
-    if (!OidIsValid(xml_handle_temp_table_relid))
+    if (!table_exists)
     {
         /* Table doesn't exist, so the handle definitely doesn't exist */
         ereport(ERROR,
@@ -4636,16 +4657,6 @@ delete_xml_handle_entry(int document_id)
                  errmsg("Could not find prepared statement with handle %d", document_id)));
     }
 
-    relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
-    
-    if (relation == NULL)
-    {
-        /* Table doesn't exist, so the handle definitely doesn't exist */
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_OBJECT),
-                 errmsg("Could not find prepared statement with handle %d", document_id)));
-    }
-    
     ScanKeyInit(&skey[0],
                 1,
                 BTEqualStrategyNumber, F_INT4EQ,
@@ -4674,7 +4685,7 @@ delete_xml_handle_entry(int document_id)
         PG_END_TRY();
         
         oldContext = MemoryContextSwitchTo(TopMemoryContext);
-        active_xml_handles = bms_del_member(active_xml_handles, curr_handle);
+        active_xml_handles_counter = bms_del_member(active_xml_handles_counter, curr_handle_counter);
         MemoryContextSwitchTo(oldContext);
         
         found = true;
@@ -4701,11 +4712,11 @@ void
 reset_cached_xml_handle()
 {
     /* Reset active handles bitmap */
-    bms_free(active_xml_handles);
-    active_xml_handles = NULL;
+    bms_free(active_xml_handles_counter);
+    active_xml_handles_counter = NULL;
 
     /* Reset xml handles */
-    current_xml_handle = XML_HANDLE_INVALID; 
+    current_xml_handle_counter = XML_HANDLE_COUNTER_INVALID; 
 
     /* Invalidate the Oid */
     xml_handle_temp_table_relid = InvalidOid;
