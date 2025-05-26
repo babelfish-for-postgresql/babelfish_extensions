@@ -100,7 +100,6 @@ GO
 
 -- TEST CASE 14: Testing with computed columns
 SELECT 
-    id,
     numeric_data,
     decimal_data,
     float_data,
