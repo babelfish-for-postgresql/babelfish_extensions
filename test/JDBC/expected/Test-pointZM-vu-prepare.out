@@ -1,3 +1,6 @@
+# This file tests support for POINT with ZM flags
+# It also includes test for HasM , HasZ, Z , M functions
+
 # Geometry Test Cases
 
 CREATE TABLE GEOSPATIALPOINTGEOM_dt (location geometry)
@@ -84,14 +87,14 @@ INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText(
 INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO GEOSPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when cast is not provided
@@ -649,14 +652,14 @@ INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geometry::STGeomFromText
 INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 # Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO GEOSPATIALPOINTGEOGR_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) );
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 
@@ -1079,5 +1082,376 @@ INSERT INTO GeographyToBytea (ID, geo_point) VALUES (8, geography::STGeomFromTex
 ~~ROW COUNT: 1~~
 
 INSERT INTO GeographyToBytea (ID, geo_point) VALUES (9, geography::STGeomFromText( NULL , 4326));
+~~ROW COUNT: 1~~
+
+
+# Views  for HasM , HasZ, Z , M functions
+CREATE TABLE GEOSPATIALPOINTGEOMRCV_dt (location geometry)
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOMRCV_dt (location) VALUES ( geometry::STGeomFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GEOSPATIALPOINTGEOGRCV_dt (location geography)
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 )', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900 NULL NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000 NULL)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900  NULL 32.546000)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900 32.546000  54.56300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOGRCV_dt (location) VALUES ( geography::STGeomFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW GeometryHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasM AS SELECT location.HasM FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+ 
+CREATE VIEW GeometryHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyHasZ AS SELECT location.HasZ FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryM AS SELECT location.M FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyM AS SELECT location.M FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+
+CREATE VIEW GeometryZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOMRCV_dt ORDER BY location.STX;
+
+CREATE VIEW GeographyZ AS SELECT location.Z FROM GEOSPATIALPOINTGEOGRCV_dt ORDER BY location.Lat;
+
+#Tests for Geometry type Prepared Statements
+
+# Test cases for Point(x y) - 2D points with NULL as Z and M
+prepst#!#INSERT INTO GEOSPATIALPOINTGEOMRCV_dt(location) values(?) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-720.345 45.1234 NULL):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234 NULL NULL):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y z) - 3D points with Z coordinate
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0):4332
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234 999.999):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 5.0 NULL):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y NULL m) - 2D points with measure but no Z coordinate
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 NULL 4.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 NULL 100.5):4335
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0 NULL -10.5):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234 NULL 999.999):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(0.0 0.0 NULL 0.0):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y z m) - 3D points with both Z coordinate and measure
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):4355
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0 -10.5 -20.25):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234 999.999 888.888):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(0.0 0.0 0.0 0.0):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for POINT EMPTY - Empty point geometries
+prepst#!#exec#!#GEOMETRY|-|location|-|POINT EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POINT EMPTY:0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|POINT EMPTY:10000
+~~ROW COUNT: 1~~
+
+
+#Negative Test for STGeomFromText when SRID >= 10^6
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234 NULL NULL):1000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5):1000043
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0 NULL -10.5):1000004
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):1000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+
+#Negative Test for STGeomFromText with SRID < 0
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234 NULL NULL):-5
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5):-1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0 NULL -10.5):-6
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):-2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+
+#Negative Test for STGeomFromText when SRID is NULL
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234 NULL NULL):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0 NULL -10.5):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+
+#Negative Test for STGeomFromText when a coordinate is missing
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+#Negative Test when an unsupported feature in queried
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported geometry type)~~
+
+
+#Tests for geography type Prepared Statements
+
+# Test cases for Point(x y) - 2D points with NULL as Z and M
+prepst#!#INSERT INTO GEOSPATIALPOINTGEOGRCV_dt(location) values(?) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234 NULL):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234 NULL NULL):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y z) - 3D points with Z coordinate
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0):4120
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5):4616
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234 999.999):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 5.0 NULL):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y NULL m) - 2D points with measure but no Z coordinate
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 NULL 4.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 NULL 100.5):4616
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0 NULL -10.5):4120
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234 NULL 999.999):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(0.0 0.0 NULL 0.0):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for Point(x y z m) - 3D points with both Z coordinate and measure
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4618
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):4120
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0 -10.5 -20.25):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234 999.999 888.888):4671
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(0.0 0.0 0.0 0.0):4326
+~~ROW COUNT: 1~~
+
+
+# Test cases for POINT EMPTY - Empty point geometries
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POINT EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POINT EMPTY:4709
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|POINT EMPTY:7844
+~~ROW COUNT: 1~~
+
+
+#Negative Test for STGeomFromText with SRID is not valid
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234 NULL NULL): 3542
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5):-1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0 NULL -10.5):10
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):5555
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234 NULL NULL):1000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+
+#Negative Test for STGeomFromText when SRID is NULL
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234 NULL NULL):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0 NULL -10.5):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900 100.5 200.75):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+
+#Negative Test for STGeomFromText when a coordinate is missing
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+#Negative Test when an unsupported feature in queried
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported geometry type)~~
+
+
+CREATE TABLE GEOSPATIALPOINTEMPTYdt (geom geometry, geog geography);
+
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geom) values(?) #!#GEOMETRY|-|geom|-|Point EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#INSERT INTO GEOSPATIALPOINTEMPTYdt(geog) values(?) #!#GEOGRAPHY|-|geog|-|Point EMPTY:4326
 ~~ROW COUNT: 1~~
 
