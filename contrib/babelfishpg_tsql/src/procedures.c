@@ -4523,6 +4523,7 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     bool                  nulls[7] = {false, true, false, true, true, false, true};
     bool                  table_exists = false;
 
+   /* Check if the table exists using ENR lookup */
    if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
    {
       relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
@@ -4575,13 +4576,6 @@ insert_xml_handle_entry(xmltype *xml_data, xmltype *ns_data, int xml_data_length
     if (!nulls[6])
         values[6] = PointerGetDatum(ns_data);
     
-    relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
-    
-    if (relation == NULL)
-        ereport(ERROR,
-                (errcode(ERRCODE_UNDEFINED_TABLE),
-                 errmsg("XML handle temporary table does not exist")));
-    
     tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 
     GetUserIdAndSecContext(&save_userid, &save_sec_context);
@@ -4628,13 +4622,24 @@ delete_xml_handle_entry(int document_id)
     TableScanDesc         scan;
     HeapTuple             tuple;
     bool                  found = false;
-    int                   curr_handle_counter = (document_id + 1) / 2;
+    int                   curr_handle_counter;
     int                   save_sec_context;
     Oid                   save_userid;
     int                   saved_dialect = sql_dialect;
     MemoryContext         oldContext = NULL;
     bool                  table_exists = false;
     
+    /* Check for negative document ID */
+    if (document_id <= 0)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_UNDEFINED_OBJECT),
+                 errmsg("Could not find prepared statement with handle %d", document_id)));
+    }
+
+    /* Calculate the handle counter */
+    curr_handle_counter = (document_id + 1) / 2;
+
     /* Check if the handle is still active */
     if (!bms_is_member(curr_handle_counter, active_xml_handles_counter))
     {
@@ -4643,6 +4648,7 @@ delete_xml_handle_entry(int document_id)
                  errmsg("Could not find prepared statement with handle %d", document_id)));
     }
     
+    /* Check if the table exists using ENR lookup */
     if(get_ENR_withoid(currentQueryEnv, xml_handle_temp_table_relid, ENR_TSQL_TEMP) != NULL)
     {
     	relation = relation_open(xml_handle_temp_table_relid, RowExclusiveLock);
