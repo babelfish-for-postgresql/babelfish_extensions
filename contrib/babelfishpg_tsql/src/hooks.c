@@ -6395,11 +6395,12 @@ pltsql_exprTypmod(Plan *plan, Node *expr)
 	int32       result_typmod = -1;
 	Oid         expr_type;
 	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-	
-	if (sql_dialect != SQL_DIALECT_TSQL || expr == NULL)
+
+	if (expr == NULL ||
+		(sql_dialect != SQL_DIALECT_TSQL &&
+			(!babelfish_dump_restore || strcmp(babelfish_dump_restore, "on") != 0)))
 	{
-		if (!babelfish_dump_restore && (strcmp(babelfish_dump_restore, "off") == 0))
-			return -1;
+		return -1;
 	}
 
 	expr_type = exprType(expr);

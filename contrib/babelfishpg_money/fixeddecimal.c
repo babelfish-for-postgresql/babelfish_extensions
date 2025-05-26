@@ -53,11 +53,9 @@
 
 /*
  * This is bounded by the maximum and minimum values of int64.
- * 9223372036854775807 is 19 decimal digits long, but we we can only represent
- * this number / FIXEDDECIMAL_MULTIPLIER, so we must subtract
- * FIXEDDECIMAL_SCALE
+ * 9223372036854775807 is 19 decimal digits long.
  */
-#define FIXEDDECIMAL_MAX_PRECISION 19 - FIXEDDECIMAL_SCALE
+#define FIXEDDECIMAL_MAX_PRECISION 19
 
 /* Define this if your compiler has _builtin_add_overflow() */
 /* #define HAVE_BUILTIN_OVERFLOW */
@@ -797,7 +795,8 @@ fixeddecimaltypmodin(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("FIXEDDECIMAL precision %d must be between %d and %d",
-							tl[0], FIXEDDECIMAL_SCALE, FIXEDDECIMAL_MAX_PRECISION)));
+							val_precision, FIXEDDECIMAL_SCALE, FIXEDDECIMAL_MAX_PRECISION)));
+
 		if (val_scale != FIXEDDECIMAL_SCALE)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1737,7 +1736,7 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	 * we must divide the result by this to get the correct result.
 	 */
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
-	/* Round off the result to TDS_DIFXEDECIMAL_SCALE. */
+	/* Round off the result to FIXEDDECIMAL_SCALE. */
 	if ((((int128) arg1 * arg2 % FIXEDDECIMAL_MULTIPLIER)) >= 5000)
 	result++;
 
