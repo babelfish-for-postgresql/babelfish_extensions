@@ -6,6 +6,8 @@ using System.Data.OleDb;
 using Microsoft.Data.SqlClient;
 using System.Data.SqlTypes;
 using Microsoft.SqlServer.Types;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.IO;
 using System.IO;
 using System.Text;
 
@@ -126,10 +128,19 @@ namespace BabelfishDotnetFramework
 								string geoWKT = arguments[0];
 								int srid = (int)GetSqlDbValue("int", arguments[1]);
 								
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
-								((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "Geometry";
+								// Create a WKT reader and parse the geometry
+								var reader = new WKTReader();
+								var geometry = reader.Read(geoWKT);
+								geometry.SRID = srid;
 
-								sqlCmd.Parameters[param[1].Trim()].Value = SqlGeometry.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
+								// Convert to SQL Server format
+								var sqlGeometryWriter = new SqlServerBytesWriter();
+								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
+
+								// Set up the parameter
+								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
+								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "geometry";
+								sqlCmd.Parameters[param[1].Trim()].Value = sqlServerBytes;
 								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
 							}
 								break;
@@ -138,16 +149,28 @@ namespace BabelfishDotnetFramework
 								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
 								{
 									testUtils.PrintToLogsOrConsole("GEOGRAPHY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;
+									break;    
 								}
 								string[] arguments = param[2].Split(':', 2);
 								string geoWKT = arguments[0];
 								int srid = (int)GetSqlDbValue("int", arguments[1]);
-														
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "Geography";
 
-								sqlCmd.Parameters[param[1].Trim()].Value = SqlGeography.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
+								// Create a WKT reader and parse the geometry
+								var reader = new WKTReader();
+								var geometry = reader.Read(geoWKT);
+								geometry.SRID = srid;
+
+								// Convert to SQL Server format
+								var sqlGeometryWriter = new SqlServerBytesWriter
+								{
+									IsGeography = true
+								};
+								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
+
+								// Set up the parameter
+								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
+								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "geography";  // Note: lowercase "geography"
+								sqlCmd.Parameters[param[1].Trim()].Value = sqlServerBytes;
 								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
 							}
 								break;
@@ -275,16 +298,25 @@ namespace BabelfishDotnetFramework
 								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
 								{
 									testUtils.PrintToLogsOrConsole("GEOMETRY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;	
+									break;    
 								}
 								string[] arguments = param[2].Split(':', 2);
 								string geoWKT = arguments[0];
-								int srid = (int)GetSqlDbValue("int", arguments[1]);;
+								int srid = (int)GetSqlDbValue("int", arguments[1]);
 
+								// Create a WKT reader and parse the geometry
+								var reader = new WKTReader();
+								var geometry = reader.Read(geoWKT);
+								geometry.SRID = srid;
+
+								// Convert to SQL Server format
+								var sqlGeometryWriter = new SqlServerBytesWriter();
+								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
+
+								// Set up the parameter
 								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)parameter).UdtTypeName = "Geometry";
-
-								parameter.Value = SqlGeometry.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
+								((SqlParameter)parameter).UdtTypeName = "geometry";
+								parameter.Value = sqlServerBytes;
 								parameter.Size = 65535;
 							}
 								break;
@@ -293,16 +325,28 @@ namespace BabelfishDotnetFramework
 								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
 								{
 									testUtils.PrintToLogsOrConsole("GEOGRAPHY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;	
+									break;    
 								}
 								string[] arguments = param[2].Split(':', 2);
 								string geoWKT = arguments[0];
 								int srid = (int)GetSqlDbValue("int", arguments[1]);
 
-								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)parameter).UdtTypeName = "Geography";
+								// Create a WKT reader and parse the geometry
+								var reader = new WKTReader();
+								var geometry = reader.Read(geoWKT);
+								geometry.SRID = srid;
 
-								parameter.Value = SqlGeography.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
+								// Convert to SQL Server format
+								var sqlGeometryWriter = new SqlServerBytesWriter
+								{
+									IsGeography = true
+								};
+								byte[] sqlServerBytes = sqlGeometryWriter.Write(geometry);
+
+								// Set up the parameter
+								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
+								((SqlParameter)parameter).UdtTypeName = "geography";  // Note: lowercase "geography"
+								parameter.Value = sqlServerBytes;
 								parameter.Size = 65535;
 							}
 								break;
