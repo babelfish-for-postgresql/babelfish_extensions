@@ -381,7 +381,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
--- To handle the typmod values for procedure and function for smallmoney/money.
+/*
+ * Updates typmod values in pg_proc for smallmoney/money data types in
+ * PLTSQL procedures/functions, defined in babelfish_namespace_ext schemas.
+ * Sets money typmod to 1245192(19,4) and smallmoney to 655368(10,4) where typmod is -1.
+ */
 UPDATE pg_proc p
 SET probin = (
 	SELECT jsonb_set(
@@ -417,8 +421,12 @@ WHERE sch.nspname = p.pronamespace::regnamespace::name
 	AND l.lanname = 'pltsql'
 	AND ((p.prokind = 'p' AND p.proargtypes <> '') OR (p.prokind = 'f' AND p.proallargtypes IS NULL));
 
-
--- To handle the typmod values for tables and views for smallmoney/money.
+/*
+ * Updates typmod values in pg_attribute for smallmoney/money columns
+ * in r = ordinary table, i = index, v = view, p = partitioned table, I = partitioned index.
+ * For other relkinds, we either don't create from TDS side or they don't support money/smallmoney.
+ * Sets money typmod to 1245192 and smallmoney to 655368 where. typmod is -1
+ */
 UPDATE pg_attribute a
 SET atttypmod =
 	CASE
@@ -438,8 +446,10 @@ WHERE a.attrelid = c.oid
 		a.atttypid = 'sys.smallmoney'::regtype::oid)
 	AND c.relkind IN ('r', 'i', 'v', 'p', 'I');
 
--- To handle the typmod value of UDT created over money/smallmoney.
--- This would be required in cases where we create a new table using this earlier UDT or directly using this UDT.
+/*
+ * Updates typmod values for UDTs based on money/smallmoney types in babelfish_namespace_ext schemas.
+ * Required when creating new tables or using these UDTs directly to ensure proper type handling.
+ */
 UPDATE pg_type t
 SET typtypmod =
 	CASE
