@@ -20,6 +20,7 @@
 #include "encoding/encoding.h"
 #include "typecode.h"
 #include "sqlvariant.h"
+#include "babelfishpg_common.h"
 
 #define NOT_FOUND -1
 
@@ -1240,6 +1241,32 @@ get_database_or_server_collation_oid_internal(bool missingOk)
 	return server_collation_oid;
 }
 
+static const char *
+get_cached_logical_db_name(void)
+{
+	if (!g_logical_db_cache.is_valid)
+	{
+		MemoryContext oldcontext;
+		const char* logical_db = NULL;
+		oldcontext = MemoryContextSwitchTo(CacheMemoryContext);
+			
+		logical_db = GetConfigOption("psql_logical_babelfish_db_name", true, true);
+		if (logical_db)
+		{
+			g_logical_db_cache.logical_db_name = MemoryContextStrdup(CacheMemoryContext, logical_db);
+		}
+		else
+		{
+			g_logical_db_cache.logical_db_name = NULL;
+		}
+		g_logical_db_cache.is_valid = true;
+		MemoryContextSwitchTo(oldcontext);
+	}
+	
+	return g_logical_db_cache.logical_db_name;
+}
+
+
 Oid
 BABELFISH_CLUSTER_COLLATION_OID()
 {
@@ -1252,11 +1279,11 @@ BABELFISH_CLUSTER_COLLATION_OID()
 	}
 	
 	/* 
-	 * If DMS, we can return the server level collation
+	 * If logical db collation is required from PG, we can return the server level collation
 	 * We assume that psql_logical_babelfish_db_name is a valid TSQL database name
 	 * Caller is reponsible to supply valid psql_logical_babelfish_db_name
 	 */
-	logical_babelfish_db_name = GetConfigOption("psql_logical_babelfish_db_name", true, true);
+	logical_babelfish_db_name = get_cached_logical_db_name();
 	if (logical_babelfish_db_name)
 		return get_database_or_server_collation_oid_internal(false);
 
