@@ -6,10 +6,10 @@ GO
 CREATE TYPE babel_5512_upgrade_type2 FROM MONEY;
 GO
 
+
 ----------------------------------------
 -- FUNCTION
 ----------------------------------------
-
 -- no input function only return
 CREATE FUNCTION babel_5512_upgrade_f1() RETURNS money AS BEGIN RETURN (select 123); END;
 go
@@ -55,10 +55,10 @@ END;
 GO
 
 
+
 ----------------------------------------
 -- PROCEDURE
 ----------------------------------------
-
 -- no input procedure only OUTPUT
 CREATE PROCEDURE babel_5512_upgrade_p1 @Statement money OUTPUT AS BEGIN SET @Statement = '123' END;
 go
@@ -107,10 +107,10 @@ BEGIN
 END;
 GO
 
+
 ----------------------------------------
 -- ITVF (Inline Table-Valued Functions)
 ----------------------------------------
-
 -- User defined inline table valued function - should not update for function but update for tables returned as a part of func.
 -- First, create the table
 CREATE TABLE babel_5512_upgrade_t9(
@@ -144,10 +144,10 @@ RETURN (
 );
 GO
 
+
 -------------------------------------------------
 -- MSTVF (Multi-Statement Table-Valued Functions)
 -------------------------------------------------
-
 -- Multi-statement table valued function - should not update for function but update for tables returned as a part of func.
 CREATE TABLE babel_5512_upgrade_t10(customer_id int primary key, money_col money not null, small_col smallmoney);
 GO
@@ -195,16 +195,24 @@ go
 
 insert into babel_5512_upgrade_t1 values (1.0, -922337203685477.5808, -214748.3648)
 GO
+~~ROW COUNT: 1~~
+
 insert into babel_5512_upgrade_t1 values (2.0, 922337203685477.5807, 214748.3647)
 GO
+~~ROW COUNT: 1~~
+
 insert into babel_5512_upgrade_t1 values (3.0, 1234.234563, 123.234567)
 GO
+~~ROW COUNT: 1~~
+
 
 -- UDT column
 create table babel_5512_upgrade_t2 ( a15 decimal,a16 babel_5512_upgrade_type1,a17 babel_5512_upgrade_type2)
 go
 insert into babel_5512_upgrade_t2 values (678.90, 678.90, 678.90)
 GO
+~~ROW COUNT: 1~~
+
 
 create view babel_5512_upgrade_v1 as select cast(2 as smallmoney) * cast(6.43 as smallmoney) as babel_5512_result1
 go
@@ -238,14 +246,4 @@ GO
 CREATE VIEW babel_5512_upgrade_v10 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
 GO
 
--- p = partitioned table
-CREATE PARTITION FUNCTION babel_5512_upgrade_f11 (int) AS RANGE RIGHT FOR VALUES (100, 200, 300, 400);
-GO
-CREATE PARTITION SCHEME babel_5512_upgrade_s1 AS PARTITION babel_5512_upgrade_f11 ALL TO ([PRIMARY]);
-GO
-CREATE TABLE babel_5512_upgrade_t4 (id int, babel_5512_mon3 money, babel_5512_small3 smallmoney, dept_id int) ON babel_5512_upgrade_s1(dept_id);
-GO
 
--- I = partitioned index
-CREATE INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4(babel_5512_mon3);
-GO

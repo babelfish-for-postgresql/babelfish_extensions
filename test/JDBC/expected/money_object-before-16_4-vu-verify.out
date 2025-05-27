@@ -250,16 +250,6 @@ babel_5512_small1#!#smallmoney#!#4#!#10#!#4
 id#!#int#!#4#!#10#!#0
 ~~END~~
 
-EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t4'
-GO
-~~START~~
-varchar#!#varchar#!#smallint#!#tinyint#!#tinyint
-babel_5512_mon3#!#money#!#8#!#19#!#4
-babel_5512_small3#!#smallmoney#!#4#!#10#!#4
-dept_id#!#int#!#4#!#10#!#0
-id#!#int#!#4#!#10#!#0
-~~END~~
-
 EXEC babel_5512_get_column_info_p10 'babel_5512_upgrade_t9'
 GO
 ~~START~~
@@ -401,25 +391,7 @@ ORDER BY c.relkind, c.relname, a.attname;
 GO
 ~~START~~
 varchar#!#varchar#!#text#!#int
-I#!#babel_5512_mon3#!#money#!#1245192
-i#!#babel_5512_mon3#!#money#!#1245192
-i#!#babel_5512_mon3#!#money#!#1245192
-i#!#babel_5512_mon3#!#money#!#1245192
-i#!#babel_5512_mon3#!#money#!#1245192
-i#!#babel_5512_mon3#!#money#!#1245192
 i#!#babel_5512_mon1#!#money#!#1245192
-p#!#babel_5512_mon3#!#money#!#1245192
-p#!#babel_5512_small3#!#smallmoney#!#655368
-r#!#babel_5512_mon3#!#money#!#1245192
-r#!#babel_5512_small3#!#smallmoney#!#655368
-r#!#babel_5512_mon3#!#money#!#1245192
-r#!#babel_5512_small3#!#smallmoney#!#655368
-r#!#babel_5512_mon3#!#money#!#1245192
-r#!#babel_5512_small3#!#smallmoney#!#655368
-r#!#babel_5512_mon3#!#money#!#1245192
-r#!#babel_5512_small3#!#smallmoney#!#655368
-r#!#babel_5512_mon3#!#money#!#1245192
-r#!#babel_5512_small3#!#smallmoney#!#655368
 r#!#babel_5512_mon1#!#money#!#1245192
 r#!#babel_5512_small1#!#smallmoney#!#655368
 v#!#babel_5512_result1#!#smallmoney#!#655368

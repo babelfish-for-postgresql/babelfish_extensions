@@ -411,19 +411,6 @@ money
 
 
 
--- Testing with complex calculations
--- FIXME: Handle fixed length dataype branch operator when we have it with numeric.
--- DECLARE @revenue MONEY = 10000.00
--- DECLARE @costs MONEY = 6000.00
--- DECLARE @targetMargin SMALLMONEY = 0.40
--- SELECT CASE
---     WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
---         (@revenue - @costs) * 0.10
---     WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
---         (@revenue - @costs) * 0.05
---     ELSE 0.00
--- END
--- GO
 -- Testing with multiple currency conversions
 DECLARE @usdAmount MONEY = 1000.00
 DECLARE @exchangeRate1 SMALLMONEY = 1.15 -- EUR
@@ -533,9 +520,6 @@ numeric
 ~~END~~
 
 
--- -- overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.3647 as smallmoney) * cast(1.0001 as smallmoney) end
--- GO
 -- MONEY with MONEY combinations
 -------------------------
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(2.5 as money) * cast(2.5 as money) end
@@ -643,8 +627,6 @@ numeric
 
 
 -- Overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.00 as smallmoney) + cast(214748.00 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(922337203685477.00 as money) + cast(922337203685477.00 as money) end
 GO
 ~~START~~
@@ -673,8 +655,6 @@ numeric
 
 
 -- Overflow or division by small numbers
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.3647 as smallmoney) / cast(0.5 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(922337203685477.5807 as money) / cast(0.5 as money) end
 GO
 ~~START~~
@@ -702,8 +682,6 @@ numeric
 
 
 -- Overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(-214748.3648 as smallmoney) * cast(1.0001 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(-922337203685477.5808 as money) * cast(1.0001 as money) end
 GO
 ~~START~~
@@ -765,28 +743,27 @@ money
 
 
 -- Varous INT ranges
--- file JIRA (int8) overflow, trated as int8 by us, and numeric by sqlserver
-select 7378697629483820646 * cast(99999.9999 as smallmoney)
+-- treated as int8 by us, and numeric by sqlserver
+select 7378697629483820646 * cast(99999.9999 as money)
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
-select 9223372036854775807 * cast(99999.9999 as smallmoney)
+select 9223372036854775807 * cast(99999.9999 as money)
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
-
-select cast(99999.9999 as smallmoney) * 7378697629483820646
+select cast(99999.9999 as money) * 7378697629483820646
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
@@ -802,6 +779,21 @@ numeric
 ~~END~~
 
 select 9223372036854775808  * CAST(2.4999 AS SMALLMONEY)
+GO
+~~START~~
+numeric
+23057507754933254042.4192
+~~END~~
+
+
+select 73786976294838206461 * cast(99999.9999 as money)
+GO
+~~START~~
+numeric
+7378697622105123016616179.3539
+~~END~~
+
+select 9223372036854775808  * CAST(2.4999 AS MONEY)
 GO
 ~~START~~
 numeric
@@ -825,16 +817,6 @@ GO
 numeric
 737869762210512301651617.9354
 ~~END~~
-
-
--- overflow error for us, we treat 9223372036854775807 as bigint
-select 9223372036854775807  * CAST(2.4999 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
 
 
 -- smallint
@@ -864,50 +846,12 @@ smallmoney
 ~~END~~
 
 
--- giving overflow error (int4)
-select 2147483647 * CAST(2.4999 AS SMALLMONEY)
+select 21474836 * CAST(1 AS MONEY)
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-select 21474836 * CAST(2.4999 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-select 21474836 * CAST(1 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-
--- giving overflow error (int2)
-select 32767 * CAST(99999.9999 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-
--- giving overflow error (int1)
-select 255  * CAST(99999.9999 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
+money
+21474836.0000
+~~END~~
 
 
 -- fixeddecimal multiplication
@@ -934,61 +878,186 @@ money
 
 
 
--- INT32 Edge Cases with smallmoney
--------------------------
--- INT32_MAX = 2147483647
--- INT32_MIN = -2147483648
--- Multiplication edge cases
-SELECT CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MAX * 1
+-- Int 8(int64) : -9223372036854775808 to 9223372036854775807
+-- int 4(int32) : -2147483648 to 2147483647
+-- int 2(int16) : -32768 to 32767
+-- int 1(int8) : 0 to 255
+-- money: -922337203685477.5808 to 922337203685477.5807
+-- Smallmoney: -214748.3648 to 214748.3647
+-- INT8 (BIGINT) Combinations
+-- INT8 * MONEY
+SELECT CAST(9223372036854775807 AS bigint) * CAST(2.4999 AS MONEY) AS res1
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
-SELECT CAST(2147483647 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
+SELECT CAST(9223372036854775807 AS bigint) * CAST(922337203685477.5807 AS MONEY) AS res1
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-2147483648 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MIN * 1
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-2147483648 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
-GO
-~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
 
+-- MONEY * INT8
+SELECT CAST(2.4999 AS MONEY) * 9223372036854775807 AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * 9223372036854775807 AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
 
 
--- Division edge cases
--- SELECT CAST(2147483647 AS INT) / CAST(1.0000 AS SMALLMONEY)
--- GO
--- SELECT CAST(2147483647 AS INT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
--- GO
--- SELECT CAST(-2147483648 AS INT) / CAST(1.0000 AS SMALLMONEY)
--- GO
--- SELECT CAST(-2147483648 AS INT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
--- GO
--- INT64 Edge Cases with smallmoney
+-- INT4 (INT) Combinations
+-- INT4 * MONEY
+SELECT 2147483647 * CAST(2.4999 AS MONEY) AS res1
+GO
+~~START~~
+money
+5368494369.1353
+~~END~~
+
+SELECT 2147483647 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- MONEY * INT4
+SELECT CAST(2.4999 AS MONEY) * 2147483647 AS res1
+GO
+~~START~~
+money
+5368494369.1353
+~~END~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * 2147483647 AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- INT2 (SMALLINT) Combinations
+-- INT2 * MONEY
+SELECT 32767 * CAST(2.4999 AS MONEY) AS res1
+GO
+~~START~~
+money
+81914.2233
+~~END~~
+
+SELECT 32767 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- MONEY * INT2
+SELECT CAST(2.4999 AS MONEY) * 32767 AS res1
+GO
+~~START~~
+money
+81914.2233
+~~END~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * 32767 AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- INT1 (TINYINT) Combinations
+-- INT1 * MONEY
+SELECT 255 * CAST(2.4999 AS MONEY) AS res1
+GO
+~~START~~
+money
+637.4745
+~~END~~
+
+SELECT 255 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- MONEY * INT1
+SELECT CAST(2.4999 AS MONEY) * 255 AS res1
+GO
+~~START~~
+money
+637.4745
+~~END~~
+
+SELECT CAST(922337203685477.5807 AS MONEY) * 255 AS res1
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+
+-- -- SMALLMONEY * INT1
+SELECT CAST(2.4999 AS SMALLMONEY) * 255 AS res1
+GO
+~~START~~
+smallmoney
+637.4745
+~~END~~
+
+SELECT CAST(214748.3647 AS MONEY) * 255 AS res1
+GO
+~~START~~
+money
+54760832.9985
+~~END~~
+
+
+
+
+-- INT64 Edge Cases
 -------------------------
 -- INT64_MAX = 9223372036854775807
 -- INT64_MIN = -9223372036854775808
 -- Multiplication edge cases
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MAX * 1
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS MONEY)
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS SMALLMONEY)
 GO
 ~~START~~
 smallmoney
@@ -996,7 +1065,15 @@ smallmoney
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS MONEY)
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: fixeddecimal out of range)~~
+
+SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0000 AS SMALLMONEY)
 GO
 ~~START~~
 smallmoney
@@ -1004,60 +1081,10 @@ smallmoney
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
-SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MIN * 1
+SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0001 AS MONEY)
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-
--- Division edge cases
-SELECT CAST(9223372036854775807 AS BIGINT) / CAST(1.0000 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(9223372036854775807 AS BIGINT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-9223372036854775808 AS BIGINT) / CAST(1.0000 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-9223372036854775808 AS BIGINT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT 9223372036854775807 / CAST(0.5000 AS SMALLMONEY)
-GO
-~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
@@ -1080,127 +1107,78 @@ numeric
 ~~END~~
 
 
--- Mixed operations
-SELECT CASE 
-    WHEN 1=1 THEN CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY)
-    ELSE CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS SMALLMONEY)
-END
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-
--- Testing with values just below/above thresholds
-SELECT CAST(2147483646 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Just below INT32_MAX
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(2147483648 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Just above INT32_MAX
-GO
-~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
-
-
--- Testing with power of 2 values
-SELECT CAST(POWER(2, 31) - 1 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MAX
-GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
-
-SELECT CAST(POWER(2, 63) - 1 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MAX
-GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
-
-
 -- Testing with intermediate values
-SELECT CAST(1073741824 AS INT) * CAST(2.0000 AS SMALLMONEY) -- 2^30 * 2
+ SELECT CAST(1073741824 AS INT) * CAST(2.0000 AS money) -- 2^30 * 2
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
+money
+2147483648.0000
+~~END~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(4611686018427387904 AS BIGINT) * CAST(2.0000 AS SMALLMONEY) -- 2^62 * 2
+SELECT CAST(4611686018427387904 AS BIGINT) * CAST(2.0000 AS MONEY) -- 2^62 * 2
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
 
 -- Testing with negative powers of 2
-SELECT CAST(-1073741824 AS INT) * CAST(2.0000 AS SMALLMONEY) -- -2^30 * 2
+SELECT CAST(-1073741824 AS INT) * CAST(2.0000 AS MONEY) -- -2^30 * 2
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
+money
+-2147483648.0000
+~~END~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(-4611686018427387904 AS BIGINT) * CAST(2.0000 AS SMALLMONEY) -- -2^62 * 2
+SELECT CAST(-4611686018427387904 AS BIGINT) * CAST(2.0000 AS MONEY) -- -2^62 * 2
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
 
 -- Testing with decimal fractions
-SELECT CAST(2147483647 AS INT) * CAST(0.5000 AS SMALLMONEY)
+SELECT CAST(2147483647 AS INT) * CAST(0.5000 AS MONEY)
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
+money
+1073741823.5000
+~~END~~
 
-~~ERROR (Message: fixeddecimal out of range)~~
-
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS SMALLMONEY)
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS MONEY)
 GO
 ~~START~~
-smallmoney
+money
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: fixeddecimal out of range)~~
 
 
 -- Testing with very small decimal values
-SELECT CAST(2147483647 AS INT) * CAST(0.0001 AS SMALLMONEY)
+SELECT CAST(2147483647 AS INT) * CAST(0.0001 AS MONEY)
 GO
 ~~START~~
-smallmoney
+money
 214748.3647
 ~~END~~
 
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.0001 AS SMALLMONEY)
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.0001 AS MONEY)
 GO
 ~~START~~
-smallmoney
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: fixeddecimal out of range)~~
+money
+922337203685477.5807
+~~END~~
 
 
 -- Testing with CASE statements and edge cases
 SELECT CASE 
-    WHEN CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY) > 0
-    THEN CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS SMALLMONEY)
-    ELSE CAST('170141183460469231731687303715884105727' AS DECIMAL(38,0)) * CAST(0.0001 AS SMALLMONEY)
+    WHEN CAST(2147483647 AS INT) * CAST(1.0000 AS MONEY) > 0
+    THEN CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS MONEY)
+    ELSE CAST('170141183460469231731687303715884105727' AS DECIMAL(38,0)) * CAST(0.0001 AS MONEY)
 END
 GO
 ~~ERROR (Code: 33557097)~~
@@ -1271,20 +1249,15 @@ numeric
 ~~END~~
 
 
+-- Multiplication near limits
+SELECT CAST(10000.00 AS SMALLMONEY) * CAST(21.4748 AS SMALLMONEY)
+GO
+~~START~~
+smallmoney
+214748.0000
+~~END~~
 
 
-
-
--- Arithmetic operations edge cases
--- Addition near max value
--- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(0.0001 AS SMALLMONEY) -- Should overflow
--- GO
--- -- Multiplication near limits
--- SELECT CAST(10000.00 AS SMALLMONEY) * CAST(21.4748 AS SMALLMONEY)
--- GO
--- -- Division by small numbers
--- SELECT CAST(100.00 AS SMALLMONEY) / CAST(0.0001 AS SMALLMONEY)
--- GO
 -- Nested CASE queries
 -- 1. (first condition is true)
 SELECT 
@@ -2289,7 +2262,6 @@ GO
 numeric
 9223372036854775930.45
 ~~END~~
-
 
 
 select 2.00 * (select 1)

@@ -223,12 +223,6 @@ go
 create view babel_5512_upgrade_v3 as select cast(6.43 as smallmoney) as babel_5512_result3
 GO
 
-
-
--- create view babel_5512_upgrade_v4 as select case 1 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(6.43 as smallmoney) end
--- GO
--- create view babel_5512_upgrade_v5 as select CAST(123.45 AS NUMERIC(5,2)) + CAST(678.90 AS MONEY) as bsc
--- GO
 create view babel_5512_upgrade_v6 AS SELECT a15, a16, a17 FROM babel_5512_upgrade_t2;
 GO
 -- view direct query level UDT
@@ -252,4 +246,14 @@ GO
 CREATE VIEW babel_5512_upgrade_v10 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
 GO
 
+-- p = partitioned table
+CREATE PARTITION FUNCTION babel_5512_upgrade_f11 (int) AS RANGE RIGHT FOR VALUES (100, 200, 300, 400);
+GO
+CREATE PARTITION SCHEME babel_5512_upgrade_s1 AS PARTITION babel_5512_upgrade_f11 ALL TO ([PRIMARY]);
+GO
+CREATE TABLE babel_5512_upgrade_t4 (id int, babel_5512_mon3 money, babel_5512_small3 smallmoney, dept_id int) ON babel_5512_upgrade_s1(dept_id);
+GO
 
+-- I = partitioned index
+CREATE INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4(babel_5512_mon3);
+GO

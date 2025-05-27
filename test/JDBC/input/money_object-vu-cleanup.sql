@@ -2,8 +2,6 @@
 DROP VIEW babel_5512_upgrade_v1;
 DROP VIEW babel_5512_upgrade_v2;
 DROP VIEW babel_5512_upgrade_v3;
--- DROP VIEW babel_5512_upgrade_v4;
--- DROP VIEW babel_5512_upgrade_v5;
 DROP VIEW babel_5512_upgrade_v6;
 DROP VIEW babel_5512_upgrade_v7;
 DROP VIEW babel_5512_upgrade_v8;
@@ -52,7 +50,7 @@ GO
 DROP TABLE babel_5512_upgrade_t1;
 DROP TABLE babel_5512_upgrade_t2;
 DROP TABLE babel_5512_upgrade_t3;
--- DROP TABLE babel_5512_upgrade_t4;
+DROP TABLE babel_5512_upgrade_t4;
 DROP TABLE babel_5512_upgrade_t5;
 DROP TABLE babel_5512_upgrade_t9;
 DROP TABLE babel_5512_upgrade_t10;
@@ -60,12 +58,12 @@ DROP TABLE babel_5512_upgrade_t11;
 GO
 
 -- Drop Partition Scheme
--- DROP PARTITION SCHEME babel_5512_upgrade_s1;
--- GO
+DROP PARTITION SCHEME babel_5512_upgrade_s1;
+GO
 
 -- Drop Partition Function
--- DROP PARTITION FUNCTION babel_5512_upgrade_f11;
--- GO
+DROP PARTITION FUNCTION babel_5512_upgrade_f11;
+GO
 
 -- Drop User-Defined Types (drop last as they might be used by other objects)
 DROP TYPE babel_5512_upgrade_type1;

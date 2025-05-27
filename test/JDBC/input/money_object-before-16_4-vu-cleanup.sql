@@ -11,7 +11,6 @@ GO
 
 -- Drop Indexes
 DROP INDEX babel_5512_upgrade_idx1 ON babel_5512_upgrade_t3;
--- DROP INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4;
 GO
 
 -- Drop Functions (ITVF, MSTVF, and regular functions)
@@ -50,19 +49,10 @@ GO
 DROP TABLE babel_5512_upgrade_t1;
 DROP TABLE babel_5512_upgrade_t2;
 DROP TABLE babel_5512_upgrade_t3;
-DROP TABLE babel_5512_upgrade_t4;
 DROP TABLE babel_5512_upgrade_t5;
 DROP TABLE babel_5512_upgrade_t9;
 DROP TABLE babel_5512_upgrade_t10;
 DROP TABLE babel_5512_upgrade_t11;
-GO
-
--- Drop Partition Scheme
-DROP PARTITION SCHEME babel_5512_upgrade_s1;
-GO
-
--- Drop Partition Function
-DROP PARTITION FUNCTION babel_5512_upgrade_f11;
 GO
 
 -- Drop User-Defined Types (drop last as they might be used by other objects)

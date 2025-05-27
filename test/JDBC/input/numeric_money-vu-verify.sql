@@ -209,19 +209,6 @@ SELECT CASE
 END
 GO
 
--- Testing with complex calculations
--- FIXME: Handle fixed length dataype branch operator when we have it with numeric.
--- DECLARE @revenue MONEY = 10000.00
--- DECLARE @costs MONEY = 6000.00
--- DECLARE @targetMargin SMALLMONEY = 0.40
--- SELECT CASE
---     WHEN (@revenue - @costs) / @revenue >= @targetMargin THEN 
---         (@revenue - @costs) * 0.10
---     WHEN (@revenue - @costs) / @revenue >= @targetMargin / 2 THEN
---         (@revenue - @costs) * 0.05
---     ELSE 0.00
--- END
--- GO
 
 -- Testing with multiple currency conversions
 DECLARE @usdAmount MONEY = 1000.00
@@ -284,9 +271,6 @@ GO
 -- Rounding instead of truncation
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(2.5 as smallmoney) * cast(2.4999 as smallmoney) end
 GO
--- -- overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.3647 as smallmoney) * cast(1.0001 as smallmoney) end
--- GO
 
 -- MONEY with MONEY combinations
 -------------------------
@@ -327,8 +311,6 @@ select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(1000000.00 as mon
 GO
 
 -- Overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.00 as smallmoney) + cast(214748.00 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(922337203685477.00 as money) + cast(922337203685477.00 as money) end
 GO
 
@@ -341,8 +323,6 @@ select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(1000000.00 as mon
 GO
 
 -- Overflow or division by small numbers
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(214748.3647 as smallmoney) / cast(0.5 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(922337203685477.5807 as money) / cast(0.5 as money) end
 GO
 
@@ -354,8 +334,6 @@ select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(-1000000.00 as mo
 GO
 
 -- Overflow
--- select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(-214748.3648 as smallmoney) * cast(1.0001 as smallmoney) end
--- GO
 select case 2 when 1 then cast(5.5 as DECIMAL(10,2)) else cast(-922337203685477.5808 as money) * cast(1.0001 as money) end
 GO
 
@@ -380,13 +358,12 @@ SELECT CAST(2.8571 AS MONEY) * CAST(2.4999 AS MONEY)
 GO
 
 -- Varous INT ranges
--- file JIRA (int8) overflow, trated as int8 by us, and numeric by sqlserver
-select 7378697629483820646 * cast(99999.9999 as smallmoney)
+-- treated as int8 by us, and numeric by sqlserver
+select 7378697629483820646 * cast(99999.9999 as money)
 GO
-select 9223372036854775807 * cast(99999.9999 as smallmoney)
+select 9223372036854775807 * cast(99999.9999 as money)
 GO
-
-select cast(99999.9999 as smallmoney) * 7378697629483820646
+select cast(99999.9999 as money) * 7378697629483820646
 GO
 
 
@@ -396,16 +373,17 @@ GO
 select 9223372036854775808  * CAST(2.4999 AS SMALLMONEY)
 GO
 
+select 73786976294838206461 * cast(99999.9999 as money)
+GO
+select 9223372036854775808  * CAST(2.4999 AS MONEY)
+GO
+
 -- overflow issue, BABEL-5689
 select cast(7378697629483820646 as numeric(30,0))*cast(99999.9999 as smallmoney)
 GO
 
 -- explicit casting to numeric
 select cast(7378697629483820646 as numeric(20,0)) * cast(99999.9999 as smallmoney)
-GO
-
--- overflow error for us, we treat 9223372036854775807 as bigint
-select 9223372036854775807  * CAST(2.4999 AS SMALLMONEY)
 GO
 
 -- smallint
@@ -420,20 +398,7 @@ GO
 select 255  * cast(1 as smallmoney)
 GO
 
--- giving overflow error (int4)
-select 2147483647 * CAST(2.4999 AS SMALLMONEY)
-GO
-select 21474836 * CAST(2.4999 AS SMALLMONEY)
-GO
-select 21474836 * CAST(1 AS SMALLMONEY)
-GO
-
--- giving overflow error (int2)
-select 32767 * CAST(99999.9999 AS SMALLMONEY)
-GO
-
--- giving overflow error (int1)
-select 255  * CAST(99999.9999 AS SMALLMONEY)
+select 21474836 * CAST(1 AS MONEY)
 GO
 
 -- fixeddecimal multiplication
@@ -447,56 +412,87 @@ GO
 select cast(922337203685477.5807 as money) * cast(214748.3647 as smallmoney)
 GO
 
--- INT32 Edge Cases with smallmoney
--------------------------
--- INT32_MAX = 2147483647
--- INT32_MIN = -2147483648
+-- Int 8(int64) : -9223372036854775808 to 9223372036854775807
+-- int 4(int32) : -2147483648 to 2147483647
+-- int 2(int16) : -32768 to 32767
+-- int 1(int8) : 0 to 255
+-- money: -922337203685477.5808 to 922337203685477.5807
+-- Smallmoney: -214748.3648 to 214748.3647
 
--- Multiplication edge cases
-SELECT CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MAX * 1
+-- INT8 (BIGINT) Combinations
+-- INT8 * MONEY
+SELECT CAST(9223372036854775807 AS bigint) * CAST(2.4999 AS MONEY) AS res1
 GO
-SELECT CAST(2147483647 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
-GO
-SELECT CAST(-2147483648 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MIN * 1
-GO
-SELECT CAST(-2147483648 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
+SELECT CAST(9223372036854775807 AS bigint) * CAST(922337203685477.5807 AS MONEY) AS res1
 GO
 
--- Division edge cases
--- SELECT CAST(2147483647 AS INT) / CAST(1.0000 AS SMALLMONEY)
--- GO
--- SELECT CAST(2147483647 AS INT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
--- GO
--- SELECT CAST(-2147483648 AS INT) / CAST(1.0000 AS SMALLMONEY)
--- GO
--- SELECT CAST(-2147483648 AS INT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
--- GO
+-- MONEY * INT8
+SELECT CAST(2.4999 AS MONEY) * 9223372036854775807 AS res1
+GO
+SELECT CAST(922337203685477.5807 AS MONEY) * 9223372036854775807 AS res1
+GO
 
--- INT64 Edge Cases with smallmoney
+-- INT4 (INT) Combinations
+-- INT4 * MONEY
+SELECT 2147483647 * CAST(2.4999 AS MONEY) AS res1
+GO
+SELECT 2147483647 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+
+-- MONEY * INT4
+SELECT CAST(2.4999 AS MONEY) * 2147483647 AS res1
+GO
+SELECT CAST(922337203685477.5807 AS MONEY) * 2147483647 AS res1
+GO
+
+-- INT2 (SMALLINT) Combinations
+-- INT2 * MONEY
+SELECT 32767 * CAST(2.4999 AS MONEY) AS res1
+GO
+SELECT 32767 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+
+-- MONEY * INT2
+SELECT CAST(2.4999 AS MONEY) * 32767 AS res1
+GO
+SELECT CAST(922337203685477.5807 AS MONEY) * 32767 AS res1
+GO
+
+-- INT1 (TINYINT) Combinations
+-- INT1 * MONEY
+SELECT 255 * CAST(2.4999 AS MONEY) AS res1
+GO
+SELECT 255 * CAST(922337203685477.5807 AS MONEY) AS res1
+GO
+
+-- MONEY * INT1
+SELECT CAST(2.4999 AS MONEY) * 255 AS res1
+GO
+SELECT CAST(922337203685477.5807 AS MONEY) * 255 AS res1
+GO
+
+-- -- SMALLMONEY * INT1
+SELECT CAST(2.4999 AS SMALLMONEY) * 255 AS res1
+GO
+SELECT CAST(214748.3647 AS MONEY) * 255 AS res1
+GO
+
+
+-- INT64 Edge Cases
 -------------------------
 -- INT64_MAX = 9223372036854775807
 -- INT64_MIN = -9223372036854775808
 
 -- Multiplication edge cases
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MAX * 1
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS MONEY)
 GO
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS SMALLMONEY)
 GO
-SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MIN * 1
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(1.0001 AS MONEY)
 GO
-SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Should overflow
+SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0000 AS SMALLMONEY)
 GO
-
--- Division edge cases
-SELECT CAST(9223372036854775807 AS BIGINT) / CAST(1.0000 AS SMALLMONEY)
-GO
-SELECT CAST(9223372036854775807 AS BIGINT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
-GO
-SELECT CAST(-9223372036854775808 AS BIGINT) / CAST(1.0000 AS SMALLMONEY)
-GO
-SELECT CAST(-9223372036854775808 AS BIGINT) / CAST(0.5000 AS SMALLMONEY) -- Should overflow
-GO
-SELECT 9223372036854775807 / CAST(0.5000 AS SMALLMONEY)
+SELECT CAST(-9223372036854775808 AS BIGINT) * CAST(1.0001 AS MONEY)
 GO
 
 -------------------------
@@ -506,54 +502,35 @@ GO
 SELECT CAST(9999999999999999999999999999999 AS DECIMAL(38,0)) / CAST(1.0000 AS SMALLMONEY)
 GO
 
--- Mixed operations
-SELECT CASE 
-    WHEN 1=1 THEN CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY)
-    ELSE CAST(9223372036854775807 AS BIGINT) * CAST(1.0000 AS SMALLMONEY)
-END
-GO
-
--- Testing with values just below/above thresholds
-SELECT CAST(2147483646 AS INT) * CAST(1.0001 AS SMALLMONEY) -- Just below INT32_MAX
-GO
-SELECT CAST(2147483648 AS BIGINT) * CAST(1.0001 AS SMALLMONEY) -- Just above INT32_MAX
-GO
-
--- Testing with power of 2 values
-SELECT CAST(POWER(2, 31) - 1 AS INT) * CAST(1.0000 AS SMALLMONEY) -- INT32_MAX
-GO
-SELECT CAST(POWER(2, 63) - 1 AS BIGINT) * CAST(1.0000 AS SMALLMONEY) -- INT64_MAX
-GO
-
 -- Testing with intermediate values
-SELECT CAST(1073741824 AS INT) * CAST(2.0000 AS SMALLMONEY) -- 2^30 * 2
+ SELECT CAST(1073741824 AS INT) * CAST(2.0000 AS money) -- 2^30 * 2
 GO
-SELECT CAST(4611686018427387904 AS BIGINT) * CAST(2.0000 AS SMALLMONEY) -- 2^62 * 2
+SELECT CAST(4611686018427387904 AS BIGINT) * CAST(2.0000 AS MONEY) -- 2^62 * 2
 GO
 
 -- Testing with negative powers of 2
-SELECT CAST(-1073741824 AS INT) * CAST(2.0000 AS SMALLMONEY) -- -2^30 * 2
+SELECT CAST(-1073741824 AS INT) * CAST(2.0000 AS MONEY) -- -2^30 * 2
 GO
-SELECT CAST(-4611686018427387904 AS BIGINT) * CAST(2.0000 AS SMALLMONEY) -- -2^62 * 2
+SELECT CAST(-4611686018427387904 AS BIGINT) * CAST(2.0000 AS MONEY) -- -2^62 * 2
 GO
 
 -- Testing with decimal fractions
-SELECT CAST(2147483647 AS INT) * CAST(0.5000 AS SMALLMONEY)
+SELECT CAST(2147483647 AS INT) * CAST(0.5000 AS MONEY)
 GO
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS SMALLMONEY)
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS MONEY)
 GO
 
 -- Testing with very small decimal values
-SELECT CAST(2147483647 AS INT) * CAST(0.0001 AS SMALLMONEY)
+SELECT CAST(2147483647 AS INT) * CAST(0.0001 AS MONEY)
 GO
-SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.0001 AS SMALLMONEY)
+SELECT CAST(9223372036854775807 AS BIGINT) * CAST(0.0001 AS MONEY)
 GO
 
 -- Testing with CASE statements and edge cases
 SELECT CASE 
-    WHEN CAST(2147483647 AS INT) * CAST(1.0000 AS SMALLMONEY) > 0
-    THEN CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS SMALLMONEY)
-    ELSE CAST('170141183460469231731687303715884105727' AS DECIMAL(38,0)) * CAST(0.0001 AS SMALLMONEY)
+    WHEN CAST(2147483647 AS INT) * CAST(1.0000 AS MONEY) > 0
+    THEN CAST(9223372036854775807 AS BIGINT) * CAST(0.5000 AS MONEY)
+    ELSE CAST('170141183460469231731687303715884105727' AS DECIMAL(38,0)) * CAST(0.0001 AS MONEY)
 END
 GO
 
@@ -585,19 +562,9 @@ GO
 SELECT CAST(123.45 AS NUMERIC(5,2)) / CAST(5.0 AS MONEY) AS result;
 GO
 
--- Arithmetic operations edge cases
--- Addition near max value
--- SELECT CAST(214748.3647 AS SMALLMONEY) + CAST(0.0001 AS SMALLMONEY) -- Should overflow
--- GO
-
--- -- Multiplication near limits
--- SELECT CAST(10000.00 AS SMALLMONEY) * CAST(21.4748 AS SMALLMONEY)
--- GO
-
--- -- Division by small numbers
--- SELECT CAST(100.00 AS SMALLMONEY) / CAST(0.0001 AS SMALLMONEY)
--- GO
-
+-- Multiplication near limits
+SELECT CAST(10000.00 AS SMALLMONEY) * CAST(21.4748 AS SMALLMONEY)
+GO
 
 -- Nested CASE queries
 -- 1. (first condition is true)
@@ -1166,7 +1133,6 @@ GO
 DECLARE @num NUMERIC(5,2) = 123.45, @bigint BIGINT = 9223372036854775807;
 SELECT @num + @bigint AS result;
 GO
-
 
 select 2.00 * (select 1)
 GO
