@@ -133,6 +133,63 @@ False#!#
 #!#False
 #!#False
 False#!#False
+#Q#CREATE TABLE POINTEMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+#Q#INSERT INTO POINTEMP_dt(geom) values(@geom) 
+#Q#INSERT INTO POINTEMP_dt(geog) values(@geog) 
+#Q#INSERT INTO POINTEMP_dt(geom) values(@geom) 
+#Q#INSERT INTO POINTEMP_dt(geog) values(@geog) 
+#Q#SELECT geom.STAsText(), geog.STAsText() FROM POINTEMP_dt;
+#D#text#!#text
+POINT EMPTY#!#
+#!#POINT EMPTY
+POINT EMPTY#!#
+#!#POINT EMPTY
+#Q#SELECT geom.STDimension(), geog.STDimension() FROM POINTEMP_dt;
+#D#int#!#int
+-1#!#
+#!#-1
+-1#!#
+#!#-1
+#Q#SELECT geom.STIsClosed(), geog.STIsClosed() FROM POINTEMP_dt;
+#D#bit#!#bit
+False#!#
+#!#False
+False#!#
+#!#False
+#Q#SELECT geom.STIsValid(), geog.STIsValid() FROM POINTEMP_dt;
+#D#bit#!#bit
+True#!#
+#!#True
+True#!#
+#!#True
+#Q#SELECT geom.STAsBinary(), geog.STAsBinary() FROM POINTEMP_dt;
+#D#varbinary#!#varbinary
+140000000#!#
+
+140000000
+140000000#!#
+
+
+140000000
+#Q#SELECT geom.STArea(), geog.STArea() FROM POINTEMP_dt;
+#D#float#!#float
+0#!#
+#!#0
+0#!#
+#!#0
+#Q#SELECT geom.STX ,geom.STY, geom.M, geom.Z FROM POINTEMP_dt;
+#D#float#!#float#!#float#!#float
+#!##!##!#
+#!##!##!#
+#!##!##!#
+#!##!##!#
+#Q#SELECT geog.Long ,geog.Long, geog.M, geog.Z FROM POINTEMP_dt;
+#D#float#!#float#!#float#!#float
+#!##!##!#
+#!##!##!#
+#!##!##!#
+#!##!##!#
 #Q#DROP TABLE IF EXISTS POINTGEOM_dt;
 #Q#DROP TABLE IF EXISTS POINTGEOG_dt;
 #Q#DROP TABLE IF EXISTS POINT_dt;
+#Q#DROP TABLE IF EXISTS POINTEMP_dt;
