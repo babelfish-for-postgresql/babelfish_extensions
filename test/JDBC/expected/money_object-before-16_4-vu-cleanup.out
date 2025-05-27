@@ -11,7 +11,6 @@ GO
 
 -- Drop Indexes
 DROP INDEX babel_5512_upgrade_idx1 ON babel_5512_upgrade_t3;
--- DROP INDEX babel_5512_upgrade_idx2 ON babel_5512_upgrade_t4;
 GO
 
 -- Drop Functions (ITVF, MSTVF, and regular functions)

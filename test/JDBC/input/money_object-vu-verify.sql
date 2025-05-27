@@ -136,3 +136,4 @@ AND a.attname IN ('babel_5512_mon3','babel_5512_mon1','babel_5512_small3','babel
 AND c.relkind IN ('r', 'i', 'v', 'p', 'I') 
 ORDER BY c.relkind, c.relname, a.attname;
 GO
+

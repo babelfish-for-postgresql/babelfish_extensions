@@ -245,5 +245,3 @@ GO
 -- v = view using table column
 CREATE VIEW babel_5512_upgrade_v10 AS SELECT id, babel_5512_mon1, babel_5512_small1 FROM babel_5512_upgrade_t3;
 GO
-
-
