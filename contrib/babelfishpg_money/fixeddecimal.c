@@ -1747,7 +1747,7 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	result++;
 
 
-	if (result != (int128) ((int64) result))
+	if (result != ((int64) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));

@@ -436,6 +436,17 @@ GO
 select 255  * CAST(99999.9999 AS SMALLMONEY)
 GO
 
+-- fixeddecimal multiplication
+select cast(922337203685477.5807 as money) * cast(922337203685477.5807 as money)
+GO
+
+-- crashing
+-- select cast(214748.3647 as smallmoney) * cast(214748.3647 as smallmoney)
+-- GO
+
+select cast(922337203685477.5807 as money) * cast(214748.3647 as smallmoney)
+GO
+
 -- INT32 Edge Cases with smallmoney
 -------------------------
 -- INT32_MAX = 2147483647
@@ -1127,6 +1138,12 @@ GO
 DECLARE @inputString smalldatetime = '1955-12-13 12:43:10';
 declare @var2 SmallMoneyType = 123.45;
 select @inputString + @var2
+GO
+
+-- table variable, working after my fix only handling in t_scaler
+declare @tableVar2 table(a smallmoney, b numeric(5,2));
+insert into @tableVar2 values(678.90, 123.45);
+select a +b from @tableVar2
 GO
 
 -- scale/precion with aggregate
