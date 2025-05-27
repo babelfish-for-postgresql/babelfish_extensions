@@ -6085,7 +6085,7 @@ END CATCH;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- Invalid Geography
