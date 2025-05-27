@@ -184,6 +184,7 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
+
 typedef struct {
 	int oid;
 	char *alias;
