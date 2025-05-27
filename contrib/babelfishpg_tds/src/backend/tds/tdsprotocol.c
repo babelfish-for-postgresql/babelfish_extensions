@@ -126,49 +126,76 @@ ResetTDSConnection(void)
 	Assert(TdsRequestCtrl->requestContext != NULL);
 	TdsErrorContext->err_text = "Resetting the TDS connection";
 
-	/* Make sure we've killed any active transaction */
-	pltsql_plugin_handler_ptr->pltsql_abort_any_transaction_callback();
-
-	/*
-	 * Save the transaction isolation level that should be restored after
-	 * connection reset.
-	 */
-	isolationOld = GetConfigOption("default_transaction_isolation", false, false);
-
-	/*
-	 * Start an implicit transaction block because the internal code may need
-	 * to access the catalog.
-	 */
-	StartTransactionCommand();
-	TdsDiscardAll();
-	pltsql_plugin_handler_ptr->reset_session_properties();
-	CommitTransactionCommand();
-
-	/*
-	 * Now reset the TDS top memory context and re-initialize everything.
-	 * Also, restore the transaction isolation level.
-	 */
-	MemoryContextReset(TdsMemoryContext);
-	TdsCommReset();
-	TdsProtocolInit();
-	TdsResetCache();
-	TdsResponseReset();
-	TdsResetBcpOffset();
-	TdsResetLoginFlags();
-
-	/* Retore previous isolation level when not called by sys.sp_reset_connection. */
-	if (!resetTdsConnectionFlag)
+	PG_TRY();
 	{
-		SetConfigOption("default_transaction_isolation", isolationOld,
-						PGC_BACKEND, PGC_S_CLIENT);
-	}
-	tvp_lookup_list = NIL;
+		/* Make sure we've killed any active transaction */
+		pltsql_plugin_handler_ptr->pltsql_abort_any_transaction_callback();
 
-	/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
-	if (!resetTdsConnectionFlag)
-	{
-		TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+		/*
+		 * Save the transaction isolation level that should be restored after
+		 * connection reset.
+		 */
+		isolationOld = GetConfigOption("default_transaction_isolation", false, false);
+
+		/*
+		 * Start an implicit transaction block because the internal code may need
+		 * to access the catalog.
+		 */
+		StartTransactionCommand();
+		TdsDiscardAll();
+		pltsql_plugin_handler_ptr->reset_session_properties();
+		CommitTransactionCommand();
+
+		/*
+		 * Now reset the TDS top memory context and re-initialize everything.
+		 * Also, restore the transaction isolation level.
+		 */
+		MemoryContextReset(TdsMemoryContext);
+		TdsCommReset();
+		TdsProtocolInit();
+		TdsResetCache();
+		TdsResponseReset();
+		TdsResetBcpOffset();
+		TdsResetLoginFlags();
+
+		/* Retore previous isolation level when not called by sys.sp_reset_connection. */
+		if (!resetTdsConnectionFlag)
+		{
+			SetConfigOption("default_transaction_isolation", isolationOld,
+							PGC_BACKEND, PGC_S_CLIENT);
+		}
+		tvp_lookup_list = NIL;
+
+		/* Send an environement change token is its not called via sys.sp_reset_connection procedure. */
+		if (!resetTdsConnectionFlag)
+		{
+			TdsSendEnvChange(TDS_ENVID_RESETCON, NULL, NULL);
+		}
 	}
+	PG_CATCH();
+	{
+		/* Before terminating the connection, send the response to the client. */
+		EmitErrorReport();
+		FlushErrorState();
+
+		/*
+		 * Client driver terminates the connection with a
+		 * dual error token and with error 596. Otherwise
+		 * it sends the next requests before realising the
+		 * session was terminated.
+		 */
+		TdsSendError(596, 1, ERROR,
+				"Cannot continue the execution because the session is in the kill state.", 1);
+
+		TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+		TdsFlush();
+
+		/* Terminate the connection. */
+		ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Reset Connection Failed")));
+	}
+	PG_END_TRY();
 }
 
 /*
@@ -537,68 +564,96 @@ TdsSocketBackend(void)
 
 						TdsErrorContext->phase = "TDS_REQUEST_PHASE_INIT";
 
-						/*
-						 * Switch to the request context.  We reset this
-						 * context once once TDSfunctionCache is loaded
-						 */
-						oldContext = MemoryContextSwitchTo(TdsMemoryContext);
+						PG_TRY(_inner);
+						{
+							/*
+							 * Switch to the request context.  We reset this
+							 * context once once TDSfunctionCache is loaded
+							 */
+							oldContext = MemoryContextSwitchTo(TdsMemoryContext);
 
-						InitTDSResponse();
-						StartTransactionCommand();
-						PushActiveSnapshot(GetTransactionSnapshot());
+							InitTDSResponse();
+							StartTransactionCommand();
+							PushActiveSnapshot(GetTransactionSnapshot());
 
-						/*
-						 * Loading the cache tables in TdsMemoryContext Memory
-						 * context and is loaded only once during the INIT
-						 * step. TODO: Cache invalidate & reload if some
-						 * enteries have changed
-						 */
-						TdsLoadTypeFunctionCache();
-						TdsLoadEncodingLCIDCache();
-						PopActiveSnapshot();
-						CommitTransactionCommand();
+							/*
+							 * Loading the cache tables in TdsMemoryContext Memory
+							 * context and is loaded only once during the INIT
+							 * step. TODO: Cache invalidate & reload if some
+							 * enteries have changed
+							 */
+							TdsLoadTypeFunctionCache();
+							TdsLoadEncodingLCIDCache();
+							PopActiveSnapshot();
+							CommitTransactionCommand();
 
-						MemoryContextSwitchTo(oldContext);
+							MemoryContextSwitchTo(oldContext);
 
-						/*
-						 * we should have exec callbacks initialized by this
-						 * time
-						 */
-						if (!(pltsql_plugin_handler_ptr->sql_batch_callback))
-							elog(FATAL, "sql_batch_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_executesql_callback))
-							elog(FATAL, "sp_executesql_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_prepare_callback))
-							elog(FATAL, "sp_prepare_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_execute_callback))
-							elog(FATAL, "sp_execute_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_prepexec_callback))
-							elog(FATAL, "sp_prepexec_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_unprepare_callback))
-							elog(FATAL, "sp_unprepare_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->pltsql_declare_var_callback))
-							elog(FATAL, "pltsql_declare_var_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->pltsql_read_out_param_callback))
-							elog(FATAL, "pltsql_read_out_param_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursoropen_callback))
-							elog(FATAL, "sp_cursoropen_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorclose_callback))
-							elog(FATAL, "sp_cursorclose_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorfetch_callback))
-							elog(FATAL, "sp_cursorfetch_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorexecute_callback))
-							elog(FATAL, "sp_cursorexecute_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorprepexec_callback))
-							elog(FATAL, "sp_cursorprepexec_callback is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorprepare_callback))
-							elog(FATAL, "sp_cursorprepare is not initialized");
-						if (!(pltsql_plugin_handler_ptr->sp_cursorunprepare_callback))
-							elog(FATAL, "sp_cursorunprepare is not initialized");
-						if (!(pltsql_plugin_handler_ptr->send_column_metadata))
-							elog(FATAL, "send_column_metadata is not initialized");
+							/*
+							 * we should have exec callbacks initialized by this
+							 * time
+							 */
+							if (!(pltsql_plugin_handler_ptr->sql_batch_callback))
+								elog(FATAL, "sql_batch_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_executesql_callback))
+								elog(FATAL, "sp_executesql_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_prepare_callback))
+								elog(FATAL, "sp_prepare_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_execute_callback))
+								elog(FATAL, "sp_execute_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_prepexec_callback))
+								elog(FATAL, "sp_prepexec_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_unprepare_callback))
+								elog(FATAL, "sp_unprepare_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->pltsql_declare_var_callback))
+								elog(FATAL, "pltsql_declare_var_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->pltsql_read_out_param_callback))
+								elog(FATAL, "pltsql_read_out_param_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursoropen_callback))
+								elog(FATAL, "sp_cursoropen_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorclose_callback))
+								elog(FATAL, "sp_cursorclose_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorfetch_callback))
+								elog(FATAL, "sp_cursorfetch_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorexecute_callback))
+								elog(FATAL, "sp_cursorexecute_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorprepexec_callback))
+								elog(FATAL, "sp_cursorprepexec_callback is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorprepare_callback))
+								elog(FATAL, "sp_cursorprepare is not initialized");
+							if (!(pltsql_plugin_handler_ptr->sp_cursorunprepare_callback))
+								elog(FATAL, "sp_cursorunprepare is not initialized");
+							if (!(pltsql_plugin_handler_ptr->send_column_metadata))
+								elog(FATAL, "send_column_metadata is not initialized");
 
-						/* Ready to fetch the next request */
-						TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
+							/* Ready to fetch the next request */
+							TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
+							break;
+						}
+						PG_CATCH(_inner);
+						{
+							/* Before terminating the connection, send the response to the client. */
+							EmitErrorReport();
+							FlushErrorState();
+
+							/*
+							 * Client driver terminates the connection with a
+							 * dual error token and with error 596. Otherwise
+							 * it sends the next requests before realising the
+							 * session was terminated.
+							 */
+							TdsSendError(596, 1, ERROR,
+									"Cannot continue the execution because the session is in the kill state.", 1);
+
+							TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+							TdsFlush();
+
+							/* Terminate the connection. */
+							ereport(FATAL,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("Connection Initialization Failed")));
+						}
+						PG_END_TRY(_inner);
 						break;
 					}
 				case TDS_REQUEST_PHASE_FETCH:
