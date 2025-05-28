@@ -200,6 +200,9 @@ GO
 insert into babel_5512_upgrade_t1 values (3.0, 1234.234563, 123.234567)
 GO
 
+Select * from babel_5512_upgrade_t1
+GO
+
 -- UDT column
 create table babel_5512_upgrade_t2 ( a15 decimal,a16 babel_5512_upgrade_type1,a17 babel_5512_upgrade_type2)
 go

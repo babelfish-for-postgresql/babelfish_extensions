@@ -239,6 +239,7 @@ static Oid default_collation_for_builtin_type(Type typ, bool handle_text);
 static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
+static void handle_basetype_typmodin(Type typ, Oid *typmodin);
 
 /***************************************************
  * 			Temp Table Related Declarations + Hooks
@@ -576,6 +577,8 @@ InstallExtendedHooks(void)
 	ExecInitParallelPlan_hook = bbf_ExecInitParallelPlan;
 
 	ExecCheckOneRelPerms_hook = bbf_ExecCheckOneRelPerms;
+
+	handle_basetype_typmodin_hook = handle_basetype_typmodin;
 }
 
 void
@@ -662,6 +665,7 @@ UninstallExtendedHooks(void)
 	ParallelQueryMain_hook = prev_ParallelQueryMain_hook;
 	ExecInitParallelPlan_hook = prev_ExecInitParallelPlan_hook;
 	ExecCheckOneRelPerms_hook = NULL;
+	handle_basetype_typmodin_hook = NULL;
 }
 
 /*****************************************
@@ -6487,4 +6491,32 @@ pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan)
 	}
 	return true;
 	
+}
+
+/*
+ * Return the typmodin for domains like smallmoney/money
+ * and UDTs created on them, in case of dump_restore.
+ */
+static void
+handle_basetype_typmodin(Type typ, Oid *typmodin)
+{
+	Oid 		typbasetype;
+	Oid 		basetypeid;
+	Oid 		typeoid;
+	HeapTuple	tup;
+	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	typeoid = ((Form_pg_type) GETSTRUCT(typ))->oid;
+	typbasetype = ((Form_pg_type) GETSTRUCT(typ))->typbasetype;
+
+	if (dump_restore && (strcmp(dump_restore, "on") == 0) &&
+		!OidIsValid(*typmodin) && OidIsValid(typbasetype))
+	{
+		basetypeid = getBaseType(typeoid);
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(basetypeid));
+		if (!HeapTupleIsValid(tup)) /* should not happen */
+			elog(ERROR, "cache lookup failed for type %u", basetypeid);
+		*typmodin = ((Form_pg_type) GETSTRUCT((Type)tup))->typmodin;
+		ReleaseSysCache(tup);
+	}
 }
