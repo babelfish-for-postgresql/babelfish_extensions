@@ -20,7 +20,6 @@
 #include "typecode.h"
 #include "varchar.h"
 #include "datetimeoffset.h"
-#include "tcop/utility.h"
 
 common_utility_plugin common_utility_plugin_var = {NULL};
 static common_utility_plugin *get_common_utility_plugin(void);
