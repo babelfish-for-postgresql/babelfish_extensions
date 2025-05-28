@@ -231,6 +231,9 @@ GO
 SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
 GO
 
+SHOW psql_logical_babelfish_db_name;
+GO
+
 UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
 GO
 
@@ -519,7 +522,13 @@ GO
 
 
 -- psql
+SHOW psql_logical_babelfish_db_name;
+GO
+
 SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
+GO
+
+SHOW psql_logical_babelfish_db_name;
 GO
 
 UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
@@ -714,6 +723,9 @@ GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
+GO
+
+SHOW psql_logical_babelfish_db_name;
 GO
 
 -- tsql

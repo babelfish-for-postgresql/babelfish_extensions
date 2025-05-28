@@ -455,6 +455,14 @@ GO
 SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
 GO
 
+SHOW psql_logical_babelfish_db_name;
+GO
+~~START~~
+text
+dms_db_babel_5077
+~~END~~
+
+
 UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
 GO
 ~~ROW COUNT: 1~~
@@ -930,8 +938,24 @@ GO
 
 
 -- psql
+SHOW psql_logical_babelfish_db_name;
+GO
+~~START~~
+text
+
+~~END~~
+
+
 SET psql_logical_babelfish_db_name = 'dms_db_babel_5077';
 GO
+
+SHOW psql_logical_babelfish_db_name;
+GO
+~~START~~
+text
+dms_db_babel_5077
+~~END~~
+
 
 UPDATE dms_db_babel_5077_dbo.dms_db_babel_5077_t1 SET dms_db_babel_5077_t1_col1 = 'collation' where dms_db_babel_5077_t1_col2 = 'chinese';
 GO
@@ -1292,6 +1316,14 @@ SELECT pg_sleep(1);
 GO
 ~~START~~
 void
+
+~~END~~
+
+
+SHOW psql_logical_babelfish_db_name;
+GO
+~~START~~
+text
 
 ~~END~~
 

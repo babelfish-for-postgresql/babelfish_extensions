@@ -34,21 +34,6 @@ char	   *pltsql_server_collation_name = NULL;
 /* Dump and Restore */
 char	   *babelfish_restored_server_collation_name = NULL;
 
-/* Global cache variable */
-LogicalDBCache g_logical_db_cache = {NULL, false};
-
-/* Previous ProcessUtility hook if any */
-static ProcessUtility_hook_type prev_ProcessUtility = NULL;
-static void
-babelfishpg_logicalDB_ProcessUtility(PlannedStmt *pstmt,
-						const char *queryString,
-						bool readOnlyTree,
-						ProcessUtilityContext context,
-						ParamListInfo params,
-						QueryEnvironment *queryEnv,
-						DestReceiver *dest,
-						QueryCompletion *qc);
-
 const char *BabelfishTranslateCollation(
 										const char *collname,
 										Oid collnamespace,
@@ -165,14 +150,6 @@ _PG_init(void)
  	prev_get_like_collation_hook = get_like_collation_hook;
 	get_like_collation_hook = bbf_get_like_collation;
 
-	/* Initialize logical db name */
-	g_logical_db_cache.logical_db_name = NULL;
-	g_logical_db_cache.is_valid = false;
-
-	/* Save previous hook and install hook for logical db name */
-	prev_ProcessUtility = ProcessUtility_hook;
-	ProcessUtility_hook = babelfishpg_logicalDB_ProcessUtility;
-
 }
 void
 _PG_fini(void)
@@ -182,8 +159,6 @@ _PG_fini(void)
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;
 	set_like_collation_hook = prev_set_like_collation_hook;
 	get_like_collation_hook = prev_get_like_collation_hook;
-	/* Restore previous hook */
-	ProcessUtility_hook = prev_ProcessUtility;
 }
 
 common_utility_plugin *
@@ -244,62 +219,4 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.tsql_numeric_get_typmod = &tsql_numeric_get_typmod;
 	}
 	return &common_utility_plugin_var;
-}
-
-/* Hook function to catch utility commands */
-static void
-babelfishpg_logicalDB_ProcessUtility(PlannedStmt *pstmt,
-						const char *queryString,
-						bool readOnlyTree,
-						ProcessUtilityContext context,
-						ParamListInfo params,
-						QueryEnvironment *queryEnv,
-						DestReceiver *dest,
-						QueryCompletion *qc)
-{
-	Node *parsetree = pstmt->utilityStmt;
-
-	switch (nodeTag(parsetree))
-	{
-		/* SET [ SESSION | LOCAL ] configuration_parameter */
-		case T_VariableSetStmt:
-		{
-			VariableSetStmt *stmt = (VariableSetStmt *) parsetree;
-			if (strcasecmp(stmt->name, "psql_logical_babelfish_db_name") == 0)
-			{
-				g_logical_db_cache.is_valid = false;
-			}
-			break;
-		}
-		/* ALTER DATABASE name SET configuration_parameter */
-		case T_AlterDatabaseSetStmt:
-		{
-			AlterDatabaseSetStmt *stmt = (AlterDatabaseSetStmt *) parsetree;
-			if (strcasecmp(stmt->setstmt->name, "psql_logical_babelfish_db_name") == 0)
-			{
-				g_logical_db_cache.is_valid = false;
-			}
-			break;
-		}
-		/* ALTER SYSTEM SET configuration_parameter */
-		case T_AlterSystemStmt:
-		{
-			AlterSystemStmt *stmt = (AlterSystemStmt *) parsetree;
-			if (strcasecmp(stmt->setstmt->name, "psql_logical_babelfish_db_name") == 0)
-			{
-				g_logical_db_cache.is_valid = false;
-			}
-			break;
-		}
-		default:
-			break;
-	}
-
-	/* Chain to previous hook if any */
-	if (prev_ProcessUtility)
-		prev_ProcessUtility(pstmt, queryString, readOnlyTree,
-						context, params, queryEnv, dest, qc);
-	else
-		standard_ProcessUtility(pstmt, queryString, readOnlyTree,
-							context, params, queryEnv, dest, qc);
 }

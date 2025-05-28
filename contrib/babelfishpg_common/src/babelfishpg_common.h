@@ -96,11 +96,3 @@ typedef struct common_utility_plugin
 	void		(*TsqlUTF8toUTF16StringInfo) (StringInfo utf16_data, const void *data, size_t len);
 	int32_t		(*tsql_numeric_get_typmod) (Numeric num);
 } common_utility_plugin;
-
-/* struct to save the state of the psql_logical_babelfish_db_name GUC */
-typedef struct LogicalDBCache {
-	const char *logical_db_name;
-	bool is_valid;
-} LogicalDBCache;
-
-extern LogicalDBCache g_logical_db_cache;
