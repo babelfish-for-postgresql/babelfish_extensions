@@ -27,26 +27,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
-
-/*
- * The scale which the number is actually stored.
- * For example: 100 will allow 2 decimal places of precision
- * This must always be a '1' followed by a number of '0's.
- */
-#define FIXEDDECIMAL_MULTIPLIER 10000LL
-
-/*
- * This ensures that we round up the result in case the 5th decimal place >= 5
- * in case of fixeddecimal multiplication.
- */
-#define FIXEDDECIMAL_ROUNDUP 5000
-
-/*
- * Number of decimal places to store.
- * This number should be the number of decimal digits that it takes to
- * represent FIXEDDECIMAL_MULTIPLIER - 1
- */
-#define FIXEDDECIMAL_SCALE 4
+#include "fixeddecimal.h"
 
 /* Sanity checks */
 #if FIXEDDECIMAL_SCALE == 0
@@ -2612,6 +2593,7 @@ int2fixeddecimaldiv(PG_FUNCTION_ARGS)
 	/* No overflow is possible */
 	PG_RETURN_FLOAT8((float8) arg1 / arg2);
 }
+
 
 /*----------------------------------------------------------
  *	Conversion operators.
