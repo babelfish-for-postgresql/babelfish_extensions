@@ -51,7 +51,7 @@ contains_search_condition:
     ;
 
 multiple_term:
-    search_term opt_node {
+    search_term opt_boolean_node {
         if($2 != NULL) 
         {
             $$ = mergeTokens($1, $2, NULL);
@@ -61,7 +61,7 @@ multiple_term:
             $$ = $1;
         }
     }
-    | enclosed_term opt_node {
+    | enclosed_term opt_boolean_node {
         if($2 != NULL) 
         {
             $$ = mergeTokens($1, $2, NULL);
@@ -73,7 +73,7 @@ multiple_term:
     }
     ;
 
-opt_node:
+opt_boolean_node:
     bool_operator multiple_term {
         $$ = mergeTokens($1, $2, NULL);
     }
@@ -83,7 +83,7 @@ opt_node:
     ;
 
 enclosed_term:
-    white_space O_PAREN_TOKEN multiple_term C_PAREN_TOKEN white_space {
+    opt_white_space O_PAREN_TOKEN multiple_term C_PAREN_TOKEN opt_white_space {
         $$ = mergeTokens($2, $3, $4);
     }
     ;
@@ -107,7 +107,7 @@ search_term:
     ;
 
 simple_term:
-    white_space keyword white_space {
+    opt_white_space keyword opt_white_space {
         $$ = $2;
     }
     ;
@@ -122,7 +122,7 @@ keyword:
     ;
 
 prefix_term:
-    white_space PREFIX_TERM_TOKEN white_space {
+    opt_white_space PREFIX_TERM_TOKEN opt_white_space {
         $$ = translate_prefix_term($2);
     }
     ;
@@ -151,7 +151,7 @@ simple_term_list:
     }
     ;
 
-white_space:
+opt_white_space:
     WS_TOKEN
     | /* EMPTY */
     ;

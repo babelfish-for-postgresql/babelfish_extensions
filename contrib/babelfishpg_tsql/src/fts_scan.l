@@ -39,9 +39,9 @@ AND[ \s\t\r\n]+NOT  	{ yylval = "AND NOT"; return AND_NOT_TOKEN; }
 [ \t\r\n]+      	{ yylval = " "; return WS_TOKEN; }
 
 
-\"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  /* Handle prefix terms */
+\"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror_with_code(ERRCODE_SYNTAX_ERROR, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  /* Handle prefix terms */
 \"[^"]*\"                																						    { yylval = yytext; return TEXT_TOKEN; }  /* Handle double-quoted phrases */
-[a-zA-Z0-9~`!@#$%^&*+_\-={[}\]|\\:;"'<,>.?/]+																	{ if (strncasecmp(yytext, "FORMSOF(", strlen("FORMSOF(")) == 0) { yyerror(NULL, "Generation term is not currently supported in Babelfish"); } yylval = yytext; return WORD_TOKEN; }  /* Handle individual words */
+[a-zA-Z0-9~`!@#$%^&*+_\-={[}\]|\\:;"'<,>.?/]+																	{ if (strncasecmp(yytext, "FORMSOF(", strlen("FORMSOF(")) == 0) { yyerror_with_code(ERRCODE_FEATURE_NOT_SUPPORTED, "Generation term is not currently supported in Babelfish"); } yylval = yytext; return WORD_TOKEN; }  /* Handle individual words */
 
 .               																									{ return yytext[0]; }  /* Other characters are returned as-is */
 
