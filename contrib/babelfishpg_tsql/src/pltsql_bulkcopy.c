@@ -999,7 +999,7 @@ BeginBulkCopy(Relation rel,
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...).
 	 */
-	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->rteperminfos);
+	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->rteperminfos, bms_make_singleton(1));
 	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
